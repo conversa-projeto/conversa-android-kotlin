@@ -10,8 +10,8 @@ Este **não** é um aplicativo autônomo, este é apenas um frontend, um cliente
 
 ## 💻 Code Contributors
 
-<a href="https://github.com/conversa-projeto/conversa/graphs/contributors">
-  <img src="https://contrib.rocks/image?repo=conversa-projeto/conversa" />
+<a href="https://github.com/conversa-projeto/conversa-android-kotlin/graphs/contributors">
+  <img src="https://contrib.rocks/image?repo=conversa-projeto/conversa-android-kotlin" />
 </a>
 
 ## ⚠️ License
