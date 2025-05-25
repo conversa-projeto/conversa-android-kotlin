@@ -1,0 +1,48 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:orientation="vertical"
+    android:gravity="start"
+    android:paddingStart="8dp"
+    android:paddingEnd="60dp"
+    android:paddingTop="4dp"
+    android:paddingBottom="4dp">
+
+    <LinearLayout
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:orientation="horizontal"
+        android:background="@drawable/bg_message_received"
+        android:padding="8dp"
+        android:gravity="center_vertical">
+
+        <Button
+            android:id="@+id/btnPlayAudio"
+            android:layout_width="40dp"
+            android:layout_height="40dp"
+            android:text="▶"
+            android:textSize="18sp"
+            android:textColor="@android:color/black"
+            android:background="?attr/selectableItemBackgroundBorderless"
+            android:gravity="center" />
+
+        <TextView
+            android:id="@+id/textViewAudioDuration"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginStart="8dp"
+            android:textColor="@android:color/black"
+            android:textSize="14sp"
+            android:text="0:20" /> </LinearLayout>
+
+    <TextView
+        android:id="@+id/textViewMessageTimestamp"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="2dp"
+        android:textSize="10sp"
+        android:textColor="#888888"
+        android:text="10:36 AM" />
+
+</LinearLayout>
