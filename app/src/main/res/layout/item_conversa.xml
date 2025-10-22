@@ -1,0 +1,95 @@
+<?xml version="1.0" encoding="utf-8"?>
+<com.google.android.material.card.MaterialCardView xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:layout_marginHorizontal="8dp"
+    android:layout_marginVertical="4dp"
+    app:cardCornerRadius="12dp"
+    app:cardElevation="2dp"
+    app:strokeWidth="0dp">
+
+    <androidx.constraintlayout.widget.ConstraintLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:padding="12dp">
+
+        <!-- Ícone de tipo (pessoa/grupo) -->
+        <ImageView
+            android:id="@+id/ivIconeTipo"
+            android:layout_width="48dp"
+            android:layout_height="48dp"
+            android:padding="8dp"
+            android:background="?attr/colorPrimary"
+            android:tint="@android:color/white"
+            android:contentDescription="Ícone do tipo de conversa"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toTopOf="parent"
+            tools:src="@android:drawable/ic_menu_myplaces" />
+
+        <!-- Nome da conversa -->
+        <TextView
+            android:id="@+id/tvNomeConversa"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_marginStart="12dp"
+            android:layout_marginEnd="8dp"
+            android:ellipsize="end"
+            android:maxLines="1"
+            android:textColor="?android:textColorPrimary"
+            android:textSize="16sp"
+            android:textStyle="bold"
+            app:layout_constraintEnd_toStartOf="@id/tvHoraMensagem"
+            app:layout_constraintStart_toEndOf="@id/ivIconeTipo"
+            app:layout_constraintTop_toTopOf="@id/ivIconeTipo"
+            tools:text="João Silva" />
+
+        <!-- Hora da última mensagem -->
+        <TextView
+            android:id="@+id/tvHoraMensagem"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:textColor="?android:textColorSecondary"
+            android:textSize="12sp"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintTop_toTopOf="@id/tvNomeConversa"
+            tools:text="10:30" />
+
+        <!-- Última mensagem -->
+        <TextView
+            android:id="@+id/tvUltimaMensagem"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="4dp"
+            android:layout_marginStart="12dp"
+            android:layout_marginEnd="8dp"
+            android:ellipsize="end"
+            android:maxLines="2"
+            android:textColor="?android:textColorSecondary"
+            android:textSize="14sp"
+            app:layout_constraintEnd_toStartOf="@id/tvBadgeNaoLidas"
+            app:layout_constraintStart_toEndOf="@id/ivIconeTipo"
+            app:layout_constraintTop_toBottomOf="@id/tvNomeConversa"
+            tools:text="Olá! Como você está?" />
+
+        <!-- Badge de mensagens não lidas -->
+        <TextView
+            android:id="@+id/tvBadgeNaoLidas"
+            android:layout_width="24dp"
+            android:layout_height="24dp"
+            android:background="@drawable/badge_circle"
+            android:gravity="center"
+            android:textColor="@android:color/white"
+            android:textSize="11sp"
+            android:textStyle="bold"
+            android:visibility="gone"
+            app:layout_constraintBottom_toBottomOf="@id/tvUltimaMensagem"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintTop_toTopOf="@id/tvUltimaMensagem"
+            tools:text="3"
+            tools:visibility="visible" />
+
+    </androidx.constraintlayout.widget.ConstraintLayout>
+
+</com.google.android.material.card.MaterialCardView>
