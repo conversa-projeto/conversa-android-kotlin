@@ -44,6 +44,13 @@
             android:name=".MainActivity"
             android:exported="false"
             android:theme="@style/Theme.Conversa" />
+        
+        <!-- Chat Activity -->
+        <activity
+            android:name=".ui.chat.ChatActivity"
+            android:exported="false"
+            android:theme="@style/Theme.Conversa"
+            android:windowSoftInputMode="adjustResize" />
             
     </application>
 

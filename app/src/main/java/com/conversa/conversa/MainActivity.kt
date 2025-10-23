@@ -15,6 +15,7 @@ import com.conversa.conversa.data.model.Conversa
 import com.conversa.conversa.data.preferences.UserPreferences
 import com.conversa.conversa.databinding.ActivityMainBinding
 import com.conversa.conversa.databinding.ContentMainBinding
+import com.conversa.conversa.ui.chat.ChatActivity
 import com.google.android.material.snackbar.Snackbar
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
@@ -185,17 +186,11 @@ class MainActivity : AppCompatActivity() {
     }
     
     private fun abrirConversa(conversa: Conversa) {
-        Toast.makeText(
-            this,
-            "Abrindo conversa: ${conversa.nome}",
-            Toast.LENGTH_SHORT
-        ).show()
-        
-        // TODO: Implementar tela de chat
-        // val intent = Intent(this, ChatActivity::class.java)
-        // intent.putExtra("conversa_id", conversa.id)
-        // intent.putExtra("conversa_nome", conversa.nome)
-        // startActivity(intent)
+        val intent = Intent(this, ChatActivity::class.java)
+        intent.putExtra("conversa_id", conversa.id)
+        intent.putExtra("conversa_nome", conversa.nome ?: conversa.descricao)
+        intent.putExtra("conversa_tipo", conversa.tipo)
+        startActivity(intent)
     }
 
     override fun onCreateOptionsMenu(menu: Menu): Boolean {

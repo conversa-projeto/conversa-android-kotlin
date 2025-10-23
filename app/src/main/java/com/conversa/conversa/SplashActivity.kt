@@ -59,9 +59,9 @@ class SplashActivity : AppCompatActivity() {
             
             if (!savedLogin.isNullOrEmpty() && !savedPassword.isNullOrEmpty()) {
                 // Tem credenciais salvas, tenta fazer login automático
-                runOnUiThread {
-                    Toast.makeText(this, "Fazendo login automático...", Toast.LENGTH_SHORT).show()
-                }
+//                runOnUiThread {
+//                    Toast.makeText(this, "Fazendo login automático...", Toast.LENGTH_SHORT).show()
+//                }
                 
                 // Vai para LoginActivity que fará o login automático
                 abrirLogin()
