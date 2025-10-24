@@ -1,12 +1,49 @@
+<?xml version="1.0" encoding="utf-8"?>
 <resources>
     <string name="app_name">Conversa</string>
-    <string name="title_activity_login">LoginActivity</string>
-    <string name="prompt_email">Email</string>
-    <string name="prompt_password">Password</string>
-    <string name="action_sign_in">Sign in or register</string>
-    <string name="action_sign_in_short">Sign in</string>
-    <string name="welcome">"Welcome !"</string>
-    <string name="invalid_username">Not a valid username</string>
-    <string name="invalid_password">Password must be >5 characters</string>
-    <string name="login_failed">"Login failed"</string>
+
+    <!-- Login -->
+    <string name="login_title">Bem-vindo ao Conversa</string>
+    <string name="email_hint">E-mail</string>
+    <string name="password_hint">Senha</string>
+    <string name="login_button">Entrar</string>
+    <string name="register_button">Criar conta</string>
+    <string name="forgot_password">Esqueceu a senha?</string>
+
+    <!-- Registro -->
+    <string name="register_title">Criar conta</string>
+    <string name="name_hint">Nome completo</string>
+    <string name="confirm_password_hint">Confirmar senha</string>
+
+    <!-- Mensagens de erro -->
+    <string name="error_empty_fields">Preencha todos os campos</string>
+    <string name="error_invalid_email">E-mail inválido</string>
+    <string name="error_short_password">Senha deve ter no mínimo 6 caracteres</string>
+    <string name="error_passwords_dont_match">As senhas não coincidem</string>
+    <string name="error_network">Erro de conexão</string>
+    <string name="error_generic">Ocorreu um erro. Tente novamente</string>
+
+    <!-- Chat -->
+    <string name="message_hint">Mensagem</string>
+    <string name="typing">digitando...</string>
+    <string name="send">Enviar</string>
+    <string name="attach">Anexar</string>
+
+    <!-- Opções -->
+    <string name="camera">Câmera</string>
+    <string name="gallery">Galeria</string>
+    <string name="file">Arquivo</string>
+    <string name="copy">Copiar</string>
+    <string name="forward">Encaminhar</string>
+    <string name="delete">Excluir</string>
+    <string name="delete_for_me">Excluir para mim</string>
+    <string name="delete_for_everyone">Excluir para todos</string>
+
+    <!-- Geral -->
+    <string name="cancel">Cancelar</string>
+    <string name="ok">OK</string>
+    <string name="yes">Sim</string>
+    <string name="no">Não</string>
+    <string name="loading">Carregando...</string>
+    <string name="no_conversations">Nenhuma conversa ainda</string>
 </resources>
