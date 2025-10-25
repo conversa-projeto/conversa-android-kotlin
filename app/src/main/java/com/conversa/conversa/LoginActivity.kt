@@ -121,12 +121,12 @@ class LoginActivity : AppCompatActivity() {
                         userPreferences.clearLoginCredentials()
                     }
                     
-                    // Mostra mensagem de sucesso
-                    Toast.makeText(
-                        this@LoginActivity,
-                        "Login realizado com sucesso!\nBem-vindo, ${loginResponse.nome}",
-                        Toast.LENGTH_LONG
-                    ).show()
+//                    // Mostra mensagem de sucesso
+//                    Toast.makeText(
+//                        this@LoginActivity,
+//                        "Login realizado com sucesso!\nBem-vindo, ${loginResponse.nome}",
+//                        Toast.LENGTH_LONG
+//                    ).show()
                     
                     // Aguarda 1 segundo e vai para MainActivity
                     kotlinx.coroutines.delay(1000)

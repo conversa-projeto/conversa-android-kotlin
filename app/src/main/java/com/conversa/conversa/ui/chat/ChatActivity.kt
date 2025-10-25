@@ -63,6 +63,9 @@ class ChatActivity : AppCompatActivity() {
             title = conversaNome
             setDisplayHomeAsUpEnabled(true)
             setDisplayShowHomeEnabled(true)
+            setDisplayShowTitleEnabled(false) // Remove título padrão
+            binding.tvNomeUsuario.text = conversaNome // ou o objeto que você usa
+            binding.tvStatusUsuario.text = "online" // ou destinatario.status
         }
     }
 

@@ -12,6 +12,8 @@ import com.conversa.conversa.data.model.Mensagem
 import com.conversa.conversa.databinding.ItemMensagemRecebidaBinding
 import com.conversa.conversa.databinding.ItemMensagemEnviadaBinding
 import java.text.SimpleDateFormat
+import java.time.LocalDateTime
+import java.time.format.DateTimeFormatter
 import java.util.Date
 import java.util.Locale
 
@@ -122,15 +124,8 @@ class MensagensAdapter(
     /**
      * Formata a data/hora para exibição (ex: "14:30")
      */
-    private fun formatarHora(dataHora: String): String {
-        return try {
-            val inputFormat = SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss", Locale.getDefault())
-            val outputFormat = SimpleDateFormat("HH:mm", Locale.getDefault())
-            val date = inputFormat.parse(dataHora)
-            date?.let { outputFormat.format(it) } ?: ""
-        } catch (e: Exception) {
-            ""
-        }
+    private fun formatarHora(dataHora: LocalDateTime?): String {
+        return dataHora?.format(DateTimeFormatter.ofPattern("HH:mm")) ?: ""
     }
 }
 

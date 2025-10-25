@@ -1,6 +1,7 @@
 package com.conversa.conversa.data.model
 
 import com.google.gson.annotations.SerializedName
+import java.time.LocalDateTime
 
 /**
  * Representa uma mensagem no chat
@@ -12,8 +13,8 @@ data class Mensagem(
     @SerializedName("remetente_id")
     val usuarioId: Int,
     val remetente: String,
-    val inserida: String,
-    val alterada: String?,
+    val inserida: LocalDateTime,
+    val alterada: LocalDateTime?,
     val recebida: Boolean,
     val visualizada: Boolean,
     val reproduzida: Boolean,

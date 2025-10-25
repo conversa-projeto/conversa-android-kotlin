@@ -110,12 +110,6 @@ class MainActivity : AppCompatActivity() {
                     mostrarVazio()
                 } else {
                     mostrarConversas(conversas)
-
-                    Toast.makeText(
-                        this@MainActivity,
-                        conversas.count().toString(),
-                        Toast.LENGTH_LONG
-                    ).show()
                 }
             } else {
                 val errorMessage = when (response.code()) {

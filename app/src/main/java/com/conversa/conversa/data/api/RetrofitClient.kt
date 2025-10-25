@@ -1,11 +1,14 @@
 package com.conversa.conversa.data.api
 
+import UtcToLocalDateTimeDeserializer
 import com.conversa.conversa.BuildConfig
+import com.google.gson.GsonBuilder
 import okhttp3.OkHttpClient
 import okhttp3.logging.HttpLoggingInterceptor
 import retrofit2.Retrofit
 import retrofit2.converter.gson.GsonConverterFactory
 import java.util.concurrent.TimeUnit
+import java.time.LocalDateTime
 
 object RetrofitClient {
     
@@ -25,10 +28,13 @@ object RetrofitClient {
     
     private fun getRetrofit(): Retrofit {
         if (retrofit == null) {
+            val gson = GsonBuilder()
+                .registerTypeAdapter(LocalDateTime::class.java, UtcToLocalDateTimeDeserializer())
+                .create()
             retrofit = Retrofit.Builder()
                 .baseUrl(currentBaseUrl)
                 .client(okHttpClient)
-                .addConverterFactory(GsonConverterFactory.create())
+                .addConverterFactory(GsonConverterFactory.create(gson))
                 .build()
         }
         return retrofit!!

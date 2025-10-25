@@ -13,7 +13,7 @@
         android:text="Login"
         android:textSize="32sp"
         android:textStyle="bold"
-        android:textColor="@color/design_default_color_primary"
+        android:textColor="@color/corPrimaria"
         android:layout_marginBottom="48dp"
         app:layout_constraintBottom_toTopOf="@id/cardLogin"
         app:layout_constraintEnd_toEndOf="parent"
@@ -25,9 +25,10 @@
         android:id="@+id/cardLogin"
         android:layout_width="0dp"
         android:layout_height="wrap_content"
-        app:cardCornerRadius="16dp"
-        app:cardElevation="8dp"
         android:layout_marginTop="16dp"
+        app:cardBackgroundColor="@android:color/transparent"
+        app:cardCornerRadius="16dp"
+        app:cardElevation="0dp"
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
@@ -45,10 +46,10 @@
                 android:layout_height="wrap_content"
                 android:hint="Usuário"
                 app:boxBackgroundMode="outline"
-                app:boxCornerRadiusTopStart="8dp"
-                app:boxCornerRadiusTopEnd="8dp"
+                app:boxCornerRadiusBottomEnd="8dp"
                 app:boxCornerRadiusBottomStart="8dp"
-                app:boxCornerRadiusBottomEnd="8dp">
+                app:boxCornerRadiusTopEnd="8dp"
+                app:boxCornerRadiusTopStart="8dp">
 
                 <com.google.android.material.textfield.TextInputEditText
                     android:id="@+id/etLogin"
@@ -66,10 +67,10 @@
                 android:layout_marginTop="16dp"
                 android:hint="Senha"
                 app:boxBackgroundMode="outline"
-                app:boxCornerRadiusTopStart="8dp"
-                app:boxCornerRadiusTopEnd="8dp"
-                app:boxCornerRadiusBottomStart="8dp"
                 app:boxCornerRadiusBottomEnd="8dp"
+                app:boxCornerRadiusBottomStart="8dp"
+                app:boxCornerRadiusTopEnd="8dp"
+                app:boxCornerRadiusTopStart="8dp"
                 app:endIconMode="password_toggle">
 
                 <com.google.android.material.textfield.TextInputEditText
@@ -116,7 +117,7 @@
         android:layout_height="wrap_content"
         android:layout_marginTop="16dp"
         android:text="⚙️ Configurar Servidor"
-        android:textColor="@color/design_default_color_primary"
+        android:textColor="@color/corPrimaria"
         android:textSize="14sp"
         android:textStyle="bold"
         android:clickable="true"
