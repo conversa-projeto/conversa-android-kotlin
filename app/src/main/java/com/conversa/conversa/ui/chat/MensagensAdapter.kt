@@ -11,15 +11,12 @@ import com.conversa.conversa.data.model.Conteudo
 import com.conversa.conversa.data.model.Mensagem
 import com.conversa.conversa.databinding.ItemMensagemRecebidaBinding
 import com.conversa.conversa.databinding.ItemMensagemEnviadaBinding
-import java.text.SimpleDateFormat
-import java.time.LocalDateTime
 import java.time.format.DateTimeFormatter
-import java.util.Date
-import java.util.Locale
 
 class MensagensAdapter(
     private val usuarioId: Int,
-    private val isGrupo: Boolean
+    private val isGrupo: Boolean,
+    private val onDownloadClick: (conteudoId: Int, nomeArquivo: String, extensao: String) -> Unit
 ) : ListAdapter<Mensagem, RecyclerView.ViewHolder>(MensagemDiffCallback()) {
 
     companion object {
@@ -76,8 +73,30 @@ class MensagensAdapter(
             // Pega o primeiro conteúdo de texto (se existir)
             val conteudoTexto = mensagem.conteudos.firstOrNull { it.tipo == Conteudo.TIPO_TEXTO }
             
-            binding.tvMensagem.text = conteudoTexto?.conteudo ?: ""
-            binding.tvHora.text = formatarHora(mensagem.inserida)
+            if (conteudoTexto != null && conteudoTexto.conteudo.isNotEmpty()) {
+                binding.tvMensagem.text = conteudoTexto.conteudo
+                binding.tvMensagem.visibility = View.VISIBLE
+            } else {
+                binding.tvMensagem.visibility = View.GONE
+            }
+            
+            // Verifica se há anexos (arquivo, imagem, áudio)
+            val anexo = mensagem.conteudos.firstOrNull { 
+                it.tipo in listOf(Conteudo.TIPO_IMAGEM, Conteudo.TIPO_ARQUIVO, Conteudo.TIPO_AUDIO)
+            }
+            
+            if (anexo != null) {
+                configurarAnexo(
+                    binding.layoutAnexo,
+                    binding.tvNomeArquivo,
+                    binding.btnBaixarAnexo,
+                    anexo
+                )
+            } else {
+                binding.layoutAnexo.visibility = View.GONE
+            }
+            
+            binding.tvHora.text = formatarHora(mensagem.inserida?.toString())
             
             // Indicadores de status
             when {
@@ -116,16 +135,76 @@ class MensagensAdapter(
                 binding.tvRemetente.visibility = View.GONE
             }
             
-            binding.tvMensagem.text = conteudoTexto?.conteudo ?: ""
-            binding.tvHora.text = formatarHora(mensagem.inserida)
+            if (conteudoTexto != null && conteudoTexto.conteudo.isNotEmpty()) {
+                binding.tvMensagem.text = conteudoTexto.conteudo
+                binding.tvMensagem.visibility = View.VISIBLE
+            } else {
+                binding.tvMensagem.visibility = View.GONE
+            }
+            
+            // Verifica se há anexos (arquivo, imagem, áudio)
+            val anexo = mensagem.conteudos.firstOrNull { 
+                it.tipo in listOf(Conteudo.TIPO_IMAGEM, Conteudo.TIPO_ARQUIVO, Conteudo.TIPO_AUDIO)
+            }
+            
+            if (anexo != null) {
+                configurarAnexo(
+                    binding.layoutAnexo,
+                    binding.tvNomeArquivo,
+                    binding.btnBaixarAnexo,
+                    anexo
+                )
+            } else {
+                binding.layoutAnexo.visibility = View.GONE
+            }
+            
+            binding.tvHora.text = formatarHora(mensagem.inserida?.toString())
+        }
+    }
+
+    /**
+     * Configura a exibição de um anexo
+     */
+    private fun configurarAnexo(
+        layoutAnexo: View,
+        tvNomeArquivo: View,
+        btnBaixar: View,
+        anexo: Conteudo
+    ) {
+        layoutAnexo.visibility = View.VISIBLE
+        
+        val nomeCompleto = if (anexo.nome != null && anexo.extensao != null) {
+            "${anexo.nome}.${anexo.extensao}"
+        } else {
+            when (anexo.tipo) {
+                Conteudo.TIPO_IMAGEM -> "imagem.jpg"
+                Conteudo.TIPO_AUDIO -> "audio.mp3"
+                else -> "arquivo.bin"
+            }
+        }
+        
+        (tvNomeArquivo as? android.widget.TextView)?.text = nomeCompleto
+        
+        btnBaixar.setOnClickListener {
+            val nome = anexo.nome ?: "arquivo_${anexo.id}"
+            val extensao = anexo.extensao ?: "bin"
+            onDownloadClick(anexo.id, nome, extensao)
         }
     }
 
     /**
      * Formata a data/hora para exibição (ex: "14:30")
      */
-    private fun formatarHora(dataHora: LocalDateTime?): String {
-        return dataHora?.format(DateTimeFormatter.ofPattern("HH:mm")) ?: ""
+    private fun formatarHora(dataHora: String?): String {
+        if (dataHora == null) return ""
+        
+        return try {
+            val formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH:mm:ss")
+            val dateTime = java.time.LocalDateTime.parse(dataHora, formatter)
+            dateTime.format(DateTimeFormatter.ofPattern("HH:mm"))
+        } catch (e: Exception) {
+            ""
+        }
     }
 }
 

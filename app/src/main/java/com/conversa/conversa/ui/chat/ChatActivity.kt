@@ -69,9 +69,14 @@ class ChatActivity : AppCompatActivity() {
         }
     }
 
+    private fun onDownloadClick(conteudoId: Int, nomeArquivo: String, extensao: String) {
+        Toast.makeText(this, "Erro: Token não encontrado", Toast.LENGTH_SHORT).show()
+        return
+    }
+
     private fun setupRecyclerView() {
         // Inicializa com 0, será atualizado após carregar dados do usuário
-        mensagensAdapter = MensagensAdapter(0, false)
+        mensagensAdapter = MensagensAdapter(0, false, ::onDownloadClick)
         
         val layoutManager = LinearLayoutManager(this)
         layoutManager.stackFromEnd = true // Começa do final (mensagens mais recentes)
@@ -99,7 +104,7 @@ class ChatActivity : AppCompatActivity() {
 
         // Atualiza adapter com o ID correto e tipo de conversa
         val isGrupo = conversaTipo == 2
-        mensagensAdapter = MensagensAdapter(usuarioId, isGrupo)
+        mensagensAdapter = MensagensAdapter(usuarioId, isGrupo, ::onDownloadClick)
         binding.rvMensagens.adapter = mensagensAdapter
     }
 

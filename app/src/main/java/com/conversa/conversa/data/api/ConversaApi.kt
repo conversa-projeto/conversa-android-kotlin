@@ -7,12 +7,14 @@ import com.conversa.conversa.data.model.LoginRequest
 import com.conversa.conversa.data.model.LoginResponse
 import com.conversa.conversa.data.model.Mensagem
 import retrofit2.Response
+import okhttp3.ResponseBody
 import retrofit2.http.Body
 import retrofit2.http.GET
 import retrofit2.http.Header
 import retrofit2.http.POST
 import retrofit2.http.PUT
 import retrofit2.http.Query
+import retrofit2.http.Streaming
 
 interface ConversaApi {
     
@@ -59,4 +61,14 @@ interface ConversaApi {
         @Query("conversa") conversaId: Int,
         @Query("mensagem") mensagemId: Int
     ): Response<Unit>
+    
+    /**
+     * Faz download de um anexo (imagem, arquivo, áudio)
+     */
+    @Streaming
+    @GET("conteudo")
+    suspend fun downloadAnexo(
+        @Header("Authorization") token: String,
+        @Query("id") conteudoId: Int
+    ): Response<ResponseBody>
 }
