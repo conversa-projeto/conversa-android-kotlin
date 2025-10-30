@@ -7,6 +7,7 @@ import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
 import androidx.lifecycle.lifecycleScope
 import androidx.recyclerview.widget.LinearLayoutManager
+import com.conversa.conversa.data.api.DownloadHelper
 import com.conversa.conversa.data.api.RetrofitClient
 import com.conversa.conversa.data.model.ConteudoRequest
 import com.conversa.conversa.data.model.EnviarMensagemRequest
@@ -21,12 +22,15 @@ class ChatActivity : AppCompatActivity() {
     private lateinit var binding: ActivityChatBinding
     private lateinit var userPreferences: UserPreferences
     private lateinit var mensagensAdapter: MensagensAdapter
+    private lateinit var audioPlayerHelper: AudioPlayerHelper
+    private lateinit var downloadHelper: DownloadHelper
     
     private var conversaId: Int = 0
     private var conversaNome: String = ""
     private var conversaTipo: Int = 1 // 1 = Chat 1:1, 2 = Grupo
     private var usuarioId: Int = 0
     private var authToken: String = ""
+    private var apiUrl: String = ""
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -35,6 +39,8 @@ class ChatActivity : AppCompatActivity() {
         setContentView(binding.root)
         
         userPreferences = UserPreferences(this)
+        audioPlayerHelper = AudioPlayerHelper(this)
+        downloadHelper = DownloadHelper(this)
         
         // Pega dados da conversa
         conversaId = intent.getIntExtra("conversa_id", 0)
@@ -63,28 +69,48 @@ class ChatActivity : AppCompatActivity() {
             title = conversaNome
             setDisplayHomeAsUpEnabled(true)
             setDisplayShowHomeEnabled(true)
-            setDisplayShowTitleEnabled(false) // Remove título padrão
-            binding.tvNomeUsuario.text = conversaNome // ou o objeto que você usa
-            binding.tvStatusUsuario.text = "online" // ou destinatario.status
+            setDisplayShowTitleEnabled(false)
+            binding.tvNomeUsuario.text = conversaNome
+            binding.tvStatusUsuario.text = "online"
         }
     }
 
-    private fun onDownloadClick(conteudoId: Int, nomeArquivo: String, extensao: String) {
-        Toast.makeText(this, "Erro: Token não encontrado", Toast.LENGTH_SHORT).show()
-        return
+    private fun onDownloadClick(conteudoId: String, nomeArquivo: String, extensao: String) {
+        if (authToken.isEmpty()) {
+            Toast.makeText(this, "Erro: Token não encontrado", Toast.LENGTH_SHORT).show()
+            return
+        }
+        
+        lifecycleScope.launch {
+            val result = downloadHelper.downloadAnexo(
+                conteudoId = conteudoId,
+                nomeArquivo = nomeArquivo,
+                extensao = extensao,
+                authToken = authToken
+            )
+            
+            result.onSuccess { file ->
+                Toast.makeText(
+                    this@ChatActivity,
+                    "Download concluído: $nomeArquivo.$extensao",
+                    Toast.LENGTH_SHORT
+                ).show()
+            }.onFailure { exception ->
+                Toast.makeText(
+                    this@ChatActivity,
+                    "Erro ao fazer download: ${exception.message}",
+                    Toast.LENGTH_SHORT
+                ).show()
+            }
+        }
     }
 
     private fun setupRecyclerView() {
-        // Inicializa com 0, será atualizado após carregar dados do usuário
-        mensagensAdapter = MensagensAdapter(0, false, ::onDownloadClick)
-        
+        // Será reinicializado após carregar dados do usuário
         val layoutManager = LinearLayoutManager(this)
-        layoutManager.stackFromEnd = true // Começa do final (mensagens mais recentes)
+        layoutManager.stackFromEnd = true
         
-        binding.rvMensagens.apply {
-            adapter = mensagensAdapter
-            this.layoutManager = layoutManager
-        }
+        binding.rvMensagens.layoutManager = layoutManager
     }
 
     private fun setupListeners() {
@@ -101,10 +127,18 @@ class ChatActivity : AppCompatActivity() {
     private suspend fun carregarDadosUsuario() {
         usuarioId = userPreferences.userId.first() ?: 0
         authToken = userPreferences.authToken.first() ?: ""
+        apiUrl = userPreferences.apiUrl.first() ?: ""
 
-        // Atualiza adapter com o ID correto e tipo de conversa
+        // Atualiza adapter com os dados corretos
         val isGrupo = conversaTipo == 2
-        mensagensAdapter = MensagensAdapter(usuarioId, isGrupo, ::onDownloadClick)
+        mensagensAdapter = MensagensAdapter(
+            usuarioId = usuarioId,
+            isGrupo = isGrupo,
+            apiUrl = apiUrl,
+            authToken = authToken,
+            audioPlayerHelper = audioPlayerHelper,
+            onDownloadClick = ::onDownloadClick
+        )
         binding.rvMensagens.adapter = mensagensAdapter
     }
 
@@ -253,5 +287,11 @@ class ChatActivity : AppCompatActivity() {
             }
             else -> super.onOptionsItemSelected(item)
         }
+    }
+
+    override fun onDestroy() {
+        super.onDestroy()
+        // Libera recursos do player de áudio
+        audioPlayerHelper.release()
     }
 }

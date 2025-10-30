@@ -18,7 +18,7 @@ class DownloadHelper(private val context: Context) {
      * Faz download de um anexo e salva na pasta Downloads
      */
     suspend fun downloadAnexo(
-        conteudoId: Int,
+        conteudoId: String,
         nomeArquivo: String,
         extensao: String,
         authToken: String

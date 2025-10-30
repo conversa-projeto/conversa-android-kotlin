@@ -69,6 +69,6 @@ interface ConversaApi {
     @GET("conteudo")
     suspend fun downloadAnexo(
         @Header("Authorization") token: String,
-        @Query("id") conteudoId: Int
+        @Query("identificador") conteudoId: String
     ): Response<ResponseBody>
 }
