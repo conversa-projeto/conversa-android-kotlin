@@ -23,6 +23,7 @@ import com.conversa.conversa.data.preferences.UserPreferences
 import com.conversa.conversa.databinding.ActivityChatBinding
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
+import java.io.File
 
 class ChatActivity : AppCompatActivity() {
 
@@ -32,6 +33,12 @@ class ChatActivity : AppCompatActivity() {
     private lateinit var audioPlayerHelper: AudioPlayerHelper
     private lateinit var downloadHelper: DownloadHelper
     private lateinit var uploadHelper: UploadHelper
+    private lateinit var audioRecorderHelper: AudioRecorderHelper
+    
+    private var gravandoAudio = false
+    private var audioFile: File? = null
+    private var timerHandler: android.os.Handler? = null
+    private var timerRunnable: Runnable? = null
     
     private var conversaId: Int = 0
     private var conversaNome: String = ""
@@ -50,6 +57,7 @@ class ChatActivity : AppCompatActivity() {
         audioPlayerHelper = AudioPlayerHelper(this)
         downloadHelper = DownloadHelper(this)
         uploadHelper = UploadHelper(this)
+        audioRecorderHelper = AudioRecorderHelper(this)
         
         // Pega dados da conversa
         conversaId = intent.getIntExtra("conversa_id", 0)
@@ -146,6 +154,21 @@ class ChatActivity : AppCompatActivity() {
         }
     }
 
+    // Launcher para permissão de microfone
+    private val solicitarPermissaoMicrofoneLauncher = registerForActivityResult(
+        ActivityResultContracts.RequestPermission()
+    ) { concedida ->
+        if (concedida) {
+            iniciarGravacaoAudio()
+        } else {
+            Toast.makeText(
+                this,
+                "Permissão de microfone negada. Não é possível gravar áudio.",
+                Toast.LENGTH_SHORT
+            ).show()
+        }
+    }
+
     private fun setupListeners() {
         binding.btnEnviar.setOnClickListener {
             enviarMensagem()
@@ -155,10 +178,33 @@ class ChatActivity : AppCompatActivity() {
             verificarPermissaoEAbrirGaleria()
         }
         
+        binding.btnMicrofone.setOnClickListener {
+            verificarPermissaoEGravarAudio()
+        }
+        
+        binding.btnCancelarAudio.setOnClickListener {
+            cancelarGravacaoAudio()
+        }
+        
+        binding.btnPararGravacao.setOnClickListener {
+            pararEEnviarAudio()
+        }
+        
         binding.etMensagem.setOnEditorActionListener { _, _, _ ->
             enviarMensagem()
             true
         }
+        
+        // Mostra/esconde botão de enviar baseado no texto
+        binding.etMensagem.addTextChangedListener(object : android.text.TextWatcher {
+            override fun beforeTextChanged(s: CharSequence?, start: Int, count: Int, after: Int) {}
+            override fun onTextChanged(s: CharSequence?, start: Int, before: Int, count: Int) {}
+            override fun afterTextChanged(s: android.text.Editable?) {
+                val temTexto = !s.isNullOrEmpty()
+                binding.btnEnviar.visibility = if (temTexto) View.VISIBLE else View.GONE
+                binding.btnMicrofone.visibility = if (temTexto) View.GONE else View.VISIBLE
+            }
+        })
     }
 
     /**
@@ -472,5 +518,219 @@ class ChatActivity : AppCompatActivity() {
         super.onDestroy()
         // Libera recursos do player de áudio
         audioPlayerHelper.release()
+        // Libera recursos do gravador
+        audioRecorderHelper.release()
+        // Para o timer se estiver rodando
+        pararTimer()
+    }
+    
+    /**
+     * Verifica permissão e inicia gravação de áudio
+     */
+    private fun verificarPermissaoEGravarAudio() {
+        when {
+            ContextCompat.checkSelfPermission(
+                this,
+                Manifest.permission.RECORD_AUDIO
+            ) == PackageManager.PERMISSION_GRANTED -> {
+                iniciarGravacaoAudio()
+            }
+            else -> {
+                solicitarPermissaoMicrofoneLauncher.launch(
+                    Manifest.permission.RECORD_AUDIO
+                )
+            }
+        }
+    }
+    
+    /**
+     * Inicia a gravação de áudio
+     */
+    private fun iniciarGravacaoAudio() {
+        audioFile = audioRecorderHelper.startRecording()
+        
+        if (audioFile == null) {
+            Toast.makeText(
+                this,
+                "Erro ao iniciar gravação de áudio",
+                Toast.LENGTH_SHORT
+            ).show()
+            return
+        }
+        
+        gravandoAudio = true
+        
+        // Mostra layout de gravação
+        binding.layoutInputNormal.visibility = View.GONE
+        binding.layoutGravacaoAudio.visibility = View.VISIBLE
+        
+        // Inicia timer de duração
+        iniciarTimer()
+    }
+    
+    /**
+     * Cancela a gravação de áudio
+     */
+    private fun cancelarGravacaoAudio() {
+        audioRecorderHelper.cancelRecording()
+        pararTimer()
+        
+        gravandoAudio = false
+        audioFile = null
+        
+        // Volta ao layout normal
+        binding.layoutGravacaoAudio.visibility = View.GONE
+        binding.layoutInputNormal.visibility = View.VISIBLE
+        
+        Toast.makeText(
+            this,
+            "Gravação cancelada",
+            Toast.LENGTH_SHORT
+        ).show()
+    }
+    
+    /**
+     * Para a gravação e envia o áudio
+     */
+    private fun pararEEnviarAudio() {
+        val duracao = audioRecorderHelper.stopRecording()
+        pararTimer()
+        
+        gravandoAudio = false
+        
+        // Volta ao layout normal
+        binding.layoutGravacaoAudio.visibility = View.GONE
+        binding.layoutInputNormal.visibility = View.VISIBLE
+        
+        // Verifica duração mínima (1 segundo)
+        if (duracao < 1000) {
+            audioFile?.delete()
+            audioFile = null
+            Toast.makeText(
+                this,
+                "Áudio muito curto. Grave por pelo menos 1 segundo.",
+                Toast.LENGTH_SHORT
+            ).show()
+            return
+        }
+        
+        // Envia o áudio
+        audioFile?.let { file ->
+            enviarAudioGravado(file)
+        }
+    }
+    
+    /**
+     * Envia o áudio gravado
+     */
+    private fun enviarAudioGravado(audioFile: File) {
+        // Desabilita botões
+        binding.btnAnexar.isEnabled = false
+        binding.btnMicrofone.isEnabled = false
+        binding.etMensagem.isEnabled = false
+        
+        lifecycleScope.launch {
+            try {
+                mostrarLoading(true)
+                
+                // 1. Faz upload do áudio
+                val uploadResult = uploadHelper.uploadAudio(audioFile, authToken)
+                
+                uploadResult.onSuccess { identificador ->
+                    // 2. Envia mensagem com o identificador do áudio
+                    val request = EnviarMensagemRequest(
+                        conversaId = conversaId,
+                        conteudos = listOf(
+                            ConteudoRequest(
+                                tipo = 4, // Áudio
+                                ordem = 1,
+                                conteudo = identificador
+                            )
+                        )
+                    )
+                    
+                    val response = RetrofitClient.api.enviarMensagem(
+                        token = "Bearer $authToken",
+                        mensagem = request
+                    )
+                    
+                    if (response.isSuccessful) {
+                        // Recarrega mensagens
+                        carregarMensagens()
+                        
+                        Toast.makeText(
+                            this@ChatActivity,
+                            "Áudio enviado com sucesso!",
+                            Toast.LENGTH_SHORT
+                        ).show()
+                    } else {
+                        Toast.makeText(
+                            this@ChatActivity,
+                            "Erro ao enviar mensagem: ${response.code()}",
+                            Toast.LENGTH_SHORT
+                        ).show()
+                    }
+                }.onFailure { exception ->
+                    Toast.makeText(
+                        this@ChatActivity,
+                        "Erro ao fazer upload: ${exception.message}",
+                        Toast.LENGTH_SHORT
+                    ).show()
+                }
+                
+            } catch (e: Exception) {
+                e.printStackTrace()
+                Toast.makeText(
+                    this@ChatActivity,
+                    "Erro: ${e.message}",
+                    Toast.LENGTH_SHORT
+                ).show()
+            } finally {
+                mostrarLoading(false)
+                // Reabilita botões
+                binding.btnAnexar.isEnabled = true
+                binding.btnMicrofone.isEnabled = true
+                binding.etMensagem.isEnabled = true
+            }
+        }
+    }
+    
+    /**
+     * Inicia o timer de duração da gravação
+     */
+    private fun iniciarTimer() {
+        timerHandler = android.os.Handler(android.os.Looper.getMainLooper())
+        timerRunnable = object : Runnable {
+            override fun run() {
+                if (gravandoAudio) {
+                    val duracao = audioRecorderHelper.getCurrentDuration()
+                    binding.tvDuracaoGravacao.text = audioRecorderHelper.formatDuration(duracao)
+                    
+                    // Limite de 5 minutos
+                    if (duracao >= 5 * 60 * 1000) {
+                        pararEEnviarAudio()
+                        Toast.makeText(
+                            this@ChatActivity,
+                            "Limite de 5 minutos atingido",
+                            Toast.LENGTH_SHORT
+                        ).show()
+                    } else {
+                        timerHandler?.postDelayed(this, 100)
+                    }
+                }
+            }
+        }
+        timerHandler?.post(timerRunnable!!)
+    }
+    
+    /**
+     * Para o timer
+     */
+    private fun pararTimer() {
+        timerRunnable?.let {
+            timerHandler?.removeCallbacks(it)
+        }
+        timerHandler = null
+        timerRunnable = null
     }
 }

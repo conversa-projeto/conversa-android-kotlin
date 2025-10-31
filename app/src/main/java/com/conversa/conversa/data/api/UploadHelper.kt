@@ -91,6 +91,70 @@ class UploadHelper(private val context: Context) {
     }
 
     /**
+     * Faz upload de um arquivo de áudio
+     * @param audioFile Arquivo de áudio gravado
+     * @param authToken Token de autenticação
+     * @return Identificador (hash SHA256) do arquivo enviado
+     */
+    suspend fun uploadAudio(audioFile: File, authToken: String): Result<String> {
+        return withContext(Dispatchers.IO) {
+            try {
+                // 1. Calcula SHA256 do arquivo
+                val sha256 = calcularSHA256(audioFile)
+
+                // 2. Verifica se arquivo já existe no servidor
+                val existeResponse = RetrofitClient.api.verificarAnexoExiste(
+                    token = "Bearer $authToken",
+                    identificador = sha256
+                )
+
+                if (existeResponse.isSuccessful) {
+                    val existeResult = existeResponse.body()
+                    if (existeResult?.existe == true) {
+                        // Arquivo já existe, retorna o identificador
+                        audioFile.delete()
+                        return@withContext Result.success(sha256)
+                    }
+                }
+
+                // 3. Faz upload do arquivo
+                val nomeArquivo = "audio_${System.currentTimeMillis()}"
+                val extensao = audioFile.extension
+
+                val requestBody = audioFile.readBytes().toRequestBody(
+                    "application/octet-stream".toMediaTypeOrNull()
+                )
+
+                val uploadResponse = RetrofitClient.api.uploadAnexo(
+                    token = "Bearer $authToken",
+                    tipo = 4, // 4 = Áudio
+                    nome = nomeArquivo,
+                    extensao = extensao,
+                    arquivo = requestBody
+                )
+
+                // Deleta arquivo temporário após upload
+                audioFile.delete()
+
+                if (uploadResponse.isSuccessful) {
+                    val resultado = uploadResponse.body()
+                    if (resultado != null) {
+                        Result.success(resultado.identificador)
+                    } else {
+                        Result.failure(Exception("Resposta vazia do servidor"))
+                    }
+                } else {
+                    Result.failure(Exception("Erro ao fazer upload: ${uploadResponse.code()}"))
+                }
+
+            } catch (e: Exception) {
+                e.printStackTrace()
+                Result.failure(e)
+            }
+        }
+    }
+
+    /**
      * Calcula o hash SHA256 de um arquivo
      */
     private fun calcularSHA256(file: File): String {
