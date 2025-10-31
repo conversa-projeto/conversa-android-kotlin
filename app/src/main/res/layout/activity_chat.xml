@@ -128,6 +128,16 @@
             android:orientation="horizontal"
             android:padding="8dp">
 
+            <ImageButton
+                android:id="@+id/btnAnexar"
+                android:layout_width="48dp"
+                android:layout_height="48dp"
+                android:layout_gravity="bottom"
+                android:background="?attr/selectableItemBackgroundBorderless"
+                android:contentDescription="Anexar imagem"
+                android:src="@drawable/ic_attach"
+                android:tint="@color/corPrimaria" />
+
             <com.google.android.material.textfield.TextInputEditText
                 android:id="@+id/etMensagem"
                 android:layout_width="0dp"

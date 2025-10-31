@@ -1,14 +1,21 @@
 package com.conversa.conversa.ui.chat
 
+import android.Manifest
+import android.content.pm.PackageManager
+import android.net.Uri
+import android.os.Build
 import android.os.Bundle
 import android.view.MenuItem
 import android.view.View
 import android.widget.Toast
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.appcompat.app.AppCompatActivity
+import androidx.core.content.ContextCompat
 import androidx.lifecycle.lifecycleScope
 import androidx.recyclerview.widget.LinearLayoutManager
 import com.conversa.conversa.data.api.DownloadHelper
 import com.conversa.conversa.data.api.RetrofitClient
+import com.conversa.conversa.data.api.UploadHelper
 import com.conversa.conversa.data.model.ConteudoRequest
 import com.conversa.conversa.data.model.EnviarMensagemRequest
 import com.conversa.conversa.data.model.Mensagem
@@ -24,6 +31,7 @@ class ChatActivity : AppCompatActivity() {
     private lateinit var mensagensAdapter: MensagensAdapter
     private lateinit var audioPlayerHelper: AudioPlayerHelper
     private lateinit var downloadHelper: DownloadHelper
+    private lateinit var uploadHelper: UploadHelper
     
     private var conversaId: Int = 0
     private var conversaNome: String = ""
@@ -41,6 +49,7 @@ class ChatActivity : AppCompatActivity() {
         userPreferences = UserPreferences(this)
         audioPlayerHelper = AudioPlayerHelper(this)
         downloadHelper = DownloadHelper(this)
+        uploadHelper = UploadHelper(this)
         
         // Pega dados da conversa
         conversaId = intent.getIntExtra("conversa_id", 0)
@@ -113,14 +122,184 @@ class ChatActivity : AppCompatActivity() {
         binding.rvMensagens.layoutManager = layoutManager
     }
 
+    // Launcher para seleção de imagem
+    private val selecionarImagemLauncher = registerForActivityResult(
+        ActivityResultContracts.GetContent()
+    ) { uri: Uri? ->
+        uri?.let {
+            enviarImagemSelecionada(it)
+        }
+    }
+
+    // Launcher para permissão de galeria (Android 13+)
+    private val solicitarPermissaoGaleriaLauncher = registerForActivityResult(
+        ActivityResultContracts.RequestPermission()
+    ) { concedida ->
+        if (concedida) {
+            abrirSeletorImagem()
+        } else {
+            Toast.makeText(
+                this,
+                "Permissão negada. Não é possível acessar a galeria.",
+                Toast.LENGTH_SHORT
+            ).show()
+        }
+    }
+
     private fun setupListeners() {
         binding.btnEnviar.setOnClickListener {
             enviarMensagem()
         }
         
+        binding.btnAnexar.setOnClickListener {
+            verificarPermissaoEAbrirGaleria()
+        }
+        
         binding.etMensagem.setOnEditorActionListener { _, _, _ ->
             enviarMensagem()
             true
+        }
+    }
+
+    /**
+     * Verifica permissão e abre seletor de imagem
+     */
+    private fun verificarPermissaoEAbrirGaleria() {
+        when {
+            // Android 13+ requer READ_MEDIA_IMAGES
+            Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU -> {
+                when {
+                    ContextCompat.checkSelfPermission(
+                        this,
+                        Manifest.permission.READ_MEDIA_IMAGES
+                    ) == PackageManager.PERMISSION_GRANTED -> {
+                        abrirSeletorImagem()
+                    }
+                    else -> {
+                        solicitarPermissaoGaleriaLauncher.launch(
+                            Manifest.permission.READ_MEDIA_IMAGES
+                        )
+                    }
+                }
+            }
+            // Android 10-12 requer READ_EXTERNAL_STORAGE
+            else -> {
+                when {
+                    ContextCompat.checkSelfPermission(
+                        this,
+                        Manifest.permission.READ_EXTERNAL_STORAGE
+                    ) == PackageManager.PERMISSION_GRANTED -> {
+                        abrirSeletorImagem()
+                    }
+                    else -> {
+                        solicitarPermissaoGaleriaLauncher.launch(
+                            Manifest.permission.READ_EXTERNAL_STORAGE
+                        )
+                    }
+                }
+            }
+        }
+    }
+
+    /**
+     * Abre o seletor de imagem
+     */
+    private fun abrirSeletorImagem() {
+        selecionarImagemLauncher.launch("image/*")
+    }
+
+    /**
+     * Envia a imagem selecionada
+     */
+    private fun enviarImagemSelecionada(uri: Uri) {
+        // Desabilita botões enquanto processa
+        binding.btnAnexar.isEnabled = false
+        binding.btnEnviar.isEnabled = false
+        binding.etMensagem.isEnabled = false
+
+        lifecycleScope.launch {
+            try {
+                mostrarLoading(true)
+
+                // 1. Faz upload da imagem
+                val uploadResult = uploadHelper.uploadImagem(uri, authToken)
+
+                uploadResult.onSuccess { identificador ->
+                    // 2. Envia mensagem com o identificador da imagem
+                    val textoMensagem = binding.etMensagem.text.toString().trim()
+                    val conteudos = mutableListOf<ConteudoRequest>()
+
+                    // Adiciona imagem
+                    conteudos.add(
+                        ConteudoRequest(
+                            tipo = 2, // Imagem
+                            ordem = 1,
+                            conteudo = identificador
+                        )
+                    )
+
+                    // Adiciona texto se houver
+                    if (textoMensagem.isNotEmpty()) {
+                        conteudos.add(
+                            ConteudoRequest(
+                                tipo = 1, // Texto
+                                ordem = 2,
+                                conteudo = textoMensagem
+                            )
+                        )
+                    }
+
+                    val request = EnviarMensagemRequest(
+                        conversaId = conversaId,
+                        conteudos = conteudos
+                    )
+
+                    val response = RetrofitClient.api.enviarMensagem(
+                        token = "Bearer $authToken",
+                        mensagem = request
+                    )
+
+                    if (response.isSuccessful) {
+                        // Limpa o campo de texto
+                        binding.etMensagem.setText("")
+
+                        // Recarrega mensagens
+                        carregarMensagens()
+
+                        Toast.makeText(
+                            this@ChatActivity,
+                            "Imagem enviada com sucesso!",
+                            Toast.LENGTH_SHORT
+                        ).show()
+                    } else {
+                        Toast.makeText(
+                            this@ChatActivity,
+                            "Erro ao enviar mensagem: ${response.code()}",
+                            Toast.LENGTH_SHORT
+                        ).show()
+                    }
+                }.onFailure { exception ->
+                    Toast.makeText(
+                        this@ChatActivity,
+                        "Erro ao fazer upload: ${exception.message}",
+                        Toast.LENGTH_SHORT
+                    ).show()
+                }
+
+            } catch (e: Exception) {
+                e.printStackTrace()
+                Toast.makeText(
+                    this@ChatActivity,
+                    "Erro: ${e.message}",
+                    Toast.LENGTH_SHORT
+                ).show()
+            } finally {
+                mostrarLoading(false)
+                // Reabilita botões
+                binding.btnAnexar.isEnabled = true
+                binding.btnEnviar.isEnabled = true
+                binding.etMensagem.isEnabled = true
+            }
         }
     }
 

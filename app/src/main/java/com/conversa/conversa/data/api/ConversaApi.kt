@@ -15,6 +15,7 @@ import retrofit2.http.POST
 import retrofit2.http.PUT
 import retrofit2.http.Query
 import retrofit2.http.Streaming
+import okhttp3.RequestBody
 
 interface ConversaApi {
     
@@ -66,9 +67,41 @@ interface ConversaApi {
      * Faz download de um anexo (imagem, arquivo, áudio)
      */
     @Streaming
-    @GET("conteudo")
+    @GET("anexo")
     suspend fun downloadAnexo(
         @Header("Authorization") token: String,
         @Query("identificador") conteudoId: String
     ): Response<ResponseBody>
+    
+    /**
+     * Verifica se um anexo já existe no servidor
+     */
+    @GET("anexo/existe")
+    suspend fun verificarAnexoExiste(
+        @Header("Authorization") token: String,
+        @Query("identificador") identificador: String
+    ): Response<AnexoExisteResponse>
+    
+    /**
+     * Faz upload de um anexo (imagem, arquivo, áudio)
+     */
+    @PUT("anexo")
+    suspend fun uploadAnexo(
+        @Header("Authorization") token: String,
+        @Query("tipo") tipo: Int,
+        @Query("nome") nome: String,
+        @Query("extensao") extensao: String,
+        @Body arquivo: RequestBody
+    ): Response<AnexoUploadResponse>
 }
+
+data class AnexoExisteResponse(
+    val existe: Boolean
+)
+
+data class AnexoUploadResponse(
+    val id: Int,
+    val identificador: String,
+    val tipo: Int,
+    val tamanho: Long
+)
