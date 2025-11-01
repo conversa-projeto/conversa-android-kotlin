@@ -9,6 +9,27 @@
     <string name="next">Next</string>
     <string name="previous">Previous</string>
 
+    <!-- Strings para chamadas -->
+    <string name="chamada_recebida">Chamada recebida...</string>
+    <string name="conectando">Conectando...</string>
+    <string name="chamada_em_andamento">Em chamada</string>
+    <string name="chamada_finalizada">Chamada encerrada</string>
+    <string name="aceitar">Aceitar</string>
+    <string name="recusar">Recusar</string>
+    <string name="encerrar">Encerrar</string>
+    <string name="silenciar">Silenciar</string>
+    <string name="mudo">Mudo</string>
+    <string name="alto_falante">Alto-falante</string>
+    <string name="aceitar_chamada">Aceitar chamada</string>
+    <string name="recusar_chamada">Recusar chamada</string>
+    <string name="encerrar_chamada">Encerrar chamada</string>
+    <string name="avatar_contato">Avatar do contato</string>
+    <string name="nome_contato">Contato</string>
+    <string name="erro_iniciar_chamada">Erro ao iniciar chamada</string>
+    <string name="erro_aceitar_chamada">Erro ao aceitar chamada</string>
+    <string name="erro_recusar_chamada">Erro ao recusar chamada</string>
+    <string name="permissao_audio_necessaria">Permissão de áudio necessária para fazer chamadas</string>
+
     <string name="lorem_ipsum">
         Lorem ipsum dolor sit amet, consectetur adipiscing elit. Nam in scelerisque sem. Mauris
         volutpat, dolor id interdum ullamcorper, risus dolor egestas lectus, sit amet mattis purus
