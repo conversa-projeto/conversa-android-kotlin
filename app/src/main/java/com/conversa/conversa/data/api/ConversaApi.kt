@@ -1,24 +1,9 @@
 package com.conversa.conversa.data.api
 
-import com.conversa.conversa.data.model.AdicionarUsuarioRequest
-import com.conversa.conversa.data.model.Contato
-import com.conversa.conversa.data.model.Conversa
-import com.conversa.conversa.data.model.CriarConversaRequest
-import com.conversa.conversa.data.model.CriarConversaResponse
-import com.conversa.conversa.data.model.EnviarMensagemRequest
-import com.conversa.conversa.data.model.EnviarMensagemResponse
-import com.conversa.conversa.data.model.LoginRequest
-import com.conversa.conversa.data.model.LoginResponse
-import com.conversa.conversa.data.model.Mensagem
+import com.conversa.conversa.data.model.*
 import retrofit2.Response
 import okhttp3.ResponseBody
-import retrofit2.http.Body
-import retrofit2.http.GET
-import retrofit2.http.Header
-import retrofit2.http.POST
-import retrofit2.http.PUT
-import retrofit2.http.Query
-import retrofit2.http.Streaming
+import retrofit2.http.*
 import okhttp3.RequestBody
 
 interface ConversaApi {
@@ -123,6 +108,71 @@ interface ConversaApi {
         @Query("extensao") extensao: String,
         @Body arquivo: RequestBody
     ): Response<AnexoUploadResponse>
+    
+    // ========== ENDPOINTS DE CHAMADAS ==========
+    
+    /**
+     * Inicia uma nova chamada
+     */
+    @PUT("chamada/iniciar")
+    suspend fun iniciarChamada(
+        @Header("Authorization") token: String,
+        @Body request: IniciarChamadaRequest
+    ): Response<ChamadaResponse>
+    
+    /**
+     * Aceita e entra em uma chamada
+     */
+    @POST("chamada/entrar")
+    suspend fun entrarChamada(
+        @Header("Authorization") token: String,
+        @Body request: ChamadaIdRequest
+    ): Response<Unit>
+    
+    /**
+     * Recusa uma chamada
+     */
+    @POST("chamada/recusar")
+    suspend fun recusarChamada(
+        @Header("Authorization") token: String,
+        @Body request: ChamadaIdRequest
+    ): Response<Unit>
+    
+    /**
+     * Sai da chamada (mantém a chamada ativa)
+     */
+    @POST("chamada/sair")
+    suspend fun sairChamada(
+        @Header("Authorization") token: String,
+        @Body request: ChamadaIdRequest
+    ): Response<Unit>
+    
+    /**
+     * Cancela uma chamada (antes de alguém entrar)
+     */
+    @POST("chamada/cancelar")
+    suspend fun cancelarChamada(
+        @Header("Authorization") token: String,
+        @Body request: ChamadaIdRequest
+    ): Response<Unit>
+    
+    /**
+     * Finaliza uma chamada (forçadamente)
+     */
+    @POST("chamada/finalizar")
+    suspend fun finalizarChamada(
+        @Header("Authorization") token: String,
+        @Body request: ChamadaIdRequest
+    ): Response<Unit>
+    
+    /**
+     * Obtém dados completos de uma chamada
+     */
+    @GET("chamada/dados")
+    suspend fun obterDadosChamada(
+        @Header("Authorization") token: String,
+        @Query("id") chamadaId: Int
+    ): Response<ChamadaResponse>
 }
 
 data class AnexoExisteResponse(
