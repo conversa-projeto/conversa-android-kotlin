@@ -1,6 +1,10 @@
 package com.conversa.conversa.data.api
 
+import com.conversa.conversa.data.model.AdicionarUsuarioRequest
+import com.conversa.conversa.data.model.Contato
 import com.conversa.conversa.data.model.Conversa
+import com.conversa.conversa.data.model.CriarConversaRequest
+import com.conversa.conversa.data.model.CriarConversaResponse
 import com.conversa.conversa.data.model.EnviarMensagemRequest
 import com.conversa.conversa.data.model.EnviarMensagemResponse
 import com.conversa.conversa.data.model.LoginRequest
@@ -26,6 +30,32 @@ interface ConversaApi {
     suspend fun listarConversas(
         @Header("Authorization") token: String
     ): Response<List<Conversa>>
+    
+    /**
+     * Lista os contatos do usuário autenticado
+     */
+    @GET("usuario/contatos")
+    suspend fun listarContatos(
+        @Header("Authorization") token: String
+    ): Response<List<Contato>>
+    
+    /**
+     * Cria uma nova conversa (1:1 ou Grupo)
+     */
+    @PUT("conversa")
+    suspend fun criarConversa(
+        @Header("Authorization") token: String,
+        @Body request: CriarConversaRequest
+    ): Response<CriarConversaResponse>
+    
+    /**
+     * Adiciona um usuário a uma conversa
+     */
+    @PUT("conversa/usuario")
+    suspend fun adicionarUsuarioConversa(
+        @Header("Authorization") token: String,
+        @Body request: AdicionarUsuarioRequest
+    ): Response<Unit>
     
     /**
      * Obtém mensagens de uma conversa
