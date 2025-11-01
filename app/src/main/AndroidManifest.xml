@@ -66,6 +66,16 @@
             android:exported="false"
             android:theme="@style/Theme.Conversa.NoActionBar"
             android:configChanges="orientation|screenSize" />
+
+        <activity
+            android:name=".CriarGrupoActivity"
+            android:label="Novo Grupo"
+            android:parentActivityName=".MainActivity" />
+
+        <activity
+            android:name=".DetalhesGrupoActivity"
+            android:label="Detalhes do Grupo"
+            android:parentActivityName=".CriarGrupoActivity" />
             
     </application>
 

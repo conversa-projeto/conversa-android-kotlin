@@ -41,9 +41,6 @@ class MainActivity : AppCompatActivity() {
     private lateinit var contentBinding: ContentMainBinding
     private lateinit var userPreferences: UserPreferences
     private lateinit var conversasAdapter: ConversasAdapter
-    
-    private var listaContatos: List<Contato> = emptyList()
-    private var contatosSelecionados: List<Contato> = emptyList()
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -184,16 +181,6 @@ class MainActivity : AppCompatActivity() {
         
         lifecycleScope.launch {
             dialogBinding.progressBar.visibility = View.VISIBLE
-            listaContatos = carregarContatos()
-            
-            if (listaContatos.isEmpty()) {
-                dialogBinding.progressBar.visibility = View.GONE
-                dialogBinding.tvVazio.visibility = View.VISIBLE
-            } else {
-                dialogBinding.progressBar.visibility = View.GONE
-                dialogBinding.rvContatos.visibility = View.VISIBLE
-                adapter.setListaCompleta(listaContatos)
-            }
         }
         
         dialogBinding.etPesquisar.addTextChangedListener { text ->
@@ -276,161 +263,7 @@ class MainActivity : AppCompatActivity() {
             Toast.makeText(this, "Erro: ${e.message}", Toast.LENGTH_SHORT).show()
         }
     }
-    
-    // ========== DIALOG CRIAR GRUPO ==========
-    
-    private fun mostrarDialogCriarGrupo() {
-        val dialog = Dialog(this)
-        dialog.requestWindowFeature(Window.FEATURE_NO_TITLE)
-        val dialogBinding = DialogCriarGrupoBinding.inflate(layoutInflater)
-        dialog.setContentView(dialogBinding.root)
-        
-        dialog.window?.setLayout(
-            (resources.displayMetrics.widthPixels * 0.9).toInt(),
-            (resources.displayMetrics.heightPixels * 0.75).toInt()
-        )
-        
-        val adapter = ContatosSelecionaveisAdapter { quantidade ->
-            dialogBinding.tvContador.text = "$quantidade selecionados"
-            dialogBinding.btnAvancar.isEnabled = true //quantidade >= 2
-        }
-        
-        dialogBinding.rvContatos.adapter = adapter
-        
-        lifecycleScope.launch {
-            dialogBinding.progressBar.visibility = View.VISIBLE
-            listaContatos = carregarContatos()
-            
-            if (listaContatos.isEmpty()) {
-                dialogBinding.progressBar.visibility = View.GONE
-                dialogBinding.tvVazio.visibility = View.VISIBLE
-            } else {
-                dialogBinding.progressBar.visibility = View.GONE
-                dialogBinding.rvContatos.visibility = View.VISIBLE
-                adapter.setListaCompleta(listaContatos)
-            }
-        }
-        
-        dialogBinding.etPesquisar.addTextChangedListener { text ->
-            adapter.filtrar(text.toString())
-        }
-        
-        dialogBinding.btnCancelar.setOnClickListener {
-            dialog.dismiss()
-        }
-        
-        dialogBinding.btnAvancar.setOnClickListener {
-            contatosSelecionados = adapter.getContatosSelecionados()
-            dialog.dismiss()
-            mostrarDialogDetalhesGrupo()
-        }
-        
-        dialog.show()
-    }
-    
-    // ========== DIALOG DETALHES GRUPO ==========
-    
-    private fun mostrarDialogDetalhesGrupo() {
-        val dialog = Dialog(this)
-        dialog.requestWindowFeature(Window.FEATURE_NO_TITLE)
-        val dialogBinding = DialogDetalhesGrupoBinding.inflate(layoutInflater)
-        dialog.setContentView(dialogBinding.root)
-        
-        dialog.window?.setLayout(
-            (resources.displayMetrics.widthPixels * 0.8).toInt(),
-            resources.displayMetrics.heightPixels
-        )
-        
-        val nomesMembros = contatosSelecionados.joinToString(", ") { it.nome }
-        dialogBinding.tvMembros.text = "Você + ${contatosSelecionados.size} outros\n$nomesMembros"
-        
-        dialogBinding.etNomeGrupo.addTextChangedListener { text ->
-            dialogBinding.btnCriarGrupo.isEnabled = !text.isNullOrEmpty()
-        }
-        
-        dialogBinding.btnVoltar.setOnClickListener {
-            dialog.dismiss()
-            mostrarDialogCriarGrupo()
-        }
-        
-        dialogBinding.btnCriarGrupo.setOnClickListener {
-            val nomeGrupo = dialogBinding.etNomeGrupo.text.toString().trim()
-            val descricao = dialogBinding.etDescricaoGrupo.text.toString().trim()
-            
-            if (nomeGrupo.isEmpty()) {
-                Toast.makeText(this, "Digite um nome para o grupo", Toast.LENGTH_SHORT).show()
-                return@setOnClickListener
-            }
-            
-            dialog.dismiss()
-            lifecycleScope.launch {
-                criarGrupo(nomeGrupo, descricao)
-            }
-        }
-        
-        dialog.show()
-    }
-    
-    private suspend fun criarGrupo(nome: String, descricao: String) {
-        try {
-            Toast.makeText(this, "Criando grupo...", Toast.LENGTH_SHORT).show()
-            
-            val token = userPreferences.authToken.first() ?: return
-            val userId = userPreferences.userId.first() ?: return
-            val dataAtual = LocalDateTime.now().format(DateTimeFormatter.ISO_DATE_TIME)
-            
-            val request = CriarConversaRequest(
-                descricao = nome,
-                tipo = 2,
-                inserida = dataAtual
-            )
-            
-            val response = RetrofitClient.api.criarConversa("Bearer $token", request)
-            
-            if (response.isSuccessful && response.body() != null) {
-                val grupoCriado = response.body()!!
-                
-                // Adiciona criador
-                RetrofitClient.api.adicionarUsuarioConversa(
-                    "Bearer $token",
-                    AdicionarUsuarioRequest(grupoCriado.id, userId)
-                )
-                
-                // Adiciona membros
-                contatosSelecionados.forEach { contato ->
-                    RetrofitClient.api.adicionarUsuarioConversa(
-                        "Bearer $token",
-                        AdicionarUsuarioRequest(grupoCriado.id, contato.id)
-                    )
-                }
-                
-                val grupo = Conversa(
-                    id = grupoCriado.id,
-                    descricao = nome,
-                    tipo = 2,
-                    inserida = grupoCriado.inserida,
-                    nome = nome,
-                    destinatario_id = null,
-                    mensagem_id = 0,
-                    ultima_mensagem = null,
-                    ultima_mensagem_texto = null,
-                    mensagens_sem_visualizar = 0
-                )
-                
-                Toast.makeText(this, "Grupo criado com sucesso!", Toast.LENGTH_SHORT).show()
-                abrirConversa(grupo)
-                carregarConversas()
-            } else {
-                Toast.makeText(this, "Erro ao criar grupo", Toast.LENGTH_SHORT).show()
-            }
-        } catch (e: Exception) {
-            e.printStackTrace()
-            Toast.makeText(this, "Erro: ${e.message}", Toast.LENGTH_SHORT).show()
-        }
-    }
-    
-    // ========== HELPERS ==========
-    
+
     private fun mostrarLoading(mostrar: Boolean) {
         contentBinding.apply {
             progressBar.visibility = if (mostrar) View.VISIBLE else View.GONE
@@ -490,7 +323,9 @@ class MainActivity : AppCompatActivity() {
                 true
             }
             R.id.action_novo_grupo -> {
-                mostrarDialogCriarGrupo()
+                // Agora abre a Activity em vez do dialog
+                val intent = Intent(this, CriarGrupoActivity::class.java)
+                startActivity(intent)
                 true
             }
             R.id.action_settings -> {
