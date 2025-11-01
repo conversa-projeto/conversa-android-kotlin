@@ -24,7 +24,6 @@
         android:theme="@style/Theme.Conversa"
         android:usesCleartextTraffic="true">
         
-        <!-- Splash Activity - Tela inicial -->
         <activity
             android:name=".SplashActivity"
             android:exported="true"
@@ -35,32 +34,27 @@
             </intent-filter>
         </activity>
         
-        <!-- Config API Activity -->
         <activity
             android:name=".ConfigApiActivity"
             android:exported="false"
             android:theme="@style/Theme.Conversa.NoActionBar" />
         
-        <!-- Login Activity -->
         <activity
             android:name=".LoginActivity"
             android:exported="false"
             android:theme="@style/Theme.Conversa.NoActionBar" />
         
-        <!-- Main Activity -->
         <activity
             android:name=".MainActivity"
             android:exported="false"
             android:theme="@style/Theme.Conversa" />
         
-        <!-- Chat Activity -->
         <activity
             android:name=".ui.chat.ChatActivity"
             android:exported="false"
             android:theme="@style/Theme.Conversa"
             android:windowSoftInputMode="adjustResize" />
         
-        <!-- Image Viewer Activity -->
         <activity
             android:name=".ui.chat.ImageViewerActivity"
             android:exported="false"
@@ -68,13 +62,21 @@
             android:configChanges="orientation|screenSize" />
 
         <activity
+            android:name=".ContatosActivity"
+            android:label="Contatos"
+            android:exported="false"
+            android:parentActivityName=".MainActivity" />
+
+        <activity
             android:name=".CriarGrupoActivity"
             android:label="Novo Grupo"
+            android:exported="false"
             android:parentActivityName=".MainActivity" />
 
         <activity
             android:name=".DetalhesGrupoActivity"
             android:label="Detalhes do Grupo"
+            android:exported="false"
             android:parentActivityName=".CriarGrupoActivity" />
             
     </application>

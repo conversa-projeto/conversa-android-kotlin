@@ -3,19 +3,17 @@ package com.conversa.conversa
 import android.app.Dialog
 import android.content.Intent
 import android.os.Bundle
-import android.text.Editable
-import android.text.TextWatcher
-import android.view.Menu
 import android.view.MenuItem
 import android.view.View
 import android.view.Window
+import android.widget.TextView
 import android.widget.Toast
+import androidx.appcompat.app.ActionBarDrawerToggle
 import androidx.appcompat.app.AppCompatActivity
-import androidx.core.widget.addTextChangedListener
+import androidx.core.view.GravityCompat
 import androidx.lifecycle.lifecycleScope
 import androidx.recyclerview.widget.DividerItemDecoration
 import com.conversa.conversa.adapter.ContatosAdapter
-import com.conversa.conversa.adapter.ContatosSelecionaveisAdapter
 import com.conversa.conversa.adapter.ConversasAdapter
 import com.conversa.conversa.data.api.RetrofitClient
 import com.conversa.conversa.data.model.AdicionarUsuarioRequest
@@ -26,21 +24,20 @@ import com.conversa.conversa.data.preferences.UserPreferences
 import com.conversa.conversa.databinding.ActivityMainBinding
 import com.conversa.conversa.databinding.ContentMainBinding
 import com.conversa.conversa.databinding.DialogContatosBinding
-import com.conversa.conversa.databinding.DialogCriarGrupoBinding
-import com.conversa.conversa.databinding.DialogDetalhesGrupoBinding
 import com.conversa.conversa.ui.chat.ChatActivity
-import com.google.android.material.snackbar.Snackbar
+import com.google.android.material.navigation.NavigationView
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
 import java.time.LocalDateTime
 import java.time.format.DateTimeFormatter
 
-class MainActivity : AppCompatActivity() {
+class MainActivity : AppCompatActivity(), NavigationView.OnNavigationItemSelectedListener {
     private var isFirstLoad = true
     private lateinit var binding: ActivityMainBinding
     private lateinit var contentBinding: ContentMainBinding
     private lateinit var userPreferences: UserPreferences
     private lateinit var conversasAdapter: ConversasAdapter
+    private lateinit var toggle: ActionBarDrawerToggle
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -53,6 +50,7 @@ class MainActivity : AppCompatActivity() {
 
         setSupportActionBar(binding.toolbar)
         
+        setupNavigationDrawer()
         setupRecyclerView()
         setupListeners()
         
@@ -62,7 +60,64 @@ class MainActivity : AppCompatActivity() {
         }
 
         binding.fab.setOnClickListener {
-            mostrarDialogContatos()
+            val intent = Intent(this, ContatosActivity::class.java)
+            startActivity(intent)
+        }
+    }
+    
+    private fun setupNavigationDrawer() {
+        toggle = ActionBarDrawerToggle(
+            this,
+            binding.drawerLayout,
+            binding.toolbar,
+            R.string.navigation_drawer_open,
+            R.string.navigation_drawer_close
+        )
+        binding.drawerLayout.addDrawerListener(toggle)
+        toggle.syncState()
+        
+        binding.navView.setNavigationItemSelectedListener(this)
+        
+        // Atualizar header com dados do usuário
+        lifecycleScope.launch {
+            val headerView = binding.navView.getHeaderView(0)
+            val tvNome = headerView.findViewById<TextView>(R.id.tvNomeUsuario)
+            val tvStatus = headerView.findViewById<TextView>(R.id.tvStatusUsuario)
+            
+            val userName = userPreferences.userName.first()
+            tvNome.text = userName ?: "Usuário"
+            tvStatus.text = "Online"
+        }
+    }
+    
+    override fun onNavigationItemSelected(item: MenuItem): Boolean {
+        when (item.itemId) {
+            R.id.nav_contatos -> {
+                val intent = Intent(this, ContatosActivity::class.java)
+                startActivity(intent)
+            }
+            R.id.nav_criar_grupo -> {
+                val intent = Intent(this, CriarGrupoActivity::class.java)
+                startActivity(intent)
+            }
+            R.id.nav_configuracoes -> {
+                val intent = Intent(this, ConfigApiActivity::class.java)
+                startActivity(intent)
+            }
+            R.id.nav_sair -> {
+                realizarLogout()
+            }
+        }
+        
+        binding.drawerLayout.closeDrawer(GravityCompat.START)
+        return true
+    }
+    
+    override fun onBackPressed() {
+        if (binding.drawerLayout.isDrawerOpen(GravityCompat.START)) {
+            binding.drawerLayout.closeDrawer(GravityCompat.START)
+        } else {
+            super.onBackPressed()
         }
     }
     
@@ -94,7 +149,7 @@ class MainActivity : AppCompatActivity() {
         }
         
         val userName = userPreferences.userName.first()
-        supportActionBar?.title = "Olá, $userName!"
+        supportActionBar?.title = "Conversa"
     }
     
     private suspend fun carregarConversas() {
@@ -138,129 +193,6 @@ class MainActivity : AppCompatActivity() {
             Toast.makeText(this@MainActivity, e.message, Toast.LENGTH_LONG).show()
         } finally {
             mostrarLoading(false)
-        }
-    }
-    
-    private suspend fun carregarContatos(): List<Contato> {
-        return try {
-            val token = userPreferences.authToken.first() ?: return emptyList()
-            val response = RetrofitClient.api.listarContatos("Bearer $token")
-            
-            if (response.isSuccessful && response.body() != null) {
-                response.body()!!
-            } else {
-                emptyList()
-            }
-        } catch (e: Exception) {
-            e.printStackTrace()
-            emptyList()
-        }
-    }
-    
-    // ========== DIALOG CONTATOS (1:1) ==========
-    
-    private fun mostrarDialogContatos() {
-        val dialog = Dialog(this)
-        dialog.requestWindowFeature(Window.FEATURE_NO_TITLE)
-        val dialogBinding = DialogContatosBinding.inflate(layoutInflater)
-        dialog.setContentView(dialogBinding.root)
-        
-        dialog.window?.setLayout(
-            (resources.displayMetrics.widthPixels * 0.9).toInt(),
-            (resources.displayMetrics.heightPixels * 0.7).toInt()
-        )
-        
-        val adapter = ContatosAdapter { contato ->
-            dialog.dismiss()
-            lifecycleScope.launch {
-                iniciarOuAbrirConversa(contato)
-            }
-        }
-        
-        dialogBinding.rvContatos.adapter = adapter
-        
-        lifecycleScope.launch {
-            dialogBinding.progressBar.visibility = View.VISIBLE
-        }
-        
-        dialogBinding.etPesquisar.addTextChangedListener { text ->
-            adapter.filtrar(text.toString())
-        }
-        
-        dialogBinding.btnCancelar.setOnClickListener {
-            dialog.dismiss()
-        }
-        
-        dialog.show()
-    }
-    
-    private suspend fun iniciarOuAbrirConversa(contato: Contato) {
-        val userId = userPreferences.userId.first() ?: return
-        
-        // Busca conversa existente
-        val conversaExistente = conversasAdapter.currentList.find { conversa ->
-            conversa.tipo == 1 && conversa.destinatario_id == contato.id
-        }
-        
-        if (conversaExistente != null) {
-            abrirConversa(conversaExistente)
-        } else {
-            criarNovaConversa(contato, userId)
-        }
-    }
-    
-    private suspend fun criarNovaConversa(contato: Contato, userId: Int) {
-        try {
-            Toast.makeText(this, "Criando conversa...", Toast.LENGTH_SHORT).show()
-            
-            val token = userPreferences.authToken.first() ?: return
-            val dataAtual = LocalDateTime.now().format(DateTimeFormatter.ISO_DATE_TIME)
-            
-            val request = CriarConversaRequest(
-                descricao = "",
-                tipo = 1,
-                inserida = dataAtual
-            )
-            
-            val response = RetrofitClient.api.criarConversa("Bearer $token", request)
-            
-            if (response.isSuccessful && response.body() != null) {
-                val conversaCriada = response.body()!!
-                
-                // Adiciona usuário atual
-                RetrofitClient.api.adicionarUsuarioConversa(
-                    "Bearer $token",
-                    AdicionarUsuarioRequest(conversaCriada.id, userId)
-                )
-                
-                // Adiciona contato
-                RetrofitClient.api.adicionarUsuarioConversa(
-                    "Bearer $token",
-                    AdicionarUsuarioRequest(conversaCriada.id, contato.id)
-                )
-                
-                // Abre a conversa
-                val conversa = Conversa(
-                    id = conversaCriada.id,
-                    descricao = contato.nome,
-                    tipo = 1,
-                    inserida = conversaCriada.inserida,
-                    nome = contato.nome,
-                    destinatario_id = contato.id,
-                    mensagem_id = 0,
-                    ultima_mensagem = null,
-                    ultima_mensagem_texto = null,
-                    mensagens_sem_visualizar = 0
-                )
-                
-                abrirConversa(conversa)
-                carregarConversas()
-            } else {
-                Toast.makeText(this, "Erro ao criar conversa", Toast.LENGTH_SHORT).show()
-            }
-        } catch (e: Exception) {
-            e.printStackTrace()
-            Toast.makeText(this, "Erro: ${e.message}", Toast.LENGTH_SHORT).show()
         }
     }
 
@@ -309,36 +241,6 @@ class MainActivity : AppCompatActivity() {
         intent.putExtra("conversa_nome", conversa.nome ?: conversa.descricao)
         intent.putExtra("conversa_tipo", conversa.tipo)
         startActivity(intent)
-    }
-
-    override fun onCreateOptionsMenu(menu: Menu): Boolean {
-        menuInflater.inflate(R.menu.menu_main, menu)
-        return true
-    }
-
-    override fun onOptionsItemSelected(item: MenuItem): Boolean {
-        return when (item.itemId) {
-            R.id.action_contatos -> {
-                mostrarDialogContatos()
-                true
-            }
-            R.id.action_novo_grupo -> {
-                // Agora abre a Activity em vez do dialog
-                val intent = Intent(this, CriarGrupoActivity::class.java)
-                startActivity(intent)
-                true
-            }
-            R.id.action_settings -> {
-                val intent = Intent(this, ConfigApiActivity::class.java)
-                startActivity(intent)
-                true
-            }
-            R.id.action_logout -> {
-                realizarLogout()
-                true
-            }
-            else -> super.onOptionsItemSelected(item)
-        }
     }
     
     private fun realizarLogout() {

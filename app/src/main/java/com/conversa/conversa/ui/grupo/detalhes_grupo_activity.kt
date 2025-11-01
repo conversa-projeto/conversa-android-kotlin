@@ -120,14 +120,14 @@ class DetalhesGrupoActivity : AppCompatActivity() {
                 // Adiciona criador
                 RetrofitClient.api.adicionarUsuarioConversa(
                     "Bearer $token",
-                    AdicionarUsuarioRequest(grupoCriado.id, userId)
+                    AdicionarUsuarioRequest(conversa_id = grupoCriado.id, usuario_id = userId)
                 )
                 
                 // Adiciona membros
                 contatosSelecionados.forEach { contato ->
                     RetrofitClient.api.adicionarUsuarioConversa(
                         "Bearer $token",
-                        AdicionarUsuarioRequest(grupoCriado.id, contato.id)
+                        AdicionarUsuarioRequest(conversa_id = grupoCriado.id, usuario_id = contato.id)
                     )
                 }
                 

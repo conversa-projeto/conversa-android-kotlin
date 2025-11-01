@@ -16,4 +16,8 @@
         <item name="windowActionBar">false</item>
         <item name="windowNoTitle">true</item>
     </style>
+    
+    <style name="Theme.Conversa.AppBarOverlay" parent="ThemeOverlay.Material3.Dark.ActionBar" />
+    
+    <style name="Theme.Conversa.PopupOverlay" parent="ThemeOverlay.Material3.Light" />
 </resources>

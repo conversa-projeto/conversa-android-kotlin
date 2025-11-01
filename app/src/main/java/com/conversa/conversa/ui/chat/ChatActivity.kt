@@ -43,6 +43,8 @@ class ChatActivity : AppCompatActivity() {
     private var conversaId: Int = 0
     private var conversaNome: String = ""
     private var conversaTipo: Int = 1 // 1 = Chat 1:1, 2 = Grupo
+    private var destinatarioId: Int? = null
+    private var criarConversa: Boolean = false
     private var usuarioId: Int = 0
     private var authToken: String = ""
     private var apiUrl: String = ""
@@ -63,12 +65,8 @@ class ChatActivity : AppCompatActivity() {
         conversaId = intent.getIntExtra("conversa_id", 0)
         conversaNome = intent.getStringExtra("conversa_nome") ?: "Chat"
         conversaTipo = intent.getIntExtra("conversa_tipo", 1)
-        
-        if (conversaId == 0) {
-            Toast.makeText(this, "Erro: ID da conversa inválido", Toast.LENGTH_SHORT).show()
-            finish()
-            return
-        }
+        destinatarioId = intent.getIntExtra("destinatario_id", -1).takeIf { it != -1 }
+        criarConversa = intent.getBooleanExtra("criar_conversa", false)
         
         setupToolbar()
         setupRecyclerView()
@@ -76,7 +74,11 @@ class ChatActivity : AppCompatActivity() {
         
         lifecycleScope.launch {
             carregarDadosUsuario()
-            carregarMensagens()
+            
+            // Só carrega mensagens se a conversa já existe
+            if (conversaId > 0) {
+                carregarMensagens()
+            }
         }
     }
 
@@ -439,6 +441,18 @@ class ChatActivity : AppCompatActivity() {
         
         lifecycleScope.launch {
             try {
+                // Se precisa criar a conversa primeiro, cria
+                if (criarConversa && conversaId == 0 && destinatarioId != null) {
+                    val conversaCriada = criarNovaConversa()
+                    if (conversaCriada) {
+                        criarConversa = false // Marca como criada
+                    } else {
+                        binding.etMensagem.isEnabled = true
+                        binding.btnEnviar.isEnabled = true
+                        return@launch
+                    }
+                }
+                
                 val request = EnviarMensagemRequest(
                     conversaId = conversaId,
                     conteudos = listOf(
@@ -481,6 +495,64 @@ class ChatActivity : AppCompatActivity() {
                 binding.etMensagem.isEnabled = true
                 binding.btnEnviar.isEnabled = true
             }
+        }
+    }
+    
+    private suspend fun criarNovaConversa(): Boolean {
+        return try {
+            val dataAtual = java.time.LocalDateTime.now()
+                .format(java.time.format.DateTimeFormatter.ISO_DATE_TIME)
+            
+            // 1. Cria a conversa
+            val request = com.conversa.conversa.data.model.CriarConversaRequest(
+                descricao = "",
+                tipo = 1,
+                inserida = dataAtual
+            )
+            
+            val response = RetrofitClient.api.criarConversa("Bearer $authToken", request)
+            
+            if (!response.isSuccessful || response.body() == null) {
+                Toast.makeText(
+                    this,
+                    "Erro ao criar conversa",
+                    Toast.LENGTH_SHORT
+                ).show()
+                return false
+            }
+            
+            val conversaCriada = response.body()!!
+            conversaId = conversaCriada.id
+            
+            // 2. Adiciona o usuário atual
+            RetrofitClient.api.adicionarUsuarioConversa(
+                "Bearer $authToken",
+                com.conversa.conversa.data.model.AdicionarUsuarioRequest(
+                    conversa_id = conversaId,
+                    usuario_id = usuarioId
+                )
+            )
+            
+            // 3. Adiciona o destinatário
+            destinatarioId?.let { destId ->
+                RetrofitClient.api.adicionarUsuarioConversa(
+                    "Bearer $authToken",
+                    com.conversa.conversa.data.model.AdicionarUsuarioRequest(
+                        conversa_id = conversaId,
+                        usuario_id = destId
+                    )
+                )
+            }
+            
+            true
+        } catch (e: Exception) {
+            e.printStackTrace()
+            Toast.makeText(
+                this,
+                "Erro ao criar conversa: ${e.message}",
+                Toast.LENGTH_SHORT
+            ).show()
+            false
         }
     }
 
