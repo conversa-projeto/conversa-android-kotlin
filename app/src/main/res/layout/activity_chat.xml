@@ -72,6 +72,17 @@
 
                 </LinearLayout>
 
+                <!-- Botão de chamada -->
+                <ImageButton
+                    android:id="@+id/btnLigar"
+                    android:layout_width="40dp"
+                    android:layout_height="40dp"
+                    android:layout_marginEnd="8dp"
+                    android:background="?attr/selectableItemBackgroundBorderless"
+                    android:contentDescription="@string/iniciar_chamada"
+                    android:src="@drawable/ic_call"
+                    android:tint="@android:color/white" />
+
                 <!-- Botão de mais opções -->
                 <ImageButton
                     android:id="@+id/btnMaisOpcoes"

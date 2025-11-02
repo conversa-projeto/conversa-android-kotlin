@@ -10,6 +10,7 @@
     <string name="previous">Previous</string>
 
     <!-- Strings para chamadas -->
+    <string name="iniciar_chamada">Iniciar chamada</string>
     <string name="chamada_recebida">Chamada recebida...</string>
     <string name="conectando">Conectando...</string>
     <string name="chamada_em_andamento">Em chamada</string>

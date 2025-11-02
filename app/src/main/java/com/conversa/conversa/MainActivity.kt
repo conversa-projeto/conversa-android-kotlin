@@ -38,6 +38,7 @@ class MainActivity : AppCompatActivity(), NavigationView.OnNavigationItemSelecte
     private lateinit var userPreferences: UserPreferences
     private lateinit var conversasAdapter: ConversasAdapter
     private lateinit var toggle: ActionBarDrawerToggle
+    private lateinit var webSocketManager: com.conversa.conversa.data.websocket.WebSocketManager
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -67,6 +68,7 @@ class MainActivity : AppCompatActivity(), NavigationView.OnNavigationItemSelecte
         
         lifecycleScope.launch {
             carregarConfiguracoes()
+            inicializarWebSocket()
             carregarConversas()
         }
 
@@ -243,6 +245,12 @@ class MainActivity : AppCompatActivity(), NavigationView.OnNavigationItemSelecte
         intent.putExtra("conversa_id", conversa.id)
         intent.putExtra("conversa_nome", conversa.nome ?: conversa.descricao)
         intent.putExtra("conversa_tipo", conversa.tipo)
+        
+        // Passa o destinatario_id se for uma conversa individual (tipo 1)
+        if (conversa.tipo == 1 && conversa.destinatario_id != null) {
+            intent.putExtra("destinatario_id", conversa.destinatario_id)
+        }
+        
         startActivity(intent)
     }
     
@@ -257,6 +265,46 @@ class MainActivity : AppCompatActivity(), NavigationView.OnNavigationItemSelecte
         }
     }
     
+    private suspend fun inicializarWebSocket() {
+        try {
+            val apiUrl = userPreferences.apiUrl.first()
+            val token = userPreferences.authToken.first()
+            
+            if (!apiUrl.isNullOrEmpty() && !token.isNullOrEmpty()) {
+                val wsUrl = apiUrl.replace("http://", "ws://")
+                                  .replace("https://", "wss://")
+                
+                webSocketManager = com.conversa.conversa.data.websocket.WebSocketManager(this)
+                
+                // Configurar callback para chamadas recebidas
+                webSocketManager.onChamadaRecebida = { chamadaId, usuarioId, usuarioNome ->
+                    mostrarTelaChamadaRecebida(chamadaId, usuarioId, usuarioNome)
+                }
+                
+                // Conectar ao WebSocket
+                webSocketManager.conectar(wsUrl, token)
+                
+                android.util.Log.d("MainActivity", "WebSocket inicializado com sucesso")
+            }
+        } catch (e: Exception) {
+            android.util.Log.e("MainActivity", "Erro ao inicializar WebSocket", e)
+        }
+    }
+    
+    private fun mostrarTelaChamadaRecebida(
+        chamadaId: Int,
+        usuarioId: Int,
+        usuarioNome: String
+    ) {
+        val intent = Intent(this, com.conversa.conversa.ui.chamada.ChamadaIncomingActivity::class.java).apply {
+            putExtra(com.conversa.conversa.ui.chamada.ChamadaIncomingActivity.EXTRA_CHAMADA_ID, chamadaId)
+            putExtra(com.conversa.conversa.ui.chamada.ChamadaIncomingActivity.EXTRA_USUARIO_ID, usuarioId)
+            putExtra(com.conversa.conversa.ui.chamada.ChamadaIncomingActivity.EXTRA_USUARIO_NOME, usuarioNome)
+            flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TOP
+        }
+        startActivity(intent)
+    }
+    
     override fun onResume() {
         super.onResume()
         if (!isFirstLoad) {
@@ -265,5 +313,12 @@ class MainActivity : AppCompatActivity(), NavigationView.OnNavigationItemSelecte
             }
         }
         isFirstLoad = false
+    }
+    
+    override fun onDestroy() {
+        super.onDestroy()
+        if (::webSocketManager.isInitialized) {
+            webSocketManager.desconectar()
+        }
     }
 }

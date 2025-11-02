@@ -29,6 +29,10 @@ class ChatActivity : AppCompatActivity() {
 
     private lateinit var binding: ActivityChatBinding
     private lateinit var userPreferences: UserPreferences
+    
+    companion object {
+        private const val TAG = "ChatActivity"
+    }
     private lateinit var mensagensAdapter: MensagensAdapter
     private lateinit var audioPlayerHelper: AudioPlayerHelper
     private lateinit var downloadHelper: DownloadHelper
@@ -172,6 +176,10 @@ class ChatActivity : AppCompatActivity() {
     }
 
     private fun setupListeners() {
+        binding.btnLigar.setOnClickListener {
+            verificarPermissoesEIniciarChamada()
+        }
+        
         binding.btnEnviar.setOnClickListener {
             enviarMensagem()
         }
@@ -804,5 +812,85 @@ class ChatActivity : AppCompatActivity() {
         }
         timerHandler = null
         timerRunnable = null
+    }
+    
+    /**
+     * Verifica permissões e inicia chamada
+     */
+    private fun verificarPermissoesEIniciarChamada() {
+        if (ContextCompat.checkSelfPermission(
+                this,
+                Manifest.permission.RECORD_AUDIO
+            ) != PackageManager.PERMISSION_GRANTED
+        ) {
+            solicitarPermissaoMicrofoneLauncher.launch(
+                Manifest.permission.RECORD_AUDIO
+            )
+            // Quando a permissão for concedida, iniciarChamada() será chamado
+        } else {
+            iniciarChamada()
+        }
+    }
+    
+    /**
+     * Inicia uma chamada
+     */
+    private fun iniciarChamada() {
+        if (destinatarioId == null || destinatarioId == -1) {
+            Toast.makeText(
+                this,
+                "Não foi possível identificar o destinatário",
+                Toast.LENGTH_SHORT
+            ).show()
+            return
+        }
+        
+        lifecycleScope.launch {
+            try {
+                Toast.makeText(
+                    this@ChatActivity,
+                    "Iniciando chamada...",
+                    Toast.LENGTH_SHORT
+                ).show()
+                
+                // Criar repository de chamada
+                val webSocketManager = com.conversa.conversa.data.websocket.WebSocketManager(this@ChatActivity)
+                val repository = com.conversa.conversa.data.repository.ChamadaRepository(
+                    context = this@ChatActivity,
+                    api = RetrofitClient.api,
+                    chamadaManager = com.conversa.conversa.data.chamada.ChamadaManager(this@ChatActivity),
+                    webSocketManager = webSocketManager,
+                    userPreferences = userPreferences
+                )
+                
+                // Iniciar chamada
+                val result = repository.iniciarChamada(listOf(destinatarioId!!))
+                
+                result.onSuccess { chamada ->
+                    val intent = android.content.Intent(this@ChatActivity, com.conversa.conversa.ui.chamada.ChamadaActivity::class.java).apply {
+                        putExtra(com.conversa.conversa.ui.chamada.ChamadaActivity.EXTRA_CHAMADA_ID, chamada.id)
+                        putExtra(com.conversa.conversa.ui.chamada.ChamadaActivity.EXTRA_USUARIO_NOME, conversaNome)
+                        putExtra(com.conversa.conversa.ui.chamada.ChamadaActivity.EXTRA_IS_INICIADOR, true)
+                    }
+                    startActivity(intent)
+                }
+                
+                result.onFailure { erro ->
+                    android.util.Log.e(TAG, "Erro ao iniciar chamada", erro)
+                    Toast.makeText(
+                        this@ChatActivity,
+                        "Erro ao iniciar chamada: ${erro.message}",
+                        Toast.LENGTH_SHORT
+                    ).show()
+                }
+            } catch (e: Exception) {
+                android.util.Log.e(TAG, "Erro ao iniciar chamada", e)
+                Toast.makeText(
+                    this@ChatActivity,
+                    "Erro ao iniciar chamada: ${e.message}",
+                    Toast.LENGTH_LONG
+                ).show()
+            }
+        }
     }
 }
