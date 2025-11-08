@@ -4,6 +4,9 @@ import android.content.Context
 import android.media.*
 import android.util.Log
 import kotlinx.coroutines.*
+import kotlinx.coroutines.channels.Channel
+import kotlinx.coroutines.sync.Mutex
+import kotlinx.coroutines.sync.withLock
 import java.io.*
 import java.net.Socket
 import java.nio.ByteBuffer
@@ -47,6 +50,12 @@ class ChamadaManager(private val context: Context) {
     private var outputStream: DataOutputStream? = null
     private var inputStream: DataInputStream? = null
     
+    // Sincronização thread-safe para envio TCP
+    private val envioMutex = Mutex()
+    
+    // Fila de pacotes para envio serializado
+    private val filaEnvio = Channel<ByteArray>(capacity = 100)
+    
     // Áudio
     private var audioRecord: AudioRecord? = null
     private var audioTrack: AudioTrack? = null
@@ -55,6 +64,7 @@ class ChamadaManager(private val context: Context) {
     private val scope = CoroutineScope(Dispatchers.IO + SupervisorJob())
     private var captureJob: Job? = null
     private var playbackJob: Job? = null
+    private var senderJob: Job? = null
     
     // Mixing (para chamadas em grupo)
     private val mixingBuffers = mutableMapOf<Int, LinkedBlockingQueue<ShortArray>>()
@@ -80,9 +90,20 @@ class ChamadaManager(private val context: Context) {
             Log.d(TAG, "Conectando ao servidor: $serverHost:$serverPort")
             
             // Conecta ao servidor TCP
-            socket = Socket(serverHost, serverPort)
+            socket = Socket(serverHost, serverPort).apply {
+                // CRÍTICO: Desabilita algoritmo de Nagle para envio imediato
+                tcpNoDelay = true
+                // Define timeout para evitar travamentos
+                soTimeout = 5000
+                // Mantém conexão ativa
+                keepAlive = true
+            }
+            
+            // SEM BufferedOutputStream - stream direto para envio imediato
             outputStream = DataOutputStream(socket!!.getOutputStream())
             inputStream = DataInputStream(socket!!.getInputStream())
+            
+            Log.d(TAG, "Socket configurado: tcpNoDelay=true")
             
             // Registra cliente no servidor
             registrarCliente()
@@ -91,6 +112,9 @@ class ChamadaManager(private val context: Context) {
             inicializarAudio()
             
             emChamada = true
+            
+            // Inicia worker de envio serializado
+            iniciarSender()
             
             // Inicia captura e reprodução
             iniciarCaptura()
@@ -115,17 +139,26 @@ class ChamadaManager(private val context: Context) {
     
     /**
      * Registra o cliente no servidor TCP
-     * Envia: [tipo=0][usuarioId (4 bytes)]
+     * Envia: [tamanho (4 bytes)][tipo=0 (1 byte)][usuarioId (4 bytes)]
+     * Total: 9 bytes (protocolo do servidor)
      */
-    private fun registrarCliente() {
-        val buffer = ByteBuffer.allocate(5).order(ByteOrder.BIG_ENDIAN)
-        buffer.put(PACKET_TYPE_REGISTER)
-        buffer.putInt(usuarioId)
+    private suspend fun registrarCliente() {
+        // Monta payload: [tipo][usuarioId]
+        val payload = ByteBuffer.allocate(5).order(ByteOrder.LITTLE_ENDIAN)
+        payload.put(PACKET_TYPE_REGISTER)
+        payload.putInt(usuarioId)
         
-        outputStream?.write(buffer.array())
-        outputStream?.flush()
+        // Monta pacote completo: [tamanho][payload]
+        val packet = ByteBuffer.allocate(9).order(ByteOrder.LITTLE_ENDIAN)
+        packet.putInt(5) // tamanho do payload
+        packet.put(payload.array())
         
-        Log.d(TAG, "Cliente registrado: usuarioId=$usuarioId")
+        envioMutex.withLock {
+            outputStream?.write(packet.array())
+            outputStream?.flush()
+        }
+        
+        Log.d(TAG, "Cliente registrado: usuarioId=$usuarioId (9 bytes enviados)")
     }
     
     /**
@@ -161,6 +194,43 @@ class ChamadaManager(private val context: Context) {
     }
     
     /**
+     * Inicia worker que processa fila de envio de forma serializada
+     */
+    private fun iniciarSender() {
+        senderJob = scope.launch {
+            try {
+                Log.d(TAG, "Worker de envio iniciado")
+                
+                var pacotesEnviados = 0
+                
+                for (packet in filaEnvio) {
+                    try {
+                        // Envia pacote de forma thread-safe e com flush imediato
+                        envioMutex.withLock {
+                            outputStream?.write(packet)
+                            outputStream?.flush() // FLUSH IMEDIATO
+                        }
+                        
+                        pacotesEnviados++
+                        
+                        if (pacotesEnviados % 50 == 0) {
+                            Log.d(TAG, "Pacotes enviados: $pacotesEnviados, último tamanho: ${packet.size} bytes")
+                        }
+                        
+                    } catch (e: Exception) {
+                        Log.e(TAG, "Erro ao enviar pacote da fila", e)
+                        // Continua processando próximos pacotes
+                    }
+                }
+            } catch (e: Exception) {
+                Log.e(TAG, "Erro no worker de envio", e)
+            } finally {
+                Log.d(TAG, "Worker de envio finalizado")
+            }
+        }
+    }
+    
+    /**
      * Inicia captura de áudio do microfone e envio para servidor
      */
     private fun iniciarCaptura() {
@@ -170,12 +240,21 @@ class ChamadaManager(private val context: Context) {
                 Log.d(TAG, "Captura de áudio iniciada")
                 
                 val buffer = ByteArray(BUFFER_SIZE)
+                var pacotesCapturados = 0
                 
                 while (emChamada && isActive) {
                     val bytesRead = audioRecord?.read(buffer, 0, buffer.size) ?: -1
                     
                     if (bytesRead > 0) {
-                        enviarAudio(buffer, bytesRead)
+                        pacotesCapturados++
+                        
+                        // Cria cópia do buffer antes de enfileirar
+                        val audioCopy = buffer.copyOf(bytesRead)
+                        enviarAudio(audioCopy, bytesRead)
+                        
+                        if (pacotesCapturados % 50 == 0) {
+                            Log.d(TAG, "Pacotes capturados: $pacotesCapturados, último: $bytesRead bytes")
+                        }
                     }
                 }
             } catch (e: Exception) {
@@ -188,21 +267,39 @@ class ChamadaManager(private val context: Context) {
     }
     
     /**
-     * Envia pacote de áudio para o servidor
-     * Formato: [tipo=1][chamadaId (4 bytes)][dados de áudio]
+     * Envia pacote de áudio para o servidor via fila
+     * Formato: [tamanho][tipo=1 (1 byte)][chamadaId (4 bytes)][dados de áudio]
+     * Todos os inteiros em LITTLE_ENDIAN
      */
-    private fun enviarAudio(audioData: ByteArray, size: Int) {
+    private suspend fun enviarAudio(audioData: ByteArray, size: Int) {
         try {
-            val packet = ByteBuffer.allocate(5 + size).order(ByteOrder.BIG_ENDIAN)
-            packet.put(PACKET_TYPE_AUDIO)
-            packet.putInt(chamadaId)
-            packet.put(audioData, 0, size)
+            // Valida tamanho
+            if (size <= 0 || size > BUFFER_SIZE) {
+                Log.w(TAG, "Tamanho de áudio inválido: $size bytes, ignorando")
+                return
+            }
             
-            outputStream?.write(packet.array())
-            outputStream?.flush()
+            // Monta payload: [tipo][chamadaId][áudio]
+            val payloadSize = 1 + 4 + size // tipo + chamadaId + áudio
+            val payload = ByteBuffer.allocate(payloadSize).order(ByteOrder.LITTLE_ENDIAN)
+            payload.put(PACKET_TYPE_AUDIO)
+            payload.putInt(chamadaId)
+            payload.put(audioData, 0, size)
+            
+            // Monta pacote completo: [tamanho][payload]
+            val packet = ByteBuffer.allocate(4 + payloadSize).order(ByteOrder.LITTLE_ENDIAN)
+            packet.putInt(payloadSize)
+            packet.put(payload.array())
+            
+            // Enfileira para envio serializado
+            val enviado = filaEnvio.trySend(packet.array()).isSuccess
+            
+            if (!enviado) {
+                Log.w(TAG, "Fila de envio cheia, pacote descartado")
+            }
             
         } catch (e: Exception) {
-            Log.e(TAG, "Erro ao enviar áudio", e)
+            Log.e(TAG, "Erro ao enfileirar áudio", e)
         }
     }
     
@@ -229,41 +326,58 @@ class ChamadaManager(private val context: Context) {
     
     /**
      * Recebe áudio do servidor e reproduz
-     * Servidor envia: [clientId (4 bytes)][dados de áudio]
+     * Servidor envia: [tamanho (4 bytes)][clientId (4 bytes)][dados de áudio]
+     * Todos os inteiros em LITTLE_ENDIAN (padrão Delphi)
      * 
      * Para chamadas em grupo, faz mixing de múltiplos streams
      */
     private suspend fun receberEReproducirAudio() {
         try {
-            val available = inputStream?.available() ?: 0
+            // Lê tamanho total do pacote (4 bytes, LITTLE_ENDIAN)
+            val tamanhoBytes = ByteArray(4)
+            inputStream?.readFully(tamanhoBytes)
+            val tamanho = ByteBuffer.wrap(tamanhoBytes).order(ByteOrder.LITTLE_ENDIAN).int
             
-            if (available >= 4) {
-                // Lê ID do cliente que enviou o áudio
-                val clientId = inputStream?.readInt() ?: return
-                
-                // Verifica se há dados de áudio disponíveis
-                val audioAvailable = inputStream?.available() ?: 0
-                
-                if (audioAvailable > 0) {
-                    val audioData = ByteArray(minOf(audioAvailable, BUFFER_SIZE))
-                    inputStream?.readFully(audioData)
-                    
-                    // Converte bytes para shorts (PCM 16-bit)
-                    val audioShorts = bytesToShorts(audioData)
-                    
-                    // Adiciona ao buffer de mixing do participante
-                    adicionarAoMixing(clientId, audioShorts)
-                    
-                    // Faz mixing e reproduz
-                    val mixedAudio = mixar()
-                    
-                    if (mixedAudio.isNotEmpty()) {
-                        reproduzirAudio(mixedAudio)
-                    }
-                }
-            } else {
-                delay(5) // Pequeno delay para não sobrecarregar CPU
+            if (tamanho <= 4) {
+                Log.w(TAG, "Tamanho de pacote inválido: $tamanho bytes")
+                return
             }
+            
+            // Lê ID do cliente que enviou o áudio (4 bytes, LITTLE_ENDIAN)
+            val clientIdBytes = ByteArray(4)
+            inputStream?.readFully(clientIdBytes)
+            val clientId = ByteBuffer.wrap(clientIdBytes).order(ByteOrder.LITTLE_ENDIAN).int
+            
+            // Calcula tamanho do áudio
+            val audioSize = tamanho - 4 // tamanho total - clientId
+            
+            if (audioSize <= 0 || audioSize > BUFFER_SIZE * 4) {
+                Log.w(TAG, "Tamanho de áudio inválido: $audioSize bytes (clientId=$clientId)")
+                return
+            }
+            
+            // Lê dados de áudio (bloqueante)
+            val audioData = ByteArray(audioSize)
+            inputStream?.readFully(audioData)
+            
+            Log.d(TAG, "Áudio recebido: clientId=$clientId, tamanho=$audioSize bytes")
+            
+            // Converte bytes para shorts (PCM 16-bit)
+            val audioShorts = bytesToShorts(audioData)
+            
+            // Adiciona ao buffer de mixing do participante
+            adicionarAoMixing(clientId, audioShorts)
+            
+            // Faz mixing e reproduz
+            val mixedAudio = mixar()
+            
+            if (mixedAudio.isNotEmpty()) {
+                reproduzirAudio(mixedAudio)
+            }
+            
+        } catch (e: EOFException) {
+            Log.e(TAG, "Conexão encerrada pelo servidor")
+            finalizarChamada()
         } catch (e: Exception) {
             Log.e(TAG, "Erro ao receber/reproduzir áudio", e)
         }
@@ -358,6 +472,10 @@ class ChamadaManager(private val context: Context) {
         // Cancela jobs
         captureJob?.cancel()
         playbackJob?.cancel()
+        senderJob?.cancel()
+        
+        // Fecha canal de envio
+        filaEnvio.close()
         
         // Para e libera recursos de áudio
         try {

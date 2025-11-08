@@ -13,7 +13,7 @@ import com.conversa.conversa.data.api.RetrofitClient
 import com.conversa.conversa.data.chamada.ChamadaManager
 import com.conversa.conversa.data.preferences.UserPreferences
 import com.conversa.conversa.data.repository.ChamadaRepository
-import com.conversa.conversa.data.websocket.WebSocketManager
+import com.conversa.conversa.data.socket.SocketManager
 import com.conversa.conversa.databinding.ActivityChamadaBinding
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.firstOrNull
@@ -65,18 +65,23 @@ class ChamadaActivity : AppCompatActivity() {
         
         lifecycleScope.launch {
             val apiUrl = userPreferences.apiUrl.first() ?: ""
-            val wsUrl = apiUrl.replace("http", "ws")
-            val token = userPreferences.authToken.first() ?: ""
+            val host = apiUrl.replace("http://", "")
+                             .replace("https://", "")
+                             .split(":")[0]
+            val port = 8090
             
-            val webSocketManager = WebSocketManager(this@ChamadaActivity)
+            val socketManager = SocketManager(this@ChamadaActivity)
             
             repository = ChamadaRepository(
                 context = this@ChamadaActivity,
                 api = RetrofitClient.api,
                 chamadaManager = ChamadaManager(this@ChamadaActivity),
-                webSocketManager = webSocketManager,
+                socketManager = socketManager,
                 userPreferences = userPreferences
             )
+            
+            // Conectar ao Socket TCP
+            socketManager.conectar(host, port)
             
             // Configurar callbacks
             setupCallbacks()

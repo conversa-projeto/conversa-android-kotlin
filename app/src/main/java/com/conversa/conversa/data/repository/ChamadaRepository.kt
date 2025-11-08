@@ -9,7 +9,7 @@ import com.conversa.conversa.data.model.ChamadaResponse
 import com.conversa.conversa.data.model.IniciarChamadaRequest
 import com.conversa.conversa.data.model.UsuarioIdDto
 import com.conversa.conversa.data.preferences.UserPreferences
-import com.conversa.conversa.data.websocket.WebSocketManager
+import com.conversa.conversa.data.socket.SocketManager
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.firstOrNull
 import retrofit2.Response
@@ -22,7 +22,7 @@ class ChamadaRepository(
     private val context: Context,
     private val api: ConversaApi,
     private val chamadaManager: ChamadaManager,
-    private val webSocketManager: WebSocketManager,
+    private val socketManager: SocketManager,
     private val userPreferences: UserPreferences
 ) {
     
@@ -47,32 +47,32 @@ class ChamadaRepository(
     }
     
     /**
-     * Configura callbacks do WebSocket
+     * Configura callbacks do Socket TCP
      */
     private fun setupWebSocketCallbacks() {
-        webSocketManager.onChamadaRecebida = { chamadaId, usuarioId, usuarioNome ->
+        socketManager.onChamadaRecebida = { chamadaId, usuarioId, usuarioNome ->
             Log.d(TAG, "Chamada recebida: $chamadaId de $usuarioNome")
             // O callback será tratado pela Activity
         }
         
-        webSocketManager.onChamadaFinalizada = { chamadaId, usuarioId ->
+        socketManager.onChamadaFinalizada = { chamadaId, usuarioId ->
             Log.d(TAG, "Chamada finalizada: $chamadaId")
             if (chamadaAtual?.id == chamadaId) {
                 finalizarChamadaLocal()
             }
         }
         
-        webSocketManager.onUsuarioEntrou = { chamadaId, usuarioId ->
+        socketManager.onUsuarioEntrou = { chamadaId, usuarioId ->
             Log.d(TAG, "Usuário entrou na chamada: $chamadaId")
             // O callback será tratado pela Activity
         }
         
-        webSocketManager.onUsuarioSaiu = { chamadaId, usuarioId ->
+        socketManager.onUsuarioSaiu = { chamadaId, usuarioId ->
             Log.d(TAG, "Usuário saiu da chamada: $chamadaId")
             // O callback será tratado pela Activity
         }
         
-        webSocketManager.onUsuarioRecusou = { chamadaId, usuarioId ->
+        socketManager.onUsuarioRecusou = { chamadaId, usuarioId ->
             Log.d(TAG, "Usuário recusou a chamada: $chamadaId")
             // O callback será tratado pela Activity
         }

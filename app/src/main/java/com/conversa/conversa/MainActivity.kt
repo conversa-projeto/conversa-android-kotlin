@@ -38,7 +38,7 @@ class MainActivity : AppCompatActivity(), NavigationView.OnNavigationItemSelecte
     private lateinit var userPreferences: UserPreferences
     private lateinit var conversasAdapter: ConversasAdapter
     private lateinit var toggle: ActionBarDrawerToggle
-    private lateinit var webSocketManager: com.conversa.conversa.data.websocket.WebSocketManager
+    private lateinit var socketManager: com.conversa.conversa.data.socket.SocketManager
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -68,7 +68,7 @@ class MainActivity : AppCompatActivity(), NavigationView.OnNavigationItemSelecte
         
         lifecycleScope.launch {
             carregarConfiguracoes()
-            inicializarWebSocket()
+            inicializarSocket()
             carregarConversas()
         }
 
@@ -265,29 +265,31 @@ class MainActivity : AppCompatActivity(), NavigationView.OnNavigationItemSelecte
         }
     }
     
-    private suspend fun inicializarWebSocket() {
+    private suspend fun inicializarSocket() {
         try {
             val apiUrl = userPreferences.apiUrl.first()
-            val token = userPreferences.authToken.first()
             
-            if (!apiUrl.isNullOrEmpty() && !token.isNullOrEmpty()) {
-                val wsUrl = apiUrl.replace("http://", "ws://")
-                                  .replace("https://", "wss://")
+            if (!apiUrl.isNullOrEmpty()) {
+                // Extrai host e define porta 8090
+                val host = apiUrl.replace("http://", "")
+                                 .replace("https://", "")
+                                 .split(":")[0]
+                val port = 8090
                 
-                webSocketManager = com.conversa.conversa.data.websocket.WebSocketManager(this)
+                socketManager = com.conversa.conversa.data.socket.SocketManager(this)
                 
                 // Configurar callback para chamadas recebidas
-                webSocketManager.onChamadaRecebida = { chamadaId, usuarioId, usuarioNome ->
+                socketManager.onChamadaRecebida = { chamadaId, usuarioId, usuarioNome ->
                     mostrarTelaChamadaRecebida(chamadaId, usuarioId, usuarioNome)
                 }
                 
-                // Conectar ao WebSocket
-                webSocketManager.conectar(wsUrl, token)
+                // Conectar ao Socket TCP
+                socketManager.conectar(host, port)
                 
-                android.util.Log.d("MainActivity", "WebSocket inicializado com sucesso")
+                android.util.Log.d("MainActivity", "Socket TCP inicializado com sucesso: $host:$port")
             }
         } catch (e: Exception) {
-            android.util.Log.e("MainActivity", "Erro ao inicializar WebSocket", e)
+            android.util.Log.e("MainActivity", "Erro ao inicializar Socket TCP", e)
         }
     }
     
@@ -317,8 +319,8 @@ class MainActivity : AppCompatActivity(), NavigationView.OnNavigationItemSelecte
     
     override fun onDestroy() {
         super.onDestroy()
-        if (::webSocketManager.isInitialized) {
-            webSocketManager.desconectar()
+        if (::socketManager.isInitialized) {
+            socketManager.desconectar()
         }
     }
 }

@@ -854,12 +854,12 @@ class ChatActivity : AppCompatActivity() {
                 ).show()
                 
                 // Criar repository de chamada
-                val webSocketManager = com.conversa.conversa.data.websocket.WebSocketManager(this@ChatActivity)
+                val socketManager = com.conversa.conversa.data.socket.SocketManager(this@ChatActivity)
                 val repository = com.conversa.conversa.data.repository.ChamadaRepository(
                     context = this@ChatActivity,
                     api = RetrofitClient.api,
                     chamadaManager = com.conversa.conversa.data.chamada.ChamadaManager(this@ChatActivity),
-                    webSocketManager = webSocketManager,
+                    socketManager = socketManager,
                     userPreferences = userPreferences
                 )
                 
