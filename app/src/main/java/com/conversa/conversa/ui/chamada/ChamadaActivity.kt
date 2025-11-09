@@ -1,11 +1,16 @@
 package com.conversa.conversa.ui.chamada
 
+import android.Manifest
+import android.content.pm.PackageManager
 import android.media.AudioManager
 import android.os.Bundle
 import android.os.SystemClock
 import android.util.Log
+import android.view.View
 import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
+import androidx.core.app.ActivityCompat
+import androidx.core.content.ContextCompat
 import androidx.lifecycle.lifecycleScope
 import com.conversa.conversa.R
 import com.conversa.conversa.data.api.RetrofitClient
@@ -23,18 +28,22 @@ class ChamadaActivity : AppCompatActivity() {
     private lateinit var audioManager: AudioManager
     
     private var chamadaId: Int = 0
+    private var usuarioId: Int = 0
     private var usuarioNome: String = ""
-    private var isIniciador: Boolean = false
+    private var isIncoming: Boolean = false // NOVO: determina se é chamada recebida
     private var isMuted: Boolean = false
     private var isSpeakerOn: Boolean = false
     private var chamadaConectada: Boolean = false
+    private var permissoesVerificadas: Boolean = false
 
     companion object {
         private const val TAG = "ChamadaActivity"
+        private const val REQUEST_RECORD_AUDIO = 201
         
         const val EXTRA_CHAMADA_ID = "chamada_id"
+        const val EXTRA_USUARIO_ID = "usuario_id"
         const val EXTRA_USUARIO_NOME = "usuario_nome"
-        const val EXTRA_IS_INICIADOR = "is_iniciador"
+        const val EXTRA_IS_INCOMING = "is_incoming" // NOVO
     }
 
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -44,8 +53,9 @@ class ChamadaActivity : AppCompatActivity() {
 
         // Obter dados do intent
         chamadaId = intent.getIntExtra(EXTRA_CHAMADA_ID, 0)
+        usuarioId = intent.getIntExtra(EXTRA_USUARIO_ID, 0)
         usuarioNome = intent.getStringExtra(EXTRA_USUARIO_NOME) ?: "Contato"
-        isIniciador = intent.getBooleanExtra(EXTRA_IS_INICIADOR, false)
+        isIncoming = intent.getBooleanExtra(EXTRA_IS_INCOMING, false) // NOVO
 
         if (chamadaId == 0) {
             Toast.makeText(this, "Erro: chamada inválida", Toast.LENGTH_SHORT).show()
@@ -53,17 +63,76 @@ class ChamadaActivity : AppCompatActivity() {
             return
         }
 
+        Log.d(TAG, "Chamada: id=$chamadaId, incoming=$isIncoming")
+
         // Inicializar AudioManager
         audioManager = getSystemService(AUDIO_SERVICE) as AudioManager
 
         // Inicializar componentes
         userPreferences = UserPreferences(this)
         
-        // Usa o SocketManager compartilhado do Service
+        // Verificar permissão de áudio
+        verificarPermissaoAudio()
+    }
+    
+    private fun verificarPermissaoAudio() {
+        if (ContextCompat.checkSelfPermission(
+                this,
+                Manifest.permission.RECORD_AUDIO
+            ) != PackageManager.PERMISSION_GRANTED
+        ) {
+            Log.w(TAG, "Permissão de áudio NÃO concedida, solicitando...")
+            ActivityCompat.requestPermissions(
+                this,
+                arrayOf(Manifest.permission.RECORD_AUDIO),
+                REQUEST_RECORD_AUDIO
+            )
+        } else {
+            Log.d(TAG, "Permissão de áudio já concedida")
+            permissoesVerificadas = true
+            inicializarChamada()
+        }
+    }
+    
+    override fun onRequestPermissionsResult(
+        requestCode: Int,
+        permissions: Array<out String>,
+        grantResults: IntArray
+    ) {
+        super.onRequestPermissionsResult(requestCode, permissions, grantResults)
+        
+        when (requestCode) {
+            REQUEST_RECORD_AUDIO -> {
+                if (grantResults.isNotEmpty() && 
+                    grantResults[0] == PackageManager.PERMISSION_GRANTED) {
+                    Log.d(TAG, "Permissão de áudio concedida")
+                    permissoesVerificadas = true
+                    inicializarChamada()
+                } else {
+                    Log.e(TAG, "Permissão de áudio NEGADA")
+                    Toast.makeText(
+                        this,
+                        "Permissão de microfone necessária para chamadas",
+                        Toast.LENGTH_LONG
+                    ).show()
+                    finish()
+                }
+            }
+        }
+    }
+    
+    private fun inicializarChamada() {
+        if (!permissoesVerificadas) {
+            Log.e(TAG, "Tentou inicializar sem permissões verificadas")
+            return
+        }
+        
+        Log.d(TAG, "Inicializando chamada com permissões OK")
+        
         val socketManager = ChamadaIncomingActivity.sharedSocketManager
         
         if (socketManager == null) {
-            Log.e(TAG, "SocketManager não disponível - Service não iniciado?")
+            Log.e(TAG, "SocketManager não disponível")
             Toast.makeText(this, "Erro: serviço não disponível", Toast.LENGTH_SHORT).show()
             finish()
             return
@@ -77,23 +146,60 @@ class ChamadaActivity : AppCompatActivity() {
             userPreferences = userPreferences
         )
         
-        // Configurar callbacks
         setupCallbacks()
-
         setupUI()
         setupListeners()
+        
+        // Se é incoming, mostra botões de aceitar/recusar
+        // Se não, já inicia conectando
+        if (isIncoming) {
+            mostrarEstadoIncoming()
+        } else {
+            mostrarEstadoAtivo()
+        }
     }
 
     private fun setupUI() {
         binding.tvNomeContato.text = usuarioNome
-        binding.tvTimer.text = getString(R.string.conectando)
+        binding.tvTimer.text = if (isIncoming) getString(R.string.chamada_recebida) else getString(R.string.conectando)
         
-        // Iniciar com speaker desligado e microfone ligado
         atualizarBotaoMute()
         atualizarBotaoSpeaker()
     }
+    
+    /**
+     * Mostra estado INCOMING: botões aceitar/recusar
+     */
+    private fun mostrarEstadoIncoming() {
+        binding.llBotoesIncoming.visibility = View.VISIBLE
+        binding.llControles.visibility = View.GONE
+        binding.llBotaoEncerrar.visibility = View.GONE
+        
+        binding.tvTimer.text = getString(R.string.chamada_recebida)
+    }
+    
+    /**
+     * Mostra estado ATIVO: controles mute/speaker/encerrar
+     */
+    private fun mostrarEstadoAtivo() {
+        binding.llBotoesIncoming.visibility = View.GONE
+        binding.llControles.visibility = View.VISIBLE
+        binding.llBotaoEncerrar.visibility = View.VISIBLE
+        
+        binding.tvTimer.text = getString(R.string.conectando)
+    }
 
     private fun setupListeners() {
+        // Botões INCOMING
+        binding.btnAceitar.setOnClickListener {
+            aceitarChamada()
+        }
+        
+        binding.btnRecusar.setOnClickListener {
+            recusarChamada()
+        }
+        
+        // Botões ATIVOS
         binding.btnMute.setOnClickListener {
             toggleMute()
         }
@@ -104,6 +210,66 @@ class ChamadaActivity : AppCompatActivity() {
 
         binding.btnEncerrarChamada.setOnClickListener {
             finalizarChamada()
+        }
+    }
+    
+    /**
+     * Aceita a chamada recebida
+     */
+    private fun aceitarChamada() {
+        Log.d(TAG, "Aceitando chamada $chamadaId")
+        
+        binding.btnAceitar.isEnabled = false
+        binding.btnRecusar.isEnabled = false
+        binding.tvTimer.text = getString(R.string.conectando)
+        
+        lifecycleScope.launch {
+            try {
+                val result = repository.aceitarChamada(chamadaId)
+                
+                result.onSuccess {
+                    Log.d(TAG, "Chamada aceita com sucesso")
+                    mostrarEstadoAtivo()
+                }
+                
+                result.onFailure { erro ->
+                    Log.e(TAG, "Erro ao aceitar chamada", erro)
+                    Toast.makeText(
+                        this@ChamadaActivity,
+                        "Erro ao aceitar: ${erro.message}",
+                        Toast.LENGTH_SHORT
+                    ).show()
+                    finish()
+                }
+            } catch (e: Exception) {
+                Log.e(TAG, "Exceção ao aceitar", e)
+                Toast.makeText(
+                    this@ChamadaActivity,
+                    "Erro: ${e.message}",
+                    Toast.LENGTH_SHORT
+                ).show()
+                finish()
+            }
+        }
+    }
+    
+    /**
+     * Recusa a chamada recebida
+     */
+    private fun recusarChamada() {
+        Log.d(TAG, "Recusando chamada $chamadaId")
+        
+        binding.btnAceitar.isEnabled = false
+        binding.btnRecusar.isEnabled = false
+        
+        lifecycleScope.launch {
+            try {
+                repository.recusarChamada(chamadaId)
+                finish()
+            } catch (e: Exception) {
+                Log.e(TAG, "Erro ao recusar", e)
+                finish()
+            }
         }
     }
 
@@ -231,17 +397,15 @@ class ChamadaActivity : AppCompatActivity() {
         Log.d(TAG, "Activity sendo destruída")
         chamadaConectada = false
         
-        // Limpa recursos do repository (fecha conexão TCP)
         if (::repository.isInitialized) {
             repository.cleanup()
         }
         
-        // Restaurar configuração de áudio
         audioManager.mode = AudioManager.MODE_NORMAL
         audioManager.isSpeakerphoneOn = false
     }
 
     override fun onBackPressed() {
-        // Não permite voltar - precisa encerrar a chamada
+        // Não permite voltar
     }
 }

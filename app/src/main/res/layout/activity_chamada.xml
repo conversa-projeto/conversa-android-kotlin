@@ -51,7 +51,74 @@
         app:layout_constraintTop_toBottomOf="@id/tvNomeContato"
         tools:text="00:35" />
 
-    <!-- Container de controles -->
+    <!-- BOTÕES INCOMING: Aceitar/Recusar -->
+    <LinearLayout
+        android:id="@+id/llBotoesIncoming"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginBottom="80dp"
+        android:gravity="center"
+        android:orientation="horizontal"
+        android:visibility="gone"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        tools:visibility="visible">
+
+        <!-- Botão Recusar -->
+        <LinearLayout
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginEnd="48dp"
+            android:gravity="center"
+            android:orientation="vertical">
+
+            <ImageButton
+                android:id="@+id/btnRecusar"
+                android:layout_width="64dp"
+                android:layout_height="64dp"
+                android:background="@drawable/bg_btn_reject_call"
+                android:contentDescription="@string/recusar_chamada"
+                android:src="@drawable/ic_call_end"
+                app:tint="@color/white" />
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="8dp"
+                android:text="@string/recusar"
+                android:textColor="@color/corPrimaria"
+                android:textSize="14sp" />
+        </LinearLayout>
+
+        <!-- Botão Aceitar -->
+        <LinearLayout
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginStart="48dp"
+            android:gravity="center"
+            android:orientation="vertical">
+
+            <ImageButton
+                android:id="@+id/btnAceitar"
+                android:layout_width="64dp"
+                android:layout_height="64dp"
+                android:background="@drawable/bg_btn_accept_call"
+                android:contentDescription="@string/aceitar_chamada"
+                android:src="@drawable/ic_call"
+                app:tint="@color/white" />
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="8dp"
+                android:text="@string/aceitar"
+                android:textColor="@color/corPrimaria"
+                android:textSize="14sp" />
+        </LinearLayout>
+    </LinearLayout>
+
+    <!-- CONTROLES ATIVOS: Mute/Speaker -->
     <LinearLayout
         android:id="@+id/llControles"
         android:layout_width="wrap_content"
@@ -59,9 +126,11 @@
         android:layout_marginBottom="120dp"
         android:gravity="center"
         android:orientation="horizontal"
-        app:layout_constraintBottom_toTopOf="@id/btnEncerrar"
+        android:visibility="gone"
+        app:layout_constraintBottom_toTopOf="@id/llBotaoEncerrar"
         app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintStart_toStartOf="parent">
+        app:layout_constraintStart_toStartOf="parent"
+        tools:visibility="visible">
 
         <!-- Botão Mute -->
         <LinearLayout
@@ -120,15 +189,17 @@
 
     <!-- Botão Encerrar -->
     <LinearLayout
-        android:id="@+id/btnEncerrar"
+        android:id="@+id/llBotaoEncerrar"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_marginBottom="80dp"
         android:gravity="center"
         android:orientation="vertical"
+        android:visibility="gone"
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintStart_toStartOf="parent">
+        app:layout_constraintStart_toStartOf="parent"
+        tools:visibility="visible">
 
         <ImageButton
             android:id="@+id/btnEncerrarChamada"

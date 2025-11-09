@@ -881,7 +881,7 @@ class ChatActivity : AppCompatActivity() {
                     val intent = android.content.Intent(this@ChatActivity, com.conversa.conversa.ui.chamada.ChamadaActivity::class.java).apply {
                         putExtra(com.conversa.conversa.ui.chamada.ChamadaActivity.EXTRA_CHAMADA_ID, chamada.id)
                         putExtra(com.conversa.conversa.ui.chamada.ChamadaActivity.EXTRA_USUARIO_NOME, conversaNome)
-                        putExtra(com.conversa.conversa.ui.chamada.ChamadaActivity.EXTRA_IS_INICIADOR, true)
+                        putExtra(com.conversa.conversa.ui.chamada.ChamadaActivity.EXTRA_IS_INCOMING, false) // Quem inicia
                     }
                     startActivity(intent)
                 }

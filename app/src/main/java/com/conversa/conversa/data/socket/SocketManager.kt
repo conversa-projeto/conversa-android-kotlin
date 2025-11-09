@@ -29,9 +29,9 @@ class SocketManager(private val context: Context) {
         const val TYPE_STATUS_MENSAGEM = 3
         const val TYPE_CHAMADA_RECEBIDA = 51
         const val TYPE_CHAMADA_FINALIZADA = 52
-        const val TYPE_USUARIO_RECUSOU = 53
-        const val TYPE_USUARIO_ENTROU = 54
-        const val TYPE_USUARIO_SAIU = 55
+        const val TYPE_CHAMADA_USUARIO_RECUSOU = 53
+        const val TYPE_CHAMADA_USUARIO_ENTROU = 54
+        const val TYPE_CHAMADA_USUARIO_SAIU = 55
         
         // Configurações de reconexão
         private const val RECONNECT_DELAY_MS = 5000L
@@ -233,21 +233,21 @@ class SocketManager(private val context: Context) {
                     onChamadaFinalizada?.invoke(chamadaId, usuarioId)
                 }
                 
-                TYPE_USUARIO_RECUSOU -> {
+                TYPE_CHAMADA_USUARIO_RECUSOU -> {
                     val chamadaId = obj.getInt("chamada_id")
                     val usuarioId = obj.getInt("usuario_id")
                     Log.d(TAG, "Usuário recusou chamada: $chamadaId")
                     onUsuarioRecusou?.invoke(chamadaId, usuarioId)
                 }
                 
-                TYPE_USUARIO_ENTROU -> {
+                TYPE_CHAMADA_USUARIO_ENTROU -> {
                     val chamadaId = obj.getInt("chamada_id")
                     val usuarioId = obj.getInt("usuario_id")
                     Log.d(TAG, "Usuário entrou na chamada: $chamadaId")
                     onUsuarioEntrou?.invoke(chamadaId, usuarioId)
                 }
                 
-                TYPE_USUARIO_SAIU -> {
+                TYPE_CHAMADA_USUARIO_SAIU -> {
                     val chamadaId = obj.getInt("chamada_id")
                     val usuarioId = obj.getInt("usuario_id")
                     Log.d(TAG, "Usuário saiu da chamada: $chamadaId")
