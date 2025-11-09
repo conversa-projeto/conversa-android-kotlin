@@ -4,7 +4,6 @@ import android.media.AudioManager
 import android.os.Bundle
 import android.os.SystemClock
 import android.util.Log
-import android.widget.Chronometer
 import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
 import androidx.lifecycle.lifecycleScope
@@ -13,10 +12,7 @@ import com.conversa.conversa.data.api.RetrofitClient
 import com.conversa.conversa.data.chamada.ChamadaManager
 import com.conversa.conversa.data.preferences.UserPreferences
 import com.conversa.conversa.data.repository.ChamadaRepository
-import com.conversa.conversa.data.socket.SocketManager
 import com.conversa.conversa.databinding.ActivityChamadaBinding
-import kotlinx.coroutines.flow.first
-import kotlinx.coroutines.flow.firstOrNull
 import kotlinx.coroutines.launch
 
 class ChamadaActivity : AppCompatActivity() {
@@ -63,29 +59,26 @@ class ChamadaActivity : AppCompatActivity() {
         // Inicializar componentes
         userPreferences = UserPreferences(this)
         
-        lifecycleScope.launch {
-            val apiUrl = userPreferences.apiUrl.first() ?: ""
-            val host = apiUrl.replace("http://", "")
-                             .replace("https://", "")
-                             .split(":")[0]
-            val port = 8090
-            
-            val socketManager = SocketManager(this@ChamadaActivity)
-            
-            repository = ChamadaRepository(
-                context = this@ChamadaActivity,
-                api = RetrofitClient.api,
-                chamadaManager = ChamadaManager(this@ChamadaActivity),
-                socketManager = socketManager,
-                userPreferences = userPreferences
-            )
-            
-            // Conectar ao Socket TCP
-            socketManager.conectar(host, port)
-            
-            // Configurar callbacks
-            setupCallbacks()
+        // Usa o SocketManager compartilhado do Service
+        val socketManager = ChamadaIncomingActivity.sharedSocketManager
+        
+        if (socketManager == null) {
+            Log.e(TAG, "SocketManager não disponível - Service não iniciado?")
+            Toast.makeText(this, "Erro: serviço não disponível", Toast.LENGTH_SHORT).show()
+            finish()
+            return
         }
+        
+        repository = ChamadaRepository(
+            context = this@ChamadaActivity,
+            api = RetrofitClient.api,
+            chamadaManager = ChamadaManager(this@ChamadaActivity),
+            socketManager = socketManager,
+            userPreferences = userPreferences
+        )
+        
+        // Configurar callbacks
+        setupCallbacks()
 
         setupUI()
         setupListeners()
@@ -115,23 +108,30 @@ class ChamadaActivity : AppCompatActivity() {
     }
 
     private fun setupCallbacks() {
+        Log.d(TAG, "Configurando callbacks do repository")
+        
         repository.onChamadaConectada = {
+            Log.d(TAG, "CALLBACK: Chamada conectada!")
             runOnUiThread {
                 chamadaConectada = true
                 binding.tvTimer.text = "00:00"
                 iniciarTimer()
+                Toast.makeText(this@ChamadaActivity, "Chamada conectada", Toast.LENGTH_SHORT).show()
             }
         }
 
         repository.onChamadaFinalizada = {
+            Log.d(TAG, "CALLBACK: Chamada finalizada!")
             runOnUiThread {
+                chamadaConectada = false
+                Toast.makeText(this@ChamadaActivity, "Chamada finalizada", Toast.LENGTH_SHORT).show()
                 finish()
             }
         }
 
         repository.onErro = { erro ->
+            Log.e(TAG, "CALLBACK: Erro na chamada: $erro")
             runOnUiThread {
-                Log.e(TAG, "Erro na chamada: $erro")
                 Toast.makeText(
                     this@ChamadaActivity,
                     "Erro: $erro",
@@ -143,8 +143,6 @@ class ChamadaActivity : AppCompatActivity() {
     }
 
     private fun iniciarTimer() {
-        // Converter TextView para Chronometer se necessário
-        // Por enquanto, vamos usar um timer simples
         val startTime = SystemClock.elapsedRealtime()
         
         lifecycleScope.launch {
@@ -167,7 +165,6 @@ class ChamadaActivity : AppCompatActivity() {
         isMuted = !isMuted
         
         // TODO: Implementar lógica de mute no ChamadaManager
-        // Por enquanto, apenas atualiza UI
         
         atualizarBotaoMute()
         
@@ -231,7 +228,13 @@ class ChamadaActivity : AppCompatActivity() {
 
     override fun onDestroy() {
         super.onDestroy()
+        Log.d(TAG, "Activity sendo destruída")
         chamadaConectada = false
+        
+        // Limpa recursos do repository (fecha conexão TCP)
+        if (::repository.isInitialized) {
+            repository.cleanup()
+        }
         
         // Restaurar configuração de áudio
         audioManager.mode = AudioManager.MODE_NORMAL

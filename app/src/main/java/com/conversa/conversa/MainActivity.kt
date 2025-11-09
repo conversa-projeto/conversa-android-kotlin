@@ -24,6 +24,7 @@ import com.conversa.conversa.data.preferences.UserPreferences
 import com.conversa.conversa.databinding.ActivityMainBinding
 import com.conversa.conversa.databinding.ContentMainBinding
 import com.conversa.conversa.databinding.DialogContatosBinding
+import com.conversa.conversa.service.SocketService
 import com.conversa.conversa.ui.chat.ChatActivity
 import com.google.android.material.navigation.NavigationView
 import kotlinx.coroutines.flow.first
@@ -38,7 +39,6 @@ class MainActivity : AppCompatActivity(), NavigationView.OnNavigationItemSelecte
     private lateinit var userPreferences: UserPreferences
     private lateinit var conversasAdapter: ConversasAdapter
     private lateinit var toggle: ActionBarDrawerToggle
-    private lateinit var socketManager: com.conversa.conversa.data.socket.SocketManager
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -256,6 +256,9 @@ class MainActivity : AppCompatActivity(), NavigationView.OnNavigationItemSelecte
     
     private fun realizarLogout() {
         lifecycleScope.launch {
+            // Para o SocketService
+            SocketService.stop(this@MainActivity)
+            
             userPreferences.clear()
             
             val intent = Intent(this@MainActivity, LoginActivity::class.java)
@@ -275,21 +278,16 @@ class MainActivity : AppCompatActivity(), NavigationView.OnNavigationItemSelecte
                                  .replace("https://", "")
                                  .split(":")[0]
                 val port = 8090
+
+                val token = userPreferences.authToken.first() ?: "";
                 
-                socketManager = com.conversa.conversa.data.socket.SocketManager(this)
+                // Inicia SocketService em foreground
+                SocketService.start(this, host, port, token)
                 
-                // Configurar callback para chamadas recebidas
-                socketManager.onChamadaRecebida = { chamadaId, usuarioId, usuarioNome ->
-                    mostrarTelaChamadaRecebida(chamadaId, usuarioId, usuarioNome)
-                }
-                
-                // Conectar ao Socket TCP
-                socketManager.conectar(host, port)
-                
-                android.util.Log.d("MainActivity", "Socket TCP inicializado com sucesso: $host:$port")
+                android.util.Log.d("MainActivity", "SocketService iniciado: $host:$port")
             }
         } catch (e: Exception) {
-            android.util.Log.e("MainActivity", "Erro ao inicializar Socket TCP", e)
+            android.util.Log.e("MainActivity", "Erro ao inicializar SocketService", e)
         }
     }
     
@@ -319,8 +317,6 @@ class MainActivity : AppCompatActivity(), NavigationView.OnNavigationItemSelecte
     
     override fun onDestroy() {
         super.onDestroy()
-        if (::socketManager.isInitialized) {
-            socketManager.desconectar()
-        }
+        // SocketService continua rodando em background
     }
 }

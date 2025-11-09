@@ -14,10 +14,7 @@ import com.conversa.conversa.data.api.RetrofitClient
 import com.conversa.conversa.data.chamada.ChamadaManager
 import com.conversa.conversa.data.preferences.UserPreferences
 import com.conversa.conversa.data.repository.ChamadaRepository
-import com.conversa.conversa.data.socket.SocketManager
 import com.conversa.conversa.databinding.ActivityChamadaIncomingBinding
-import kotlinx.coroutines.flow.first
-import kotlinx.coroutines.flow.firstOrNull
 import kotlinx.coroutines.launch
 
 class ChamadaIncomingActivity : AppCompatActivity() {
@@ -37,6 +34,9 @@ class ChamadaIncomingActivity : AppCompatActivity() {
         const val EXTRA_CHAMADA_ID = "chamada_id"
         const val EXTRA_USUARIO_ID = "usuario_id"
         const val EXTRA_USUARIO_NOME = "usuario_nome"
+        
+        // Singleton para compartilhar SocketManager com Service
+        var sharedSocketManager: com.conversa.conversa.data.socket.SocketManager? = null
     }
 
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -58,26 +58,23 @@ class ChamadaIncomingActivity : AppCompatActivity() {
         // Inicializar componentes
         userPreferences = UserPreferences(this)
         
-        lifecycleScope.launch {
-            val apiUrl = userPreferences.apiUrl.first() ?: ""
-            val host = apiUrl.replace("http://", "")
-                             .replace("https://", "")
-                             .split(":")[0]
-            val port = 8090
-            
-            val socketManager = SocketManager(this@ChamadaIncomingActivity)
-            
-            repository = ChamadaRepository(
-                context = this@ChamadaIncomingActivity,
-                api = RetrofitClient.api,
-                chamadaManager = ChamadaManager(this@ChamadaIncomingActivity),
-                socketManager = socketManager,
-                userPreferences = userPreferences
-            )
-            
-            // Conectar ao Socket TCP
-            socketManager.conectar(host, port)
+        // Usa o SocketManager do Service (compartilhado)
+        val socketManager = sharedSocketManager
+        
+        if (socketManager == null) {
+            Log.e(TAG, "SocketManager não disponível - Service não iniciado?")
+            Toast.makeText(this, "Erro: serviço não disponível", Toast.LENGTH_SHORT).show()
+            finish()
+            return
         }
+        
+        repository = ChamadaRepository(
+            context = this@ChamadaIncomingActivity,
+            api = RetrofitClient.api,
+            chamadaManager = ChamadaManager(this@ChamadaIncomingActivity),
+            socketManager = socketManager,
+            userPreferences = userPreferences
+        )
 
         setupUI()
         setupListeners()

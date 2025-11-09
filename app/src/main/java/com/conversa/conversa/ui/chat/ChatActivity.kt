@@ -853,8 +853,19 @@ class ChatActivity : AppCompatActivity() {
                     Toast.LENGTH_SHORT
                 ).show()
                 
+                // Usa SocketManager compartilhado do Service
+                val socketManager = com.conversa.conversa.ui.chamada.ChamadaIncomingActivity.sharedSocketManager
+                
+                if (socketManager == null) {
+                    Toast.makeText(
+                        this@ChatActivity,
+                        "Erro: serviço não disponível",
+                        Toast.LENGTH_SHORT
+                    ).show()
+                    return@launch
+                }
+                
                 // Criar repository de chamada
-                val socketManager = com.conversa.conversa.data.socket.SocketManager(this@ChatActivity)
                 val repository = com.conversa.conversa.data.repository.ChamadaRepository(
                     context = this@ChatActivity,
                     api = RetrofitClient.api,

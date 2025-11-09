@@ -12,7 +12,6 @@ import com.conversa.conversa.data.preferences.UserPreferences
 import com.conversa.conversa.data.socket.SocketManager
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.firstOrNull
-import retrofit2.Response
 
 /**
  * Repository para gerenciar chamadas de áudio
@@ -42,40 +41,7 @@ class ChamadaRepository(
     var onErro: ((String) -> Unit)? = null
     
     init {
-        setupWebSocketCallbacks()
         setupChamadaManagerCallbacks()
-    }
-    
-    /**
-     * Configura callbacks do Socket TCP
-     */
-    private fun setupWebSocketCallbacks() {
-        socketManager.onChamadaRecebida = { chamadaId, usuarioId, usuarioNome ->
-            Log.d(TAG, "Chamada recebida: $chamadaId de $usuarioNome")
-            // O callback será tratado pela Activity
-        }
-        
-        socketManager.onChamadaFinalizada = { chamadaId, usuarioId ->
-            Log.d(TAG, "Chamada finalizada: $chamadaId")
-            if (chamadaAtual?.id == chamadaId) {
-                finalizarChamadaLocal()
-            }
-        }
-        
-        socketManager.onUsuarioEntrou = { chamadaId, usuarioId ->
-            Log.d(TAG, "Usuário entrou na chamada: $chamadaId")
-            // O callback será tratado pela Activity
-        }
-        
-        socketManager.onUsuarioSaiu = { chamadaId, usuarioId ->
-            Log.d(TAG, "Usuário saiu da chamada: $chamadaId")
-            // O callback será tratado pela Activity
-        }
-        
-        socketManager.onUsuarioRecusou = { chamadaId, usuarioId ->
-            Log.d(TAG, "Usuário recusou a chamada: $chamadaId")
-            // O callback será tratado pela Activity
-        }
     }
     
     /**
@@ -93,7 +59,7 @@ class ChamadaRepository(
         }
         
         chamadaManager.onChamadaFinalizada = {
-            Log.d(TAG, "Chamada finalizada pelo gerenciador")
+            Log.d(TAG, "Chamada finalizada pelo gerenciador de áudio")
             onChamadaFinalizada?.invoke()
         }
     }
@@ -132,7 +98,7 @@ class ChamadaRepository(
                 val chamada = response.body()!!
                 chamadaAtual = chamada
                 
-                Log.d(TAG, "Chamada iniciada: ${chamada.id}")
+                Log.d(TAG, "Chamada iniciada via API: ${chamada.id}")
                 
                 // Conecta ao servidor TCP para áudio
                 val sucesso = chamadaManager.iniciarChamada(
@@ -143,16 +109,19 @@ class ChamadaRepository(
                 )
                 
                 if (sucesso) {
+                    Log.d(TAG, "Áudio conectado com sucesso")
                     onChamadaIniciada?.invoke(chamada)
                     Result.success(chamada)
                 } else {
+                    Log.e(TAG, "Falha ao conectar áudio TCP")
                     Result.failure(Exception("Falha ao conectar áudio"))
                 }
             } else {
+                Log.e(TAG, "Erro API ao iniciar chamada: ${response.code()}")
                 Result.failure(Exception("Erro ao iniciar chamada: ${response.code()}"))
             }
         } catch (e: Exception) {
-            Log.e(TAG, "Erro ao iniciar chamada", e)
+            Log.e(TAG, "Exceção ao iniciar chamada", e)
             Result.failure(e)
         }
     }
@@ -171,11 +140,25 @@ class ChamadaRepository(
             val apiUrl = userPreferences.apiUrl.firstOrNull() ?: ""
             val tcpHost = extrairHost(apiUrl)
             
+            Log.d(TAG, "Aceitando chamada $chamadaId...")
+            
             // Informa ao servidor que está entrando na chamada
             val response = api.entrarChamada("Bearer $token", ChamadaIdRequest(chamadaId))
             
             if (response.isSuccessful) {
-                Log.d(TAG, "Chamada aceita: $chamadaId")
+                Log.d(TAG, "Chamada aceita via API: $chamadaId")
+                
+                // Salva ID da chamada atual
+                chamadaAtual = ChamadaResponse(
+                    id = chamadaId,
+                    iniciada = null,
+                    finalizada = null,
+                    tipo = 1,
+                    status = 3, // EM_ANDAMENTO
+                    criadoEm = "",
+                    criadoPor = usuarioId,
+                    usuarios = emptyList()
+                )
                 
                 // Conecta ao servidor TCP
                 val sucesso = chamadaManager.iniciarChamada(
@@ -186,15 +169,18 @@ class ChamadaRepository(
                 )
                 
                 if (sucesso) {
+                    Log.d(TAG, "Áudio conectado com sucesso")
                     Result.success(Unit)
                 } else {
+                    Log.e(TAG, "Falha ao conectar áudio TCP")
                     Result.failure(Exception("Falha ao conectar áudio"))
                 }
             } else {
+                Log.e(TAG, "Erro API ao aceitar chamada: ${response.code()}")
                 Result.failure(Exception("Erro ao aceitar chamada: ${response.code()}"))
             }
         } catch (e: Exception) {
-            Log.e(TAG, "Erro ao aceitar chamada", e)
+            Log.e(TAG, "Exceção ao aceitar chamada", e)
             Result.failure(e)
         }
     }
@@ -209,16 +195,19 @@ class ChamadaRepository(
                 return Result.failure(Exception("Token não disponível"))
             }
             
+            Log.d(TAG, "Recusando chamada $chamadaId...")
+            
             val response = api.recusarChamada("Bearer $token", ChamadaIdRequest(chamadaId))
             
             if (response.isSuccessful) {
                 Log.d(TAG, "Chamada recusada: $chamadaId")
                 Result.success(Unit)
             } else {
+                Log.e(TAG, "Erro ao recusar chamada: ${response.code()}")
                 Result.failure(Exception("Erro ao recusar chamada: ${response.code()}"))
             }
         } catch (e: Exception) {
-            Log.e(TAG, "Erro ao recusar chamada", e)
+            Log.e(TAG, "Exceção ao recusar chamada", e)
             Result.failure(e)
         }
     }
@@ -228,32 +217,36 @@ class ChamadaRepository(
      */
     suspend fun finalizarChamada(): Result<Unit> {
         return try {
-            val chamada = chamadaAtual ?: return Result.success(Unit)
-            val token = userPreferences.authToken.first()
+            val chamada = chamadaAtual
             
-            // Finaliza áudio localmente
+            Log.d(TAG, "Finalizando chamada: ${chamada?.id ?: "nenhuma"}")
+            
+            // PRIMEIRO: Finaliza áudio (fecha socket TCP)
             chamadaManager.finalizarChamada()
             
-            // Notifica o servidor
-            if (token != null) {
-                api.finalizarChamada("Bearer $token", ChamadaIdRequest(chamada.id))
+            // SEGUNDO: Notifica servidor via API
+            if (chamada != null) {
+                val token = userPreferences.authToken.first()
+                if (token != null) {
+                    try {
+                        api.finalizarChamada("Bearer $token", ChamadaIdRequest(chamada.id))
+                        Log.d(TAG, "API notificada sobre finalização")
+                    } catch (e: Exception) {
+                        Log.e(TAG, "Erro ao notificar API, mas áudio já foi finalizado", e)
+                    }
+                }
             }
             
-            finalizarChamadaLocal()
+            // TERCEIRO: Limpa estado local
+            chamadaAtual = null
+            
+            Log.d(TAG, "Chamada finalizada completamente")
+            
             Result.success(Unit)
         } catch (e: Exception) {
             Log.e(TAG, "Erro ao finalizar chamada", e)
             Result.failure(e)
         }
-    }
-    
-    /**
-     * Finaliza a chamada localmente
-     */
-    private fun finalizarChamadaLocal() {
-        chamadaManager.finalizarChamada()
-        chamadaAtual = null
-        onChamadaFinalizada?.invoke()
     }
     
     /**
@@ -299,6 +292,7 @@ class ChamadaRepository(
      * Limpa recursos
      */
     fun cleanup() {
+        Log.d(TAG, "Cleanup do repository")
         chamadaManager.cleanup()
         chamadaAtual = null
     }

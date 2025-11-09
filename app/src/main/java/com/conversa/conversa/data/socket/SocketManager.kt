@@ -3,21 +3,19 @@ package com.conversa.conversa.data.socket
 import android.content.Context
 import android.util.Log
 import kotlinx.coroutines.*
+import okhttp3.*
 import org.json.JSONObject
-import java.io.*
-import java.net.Socket
-import java.nio.ByteBuffer
-import java.nio.ByteOrder
+import java.util.concurrent.TimeUnit
 
 /**
- * Gerenciador de Socket TCP para notificações em tempo real
+ * Gerenciador de WebSocket para notificações em tempo real
  * Responsável por:
- * - Conectar e manter conexão TCP na porta 8090
+ * - Conectar via WebSocket (protocolo ws://)
  * - Autenticar usando JWT
  * - Notificar eventos de chamada e mensagens
  * - Reconectar automaticamente em caso de falha
  * 
- * Protocolo: [tamanho (4 bytes LITTLE_ENDIAN)][dados JSON (UTF-8)]
+ * Protocolo WebSocket com frames padrão
  */
 class SocketManager(private val context: Context) {
     
@@ -38,13 +36,19 @@ class SocketManager(private val context: Context) {
         // Configurações de reconexão
         private const val RECONNECT_DELAY_MS = 5000L
         private const val MAX_RECONNECT_ATTEMPTS = 5
-        private const val SOCKET_TIMEOUT_MS = 30000 // 30 segundos
     }
     
-    private var socket: Socket? = null
-    private var outputStream: OutputStream? = null
-    private var inputStream: InputStream? = null
-    
+    private var webSocket: WebSocket? = null
+    private val okHttpClient: OkHttpClient by lazy {
+        OkHttpClient.Builder()
+            .connectTimeout(30, TimeUnit.SECONDS)
+            .readTimeout(0, TimeUnit.SECONDS) // Sem timeout de leitura (WebSocket mantém conexão)
+            .writeTimeout(30, TimeUnit.SECONDS)
+            .pingInterval(60, TimeUnit.SECONDS) // Ping a cada 60s (mais espaçado)
+            .retryOnConnectionFailure(true) // Retry automático
+            .build()
+    }
+
     private var currentHost: String? = null
     private var currentPort: Int = 0
     private var currentToken: String? = null
@@ -53,7 +57,6 @@ class SocketManager(private val context: Context) {
     
     // Coroutines
     private val scope = CoroutineScope(Dispatchers.IO + SupervisorJob())
-    private var receiveJob: Job? = null
     
     // Callbacks para eventos de chamada
     var onChamadaRecebida: ((chamadaId: Int, usuarioId: Int, usuarioNome: String) -> Unit)? = null
@@ -72,40 +75,28 @@ class SocketManager(private val context: Context) {
     var onErro: ((erro: String) -> Unit)? = null
     
     /**
-     * Conecta ao servidor TCP
+     * Conecta ao servidor WebSocket
      */
-    fun conectar(host: String, port: Int) {
+    fun conectar(host: String, port: Int, token: String) {
         currentHost = host
         currentPort = port
+        currentToken = token
         
         scope.launch {
             try {
-                Log.d(TAG, "Conectando ao servidor: $host:$port")
+                Log.d(TAG, "Conectando ao WebSocket: ws://$host:$port")
                 
-                // Conecta ao servidor TCP
-                socket = Socket(host, port).apply {
-                    tcpNoDelay = true
-                    soTimeout = SOCKET_TIMEOUT_MS
-                    keepAlive = true
-                }
+                val url = "ws://$host:$port"
+                val request = Request.Builder()
+                    .url(url)
+                    .build()
                 
-                outputStream = socket!!.getOutputStream()
-                inputStream = socket!!.getInputStream()
+                webSocket = okHttpClient.newWebSocket(request, createWebSocketListener())
                 
-                isConnected = true
-                reconnectAttempts = 0
-                
-                Log.d(TAG, "Socket TCP conectado")
-                
-                // Inicia recepção de mensagens
-                iniciarRecepcao()
-                
-                withContext(Dispatchers.Main) {
-                    onConectado?.invoke()
-                }
+                Log.d(TAG, "WebSocket iniciado")
                 
             } catch (e: Exception) {
-                Log.e(TAG, "Erro ao conectar", e)
+                Log.e(TAG, "Erro ao conectar WebSocket", e)
                 isConnected = false
                 
                 withContext(Dispatchers.Main) {
@@ -118,64 +109,84 @@ class SocketManager(private val context: Context) {
     }
     
     /**
-     * Inicia recepção de mensagens do servidor
+     * Cria o listener do WebSocket
      */
-    private fun iniciarRecepcao() {
-        receiveJob = scope.launch {
-            try {
-                Log.d(TAG, "Recepção de mensagens iniciada")
-                
-                while (isConnected && isActive) {
-                    receberMensagem()
-                }
-            } catch (e: EOFException) {
-                Log.e(TAG, "Conexão encerrada pelo servidor")
-                desconectarInterno()
-            } catch (e: Exception) {
-                Log.e(TAG, "Erro na recepção de mensagens", e)
-                desconectarInterno()
-            } finally {
-                Log.d(TAG, "Recepção de mensagens finalizada")
+    private fun createWebSocketListener() = object : WebSocketListener() {
+        override fun onOpen(webSocket: WebSocket, response: Response) {
+            Log.d(TAG, "WebSocket conectado")
+            isConnected = true
+            reconnectAttempts = 0
+            
+            // Autentica após conexão
+            autenticar(currentToken ?: "")
+            
+            scope.launch(Dispatchers.Main) {
+                onConectado?.invoke()
             }
+        }
+        
+        override fun onMessage(webSocket: WebSocket, text: String) {
+            Log.d(TAG, "Mensagem recebida: $text")
+            
+            scope.launch(Dispatchers.Main) {
+                processarMensagem(text)
+            }
+        }
+        
+        override fun onClosing(webSocket: WebSocket, code: Int, reason: String) {
+            Log.d(TAG, "WebSocket fechando: $code - $reason")
+            webSocket.close(1000, null)
+        }
+        
+        override fun onClosed(webSocket: WebSocket, code: Int, reason: String) {
+            Log.d(TAG, "WebSocket fechado: $code - $reason")
+            isConnected = false
+            
+            scope.launch(Dispatchers.Main) {
+                onDesconectado?.invoke()
+            }
+            
+            // Reconecta se não foi fechamento intencional
+            if (code != 1000) {
+                tentarReconectar()
+            }
+        }
+        
+        override fun onFailure(webSocket: WebSocket, t: Throwable, response: Response?) {
+            Log.e(TAG, "Erro no WebSocket", t)
+            isConnected = false
+            
+            scope.launch(Dispatchers.Main) {
+                onErro?.invoke(t.message ?: "Erro no WebSocket")
+                onDesconectado?.invoke()
+            }
+            
+            tentarReconectar()
         }
     }
     
     /**
-     * Recebe e processa uma mensagem do servidor
-     * Protocolo: [tamanho (4 bytes LITTLE_ENDIAN)][dados JSON]
+     * Autentica no servidor
      */
-    private suspend fun receberMensagem() {
-        try {
-            // Lê tamanho da mensagem (4 bytes, LITTLE_ENDIAN)
-            val tamanhoBytes = ByteArray(4)
-            inputStream?.read(tamanhoBytes, 0, 4)
-            val tamanho = ByteBuffer.wrap(tamanhoBytes).order(ByteOrder.LITTLE_ENDIAN).int
+    private fun autenticar(token: String) {
+        scope.launch {
+            delay(100) // Pequeno delay para garantir que conexão estabilizou
             
-            if (tamanho <= 0 || tamanho > 1024 * 1024) { // Max 1MB
-                Log.w(TAG, "Tamanho de mensagem inválido: $tamanho bytes")
-                return
+            val loginMsg = JSONObject().apply {
+                put("tipo", TYPE_LOGIN)
+                put("token", token)
             }
             
-            // Lê dados da mensagem
-            val dados = ByteArray(tamanho)
-            var totalLido = 0
-            while (totalLido < tamanho) {
-                val lido = inputStream?.read(dados, totalLido, tamanho - totalLido) ?: -1
-                if (lido == -1) throw EOFException("Conexão encerrada durante leitura")
-                totalLido += lido
+            val sucesso = enviarMensagem(loginMsg.toString())
+            
+            if (sucesso) {
+                Log.d(TAG, "Autenticação enviada com sucesso")
+            } else {
+                Log.e(TAG, "ERRO: Falha ao enviar autenticação!")
+                withContext(Dispatchers.Main) {
+                    onErro?.invoke("Falha ao autenticar")
+                }
             }
-            
-            // Converte para string JSON
-            val json = String(dados, Charsets.UTF_8)
-            
-            Log.d(TAG, "Mensagem recebida: $json")
-            
-            withContext(Dispatchers.Main) {
-                processarMensagem(json)
-            }
-            
-        } catch (e: Exception) {
-            throw e
         }
     }
     
@@ -254,33 +265,27 @@ class SocketManager(private val context: Context) {
     }
     
     /**
-     * Envia mensagem para o servidor
-     * Protocolo: [tamanho (4 bytes LITTLE_ENDIAN)][dados JSON]
+     * Envia mensagem via WebSocket
      */
     fun enviarMensagem(mensagem: String): Boolean {
         return try {
-            if (!isConnected || socket == null) {
-                Log.w(TAG, "Socket não conectado, não é possível enviar mensagem")
+            if (!isConnected || webSocket == null) {
+                Log.w(TAG, "WebSocket não conectado, não é possível enviar mensagem")
                 return false
             }
             
-            val dados = mensagem.toByteArray(Charsets.UTF_8)
-            val tamanho = dados.size
+            val sucesso = webSocket?.send(mensagem) ?: false
             
-            // Monta pacote: [tamanho][dados]
-            val packet = ByteBuffer.allocate(4 + tamanho).order(ByteOrder.LITTLE_ENDIAN)
-            packet.putInt(tamanho)
-            packet.put(dados)
+            if (sucesso) {
+                Log.d(TAG, "Mensagem WebSocket enviada: ${mensagem.take(100)}")
+            } else {
+                Log.e(TAG, "ERRO: Falha ao enviar via WebSocket: ${mensagem.take(50)}")
+            }
             
-            outputStream?.write(packet.array())
-            outputStream?.flush()
-            
-            Log.d(TAG, "Mensagem enviada: $mensagem")
-            true
+            sucesso
             
         } catch (e: Exception) {
-            Log.e(TAG, "Erro ao enviar mensagem", e)
-            desconectarInterno()
+            Log.e(TAG, "Erro ao enviar mensagem WebSocket", e)
             false
         }
     }
@@ -301,62 +306,26 @@ class SocketManager(private val context: Context) {
         scope.launch {
             delay(RECONNECT_DELAY_MS)
             if (scope.isActive && currentHost != null && currentPort > 0) {
-                conectar(currentHost!!, currentPort)
+                conectar(currentHost!!, currentPort, currentToken!!)
             }
         }
     }
     
     /**
-     * Desconecta internamente (sem chamar callback)
-     */
-    private fun desconectarInterno() {
-        isConnected = false
-        
-        receiveJob?.cancel()
-        
-        try {
-            outputStream?.close()
-            inputStream?.close()
-            socket?.close()
-        } catch (e: Exception) {
-            Log.e(TAG, "Erro ao fechar socket", e)
-        }
-        
-        socket = null
-        outputStream = null
-        inputStream = null
-        
-        scope.launch(Dispatchers.Main) {
-            onDesconectado?.invoke()
-        }
-        
-        tentarReconectar()
-    }
-    
-    /**
-     * Desconecta o socket
+     * Desconecta o WebSocket
      */
     fun desconectar() {
-        Log.d(TAG, "Desconectando socket")
+        Log.d(TAG, "Desconectando WebSocket")
         
         isConnected = false
         reconnectAttempts = MAX_RECONNECT_ATTEMPTS // Impede reconexão
         
-        receiveJob?.cancel()
+        webSocket?.close(1000, "Desconexão intencional")
+        webSocket = null
         
-        try {
-            outputStream?.close()
-            inputStream?.close()
-            socket?.close()
-        } catch (e: Exception) {
-            Log.e(TAG, "Erro ao fechar socket", e)
-        }
-        
-        socket = null
-        outputStream = null
-        inputStream = null
         currentHost = null
         currentPort = 0
+        currentToken = null
         
         onDesconectado?.invoke()
     }
@@ -372,5 +341,7 @@ class SocketManager(private val context: Context) {
     fun cleanup() {
         desconectar()
         scope.cancel()
+        okHttpClient.dispatcher.executorService.shutdown()
+        okHttpClient.connectionPool.evictAll()
     }
 }
