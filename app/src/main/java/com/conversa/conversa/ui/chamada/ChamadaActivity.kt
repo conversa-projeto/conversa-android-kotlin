@@ -1,61 +1,100 @@
 package com.conversa.conversa.ui.chamada
 
 import android.Manifest
+import android.app.KeyguardManager
+import android.content.Context
 import android.content.pm.PackageManager
+import android.hardware.Sensor
+import android.hardware.SensorEvent
+import android.hardware.SensorEventListener
+import android.hardware.SensorManager
 import android.media.AudioManager
+import android.os.Build
 import android.os.Bundle
+import android.os.PowerManager
 import android.os.SystemClock
 import android.util.Log
-import android.view.View
+import android.view.WindowManager
 import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.app.ActivityCompat
 import androidx.core.content.ContextCompat
+import androidx.fragment.app.Fragment
 import androidx.lifecycle.lifecycleScope
 import com.conversa.conversa.R
 import com.conversa.conversa.data.api.RetrofitClient
 import com.conversa.conversa.data.chamada.ChamadaManager
+import com.conversa.conversa.data.chamada.model.EventoChamadaUI
+import com.conversa.conversa.data.chamada.model.TipoEventoChamadaUI
+import com.conversa.conversa.data.model.UsuarioChamadaStatus
 import com.conversa.conversa.data.preferences.UserPreferences
 import com.conversa.conversa.data.repository.ChamadaRepository
-import com.conversa.conversa.databinding.ActivityChamadaBinding
+import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.launch
 
-class ChamadaActivity : AppCompatActivity() {
+class ChamadaActivity : AppCompatActivity(),
+    SensorEventListener,
+    IncomingCallFragment.IncomingCallListener,
+    SimpleCallFragment.SimpleCallListener,
+    GroupCallFragment.GroupCallListener {
 
-    private lateinit var binding: ActivityChamadaBinding
     private lateinit var repository: ChamadaRepository
     private lateinit var userPreferences: UserPreferences
     private lateinit var audioManager: AudioManager
-    
+
+    private lateinit var sensorManager: SensorManager
+    private var proximitySensor: Sensor? = null
+    private lateinit var proximityWakeLock: PowerManager.WakeLock
+
     private var chamadaId: Int = 0
     private var usuarioId: Int = 0
     private var usuarioNome: String = ""
-    private var isIncoming: Boolean = false // NOVO: determina se é chamada recebida
+    private var isIncoming: Boolean = false
+    private var autoAnswer: Boolean = false
     private var isMuted: Boolean = false
     private var isSpeakerOn: Boolean = false
     private var chamadaConectada: Boolean = false
     private var permissoesVerificadas: Boolean = false
+    private var isChamadaGrupo: Boolean = false
+
+    // Mapa de participantes mutados localmente
+    private val participantesMutados = mutableSetOf<Int>()
+
+    private var timerStartTime: Long = 0
+    private var timerText: String = "00:00"
+
+    private var currentFragment: Fragment? = null
 
     companion object {
         private const val TAG = "ChamadaActivity"
         private const val REQUEST_RECORD_AUDIO = 201
-        
+
         const val EXTRA_CHAMADA_ID = "chamada_id"
         const val EXTRA_USUARIO_ID = "usuario_id"
         const val EXTRA_USUARIO_NOME = "usuario_nome"
-        const val EXTRA_IS_INCOMING = "is_incoming" // NOVO
+        const val EXTRA_IS_INCOMING = "is_incoming"
+
+        var sharedSocketManager: com.conversa.conversa.data.socket.SocketManager? = null
     }
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        binding = ActivityChamadaBinding.inflate(layoutInflater)
-        setContentView(binding.root)
+        setContentView(R.layout.activity_chamada)
 
-        // Obter dados do intent
+        configurarTelasBloqueadas()
+
         chamadaId = intent.getIntExtra(EXTRA_CHAMADA_ID, 0)
         usuarioId = intent.getIntExtra(EXTRA_USUARIO_ID, 0)
         usuarioNome = intent.getStringExtra(EXTRA_USUARIO_NOME) ?: "Contato"
-        isIncoming = intent.getBooleanExtra(EXTRA_IS_INCOMING, false) // NOVO
+        isIncoming = intent.getBooleanExtra(EXTRA_IS_INCOMING, false)
+        autoAnswer = intent.getBooleanExtra("auto_answer", false)
+
+        Log.d(TAG, "📞 onCreate - Extras recebidos:")
+        Log.d(TAG, "   chamadaId=$chamadaId")
+        Log.d(TAG, "   usuarioId=$usuarioId")
+        Log.d(TAG, "   isIncoming=$isIncoming")
+        Log.d(TAG, "   autoAnswer=$autoAnswer")
+        Log.d(TAG, "   usuarioNome=$usuarioNome")
 
         if (chamadaId == 0) {
             Toast.makeText(this, "Erro: chamada inválida", Toast.LENGTH_SHORT).show()
@@ -63,53 +102,115 @@ class ChamadaActivity : AppCompatActivity() {
             return
         }
 
-        Log.d(TAG, "Chamada: id=$chamadaId, incoming=$isIncoming")
+        Log.d(TAG, "Chamada: id=$chamadaId, incoming=$isIncoming, usuario=$usuarioNome")
 
-        // Inicializar AudioManager
         audioManager = getSystemService(AUDIO_SERVICE) as AudioManager
-
-        // Inicializar componentes
         userPreferences = UserPreferences(this)
-        
-        // Verificar permissão de áudio
+
+        inicializarSensorProximidade()
         verificarPermissaoAudio()
     }
     
+    private fun configurarTelasBloqueadas() {
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O_MR1) {
+            setShowWhenLocked(true)
+            setTurnScreenOn(true)
+        } else {
+            @Suppress("DEPRECATION")
+            window.addFlags(
+                WindowManager.LayoutParams.FLAG_SHOW_WHEN_LOCKED or
+                        WindowManager.LayoutParams.FLAG_TURN_SCREEN_ON or
+                        WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON or
+                        WindowManager.LayoutParams.FLAG_DISMISS_KEYGUARD
+            )
+        }
+
+        val keyguardManager = getSystemService(Context.KEYGUARD_SERVICE) as KeyguardManager
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+            keyguardManager.requestDismissKeyguard(this, null)
+        }
+    }
+
+    private fun inicializarSensorProximidade() {
+        sensorManager = getSystemService(Context.SENSOR_SERVICE) as SensorManager
+        proximitySensor = sensorManager.getDefaultSensor(Sensor.TYPE_PROXIMITY)
+
+        val powerManager = getSystemService(Context.POWER_SERVICE) as PowerManager
+        proximityWakeLock = powerManager.newWakeLock(
+            PowerManager.PROXIMITY_SCREEN_OFF_WAKE_LOCK,
+            "Conversa::ProximityWakeLock"
+        )
+    }
+
+    private fun ativarSensorProximidade() {
+        proximitySensor?.let {
+            sensorManager.registerListener(this, it, SensorManager.SENSOR_DELAY_NORMAL)
+            Log.d(TAG, "Sensor de proximidade ativado")
+        }
+    }
+
+    private fun desativarSensorProximidade() {
+        sensorManager.unregisterListener(this)
+        if (proximityWakeLock.isHeld) {
+            proximityWakeLock.release()
+        }
+        Log.d(TAG, "Sensor de proximidade desativado")
+    }
+
+    override fun onSensorChanged(event: SensorEvent?) {
+        if (event?.sensor?.type == Sensor.TYPE_PROXIMITY) {
+            val distance = event.values[0]
+            val maxRange = event.sensor.maximumRange
+            val isNear = distance < 5f && distance < maxRange
+
+            if (chamadaConectada) {
+                if (isNear) {
+                    if (!proximityWakeLock.isHeld) {
+                        proximityWakeLock.acquire(10 * 60 * 1000L)
+                    }
+                } else {
+                    if (proximityWakeLock.isHeld) {
+                        proximityWakeLock.release()
+                    }
+                }
+            }
+        }
+    }
+
+    override fun onAccuracyChanged(sensor: Sensor?, accuracy: Int) {}
+
     private fun verificarPermissaoAudio() {
         if (ContextCompat.checkSelfPermission(
                 this,
                 Manifest.permission.RECORD_AUDIO
             ) != PackageManager.PERMISSION_GRANTED
         ) {
-            Log.w(TAG, "Permissão de áudio NÃO concedida, solicitando...")
             ActivityCompat.requestPermissions(
                 this,
                 arrayOf(Manifest.permission.RECORD_AUDIO),
                 REQUEST_RECORD_AUDIO
             )
         } else {
-            Log.d(TAG, "Permissão de áudio já concedida")
             permissoesVerificadas = true
             inicializarChamada()
         }
     }
-    
+
     override fun onRequestPermissionsResult(
         requestCode: Int,
         permissions: Array<out String>,
         grantResults: IntArray
     ) {
         super.onRequestPermissionsResult(requestCode, permissions, grantResults)
-        
+
         when (requestCode) {
             REQUEST_RECORD_AUDIO -> {
-                if (grantResults.isNotEmpty() && 
-                    grantResults[0] == PackageManager.PERMISSION_GRANTED) {
-                    Log.d(TAG, "Permissão de áudio concedida")
+                if (grantResults.isNotEmpty() &&
+                    grantResults[0] == PackageManager.PERMISSION_GRANTED
+                ) {
                     permissoesVerificadas = true
                     inicializarChamada()
                 } else {
-                    Log.e(TAG, "Permissão de áudio NEGADA")
                     Toast.makeText(
                         this,
                         "Permissão de microfone necessária para chamadas",
@@ -120,120 +221,203 @@ class ChamadaActivity : AppCompatActivity() {
             }
         }
     }
-    
+
     private fun inicializarChamada() {
-        if (!permissoesVerificadas) {
-            Log.e(TAG, "Tentou inicializar sem permissões verificadas")
-            return
-        }
-        
-        Log.d(TAG, "Inicializando chamada com permissões OK")
-        
-        val socketManager = ChamadaIncomingActivity.sharedSocketManager
-        
+        if (!permissoesVerificadas) return
+
+        val socketManager = sharedSocketManager
         if (socketManager == null) {
-            Log.e(TAG, "SocketManager não disponível")
             Toast.makeText(this, "Erro: serviço não disponível", Toast.LENGTH_SHORT).show()
             finish()
             return
         }
-        
+
         repository = ChamadaRepository(
-            context = this@ChamadaActivity,
+            context = this,
             api = RetrofitClient.api,
-            chamadaManager = ChamadaManager(this@ChamadaActivity),
+            chamadaManager = ChamadaManager(this),
             socketManager = socketManager,
             userPreferences = userPreferences
         )
-        
+
         setupCallbacks()
-        setupUI()
-        setupListeners()
-        
-        // Se é incoming, mostra botões de aceitar/recusar
-        // Se não, já inicia conectando
+        setupAudio()
+        observarFlows()
+
         if (isIncoming) {
-            mostrarEstadoIncoming()
+            if (autoAnswer) {
+                Log.d(TAG, "✅ AUTO-ANSWER ativado - aceitando chamada automaticamente")
+                onAceitarChamada()
+            } else {
+                Log.d(TAG, "🔔 Mostrando tela de chamada recebida")
+                mostrarIncomingFragment()
+            }
         } else {
-            mostrarEstadoAtivo()
+            Log.d(TAG, "📞 Chamada sainte - indo direto para tela de chamada")
+            mostrarCallFragment()
         }
     }
 
-    private fun setupUI() {
-        binding.tvNomeContato.text = usuarioNome
-        binding.tvTimer.text = if (isIncoming) getString(R.string.chamada_recebida) else getString(R.string.conectando)
-        
-        atualizarBotaoMute()
-        atualizarBotaoSpeaker()
-    }
-    
-    /**
-     * Mostra estado INCOMING: botões aceitar/recusar
-     */
-    private fun mostrarEstadoIncoming() {
-        binding.llBotoesIncoming.visibility = View.VISIBLE
-        binding.llControles.visibility = View.GONE
-        binding.llBotaoEncerrar.visibility = View.GONE
-        
-        binding.tvTimer.text = getString(R.string.chamada_recebida)
-    }
-    
-    /**
-     * Mostra estado ATIVO: controles mute/speaker/encerrar
-     */
-    private fun mostrarEstadoAtivo() {
-        binding.llBotoesIncoming.visibility = View.GONE
-        binding.llControles.visibility = View.VISIBLE
-        binding.llBotaoEncerrar.visibility = View.VISIBLE
-        
-        binding.tvTimer.text = getString(R.string.conectando)
+    private fun setupCallbacks() {
+        repository.onErro = { erro ->
+            runOnUiThread {
+                Toast.makeText(this, "Erro: $erro", Toast.LENGTH_SHORT).show()
+                finish()
+            }
+        }
     }
 
-    private fun setupListeners() {
-        // Botões INCOMING
-        binding.btnAceitar.setOnClickListener {
-            aceitarChamada()
-        }
-        
-        binding.btnRecusar.setOnClickListener {
-            recusarChamada()
-        }
-        
-        // Botões ATIVOS
-        binding.btnMute.setOnClickListener {
-            toggleMute()
+    private fun setupAudio() {
+        isMuted = false
+        isSpeakerOn = true
+        audioManager.mode = AudioManager.MODE_IN_COMMUNICATION
+        audioManager.isSpeakerphoneOn = true
+    }
+
+    private fun observarFlows() {
+        lifecycleScope.launch {
+            repository.eventosUIFlow.collectLatest { evento ->
+                processarEvento(evento)
+            }
         }
 
-        binding.btnSpeaker.setOnClickListener {
-            toggleSpeaker()
-        }
-
-        binding.btnEncerrarChamada.setOnClickListener {
-            finalizarChamada()
+        lifecycleScope.launch {
+            repository.chamadaAtualFlow.collectLatest { chamada ->
+                chamada?.let {
+                    isChamadaGrupo = it.tipo == 2
+                    atualizarFragmentSeNecessario()
+                    atualizarListaParticipantes()
+                }
+            }
         }
     }
-    
-    /**
-     * Aceita a chamada recebida
-     */
-    private fun aceitarChamada() {
-        Log.d(TAG, "Aceitando chamada $chamadaId")
-        
-        binding.btnAceitar.isEnabled = false
-        binding.btnRecusar.isEnabled = false
-        binding.tvTimer.text = getString(R.string.conectando)
-        
+
+    private fun processarEvento(evento: EventoChamadaUI) {
+        when (evento.tipo) {
+            TipoEventoChamadaUI.PARTICIPANTE_ENTROU -> {
+                atualizarListaParticipantes()
+                evento.participanteNome?.let { nome ->
+                    Toast.makeText(this, "$nome entrou", Toast.LENGTH_SHORT).show()
+                }
+            }
+
+            TipoEventoChamadaUI.PARTICIPANTE_SAIU -> {
+                atualizarListaParticipantes()
+                evento.participanteNome?.let { nome ->
+                    Toast.makeText(this, "$nome saiu da chamada", Toast.LENGTH_SHORT).show()
+                    lifecycleScope.launch {
+                        kotlinx.coroutines.delay(2000)
+                        finish()
+                    }
+                }
+            }
+
+            TipoEventoChamadaUI.CHAMADA_RECUSADA -> {
+                Toast.makeText(this, "Chamada recusada", Toast.LENGTH_SHORT).show()
+                lifecycleScope.launch {
+                    kotlinx.coroutines.delay(2000)
+                    finish()
+                }
+            }
+
+            TipoEventoChamadaUI.CHAMADA_REALMENTE_INICIADA -> {
+                chamadaConectada = true
+                timerStartTime = SystemClock.elapsedRealtime()
+                iniciarTimer()
+                ativarSensorProximidade()
+                atualizarBotoes()
+                Toast.makeText(this, "Chamada iniciada", Toast.LENGTH_SHORT).show()
+            }
+
+            TipoEventoChamadaUI.CHAMADA_FINALIZADA -> {
+                chamadaConectada = false
+                desativarSensorProximidade()
+                finish()
+            }
+
+            else -> {}
+        }
+    }
+
+    private fun atualizarFragmentSeNecessario() {
+        if (!chamadaConectada) return
+
+        val fragmentoEsperado = if (isChamadaGrupo) {
+            GroupCallFragment::class.java
+        } else {
+            SimpleCallFragment::class.java
+        }
+
+        if (currentFragment?.javaClass != fragmentoEsperado) {
+            mostrarCallFragment()
+        }
+    }
+
+    private fun mostrarIncomingFragment() {
+        val fragment = IncomingCallFragment()
+        replaceFragment(fragment)
+    }
+
+    private fun mostrarCallFragment() {
+        val fragment = if (isChamadaGrupo) {
+            GroupCallFragment()
+        } else {
+            SimpleCallFragment()
+        }
+        replaceFragment(fragment)
+    }
+
+    private fun replaceFragment(fragment: Fragment) {
+        currentFragment = fragment
+        supportFragmentManager.beginTransaction()
+            .replace(R.id.fragmentContainer, fragment)
+            .commit()
+    }
+
+    private fun iniciarTimer() {
+        lifecycleScope.launch {
+            while (chamadaConectada) {
+                val elapsed = SystemClock.elapsedRealtime() - timerStartTime
+                val seconds = (elapsed / 1000).toInt()
+                val minutes = seconds / 60
+                val secs = seconds % 60
+
+                timerText = String.format("%02d:%02d", minutes, secs)
+                atualizarTimer()
+
+                kotlinx.coroutines.delay(1000)
+            }
+        }
+    }
+
+    private fun atualizarTimer() {
+        (currentFragment as? SimpleCallFragment)?.atualizarTimer()
+        (currentFragment as? GroupCallFragment)?.atualizarTimer()
+    }
+
+    private fun atualizarBotoes() {
+        (currentFragment as? SimpleCallFragment)?.atualizarBotoes()
+        (currentFragment as? GroupCallFragment)?.atualizarBotoes()
+    }
+
+    private fun atualizarListaParticipantes() {
+        (currentFragment as? GroupCallFragment)?.atualizarListaParticipantes()
+    }
+
+    // IncomingCallListener
+    override fun onAceitarChamada() {
+        (currentFragment as? IncomingCallFragment)?.desabilitarBotoes()
+
         lifecycleScope.launch {
             try {
                 val result = repository.aceitarChamada(chamadaId)
-                
+
                 result.onSuccess {
-                    Log.d(TAG, "Chamada aceita com sucesso")
-                    mostrarEstadoAtivo()
+                    atualizarNotificacaoParaEmAndamento()
+                    mostrarCallFragment()
                 }
-                
+
                 result.onFailure { erro ->
-                    Log.e(TAG, "Erro ao aceitar chamada", erro)
                     Toast.makeText(
                         this@ChamadaActivity,
                         "Erro ao aceitar: ${erro.message}",
@@ -242,7 +426,6 @@ class ChamadaActivity : AppCompatActivity() {
                     finish()
                 }
             } catch (e: Exception) {
-                Log.e(TAG, "Exceção ao aceitar", e)
                 Toast.makeText(
                     this@ChamadaActivity,
                     "Erro: ${e.message}",
@@ -252,88 +435,49 @@ class ChamadaActivity : AppCompatActivity() {
             }
         }
     }
-    
-    /**
-     * Recusa a chamada recebida
-     */
-    private fun recusarChamada() {
-        Log.d(TAG, "Recusando chamada $chamadaId")
-        
-        binding.btnAceitar.isEnabled = false
-        binding.btnRecusar.isEnabled = false
-        
+
+    override fun onRecusarChamada() {
+        (currentFragment as? IncomingCallFragment)?.desabilitarBotoes()
+
         lifecycleScope.launch {
             try {
                 repository.recusarChamada(chamadaId)
+                removerNotificacaoChamada()
                 finish()
             } catch (e: Exception) {
-                Log.e(TAG, "Erro ao recusar", e)
+                removerNotificacaoChamada()
                 finish()
             }
         }
     }
 
-    private fun setupCallbacks() {
-        Log.d(TAG, "Configurando callbacks do repository")
-        
-        repository.onChamadaConectada = {
-            Log.d(TAG, "CALLBACK: Chamada conectada!")
-            runOnUiThread {
-                chamadaConectada = true
-                binding.tvTimer.text = "00:00"
-                iniciarTimer()
-                Toast.makeText(this@ChamadaActivity, "Chamada conectada", Toast.LENGTH_SHORT).show()
-            }
-        }
-
-        repository.onChamadaFinalizada = {
-            Log.d(TAG, "CALLBACK: Chamada finalizada!")
-            runOnUiThread {
-                chamadaConectada = false
-                Toast.makeText(this@ChamadaActivity, "Chamada finalizada", Toast.LENGTH_SHORT).show()
-                finish()
-            }
-        }
-
-        repository.onErro = { erro ->
-            Log.e(TAG, "CALLBACK: Erro na chamada: $erro")
-            runOnUiThread {
-                Toast.makeText(
-                    this@ChamadaActivity,
-                    "Erro: $erro",
-                    Toast.LENGTH_SHORT
-                ).show()
-                finish()
-            }
-        }
-    }
-
-    private fun iniciarTimer() {
-        val startTime = SystemClock.elapsedRealtime()
-        
+    // SimpleCallListener & GroupCallListener
+    override fun onEncerrarChamada() {
         lifecycleScope.launch {
-            while (chamadaConectada) {
-                val elapsed = SystemClock.elapsedRealtime() - startTime
-                val seconds = (elapsed / 1000).toInt()
-                val minutes = seconds / 60
-                val secs = seconds % 60
-                
-                runOnUiThread {
-                    binding.tvTimer.text = String.format("%02d:%02d", minutes, secs)
-                }
-                
-                kotlinx.coroutines.delay(1000)
+            try {
+                chamadaConectada = false
+                desativarSensorProximidade()
+                repository.finalizarChamada()
+                removerNotificacaoChamada()
+                finish()
+            } catch (e: Exception) {
+                removerNotificacaoChamada()
+                finish()
             }
         }
     }
 
-    private fun toggleMute() {
+    override fun onToggleMute() {
         isMuted = !isMuted
-        
-        // TODO: Implementar lógica de mute no ChamadaManager
-        
-        atualizarBotaoMute()
-        
+
+        if (::repository.isInitialized) {
+            if (isMuted) {
+                repository.pausarCaptura()
+            } else {
+                repository.retormarCaptura()
+            }
+        }
+
         Toast.makeText(
             this,
             if (isMuted) "Microfone desligado" else "Microfone ligado",
@@ -341,14 +485,12 @@ class ChamadaActivity : AppCompatActivity() {
         ).show()
     }
 
-    private fun toggleSpeaker() {
+    override fun onToggleSpeaker() {
         isSpeakerOn = !isSpeakerOn
-        
+
         audioManager.mode = AudioManager.MODE_IN_COMMUNICATION
         audioManager.isSpeakerphoneOn = isSpeakerOn
-        
-        atualizarBotaoSpeaker()
-        
+
         Toast.makeText(
             this,
             if (isSpeakerOn) "Alto-falante ligado" else "Alto-falante desligado",
@@ -356,56 +498,91 @@ class ChamadaActivity : AppCompatActivity() {
         ).show()
     }
 
-    private fun atualizarBotaoMute() {
-        if (isMuted) {
-            binding.btnMute.setImageResource(R.drawable.ic_mic_off)
-            binding.tvMuteLabel.text = "Mudo"
-        } else {
-            binding.btnMute.setImageResource(R.drawable.ic_mic_on)
-            binding.tvMuteLabel.text = "Mudo"
-        }
-    }
+    override fun getNomeContato(): String = usuarioNome
+    override fun getNomeGrupo(): String = usuarioNome
+    override fun getTimerText(): String = timerText
+    override fun isMuted(): Boolean = isMuted
+    override fun isSpeakerOn(): Boolean = isSpeakerOn
+    override fun isChamadaConectada(): Boolean = chamadaConectada
 
-    private fun atualizarBotaoSpeaker() {
-        if (isSpeakerOn) {
-            binding.btnSpeaker.setImageResource(R.drawable.ic_volume_up)
-            binding.tvSpeakerLabel.text = getString(R.string.alto_falante)
-        } else {
-            binding.btnSpeaker.setImageResource(R.drawable.ic_volume_off)
-            binding.tvSpeakerLabel.text = getString(R.string.alto_falante)
-        }
-    }
+    override fun getParticipantes(): List<ParticipanteItem> {
+        val chamada = repository.chamadaAtual ?: return emptyList()
 
-    private fun finalizarChamada() {
-        lifecycleScope.launch {
-            try {
-                chamadaConectada = false
-                binding.tvTimer.text = getString(R.string.chamada_finalizada)
-                
-                repository.finalizarChamada()
-                
-                finish()
-            } catch (e: Exception) {
-                Log.e(TAG, "Erro ao finalizar chamada", e)
-                finish()
+        return chamada.usuarios.map { usuario ->
+            val status = when (usuario.status) {
+                UsuarioChamadaStatus.ENTROU.valor -> "Conectado"
+                UsuarioChamadaStatus.PENDENTE.valor -> "Aguardando..."
+                UsuarioChamadaStatus.RECUSADO.valor -> "Recusou"
+                UsuarioChamadaStatus.SAIU.valor -> "Saiu"
+                else -> "Desconhecido"
             }
+
+            ParticipanteItem(
+                id = usuario.usuarioId,
+                nome = usuario.usuarioNome,
+                fotoUrl = null,
+                audioAtivo = usuario.status == UsuarioChamadaStatus.ENTROU.valor,
+                status = status,
+                mutadoLocalmente = participantesMutados.contains(usuario.usuarioId)
+            )
+        }
+    }
+
+    override fun onMutarParticipante(participante: ParticipanteItem) {
+        if (participantesMutados.contains(participante.id)) {
+            participantesMutados.remove(participante.id)
+            Toast.makeText(this, "Ouvindo ${participante.nome}", Toast.LENGTH_SHORT).show()
+        } else {
+            participantesMutados.add(participante.id)
+            Toast.makeText(this, "${participante.nome} mutado", Toast.LENGTH_SHORT).show()
+        }
+
+        // Atualiza o ChamadaManager com a lista de mutados
+        if (::repository.isInitialized) {
+            repository.atualizarParticipantesMutados(participantesMutados)
+        }
+
+        // Atualiza a lista para refletir a mudança
+        atualizarListaParticipantes()
+    }
+
+    private fun atualizarNotificacaoParaEmAndamento() {
+        try {
+            val intent = android.content.Intent(this, com.conversa.conversa.service.SocketService::class.java)
+            intent.action = "UPDATE_NOTIFICATION"
+            intent.putExtra("chamada_id", chamadaId)
+            intent.putExtra("usuario_nome", usuarioNome)
+            startService(intent)
+        } catch (e: Exception) {
+            Log.e(TAG, "Erro ao atualizar notificação", e)
+        }
+    }
+    
+    private fun removerNotificacaoChamada() {
+        try {
+            val intent = android.content.Intent(this, com.conversa.conversa.service.SocketService::class.java)
+            intent.action = "REMOVE_NOTIFICATION"
+            startService(intent)
+        } catch (e: Exception) {
+            Log.e(TAG, "Erro ao remover notificação", e)
         }
     }
 
     override fun onDestroy() {
         super.onDestroy()
-        Log.d(TAG, "Activity sendo destruída")
         chamadaConectada = false
-        
+
+        desativarSensorProximidade()
+
         if (::repository.isInitialized) {
             repository.cleanup()
         }
-        
+
         audioManager.mode = AudioManager.MODE_NORMAL
         audioManager.isSpeakerphoneOn = false
     }
 
     override fun onBackPressed() {
-        // Não permite voltar
+        // Não permite voltar durante chamada
     }
 }

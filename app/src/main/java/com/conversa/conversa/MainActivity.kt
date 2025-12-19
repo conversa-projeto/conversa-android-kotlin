@@ -1,9 +1,12 @@
 package com.conversa.conversa
 
+import android.Manifest
 import android.app.Dialog
 import android.content.ComponentName
 import android.content.Context
 import android.content.Intent
+import android.content.pm.PackageManager
+import android.os.Build
 import android.content.ServiceConnection
 import android.os.Bundle
 import android.os.IBinder
@@ -14,6 +17,8 @@ import android.widget.TextView
 import android.widget.Toast
 import androidx.appcompat.app.ActionBarDrawerToggle
 import androidx.appcompat.app.AppCompatActivity
+import androidx.core.app.ActivityCompat
+import androidx.core.content.ContextCompat
 import androidx.core.view.GravityCompat
 import androidx.lifecycle.lifecycleScope
 import androidx.recyclerview.widget.DividerItemDecoration
@@ -30,7 +35,9 @@ import com.conversa.conversa.databinding.ContentMainBinding
 import com.conversa.conversa.databinding.DialogContatosBinding
 import com.conversa.conversa.service.CallListener
 import com.conversa.conversa.service.SocketService
+import com.conversa.conversa.ui.chamada.ChamadaActivity
 import com.conversa.conversa.ui.chat.ChatActivity
+import com.conversa.conversa.utils.ChamadaBroadcast
 import com.google.android.material.navigation.NavigationView
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
@@ -79,7 +86,6 @@ class MainActivity : AppCompatActivity(), NavigationView.OnNavigationItemSelecte
 
         setSupportActionBar(binding.toolbar)
         
-        // Tratamento moderno do botão voltar
         onBackPressedDispatcher.addCallback(this, object : androidx.activity.OnBackPressedCallback(true) {
             override fun handleOnBackPressed() {
                 if (binding.drawerLayout.isDrawerOpen(GravityCompat.START)) {
@@ -94,9 +100,12 @@ class MainActivity : AppCompatActivity(), NavigationView.OnNavigationItemSelecte
         setupRecyclerView()
         setupListeners()
         
+        // CRÍTICO: Solicita permissões necessárias
+        verificarPermissoes()
+        
         lifecycleScope.launch {
             carregarConfiguracoes()
-            inicializarSocket()
+            inicializarSocket() // Inicia IMEDIATAMENTE
             carregarConversas()
         }
 
@@ -122,7 +131,6 @@ class MainActivity : AppCompatActivity(), NavigationView.OnNavigationItemSelecte
         
         binding.navView.setNavigationItemSelectedListener(this)
         
-        // Atualizar header com dados do usuário
         lifecycleScope.launch {
             val headerView = binding.navView.getHeaderView(0)
             val tvNome = headerView.findViewById<TextView>(R.id.tvNomeUsuario)
@@ -277,7 +285,6 @@ class MainActivity : AppCompatActivity(), NavigationView.OnNavigationItemSelecte
         intent.putExtra("conversa_nome", conversa.nome ?: conversa.descricao)
         intent.putExtra("conversa_tipo", conversa.tipo)
         
-        // Passa o destinatario_id se for uma conversa individual (tipo 1)
         if (conversa.tipo == 1 && conversa.destinatario_id != null) {
             intent.putExtra("destinatario_id", conversa.destinatario_id)
         }
@@ -287,7 +294,6 @@ class MainActivity : AppCompatActivity(), NavigationView.OnNavigationItemSelecte
     
     private fun realizarLogout() {
         lifecycleScope.launch {
-            // Para o SocketService
             SocketService.stop(this@MainActivity)
             
             userPreferences.clear()
@@ -299,51 +305,72 @@ class MainActivity : AppCompatActivity(), NavigationView.OnNavigationItemSelecte
         }
     }
     
+    /**
+     * CRÍTICO: Inicia SocketService assim que MainActivity abre
+     * Service roda em background mesmo quando app fecha
+     */
     private suspend fun inicializarSocket() {
         try {
             val apiUrl = userPreferences.apiUrl.first()
             
             if (!apiUrl.isNullOrEmpty()) {
-                // Extrai host e define porta 8090
                 val host = apiUrl.replace("http://", "")
                                  .replace("https://", "")
                                  .split(":")[0]
                 val port = 8090
 
-                val token = userPreferences.authToken.first() ?: "";
+                val token = userPreferences.authToken.first() ?: ""
                 
-                // Inicia SocketService em foreground
-                SocketService.start(this, host, port, token)
-                
-                android.util.Log.d("MainActivity", "SocketService iniciado: $host:$port")
+                if (token.isNotEmpty()) {
+                    // Inicia SocketService em foreground
+                    SocketService.start(this, host, port, token)
+                    
+                    android.util.Log.d("MainActivity", "✅ SocketService iniciado: $host:$port")
+                } else {
+                    android.util.Log.e("MainActivity", "❌ Token vazio, não iniciou service")
+                }
+            } else {
+                android.util.Log.e("MainActivity", "❌ API URL vazia, não iniciou service")
             }
         } catch (e: Exception) {
-            android.util.Log.e("MainActivity", "Erro ao inicializar SocketService", e)
+            android.util.Log.e("MainActivity", "❌ Erro ao inicializar SocketService", e)
         }
-    }
-    
-    private fun mostrarTelaChamadaRecebida(
-        chamadaId: Int,
-        usuarioId: Int,
-        usuarioNome: String
-    ) {
-        val intent = Intent(this, com.conversa.conversa.ui.chamada.ChamadaIncomingActivity::class.java).apply {
-            putExtra(com.conversa.conversa.ui.chamada.ChamadaIncomingActivity.EXTRA_CHAMADA_ID, chamadaId)
-            putExtra(com.conversa.conversa.ui.chamada.ChamadaIncomingActivity.EXTRA_USUARIO_ID, usuarioId)
-            putExtra(com.conversa.conversa.ui.chamada.ChamadaIncomingActivity.EXTRA_USUARIO_NOME, usuarioNome)
-            flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TOP
-        }
-        startActivity(intent)
     }
     
     override fun onResume() {
         super.onResume()
+        
+        // Registra listener para receber chamadas quando app está aberto
+        ChamadaBroadcast.addListener(this)
+        
         if (!isFirstLoad) {
             lifecycleScope.launch {
                 carregarConversas()
             }
         }
         isFirstLoad = false
+    }
+    
+    override fun onPause() {
+        super.onPause()
+        // Remove listener quando sai da tela
+        ChamadaBroadcast.removeListener(this)
+    }
+    
+    /**
+     * Callback quando chamada é recebida com app ABERTO
+     */
+    override fun onChamadaRecebida(chamadaId: Int, usuarioId: Int, usuarioNome: String) {
+        android.util.Log.d("MainActivity", "📱 Chamada recebida via broadcast: $usuarioNome")
+        
+        // Abre ChamadaActivity por cima da MainActivity
+        val intent = Intent(this, ChamadaActivity::class.java).apply {
+            putExtra(ChamadaActivity.EXTRA_CHAMADA_ID, chamadaId)
+            putExtra(ChamadaActivity.EXTRA_USUARIO_ID, usuarioId)
+            putExtra(ChamadaActivity.EXTRA_USUARIO_NOME, usuarioNome)
+            putExtra(ChamadaActivity.EXTRA_IS_INCOMING, true)
+        }
+        startActivity(intent)
     }
     
     override fun onDestroy() {

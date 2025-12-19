@@ -3,6 +3,8 @@ package com.conversa.conversa.service
 import android.app.*
 import android.content.Context
 import android.content.Intent
+import android.media.AudioAttributes
+import android.media.RingtoneManager
 import android.os.Binder
 import android.os.Build
 import android.os.IBinder
@@ -11,8 +13,10 @@ import android.util.Log
 import androidx.core.app.NotificationCompat
 import com.conversa.conversa.MainActivity
 import com.conversa.conversa.R
+import com.conversa.conversa.data.api.RetrofitClient
 import com.conversa.conversa.data.socket.SocketManager
-import com.conversa.conversa.ui.chamada.ChamadaIncomingActivity
+import androidx.localbroadcastmanager.content.LocalBroadcastManager
+import com.conversa.conversa.ui.chamada.ChamadaActivity
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
@@ -38,7 +42,6 @@ class SocketService : Service() {
 
         // IDs de notificação
         private const val NOTIFICATION_ID_SERVICE = 1001
-        private const val NOTIFICATION_ID_CHAMADA = 1002
         private const val NOTIFICATION_ID_MENSAGEM = 1003
 
         // Canais de notificação
@@ -116,16 +119,15 @@ class SocketService : Service() {
             PowerManager.PARTIAL_WAKE_LOCK,
             "Conversa::SocketServiceWakeLock"
         )
-        wakeLock.acquire(10 * 60 * 1000L) // 10 minutos, será renovado
+        wakeLock.acquire(10 * 60 * 1000L)
     }
     
     override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
         Log.d(TAG, "Service iniciado")
         
-        // Extrai parâmetros
-        val host = intent?.getStringExtra(EXTRA_HOST)
-        val token = intent?.getStringExtra(EXTRA_TOKEN)
-        val port = intent?.getIntExtra(EXTRA_PORT, 8090) ?: 8090
+        val host = intent?.getStringExtra(EXTRA_HOST) ?: lastValidHost
+        val token = intent?.getStringExtra(EXTRA_TOKEN) ?: lastValidToken
+        val port = intent?.getIntExtra(EXTRA_PORT, lastValidPort) ?: lastValidPort
 
         if (host.isNullOrEmpty()) {
             Log.e(TAG, "Host não fornecido, parando service")
@@ -139,20 +141,21 @@ class SocketService : Service() {
             return START_NOT_STICKY
         }
         
+        lastValidHost = host
+        lastValidPort = port
+        lastValidToken = token
+        
         currentHost = host
         currentPort = port
         currentToken = token
         
-        // Inicia em foreground com notificação persistente
         startForeground(NOTIFICATION_ID_SERVICE, criarNotificacaoService())
         
-        // Inicializa SocketManager se ainda não foi
         if (!isRunning) {
             inicializarSocket(host, port, token)
             isRunning = true
         }
         
-        // START_STICKY: reinicia service se for morto pelo sistema
         return START_STICKY
     }
     
@@ -227,12 +230,8 @@ class SocketService : Service() {
         scope.cancel()
     }
     
-    /**
-     * Cria canais de notificação (Android 8+)
-     */
     private fun criarCanaisNotificacao() {
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-            // Canal do service (baixa prioridade)
             val serviceChannel = NotificationChannel(
                 CHANNEL_ID_SERVICE,
                 "Serviço Conversa",
@@ -242,7 +241,8 @@ class SocketService : Service() {
                 setShowBadge(false)
             }
             
-            // Canal de chamadas (alta prioridade)
+            val soundUri = RingtoneManager.getDefaultUri(RingtoneManager.TYPE_RINGTONE)
+            
             val chamadasChannel = NotificationChannel(
                 CHANNEL_ID_CHAMADAS,
                 "Chamadas",
@@ -252,9 +252,17 @@ class SocketService : Service() {
                 enableVibration(true)
                 enableLights(true)
                 setShowBadge(true)
+                setBypassDnd(true)
+                
+                setSound(
+                    soundUri,
+                    AudioAttributes.Builder()
+                        .setUsage(AudioAttributes.USAGE_NOTIFICATION_RINGTONE)
+                        .setContentType(AudioAttributes.CONTENT_TYPE_SONIFICATION)
+                        .build()
+                )
             }
             
-            // Canal de mensagens (prioridade normal)
             val mensagensChannel = NotificationChannel(
                 CHANNEL_ID_MENSAGENS,
                 "Mensagens",
@@ -271,9 +279,6 @@ class SocketService : Service() {
         }
     }
     
-    /**
-     * Cria notificação persistente do service
-     */
     private fun criarNotificacaoService(): Notification {
         val intent = Intent(this, MainActivity::class.java)
         val pendingIntent = PendingIntent.getActivity(
@@ -286,24 +291,19 @@ class SocketService : Service() {
         return NotificationCompat.Builder(this, CHANNEL_ID_SERVICE)
             .setContentTitle("Conversa")
             .setContentText("Conectado - Recebendo notificações")
-            .setSmallIcon(R.drawable.ic_notification) // Você precisa adicionar esse ícone
+            .setSmallIcon(R.drawable.ic_notification)
             .setContentIntent(pendingIntent)
-            .setOngoing(true) // Não pode ser descartada pelo usuário
+            .setOngoing(true)
             .setPriority(NotificationCompat.PRIORITY_LOW)
             .setCategory(NotificationCompat.CATEGORY_SERVICE)
             .build()
     }
     
-    /**
-     * Inicializa conexão socket
-     */
     private fun inicializarSocket(host: String, port: Int, token: String) {
         socketManager = SocketManager(this)
         
-        // Compartilha com Activities
-        ChamadaIncomingActivity.sharedSocketManager = socketManager
+        ChamadaActivity.sharedSocketManager = socketManager
         
-        // Configura callbacks
         socketManager.onChamadaRecebida = { chamadaId, usuarioId, usuarioNome ->
             Log.d(TAG, "Chamada recebida: $chamadaId de $usuarioNome")
 
@@ -347,15 +347,11 @@ class SocketService : Service() {
             atualizarNotificacaoService("Erro - Tentando reconectar...")
         }
         
-        // Conecta
         scope.launch {
             socketManager.conectar(host, port, token)
         }
     }
     
-    /**
-     * Atualiza notificação do service
-     */
     private fun atualizarNotificacaoService(status: String) {
         val intent = Intent(this, MainActivity::class.java)
         val pendingIntent = PendingIntent.getActivity(

@@ -1,0 +1,94 @@
+package com.conversa.conversa.ui.chamada
+
+import android.content.Intent
+import android.os.Bundle
+import android.util.Log
+import android.widget.Toast
+import androidx.appcompat.app.AppCompatActivity
+import androidx.lifecycle.lifecycleScope
+import com.conversa.conversa.data.api.RetrofitClient
+import com.conversa.conversa.data.chamada.ChamadaManager
+import com.conversa.conversa.data.preferences.UserPreferences
+import com.conversa.conversa.data.repository.ChamadaRepository
+import com.conversa.conversa.databinding.ActivityChamadaIncomingBinding
+import kotlinx.coroutines.launch
+
+/**
+ * Activity simplificada que apenas redireciona para ChamadaActivity
+ * Cria um NOVO repository para cada chamada recebida
+ */
+class ChamadaIncomingActivity : AppCompatActivity() {
+
+    private lateinit var binding: ActivityChamadaIncomingBinding
+
+    companion object {
+        private const val TAG = "ChamadaIncomingActivity"
+        
+        const val EXTRA_CHAMADA_ID = "chamada_id"
+        const val EXTRA_USUARIO_ID = "usuario_id"
+        const val EXTRA_USUARIO_NOME = "usuario_nome"
+        
+        // SocketManager compartilhado com Service (APENAS eventos de chamada)
+        var sharedSocketManager: com.conversa.conversa.data.socket.SocketManager? = null
+    }
+
+    override fun onCreate(savedInstanceState: Bundle?) {
+        super.onCreate(savedInstanceState)
+        binding = ActivityChamadaIncomingBinding.inflate(layoutInflater)
+        setContentView(binding.root)
+
+        val chamadaId = intent.getIntExtra(EXTRA_CHAMADA_ID, 0)
+        val usuarioId = intent.getIntExtra(EXTRA_USUARIO_ID, 0)
+        val usuarioNome = intent.getStringExtra(EXTRA_USUARIO_NOME) ?: "Contato"
+        
+        Log.d(TAG, "Chamada recebida: id=$chamadaId, de=$usuarioNome")
+
+        lifecycleScope.launch {
+            try {
+                val socketManager = sharedSocketManager
+                
+                if (socketManager == null) {
+                    Log.e(TAG, "SocketManager não disponível")
+                    Toast.makeText(this@ChamadaIncomingActivity, "Erro: serviço não disponível", Toast.LENGTH_SHORT).show()
+                    finish()
+                    return@launch
+                }
+                
+                val userPreferences = UserPreferences(this@ChamadaIncomingActivity)
+                
+                // CRIA um NOVO repository para esta chamada específica
+                val repository = ChamadaRepository(
+                    context = this@ChamadaIncomingActivity,
+                    api = RetrofitClient.api,
+                    chamadaManager = ChamadaManager(this@ChamadaIncomingActivity),
+                    socketManager = socketManager,
+                    userPreferences = userPreferences
+                )
+                
+                // Compartilha TEMPORARIAMENTE para a ChamadaActivity
+                ChamadaActivity.sharedRepository = repository
+                Log.d(TAG, "✅ NOVO repository criado e compartilhado para chamada recebida")
+                
+                // Redireciona para ChamadaActivity
+                val intentChamada = Intent(this@ChamadaIncomingActivity, ChamadaActivity::class.java).apply {
+                    putExtra(ChamadaActivity.EXTRA_CHAMADA_ID, chamadaId)
+                    putExtra(ChamadaActivity.EXTRA_USUARIO_ID, usuarioId)
+                    putExtra(ChamadaActivity.EXTRA_USUARIO_NOME, usuarioNome)
+                    putExtra(ChamadaActivity.EXTRA_IS_INCOMING, true)
+                }
+                
+                startActivity(intentChamada)
+                finish()
+                
+            } catch (e: Exception) {
+                Log.e(TAG, "Erro ao preparar chamada recebida", e)
+                Toast.makeText(this@ChamadaIncomingActivity, "Erro ao abrir chamada", Toast.LENGTH_SHORT).show()
+                finish()
+            }
+        }
+    }
+
+    override fun onBackPressed() {
+        // Não permite voltar
+    }
+}
