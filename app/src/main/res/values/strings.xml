@@ -30,6 +30,11 @@
     <string name="erro_aceitar_chamada">Erro ao aceitar chamada</string>
     <string name="erro_recusar_chamada">Erro ao recusar chamada</string>
     <string name="permissao_audio_necessaria">Permissão de áudio necessária para fazer chamadas</string>
+    <string name="alternar_visualizacao">Alternar visualização</string>
+    <string name="mutar_participante">Mutar participante</string>
+    <string name="atender">Atender</string>
+    <string name="em_chamada_com">Em chamada com %1$s</string>
+    <string name="chamada_grupo">Chamada em grupo</string>
 
     <string name="lorem_ipsum">
         Lorem ipsum dolor sit amet, consectetur adipiscing elit. Nam in scelerisque sem. Mauris

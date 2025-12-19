@@ -21,11 +21,13 @@ import com.conversa.conversa.data.model.EnviarMensagemRequest
 import com.conversa.conversa.data.model.Mensagem
 import com.conversa.conversa.data.preferences.UserPreferences
 import com.conversa.conversa.databinding.ActivityChatBinding
+import com.conversa.conversa.ui.chamada.ChamadaActivity
+import com.conversa.conversa.utils.ChamadaBroadcast
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
 import java.io.File
 
-class ChatActivity : AppCompatActivity() {
+class ChatActivity : AppCompatActivity(), ChamadaBroadcast.ChamadaListener {
 
     private lateinit var binding: ActivityChatBinding
     private lateinit var userPreferences: UserPreferences
@@ -854,7 +856,7 @@ class ChatActivity : AppCompatActivity() {
                 ).show()
                 
                 // Usa SocketManager compartilhado do Service
-                val socketManager = com.conversa.conversa.ui.chamada.ChamadaIncomingActivity.sharedSocketManager
+                val socketManager = com.conversa.conversa.ui.chamada.ChamadaActivity.sharedSocketManager
                 
                 if (socketManager == null) {
                     Toast.makeText(
@@ -865,7 +867,7 @@ class ChatActivity : AppCompatActivity() {
                     return@launch
                 }
                 
-                // Criar repository de chamada
+                // Criar repository de chamada para esta chamada específica
                 val repository = com.conversa.conversa.data.repository.ChamadaRepository(
                     context = this@ChatActivity,
                     api = RetrofitClient.api,
@@ -873,6 +875,8 @@ class ChatActivity : AppCompatActivity() {
                     socketManager = socketManager,
                     userPreferences = userPreferences
                 )
+                
+                android.util.Log.d(TAG, "âœ… Repository criado para iniciar chamada")
                 
                 // Iniciar chamada
                 val result = repository.iniciarChamada(listOf(destinatarioId!!))
@@ -903,5 +907,27 @@ class ChatActivity : AppCompatActivity() {
                 ).show()
             }
         }
+    }
+    
+    override fun onResume() {
+        super.onResume()
+        ChamadaBroadcast.addListener(this)
+    }
+    
+    override fun onPause() {
+        super.onPause()
+        ChamadaBroadcast.removeListener(this)
+    }
+    
+    override fun onChamadaRecebida(chamadaId: Int, usuarioId: Int, usuarioNome: String) {
+        android.util.Log.d(TAG, "📱 Chamada recebida via broadcast: $usuarioNome")
+        
+        val intent = android.content.Intent(this, ChamadaActivity::class.java).apply {
+            putExtra(ChamadaActivity.EXTRA_CHAMADA_ID, chamadaId)
+            putExtra(ChamadaActivity.EXTRA_USUARIO_ID, usuarioId)
+            putExtra(ChamadaActivity.EXTRA_USUARIO_NOME, usuarioNome)
+            putExtra(ChamadaActivity.EXTRA_IS_INCOMING, true)
+        }
+        startActivity(intent)
     }
 }

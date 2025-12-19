@@ -6,4 +6,5 @@
     <color name="corFundoEditor">#E0E0E0</color>
     <color name="corMensagemRecebida">#EDEDED</color>
     <color name="corMensagemEnviada">#CFE7FF</color>
+    <color name="white_smoke">#F5F5F5</color>
 </resources>

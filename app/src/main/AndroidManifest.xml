@@ -21,8 +21,14 @@
     <uses-permission android:name="android.permission.FOREGROUND_SERVICE_DATA_SYNC" />
     <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />
     <uses-permission android:name="android.permission.WAKE_LOCK" />
+    
+    <!-- NOVO: Permissões para tela bloqueada e sensor proximidade -->
+    <uses-permission android:name="android.permission.USE_FULL_SCREEN_INTENT" />
+    <uses-permission android:name="android.permission.SYSTEM_ALERT_WINDOW" />
+    <uses-permission android:name="android.permission.DISABLE_KEYGUARD" />
 
     <application
+        android:name=".ConversaApplication"
         android:allowBackup="true"
         android:dataExtractionRules="@xml/data_extraction_rules"
         android:fullBackupContent="@xml/backup_rules"
@@ -37,6 +43,25 @@
             android:enabled="true"
             android:exported="false"
             android:foregroundServiceType="dataSync"></service>
+
+        <receiver
+            android:name=".service.ChamadaActionReceiver"
+            android:enabled="true"
+            android:exported="false">
+            <intent-filter>
+                <action android:name="com.conversa.conversa.ACTION_ANSWER_CALL" />
+                <action android:name="com.conversa.conversa.ACTION_DECLINE_CALL" />
+            </intent-filter>
+        </receiver>
+
+        <receiver
+            android:name=".receiver.ChamadaBroadcastReceiver"
+            android:enabled="true"
+            android:exported="false">
+            <intent-filter>
+                <action android:name="com.conversa.CHAMADA_RECEBIDA" />
+            </intent-filter>
+        </receiver>
 
         <activity
             android:name=".SplashActivity"
@@ -84,22 +109,17 @@
             android:name=".DetalhesGrupoActivity"
             android:exported="false"
             android:label="Detalhes do Grupo"
-            android:parentActivityName=".CriarGrupoActivity" /> <!-- Activities de Chamada -->
-        <activity
-            android:name=".ui.chamada.ChamadaIncomingActivity"
-            android:excludeFromRecents="true"
-            android:exported="false"
-            android:launchMode="singleTop"
-            android:screenOrientation="portrait"
-            android:showWhenLocked="true"
-            android:theme="@style/Theme.Conversa.NoActionBar"
-            android:turnScreenOn="true" />
+            android:parentActivityName=".CriarGrupoActivity" />
+            
+        <!-- Activity de Chamada (única para incoming e outgoing) -->
         <activity
             android:name=".ui.chamada.ChamadaActivity"
             android:excludeFromRecents="true"
             android:exported="false"
             android:launchMode="singleTop"
             android:screenOrientation="portrait"
+            android:showWhenLocked="true"
+            android:turnScreenOn="true"
             android:theme="@style/Theme.Conversa.NoActionBar" />
     </application>
 
