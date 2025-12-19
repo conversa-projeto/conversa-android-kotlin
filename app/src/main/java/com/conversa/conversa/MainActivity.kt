@@ -1,8 +1,12 @@
 package com.conversa.conversa
 
 import android.app.Dialog
+import android.content.ComponentName
+import android.content.Context
 import android.content.Intent
+import android.content.ServiceConnection
 import android.os.Bundle
+import android.os.IBinder
 import android.view.MenuItem
 import android.view.View
 import android.view.Window
@@ -24,6 +28,7 @@ import com.conversa.conversa.data.preferences.UserPreferences
 import com.conversa.conversa.databinding.ActivityMainBinding
 import com.conversa.conversa.databinding.ContentMainBinding
 import com.conversa.conversa.databinding.DialogContatosBinding
+import com.conversa.conversa.service.CallListener
 import com.conversa.conversa.service.SocketService
 import com.conversa.conversa.ui.chat.ChatActivity
 import com.google.android.material.navigation.NavigationView
@@ -32,13 +37,36 @@ import kotlinx.coroutines.launch
 import java.time.LocalDateTime
 import java.time.format.DateTimeFormatter
 
-class MainActivity : AppCompatActivity(), NavigationView.OnNavigationItemSelectedListener {
+class MainActivity : AppCompatActivity(), NavigationView.OnNavigationItemSelectedListener, CallListener {
     private var isFirstLoad = true
     private lateinit var binding: ActivityMainBinding
     private lateinit var contentBinding: ContentMainBinding
     private lateinit var userPreferences: UserPreferences
     private lateinit var conversasAdapter: ConversasAdapter
     private lateinit var toggle: ActionBarDrawerToggle
+
+    // ServiceConnection
+    private var socketService: SocketService? = null
+    private var isServiceBound = false
+
+    private val serviceConnection = object : ServiceConnection {
+        override fun onServiceConnected(name: ComponentName?, service: IBinder?) {
+            val binder = service as SocketService.LocalBinder
+            socketService = binder.getService()
+            isServiceBound = true
+
+            // Registra callback para receber chamadas
+            socketService?.setCallListener(this@MainActivity)
+
+            android.util.Log.d("MainActivity", "Service vinculado com sucesso")
+        }
+
+        override fun onServiceDisconnected(name: ComponentName?) {
+            socketService = null
+            isServiceBound = false
+            android.util.Log.d("MainActivity", "Service desvinculado")
+        }
+    }
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -76,6 +104,9 @@ class MainActivity : AppCompatActivity(), NavigationView.OnNavigationItemSelecte
             val intent = Intent(this, ContatosActivity::class.java)
             startActivity(intent)
         }
+
+        // Vincula ao SocketService
+        vincularSocketService()
     }
     
     private fun setupNavigationDrawer() {
@@ -317,6 +348,36 @@ class MainActivity : AppCompatActivity(), NavigationView.OnNavigationItemSelecte
     
     override fun onDestroy() {
         super.onDestroy()
+
+        // Desvincula do SocketService
+        if (isServiceBound) {
+            socketService?.setCallListener(null)
+            unbindService(serviceConnection)
+            isServiceBound = false
+        }
+
         // SocketService continua rodando em background
+    }
+
+    /**
+     * Vincula ao SocketService para receber callbacks
+     */
+    private fun vincularSocketService() {
+        val intent = Intent(this, SocketService::class.java)
+        bindService(intent, serviceConnection, Context.BIND_AUTO_CREATE)
+    }
+
+    // Implementação de CallListener
+    override fun onChamadaRecebida(chamadaId: Int, usuarioId: Int, usuarioNome: String) {
+        android.util.Log.d("MainActivity", "Chamada recebida via callback: $chamadaId de $usuarioNome")
+        mostrarTelaChamadaRecebida(chamadaId, usuarioId, usuarioNome)
+    }
+
+    override fun onNovaMensagem(titulo: String, mensagem: String) {
+        android.util.Log.d("MainActivity", "Nova mensagem via callback: $titulo")
+        // Recarrega conversas para mostrar a nova mensagem
+        lifecycleScope.launch {
+            carregarConversas()
+        }
     }
 }

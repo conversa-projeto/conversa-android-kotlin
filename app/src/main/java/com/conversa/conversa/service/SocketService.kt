@@ -3,6 +3,7 @@ package com.conversa.conversa.service
 import android.app.*
 import android.content.Context
 import android.content.Intent
+import android.os.Binder
 import android.os.Build
 import android.os.IBinder
 import android.os.PowerManager
@@ -19,29 +20,37 @@ import kotlinx.coroutines.cancel
 import kotlinx.coroutines.launch
 
 /**
+ * Interface para receber callbacks de chamadas quando app está vinculado
+ */
+interface CallListener {
+    fun onChamadaRecebida(chamadaId: Int, usuarioId: Int, usuarioNome: String)
+    fun onNovaMensagem(titulo: String, mensagem: String)
+}
+
+/**
  * Service em foreground que mantém conexão TCP ativa
  * Recebe notificações de chamadas e mensagens mesmo com app fechado
  */
 class SocketService : Service() {
-    
+
     companion object {
         private const val TAG = "SocketService"
-        
+
         // IDs de notificação
         private const val NOTIFICATION_ID_SERVICE = 1001
         private const val NOTIFICATION_ID_CHAMADA = 1002
         private const val NOTIFICATION_ID_MENSAGEM = 1003
-        
+
         // Canais de notificação
         private const val CHANNEL_ID_SERVICE = "conversa_service_channel"
         private const val CHANNEL_ID_CHAMADAS = "conversa_chamadas_channel"
         private const val CHANNEL_ID_MENSAGENS = "conversa_mensagens_channel"
-        
+
         // Extras do Intent
         private const val EXTRA_HOST = "host"
         private const val EXTRA_PORT = "port"
         private const val EXTRA_TOKEN = "auth_token"
-        
+
         /**
          * Inicia o service
          */
@@ -51,14 +60,14 @@ class SocketService : Service() {
                 putExtra(EXTRA_PORT, port)
                 putExtra(EXTRA_TOKEN, token)
             }
-            
+
             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
                 context.startForegroundService(intent)
             } else {
                 context.startService(intent)
             }
         }
-        
+
         /**
          * Para o service
          */
@@ -67,27 +76,40 @@ class SocketService : Service() {
             context.stopService(intent)
         }
     }
-    
+
+    // Binder para vincular com Activities
+    private val binder = LocalBinder()
+
+    inner class LocalBinder : Binder() {
+        fun getService(): SocketService = this@SocketService
+    }
+
     private lateinit var socketManager: SocketManager
     private lateinit var notificationManager: NotificationManager
     private lateinit var wakeLock: PowerManager.WakeLock
-    
+    private lateinit var ringtoneManager: CallRingtoneManager
+
     private val scope = CoroutineScope(Dispatchers.IO + SupervisorJob())
-    
+
     private var isRunning = false
     private var currentHost: String? = null
     private var currentPort: Int = 0
     private var currentToken: String? = null
+
+    // Controle de vinculação
+    private var isAppBound = false
+    private var callListener: CallListener? = null
     
     override fun onCreate() {
         super.onCreate()
         Log.d(TAG, "Service criado")
-        
+
         notificationManager = getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
-        
+        ringtoneManager = CallRingtoneManager(this)
+
         // Cria canais de notificação
         criarCanaisNotificacao()
-        
+
         // Adquire WakeLock para manter CPU ativa
         val powerManager = getSystemService(Context.POWER_SERVICE) as PowerManager
         wakeLock = powerManager.newWakeLock(
@@ -134,30 +156,73 @@ class SocketService : Service() {
         return START_STICKY
     }
     
-    override fun onBind(intent: Intent?): IBinder? {
-        // Service não é bound
-        return null
+    override fun onBind(intent: Intent?): IBinder {
+        Log.d(TAG, "Service vinculado")
+        isAppBound = true
+        return binder
+    }
+
+    override fun onUnbind(intent: Intent?): Boolean {
+        Log.d(TAG, "Service desvinculado")
+        isAppBound = false
+        callListener = null
+        return super.onUnbind(intent)
+    }
+
+    /**
+     * Registra listener para receber callbacks de chamadas
+     */
+    fun setCallListener(listener: CallListener?) {
+        callListener = listener
+        Log.d(TAG, "CallListener ${if (listener != null) "registrado" else "removido"}")
+    }
+
+    /**
+     * Retorna se o app está vinculado ao service
+     */
+    fun isAppBound(): Boolean = isAppBound
+
+    /**
+     * Cancela notificação de chamada e para ringtone
+     */
+    fun cancelarNotificacaoChamada() {
+        notificationManager.cancel(NOTIFICATION_ID_CHAMADA)
+        ringtoneManager.parar()
+        Log.d(TAG, "Notificação de chamada cancelada")
+    }
+
+    /**
+     * Para ringtone sem cancelar notificação
+     */
+    fun pararRingtone() {
+        ringtoneManager.parar()
+        Log.d(TAG, "Ringtone parado")
     }
     
     override fun onDestroy() {
         super.onDestroy()
         Log.d(TAG, "Service destruído")
-        
+
         isRunning = false
-        
+
         // Remove referência compartilhada
         ChamadaIncomingActivity.sharedSocketManager = null
-        
+
+        // Para ringtone
+        if (::ringtoneManager.isInitialized) {
+            ringtoneManager.release()
+        }
+
         // Desconecta socket
         if (::socketManager.isInitialized) {
             socketManager.desconectar()
         }
-        
+
         // Libera WakeLock
         if (wakeLock.isHeld) {
             wakeLock.release()
         }
-        
+
         // Cancela coroutines
         scope.cancel()
     }
@@ -241,12 +306,30 @@ class SocketService : Service() {
         // Configura callbacks
         socketManager.onChamadaRecebida = { chamadaId, usuarioId, usuarioNome ->
             Log.d(TAG, "Chamada recebida: $chamadaId de $usuarioNome")
-            mostrarNotificacaoChamada(chamadaId, usuarioId, usuarioNome)
+
+            if (isAppBound && callListener != null) {
+                // App vinculado: envia via callback direto
+                Log.d(TAG, "Enviando chamada via callback direto")
+                callListener?.onChamadaRecebida(chamadaId, usuarioId, usuarioNome)
+            } else {
+                // App não vinculado: mostra notificação
+                Log.d(TAG, "Enviando chamada via notificação")
+                mostrarNotificacaoChamada(chamadaId, usuarioId, usuarioNome)
+            }
         }
-        
+
         socketManager.onNovaMensagem = { titulo, mensagem ->
             Log.d(TAG, "Nova mensagem: $titulo")
-            mostrarNotificacaoMensagem(titulo, mensagem)
+
+            if (isAppBound && callListener != null) {
+                // App vinculado: envia via callback direto
+                Log.d(TAG, "Enviando mensagem via callback direto")
+                callListener?.onNovaMensagem(titulo, mensagem)
+            } else {
+                // App não vinculado: mostra notificação
+                Log.d(TAG, "Enviando mensagem via notificação")
+                mostrarNotificacaoMensagem(titulo, mensagem)
+            }
         }
         
         socketManager.onConectado = {
@@ -299,6 +382,9 @@ class SocketService : Service() {
      * Mostra notificação de chamada recebida
      */
     private fun mostrarNotificacaoChamada(chamadaId: Int, usuarioId: Int, usuarioNome: String) {
+        // Inicia ringtone/vibração IMEDIATAMENTE
+        ringtoneManager.iniciar()
+
         // Intent para abrir tela de chamada
         val intent = Intent(this, ChamadaIncomingActivity::class.java).apply {
             putExtra(ChamadaIncomingActivity.EXTRA_CHAMADA_ID, chamadaId)
@@ -306,28 +392,29 @@ class SocketService : Service() {
             putExtra(ChamadaIncomingActivity.EXTRA_USUARIO_NOME, usuarioNome)
             flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TOP
         }
-        
+
         val pendingIntent = PendingIntent.getActivity(
             this,
             chamadaId,
             intent,
             PendingIntent.FLAG_IMMUTABLE or PendingIntent.FLAG_UPDATE_CURRENT
         )
-        
+
+        // Cria notificação SEM vibração (CallRingtoneManager controla)
         val notification = NotificationCompat.Builder(this, CHANNEL_ID_CHAMADAS)
             .setContentTitle("Chamada de $usuarioNome")
             .setContentText("Toque para atender")
             .setSmallIcon(R.drawable.ic_notification)
             .setContentIntent(pendingIntent)
-            .setAutoCancel(true)
+            .setOngoing(true) // Não pode ser descartada
             .setPriority(NotificationCompat.PRIORITY_HIGH)
             .setCategory(NotificationCompat.CATEGORY_CALL)
+            .setVisibility(NotificationCompat.VISIBILITY_PUBLIC) // Mostra na tela bloqueada
             .setFullScreenIntent(pendingIntent, true) // Abre app automaticamente
-            .setVibrate(longArrayOf(0, 1000, 500, 1000))
             .build()
-        
+
         notificationManager.notify(NOTIFICATION_ID_CHAMADA, notification)
-        
+
         // Abre automaticamente a tela de chamada
         startActivity(intent)
     }
