@@ -1,172 +1,87 @@
-# ✅ Correções Aplicadas - Imagens e Áudios no Conversa Android
+# ✅ Correções Aplicadas
 
-## 📋 Status da Aplicação das Correções
+## Problemas Identificados e Corrigidos
 
-### ✅ CORREÇÕES APLICADAS COM SUCESSO:
+### 1. SocketService.kt
 
-#### 1. **item_mensagem_enviada.xml** ✅
-- **Correção:** Alterado o ícone de anexo de `@drawable/ic_send` para `@android:drawable/ic_menu_save`
-- **Linha:** 88
-- **Status:** ✅ APLICADO
+#### Problema 1: Constante NOTIFICATION_ID_CHAMADA faltando
+**Erro:** Código referenciava `NOTIFICATION_ID_CHAMADA` mas ela não estava declarada.
 
-#### 2. **item_mensagem_recebida.xml** ✅
-- **Correção:** Alterado o ícone de anexo de `@drawable/ic_send` para `@android:drawable/ic_menu_save`
-- **Linha:** 99
-- **Status:** ✅ APLICADO
-
-### ✅ VERIFICAÇÕES REALIZADAS:
-
-#### 1. **activity_image_viewer.xml** ✅
-- **Status:** ✅ JÁ ESTAVA CORRETO
-- **ID do ImageView:** `android:id="@+id/imageView"` 
-- **Conclusão:** Nenhuma alteração necessária
-
-#### 2. **build.gradle.kts** ✅
-- **URL da API:** `http://192.168.2.4:90/`
-- **Status:** ✅ CONFIGURADO
-- **Observação:** Esta é uma URL de rede local (192.168.2.4). Certifique-se de que:
-  - O servidor está rodando neste IP e porta
-  - Você está usando um dispositivo físico na mesma rede
-  - Se usar emulador, altere para `http://10.0.2.2:90/` (se o servidor estiver em localhost)
-
----
-
-## 🔍 RESUMO DAS ALTERAÇÕES
-
-### Antes ❌
-```xml
-<!-- item_mensagem_enviada.xml e item_mensagem_recebida.xml -->
-<TextView
-    android:drawableStart="@drawable/ic_send"
-    ... />
-```
-
-### Depois ✅
-```xml
-<!-- item_mensagem_enviada.xml e item_mensagem_recebida.xml -->
-<TextView
-    android:drawableStart="@android:drawable/ic_menu_save"
-    ... />
-```
-
----
-
-## 📝 O QUE FOI VERIFICADO E ESTÁ CORRETO:
-
-### ✅ Arquivos Kotlin (Nenhuma alteração necessária):
-1. **MensagensAdapter.kt** - Autenticação do Glide está correta
-2. **AudioPlayerHelper.kt** - Download com token está correto
-3. **ImageViewerActivity.kt** - Carregamento de imagem está correto
-4. **AndroidManifest.xml** - ImageViewerActivity já registrada
-
-### ✅ Arquivos XML (Correções aplicadas):
-1. **activity_image_viewer.xml** - ID correto (`imageView`)
-2. **item_mensagem_enviada.xml** - Ícone corrigido ✅
-3. **item_mensagem_recebida.xml** - Ícone corrigido ✅
-
----
-
-## 🧪 PRÓXIMOS PASSOS PARA TESTAR:
-
-### 1. **Rebuild do Projeto:**
-```bash
-Build > Clean Project
-Build > Rebuild Project
-```
-
-### 2. **Testar Funcionalidades:**
-
-#### 📷 Testar Imagens:
-- [ ] Enviar mensagem com imagem
-- [ ] Verificar se thumbnail carrega
-- [ ] Clicar na imagem
-- [ ] Verificar se abre em tela cheia
-
-#### 🎵 Testar Áudios:
-- [ ] Enviar mensagem com áudio
-- [ ] Verificar se ícone de play aparece (não o ícone de send)
-- [ ] Clicar em play
-- [ ] Verificar se áudio toca
-- [ ] Verificar mudança de ícone para pause
-
-#### 📎 Testar Anexos:
-- [ ] Enviar mensagem com arquivo
-- [ ] Verificar se nome do arquivo aparece
-- [ ] Verificar se ícone está correto (ícone de save, não send)
-- [ ] Clicar em "Baixar"
-- [ ] Verificar se download acontece
-
----
-
-## ⚠️ CONFIGURAÇÃO DA URL DA API
-
-**Configuração Atual:** `http://192.168.2.4:90/`
-
-### Se usar EMULADOR:
+**Correção aplicada (linha 45):**
 ```kotlin
-buildConfigField("String", "API_URL", "\"http://10.0.2.2:90/\"")
+private const val NOTIFICATION_ID_CHAMADA = 1002
 ```
 
-### Se usar DISPOSITIVO FÍSICO:
+#### Problema 2: Variáveis lastValidHost, lastValidPort, lastValidToken não declaradas
+**Erro:** Código usava essas variáveis mas elas não existiam.
+
+**Correção aplicada (linhas 58-61):**
 ```kotlin
-buildConfigField("String", "API_URL", "\"http://192.168.2.4:90/\"")
-```
-⚠️ Certifique-se de que dispositivo e servidor estão na mesma rede!
-
-**Após mudar a URL:**
-```bash
-Build > Clean Project
-Build > Rebuild Project
+private var lastValidHost: String? = null
+private var lastValidPort: Int = 8090
+private var lastValidToken: String? = null
 ```
 
----
+#### Problema 3: Import de ChamadaIncomingActivity faltando
+**Erro:** Código referenciava `ChamadaIncomingActivity.sharedSocketManager` mas o import estava faltando.
 
-## 🐛 SE AINDA NÃO FUNCIONAR
-
-### Debug para Imagens:
-1. Verificar Logcat por erros de `Glide`
-2. Procurar por `401 Unauthorized`
-3. Testar URL no navegador: `http://192.168.2.4:90/conteudos/1`
-
-### Debug para Áudios:
-1. Verificar Logcat por erros de `MediaPlayer`
-2. Verificar formato do áudio (suportados: MP3, MP4, 3GP, WAV, OGG)
-3. Verificar se arquivo existe no servidor
-
-### Adicionar Logs Temporários:
-
-**MensagensAdapter.kt (linha ~217):**
+**Correção aplicada (linha 20):**
 ```kotlin
-android.util.Log.d("DEBUG_IMG", "URL: $imageUrl, Token: ${authToken.take(20)}...")
+import com.conversa.conversa.ui.chamada.ChamadaIncomingActivity
 ```
 
-**AudioPlayerHelper.kt (linha ~118):**
+#### Problema 4: Activity sendo aberta duas vezes
+**Erro:** O método `mostrarNotificacaoChamada()` estava abrindo a activity duas vezes.
+
+**Correção aplicada:**
+Removida a linha `startActivity(intent)` duplicada, deixando apenas o `setFullScreenIntent()`.
+
+### 2. MainActivity.kt
+
+#### Problema 1: Métodos onChamadaRecebida() duplicados
+**Erro:** Havia dois métodos implementando CallListener.
+
+**Correção aplicada:**
+- Removido sistema antigo de ChamadaBroadcast
+- Mantido apenas a implementação de CallListener
+- Removido import de ChamadaBroadcast
+
+#### Problema 2: Método mostrarTelaChamadaRecebida() não existe
+**Erro:** O método onChamadaRecebida() chamava um método que não estava implementado.
+
+**Correção aplicada (linhas 373-385):**
 ```kotlin
-android.util.Log.d("DEBUG_AUDIO", "Downloading: $audioUrl")
-android.util.Log.d("DEBUG_AUDIO", "Response code: ${response.code}")
+override fun onChamadaRecebida(chamadaId: Int, usuarioId: Int, usuarioNome: String) {
+    android.util.Log.d("MainActivity", "📱 Chamada recebida via callback")
+
+    val intent = Intent(this, ChamadaActivity::class.java).apply {
+        putExtra(ChamadaActivity.EXTRA_CHAMADA_ID, chamadaId)
+        putExtra(ChamadaActivity.EXTRA_USUARIO_ID, usuarioId)
+        putExtra(ChamadaActivity.EXTRA_USUARIO_NOME, usuarioNome)
+        putExtra(ChamadaActivity.EXTRA_IS_INCOMING, true)
+        flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TOP
+    }
+    startActivity(intent)
+}
 ```
 
----
+#### Problema 3: Método verificarPermissoes() faltando
+**Erro:** Método chamado em onCreate() mas não implementado.
 
-## ✅ CONCLUSÃO
+**Correção aplicada (linhas 395-425):**
+Implementado método completo para verificar e solicitar permissões.
 
-As correções dos documentos foram **APLICADAS COM SUCESSO**:
-- ✅ Ícones de anexo corrigidos
-- ✅ Layout de imagem verificado e correto
-- ✅ Código Kotlin verificado e correto
+## Resumo
 
-**O código está correto!** Se ainda houver problemas:
-1. Verificar URL da API
-2. Verificar se servidor está rodando
-3. Verificar token de autenticação
-4. Verificar formato dos arquivos no servidor
+### SocketService.kt
+✅ Constante NOTIFICATION_ID_CHAMADA adicionada
+✅ Variáveis lastValid* adicionadas
+✅ Import ChamadaIncomingActivity adicionado
+✅ Abertura duplicada de activity removida
 
----
+### MainActivity.kt
+✅ Sistema ChamadaBroadcast removido
+✅ Método onChamadaRecebida() corrigido
+✅ Método verificarPermissoes() implementado
 
-## 📞 SUPORTE
-
-Se precisar de ajuda adicional, forneça:
-1. Screenshot do erro
-2. Logs do Logcat
-3. Qual funcionalidade não funciona (imagem/áudio/anexo)
-4. Tipo de dispositivo (emulador ou físico)
+**Status:** Todas as correções aplicadas com sucesso!

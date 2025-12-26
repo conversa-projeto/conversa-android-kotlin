@@ -37,7 +37,6 @@ import com.conversa.conversa.service.CallListener
 import com.conversa.conversa.service.SocketService
 import com.conversa.conversa.ui.chamada.ChamadaActivity
 import com.conversa.conversa.ui.chat.ChatActivity
-import com.conversa.conversa.utils.ChamadaBroadcast
 import com.google.android.material.navigation.NavigationView
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
@@ -80,12 +79,19 @@ class MainActivity : AppCompatActivity(), NavigationView.OnNavigationItemSelecte
 
         binding = ActivityMainBinding.inflate(layoutInflater)
         setContentView(binding.root)
-        
+
         contentBinding = ContentMainBinding.bind(binding.contentMain.root)
+
+        // CRÍTICO: Inicializa userPreferences ANTES de iniciar o service
         userPreferences = UserPreferences(this)
 
+        // PRIMEIRO: Inicia SocketService O MAIS RÁPIDO POSSÍVEL
+        lifecycleScope.launch {
+            inicializarSocketRapido()
+        }
+
         setSupportActionBar(binding.toolbar)
-        
+
         onBackPressedDispatcher.addCallback(this, object : androidx.activity.OnBackPressedCallback(true) {
             override fun handleOnBackPressed() {
                 if (binding.drawerLayout.isDrawerOpen(GravityCompat.START)) {
@@ -95,17 +101,16 @@ class MainActivity : AppCompatActivity(), NavigationView.OnNavigationItemSelecte
                 }
             }
         })
-        
+
         setupNavigationDrawer()
         setupRecyclerView()
         setupListeners()
-        
+
         // CRÍTICO: Solicita permissões necessárias
         verificarPermissoes()
-        
+
         lifecycleScope.launch {
             carregarConfiguracoes()
-            inicializarSocket() // Inicia IMEDIATAMENTE
             carregarConversas()
         }
 
@@ -306,13 +311,13 @@ class MainActivity : AppCompatActivity(), NavigationView.OnNavigationItemSelecte
     }
     
     /**
-     * CRÍTICO: Inicia SocketService assim que MainActivity abre
-     * Service roda em background mesmo quando app fecha
+     * CRÍTICO: Inicia SocketService O MAIS RÁPIDO POSSÍVEL
+     * Executado ANTES de qualquer setup de UI
      */
-    private suspend fun inicializarSocket() {
+    private suspend fun inicializarSocketRapido() {
         try {
             val apiUrl = userPreferences.apiUrl.first()
-            
+
             if (!apiUrl.isNullOrEmpty()) {
                 val host = apiUrl.replace("http://", "")
                                  .replace("https://", "")
@@ -320,12 +325,12 @@ class MainActivity : AppCompatActivity(), NavigationView.OnNavigationItemSelecte
                 val port = 8090
 
                 val token = userPreferences.authToken.first() ?: ""
-                
+
                 if (token.isNotEmpty()) {
-                    // Inicia SocketService em foreground
+                    // Inicia SocketService em foreground IMEDIATAMENTE
                     SocketService.start(this, host, port, token)
-                    
-                    android.util.Log.d("MainActivity", "✅ SocketService iniciado: $host:$port")
+
+                    android.util.Log.d("MainActivity", "⚡ SocketService iniciado RAPIDAMENTE: $host:$port")
                 } else {
                     android.util.Log.e("MainActivity", "❌ Token vazio, não iniciou service")
                 }
@@ -339,38 +344,13 @@ class MainActivity : AppCompatActivity(), NavigationView.OnNavigationItemSelecte
     
     override fun onResume() {
         super.onResume()
-        
-        // Registra listener para receber chamadas quando app está aberto
-        ChamadaBroadcast.addListener(this)
-        
+
         if (!isFirstLoad) {
             lifecycleScope.launch {
                 carregarConversas()
             }
         }
         isFirstLoad = false
-    }
-    
-    override fun onPause() {
-        super.onPause()
-        // Remove listener quando sai da tela
-        ChamadaBroadcast.removeListener(this)
-    }
-    
-    /**
-     * Callback quando chamada é recebida com app ABERTO
-     */
-    override fun onChamadaRecebida(chamadaId: Int, usuarioId: Int, usuarioNome: String) {
-        android.util.Log.d("MainActivity", "📱 Chamada recebida via broadcast: $usuarioNome")
-        
-        // Abre ChamadaActivity por cima da MainActivity
-        val intent = Intent(this, ChamadaActivity::class.java).apply {
-            putExtra(ChamadaActivity.EXTRA_CHAMADA_ID, chamadaId)
-            putExtra(ChamadaActivity.EXTRA_USUARIO_ID, usuarioId)
-            putExtra(ChamadaActivity.EXTRA_USUARIO_NOME, usuarioNome)
-            putExtra(ChamadaActivity.EXTRA_IS_INCOMING, true)
-        }
-        startActivity(intent)
     }
     
     override fun onDestroy() {
@@ -396,15 +376,49 @@ class MainActivity : AppCompatActivity(), NavigationView.OnNavigationItemSelecte
 
     // Implementação de CallListener
     override fun onChamadaRecebida(chamadaId: Int, usuarioId: Int, usuarioNome: String) {
-        android.util.Log.d("MainActivity", "Chamada recebida via callback: $chamadaId de $usuarioNome")
-        mostrarTelaChamadaRecebida(chamadaId, usuarioId, usuarioNome)
+        // NOTA: Este callback não é mais usado!
+        // A lógica foi movida para SocketService que decide automaticamente
+        // baseado no estado do dispositivo (bloqueado/desbloqueado)
+        android.util.Log.d("MainActivity", "⚠️ onChamadaRecebida chamado (não deve acontecer mais)")
     }
 
     override fun onNovaMensagem(titulo: String, mensagem: String) {
-        android.util.Log.d("MainActivity", "Nova mensagem via callback: $titulo")
+        android.util.Log.d("MainActivity", "💬 Nova mensagem via callback: $titulo")
         // Recarrega conversas para mostrar a nova mensagem
         lifecycleScope.launch {
             carregarConversas()
+        }
+    }
+
+    /**
+     * Verifica e solicita permissões necessárias
+     */
+    private fun verificarPermissoes() {
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+            val permissoesNecessarias = mutableListOf<String>()
+
+            // Permissão para notificações
+            if (ContextCompat.checkSelfPermission(this, Manifest.permission.POST_NOTIFICATIONS)
+                != PackageManager.PERMISSION_GRANTED) {
+                permissoesNecessarias.add(Manifest.permission.POST_NOTIFICATIONS)
+            }
+
+            // Permissão para Bluetooth
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
+                if (ContextCompat.checkSelfPermission(this, Manifest.permission.BLUETOOTH_CONNECT)
+                    != PackageManager.PERMISSION_GRANTED) {
+                    permissoesNecessarias.add(Manifest.permission.BLUETOOTH_CONNECT)
+                }
+            }
+
+            // Solicita permissões se necessário
+            if (permissoesNecessarias.isNotEmpty()) {
+                ActivityCompat.requestPermissions(
+                    this,
+                    permissoesNecessarias.toTypedArray(),
+                    100
+                )
+            }
         }
     }
 }

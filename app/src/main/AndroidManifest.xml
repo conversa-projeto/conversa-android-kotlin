@@ -6,6 +6,7 @@
     <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
     <uses-permission android:name="android.permission.RECORD_AUDIO" />
     <uses-permission android:name="android.permission.MODIFY_AUDIO_SETTINGS" />
+    <uses-permission android:name="android.permission.VIBRATE" />
     <uses-permission
         android:name="android.permission.WRITE_EXTERNAL_STORAGE"
         android:maxSdkVersion="28" />
@@ -19,9 +20,9 @@
 
     <uses-permission android:name="android.permission.FOREGROUND_SERVICE" />
     <uses-permission android:name="android.permission.FOREGROUND_SERVICE_DATA_SYNC" />
-    <uses-permission android:name="android.permission.FOREGROUND_SERVICE_PHONE_CALL" />
     <uses-permission android:name="android.permission.FOREGROUND_SERVICE_MICROPHONE" />
     <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />
+    <uses-permission android:name="android.permission.USE_FULL_SCREEN_INTENT" />
     <uses-permission android:name="android.permission.WAKE_LOCK" />
     <uses-permission android:name="android.permission.BLUETOOTH_CONNECT" />
 
@@ -40,7 +41,17 @@
             android:name=".service.SocketService"
             android:enabled="true"
             android:exported="false"
-            android:foregroundServiceType="dataSync|phoneCall|microphone"></service>
+            android:foregroundServiceType="dataSync|microphone"></service>
+
+        <receiver
+            android:name=".service.ChamadaActionReceiver"
+            android:enabled="true"
+            android:exported="false">
+            <intent-filter>
+                <action android:name="com.conversa.conversa.ACTION_ANSWER_CALL" />
+                <action android:name="com.conversa.conversa.ACTION_DECLINE_CALL" />
+            </intent-filter>
+        </receiver>
 
         <activity
             android:name=".SplashActivity"
@@ -90,17 +101,6 @@
             android:label="Detalhes do Grupo"
             android:parentActivityName=".CriarGrupoActivity" /> <!-- Activities de Chamada -->
         <activity
-            android:name=".ui.chamada.ChamadaIncomingActivity"
-            android:excludeFromRecents="true"
-            android:exported="false"
-            android:launchMode="singleTop"
-            android:screenOrientation="portrait"
-            android:showWhenLocked="true"
-            android:showOnLockScreen="true"
-            android:inheritShowWhenLocked="true"
-            android:theme="@style/Theme.Conversa.NoActionBar"
-            android:turnScreenOn="true" />
-        <activity
             android:name=".ui.chamada.ChamadaActivity"
             android:excludeFromRecents="true"
             android:exported="false"
@@ -109,6 +109,7 @@
             android:showWhenLocked="true"
             android:showOnLockScreen="true"
             android:inheritShowWhenLocked="true"
+            android:turnScreenOn="true"
             android:theme="@style/Theme.Conversa.NoActionBar" />
     </application>
 

@@ -3,6 +3,7 @@ package com.conversa.conversa.ui.chamada
 import android.Manifest
 import android.app.KeyguardManager
 import android.content.Context
+import android.content.Intent
 import android.content.pm.PackageManager
 import android.hardware.Sensor
 import android.hardware.SensorEvent
@@ -29,6 +30,7 @@ import com.conversa.conversa.data.chamada.model.TipoEventoChamadaUI
 import com.conversa.conversa.data.model.UsuarioChamadaStatus
 import com.conversa.conversa.data.preferences.UserPreferences
 import com.conversa.conversa.data.repository.ChamadaRepository
+import com.conversa.conversa.service.SocketService
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.launch
 
@@ -88,6 +90,12 @@ class ChamadaActivity : AppCompatActivity(),
         usuarioNome = intent.getStringExtra(EXTRA_USUARIO_NOME) ?: "Contato"
         isIncoming = intent.getBooleanExtra(EXTRA_IS_INCOMING, false)
         autoAnswer = intent.getBooleanExtra("auto_answer", false)
+
+        // Para ringtone e remove notificação se veio de ação de notificação
+        if (intent.getBooleanExtra("from_notification_action", false)) {
+            Log.d(TAG, "📞 Aberto via botão de notificação - parando ringtone")
+            pararRingtoneERemoverNotificacao()
+        }
 
         Log.d(TAG, "📞 onCreate - Extras recebidos:")
         Log.d(TAG, "   chamadaId=$chamadaId")
@@ -408,6 +416,9 @@ class ChamadaActivity : AppCompatActivity(),
     override fun onAceitarChamada() {
         (currentFragment as? IncomingCallFragment)?.desabilitarBotoes()
 
+        // Para ringtone/vibração IMEDIATAMENTE
+        pararRingtoneERemoverNotificacao()
+
         lifecycleScope.launch {
             try {
                 val result = repository.aceitarChamada(chamadaId)
@@ -439,10 +450,13 @@ class ChamadaActivity : AppCompatActivity(),
     override fun onRecusarChamada() {
         (currentFragment as? IncomingCallFragment)?.desabilitarBotoes()
 
+        // Para ringtone/vibração IMEDIATAMENTE
+        pararRingtoneERemoverNotificacao()
+
         lifecycleScope.launch {
             try {
                 repository.recusarChamada(chamadaId)
-                removerNotificacaoChamada()
+                // Ringtone já foi parado acima
                 finish()
             } catch (e: Exception) {
                 removerNotificacaoChamada()
@@ -584,5 +598,27 @@ class ChamadaActivity : AppCompatActivity(),
 
     override fun onBackPressed() {
         // Não permite voltar durante chamada
+    }
+
+    /**
+     * Para o ringtone e remove a notificação de chamada
+     * Chamado quando a activity é aberta via botão da notificação
+     */
+    private fun pararRingtoneERemoverNotificacao() {
+        try {
+            // Para ringtone via SocketService
+            val serviceIntent = Intent(this, SocketService::class.java).apply {
+                action = "STOP_RINGTONE"
+            }
+            startService(serviceIntent)
+
+            // Remove notificação
+            val notificationManager = getSystemService(Context.NOTIFICATION_SERVICE) as android.app.NotificationManager
+            notificationManager.cancel(1002) // NOTIFICATION_ID_CHAMADA
+
+            Log.d(TAG, "Ringtone parado e notificação removida")
+        } catch (e: Exception) {
+            Log.e(TAG, "Erro ao parar ringtone/remover notificação", e)
+        }
     }
 }

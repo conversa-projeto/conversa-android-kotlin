@@ -197,23 +197,29 @@ class ChamadaRepository(
     }
     
     private fun setupSocketEventListeners() {
-        
+
+        // REMOVIDO: Não deve sobrescrever o callback do SocketService!
+        // O SocketService é quem gerencia as notificações de chamadas recebidas
+        // baseado no estado do dispositivo (bloqueado/desbloqueado).
+        //
+        // ANTIGO CÓDIGO (comentado para não sobrescrever):
+        /*
         socketManager.onChamadaRecebida = { chamadaId, usuarioId, usuarioNome ->
             Log.d(TAG, "Socket: Chamada recebida $chamadaId de $usuarioNome")
-            
+
             scope.launch {
                 try {
                     val resultado = obterDadosChamada(chamadaId)
-                    
+
                     if (resultado.isSuccess) {
                         val chamada = resultado.getOrNull()!!
                         chamadaAtual = chamada
                         _estadoLocalFlow.value = EstadoChamadaLocal.RECEBENDO_CHAMADA
-                        
+
                         _eventosChamadaFlow.emit(
                             EventoChamada.Recebida(chamadaId, usuarioId, usuarioNome)
                         )
-                        
+
                         Log.d(TAG, "Dados da chamada recebida carregados: ${chamada.usuarios.size} participantes")
                     } else {
                         Log.e(TAG, "Erro ao buscar dados da chamada recebida", resultado.exceptionOrNull())
@@ -223,7 +229,8 @@ class ChamadaRepository(
                 }
             }
         }
-        
+        */
+
         socketManager.onChamadaFinalizada = { chamadaId, usuarioId ->
             Log.d(TAG, "Socket: Chamada finalizada $chamadaId")
             
