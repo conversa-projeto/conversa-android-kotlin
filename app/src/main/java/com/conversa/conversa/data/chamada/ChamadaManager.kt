@@ -74,9 +74,9 @@ class ChamadaManager(private val context: Context) {
     
     // Sincronização thread-safe para envio TCP
     private val envioMutex = Mutex()
-    
+
     // Fila de pacotes para envio serializado
-    private val filaEnvio = Channel<ByteArray>(capacity = 100)
+    private var filaEnvio = Channel<ByteArray>(capacity = 100)
     
     // Áudio - @Volatile para garantir visibilidade entre threads
     @Volatile
@@ -103,6 +103,19 @@ class ChamadaManager(private val context: Context) {
     var onChamadaFinalizada: (() -> Unit)? = null
     
     /**
+     * Recria o canal de envio (necessário após fechamento)
+     */
+    private fun recriarFilaEnvio() {
+        try {
+            filaEnvio.close()
+        } catch (e: Exception) {
+            // Ignora erro se já estiver fechado
+        }
+        filaEnvio = Channel(capacity = 100)
+        Log.d(TAG, "[$instanceId] Canal de envio recriado")
+    }
+
+    /**
      * Inicia uma nova chamada
      */
     suspend fun iniciarChamada(
@@ -114,11 +127,14 @@ class ChamadaManager(private val context: Context) {
         try {
             this@ChamadaManager.chamadaId = chamadaId
             this@ChamadaManager.usuarioId = usuarioId
-            
+
             Log.d(TAG, "[$instanceId] === INICIANDO CHAMADA ===")
             Log.d(TAG, "Servidor: $serverHost:$serverPort")
             Log.d(TAG, "ChamadaId: $chamadaId")
             Log.d(TAG, "UsuarioId: $usuarioId")
+
+            // Recria o canal de envio
+            recriarFilaEnvio()
             
             // Conecta ao servidor TCP
             socket = Socket(serverHost, serverPort).apply {
@@ -528,7 +544,7 @@ class ChamadaManager(private val context: Context) {
      * Recebe áudio do servidor e reproduz
      */
     private suspend fun receberEReproducirAudio() {
-        Log.d(TAG, "🔴 receberEReproducirAudio() CHAMADO")
+//        Log.d(TAG, "🔴 receberEReproducirAudio() CHAMADO")
         
         try {
             // Verifica se há dados disponíveis para leitura
@@ -566,7 +582,7 @@ class ChamadaManager(private val context: Context) {
             stream.readFully(audioData)
             
             // LOG: Mostra qual clientId recebeu áudio
-            Log.d(TAG, "📦 Áudio recebido de clientId=$clientId, tamanho=$audioSize bytes")
+//            Log.d(TAG, "📦 Áudio recebido de clientId=$clientId, tamanho=$audioSize bytes")
             
             val audioShorts = bytesToShorts(audioData)
             adicionarAoMixing(clientId, audioShorts)
@@ -656,15 +672,25 @@ class ChamadaManager(private val context: Context) {
     }
     
     fun finalizarChamada() {
-        Log.d(TAG, "Finalizando chamada")
-        
+        Log.d(TAG, "[$instanceId] Finalizando chamada")
+
         emChamada = false
-        
+
+        // Cancela jobs de forma explícita e aguarda
         captureJob?.cancel()
         playbackJob?.cancel()
         senderJob?.cancel()
-        
-        filaEnvio.close()
+
+        captureJob = null
+        playbackJob = null
+        senderJob = null
+
+        // Fecha canal de envio
+        try {
+            filaEnvio.close()
+        } catch (e: Exception) {
+            Log.w(TAG, "Erro ao fechar fila de envio: ${e.message}")
+        }
         
         try {
             if (audioRecord?.recordingState == AudioRecord.RECORDSTATE_RECORDING) {
@@ -750,7 +776,13 @@ class ChamadaManager(private val context: Context) {
         Log.d(TAG, "[$instanceId] audioTrack: ${if (audioTrack == null) "NULL" else "OK (estado=${audioTrack?.state})" }")
         Log.d(TAG, "captureJob ativo: ${captureJob?.isActive}")
         Log.d(TAG, "playbackJob ativo: ${playbackJob?.isActive}")
-        
+
+        // Verifica se já está capturando/reproduzindo
+        if (captureJob?.isActive == true && playbackJob?.isActive == true) {
+            Log.w(TAG, "⚠️ Captura e reprodução JÁ ESTÃO ATIVAS! Ignorando chamada duplicada")
+            return
+        }
+
         if (audioRecord == null || audioTrack == null) {
             Log.e(TAG, "❌ ERRO CRÍTICO: Componentes de áudio são NULL!")
             Log.e(TAG, "Tentando reinicializar componentes de áudio...")
@@ -764,7 +796,6 @@ class ChamadaManager(private val context: Context) {
 
         iniciarCaptura()
         iniciarReproducao()
-        iniciarSender()
 
         Log.d(TAG, "=== CAPTURA E REPRODUÇÃO DISPARADAS ===")
     }

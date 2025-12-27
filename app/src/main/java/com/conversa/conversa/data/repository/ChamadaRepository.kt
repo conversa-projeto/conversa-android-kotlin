@@ -72,11 +72,36 @@ class ChamadaRepository(
     var onConexaoTcpEstabelecida: (() -> Unit)? = null
     
     private var primeiroParticipanteEntrou: Boolean = false
-    
+
     init {
+        Log.d(TAG, "Repository criado - Limpando listeners antigos")
+        limparListenersAntigos()
+        resetarEstado()
         setupSocketEventListeners()
         setupChamadaManagerCallbacks()
         observarEventosParaUI()
+    }
+
+    /**
+     * Limpa listeners antigos do SocketManager para evitar duplicação
+     */
+    private fun limparListenersAntigos() {
+        socketManager.onChamadaRecebida = null
+        socketManager.onChamadaFinalizada = null
+        socketManager.onUsuarioRecusou = null
+        socketManager.onUsuarioEntrou = null
+        socketManager.onUsuarioSaiu = null
+        Log.d(TAG, "Listeners antigos do SocketManager removidos")
+    }
+
+    /**
+     * Reseta todos os estados internos
+     */
+    private fun resetarEstado() {
+        primeiroParticipanteEntrou = false
+        chamadaAtual = null
+        _estadoLocalFlow.value = EstadoChamadaLocal.DESCONHECIDO
+        Log.d(TAG, "Estado interno resetado")
     }
     
     private fun observarEventosParaUI() {

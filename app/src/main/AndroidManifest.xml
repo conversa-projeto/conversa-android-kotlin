@@ -25,6 +25,7 @@
     <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />
     <uses-permission android:name="android.permission.WAKE_LOCK" />
     <uses-permission android:name="android.permission.BLUETOOTH_CONNECT" />
+    <uses-permission android:name="android.permission.VIBRATE" />
 
     <!-- NOVO: Permissões para tela bloqueada e sensor proximidade -->
     <uses-permission android:name="android.permission.USE_FULL_SCREEN_INTENT" />
@@ -55,6 +56,8 @@
             <intent-filter>
                 <action android:name="com.conversa.conversa.ACTION_ANSWER_CALL" />
                 <action android:name="com.conversa.conversa.ACTION_DECLINE_CALL" />
+                <action android:name="com.conversa.ACTION_ACEITAR_CHAMADA" />
+                <action android:name="com.conversa.ACTION_RECUSAR_CHAMADA" />
             </intent-filter>
         </receiver>
 

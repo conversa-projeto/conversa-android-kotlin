@@ -20,33 +20,42 @@ class ChamadaActionReceiver : BroadcastReceiver() {
     companion object {
         private const val TAG = "ChamadaActionReceiver"
         private const val NOTIFICATION_ID = 1002
-        
+
         const val ACTION_ANSWER = "com.conversa.conversa.ACTION_ANSWER_CALL"
         const val ACTION_DECLINE = "com.conversa.conversa.ACTION_DECLINE_CALL"
+
+        // Novas actions para compatibilidade com SocketService
+        private const val ACTION_ACEITAR_CHAMADA = "com.conversa.ACTION_ACEITAR_CHAMADA"
+        private const val ACTION_RECUSAR_CHAMADA = "com.conversa.ACTION_RECUSAR_CHAMADA"
+
         const val EXTRA_CHAMADA_ID = "chamada_id"
         const val EXTRA_USUARIO_ID = "usuario_id"
     }
-    
+
     override fun onReceive(context: Context?, intent: Intent?) {
         if (context == null || intent == null) {
             Log.e(TAG, "Context ou Intent nulo")
             return
         }
-        
-        val chamadaId = intent.getIntExtra(EXTRA_CHAMADA_ID, -1)
+
+        val chamadaId = intent.getIntExtra(ChamadaActivity.EXTRA_CHAMADA_ID, -1)
         if (chamadaId == -1) {
             Log.e(TAG, "chamadaId inválido")
             return
         }
-        
+
         when (intent.action) {
-            ACTION_ANSWER -> atenderChamada(context, chamadaId, intent.getIntExtra(EXTRA_USUARIO_ID, -1))
-            ACTION_DECLINE -> recusarChamada(context, chamadaId)
+            ACTION_ANSWER, ACTION_ACEITAR_CHAMADA -> {
+                val usuarioId = intent.getIntExtra(ChamadaActivity.EXTRA_USUARIO_ID, -1)
+                val usuarioNome = intent.getStringExtra(ChamadaActivity.EXTRA_USUARIO_NOME) ?: ""
+                atenderChamada(context, chamadaId, usuarioId, usuarioNome)
+            }
+            ACTION_DECLINE, ACTION_RECUSAR_CHAMADA -> recusarChamada(context, chamadaId)
             else -> Log.w(TAG, "Action desconhecida: ${intent.action}")
         }
     }
     
-    private fun atenderChamada(context: Context, chamadaId: Int, usuarioId: Int) {
+    private fun atenderChamada(context: Context, chamadaId: Int, usuarioId: Int, usuarioNome: String = "") {
         Log.d(TAG, "Atendendo chamada $chamadaId")
 
         // Para ringtone e vibração
@@ -56,6 +65,7 @@ class ChamadaActionReceiver : BroadcastReceiver() {
         val activityIntent = Intent(context, ChamadaActivity::class.java).apply {
             putExtra(ChamadaActivity.EXTRA_CHAMADA_ID, chamadaId)
             putExtra(ChamadaActivity.EXTRA_USUARIO_ID, usuarioId)
+            putExtra(ChamadaActivity.EXTRA_USUARIO_NOME, usuarioNome)
             putExtra(ChamadaActivity.EXTRA_IS_INCOMING, true)
             putExtra("auto_answer", true)
             addFlags(Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TOP)

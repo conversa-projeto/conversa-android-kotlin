@@ -87,6 +87,10 @@ class ChamadaActivity : AppCompatActivity(),
         // IMPORTANTE: Para ringtone quando a activity abre
         ChamadaRingtoneManager.getInstance(this).parar()
 
+        // Remove notificação de chamada (se houver)
+        val notificationManager = getSystemService(Context.NOTIFICATION_SERVICE) as android.app.NotificationManager
+        notificationManager.cancel(1002)
+
         chamadaId = intent.getIntExtra(EXTRA_CHAMADA_ID, 0)
         usuarioId = intent.getIntExtra(EXTRA_USUARIO_ID, 0)
         usuarioNome = intent.getStringExtra(EXTRA_USUARIO_NOME) ?: "Contato"
