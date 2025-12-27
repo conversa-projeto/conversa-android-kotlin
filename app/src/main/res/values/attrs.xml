@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <declare-styleable name="SwipeButton">
+        <attr name="swipeType" format="enum">
+            <enum name="accept" value="0" />
+            <enum name="decline" value="1" />
+        </attr>
+    </declare-styleable>
+</resources>

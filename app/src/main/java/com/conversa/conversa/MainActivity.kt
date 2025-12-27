@@ -2,10 +2,14 @@ package com.conversa.conversa
 
 import android.Manifest
 import android.app.Dialog
+import android.content.ComponentName
+import android.content.Context
 import android.content.Intent
+import android.content.ServiceConnection
 import android.content.pm.PackageManager
 import android.os.Build
 import android.os.Bundle
+import android.os.IBinder
 import android.view.MenuItem
 import android.view.View
 import android.view.Window
@@ -39,15 +43,36 @@ import kotlinx.coroutines.launch
 import java.time.LocalDateTime
 import java.time.format.DateTimeFormatter
 
-class MainActivity : AppCompatActivity(), 
+class MainActivity : AppCompatActivity(),
     NavigationView.OnNavigationItemSelectedListener,
-    ChamadaBroadcast.ChamadaListener {
+    ChamadaBroadcast.ChamadaListener,
+    SocketService.CallListener {
     private var isFirstLoad = true
     private lateinit var binding: ActivityMainBinding
     private lateinit var contentBinding: ContentMainBinding
     private lateinit var userPreferences: UserPreferences
     private lateinit var conversasAdapter: ConversasAdapter
     private lateinit var toggle: ActionBarDrawerToggle
+
+    // ServiceConnection
+    private var socketService: SocketService? = null
+    private var isBound = false
+
+    private val serviceConnection = object : ServiceConnection {
+        override fun onServiceConnected(name: ComponentName?, service: IBinder?) {
+            val binder = service as SocketService.LocalBinder
+            socketService = binder.getService()
+            socketService?.setCallListener(this@MainActivity)
+            isBound = true
+            android.util.Log.d("MainActivity", "✅ Service vinculado com sucesso")
+        }
+
+        override fun onServiceDisconnected(name: ComponentName?) {
+            socketService = null
+            isBound = false
+            android.util.Log.d("MainActivity", "⚠️ Service desvinculado")
+        }
+    }
 
     companion object {
         private const val REQUEST_NOTIFICATION_PERMISSION = 101
@@ -373,10 +398,14 @@ class MainActivity : AppCompatActivity(),
     
     override fun onResume() {
         super.onResume()
-        
+
         // Registra listener para receber chamadas quando app está aberto
         ChamadaBroadcast.addListener(this)
-        
+
+        // Vincula ao SocketService
+        val intent = Intent(this, SocketService::class.java)
+        bindService(intent, serviceConnection, Context.BIND_AUTO_CREATE)
+
         if (!isFirstLoad) {
             lifecycleScope.launch {
                 carregarConversas()
@@ -384,20 +413,83 @@ class MainActivity : AppCompatActivity(),
         }
         isFirstLoad = false
     }
-    
+
     override fun onPause() {
         super.onPause()
+
         // Remove listener quando sai da tela
         ChamadaBroadcast.removeListener(this)
+
+        // Desvincula do SocketService
+        if (isBound) {
+            socketService?.setCallListener(null)
+            unbindService(serviceConnection)
+            isBound = false
+            android.util.Log.d("MainActivity", "🔌 Service desvinculado")
+        }
     }
     
-    /**
-     * Callback quando chamada é recebida com app ABERTO
-     */
+    // Implementação de ChamadaBroadcast.ChamadaListener (fallback)
     override fun onChamadaRecebida(chamadaId: Int, usuarioId: Int, usuarioNome: String) {
         android.util.Log.d("MainActivity", "📱 Chamada recebida via broadcast: $usuarioNome")
-        
-        // Abre ChamadaActivity por cima da MainActivity
+        abrirChamada(chamadaId, usuarioId, usuarioNome)
+    }
+
+    // Implementação de SocketService.CallListener (callback direto quando vinculado)
+    override fun onChamadaRecebida(chamadaId: String, usuarioId: Int, usuarioNome: String?) {
+        android.util.Log.d("MainActivity", "📱 Chamada recebida via callback direto: $usuarioNome")
+
+        // Converte chamadaId String para Int
+        val chamadaIdInt = chamadaId.toIntOrNull() ?: 0
+
+        // Delega para ChamadaNotificationManager para verificar estado da tela
+        lifecycleScope.launch {
+            try {
+                val token = userPreferences.authToken.first()
+                if (token != null) {
+                    val api = com.conversa.conversa.data.api.RetrofitClient.api
+                    val notificationManager = com.conversa.conversa.notification.ChamadaNotificationManager(this@MainActivity, api, token)
+
+                    notificationManager.onChamadaRecebida(
+                        chamadaId = chamadaIdInt,
+                        usuarioId = usuarioId,
+                        usuarioNome = usuarioNome ?: "Desconhecido",
+                        tipoChamada = 1
+                    )
+                }
+            } catch (e: Exception) {
+                android.util.Log.e("MainActivity", "Erro ao processar chamada", e)
+            }
+        }
+    }
+
+    override fun onNovaMensagem(titulo: String, mensagem: String) {
+        android.util.Log.d("MainActivity", "💬 Nova mensagem recebida: $titulo")
+        // Recarrega conversas para mostrar nova mensagem
+        lifecycleScope.launch {
+            carregarConversas()
+        }
+    }
+
+    override fun onSocketConectado() {
+        android.util.Log.d("MainActivity", "✅ Socket conectado")
+        // Pode atualizar UI se necessário
+    }
+
+    override fun onSocketDesconectado() {
+        android.util.Log.d("MainActivity", "⚠️ Socket desconectado")
+        // Pode mostrar aviso na UI se necessário
+    }
+
+    override fun onSocketErro(erro: String) {
+        android.util.Log.e("MainActivity", "❌ Erro no socket: $erro")
+        // Pode mostrar erro na UI se necessário
+    }
+
+    /**
+     * Método auxiliar para abrir ChamadaActivity
+     */
+    private fun abrirChamada(chamadaId: Int, usuarioId: Int, usuarioNome: String) {
         val intent = Intent(this, ChamadaActivity::class.java).apply {
             putExtra(ChamadaActivity.EXTRA_CHAMADA_ID, chamadaId)
             putExtra(ChamadaActivity.EXTRA_USUARIO_ID, usuarioId)
@@ -406,7 +498,7 @@ class MainActivity : AppCompatActivity(),
         }
         startActivity(intent)
     }
-    
+
     override fun onDestroy() {
         super.onDestroy()
         // SocketService continua rodando em background

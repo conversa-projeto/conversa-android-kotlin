@@ -29,6 +29,7 @@ import com.conversa.conversa.data.chamada.model.TipoEventoChamadaUI
 import com.conversa.conversa.data.model.UsuarioChamadaStatus
 import com.conversa.conversa.data.preferences.UserPreferences
 import com.conversa.conversa.data.repository.ChamadaRepository
+import com.conversa.conversa.service.ChamadaRingtoneManager
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.launch
 
@@ -82,6 +83,9 @@ class ChamadaActivity : AppCompatActivity(),
         setContentView(R.layout.activity_chamada)
 
         configurarTelasBloqueadas()
+
+        // IMPORTANTE: Para ringtone quando a activity abre
+        ChamadaRingtoneManager.getInstance(this).parar()
 
         chamadaId = intent.getIntExtra(EXTRA_CHAMADA_ID, 0)
         usuarioId = intent.getIntExtra(EXTRA_USUARIO_ID, 0)

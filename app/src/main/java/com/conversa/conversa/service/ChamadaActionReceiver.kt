@@ -48,9 +48,11 @@ class ChamadaActionReceiver : BroadcastReceiver() {
     
     private fun atenderChamada(context: Context, chamadaId: Int, usuarioId: Int) {
         Log.d(TAG, "Atendendo chamada $chamadaId")
-        
-        removerNotificacao(context)
-        
+
+        // Para ringtone e vibração
+        ChamadaRingtoneManager.getInstance(context).parar()
+
+        // Abre ChamadaActivity para atender
         val activityIntent = Intent(context, ChamadaActivity::class.java).apply {
             putExtra(ChamadaActivity.EXTRA_CHAMADA_ID, chamadaId)
             putExtra(ChamadaActivity.EXTRA_USUARIO_ID, usuarioId)
@@ -58,27 +60,34 @@ class ChamadaActionReceiver : BroadcastReceiver() {
             putExtra("auto_answer", true)
             addFlags(Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TOP)
         }
-        
+
         context.startActivity(activityIntent)
+
+        // Remove notificação após abrir a activity
+        removerNotificacao(context)
     }
-    
+
     private fun recusarChamada(context: Context, chamadaId: Int) {
         Log.d(TAG, "Recusando chamada $chamadaId")
-        
+
+        // Para ringtone e vibração
+        ChamadaRingtoneManager.getInstance(context).parar()
+
+        // Remove notificação ao recusar
         removerNotificacao(context)
-        
+
         val scope = CoroutineScope(Dispatchers.IO + SupervisorJob())
         scope.launch {
             try {
                 val userPrefs = UserPreferences(context)
                 val token = userPrefs.authToken.first()
-                
+
                 if (token != null) {
                     val response = RetrofitClient.api.recusarChamada(
                         "Bearer $token",
                         ChamadaIdRequest(chamadaId)
                     )
-                    
+
                     if (response.isSuccessful) {
                         Log.d(TAG, "Chamada recusada com sucesso")
                     } else {

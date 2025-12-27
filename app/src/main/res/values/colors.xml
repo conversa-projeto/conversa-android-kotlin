@@ -7,4 +7,8 @@
     <color name="corMensagemRecebida">#EDEDED</color>
     <color name="corMensagemEnviada">#CFE7FF</color>
     <color name="white_smoke">#F5F5F5</color>
+
+    <!-- Cores para SwipeButton -->
+    <color name="colorAcceptCall">#4CAF50</color>
+    <color name="colorRejectCall">#F44336</color>
 </resources>

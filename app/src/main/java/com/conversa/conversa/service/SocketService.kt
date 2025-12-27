@@ -5,6 +5,7 @@ import android.content.Context
 import android.content.Intent
 import android.media.AudioAttributes
 import android.media.RingtoneManager
+import android.os.Binder
 import android.os.Build
 import android.os.IBinder
 import android.os.PowerManager
@@ -23,6 +24,24 @@ import kotlinx.coroutines.cancel
 import kotlinx.coroutines.launch
 
 class SocketService : Service() {
+
+    // Interface para callbacks de chamadas
+    interface CallListener {
+        fun onChamadaRecebida(chamadaId: String, usuarioId: Int, usuarioNome: String?)
+        fun onNovaMensagem(titulo: String, mensagem: String)
+        fun onSocketConectado()
+        fun onSocketDesconectado()
+        fun onSocketErro(erro: String)
+    }
+
+    // Binder para vinculação com Activities
+    inner class LocalBinder : Binder() {
+        fun getService(): SocketService = this@SocketService
+    }
+
+    private val binder = LocalBinder()
+    private var callListener: CallListener? = null
+    private var isAppBound = false
     
     companion object {
         private const val TAG = "SocketService"
@@ -126,8 +145,28 @@ class SocketService : Service() {
         return START_STICKY
     }
     
-    override fun onBind(intent: Intent?): IBinder? {
-        return null
+    override fun onBind(intent: Intent?): IBinder {
+        Log.d(TAG, "Service vinculado")
+        isAppBound = true
+        return binder
+    }
+
+    override fun onUnbind(intent: Intent?): Boolean {
+        Log.d(TAG, "Service desvinculado")
+        isAppBound = false
+        callListener = null
+        return super.onUnbind(intent)
+    }
+
+    // Método público para registrar listener
+    fun setCallListener(listener: CallListener?) {
+        callListener = listener
+        Log.d(TAG, "CallListener ${if (listener != null) "registrado" else "removido"}")
+    }
+
+    // Método público para obter o SocketManager
+    fun getSocketManager(): SocketManager? {
+        return if (::socketManager.isInitialized) socketManager else null
     }
     
     override fun onDestroy() {
@@ -225,34 +264,58 @@ class SocketService : Service() {
         
         socketManager.onChamadaRecebida = { chamadaId, usuarioId, usuarioNome ->
             Log.d(TAG, "📞 Chamada recebida: chamadaId=$chamadaId, usuarioId=$usuarioId")
-            
-            val broadcastIntent = Intent("com.conversa.CHAMADA_RECEBIDA").apply {
-                putExtra("chamadaId", chamadaId)
-                putExtra("usuarioId", usuarioId)
-                putExtra("usuarioNome", usuarioNome)
+
+            if (isAppBound && callListener != null) {
+                // App vinculado: enviar via callback direto
+                Log.d(TAG, "Enviando chamada via callback direto")
+                callListener?.onChamadaRecebida(chamadaId.toString(), usuarioId, usuarioNome)
+            } else {
+                // App não vinculado: enviar via broadcast global
+                Log.d(TAG, "Enviando chamada via broadcast global")
+                val broadcastIntent = Intent("com.conversa.CHAMADA_RECEBIDA").apply {
+                    putExtra("chamadaId", chamadaId)
+                    putExtra("usuarioId", usuarioId)
+                    putExtra("usuarioNome", usuarioNome)
+                }
+                sendBroadcast(broadcastIntent)
             }
-            
-            LocalBroadcastManager.getInstance(this).sendBroadcast(broadcastIntent)
         }
-        
+
         socketManager.onNovaMensagem = { titulo, mensagem ->
             Log.d(TAG, "Nova mensagem: $titulo")
-            mostrarNotificacaoMensagem(titulo, mensagem)
+
+            if (isAppBound && callListener != null) {
+                callListener?.onNovaMensagem(titulo, mensagem)
+            } else {
+                mostrarNotificacaoMensagem(titulo, mensagem)
+            }
         }
-        
+
         socketManager.onConectado = {
             Log.d(TAG, "Socket conectado")
             atualizarNotificacaoService("Conectado")
+
+            if (isAppBound && callListener != null) {
+                callListener?.onSocketConectado()
+            }
         }
-        
+
         socketManager.onDesconectado = {
             Log.d(TAG, "Socket desconectado")
             atualizarNotificacaoService("Desconectado - Reconectando...")
+
+            if (isAppBound && callListener != null) {
+                callListener?.onSocketDesconectado()
+            }
         }
-        
+
         socketManager.onErro = { erro ->
             Log.e(TAG, "Erro no socket: $erro")
             atualizarNotificacaoService("Erro - Tentando reconectar...")
+
+            if (isAppBound && callListener != null) {
+                callListener?.onSocketErro(erro)
+            }
         }
         
         scope.launch {

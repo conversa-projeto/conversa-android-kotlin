@@ -43,18 +43,22 @@ class IncomingCallFragment : Fragment() {
     }
 
     private fun setupListeners() {
-        binding.btnAceitar.setOnClickListener {
+        // SwipeButton para aceitar
+        binding.swipeBtnAceitar.setOnSwipeCompleteListener {
+            desabilitarBotoes()
             listener?.onAceitarChamada()
         }
 
-        binding.btnRecusar.setOnClickListener {
+        // SwipeButton para recusar
+        binding.swipeBtnRecusar.setOnSwipeCompleteListener {
+            desabilitarBotoes()
             listener?.onRecusarChamada()
         }
     }
 
     fun desabilitarBotoes() {
-        binding.btnAceitar.isEnabled = false
-        binding.btnRecusar.isEnabled = false
+        binding.swipeBtnAceitar.isEnabled = false
+        binding.swipeBtnRecusar.isEnabled = false
     }
 
     override fun onDestroyView() {

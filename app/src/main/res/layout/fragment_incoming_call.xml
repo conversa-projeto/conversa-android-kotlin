@@ -48,69 +48,36 @@
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toBottomOf="@id/tvNomeContato" />
 
-    <!-- Container de botões -->
+    <!-- Swipe Buttons Horizontal -->
     <LinearLayout
-        android:id="@+id/llBotoes"
-        android:layout_width="wrap_content"
+        android:id="@+id/llSwipeButtons"
+        android:layout_width="0dp"
         android:layout_height="wrap_content"
+        android:layout_marginStart="32dp"
+        android:layout_marginEnd="32dp"
         android:layout_marginBottom="80dp"
-        android:gravity="center"
         android:orientation="horizontal"
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent">
 
-        <!-- Botão Recusar -->
-        <LinearLayout
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:layout_marginEnd="48dp"
-            android:gravity="center"
-            android:orientation="vertical">
+        <!-- SwipeButton para Recusar (esquerda) -->
+        <com.conversa.conversa.ui.chamada.SwipeButton
+            android:id="@+id/swipeBtnRecusar"
+            android:layout_width="0dp"
+            android:layout_height="80dp"
+            android:layout_weight="1"
+            android:layout_marginEnd="8dp"
+            app:swipeType="decline" />
 
-            <ImageButton
-                android:id="@+id/btnRecusar"
-                android:layout_width="64dp"
-                android:layout_height="64dp"
-                android:background="@drawable/bg_btn_reject_call"
-                android:contentDescription="@string/recusar_chamada"
-                android:src="@drawable/ic_call_end"
-                app:tint="@color/white" />
-
-            <TextView
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:layout_marginTop="8dp"
-                android:text="@string/recusar"
-                android:textColor="@color/corPrimaria"
-                android:textSize="14sp" />
-        </LinearLayout>
-
-        <!-- Botão Aceitar -->
-        <LinearLayout
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:layout_marginStart="48dp"
-            android:gravity="center"
-            android:orientation="vertical">
-
-            <ImageButton
-                android:id="@+id/btnAceitar"
-                android:layout_width="64dp"
-                android:layout_height="64dp"
-                android:background="@drawable/bg_btn_accept_call"
-                android:contentDescription="@string/aceitar_chamada"
-                android:src="@drawable/ic_call"
-                app:tint="@color/white" />
-
-            <TextView
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:layout_marginTop="8dp"
-                android:text="@string/aceitar"
-                android:textColor="@color/corPrimaria"
-                android:textSize="14sp" />
-        </LinearLayout>
+        <!-- SwipeButton para Aceitar (direita) -->
+        <com.conversa.conversa.ui.chamada.SwipeButton
+            android:id="@+id/swipeBtnAceitar"
+            android:layout_width="0dp"
+            android:layout_height="80dp"
+            android:layout_weight="1"
+            android:layout_marginStart="8dp"
+            app:swipeType="accept" />
     </LinearLayout>
 
 </androidx.constraintlayout.widget.ConstraintLayout>
