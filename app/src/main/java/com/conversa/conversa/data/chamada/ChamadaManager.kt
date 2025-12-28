@@ -41,17 +41,20 @@ class ChamadaManager(private val context: Context) {
     
     companion object {
         private const val TAG = "ChamadaManager"
-        
+
         // Configurações de áudio (conforme documentação)
         private const val SAMPLE_RATE = 44100
         private const val CHANNEL_IN = AudioFormat.CHANNEL_IN_MONO
         private const val CHANNEL_OUT = AudioFormat.CHANNEL_OUT_MONO
         private const val AUDIO_FORMAT = AudioFormat.ENCODING_PCM_16BIT
         private const val BUFFER_SIZE = 2048 // ~23ms de áudio
-        
+
         // Tipos de pacote TCP
         private const val PACKET_TYPE_REGISTER: Byte = 0
         private const val PACKET_TYPE_AUDIO: Byte = 1
+
+        // Constantes para suavização de áudio
+        private const val FADE_SAMPLES = 32 // Número de samples para fade in/out
     }
     
     // Estado da chamada - @Volatile para garantir visibilidade entre threads
@@ -92,9 +95,12 @@ class ChamadaManager(private val context: Context) {
     
     // Mixing (para chamadas em grupo)
     private val mixingBuffers = mutableMapOf<Int, LinkedBlockingQueue<ShortArray>>()
-    
+
     // Participantes mutados localmente
     private val participantesMutados = mutableSetOf<Int>()
+
+    // Buffer anterior para suavização (evita cliques entre pacotes)
+    private var lastSample: Short = 0
     
     // Callbacks
     var onConexaoTcpEstabelecida: (() -> Unit)? = null
@@ -296,13 +302,14 @@ class ChamadaManager(private val context: Context) {
 
             Log.d(TAG, "→ Buffer AudioTrack: $minBufferSizeTrack bytes")
 
-            // Cria AudioTrack
+            // Cria AudioTrack com buffer maior e consistente para reduzir underruns
+            val trackBufferSize = maxOf(minBufferSizeTrack, BUFFER_SIZE * 6)
             audioTrack = AudioTrack(
                 AudioManager.STREAM_VOICE_CALL,
                 SAMPLE_RATE,
                 CHANNEL_OUT,
                 AUDIO_FORMAT,
-                maxOf(minBufferSizeTrack, BUFFER_SIZE * 4),
+                trackBufferSize,
                 AudioTrack.MODE_STREAM
             )
 
@@ -382,7 +389,7 @@ class ChamadaManager(private val context: Context) {
                 while (emChamada && isActive) {
                     val bytesRead = audioRecord?.read(buffer, 0, buffer.size) ?: -1
 
-                    if (bytesRead > 0) {
+                    if (bytesRead > 0 && !capturaPausada) {
                         pacotesCapturados++
 
                         // Cria cópia do buffer antes de enfileirar
@@ -393,6 +400,9 @@ class ChamadaManager(private val context: Context) {
                             Log.d(TAG, "Pacotes capturados: $pacotesCapturados, último: $bytesRead bytes")
 
                         }
+                    } else if (capturaPausada) {
+                        // Pequeno delay quando pausado para evitar loop tight
+                        delay(10)
                     }
                 }
             } catch (e: Exception) {
@@ -630,33 +640,78 @@ class ChamadaManager(private val context: Context) {
         if (mixingBuffers.isEmpty()) {
             return ShortArray(0)
         }
-        
+
         val mixedBuffer = ShortArray(BUFFER_SIZE / 2)
         var hasData = false
-        
+        var numStreams = 0
+
+        // Coleta todos os buffers disponíveis
+        val buffersToMix = mutableListOf<ShortArray>()
         mixingBuffers.forEach { (_, queue) ->
             queue.poll()?.let { buffer ->
+                buffersToMix.add(buffer)
                 hasData = true
-                for (i in 0 until minOf(buffer.size, mixedBuffer.size)) {
-                    val mixed = mixedBuffer[i].toInt() + buffer[i].toInt()
-                    mixedBuffer[i] = mixed.coerceIn(
-                        Short.MIN_VALUE.toInt(), Short.MAX_VALUE.toInt()).toShort()
-                }
+                numStreams++
             }
         }
-        
-        return if (hasData) mixedBuffer else ShortArray(0)
+
+        if (!hasData) {
+            return ShortArray(0)
+        }
+
+        // Mixing com normalização baseada no número de streams
+        // Isso evita clipping quando múltiplos participantes falam ao mesmo tempo
+        buffersToMix.forEach { buffer ->
+            for (i in 0 until minOf(buffer.size, mixedBuffer.size)) {
+                // Soma e divide pelo número de streams para evitar saturação
+                val mixed = mixedBuffer[i].toInt() + (buffer[i].toInt() / numStreams)
+                mixedBuffer[i] = mixed.coerceIn(
+                    Short.MIN_VALUE.toInt(),
+                    Short.MAX_VALUE.toInt()
+                ).toShort()
+            }
+        }
+
+        return mixedBuffer
     }
     
     private fun reproduzirAudio(audioData: ShortArray) {
         if (audioData.isEmpty()) return
-        
+
         try {
-            val audioBytes = shortsToBytes(audioData)
+            // Aplica suavização para evitar cliques entre pacotes
+            val smoothedData = aplicarSuavizacao(audioData)
+            val audioBytes = shortsToBytes(smoothedData)
             audioTrack?.write(audioBytes, 0, audioBytes.size)
         } catch (e: Exception) {
             Log.e(TAG, "Erro ao reproduzir", e)
         }
+    }
+
+    /**
+     * Aplica suavização (crossfade) no início do buffer para evitar cliques
+     * Faz transição suave do último sample do pacote anterior
+     */
+    private fun aplicarSuavizacao(audioData: ShortArray): ShortArray {
+        if (audioData.isEmpty()) return audioData
+
+        val smoothed = audioData.copyOf()
+        val fadeLength = minOf(FADE_SAMPLES, smoothed.size)
+
+        // Aplica fade-in no início do buffer
+        for (i in 0 until fadeLength) {
+            val factor = i.toFloat() / fadeLength
+            val currentValue = smoothed[i].toFloat()
+            val previousValue = lastSample.toFloat()
+
+            // Crossfade: transição suave do último sample para o atual
+            smoothed[i] = (previousValue * (1f - factor) + currentValue * factor).toInt().toShort()
+        }
+
+        // Salva o último sample para o próximo pacote
+        lastSample = smoothed[smoothed.size - 1]
+
+        return smoothed
     }
     
     private fun bytesToShorts(bytes: ByteArray): ShortArray {
@@ -691,14 +746,14 @@ class ChamadaManager(private val context: Context) {
         } catch (e: Exception) {
             Log.w(TAG, "Erro ao fechar fila de envio: ${e.message}")
         }
-        
+
         try {
             if (audioRecord?.recordingState == AudioRecord.RECORDSTATE_RECORDING) {
                 audioRecord?.stop()
             }
             audioRecord?.release()
             audioRecord = null
-            
+
             if (audioTrack?.playState == AudioTrack.PLAYSTATE_PLAYING) {
                 audioTrack?.stop()
             }
@@ -707,7 +762,7 @@ class ChamadaManager(private val context: Context) {
         } catch (e: Exception) {
             Log.e(TAG, "Erro ao liberar áudio", e)
         }
-        
+
         try {
             outputStream?.close()
             inputStream?.close()
@@ -715,15 +770,18 @@ class ChamadaManager(private val context: Context) {
         } catch (e: Exception) {
             Log.e(TAG, "Erro ao fechar conexão", e)
         }
-        
+
         socket = null
         outputStream = null
         inputStream = null
-        
+
         mixingBuffers.clear()
-        
+
+        // Reseta estado de suavização
+        lastSample = 0
+
         onChamadaFinalizada?.invoke()
-        
+
         Log.d(TAG, "Chamada finalizada")
     }
     

@@ -30,8 +30,11 @@ import com.conversa.conversa.data.model.UsuarioChamadaStatus
 import com.conversa.conversa.data.preferences.UserPreferences
 import com.conversa.conversa.data.repository.ChamadaRepository
 import com.conversa.conversa.service.ChamadaRingtoneManager
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.collectLatest
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 
 class ChamadaActivity : AppCompatActivity(),
     SensorEventListener,
@@ -57,6 +60,8 @@ class ChamadaActivity : AppCompatActivity(),
     private var chamadaConectada: Boolean = false
     private var permissoesVerificadas: Boolean = false
     private var isChamadaGrupo: Boolean = false
+    private var tipoChamada: Int = 1
+    private var numParticipantes: Int = 2
 
     // Mapa de participantes mutados localmente
     private val participantesMutados = mutableSetOf<Int>()
@@ -97,12 +102,19 @@ class ChamadaActivity : AppCompatActivity(),
         isIncoming = intent.getBooleanExtra(EXTRA_IS_INCOMING, false)
         autoAnswer = intent.getBooleanExtra("auto_answer", false)
 
+        // Recebe dados adicionais da chamada (se disponíveis)
+        tipoChamada = intent.getIntExtra("EXTRA_TIPO_CHAMADA", 1)
+        numParticipantes = intent.getIntExtra("EXTRA_NUM_PARTICIPANTES", 2)
+        isChamadaGrupo = tipoChamada == 2
+
         Log.d(TAG, "📞 onCreate - Extras recebidos:")
         Log.d(TAG, "   chamadaId=$chamadaId")
         Log.d(TAG, "   usuarioId=$usuarioId")
         Log.d(TAG, "   isIncoming=$isIncoming")
         Log.d(TAG, "   autoAnswer=$autoAnswer")
         Log.d(TAG, "   usuarioNome=$usuarioNome")
+        Log.d(TAG, "   tipoChamada=$tipoChamada (grupo=$isChamadaGrupo)")
+        Log.d(TAG, "   numParticipantes=$numParticipantes")
 
         if (chamadaId == 0) {
             Toast.makeText(this, "Erro: chamada inválida", Toast.LENGTH_SHORT).show()
@@ -252,17 +264,77 @@ class ChamadaActivity : AppCompatActivity(),
         setupAudio()
         observarFlows()
 
-        if (isIncoming) {
-            if (autoAnswer) {
-                Log.d(TAG, "✅ AUTO-ANSWER ativado - aceitando chamada automaticamente")
+        // Se for auto-answer, busca dados ANTES de aceitar
+        if (isIncoming && autoAnswer) {
+            Log.d(TAG, "✅ AUTO-ANSWER ativado - buscando dados antes de aceitar")
+            lifecycleScope.launch {
+                buscarDadosChamadaSync()
+                Log.d(TAG, "📞 Dados obtidos, aceitando chamada automaticamente")
                 onAceitarChamada()
-            } else {
-                Log.d(TAG, "🔔 Mostrando tela de chamada recebida")
-                mostrarIncomingFragment()
             }
         } else {
-            Log.d(TAG, "📞 Chamada sainte - indo direto para tela de chamada")
-            mostrarCallFragment()
+            // Para outros casos, busca em background
+            buscarDadosChamada()
+
+            if (isIncoming) {
+                Log.d(TAG, "🔔 Mostrando tela de chamada recebida")
+                mostrarIncomingFragment()
+            } else {
+                Log.d(TAG, "📞 Chamada sainte - indo direto para tela de chamada")
+                mostrarCallFragment()
+            }
+        }
+    }
+
+    /**
+     * Busca dados da chamada de forma assíncrona (não bloqueia)
+     */
+    private fun buscarDadosChamada() {
+        lifecycleScope.launch {
+            buscarDadosChamadaSync()
+        }
+    }
+
+    /**
+     * Busca dados da chamada de forma síncrona (aguarda resultado)
+     */
+    private suspend fun buscarDadosChamadaSync() {
+        try {
+            val token = userPreferences.authToken.first() ?: ""
+            val chamadaData = com.conversa.conversa.service.SocketServiceHelper.buscarDadosChamada(
+                chamadaId,
+                token
+            )
+
+            if (chamadaData != null) {
+                Log.d(TAG, "✅ Dados da chamada obtidos: tipo=${chamadaData.tipo}, participantes=${chamadaData.usuarios.size}")
+
+                // Atualiza informações da chamada
+                tipoChamada = chamadaData.tipo
+                numParticipantes = chamadaData.usuarios.size
+                isChamadaGrupo = chamadaData.tipo == 2
+
+                // Busca o nome de quem criou a chamada
+                val nomeCriador = chamadaData.usuarios.find {
+                    it.usuarioId == chamadaData.criadoPor
+                }?.usuarioNome
+
+                if (nomeCriador != null && nomeCriador != usuarioNome) {
+                    Log.d(TAG, "📝 Atualizando nome de '$usuarioNome' para '$nomeCriador'")
+                    usuarioNome = nomeCriador
+
+                    // Força atualização dos fragmentos se já existirem
+                    withContext(Dispatchers.Main) {
+                        (currentFragment as? IncomingCallFragment)?.atualizarNome()
+                        (currentFragment as? SimpleCallFragment)?.atualizarNome()
+                        (currentFragment as? GroupCallFragment)?.atualizarNome()
+                    }
+                }
+            } else {
+                Log.w(TAG, "⚠️ Não foi possível obter dados da chamada")
+            }
+        } catch (e: Exception) {
+            Log.e(TAG, "❌ Erro ao buscar dados da chamada", e)
         }
     }
 
@@ -328,13 +400,27 @@ class ChamadaActivity : AppCompatActivity(),
                 }
             }
 
+            TipoEventoChamadaUI.CHAMADA_CONECTADA -> {
+                Log.d(TAG, "🎙️ Evento CHAMADA_CONECTADA recebido - iniciando timer")
+                if (!chamadaConectada) {
+                    chamadaConectada = true
+                    timerStartTime = SystemClock.elapsedRealtime()
+                    iniciarTimer()
+                    ativarSensorProximidade()
+                    atualizarBotoes()
+                }
+            }
+
             TipoEventoChamadaUI.CHAMADA_REALMENTE_INICIADA -> {
-                chamadaConectada = true
-                timerStartTime = SystemClock.elapsedRealtime()
-                iniciarTimer()
-                ativarSensorProximidade()
-                atualizarBotoes()
-                Toast.makeText(this, "Chamada iniciada", Toast.LENGTH_SHORT).show()
+                Log.d(TAG, "🎙️ Evento CHAMADA_REALMENTE_INICIADA recebido")
+                if (!chamadaConectada) {
+                    chamadaConectada = true
+                    timerStartTime = SystemClock.elapsedRealtime()
+                    iniciarTimer()
+                    ativarSensorProximidade()
+                    atualizarBotoes()
+                    Toast.makeText(this, "Chamada iniciada", Toast.LENGTH_SHORT).show()
+                }
             }
 
             TipoEventoChamadaUI.CHAMADA_FINALIZADA -> {
@@ -362,7 +448,10 @@ class ChamadaActivity : AppCompatActivity(),
     }
 
     private fun mostrarIncomingFragment() {
-        val fragment = IncomingCallFragment()
+        val fragment = IncomingCallFragment.newInstance(
+            usuarioNome,
+            if (isChamadaGrupo) "Chamada em Grupo" else "Chamada de voz"
+        )
         replaceFragment(fragment)
     }
 
@@ -414,8 +503,6 @@ class ChamadaActivity : AppCompatActivity(),
 
     // IncomingCallListener
     override fun onAceitarChamada() {
-        (currentFragment as? IncomingCallFragment)?.desabilitarBotoes()
-
         lifecycleScope.launch {
             try {
                 val result = repository.aceitarChamada(chamadaId)
@@ -445,8 +532,6 @@ class ChamadaActivity : AppCompatActivity(),
     }
 
     override fun onRecusarChamada() {
-        (currentFragment as? IncomingCallFragment)?.desabilitarBotoes()
-
         lifecycleScope.launch {
             try {
                 repository.recusarChamada(chamadaId)
@@ -581,6 +666,9 @@ class ChamadaActivity : AppCompatActivity(),
         chamadaConectada = false
 
         desativarSensorProximidade()
+
+        // Garante que ringtone e vibração sejam parados e limpos
+        ChamadaRingtoneManager.getInstance(this).parar()
 
         if (::repository.isInitialized) {
             repository.cleanup()

@@ -213,23 +213,34 @@ class SocketService : Service() {
         socketManager.onChamadaRecebida = { chamadaId, usuarioId, usuarioNome ->
             Log.d(TAG, "📞 Chamada recebida: chamadaId=$chamadaId, usuarioId=$usuarioId")
 
-            // Verifica se o dispositivo está bloqueado
-            val isDeviceLocked = isDeviceLocked()
-            Log.d(TAG, "Dispositivo bloqueado: $isDeviceLocked")
+            // CRÍTICO: Buscar dados ANTES de mostrar qualquer UI
+            scope.launch {
+                val chamadaData = SocketServiceHelper.buscarDadosChamada(chamadaId, currentToken ?: "")
 
-            if (isDeviceLocked) {
-                // Dispositivo bloqueado: abre tela de chamada fullscreen
-                Log.d(TAG, "Dispositivo bloqueado - Abrindo tela de chamada")
-                mostrarTelaChamadaFullscreen(chamadaId, usuarioId, usuarioNome)
-            } else {
-                // Dispositivo desbloqueado: mostra notificação com botões
-                Log.d(TAG, "Dispositivo desbloqueado - Mostrando notificação")
-                mostrarNotificacaoChamada(chamadaId, usuarioId, usuarioNome)
-            }
+                // Formata nome e descrição com dados completos
+                val nomeExibicao = SocketServiceHelper.formatarNomeExibicao(chamadaData, usuarioNome)
+                val descricao = SocketServiceHelper.formatarTextoNotificacao(chamadaData)
 
-            // Notifica o listener se o app estiver conectado
-            if (isAppBound && callListener != null) {
-                callListener?.onChamadaRecebida(chamadaId.toString(), usuarioId, usuarioNome)
+                Log.d(TAG, "✅ Dados obtidos - Nome: $nomeExibicao, Descrição: $descricao")
+
+                // Verifica se o dispositivo está bloqueado
+                val isDeviceLocked = isDeviceLocked()
+                Log.d(TAG, "Dispositivo bloqueado: $isDeviceLocked")
+
+                if (isDeviceLocked) {
+                    // Dispositivo bloqueado: abre tela de chamada fullscreen
+                    Log.d(TAG, "Dispositivo bloqueado - Abrindo tela de chamada")
+                    mostrarTelaChamadaFullscreen(chamadaId, usuarioId, nomeExibicao, chamadaData)
+                } else {
+                    // Dispositivo desbloqueado: mostra notificação com botões
+                    Log.d(TAG, "Dispositivo desbloqueado - Mostrando notificação")
+                    mostrarNotificacaoChamada(chamadaId, usuarioId, nomeExibicao, chamadaData)
+                }
+
+                // Notifica o listener se o app estiver conectado
+                if (isAppBound && callListener != null) {
+                    callListener?.onChamadaRecebida(chamadaId.toString(), usuarioId, nomeExibicao)
+                }
             }
         }
 
@@ -274,6 +285,16 @@ class SocketService : Service() {
     
     private fun criarCanaisNotificacao() {
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+            // Remove canais antigos para recriar com novas configurações
+            try {
+                notificationManager.deleteNotificationChannel(CHANNEL_ID_SERVICE)
+                notificationManager.deleteNotificationChannel(CHANNEL_ID_CHAMADAS)
+                notificationManager.deleteNotificationChannel(CHANNEL_ID_MENSAGENS)
+                Log.d(TAG, "Canais antigos removidos")
+            } catch (e: Exception) {
+                Log.d(TAG, "Canais ainda não existiam")
+            }
+
             val serviceChannel = NotificationChannel(
                 CHANNEL_ID_SERVICE,
                 "Serviço Conversa",
@@ -281,6 +302,7 @@ class SocketService : Service() {
             ).apply {
                 description = "Mantém conexão ativa para receber notificações"
                 setShowBadge(false)
+                lockscreenVisibility = android.app.Notification.VISIBILITY_PUBLIC
             }
             
             val soundUri = RingtoneManager.getDefaultUri(RingtoneManager.TYPE_RINGTONE)
@@ -291,11 +313,13 @@ class SocketService : Service() {
                 NotificationManager.IMPORTANCE_HIGH
             ).apply {
                 description = "Notificações de chamadas recebidas"
+                // Padrão de vibração para chamadas: vibra 1s, pausa 0.5s, repete
                 enableVibration(true)
+                vibrationPattern = longArrayOf(0, 1000, 500, 1000, 500, 1000)
                 enableLights(true)
                 setShowBadge(true)
                 setBypassDnd(true)
-                
+
                 setSound(
                     soundUri,
                     AudioAttributes.Builder()
@@ -318,6 +342,8 @@ class SocketService : Service() {
             notificationManager.createNotificationChannel(serviceChannel)
             notificationManager.createNotificationChannel(chamadasChannel)
             notificationManager.createNotificationChannel(mensagensChannel)
+
+            Log.d(TAG, "✅ Canais de notificação criados com padrão de vibração personalizado")
         }
     }
     
@@ -349,23 +375,34 @@ class SocketService : Service() {
         socketManager.onChamadaRecebida = { chamadaId, usuarioId, usuarioNome ->
             Log.d(TAG, "📞 Chamada recebida: chamadaId=$chamadaId, usuarioId=$usuarioId")
 
-            // Verifica se o dispositivo está bloqueado
-            val isDeviceLocked = isDeviceLocked()
-            Log.d(TAG, "Dispositivo bloqueado: $isDeviceLocked")
+            // CRÍTICO: Buscar dados ANTES de mostrar qualquer UI
+            scope.launch {
+                val chamadaData = SocketServiceHelper.buscarDadosChamada(chamadaId, currentToken ?: "")
 
-            if (isDeviceLocked) {
-                // Dispositivo bloqueado: abre tela de chamada fullscreen
-                Log.d(TAG, "Dispositivo bloqueado - Abrindo tela de chamada")
-                mostrarTelaChamadaFullscreen(chamadaId, usuarioId, usuarioNome)
-            } else {
-                // Dispositivo desbloqueado: mostra notificação com botões
-                Log.d(TAG, "Dispositivo desbloqueado - Mostrando notificação")
-                mostrarNotificacaoChamada(chamadaId, usuarioId, usuarioNome)
-            }
+                // Formata nome e descrição com dados completos
+                val nomeExibicao = SocketServiceHelper.formatarNomeExibicao(chamadaData, usuarioNome)
+                val descricao = SocketServiceHelper.formatarTextoNotificacao(chamadaData)
 
-            // Notifica o listener se o app estiver conectado
-            if (isAppBound && callListener != null) {
-                callListener?.onChamadaRecebida(chamadaId.toString(), usuarioId, usuarioNome)
+                Log.d(TAG, "✅ Dados obtidos - Nome: $nomeExibicao, Descrição: $descricao")
+
+                // Verifica se o dispositivo está bloqueado
+                val isDeviceLocked = isDeviceLocked()
+                Log.d(TAG, "Dispositivo bloqueado: $isDeviceLocked")
+
+                if (isDeviceLocked) {
+                    // Dispositivo bloqueado: abre tela de chamada fullscreen
+                    Log.d(TAG, "Dispositivo bloqueado - Abrindo tela de chamada")
+                    mostrarTelaChamadaFullscreen(chamadaId, usuarioId, nomeExibicao, chamadaData)
+                } else {
+                    // Dispositivo desbloqueado: mostra notificação com botões
+                    Log.d(TAG, "Dispositivo desbloqueado - Mostrando notificação")
+                    mostrarNotificacaoChamada(chamadaId, usuarioId, nomeExibicao, chamadaData)
+                }
+
+                // Notifica o listener se o app estiver conectado
+                if (isAppBound && callListener != null) {
+                    callListener?.onChamadaRecebida(chamadaId.toString(), usuarioId, nomeExibicao)
+                }
             }
         }
 
@@ -476,13 +513,24 @@ class SocketService : Service() {
     /**
      * Abre a tela de chamada fullscreen (para dispositivo bloqueado)
      */
-    private fun mostrarTelaChamadaFullscreen(chamadaId: Int, usuarioId: Int, usuarioNome: String) {
+    private fun mostrarTelaChamadaFullscreen(
+        chamadaId: Int,
+        usuarioId: Int,
+        usuarioNome: String,
+        chamadaData: com.conversa.conversa.data.model.ChamadaResponse?
+    ) {
         val intent = Intent(this, ChamadaActivity::class.java).apply {
             flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TOP
             putExtra(ChamadaActivity.EXTRA_CHAMADA_ID, chamadaId)
             putExtra(ChamadaActivity.EXTRA_USUARIO_ID, usuarioId)
             putExtra(ChamadaActivity.EXTRA_USUARIO_NOME, usuarioNome)
             putExtra(ChamadaActivity.EXTRA_IS_INCOMING, true)
+
+            // Passa informações adicionais se disponíveis
+            chamadaData?.let { chamada ->
+                putExtra("EXTRA_TIPO_CHAMADA", chamada.tipo)
+                putExtra("EXTRA_NUM_PARTICIPANTES", chamada.usuarios.size)
+            }
         }
         startActivity(intent)
     }
@@ -490,7 +538,24 @@ class SocketService : Service() {
     /**
      * Mostra notificação de chamada recebida com botões de atender/recusar
      */
-    private fun mostrarNotificacaoChamada(chamadaId: Int, usuarioId: Int, usuarioNome: String) {
+    private fun mostrarNotificacaoChamada(
+        chamadaId: Int,
+        usuarioId: Int,
+        usuarioNome: String,
+        chamadaData: com.conversa.conversa.data.model.ChamadaResponse?
+    ) {
+        Log.d(TAG, "📲 Preparando notificação para chamada $chamadaId de $usuarioNome")
+
+        // Mostra notificação com dados completos
+        atualizarNotificacaoChamada(chamadaId, usuarioId, usuarioNome, chamadaData)
+    }
+
+    private fun atualizarNotificacaoChamada(
+        chamadaId: Int,
+        usuarioId: Int,
+        usuarioNome: String,
+        chamada: com.conversa.conversa.data.model.ChamadaResponse?
+    ) {
         // Intent para abrir a tela de chamada ao clicar no corpo da notificação
         val fullScreenIntent = Intent(this, ChamadaActivity::class.java).apply {
             flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TOP
@@ -537,15 +602,24 @@ class SocketService : Service() {
             PendingIntent.FLAG_IMMUTABLE or PendingIntent.FLAG_UPDATE_CURRENT
         )
 
+        val tituloNotificacao = SocketServiceHelper.formatarNomeExibicao(chamada, usuarioNome)
+        val textoNotificacao = SocketServiceHelper.formatarTextoNotificacao(chamada)
+
+        val vibrationPattern = longArrayOf(0, 1000, 500, 1000, 500, 1000)
+
         val notification = NotificationCompat.Builder(this, CHANNEL_ID_CHAMADAS)
-            .setContentTitle("Chamada de $usuarioNome")
-            .setContentText("Chamada recebida")
+            .setContentTitle(tituloNotificacao)
+            .setContentText(textoNotificacao)
             .setSmallIcon(R.drawable.ic_notification)
             .setContentIntent(fullScreenPendingIntent)
-            .setOngoing(true) // Não removível
+            .setOngoing(true)
+            .setAutoCancel(false)
             .setPriority(NotificationCompat.PRIORITY_HIGH)
             .setCategory(NotificationCompat.CATEGORY_CALL)
-            .setAutoCancel(false)
+            .setVisibility(NotificationCompat.VISIBILITY_PUBLIC)
+            .setShowWhen(false)
+            .setLocalOnly(true)
+            .setVibrate(vibrationPattern)
             .addAction(
                 R.drawable.ic_notification,
                 "Recusar",
@@ -560,6 +634,7 @@ class SocketService : Service() {
             .build()
 
         notificationManager.notify(NOTIFICATION_ID_CHAMADA, notification)
+        Log.d(TAG, "✅ Notificação exibida: $tituloNotificacao")
     }
 
     /**

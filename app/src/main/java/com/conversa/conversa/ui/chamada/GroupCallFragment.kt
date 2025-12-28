@@ -99,6 +99,10 @@ class GroupCallFragment : Fragment() {
         }
     }
 
+    fun atualizarNome() {
+        binding.tvNomeGrupo.text = listener?.getNomeGrupo() ?: "Grupo"
+    }
+
     fun atualizarTimer() {
         binding.tvTimer.text = listener?.getTimerText() ?: "00:00"
     }

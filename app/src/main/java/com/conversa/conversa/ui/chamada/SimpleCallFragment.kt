@@ -66,6 +66,10 @@ class SimpleCallFragment : Fragment() {
         }
     }
 
+    fun atualizarNome() {
+        binding.tvNomeContato.text = listener?.getNomeContato() ?: "Contato"
+    }
+
     fun atualizarTimer() {
         binding.tvTimer.text = listener?.getTimerText() ?: "00:00"
     }

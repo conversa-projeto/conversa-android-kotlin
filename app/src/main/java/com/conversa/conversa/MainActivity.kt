@@ -136,12 +136,13 @@ class MainActivity : AppCompatActivity(),
             }
         }
         
-        // Android 12+: USE_FULL_SCREEN_INTENT via NotificationManager
+        // Android 14+: USE_FULL_SCREEN_INTENT via NotificationManager
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.UPSIDE_DOWN_CAKE) { // Android 14
             val notificationManager = getSystemService(android.app.NotificationManager::class.java)
             if (!notificationManager.canUseFullScreenIntent()) {
-                android.util.Log.w("MainActivity", "USE_FULL_SCREEN_INTENT não permitido. Solicite ao usuário nas configurações.")
-                // Não tem permissão runtime - usuário precisa habilitar manualmente
+                android.util.Log.w("MainActivity", "USE_FULL_SCREEN_INTENT não permitido")
+                // Direcionar usuário para as configurações
+                solicitarPermissaoFullScreenIntent()
             }
         }
         
@@ -154,16 +155,34 @@ class MainActivity : AppCompatActivity(),
         }
     }
     
+    private fun solicitarPermissaoFullScreenIntent() {
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.UPSIDE_DOWN_CAKE) {
+            try {
+                val intent = Intent(android.provider.Settings.ACTION_MANAGE_APP_USE_FULL_SCREEN_INTENT).apply {
+                    data = android.net.Uri.parse("package:$packageName")
+                }
+                startActivity(intent)
+                Toast.makeText(
+                    this,
+                    "Por favor, ative 'Notificações em tela cheia' para receber chamadas quando a tela estiver bloqueada",
+                    Toast.LENGTH_LONG
+                ).show()
+            } catch (e: Exception) {
+                android.util.Log.e("MainActivity", "Erro ao abrir configurações de full screen intent", e)
+            }
+        }
+    }
+
     override fun onRequestPermissionsResult(
         requestCode: Int,
         permissions: Array<out String>,
         grantResults: IntArray
     ) {
         super.onRequestPermissionsResult(requestCode, permissions, grantResults)
-        
+
         when (requestCode) {
             REQUEST_NOTIFICATION_PERMISSION -> {
-                if (grantResults.isNotEmpty() && 
+                if (grantResults.isNotEmpty() &&
                     grantResults.all { it == PackageManager.PERMISSION_GRANTED }) {
                     android.util.Log.d("MainActivity", "Permissões de notificação concedidas")
                 } else {

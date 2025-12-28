@@ -55,9 +55,9 @@ class ChamadaNotificationManager(
             Log.d(TAG, "📱 Estado - TelaBloqueda: $isTelaBloqueda")
 
             if (isTelaBloqueda) {
-                // TELA BLOQUEADA: Abre ChamadaActivity diretamente via fullscreen intent
-                Log.d(TAG, "🔒 Tela BLOQUEADA → Abrindo ChamadaActivity diretamente")
-                abrirChamadaActivityFullscreen(chamadaId, usuarioId, usuarioNome)
+                // TELA BLOQUEADA: Mostra notificação com fullscreen intent
+                Log.d(TAG, "🔒 Tela BLOQUEADA → Notificação com fullscreen intent")
+                mostrarNotificacaoFullscreen(chamadaId, usuarioId, usuarioNome)
             } else {
                 // TELA DESBLOQUEADA: Mostra notificação com botões
                 Log.d(TAG, "📲 Tela DESBLOQUEADA → Notificação com botões")
@@ -85,8 +85,32 @@ class ChamadaNotificationManager(
         }
     }
 
-    private fun abrirChamadaActivityFullscreen(chamadaId: Int, usuarioId: Int, usuarioNome: String) {
-        val activityIntent = Intent(context, ChamadaActivity::class.java).apply {
+    private fun mostrarNotificacaoFullscreen(chamadaId: Int, usuarioId: Int, usuarioNome: String) {
+        Log.d(TAG, "📲 Criando notificação com fullscreen intent")
+
+        val tituloNotificacao = usuarioNome.ifEmpty { "Chamada recebida" }
+        val textoNotificacao = "Chamada de voz"
+
+        // Intent principal da notificação (fullscreen)
+        val fullScreenIntent = Intent(context, ChamadaActivity::class.java).apply {
+            putExtra(ChamadaActivity.EXTRA_CHAMADA_ID, chamadaId)
+            putExtra(ChamadaActivity.EXTRA_USUARIO_ID, usuarioId)
+            putExtra(ChamadaActivity.EXTRA_USUARIO_NOME, usuarioNome)
+            putExtra(ChamadaActivity.EXTRA_IS_INCOMING, true)
+            flags = Intent.FLAG_ACTIVITY_NEW_TASK or
+                    Intent.FLAG_ACTIVITY_CLEAR_TOP or
+                    Intent.FLAG_ACTIVITY_EXCLUDE_FROM_RECENTS
+        }
+
+        val fullScreenPendingIntent = PendingIntent.getActivity(
+            context,
+            chamadaId,
+            fullScreenIntent,
+            PendingIntent.FLAG_IMMUTABLE or PendingIntent.FLAG_UPDATE_CURRENT
+        )
+
+        // Intent do conteúdo (quando o usuário clicar na notificação minimizada)
+        val contentIntent = Intent(context, ChamadaActivity::class.java).apply {
             putExtra(ChamadaActivity.EXTRA_CHAMADA_ID, chamadaId)
             putExtra(ChamadaActivity.EXTRA_USUARIO_ID, usuarioId)
             putExtra(ChamadaActivity.EXTRA_USUARIO_NOME, usuarioNome)
@@ -94,8 +118,38 @@ class ChamadaNotificationManager(
             flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TOP
         }
 
-        context.startActivity(activityIntent)
-        Log.d(TAG, "✅ ChamadaActivity aberta em fullscreen")
+        val contentPendingIntent = PendingIntent.getActivity(
+            context,
+            chamadaId + 10000,
+            contentIntent,
+            PendingIntent.FLAG_IMMUTABLE or PendingIntent.FLAG_UPDATE_CURRENT
+        )
+
+        val answerPendingIntent = criarPendingIntentAtender(chamadaId, usuarioId)
+        val declinePendingIntent = criarPendingIntentRecusar(chamadaId)
+
+        val vibrationPattern = longArrayOf(0, 1000, 500, 1000, 500, 1000)
+
+        val notification = NotificationCompat.Builder(context, CHANNEL_ID_CHAMADAS)
+            .setContentTitle(tituloNotificacao)
+            .setContentText(textoNotificacao)
+            .setSmallIcon(R.drawable.ic_notification)
+            .setContentIntent(contentPendingIntent)
+            .setFullScreenIntent(fullScreenPendingIntent, true) // IMPORTANTE: Abre em tela cheia
+            .setAutoCancel(false)
+            .setPriority(NotificationCompat.PRIORITY_MAX)
+            .setCategory(NotificationCompat.CATEGORY_CALL)
+            .setVisibility(NotificationCompat.VISIBILITY_PUBLIC)
+            .setOngoing(true)
+            .setTimeoutAfter(120000)
+            .setSilent(true)
+            .setVibrate(vibrationPattern)
+            .addAction(R.drawable.ic_call_end, context.getString(R.string.recusar), declinePendingIntent)
+            .addAction(R.drawable.ic_call, context.getString(R.string.atender), answerPendingIntent)
+            .build()
+
+        notificationManager.notify(NOTIFICATION_ID_CHAMADA, notification)
+        Log.d(TAG, "✅ Notificação fullscreen exibida")
     }
 
     fun pararRingtone() {
@@ -163,6 +217,8 @@ class ChamadaNotificationManager(
         val answerPendingIntent = criarPendingIntentAtender(chamadaId, usuarioId)
         val declinePendingIntent = criarPendingIntentRecusar(chamadaId)
 
+        val vibrationPattern = longArrayOf(0, 1000, 500, 1000, 500, 1000)
+
         val notification = NotificationCompat.Builder(context, CHANNEL_ID_CHAMADAS)
             .setContentTitle(tituloNotificacao)
             .setContentText(textoNotificacao)
@@ -175,6 +231,7 @@ class ChamadaNotificationManager(
             .setOngoing(true) // Não pode ser removida pelo usuário
             .setTimeoutAfter(120000)
             .setSilent(true) // Ringtone gerenciado separadamente
+            .setVibrate(vibrationPattern)
             .addAction(R.drawable.ic_call_end, context.getString(R.string.recusar), declinePendingIntent)
             .addAction(R.drawable.ic_call, context.getString(R.string.atender), answerPendingIntent)
             .build()
@@ -213,6 +270,8 @@ class ChamadaNotificationManager(
         val answerPendingIntent = criarPendingIntentAtender(chamadaId, usuarioId)
         val declinePendingIntent = criarPendingIntentRecusar(chamadaId)
 
+        val vibrationPattern = longArrayOf(0, 1000, 500, 1000, 500, 1000)
+
         val notification = NotificationCompat.Builder(context, CHANNEL_ID_CHAMADAS)
             .setContentTitle(tituloNotificacao)
             .setContentText(textoNotificacao)
@@ -225,6 +284,7 @@ class ChamadaNotificationManager(
             .setOngoing(true) // Não pode ser removida pelo usuário
             .setTimeoutAfter(120000)
             .setSilent(true) // Ringtone gerenciado separadamente
+            .setVibrate(vibrationPattern)
             .addAction(R.drawable.ic_call_end, context.getString(R.string.recusar), declinePendingIntent)
             .addAction(R.drawable.ic_call, context.getString(R.string.atender), answerPendingIntent)
             .build()
@@ -234,11 +294,18 @@ class ChamadaNotificationManager(
     }
 
     private fun formatarTituloNotificacao(chamada: ChamadaResponse, usuarioNome: String): String {
-        return if (chamada.tipo == 2) {
-            "$usuarioNome (Grupo - ${chamada.usuarios.size} pessoas)"
+        // Busca o nome de quem criou a chamada (quem está ligando)
+        val nomeCriador = chamada.usuarios.find { it.usuarioId == chamada.criadoPor }?.usuarioNome
+            ?: usuarioNome
+
+        val titulo = if (chamada.tipo == 2) {
+            "$nomeCriador (Grupo - ${chamada.usuarios.size} pessoas)"
         } else {
-            usuarioNome
+            nomeCriador
         }
+
+        Log.d(TAG, "📝 Título formatado: $titulo (criadoPor=${chamada.criadoPor})")
+        return titulo
     }
     
     private fun formatarTextoNotificacao(tipoChamada: Int): String {

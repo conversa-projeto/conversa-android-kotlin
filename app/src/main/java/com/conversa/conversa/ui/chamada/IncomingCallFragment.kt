@@ -4,15 +4,15 @@ import android.os.Bundle
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
+import androidx.compose.ui.platform.ComposeView
+import androidx.compose.ui.platform.ViewCompositionStrategy
 import androidx.fragment.app.Fragment
-import com.conversa.conversa.databinding.FragmentIncomingCallBinding
 
 class IncomingCallFragment : Fragment() {
 
-    private var _binding: FragmentIncomingCallBinding? = null
-    private val binding get() = _binding!!
-
     private var listener: IncomingCallListener? = null
+    private var nomeExibicao: String = "Contato"
+    private var descricaoExibicao: String = "Chamada Recebida"
 
     interface IncomingCallListener {
         fun onAceitarChamada()
@@ -20,49 +20,50 @@ class IncomingCallFragment : Fragment() {
         fun getNomeContato(): String
     }
 
+    companion object {
+        private const val ARG_NOME = "nome_exibicao"
+        private const val ARG_DESCRICAO = "descricao_exibicao"
+
+        fun newInstance(nome: String, descricao: String): IncomingCallFragment {
+            return IncomingCallFragment().apply {
+                arguments = Bundle().apply {
+                    putString(ARG_NOME, nome)
+                    putString(ARG_DESCRICAO, descricao)
+                }
+            }
+        }
+    }
+
     override fun onCreateView(
         inflater: LayoutInflater,
         container: ViewGroup?,
         savedInstanceState: Bundle?
     ): View {
-        _binding = FragmentIncomingCallBinding.inflate(inflater, container, false)
-        return binding.root
-    }
-
-    override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
-        super.onViewCreated(view, savedInstanceState)
-
         listener = activity as? IncomingCallListener
 
-        setupUI()
-        setupListeners()
-    }
+        // Lê os argumentos passados
+        nomeExibicao = arguments?.getString(ARG_NOME) ?: listener?.getNomeContato() ?: "Contato"
+        descricaoExibicao = arguments?.getString(ARG_DESCRICAO) ?: "Chamada Recebida"
 
-    private fun setupUI() {
-        binding.tvNomeContato.text = listener?.getNomeContato() ?: "Contato"
-    }
-
-    private fun setupListeners() {
-        // SwipeButton para aceitar
-        binding.swipeBtnAceitar.setOnSwipeCompleteListener {
-            desabilitarBotoes()
-            listener?.onAceitarChamada()
+        return ComposeView(requireContext()).apply {
+            setViewCompositionStrategy(ViewCompositionStrategy.DisposeOnViewTreeLifecycleDestroyed)
+            setContent {
+                IncomingCallScreen(
+                    callerName = nomeExibicao,
+                    callerDescription = descricaoExibicao,
+                    onAccept = {
+                        listener?.onAceitarChamada()
+                    },
+                    onDecline = {
+                        listener?.onRecusarChamada()
+                    }
+                )
+            }
         }
-
-        // SwipeButton para recusar
-        binding.swipeBtnRecusar.setOnSwipeCompleteListener {
-            desabilitarBotoes()
-            listener?.onRecusarChamada()
-        }
     }
 
-    fun desabilitarBotoes() {
-        binding.swipeBtnAceitar.isEnabled = false
-        binding.swipeBtnRecusar.isEnabled = false
-    }
-
-    override fun onDestroyView() {
-        super.onDestroyView()
-        _binding = null
+    fun atualizarNome() {
+        // O Compose irá recompor automaticamente quando o listener retornar um novo valor
+        // Não é mais necessário atualizar manualmente como no View binding
     }
 }
