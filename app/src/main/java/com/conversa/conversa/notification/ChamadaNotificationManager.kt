@@ -45,38 +45,43 @@ class ChamadaNotificationManager(
         tipoChamada: Int
     ) {
         try {
-            Log.d(TAG, "📞 onChamadaRecebida - chamadaId=$chamadaId, usuarioId=$usuarioId")
+            val instanceId = System.identityHashCode(this)
+            val threadName = Thread.currentThread().name
+            val ringtoneManagerId = System.identityHashCode(ringtoneManager)
+
+            Log.d(TAG, "╔═══════════════════════════════════════════════╗")
+            Log.d(TAG, "║ 📞 onChamadaRecebida INICIADO                ║")
+            Log.d(TAG, "╠═══════════════════════════════════════════════╣")
+            Log.d(TAG, "║ chamadaId: $chamadaId")
+            Log.d(TAG, "║ usuarioId: $usuarioId")
+            Log.d(TAG, "║ usuarioNome: $usuarioNome")
+            Log.d(TAG, "║ Thread: $threadName")
+            Log.d(TAG, "║ NotificationManager: @$instanceId")
+            Log.d(TAG, "║ RingtoneManager: @$ringtoneManagerId")
+            Log.d(TAG, "╚═══════════════════════════════════════════════╝")
 
             // PASSO 1: Iniciar ringtone IMEDIATAMENTE
+            Log.d(TAG, "🔔 Chamando ringtoneManager.iniciar()...")
             ringtoneManager.iniciar()
-            Log.d(TAG, "🔔 Ringtone iniciado")
+            Log.d(TAG, "🔔 ringtoneManager.iniciar() retornou")
 
-            val isTelaBloqueda = keyguardManager.isKeyguardLocked
-            Log.d(TAG, "📱 Estado - TelaBloqueda: $isTelaBloqueda")
+            // SEMPRE mostrar notificação fullscreen com heads-up
+            Log.d(TAG, "📲 Mostrando notificação com fullscreen intent e heads-up")
 
-            if (isTelaBloqueda) {
-                // TELA BLOQUEADA: Mostra notificação com fullscreen intent
-                Log.d(TAG, "🔒 Tela BLOQUEADA → Notificação com fullscreen intent")
-                mostrarNotificacaoFullscreen(chamadaId, usuarioId, usuarioNome)
-            } else {
-                // TELA DESBLOQUEADA: Mostra notificação com botões
-                Log.d(TAG, "📲 Tela DESBLOQUEADA → Notificação com botões")
+            // PASSO 2: Mostrar notificação fullscreen IMEDIATAMENTE
+            mostrarNotificacaoFullscreen(chamadaId, usuarioId, usuarioNome)
 
-                // PASSO 2: Mostrar notificação básica IMEDIATAMENTE
-                mostrarNotificacaoComBotoesBasica(chamadaId, usuarioId, usuarioNome)
+            // PASSO 3: Buscar dados em background e atualizar notificação
+            CoroutineScope(Dispatchers.IO).launch {
+                val chamada = buscarDadosChamada(chamadaId)
 
-                // PASSO 3: Buscar dados em background e atualizar notificação
-                CoroutineScope(Dispatchers.IO).launch {
-                    val chamada = buscarDadosChamada(chamadaId)
-
-                    if (chamada != null) {
-                        Log.d(TAG, "✅ Dados obtidos, atualizando notificação")
-                        withContext(Dispatchers.Main) {
-                            mostrarNotificacaoComBotoes(chamadaId, usuarioId, usuarioNome, chamada)
-                        }
-                    } else {
-                        Log.w(TAG, "⚠️ Não foi possível obter dados adicionais da chamada")
+                if (chamada != null) {
+                    Log.d(TAG, "✅ Dados obtidos, atualizando notificação")
+                    withContext(Dispatchers.Main) {
+                        mostrarNotificacaoFullscreen(chamadaId, usuarioId, usuarioNome, chamada)
                     }
+                } else {
+                    Log.w(TAG, "⚠️ Não foi possível obter dados adicionais da chamada")
                 }
             }
 
@@ -85,11 +90,25 @@ class ChamadaNotificationManager(
         }
     }
 
-    private fun mostrarNotificacaoFullscreen(chamadaId: Int, usuarioId: Int, usuarioNome: String) {
+    private fun mostrarNotificacaoFullscreen(
+        chamadaId: Int,
+        usuarioId: Int,
+        usuarioNome: String,
+        chamada: ChamadaResponse? = null
+    ) {
         Log.d(TAG, "📲 Criando notificação com fullscreen intent")
 
-        val tituloNotificacao = usuarioNome.ifEmpty { "Chamada recebida" }
-        val textoNotificacao = "Chamada de voz"
+        val tituloNotificacao = if (chamada != null) {
+            formatarTituloNotificacao(chamada, usuarioNome)
+        } else {
+            usuarioNome.ifEmpty { "Chamada recebida" }
+        }
+
+        val textoNotificacao = if (chamada != null) {
+            formatarTextoNotificacao(chamada.tipo)
+        } else {
+            "Chamada de voz"
+        }
 
         // Intent principal da notificação (fullscreen)
         val fullScreenIntent = Intent(context, ChamadaActivity::class.java).apply {
@@ -128,7 +147,10 @@ class ChamadaNotificationManager(
         val answerPendingIntent = criarPendingIntentAtender(chamadaId, usuarioId)
         val declinePendingIntent = criarPendingIntentRecusar(chamadaId)
 
-        val vibrationPattern = longArrayOf(0, 1000, 500, 1000, 500, 1000)
+        // Estilo de chamada (BigText para mostrar mais informações)
+        val bigTextStyle = NotificationCompat.BigTextStyle()
+            .bigText(textoNotificacao)
+            .setBigContentTitle(tituloNotificacao)
 
         val notification = NotificationCompat.Builder(context, CHANNEL_ID_CHAMADAS)
             .setContentTitle(tituloNotificacao)
@@ -142,8 +164,9 @@ class ChamadaNotificationManager(
             .setVisibility(NotificationCompat.VISIBILITY_PUBLIC)
             .setOngoing(true)
             .setTimeoutAfter(120000)
-            .setSilent(true)
-            .setVibrate(vibrationPattern)
+            .setDefaults(0) // Desabilita sons/vibrações padrão
+            .setOnlyAlertOnce(false) // Permite tocar em todas as chamadas
+            .setStyle(bigTextStyle) // Estilo para mostrar informações completas
             .addAction(R.drawable.ic_call_end, context.getString(R.string.recusar), declinePendingIntent)
             .addAction(R.drawable.ic_call, context.getString(R.string.atender), answerPendingIntent)
             .build()
@@ -153,8 +176,20 @@ class ChamadaNotificationManager(
     }
 
     fun pararRingtone() {
+        val instanceId = System.identityHashCode(this)
+        val threadName = Thread.currentThread().name
+        val ringtoneManagerId = System.identityHashCode(ringtoneManager)
+
+        Log.d(TAG, "╔═══════════════════════════════════════════════╗")
+        Log.d(TAG, "║ 🔕 pararRingtone CHAMADO                     ║")
+        Log.d(TAG, "╠═══════════════════════════════════════════════╣")
+        Log.d(TAG, "║ Thread: $threadName")
+        Log.d(TAG, "║ NotificationManager: @$instanceId")
+        Log.d(TAG, "║ RingtoneManager: @$ringtoneManagerId")
+        Log.d(TAG, "╚═══════════════════════════════════════════════╝")
+
         ringtoneManager.parar()
-        Log.d(TAG, "🔕 Ringtone parado")
+        Log.d(TAG, "🔕 Ringtone parado - retornou")
     }
 
     fun cancelarNotificacao() {

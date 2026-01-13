@@ -20,7 +20,8 @@ class ChamadaRingtoneManager private constructor(private val context: Context) {
 
     companion object {
         private const val TAG = "ChamadaRingtoneManager"
-        private val VIBRATION_PATTERN = longArrayOf(0, 1000, 1000) // Vibra 1s, pausa 1s, repete
+        // Padrão de vibração: vibra 1s, pausa 0.5s, vibra 1s, pausa 0.5s, repete
+        private val VIBRATION_PATTERN = longArrayOf(0, 1000, 500, 1000, 500)
 
         @Volatile
         private var INSTANCE: ChamadaRingtoneManager? = null
@@ -53,9 +54,20 @@ class ChamadaRingtoneManager private constructor(private val context: Context) {
      * Respeita modo silencioso/DND.
      */
     fun iniciar() {
+        val instanceId = System.identityHashCode(this)
+        val threadName = Thread.currentThread().name
+        Log.d(TAG, "═══════════════════════════════════════════════")
+        Log.d(TAG, "🎵 iniciar() CHAMADO")
+        Log.d(TAG, "   Thread: $threadName")
+        Log.d(TAG, "   Instância: @$instanceId")
+        Log.d(TAG, "   isPlaying ANTES: $isPlaying")
+        Log.d(TAG, "   ringtone: ${ringtone?.hashCode() ?: "null"}")
+        Log.d(TAG, "   vibrator: ${vibrator?.hashCode() ?: "null"}")
+
+        // Para qualquer ringtone anterior antes de iniciar um novo
         if (isPlaying) {
-            Log.w(TAG, "Ringtone já está tocando")
-            return
+            Log.d(TAG, "⚠️ Ringtone já está tocando - parando anterior")
+            parar()
         }
 
         try {
@@ -66,6 +78,10 @@ class ChamadaRingtoneManager private constructor(private val context: Context) {
             val shouldPlaySound = ringerMode == AudioManager.RINGER_MODE_NORMAL
             val shouldVibrate = ringerMode == AudioManager.RINGER_MODE_VIBRATE ||
                                ringerMode == AudioManager.RINGER_MODE_NORMAL
+
+            Log.d(TAG, "   RingerMode: $ringerMode (NORMAL=2, VIBRATE=1, SILENT=0)")
+            Log.d(TAG, "   shouldPlaySound: $shouldPlaySound")
+            Log.d(TAG, "   shouldVibrate: $shouldVibrate")
 
             // Configurar ringtone
             if (shouldPlaySound) {
@@ -85,8 +101,10 @@ class ChamadaRingtoneManager private constructor(private val context: Context) {
                     }
 
                     it.play()
-                    Log.d(TAG, "Ringtone iniciado")
+                    Log.d(TAG, "✅ Ringtone iniciado - isPlaying: ${it.isPlaying}")
                 }
+            } else {
+                Log.d(TAG, "⏭️ Ringtone NÃO iniciado (modo silencioso)")
             }
 
             // Configurar vibração
@@ -99,14 +117,18 @@ class ChamadaRingtoneManager private constructor(private val context: Context) {
                         @Suppress("DEPRECATION")
                         it.vibrate(VIBRATION_PATTERN, 0)
                     }
-                    Log.d(TAG, "Vibração iniciada")
+                    Log.d(TAG, "✅ Vibração iniciada")
                 }
+            } else {
+                Log.d(TAG, "⏭️ Vibração NÃO iniciada (modo silencioso)")
             }
 
             isPlaying = true
+            Log.d(TAG, "   isPlaying DEPOIS: $isPlaying")
+            Log.d(TAG, "═══════════════════════════════════════════════")
 
         } catch (e: Exception) {
-            Log.e(TAG, "Erro ao iniciar ringtone: ${e.message}", e)
+            Log.e(TAG, "❌ Erro ao iniciar ringtone: ${e.message}", e)
         }
     }
 
@@ -114,25 +136,38 @@ class ChamadaRingtoneManager private constructor(private val context: Context) {
      * Para completamente o ringtone e vibração.
      */
     fun parar() {
-        if (!isPlaying) {
-            return
-        }
+        val instanceId = System.identityHashCode(this)
+        val threadName = Thread.currentThread().name
+        Log.d(TAG, "───────────────────────────────────────────────")
+        Log.d(TAG, "🛑 parar() CHAMADO")
+        Log.d(TAG, "   Thread: $threadName")
+        Log.d(TAG, "   Instância: @$instanceId")
+        Log.d(TAG, "   isPlaying ANTES: $isPlaying")
 
         try {
+            // Sempre tenta parar, independente do estado
             ringtone?.let {
+                Log.d(TAG, "   Ringtone.isPlaying: ${it.isPlaying}")
                 if (it.isPlaying) {
                     it.stop()
-                    Log.d(TAG, "Ringtone parado")
+                    Log.d(TAG, "✅ Ringtone parado")
+                } else {
+                    Log.d(TAG, "⏭️ Ringtone já estava parado")
                 }
-            }
+            } ?: Log.d(TAG, "⏭️ Ringtone é null")
 
-            vibrator?.cancel()
-            Log.d(TAG, "Vibração cancelada")
-
-            isPlaying = false
+            vibrator?.let {
+                it.cancel()
+                Log.d(TAG, "✅ Vibração cancelada")
+            } ?: Log.d(TAG, "⏭️ Vibrator é null")
 
         } catch (e: Exception) {
-            Log.e(TAG, "Erro ao parar ringtone: ${e.message}", e)
+            Log.e(TAG, "❌ Erro ao parar ringtone: ${e.message}", e)
+        } finally {
+            // SEMPRE reseta o estado, mesmo se não estava tocando
+            isPlaying = false
+            Log.d(TAG, "   isPlaying DEPOIS: $isPlaying")
+            Log.d(TAG, "───────────────────────────────────────────────")
         }
     }
 

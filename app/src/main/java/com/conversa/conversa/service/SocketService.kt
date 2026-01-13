@@ -310,23 +310,17 @@ class SocketService : Service() {
             val chamadasChannel = NotificationChannel(
                 CHANNEL_ID_CHAMADAS,
                 "Chamadas",
-                NotificationManager.IMPORTANCE_HIGH
+                NotificationManager.IMPORTANCE_MAX  // MAX para fullscreen intent e heads-up
             ).apply {
                 description = "Notificações de chamadas recebidas"
-                // Padrão de vibração para chamadas: vibra 1s, pausa 0.5s, repete
-                enableVibration(true)
-                vibrationPattern = longArrayOf(0, 1000, 500, 1000, 500, 1000)
+                // Som e vibração desabilitados - controlados pelo RingtoneManager
+                enableVibration(false)
+                setSound(null, null) // Remove som do canal
                 enableLights(true)
+                lightColor = android.graphics.Color.GREEN
                 setShowBadge(true)
                 setBypassDnd(true)
-
-                setSound(
-                    soundUri,
-                    AudioAttributes.Builder()
-                        .setUsage(AudioAttributes.USAGE_NOTIFICATION_RINGTONE)
-                        .setContentType(AudioAttributes.CONTENT_TYPE_SONIFICATION)
-                        .build()
-                )
+                lockscreenVisibility = android.app.Notification.VISIBILITY_PUBLIC
             }
             
             val mensagensChannel = NotificationChannel(

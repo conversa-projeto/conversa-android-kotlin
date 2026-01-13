@@ -456,7 +456,7 @@ class MainActivity : AppCompatActivity(),
 
     // Implementação de SocketService.CallListener (callback direto quando vinculado)
     override fun onChamadaRecebida(chamadaId: String, usuarioId: Int, usuarioNome: String?) {
-        android.util.Log.d("MainActivity", "📱 Chamada recebida via callback direto: $usuarioNome")
+        android.util.Log.d("MainActivity", "📱 Chamada recebida via callback direto: chamadaId=$chamadaId, usuarioNome=$usuarioNome")
 
         // Converte chamadaId String para Int
         val chamadaIdInt = chamadaId.toIntOrNull() ?: 0
@@ -464,20 +464,24 @@ class MainActivity : AppCompatActivity(),
         // Delega para ChamadaNotificationManager para verificar estado da tela
         lifecycleScope.launch {
             try {
+                android.util.Log.d("MainActivity", "🔔 Criando ChamadaNotificationManager para chamada $chamadaIdInt")
                 val token = userPreferences.authToken.first()
                 if (token != null) {
                     val api = com.conversa.conversa.data.api.RetrofitClient.api
                     val notificationManager = com.conversa.conversa.notification.ChamadaNotificationManager(this@MainActivity, api, token)
 
+                    android.util.Log.d("MainActivity", "🔔 Chamando onChamadaRecebida do NotificationManager")
                     notificationManager.onChamadaRecebida(
                         chamadaId = chamadaIdInt,
                         usuarioId = usuarioId,
                         usuarioNome = usuarioNome ?: "Desconhecido",
                         tipoChamada = 1
                     )
+                } else {
+                    android.util.Log.e("MainActivity", "❌ Token null - não pode processar chamada")
                 }
             } catch (e: Exception) {
-                android.util.Log.e("MainActivity", "Erro ao processar chamada", e)
+                android.util.Log.e("MainActivity", "❌ Erro ao processar chamada", e)
             }
         }
     }
