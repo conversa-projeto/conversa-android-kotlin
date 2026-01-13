@@ -67,45 +67,51 @@ class SimpleCallFragment : Fragment() {
     }
 
     fun atualizarNome() {
-        binding.tvNomeContato.text = listener?.getNomeContato() ?: "Contato"
+        _binding?.tvNomeContato?.text = listener?.getNomeContato() ?: "Contato"
     }
 
     fun atualizarTimer() {
-        binding.tvTimer.text = listener?.getTimerText() ?: "00:00"
+        _binding?.tvTimer?.text = listener?.getTimerText() ?: "00:00"
     }
 
     fun atualizarBotoes() {
-        val habilitado = listener?.isChamadaConectada() ?: false
+        _binding?.let { binding ->
+            val habilitado = listener?.isChamadaConectada() ?: false
 
-        binding.btnMute.isEnabled = habilitado
-        binding.btnSpeaker.isEnabled = habilitado
+            binding.btnMute.isEnabled = habilitado
+            binding.btnSpeaker.isEnabled = habilitado
 
-        binding.btnMute.alpha = if (habilitado) 1.0f else 0.5f
-        binding.btnSpeaker.alpha = if (habilitado) 1.0f else 0.5f
+            binding.btnMute.alpha = if (habilitado) 1.0f else 0.5f
+            binding.btnSpeaker.alpha = if (habilitado) 1.0f else 0.5f
 
-        atualizarBotaoMute()
-        atualizarBotaoSpeaker()
+            atualizarBotaoMute()
+            atualizarBotaoSpeaker()
+        }
     }
 
     private fun atualizarBotaoMute() {
-        val isMuted = listener?.isMuted() ?: false
-        if (isMuted) {
-            binding.btnMute.setImageResource(R.drawable.ic_mic_off)
-            binding.tvMuteLabel.text = "Mudo"
-        } else {
-            binding.btnMute.setImageResource(R.drawable.ic_mic_on)
-            binding.tvMuteLabel.text = "Mudo"
+        _binding?.let { binding ->
+            val isMuted = listener?.isMuted() ?: false
+            if (isMuted) {
+                binding.btnMute.setImageResource(R.drawable.ic_mic_off)
+                binding.tvMuteLabel.text = "Mudo"
+            } else {
+                binding.btnMute.setImageResource(R.drawable.ic_mic_on)
+                binding.tvMuteLabel.text = "Mudo"
+            }
         }
     }
 
     private fun atualizarBotaoSpeaker() {
-        val isSpeakerOn = listener?.isSpeakerOn() ?: false
-        if (isSpeakerOn) {
-            binding.btnSpeaker.setImageResource(R.drawable.ic_volume_up)
-            binding.tvSpeakerLabel.text = getString(R.string.alto_falante)
-        } else {
-            binding.btnSpeaker.setImageResource(R.drawable.ic_volume_off)
-            binding.tvSpeakerLabel.text = getString(R.string.alto_falante)
+        _binding?.let { binding ->
+            val isSpeakerOn = listener?.isSpeakerOn() ?: false
+            if (isSpeakerOn) {
+                binding.btnSpeaker.setImageResource(R.drawable.ic_volume_up)
+                binding.tvSpeakerLabel.text = getString(R.string.alto_falante)
+            } else {
+                binding.btnSpeaker.setImageResource(R.drawable.ic_volume_off)
+                binding.tvSpeakerLabel.text = getString(R.string.alto_falante)
+            }
         }
     }
 

@@ -405,9 +405,17 @@ class ChamadaActivity : AppCompatActivity(),
                 if (!chamadaConectada) {
                     chamadaConectada = true
                     timerStartTime = SystemClock.elapsedRealtime()
-                    iniciarTimer()
-                    ativarSensorProximidade()
-                    atualizarBotoes()
+
+                    // Garante que está no fragment correto antes de iniciar timer
+                    atualizarFragmentSeNecessario()
+
+                    // Aguarda um frame para o fragment estar pronto
+                    lifecycleScope.launch {
+                        kotlinx.coroutines.delay(100)
+                        iniciarTimer()
+                        ativarSensorProximidade()
+                        atualizarBotoes()
+                    }
                 }
             }
 
