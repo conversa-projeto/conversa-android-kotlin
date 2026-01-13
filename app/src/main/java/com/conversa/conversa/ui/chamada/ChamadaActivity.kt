@@ -349,9 +349,9 @@ class ChamadaActivity : AppCompatActivity(),
 
     private fun setupAudio() {
         isMuted = false
-        isSpeakerOn = true
+        isSpeakerOn = false
         audioManager.mode = AudioManager.MODE_IN_COMMUNICATION
-        audioManager.isSpeakerphoneOn = true
+        audioManager.isSpeakerphoneOn = false
     }
 
     private fun observarFlows() {
@@ -572,12 +572,10 @@ class ChamadaActivity : AppCompatActivity(),
         isMuted = !isMuted
 
         if (::repository.isInitialized) {
-            if (isMuted) {
-                repository.pausarCaptura()
-            } else {
-                repository.retormarCaptura()
-            }
+            repository.toggleMuteMicrofone(isMuted)
         }
+
+        atualizarBotoes()
 
         Toast.makeText(
             this,
@@ -589,12 +587,15 @@ class ChamadaActivity : AppCompatActivity(),
     override fun onToggleSpeaker() {
         isSpeakerOn = !isSpeakerOn
 
-        audioManager.mode = AudioManager.MODE_IN_COMMUNICATION
-        audioManager.isSpeakerphoneOn = isSpeakerOn
+        if (::repository.isInitialized) {
+            repository.toggleSpeaker(isSpeakerOn)
+        }
+
+        atualizarBotoes()
 
         Toast.makeText(
             this,
-            if (isSpeakerOn) "Alto-falante ligado" else "Alto-falante desligado",
+            if (isSpeakerOn) "Alto-falante ligado" else "Earpiece ligado",
             Toast.LENGTH_SHORT
         ).show()
     }

@@ -186,6 +186,12 @@ class ChamadaManager(private val context: Context) {
             Log.d(TAG, "   - audioRecord: ${if (audioRecord == null) "NULL" else "OK (estado=${audioRecord?.state})" }")
             Log.d(TAG, "   - audioTrack: ${if (audioTrack == null) "NULL" else "OK (estado=${audioTrack?.state})" }")
 
+            // Configura AudioManager para usar earpiece por padrão
+            val audioManager = context.getSystemService(Context.AUDIO_SERVICE) as AudioManager
+            audioManager.mode = AudioManager.MODE_IN_COMMUNICATION
+            audioManager.isSpeakerphoneOn = false  // FALSE = earpiece (falante de ligação)
+            Log.d(TAG, "📱 AudioManager configurado: MODE_IN_COMMUNICATION, earpiece ativo")
+
             // IMPORTANTE: Seta emChamada para true ANTES de iniciar áudio
             Log.d(TAG, "[$instanceId] Setando emChamada = true")
             emChamada = true
@@ -316,13 +322,25 @@ class ChamadaManager(private val context: Context) {
 
             // Cria AudioTrack com buffer maior e consistente para reduzir underruns
             val trackBufferSize = maxOf(minBufferSizeTrack, BUFFER_SIZE * 6)
+
+            // Configuração para usar earpiece (alto-falante de ligação) por padrão
+            val audioAttributes = AudioAttributes.Builder()
+                .setUsage(AudioAttributes.USAGE_VOICE_COMMUNICATION)
+                .setContentType(AudioAttributes.CONTENT_TYPE_SPEECH)
+                .build()
+
+            val audioFormat = AudioFormat.Builder()
+                .setSampleRate(SAMPLE_RATE)
+                .setEncoding(AUDIO_FORMAT)
+                .setChannelMask(CHANNEL_OUT)
+                .build()
+
             audioTrack = AudioTrack(
-                AudioManager.STREAM_VOICE_CALL,
-                SAMPLE_RATE,
-                CHANNEL_OUT,
-                AUDIO_FORMAT,
+                audioAttributes,
+                audioFormat,
                 trackBufferSize,
-                AudioTrack.MODE_STREAM
+                AudioTrack.MODE_STREAM,
+                AudioManager.AUDIO_SESSION_ID_GENERATE
             )
 
             // Verifica estado do AudioTrack
@@ -802,20 +820,65 @@ class ChamadaManager(private val context: Context) {
         capturaPausada = true
         Log.d(TAG, "Captura pausada")
     }
-    
+
     fun retormarCaptura() {
         capturaPausada = false
         Log.d(TAG, "Captura retomada")
     }
-    
+
     fun pausarReproducao() {
         reproducaoPausada = true
         Log.d(TAG, "Reprodução pausada")
     }
-    
+
     fun retormarReproducao() {
         reproducaoPausada = false
         Log.d(TAG, "Reprodução retomada")
+    }
+
+    /**
+     * Muta/desmuta o microfone
+     */
+    fun toggleMuteMicrofone(muted: Boolean) {
+        if (muted) {
+            pausarCaptura()
+            Log.d(TAG, "🔇 Microfone MUTADO")
+        } else {
+            retormarCaptura()
+            Log.d(TAG, "🔊 Microfone ATIVO")
+        }
+    }
+
+    /**
+     * Muta/desmuta o áudio (reprodução)
+     */
+    fun toggleMuteAudio(muted: Boolean) {
+        if (muted) {
+            pausarReproducao()
+            Log.d(TAG, "🔇 Áudio MUTADO")
+        } else {
+            retormarReproducao()
+            Log.d(TAG, "🔊 Áudio ATIVO")
+        }
+    }
+
+    /**
+     * Alterna entre earpiece (falante de ligação) e speakerphone (alto-falante)
+     */
+    fun toggleSpeaker(speakerOn: Boolean) {
+        try {
+            val audioManager = context.getSystemService(Context.AUDIO_SERVICE) as AudioManager
+            audioManager.mode = AudioManager.MODE_IN_COMMUNICATION
+            audioManager.isSpeakerphoneOn = speakerOn
+
+            if (speakerOn) {
+                Log.d(TAG, "📢 Alto-falante ATIVADO")
+            } else {
+                Log.d(TAG, "📱 Earpiece ATIVADO (falante de ligação)")
+            }
+        } catch (e: Exception) {
+            Log.e(TAG, "Erro ao alternar speaker", e)
+        }
     }
     
     /**

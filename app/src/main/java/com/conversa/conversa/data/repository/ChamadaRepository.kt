@@ -640,12 +640,33 @@ class ChamadaRepository(
     fun pausarCaptura() {
         chamadaManager.pausarCaptura()
     }
-    
+
     fun retormarCaptura() {
         chamadaManager.retormarCaptura()
     }
-    
+
     fun atualizarParticipantesMutados(mutados: Set<Int>) {
         chamadaManager.atualizarParticipantesMutados(mutados)
+    }
+
+    /**
+     * Muta/desmuta o microfone
+     */
+    fun toggleMuteMicrofone(muted: Boolean) {
+        chamadaManager.toggleMuteMicrofone(muted)
+    }
+
+    /**
+     * Muta/desmuta o áudio (reprodução)
+     */
+    fun toggleMuteAudio(muted: Boolean) {
+        chamadaManager.toggleMuteAudio(muted)
+    }
+
+    /**
+     * Alterna entre earpiece e speakerphone
+     */
+    fun toggleSpeaker(speakerOn: Boolean) {
+        chamadaManager.toggleSpeaker(speakerOn)
     }
 }
