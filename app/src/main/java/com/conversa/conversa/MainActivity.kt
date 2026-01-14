@@ -34,6 +34,7 @@ import com.conversa.conversa.databinding.ActivityMainBinding
 import com.conversa.conversa.databinding.ContentMainBinding
 import com.conversa.conversa.databinding.DialogContatosBinding
 import com.conversa.conversa.service.SocketService
+import com.conversa.conversa.service.ChamadaRingtoneManager
 import com.conversa.conversa.ui.chamada.ChamadaActivity
 import com.conversa.conversa.ui.chat.ChatActivity
 import com.conversa.conversa.utils.ChamadaBroadcast
@@ -234,11 +235,14 @@ class MainActivity : AppCompatActivity(),
                 val intent = Intent(this, ConfigApiActivity::class.java)
                 startActivity(intent)
             }
+            R.id.nav_testar_chamada -> {
+                testarVibracaoEToque()
+            }
             R.id.nav_sair -> {
                 realizarLogout()
             }
         }
-        
+
         binding.drawerLayout.closeDrawer(GravityCompat.START)
         return true
     }
@@ -370,12 +374,55 @@ class MainActivity : AppCompatActivity(),
         startActivity(intent)
     }
     
+    /**
+     * Testa vibração e toque de chamada por 5 segundos
+     */
+    private fun testarVibracaoEToque() {
+        lifecycleScope.launch {
+            try {
+                Toast.makeText(
+                    this@MainActivity,
+                    "Iniciando teste de vibração e toque...",
+                    Toast.LENGTH_SHORT
+                ).show()
+
+                // Inicia ringtone e vibração
+                val ringtoneManager = ChamadaRingtoneManager.getInstance(this@MainActivity)
+                ringtoneManager.iniciar()
+
+                android.util.Log.d("MainActivity", "🔔 Teste de vibração e toque iniciado")
+
+                // Aguarda 5 segundos
+                kotlinx.coroutines.delay(5000)
+
+                // Para ringtone e vibração
+                ringtoneManager.parar()
+
+                Toast.makeText(
+                    this@MainActivity,
+                    "Teste finalizado",
+                    Toast.LENGTH_SHORT
+                ).show()
+
+                android.util.Log.d("MainActivity", "🔕 Teste de vibração e toque finalizado")
+
+            } catch (e: Exception) {
+                android.util.Log.e("MainActivity", "❌ Erro ao testar vibração e toque", e)
+                Toast.makeText(
+                    this@MainActivity,
+                    "Erro ao testar: ${e.message}",
+                    Toast.LENGTH_SHORT
+                ).show()
+            }
+        }
+    }
+
     private fun realizarLogout() {
         lifecycleScope.launch {
             SocketService.stop(this@MainActivity)
-            
+
             userPreferences.clear()
-            
+
             val intent = Intent(this@MainActivity, LoginActivity::class.java)
             intent.flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK
             startActivity(intent)
@@ -439,12 +486,11 @@ class MainActivity : AppCompatActivity(),
         // Remove listener quando sai da tela
         ChamadaBroadcast.removeListener(this)
 
-        // Desvincula do SocketService
+        // Desvincula do SocketService (MAS não remove o callListener - permite rebind)
         if (isBound) {
-            socketService?.setCallListener(null)
             unbindService(serviceConnection)
             isBound = false
-            android.util.Log.d("MainActivity", "🔌 Service desvinculado")
+            android.util.Log.d("MainActivity", "🔌 Service desvinculado (listener mantido para rebind)")
         }
     }
     

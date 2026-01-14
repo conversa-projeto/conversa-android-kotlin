@@ -64,11 +64,9 @@ class ChamadaRingtoneManager private constructor(private val context: Context) {
         Log.d(TAG, "   ringtone: ${ringtone?.hashCode() ?: "null"}")
         Log.d(TAG, "   vibrator: ${vibrator?.hashCode() ?: "null"}")
 
-        // Para qualquer ringtone anterior antes de iniciar um novo
-        if (isPlaying) {
-            Log.d(TAG, "⚠️ Ringtone já está tocando - parando anterior")
-            parar()
-        }
+        // IMPORTANTE: Sempre para e limpa tudo antes de iniciar
+        // Isso garante que cada chamada começa do zero
+        pararELimpar()
 
         try {
             val audioManager = context.getSystemService(Context.AUDIO_SERVICE) as AudioManager
@@ -83,7 +81,7 @@ class ChamadaRingtoneManager private constructor(private val context: Context) {
             Log.d(TAG, "   shouldPlaySound: $shouldPlaySound")
             Log.d(TAG, "   shouldVibrate: $shouldVibrate")
 
-            // Configurar ringtone
+            // Configurar ringtone - SEMPRE cria nova instância
             if (shouldPlaySound) {
                 val ringtoneUri = RingtoneManager.getDefaultUri(RingtoneManager.TYPE_RINGTONE)
                 ringtone = RingtoneManager.getRingtone(context, ringtoneUri)
@@ -129,6 +127,7 @@ class ChamadaRingtoneManager private constructor(private val context: Context) {
 
         } catch (e: Exception) {
             Log.e(TAG, "❌ Erro ao iniciar ringtone: ${e.message}", e)
+            isPlaying = false
         }
     }
 
@@ -172,13 +171,41 @@ class ChamadaRingtoneManager private constructor(private val context: Context) {
     }
 
     /**
+     * Para E limpa completamente ringtone e vibração.
+     * Prepara o manager para uma nova chamada.
+     */
+    private fun pararELimpar() {
+        try {
+            // Para tudo que está rodando
+            ringtone?.let {
+                if (it.isPlaying) {
+                    it.stop()
+                }
+            }
+
+            vibrator?.let {
+                it.cancel()
+            }
+
+            // Limpa referências antigas
+            ringtone = null
+            isPlaying = false
+
+            Log.d(TAG, "🧹 Ringtone e vibração limpos completamente")
+        } catch (e: Exception) {
+            Log.e(TAG, "❌ Erro ao limpar: ${e.message}", e)
+            isPlaying = false
+        }
+    }
+
+    /**
      * Libera recursos.
      * Deve ser chamado quando não for mais necessário.
      */
     fun release() {
-        parar()
-        ringtone = null
+        pararELimpar()
         vibrator = null
+        Log.d(TAG, "🧹 Recursos liberados completamente")
     }
 
     /**

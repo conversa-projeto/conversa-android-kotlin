@@ -165,6 +165,7 @@ class ChamadaNotificationManager(
             .setOngoing(true)
             .setTimeoutAfter(120000)
             .setDefaults(0) // Desabilita sons/vibrações padrão
+            .setSilent(true) // Som e vibração gerenciados pelo ChamadaRingtoneManager
             .setOnlyAlertOnce(false) // Permite tocar em todas as chamadas
             .setStyle(bigTextStyle) // Estilo para mostrar informações completas
             .addAction(R.drawable.ic_call_end, context.getString(R.string.recusar), declinePendingIntent)
@@ -252,8 +253,6 @@ class ChamadaNotificationManager(
         val answerPendingIntent = criarPendingIntentAtender(chamadaId, usuarioId)
         val declinePendingIntent = criarPendingIntentRecusar(chamadaId)
 
-        val vibrationPattern = longArrayOf(0, 1000, 500, 1000, 500, 1000)
-
         val notification = NotificationCompat.Builder(context, CHANNEL_ID_CHAMADAS)
             .setContentTitle(tituloNotificacao)
             .setContentText(textoNotificacao)
@@ -265,8 +264,7 @@ class ChamadaNotificationManager(
             .setVisibility(NotificationCompat.VISIBILITY_PUBLIC)
             .setOngoing(true) // Não pode ser removida pelo usuário
             .setTimeoutAfter(120000)
-            .setSilent(true) // Ringtone gerenciado separadamente
-            .setVibrate(vibrationPattern)
+            .setSilent(true) // Som e vibração gerenciados pelo ChamadaRingtoneManager
             .addAction(R.drawable.ic_call_end, context.getString(R.string.recusar), declinePendingIntent)
             .addAction(R.drawable.ic_call, context.getString(R.string.atender), answerPendingIntent)
             .build()
@@ -305,8 +303,6 @@ class ChamadaNotificationManager(
         val answerPendingIntent = criarPendingIntentAtender(chamadaId, usuarioId)
         val declinePendingIntent = criarPendingIntentRecusar(chamadaId)
 
-        val vibrationPattern = longArrayOf(0, 1000, 500, 1000, 500, 1000)
-
         val notification = NotificationCompat.Builder(context, CHANNEL_ID_CHAMADAS)
             .setContentTitle(tituloNotificacao)
             .setContentText(textoNotificacao)
@@ -318,8 +314,7 @@ class ChamadaNotificationManager(
             .setVisibility(NotificationCompat.VISIBILITY_PUBLIC)
             .setOngoing(true) // Não pode ser removida pelo usuário
             .setTimeoutAfter(120000)
-            .setSilent(true) // Ringtone gerenciado separadamente
-            .setVibrate(vibrationPattern)
+            .setSilent(true) // Som e vibração gerenciados pelo ChamadaRingtoneManager
             .addAction(R.drawable.ic_call_end, context.getString(R.string.recusar), declinePendingIntent)
             .addAction(R.drawable.ic_call, context.getString(R.string.atender), answerPendingIntent)
             .build()

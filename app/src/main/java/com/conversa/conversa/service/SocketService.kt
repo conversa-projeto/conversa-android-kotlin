@@ -189,8 +189,19 @@ class SocketService : Service() {
     override fun onUnbind(intent: Intent?): Boolean {
         Log.d(TAG, "Service desvinculado")
         isAppBound = false
-        callListener = null
-        return super.onUnbind(intent)
+        // NÃO remove o callListener - permite rebind
+        return true // Retorna true para permitir onRebind
+    }
+
+    override fun onRebind(intent: Intent?) {
+        super.onRebind(intent)
+        Log.d(TAG, "Service re-vinculado")
+        isAppBound = true
+
+        // Re-registra listeners quando reconecta
+        if (::socketManager.isInitialized) {
+            registrarListenersSocket()
+        }
     }
 
     // Método público para registrar listener
