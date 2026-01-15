@@ -147,30 +147,69 @@ class ChamadaNotificationManager(
         val answerPendingIntent = criarPendingIntentAtender(chamadaId, usuarioId)
         val declinePendingIntent = criarPendingIntentRecusar(chamadaId)
 
-        // Estilo de chamada (BigText para mostrar mais informações)
-        val bigTextStyle = NotificationCompat.BigTextStyle()
-            .bigText(textoNotificacao)
-            .setBigContentTitle(tituloNotificacao)
+        // Verifica se o Android suporta CallStyle (API 31+)
+        val notification = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
+            // Usa CallStyle nativo do Android 12+
+            Log.d(TAG, "📱 Usando CallStyle (API ${Build.VERSION.SDK_INT})")
 
-        val notification = NotificationCompat.Builder(context, CHANNEL_ID_CHAMADAS)
-            .setContentTitle(tituloNotificacao)
-            .setContentText(textoNotificacao)
-            .setSmallIcon(R.drawable.ic_notification)
-            .setContentIntent(contentPendingIntent)
-            .setFullScreenIntent(fullScreenPendingIntent, true) // IMPORTANTE: Abre em tela cheia
-            .setAutoCancel(false)
-            .setPriority(NotificationCompat.PRIORITY_MAX)
-            .setCategory(NotificationCompat.CATEGORY_CALL)
-            .setVisibility(NotificationCompat.VISIBILITY_PUBLIC)
-            .setOngoing(true)
-            .setTimeoutAfter(120000)
-            .setDefaults(0) // Desabilita sons/vibrações padrão
-            .setSilent(true) // Som e vibração gerenciados pelo ChamadaRingtoneManager
-            .setOnlyAlertOnce(false) // Permite tocar em todas as chamadas
-            .setStyle(bigTextStyle) // Estilo para mostrar informações completas
-            .addAction(R.drawable.ic_call_end, context.getString(R.string.recusar), declinePendingIntent)
-            .addAction(R.drawable.ic_call, context.getString(R.string.atender), answerPendingIntent)
-            .build()
+            val person = androidx.core.app.Person.Builder()
+                .setName(tituloNotificacao)
+                .setImportant(true)
+                .build()
+
+            val callStyle = NotificationCompat.CallStyle.forIncomingCall(
+                person,
+                declinePendingIntent,
+                answerPendingIntent
+            )
+
+            NotificationCompat.Builder(context, CHANNEL_ID_CHAMADAS)
+                .setContentTitle(tituloNotificacao)
+                .setContentText(textoNotificacao)
+                .setSmallIcon(R.drawable.ic_notification)
+                .setContentIntent(contentPendingIntent)
+                .setFullScreenIntent(fullScreenPendingIntent, true)
+                .setAutoCancel(false)
+                .setPriority(NotificationCompat.PRIORITY_HIGH)
+                .setCategory(NotificationCompat.CATEGORY_CALL)
+                .setVisibility(NotificationCompat.VISIBILITY_PUBLIC)
+                .setOngoing(true)
+                .setTimeoutAfter(120000)
+                .setDefaults(0)
+                .setSilent(true)
+                .setOnlyAlertOnce(false)
+                .setStyle(callStyle)
+                .setWhen(System.currentTimeMillis())
+                .setShowWhen(true)
+                .build()
+        } else {
+            // Fallback para versões antigas (API < 31)
+            Log.d(TAG, "📱 Usando notificação tradicional (API ${Build.VERSION.SDK_INT})")
+
+            val bigTextStyle = NotificationCompat.BigTextStyle()
+                .bigText(textoNotificacao)
+                .setBigContentTitle(tituloNotificacao)
+
+            NotificationCompat.Builder(context, CHANNEL_ID_CHAMADAS)
+                .setContentTitle(tituloNotificacao)
+                .setContentText(textoNotificacao)
+                .setSmallIcon(R.drawable.ic_notification)
+                .setContentIntent(contentPendingIntent)
+                .setFullScreenIntent(fullScreenPendingIntent, true)
+                .setAutoCancel(false)
+                .setPriority(NotificationCompat.PRIORITY_MAX)
+                .setCategory(NotificationCompat.CATEGORY_CALL)
+                .setVisibility(NotificationCompat.VISIBILITY_PUBLIC)
+                .setOngoing(true)
+                .setTimeoutAfter(120000)
+                .setDefaults(0)
+                .setSilent(true)
+                .setOnlyAlertOnce(false)
+                .setStyle(bigTextStyle)
+                .addAction(R.drawable.ic_call_end, context.getString(R.string.recusar), declinePendingIntent)
+                .addAction(R.drawable.ic_call, context.getString(R.string.atender), answerPendingIntent)
+                .build()
+        }
 
         notificationManager.notify(NOTIFICATION_ID_CHAMADA, notification)
         Log.d(TAG, "✅ Notificação fullscreen exibida")

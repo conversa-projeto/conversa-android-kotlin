@@ -248,11 +248,23 @@ class SocketService : Service() {
                     mostrarNotificacaoChamada(chamadaId, usuarioId, nomeExibicao, chamadaData)
                 }
 
+                // CRÍTICO: Sempre inicia ringtone, independente do estado do app
+                Log.d(TAG, "🔔 Iniciando ChamadaRingtoneManager")
+                ChamadaRingtoneManager.getInstance(this@SocketService).iniciar()
+
                 // Notifica o listener se o app estiver conectado
                 if (isAppBound && callListener != null) {
                     callListener?.onChamadaRecebida(chamadaId.toString(), usuarioId, nomeExibicao)
                 }
             }
+        }
+
+        socketManager.onChamadaFinalizada = { chamadaId, usuarioId ->
+            Log.d(TAG, "📴 Chamada finalizada: chamadaId=$chamadaId, usuarioId=$usuarioId")
+
+            // Cancela a notificação de chamada recebida
+            cancelarNotificacaoChamada()
+            Log.d(TAG, "✅ Notificação cancelada para chamada finalizada")
         }
 
         socketManager.onNovaMensagem = { titulo, mensagem ->
@@ -320,10 +332,10 @@ class SocketService : Service() {
             
             val chamadasChannel = NotificationChannel(
                 CHANNEL_ID_CHAMADAS,
-                "Chamadas",
-                NotificationManager.IMPORTANCE_MAX  // MAX para fullscreen intent e heads-up
+                "Chamadas VoIP",
+                NotificationManager.IMPORTANCE_HIGH  // HIGH para heads-up (MAX pode causar problemas)
             ).apply {
-                description = "Notificações de chamadas recebidas"
+                description = "Chamadas de voz e vídeo recebidas"
                 // Som e vibração desabilitados - controlados pelo RingtoneManager
                 enableVibration(false)
                 setSound(null, null) // Remove som do canal
@@ -332,6 +344,10 @@ class SocketService : Service() {
                 setShowBadge(true)
                 setBypassDnd(true)
                 lockscreenVisibility = android.app.Notification.VISIBILITY_PUBLIC
+                // CRÍTICO: Permite que notificações apareçam sobre outras apps
+                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
+                    setAllowBubbles(true)
+                }
             }
             
             val mensagensChannel = NotificationChannel(
@@ -404,11 +420,23 @@ class SocketService : Service() {
                     mostrarNotificacaoChamada(chamadaId, usuarioId, nomeExibicao, chamadaData)
                 }
 
+                // CRÍTICO: Sempre inicia ringtone, independente do estado do app
+                Log.d(TAG, "🔔 Iniciando ChamadaRingtoneManager")
+                ChamadaRingtoneManager.getInstance(this@SocketService).iniciar()
+
                 // Notifica o listener se o app estiver conectado
                 if (isAppBound && callListener != null) {
                     callListener?.onChamadaRecebida(chamadaId.toString(), usuarioId, nomeExibicao)
                 }
             }
+        }
+
+        socketManager.onChamadaFinalizada = { chamadaId, usuarioId ->
+            Log.d(TAG, "📴 Chamada finalizada: chamadaId=$chamadaId, usuarioId=$usuarioId")
+
+            // Cancela a notificação de chamada recebida
+            cancelarNotificacaoChamada()
+            Log.d(TAG, "✅ Notificação cancelada para chamada finalizada")
         }
 
         socketManager.onNovaMensagem = { titulo, mensagem ->
@@ -561,13 +589,15 @@ class SocketService : Service() {
         usuarioNome: String,
         chamada: com.conversa.conversa.data.model.ChamadaResponse?
     ) {
-        // Intent para abrir a tela de chamada ao clicar no corpo da notificação
+        // Intent FULLSCREEN para abrir a tela de chamada (heads-up)
         val fullScreenIntent = Intent(this, ChamadaActivity::class.java).apply {
-            flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TOP
             putExtra(ChamadaActivity.EXTRA_CHAMADA_ID, chamadaId)
             putExtra(ChamadaActivity.EXTRA_USUARIO_ID, usuarioId)
             putExtra(ChamadaActivity.EXTRA_USUARIO_NOME, usuarioNome)
             putExtra(ChamadaActivity.EXTRA_IS_INCOMING, true)
+            flags = Intent.FLAG_ACTIVITY_NEW_TASK or
+                    Intent.FLAG_ACTIVITY_CLEAR_TOP or
+                    Intent.FLAG_ACTIVITY_NO_USER_ACTION
         }
 
         val fullScreenPendingIntent = PendingIntent.getActivity(
@@ -610,36 +640,73 @@ class SocketService : Service() {
         val tituloNotificacao = SocketServiceHelper.formatarNomeExibicao(chamada, usuarioNome)
         val textoNotificacao = SocketServiceHelper.formatarTextoNotificacao(chamada)
 
-        val vibrationPattern = longArrayOf(0, 1000, 500, 1000, 500, 1000)
+        // CRÍTICO: Cancela notificação anterior para forçar nova exibição heads-up
+        notificationManager.cancel(NOTIFICATION_ID_CHAMADA)
+        Log.d(TAG, "🗑️ Notificação anterior cancelada para exibir nova")
 
-        val notification = NotificationCompat.Builder(this, CHANNEL_ID_CHAMADAS)
-            .setContentTitle(tituloNotificacao)
-            .setContentText(textoNotificacao)
-            .setSmallIcon(R.drawable.ic_notification)
-            .setContentIntent(fullScreenPendingIntent)
-            .setOngoing(true)
-            .setAutoCancel(false)
-            .setPriority(NotificationCompat.PRIORITY_HIGH)
-            .setCategory(NotificationCompat.CATEGORY_CALL)
-            .setVisibility(NotificationCompat.VISIBILITY_PUBLIC)
-            .setShowWhen(false)
-            .setLocalOnly(true)
-            .setVibrate(vibrationPattern)
-            .addAction(
-                R.drawable.ic_notification,
-                "Recusar",
-                recusarPendingIntent
-            )
-            .addAction(
-                R.drawable.ic_notification,
-                "Atender",
+        // Verifica se o Android suporta CallStyle (API 31+)
+        val notification = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
+            // Usa CallStyle nativo do Android 12+
+            Log.d(TAG, "📱 Usando CallStyle (API ${Build.VERSION.SDK_INT})")
+
+            val person = androidx.core.app.Person.Builder()
+                .setName(tituloNotificacao)
+                .setImportant(true)
+                .build()
+
+            val callStyle = NotificationCompat.CallStyle.forIncomingCall(
+                person,
+                recusarPendingIntent,
                 aceitarPendingIntent
             )
-            .setFullScreenIntent(fullScreenPendingIntent, true)
-            .build()
+
+            NotificationCompat.Builder(this, CHANNEL_ID_CHAMADAS)
+                .setSmallIcon(R.drawable.ic_notification)
+                .setContentTitle(tituloNotificacao)
+                .setContentText(textoNotificacao)
+                .setContentIntent(fullScreenPendingIntent)
+                .setFullScreenIntent(fullScreenPendingIntent, true)
+                .setPriority(NotificationCompat.PRIORITY_HIGH)
+                .setCategory(NotificationCompat.CATEGORY_CALL)
+                .setVisibility(NotificationCompat.VISIBILITY_PUBLIC)
+                .setOngoing(true)
+                .setAutoCancel(false)
+                .setDefaults(0)
+                .setSilent(true)
+                .setOnlyAlertOnce(false)
+                .setStyle(callStyle)
+                .setTimeoutAfter(60000)
+                .setWhen(System.currentTimeMillis())
+                .setShowWhen(true)
+                .build()
+        } else {
+            // Fallback para versões antigas (API < 31)
+            Log.d(TAG, "📱 Usando notificação tradicional (API ${Build.VERSION.SDK_INT})")
+
+            NotificationCompat.Builder(this, CHANNEL_ID_CHAMADAS)
+                .setSmallIcon(R.drawable.ic_notification)
+                .setContentTitle(tituloNotificacao)
+                .setContentText(textoNotificacao)
+                .setContentIntent(fullScreenPendingIntent)
+                .setFullScreenIntent(fullScreenPendingIntent, true)
+                .setPriority(NotificationCompat.PRIORITY_MAX)
+                .setCategory(NotificationCompat.CATEGORY_CALL)
+                .setVisibility(NotificationCompat.VISIBILITY_PUBLIC)
+                .setOngoing(true)
+                .setAutoCancel(false)
+                .setDefaults(0)
+                .setSilent(true)
+                .setOnlyAlertOnce(false)
+                .setTimeoutAfter(60000)
+                .setWhen(System.currentTimeMillis())
+                .setShowWhen(true)
+                .addAction(R.drawable.ic_call_end, "Recusar", recusarPendingIntent)
+                .addAction(R.drawable.ic_call, "Atender", aceitarPendingIntent)
+                .build()
+        }
 
         notificationManager.notify(NOTIFICATION_ID_CHAMADA, notification)
-        Log.d(TAG, "✅ Notificação exibida: $tituloNotificacao")
+        Log.d(TAG, "✅ Notificação heads-up exibida: $tituloNotificacao")
     }
 
     /**
@@ -647,5 +714,7 @@ class SocketService : Service() {
      */
     fun cancelarNotificacaoChamada() {
         notificationManager.cancel(NOTIFICATION_ID_CHAMADA)
+        // Para o ringtone quando a notificação é cancelada
+        ChamadaRingtoneManager.getInstance(this).parar()
     }
 }
