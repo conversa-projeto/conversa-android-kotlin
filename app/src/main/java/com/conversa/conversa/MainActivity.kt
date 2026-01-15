@@ -532,8 +532,8 @@ class MainActivity : AppCompatActivity(),
         }
     }
 
-    override fun onNovaMensagem(titulo: String, mensagem: String) {
-        android.util.Log.d("MainActivity", "💬 Nova mensagem recebida: $titulo")
+    override fun onNovaMensagem(conversaId: Int, remetenteId: Int, destinatarioId: Int, titulo: String, mensagem: String, tipo: Int) {
+        android.util.Log.d("MainActivity", "💬 Nova mensagem recebida - Conversa: $conversaId, Remetente: $remetenteId")
         // Recarrega conversas para mostrar nova mensagem
         lifecycleScope.launch {
             carregarConversas()

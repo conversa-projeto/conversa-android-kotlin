@@ -18,6 +18,7 @@ import com.conversa.conversa.data.socket.SocketManager
 import androidx.localbroadcastmanager.content.LocalBroadcastManager
 import com.conversa.conversa.ui.chamada.ChamadaActivity
 import com.conversa.conversa.utils.AppLifecycleManager
+import com.conversa.conversa.notification.MensagemNotificationManager
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
@@ -28,10 +29,10 @@ import kotlinx.coroutines.launch
 
 class SocketService : Service() {
 
-    // Interface para callbacks de chamadas
+    // Interface para callbacks de chamadas e mensagens
     interface CallListener {
         fun onChamadaRecebida(chamadaId: String, usuarioId: Int, usuarioNome: String?)
-        fun onNovaMensagem(titulo: String, mensagem: String)
+        fun onNovaMensagem(conversaId: Int, remetenteId: Int, destinatarioId: Int, titulo: String, mensagem: String, tipo: Int)
         fun onSocketConectado()
         fun onSocketDesconectado()
         fun onSocketErro(erro: String)
@@ -267,15 +268,23 @@ class SocketService : Service() {
             Log.d(TAG, "✅ Notificação cancelada para chamada finalizada")
         }
 
-        socketManager.onNovaMensagem = { titulo, mensagem ->
-            Log.d(TAG, "Nova mensagem: $titulo")
+        socketManager.onNovaMensagem = { conversaId, remetenteId, destinatarioId, titulo, mensagem, tipo ->
+            Log.d(TAG, "📨 Nova mensagem - Conversa: $conversaId, Remetente: $remetenteId")
 
-            // Sempre mostra notificação
-            mostrarNotificacaoMensagem(titulo, mensagem)
+            // Adiciona à notificação agrupada
+            MensagemNotificationManager.adicionarMensagem(
+                this@SocketService,
+                conversaId,
+                remetenteId,
+                destinatarioId,
+                titulo,
+                mensagem,
+                tipo
+            )
 
             // Também notifica o listener se o app estiver conectado
             if (isAppBound && callListener != null) {
-                callListener?.onNovaMensagem(titulo, mensagem)
+                callListener?.onNovaMensagem(conversaId, remetenteId, destinatarioId, titulo, mensagem, tipo)
             }
         }
 
@@ -439,15 +448,23 @@ class SocketService : Service() {
             Log.d(TAG, "✅ Notificação cancelada para chamada finalizada")
         }
 
-        socketManager.onNovaMensagem = { titulo, mensagem ->
-            Log.d(TAG, "Nova mensagem: $titulo")
+        socketManager.onNovaMensagem = { conversaId, remetenteId, destinatarioId, titulo, mensagem, tipo ->
+            Log.d(TAG, "📨 Nova mensagem - Conversa: $conversaId, Remetente: $remetenteId")
 
-            // Sempre mostra notificação
-            mostrarNotificacaoMensagem(titulo, mensagem)
+            // Adiciona à notificação agrupada
+            MensagemNotificationManager.adicionarMensagem(
+                this@SocketService,
+                conversaId,
+                remetenteId,
+                destinatarioId,
+                titulo,
+                mensagem,
+                tipo
+            )
 
             // Também notifica o listener se o app estiver conectado
             if (isAppBound && callListener != null) {
-                callListener?.onNovaMensagem(titulo, mensagem)
+                callListener?.onNovaMensagem(conversaId, remetenteId, destinatarioId, titulo, mensagem, tipo)
             }
         }
 
@@ -505,30 +522,6 @@ class SocketService : Service() {
         notificationManager.notify(NOTIFICATION_ID_SERVICE, notification)
     }
     
-    private fun mostrarNotificacaoMensagem(titulo: String, mensagem: String) {
-        val intent = Intent(this, MainActivity::class.java).apply {
-            flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TOP
-        }
-
-        val pendingIntent = PendingIntent.getActivity(
-            this,
-            0,
-            intent,
-            PendingIntent.FLAG_IMMUTABLE or PendingIntent.FLAG_UPDATE_CURRENT
-        )
-
-        val notification = NotificationCompat.Builder(this, CHANNEL_ID_MENSAGENS)
-            .setContentTitle(titulo)
-            .setContentText(mensagem)
-            .setSmallIcon(R.drawable.ic_notification)
-            .setContentIntent(pendingIntent)
-            .setAutoCancel(true)
-            .setPriority(NotificationCompat.PRIORITY_DEFAULT)
-            .setCategory(NotificationCompat.CATEGORY_MESSAGE)
-            .build()
-
-        notificationManager.notify(NOTIFICATION_ID_MENSAGEM, notification)
-    }
 
     /**
      * Verifica se o dispositivo está bloqueado
@@ -716,5 +709,20 @@ class SocketService : Service() {
         notificationManager.cancel(NOTIFICATION_ID_CHAMADA)
         // Para o ringtone quando a notificação é cancelada
         ChamadaRingtoneManager.getInstance(this).parar()
+    }
+
+    /**
+     * Limpa as notificações de mensagens de uma conversa específica
+     * Deve ser chamado quando o usuário abre uma conversa
+     */
+    fun limparNotificacoesConversa(conversaId: Int) {
+        MensagemNotificationManager.limparMensagensConversa(this, conversaId)
+    }
+
+    /**
+     * Limpa todas as notificações de mensagens
+     */
+    fun limparTodasNotificacoesMensagens() {
+        MensagemNotificationManager.limparTodasMensagens(this)
     }
 }
