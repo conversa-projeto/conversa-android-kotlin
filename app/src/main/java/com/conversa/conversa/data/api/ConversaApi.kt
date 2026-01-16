@@ -15,7 +15,16 @@ interface ConversaApi {
     suspend fun listarConversas(
         @Header("Authorization") token: String
     ): Response<List<Conversa>>
-    
+
+    /**
+     * Obtém dados completos de uma conversa
+     */
+    @GET("conversa/dados")
+    suspend fun obterDadosConversa(
+        @Header("Authorization") token: String,
+        @Query("id") conversaId: Int
+    ): Response<ConversaCompleta>
+
     /**
      * Lista os contatos do usuário autenticado
      */

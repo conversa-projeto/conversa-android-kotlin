@@ -19,3 +19,31 @@ data class Remetente(
     val id: Int,
     val nome: String
 )
+
+/**
+ * Modelo completo de conversa retornado pelo endpoint /conversa/dados
+ * Inclui a lista de usuários participantes
+ */
+data class ConversaCompleta(
+    val id: Int,
+    val descricao: String,
+    val tipo: Int, // 1 = individual, 2 = grupo
+    val inserida: LocalDateTime?,
+    val nome: String?,
+    val destinatario_id: Int?,
+    val mensagem_id: Int,
+    val ultima_mensagem: LocalDateTime?,
+    val ultima_mensagem_texto: String?,
+    val mensagens_sem_visualizar: Int,
+    val usuarios: List<UsuarioConversa>
+)
+
+/**
+ * Representa um usuário participante de uma conversa
+ */
+data class UsuarioConversa(
+    val id: Int,
+    val nome: String,
+    val login: String,
+    val email: String
+)

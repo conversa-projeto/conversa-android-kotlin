@@ -844,15 +844,6 @@ class ChatActivity : AppCompatActivity(), ChamadaBroadcast.ChamadaListener {
      * Inicia uma chamada
      */
     private fun iniciarChamada() {
-        if (destinatarioId == null || destinatarioId == -1) {
-            Toast.makeText(
-                this,
-                "Não foi possível identificar o destinatário",
-                Toast.LENGTH_SHORT
-            ).show()
-            return
-        }
-        
         lifecycleScope.launch {
             try {
                 Toast.makeText(
@@ -860,10 +851,10 @@ class ChatActivity : AppCompatActivity(), ChamadaBroadcast.ChamadaListener {
                     "Iniciando chamada...",
                     Toast.LENGTH_SHORT
                 ).show()
-                
+
                 // Usa SocketManager compartilhado do Service
                 val socketManager = com.conversa.conversa.ui.chamada.ChamadaActivity.sharedSocketManager
-                
+
                 if (socketManager == null) {
                     Toast.makeText(
                         this@ChatActivity,
@@ -872,7 +863,66 @@ class ChatActivity : AppCompatActivity(), ChamadaBroadcast.ChamadaListener {
                     ).show()
                     return@launch
                 }
-                
+
+                // Obter token de autenticação
+                val token = userPreferences.authToken.first()
+                if (token.isNullOrEmpty()) {
+                    Toast.makeText(
+                        this@ChatActivity,
+                        "Erro: usuário não autenticado",
+                        Toast.LENGTH_SHORT
+                    ).show()
+                    return@launch
+                }
+
+                // Construir lista de participantes
+                val participantesIds = mutableListOf<Int>()
+
+                // Se for conversa em grupo, buscar dados da conversa para obter todos os participantes
+                if (conversaId != null && conversaId!! > 0) {
+                    android.util.Log.d(TAG, "Buscando dados da conversa $conversaId para obter participantes")
+
+                    val response = RetrofitClient.api.obterDadosConversa(
+                        token = "Bearer $token",
+                        conversaId = conversaId!!
+                    )
+
+                    if (response.isSuccessful && response.body() != null) {
+                        val conversa = response.body()!!
+                        android.util.Log.d(TAG, "Conversa obtida: ${conversa.nome}, ${conversa.usuarios.size} usuários")
+
+                        // Adicionar todos os usuários da conversa (exceto o próprio usuário)
+                        val meuId = userPreferences.userId.first()
+                        conversa.usuarios
+                            .filter { it.id != meuId }
+                            .forEach { participantesIds.add(it.id) }
+
+                        android.util.Log.d(TAG, "Participantes da chamada em grupo: $participantesIds")
+                    } else {
+                        android.util.Log.e(TAG, "Erro ao obter dados da conversa: ${response.code()}")
+                        Toast.makeText(
+                            this@ChatActivity,
+                            "Erro ao obter dados da conversa",
+                            Toast.LENGTH_SHORT
+                        ).show()
+                        return@launch
+                    }
+                } else if (destinatarioId != null && destinatarioId != -1) {
+                    // Se for conversa 1:1, usar apenas o destinatarioId
+                    participantesIds.add(destinatarioId!!)
+                    android.util.Log.d(TAG, "Chamada 1:1 com destinatário: $destinatarioId")
+                }
+
+                // Validar se tem participantes
+                if (participantesIds.isEmpty()) {
+                    Toast.makeText(
+                        this@ChatActivity,
+                        "Não foi possível identificar os participantes",
+                        Toast.LENGTH_SHORT
+                    ).show()
+                    return@launch
+                }
+
                 // Limpa repository anterior se existir
                 chamadaRepository?.cleanup()
 
@@ -885,10 +935,10 @@ class ChatActivity : AppCompatActivity(), ChamadaBroadcast.ChamadaListener {
                     userPreferences = userPreferences
                 )
 
-                android.util.Log.d(TAG, "Repository criado para iniciar chamada")
+                android.util.Log.d(TAG, "Repository criado para iniciar chamada com ${participantesIds.size} participante(s)")
 
                 // Iniciar chamada
-                val result = chamadaRepository!!.iniciarChamada(listOf(destinatarioId!!))
+                val result = chamadaRepository!!.iniciarChamada(participantesIds)
                 
                 result.onSuccess { chamada ->
                     val intent = android.content.Intent(this@ChatActivity, com.conversa.conversa.ui.chamada.ChamadaActivity::class.java).apply {
