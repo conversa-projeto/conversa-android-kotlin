@@ -68,7 +68,7 @@ class ParticipantesAdapter(
         fun bind(participante: ParticipanteItem) {
             binding.tvNomeParticipante.text = participante.nome
             binding.tvStatusParticipante.text = participante.status
-            
+
             if (participante.fotoUrl != null) {
                 Glide.with(binding.root.context)
                     .load(participante.fotoUrl)
@@ -78,14 +78,21 @@ class ParticipantesAdapter(
             } else {
                 binding.ivAvatarParticipante.setImageResource(R.drawable.ic_person)
             }
-            
+
+            // Mostra ícone de mic mudo se o participante não estiver com áudio ativo
+            if (!participante.audioAtivo) {
+                binding.ivMicParticipante.visibility = android.view.View.VISIBLE
+            } else {
+                binding.ivMicParticipante.visibility = android.view.View.GONE
+            }
+
             // Atualiza ícone de volume baseado no estado
             if (participante.mutadoLocalmente) {
                 binding.ivStatusParticipante.setImageResource(R.drawable.ic_volume_off)
             } else {
                 binding.ivStatusParticipante.setImageResource(R.drawable.ic_volume_up)
             }
-            
+
             // Click listener para mutar/desmutar
             binding.ivStatusParticipante.setOnClickListener {
                 onMuteClick?.invoke(participante)

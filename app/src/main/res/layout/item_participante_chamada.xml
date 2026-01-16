@@ -31,9 +31,22 @@
         android:maxLines="1"
         android:ellipsize="end"
         app:layout_constraintStart_toEndOf="@id/ivAvatarParticipante"
-        app:layout_constraintEnd_toStartOf="@id/ivStatusParticipante"
+        app:layout_constraintEnd_toStartOf="@id/ivMicParticipante"
         app:layout_constraintTop_toTopOf="parent"
         tools:text="João Silva" />
+
+    <ImageView
+        android:id="@+id/ivMicParticipante"
+        android:layout_width="20dp"
+        android:layout_height="20dp"
+        android:layout_marginEnd="8dp"
+        android:src="@drawable/ic_mic_off"
+        android:tint="@color/corPrimaria"
+        android:visibility="gone"
+        app:layout_constraintEnd_toStartOf="@id/ivStatusParticipante"
+        app:layout_constraintTop_toTopOf="parent"
+        app:layout_constraintBottom_toBottomOf="parent"
+        tools:visibility="visible" />
 
     <TextView
         android:id="@+id/tvStatusParticipante"
@@ -47,7 +60,7 @@
         android:maxLines="1"
         android:ellipsize="end"
         app:layout_constraintStart_toEndOf="@id/ivAvatarParticipante"
-        app:layout_constraintEnd_toStartOf="@id/ivStatusParticipante"
+        app:layout_constraintEnd_toStartOf="@id/ivMicParticipante"
         app:layout_constraintTop_toBottomOf="@id/tvNomeParticipante"
         app:layout_constraintBottom_toBottomOf="parent"
         tools:text="Conectado" />

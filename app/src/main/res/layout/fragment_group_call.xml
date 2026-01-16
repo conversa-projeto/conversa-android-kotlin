@@ -6,38 +6,19 @@
     android:layout_height="match_parent"
     android:background="@color/white">
 
-    <!-- Nome do grupo -->
+    <!-- Título -->
     <TextView
-        android:id="@+id/tvNomeGrupo"
-        android:layout_width="0dp"
+        android:id="@+id/tvTitulo"
+        android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:layout_marginStart="16dp"
         android:layout_marginTop="24dp"
-        android:layout_marginEnd="8dp"
-        android:gravity="center"
-        android:maxLines="2"
-        android:ellipsize="end"
+        android:text="Chamada em Grupo"
         android:textColor="@color/corPrimaria"
         android:textSize="24sp"
         android:textStyle="bold"
-        app:layout_constraintEnd_toStartOf="@id/btnToggleView"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toTopOf="parent"
-        tools:text="Grupo de Trabalho" />
-
-    <!-- Botão toggle visualização -->
-    <ImageButton
-        android:id="@+id/btnToggleView"
-        android:layout_width="40dp"
-        android:layout_height="40dp"
-        android:layout_marginEnd="16dp"
-        android:background="?attr/selectableItemBackgroundBorderless"
-        android:contentDescription="@string/alternar_visualizacao"
-        android:src="@drawable/ic_view_grid"
-        app:tint="@color/corPrimaria"
-        app:layout_constraintBottom_toBottomOf="@id/tvNomeGrupo"
         app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintTop_toTopOf="@id/tvNomeGrupo" />
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toTopOf="parent" />
 
     <!-- Timer da chamada -->
     <TextView
@@ -49,7 +30,7 @@
         android:textSize="18sp"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toBottomOf="@id/tvNomeGrupo"
+        app:layout_constraintTop_toBottomOf="@id/tvTitulo"
         tools:text="00:35" />
 
     <!-- Lista de Participantes -->
@@ -76,10 +57,10 @@
         android:id="@+id/llControles"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:layout_marginBottom="120dp"
+        android:layout_marginBottom="24dp"
         android:gravity="center"
         android:orientation="horizontal"
-        app:layout_constraintBottom_toTopOf="@id/llBotaoEncerrar"
+        app:layout_constraintBottom_toTopOf="@id/btnEncerrarChamada"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent">
 
@@ -139,33 +120,17 @@
     </LinearLayout>
 
     <!-- Botão Encerrar -->
-    <LinearLayout
-        android:id="@+id/llBotaoEncerrar"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:layout_marginBottom="80dp"
-        android:gravity="center"
-        android:orientation="vertical"
+    <ImageButton
+        android:id="@+id/btnEncerrarChamada"
+        android:layout_width="64dp"
+        android:layout_height="64dp"
+        android:layout_marginBottom="40dp"
+        android:background="@drawable/bg_btn_reject_call"
+        android:contentDescription="@string/encerrar_chamada"
+        android:src="@drawable/ic_call_end"
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintStart_toStartOf="parent">
-
-        <ImageButton
-            android:id="@+id/btnEncerrarChamada"
-            android:layout_width="64dp"
-            android:layout_height="64dp"
-            android:background="@drawable/bg_btn_reject_call"
-            android:contentDescription="@string/encerrar_chamada"
-            android:src="@drawable/ic_call_end"
-            app:tint="@color/white" />
-
-        <TextView
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:layout_marginTop="8dp"
-            android:text="@string/encerrar"
-            android:textColor="@color/corPrimaria"
-            android:textSize="14sp" />
-    </LinearLayout>
+        app:layout_constraintStart_toStartOf="parent"
+        app:tint="@color/white" />
 
 </androidx.constraintlayout.widget.ConstraintLayout>

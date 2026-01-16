@@ -53,6 +53,7 @@ class ChamadaActivity : AppCompatActivity(),
     private var chamadaId: Int = 0
     private var usuarioId: Int = 0
     private var usuarioNome: String = ""
+    private var usuarioLogadoId: Int = 0 // ID do usuário logado
     private var isIncoming: Boolean = false
     private var autoAnswer: Boolean = false
     private var isMuted: Boolean = false
@@ -126,6 +127,12 @@ class ChamadaActivity : AppCompatActivity(),
 
         audioManager = getSystemService(AUDIO_SERVICE) as AudioManager
         userPreferences = UserPreferences(this)
+
+        // Carrega o ID do usuário logado
+        lifecycleScope.launch {
+            usuarioLogadoId = userPreferences.userId.first() ?: 0
+            Log.d(TAG, "📝 ID do usuário logado: $usuarioLogadoId")
+        }
 
         inicializarSensorProximidade()
         verificarPermissaoAudio()
@@ -327,7 +334,6 @@ class ChamadaActivity : AppCompatActivity(),
                     withContext(Dispatchers.Main) {
                         (currentFragment as? IncomingCallFragment)?.atualizarNome()
                         (currentFragment as? SimpleCallFragment)?.atualizarNome()
-                        (currentFragment as? GroupCallFragment)?.atualizarNome()
                     }
                 }
             } else {
@@ -601,7 +607,6 @@ class ChamadaActivity : AppCompatActivity(),
     }
 
     override fun getNomeContato(): String = usuarioNome
-    override fun getNomeGrupo(): String = usuarioNome
     override fun getTimerText(): String = timerText
     override fun isMuted(): Boolean = isMuted
     override fun isSpeakerOn(): Boolean = isSpeakerOn
@@ -610,24 +615,34 @@ class ChamadaActivity : AppCompatActivity(),
     override fun getParticipantes(): List<ParticipanteItem> {
         val chamada = repository.chamadaAtual ?: return emptyList()
 
-        return chamada.usuarios.map { usuario ->
-            val status = when (usuario.status) {
-                UsuarioChamadaStatus.ENTROU.valor -> "Conectado"
-                UsuarioChamadaStatus.PENDENTE.valor -> "Aguardando..."
-                UsuarioChamadaStatus.RECUSADO.valor -> "Recusou"
-                UsuarioChamadaStatus.SAIU.valor -> "Saiu"
-                else -> "Desconhecido"
+        Log.d(TAG, "👥 getParticipantes - usuarioLogadoId: $usuarioLogadoId")
+        Log.d(TAG, "👥 Total de usuários na chamada: ${chamada.usuarios.size}")
+
+        val participantes = chamada.usuarios
+            .filter { it.usuarioId != usuarioLogadoId } // Filtra o participante atual (usuário logado)
+            .map { usuario ->
+                Log.d(TAG, "👤 Participante: ${usuario.usuarioNome} (ID: ${usuario.usuarioId}, Status: ${usuario.status})")
+
+                val status = when (usuario.status) {
+                    UsuarioChamadaStatus.ENTROU.valor -> "Conectado"
+                    UsuarioChamadaStatus.PENDENTE.valor -> "Aguardando..."
+                    UsuarioChamadaStatus.RECUSADO.valor -> "Recusou"
+                    UsuarioChamadaStatus.SAIU.valor -> "Saiu"
+                    else -> "Desconhecido"
+                }
+
+                ParticipanteItem(
+                    id = usuario.usuarioId,
+                    nome = usuario.usuarioNome,
+                    fotoUrl = null,
+                    audioAtivo = usuario.status == UsuarioChamadaStatus.ENTROU.valor,
+                    status = status,
+                    mutadoLocalmente = participantesMutados.contains(usuario.usuarioId)
+                )
             }
 
-            ParticipanteItem(
-                id = usuario.usuarioId,
-                nome = usuario.usuarioNome,
-                fotoUrl = null,
-                audioAtivo = usuario.status == UsuarioChamadaStatus.ENTROU.valor,
-                status = status,
-                mutadoLocalmente = participantesMutados.contains(usuario.usuarioId)
-            )
-        }
+        Log.d(TAG, "👥 Total de participantes filtrados: ${participantes.size}")
+        return participantes
     }
 
     override fun onMutarParticipante(participante: ParticipanteItem) {

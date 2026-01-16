@@ -17,13 +17,11 @@ class GroupCallFragment : Fragment() {
 
     private var listener: GroupCallListener? = null
     private lateinit var participantesAdapter: ParticipantesAdapter
-    private var isGridMode: Boolean = false
 
     interface GroupCallListener {
         fun onEncerrarChamada()
         fun onToggleMute()
         fun onToggleSpeaker()
-        fun getNomeGrupo(): String
         fun getTimerText(): String
         fun isMuted(): Boolean
         fun isSpeakerOn(): Boolean
@@ -60,7 +58,6 @@ class GroupCallFragment : Fragment() {
     }
 
     private fun setupUI() {
-        binding.tvNomeGrupo.text = listener?.getNomeGrupo() ?: "Grupo"
         atualizarTimer()
         atualizarBotoes()
         atualizarListaParticipantes()
@@ -80,27 +77,6 @@ class GroupCallFragment : Fragment() {
             listener?.onToggleSpeaker()
             atualizarBotaoSpeaker()
         }
-
-        binding.btnToggleView.setOnClickListener {
-            toggleViewMode()
-        }
-    }
-
-    private fun toggleViewMode() {
-        isGridMode = !isGridMode
-        participantesAdapter.isGridMode = isGridMode
-
-        if (isGridMode) {
-            binding.rvParticipantes.layoutManager = GridLayoutManager(requireContext(), 2)
-            binding.btnToggleView.setImageResource(R.drawable.ic_view_list)
-        } else {
-            binding.rvParticipantes.layoutManager = LinearLayoutManager(requireContext())
-            binding.btnToggleView.setImageResource(R.drawable.ic_view_grid)
-        }
-    }
-
-    fun atualizarNome() {
-        _binding?.tvNomeGrupo?.text = listener?.getNomeGrupo() ?: "Grupo"
     }
 
     fun atualizarTimer() {
