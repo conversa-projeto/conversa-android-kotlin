@@ -200,11 +200,14 @@ class ChamadaManager(private val context: Context) {
             // Inicia worker de envio serializado
             iniciarSender()
 
+            // Inicia captura e reprodução de áudio
+            iniciarCapturaEReproducao()
+
             // CRÍTICO: Dispara callback AQUI, após tudo inicializado
             withContext(Dispatchers.Main) {
                 onConexaoEstabelecida?.invoke()
             }
-            
+
             Log.d(TAG, "✅ Chamada iniciada completamente")
             true
             

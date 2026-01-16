@@ -55,6 +55,9 @@ class ChatActivity : AppCompatActivity(), ChamadaBroadcast.ChamadaListener {
     private var authToken: String = ""
     private var apiUrl: String = ""
 
+    // Repository de chamada (para limpar quando a chamada terminar)
+    private var chamadaRepository: com.conversa.conversa.data.repository.ChamadaRepository? = null
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         
@@ -604,6 +607,9 @@ class ChatActivity : AppCompatActivity(), ChamadaBroadcast.ChamadaListener {
         audioRecorderHelper.release()
         // Para o timer se estiver rodando
         pararTimer()
+        // Limpa repository de chamada se existir
+        chamadaRepository?.cleanup()
+        chamadaRepository = null
     }
     
     /**
@@ -867,19 +873,22 @@ class ChatActivity : AppCompatActivity(), ChamadaBroadcast.ChamadaListener {
                     return@launch
                 }
                 
+                // Limpa repository anterior se existir
+                chamadaRepository?.cleanup()
+
                 // Criar repository de chamada para esta chamada específica
-                val repository = com.conversa.conversa.data.repository.ChamadaRepository(
+                chamadaRepository = com.conversa.conversa.data.repository.ChamadaRepository(
                     context = this@ChatActivity,
                     api = RetrofitClient.api,
                     chamadaManager = com.conversa.conversa.data.chamada.ChamadaManager(this@ChatActivity),
                     socketManager = socketManager,
                     userPreferences = userPreferences
                 )
-                
-                android.util.Log.d(TAG, "âœ… Repository criado para iniciar chamada")
-                
+
+                android.util.Log.d(TAG, "Repository criado para iniciar chamada")
+
                 // Iniciar chamada
-                val result = repository.iniciarChamada(listOf(destinatarioId!!))
+                val result = chamadaRepository!!.iniciarChamada(listOf(destinatarioId!!))
                 
                 result.onSuccess { chamada ->
                     val intent = android.content.Intent(this@ChatActivity, com.conversa.conversa.ui.chamada.ChamadaActivity::class.java).apply {
@@ -912,6 +921,10 @@ class ChatActivity : AppCompatActivity(), ChamadaBroadcast.ChamadaListener {
     override fun onResume() {
         super.onResume()
         ChamadaBroadcast.addListener(this)
+        // Limpa repository de chamada quando volta para o chat
+        // (a chamada foi encerrada)
+        chamadaRepository?.cleanup()
+        chamadaRepository = null
     }
     
     override fun onPause() {
