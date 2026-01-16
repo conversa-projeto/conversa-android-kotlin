@@ -56,10 +56,10 @@ class ChamadaManager(private val context: Context) {
         // Constantes para suavização de áudio
         private const val FADE_SAMPLES = 32 // Número de samples para fade in/out
 
-        // Constantes de buffering (como no Windows)
-        private const val MIN_BUFFER_START = 8192  // 8KB antes de começar reprodução
-        private const val MIN_BUFFER_RUNNING = 4096 // Mínimo durante reprodução
-        private const val MAX_BUFFER_THRESHOLD = 20480 // ~230ms de buffer máximo
+        // Constantes de buffering (ajustadas conforme análise Windows/Android)
+        private const val MIN_BUFFER_START = 8192  // 8KB (~92ms) antes de começar reprodução (igual Windows)
+        private const val MIN_BUFFER_RUNNING = 4096 // 4KB (~46ms) mínimo durante reprodução
+        private const val MAX_BUFFER_THRESHOLD = 8192 // ~92ms de buffer máximo
         private const val PLAY_INTERVAL_MS = 23L // Intervalo entre reproduções (23ms)
     }
     
@@ -98,12 +98,17 @@ class ChamadaManager(private val context: Context) {
     private var captureJob: Job? = null
     private var playbackJob: Job? = null
     private var senderJob: Job? = null
-    
+    private var receiveJob: Job? = null  // Nova coroutine para recepção TCP
+    private var mixerJob: Job? = null    // Nova coroutine para mixing dedicado
+
     // Mixing (para chamadas em grupo)
     private val mixingBuffers = mutableMapOf<Int, LinkedBlockingQueue<ShortArray>>()
 
     // Controle de bytes acumulados por cliente (para gerenciar overflow)
     private val mixingBufferSizes = mutableMapOf<Int, Int>()
+
+    // Buffer intermediário entre mixer e reprodução
+    private val mixedOutputBuffer = LinkedBlockingQueue<ShortArray>(10) // ~230ms máximo
 
     // Participantes mutados localmente
     private val participantesMutados = mutableSetOf<Int>()
@@ -116,6 +121,7 @@ class ChamadaManager(private val context: Context) {
     var onConexaoEstabelecida: (() -> Unit)? = null
     var onConexaoFalhou: ((String) -> Unit)? = null
     var onChamadaFinalizada: (() -> Unit)? = null
+    var onErroAudio: ((String) -> Unit)? = null
     
     /**
      * Recria o canal de envio (necessário após fechamento)
@@ -413,33 +419,88 @@ class ChamadaManager(private val context: Context) {
     private fun iniciarCaptura() {
         captureJob = scope.launch {
             try {
-                audioRecord?.startRecording()
-                Log.d(TAG, "Captura de áudio iniciada")
+                val record = audioRecord
+                if (record == null) {
+                    Log.e(TAG, "❌ AudioRecord é null ao iniciar captura")
+                    withContext(Dispatchers.Main) {
+                        onErroAudio?.invoke("AudioRecord não inicializado")
+                    }
+                    return@launch
+                }
+
+                try {
+                    record.startRecording()
+                    Log.d(TAG, "Captura de áudio iniciada")
+                } catch (e: IllegalStateException) {
+                    Log.e(TAG, "❌ Erro ao iniciar gravação (IllegalStateException)", e)
+                    withContext(Dispatchers.Main) {
+                        onErroAudio?.invoke("Erro ao iniciar gravação: ${e.message}")
+                    }
+                    return@launch
+                }
 
                 val buffer = ByteArray(BUFFER_SIZE)
                 var pacotesCapturados = 0
+                var errosConsecutivos = 0
 
                 while (emChamada && isActive) {
-                    val bytesRead = audioRecord?.read(buffer, 0, buffer.size) ?: -1
+                    try {
+                        val bytesRead = record.read(buffer, 0, buffer.size)
 
-                    if (bytesRead > 0 && !capturaPausada) {
-                        pacotesCapturados++
+                        when {
+                            bytesRead > 0 && !capturaPausada -> {
+                                pacotesCapturados++
+                                errosConsecutivos = 0 // Reset contador de erros
 
-                        // Cria cópia do buffer antes de enfileirar
-                        val audioCopy = buffer.copyOf(bytesRead)
-                        enviarAudio(audioCopy, bytesRead)
+                                // Cria cópia do buffer antes de enfileirar
+                                val audioCopy = buffer.copyOf(bytesRead)
+                                enviarAudio(audioCopy, bytesRead)
 
-                        if (pacotesCapturados % 50 == 0) {
-                            Log.d(TAG, "Pacotes capturados: $pacotesCapturados, último: $bytesRead bytes")
-
+                                if (pacotesCapturados % 50 == 0) {
+                                    Log.d(TAG, "Pacotes capturados: $pacotesCapturados, último: $bytesRead bytes")
+                                }
+                            }
+                            bytesRead == AudioRecord.ERROR_INVALID_OPERATION -> {
+                                Log.e(TAG, "❌ Erro: AudioRecord em estado inválido")
+                                errosConsecutivos++
+                                if (errosConsecutivos > 10) {
+                                    Log.e(TAG, "❌ Muitos erros consecutivos, finalizando captura")
+                                    withContext(Dispatchers.Main) {
+                                        onErroAudio?.invoke("AudioRecord em estado inválido")
+                                    }
+                                    break
+                                }
+                                delay(100)
+                            }
+                            bytesRead == AudioRecord.ERROR_BAD_VALUE -> {
+                                Log.e(TAG, "❌ Erro: Parâmetros inválidos no AudioRecord")
+                                errosConsecutivos++
+                                if (errosConsecutivos > 10) {
+                                    break
+                                }
+                                delay(100)
+                            }
+                            capturaPausada -> {
+                                delay(10)
+                            }
                         }
-                    } else if (capturaPausada) {
-                        // Pequeno delay quando pausado para evitar loop tight
-                        delay(10)
+                    } catch (e: IllegalStateException) {
+                        Log.e(TAG, "❌ Erro durante leitura do AudioRecord", e)
+                        errosConsecutivos++
+                        if (errosConsecutivos > 10) {
+                            withContext(Dispatchers.Main) {
+                                onErroAudio?.invoke("Erro durante captura: ${e.message}")
+                            }
+                            break
+                        }
+                        delay(100)
                     }
                 }
             } catch (e: Exception) {
-                Log.e(TAG, "Erro na captura de áudio", e)
+                Log.e(TAG, "❌ Erro fatal na captura de áudio", e)
+                withContext(Dispatchers.Main) {
+                    onErroAudio?.invoke("Erro fatal na captura: ${e.message}")
+                }
             } finally {
                 try {
                     // Verifica estado antes de parar para evitar IllegalStateException
@@ -486,7 +547,159 @@ class ChamadaManager(private val context: Context) {
     }
     
     /**
-     * Inicia reprodução de áudio recebido do servidor
+     * Inicia recepção TCP de áudio (separada da reprodução)
+     */
+    private fun iniciarRecepcaoTCP() {
+        receiveJob = scope.launch {
+            try {
+                Log.d(TAG, "🌐 Recepção TCP iniciada")
+                var pacotesRecebidos = 0
+
+                while (emChamada && isActive) {
+                    try {
+                        receberAudioDoServidor()
+                        pacotesRecebidos++
+
+                        if (pacotesRecebidos == 1) {
+                            Log.d(TAG, "🌐 PRIMEIRO pacote TCP recebido")
+                        }
+
+                        if (pacotesRecebidos % 50 == 0) {
+                            Log.d(TAG, "🌐 Pacotes TCP recebidos: $pacotesRecebidos")
+                        }
+                    } catch (e: EOFException) {
+                        Log.e(TAG, "Conexão encerrada pelo servidor")
+                        withContext(Dispatchers.Main) {
+                            finalizarChamada()
+                        }
+                        break
+                    } catch (e: SocketTimeoutException) {
+                        delay(10)
+                    } catch (e: Exception) {
+                        Log.e(TAG, "Erro ao receber TCP: ${e.message}", e)
+                        delay(10)
+                    }
+                }
+
+                Log.d(TAG, "🌐 Recepção TCP finalizada. Total: $pacotesRecebidos pacotes")
+            } catch (e: Exception) {
+                Log.e(TAG, "❌ Erro na recepção TCP", e)
+            }
+        }
+    }
+
+    /**
+     * Recebe áudio do servidor e adiciona ao buffer de mixing
+     * (não reproduz diretamente - isso é feito pela coroutine de reprodução)
+     */
+    private suspend fun receberAudioDoServidor() {
+        try {
+            // Verifica se há dados disponíveis para leitura
+            val stream = inputStream
+            if (stream == null) {
+                Log.e(TAG, "InputStream é null")
+                delay(10)
+                return
+            }
+
+            // Lê tamanho do pacote
+            val tamanhoBytes = ByteArray(4)
+            stream.readFully(tamanhoBytes)
+            val tamanho = ByteBuffer.wrap(tamanhoBytes).order(ByteOrder.LITTLE_ENDIAN).int
+
+            if (tamanho <= 4 || tamanho > (BUFFER_SIZE * 4 + 4)) {
+                Log.w(TAG, "Pacote inválido: $tamanho bytes")
+                return
+            }
+
+            // Lê ID do cliente
+            val clientIdBytes = ByteArray(4)
+            stream.readFully(clientIdBytes)
+            val clientId = ByteBuffer.wrap(clientIdBytes).order(ByteOrder.LITTLE_ENDIAN).int
+
+            val audioSize = tamanho - 4
+
+            if (audioSize <= 0 || audioSize > BUFFER_SIZE * 4) {
+                Log.w(TAG, "Áudio inválido: $audioSize bytes (client=$clientId)")
+                return
+            }
+
+            // Lê dados de áudio
+            val audioData = ByteArray(audioSize)
+            stream.readFully(audioData)
+
+            val audioShorts = bytesToShorts(audioData)
+            adicionarAoMixing(clientId, audioShorts)
+
+        } catch (e: EOFException) {
+            throw e // Propaga para finalizar chamada
+        } catch (e: SocketTimeoutException) {
+            throw e // Propaga para retry
+        } catch (e: Exception) {
+            Log.e(TAG, "Erro ao receber áudio: ${e.message}", e)
+            throw e
+        }
+    }
+
+    /**
+     * Inicia mixing dedicado (processa a cada 23ms)
+     */
+    private fun iniciarMixer() {
+        mixerJob = scope.launch {
+            try {
+                Log.d(TAG, "🎚️ Mixer iniciado")
+                var proximoTempo = System.currentTimeMillis() + PLAY_INTERVAL_MS
+                var ciclosMixing = 0
+
+                while (emChamada && isActive) {
+                    val agoraAtual = System.currentTimeMillis()
+
+                    if (agoraAtual >= proximoTempo) {
+                        // Só mixa se todos os participantes tiverem dados OU se algum buffer estiver muito cheio
+                        if (todosParticipantesProntos() || algumBufferCheio()) {
+                            val mixedAudio = mixar()
+                            if (mixedAudio.isNotEmpty()) {
+                                // Adiciona ao buffer de saída (não bloqueia se cheio)
+                                if (!mixedOutputBuffer.offer(mixedAudio)) {
+                                    // Se buffer de saída está cheio, descarta pacote mais antigo
+                                    mixedOutputBuffer.poll()
+                                    mixedOutputBuffer.offer(mixedAudio)
+                                    Log.w(TAG, "⚠️ Buffer de saída cheio, descartando pacote antigo")
+                                }
+
+                                ciclosMixing++
+                                if (ciclosMixing % 50 == 0) {
+                                    Log.d(TAG, "🎚️ Ciclos de mixing: $ciclosMixing")
+                                }
+                            }
+                        }
+
+                        proximoTempo += PLAY_INTERVAL_MS
+
+                        // Ressincronização se atrasou muito (>100ms)
+                        if (agoraAtual > proximoTempo + 100) {
+                            Log.w(TAG, "⚠️ Drift detectado no mixer, ressincronizando")
+                            proximoTempo = agoraAtual + PLAY_INTERVAL_MS
+                        }
+                    }
+
+                    val tempoEspera = proximoTempo - System.currentTimeMillis()
+                    if (tempoEspera > 0) {
+                        delay(minOf(tempoEspera, 50))
+                    } else {
+                        delay(1) // Yield mínimo
+                    }
+                }
+
+                Log.d(TAG, "🎚️ Mixer finalizado. Total: $ciclosMixing ciclos")
+            } catch (e: Exception) {
+                Log.e(TAG, "❌ Erro no mixer", e)
+            }
+        }
+    }
+
+    /**
+     * Inicia reprodução de áudio (lê do buffer mixado com temporização)
      */
     private fun iniciarReproducao() {
         Log.d(TAG, "🔴 iniciarReproducao() chamado")
@@ -508,6 +721,23 @@ class ChamadaManager(private val context: Context) {
                     return@launch
                 }
 
+                // Aguarda buffer inicial de MIN_BUFFER_START bytes (~92ms)
+                Log.d(TAG, "⏳ Aguardando buffer inicial de $MIN_BUFFER_START bytes...")
+                var bufferAcumulado = 0
+                while (bufferAcumulado < MIN_BUFFER_START && emChamada && isActive) {
+                    bufferAcumulado = mixingBufferSizes.values.sum()
+                    if (bufferAcumulado < MIN_BUFFER_START) {
+                        delay(10)
+                    }
+                }
+
+                if (!emChamada || !isActive) {
+                    Log.w(TAG, "⚠️ Chamada finalizada antes de atingir buffer inicial")
+                    return@launch
+                }
+
+                Log.d(TAG, "✅ Buffer inicial atingido: $bufferAcumulado bytes")
+
                 Log.d(TAG, "🔊 Iniciando reprodução...")
                 track.play()
 
@@ -515,32 +745,91 @@ class ChamadaManager(private val context: Context) {
 
                 if (track.playState != AudioTrack.PLAYSTATE_PLAYING) {
                     Log.e(TAG, "❌ AudioTrack NÃO está reproduzindo. Estado: ${track.playState}")
+                    withContext(Dispatchers.Main) {
+                        onErroAudio?.invoke("AudioTrack não está reproduzindo")
+                    }
                     return@launch
                 }
 
                 Log.d(TAG, "✅ 🔊 Reprodução iniciada com sucesso!")
 
-                var pacotesRecebidos = 0
+                var proximoTempo = System.currentTimeMillis() + PLAY_INTERVAL_MS
+                var pacotesReproduzidos = 0
+                var underrunCount = 0
+                var errosConsecutivos = 0
 
                 while (emChamada && isActive) {
                     try {
-                        receberEReproducirAudio()
-                        pacotesRecebidos++
+                        val agoraAtual = System.currentTimeMillis()
 
-                        if (pacotesRecebidos == 1) {
-                            Log.d(TAG, "🔊 PRIMEIRO pacote recebido e processado")
+                        if (agoraAtual >= proximoTempo) {
+                            // Tenta ler áudio mixado do buffer de saída
+                            val mixedAudio = mixedOutputBuffer.poll()
+
+                            if (mixedAudio != null && !reproducaoPausada) {
+                                try {
+                                    reproduzirAudio(mixedAudio)
+                                    pacotesReproduzidos++
+                                    errosConsecutivos = 0 // Reset contador de erros
+
+                                    if (pacotesReproduzidos == 1) {
+                                        Log.d(TAG, "🔊 PRIMEIRO pacote reproduzido")
+                                    }
+
+                                    if (pacotesReproduzidos % 50 == 0) {
+                                        Log.d(TAG, "🔊 Pacotes reproduzidos: $pacotesReproduzidos")
+                                    }
+                                } catch (e: IllegalStateException) {
+                                    Log.e(TAG, "❌ Erro ao reproduzir (IllegalStateException)", e)
+                                    errosConsecutivos++
+                                    if (errosConsecutivos > 10) {
+                                        Log.e(TAG, "❌ Muitos erros consecutivos, finalizando reprodução")
+                                        withContext(Dispatchers.Main) {
+                                            onErroAudio?.invoke("Erro crítico na reprodução")
+                                        }
+                                        break
+                                    }
+                                }
+                            } else if (mixedAudio == null) {
+                                // Buffer vazio (underrun)
+                                underrunCount++
+                                if (underrunCount % 20 == 0) {
+                                    Log.w(TAG, "⚠️ Underruns detectados: $underrunCount (buffer de saída vazio)")
+                                }
+                            }
+
+                            proximoTempo += PLAY_INTERVAL_MS
+
+                            // Ressincronização se atrasou muito (>100ms)
+                            if (agoraAtual > proximoTempo + 100) {
+                                Log.w(TAG, "⚠️ Drift detectado na reprodução, ressincronizando")
+                                proximoTempo = agoraAtual + PLAY_INTERVAL_MS
+                            }
                         }
 
-                        if (pacotesRecebidos % 50 == 0) {
-                            Log.d(TAG, "🔊 Recebidos: $pacotesRecebidos pacotes")
+                        val tempoEspera = proximoTempo - System.currentTimeMillis()
+                        if (tempoEspera > 0) {
+                            delay(minOf(tempoEspera, 50))
+                        } else {
+                            delay(1) // Yield mínimo
                         }
+
                     } catch (e: Exception) {
                         Log.e(TAG, "Erro no loop de reprodução: ${e.message}", e)
+                        errosConsecutivos++
+                        if (errosConsecutivos > 10) {
+                            withContext(Dispatchers.Main) {
+                                onErroAudio?.invoke("Erro no loop de reprodução: ${e.message}")
+                            }
+                            break
+                        }
                         delay(10)
                     }
                 }
 
-                Log.d(TAG, "🔊 Loop de reprodução finalizado. Total: $pacotesRecebidos pacotes")
+                Log.d(TAG, "🔊 Loop de reprodução finalizado")
+                Log.d(TAG, "   - Pacotes reproduzidos: $pacotesReproduzidos")
+                Log.d(TAG, "   - Underruns detectados: $underrunCount")
             } catch (e: Exception) {
                 Log.e(TAG, "❌ Erro na reprodução", e)
             } finally {
@@ -557,70 +846,26 @@ class ChamadaManager(private val context: Context) {
     }
     
     /**
-     * Recebe áudio do servidor e reproduz
+     * Verifica se todos os participantes têm pelo menos 1 pacote para mixar
      */
-    private suspend fun receberEReproducirAudio() {
-//        Log.d(TAG, "🔴 receberEReproducirAudio() CHAMADO")
-        
-        try {
-            // Verifica se há dados disponíveis para leitura
-            val stream = inputStream
-            if (stream == null) {
-                Log.e(TAG, "InputStream é null")
-                delay(10)
-                return
-            }
-            
-            // Lê tamanho do pacote
-            val tamanhoBytes = ByteArray(4)
-            stream.readFully(tamanhoBytes)
-            val tamanho = ByteBuffer.wrap(tamanhoBytes).order(ByteOrder.LITTLE_ENDIAN).int
-            
-            if (tamanho <= 4 || tamanho > (BUFFER_SIZE * 4 + 4)) {
-                Log.w(TAG, "Pacote inválido: $tamanho bytes")
-                return
-            }
-            
-            // Lê ID do cliente
-            val clientIdBytes = ByteArray(4)
-            stream.readFully(clientIdBytes)
-            val clientId = ByteBuffer.wrap(clientIdBytes).order(ByteOrder.LITTLE_ENDIAN).int
-            
-            val audioSize = tamanho - 4
-            
-            if (audioSize <= 0 || audioSize > BUFFER_SIZE * 4) {
-                Log.w(TAG, "Áudio inválido: $audioSize bytes (client=$clientId)")
-                return
-            }
-            
-            // Lê dados de áudio
-            val audioData = ByteArray(audioSize)
-            stream.readFully(audioData)
-            
-            // LOG: Mostra qual clientId recebeu áudio
-//            Log.d(TAG, "📦 Áudio recebido de clientId=$clientId, tamanho=$audioSize bytes")
-            
-            val audioShorts = bytesToShorts(audioData)
-            adicionarAoMixing(clientId, audioShorts)
-            
-            val mixedAudio = mixar()
-            if (mixedAudio.isNotEmpty() && !reproducaoPausada) {
-                reproduzirAudio(mixedAudio)
-            }
-            
-        } catch (e: EOFException) {
-            Log.e(TAG, "Conexão encerrada pelo servidor")
-            withContext(Dispatchers.Main) {
-                finalizarChamada()
-            }
-        } catch (e: SocketTimeoutException) {
-            delay(10)
-        } catch (e: Exception) {
-            Log.e(TAG, "Erro ao receber/reproduzir: ${e.message}", e)
-            delay(10)
-        }
+    private fun todosParticipantesProntos(): Boolean {
+        if (mixingBuffers.isEmpty()) return false
+
+        // Se tiver apenas 1 participante, sempre está pronto
+        if (mixingBuffers.size == 1) return true
+
+        // Todos os participantes devem ter pelo menos 1 pacote
+        return mixingBuffers.all { (_, queue) -> queue.isNotEmpty() }
     }
-    
+
+    /**
+     * Verifica se algum buffer está acima de 50% do threshold (para evitar delay excessivo)
+     */
+    private fun algumBufferCheio(): Boolean {
+        val halfThreshold = MAX_BUFFER_THRESHOLD / 2
+        return mixingBufferSizes.any { (_, size) -> size > halfThreshold }
+    }
+
     private fun adicionarAoMixing(clientId: Int, audioData: ShortArray) {
         // Ignora áudio de participantes mutados localmente
         if (isParticipanteMutado(clientId)) {
@@ -629,27 +874,32 @@ class ChamadaManager(private val context: Context) {
         }
 
         if (!mixingBuffers.containsKey(clientId)) {
-            mixingBuffers[clientId] = LinkedBlockingQueue(100)
+            mixingBuffers[clientId] = LinkedBlockingQueue(10) // Reduzido para 10 pacotes (~230ms máximo)
             mixingBufferSizes[clientId] = 0
             Log.d(TAG, "✅ Novo buffer criado para clientId=$clientId")
         }
 
         val queue = mixingBuffers[clientId]!!
-        val currentSize = mixingBufferSizes[clientId] ?: 0
+        var currentSize = mixingBufferSizes[clientId] ?: 0
         val audioBytes = audioData.size * 2 // ShortArray -> bytes
 
-        // Se buffer está muito cheio (>MAX_BUFFER_THRESHOLD), descarta pacote antigo
-        if (currentSize > MAX_BUFFER_THRESHOLD) {
+        // Se buffer está muito cheio (>MAX_BUFFER_THRESHOLD), descarta pacotes antigos até ficar abaixo do limite
+        while (currentSize > MAX_BUFFER_THRESHOLD) {
             val discarded = queue.poll()
             if (discarded != null) {
-                mixingBufferSizes[clientId] = currentSize - (discarded.size * 2)
-                Log.d(TAG, "⚠️ Buffer overflow clientId=$clientId, descartando pacote antigo")
+                currentSize = (currentSize - (discarded.size * 2)).coerceAtLeast(0)
+                mixingBufferSizes[clientId] = currentSize
+                Log.d(TAG, "⚠️ Buffer overflow clientId=$clientId, descartando pacote antigo (tamanho buffer: $currentSize bytes)")
+            } else {
+                break
             }
         }
 
         // Adiciona novo pacote
         if (queue.offer(audioData)) {
             mixingBufferSizes[clientId] = (mixingBufferSizes[clientId] ?: 0) + audioBytes
+        } else {
+            Log.w(TAG, "⚠️ Não foi possível adicionar pacote para clientId=$clientId (fila cheia)")
         }
     }
     
@@ -764,14 +1014,18 @@ class ChamadaManager(private val context: Context) {
 
         emChamada = false
 
-        // Cancela jobs de forma explícita e aguarda
+        // Cancela jobs de forma explícita
         captureJob?.cancel()
         playbackJob?.cancel()
         senderJob?.cancel()
+        receiveJob?.cancel()
+        mixerJob?.cancel()
 
         captureJob = null
         playbackJob = null
         senderJob = null
+        receiveJob = null
+        mixerJob = null
 
         // Fecha canal de envio
         try {
@@ -808,8 +1062,10 @@ class ChamadaManager(private val context: Context) {
         outputStream = null
         inputStream = null
 
+        // Limpa todos os buffers
         mixingBuffers.clear()
         mixingBufferSizes.clear()
+        mixedOutputBuffer.clear()
 
         // Reseta estado de suavização
         lastSample = 0
@@ -913,10 +1169,13 @@ class ChamadaManager(private val context: Context) {
         Log.d(TAG, "[$instanceId] audioTrack: ${if (audioTrack == null) "NULL" else "OK (estado=${audioTrack?.state})" }")
         Log.d(TAG, "captureJob ativo: ${captureJob?.isActive}")
         Log.d(TAG, "playbackJob ativo: ${playbackJob?.isActive}")
+        Log.d(TAG, "receiveJob ativo: ${receiveJob?.isActive}")
+        Log.d(TAG, "mixerJob ativo: ${mixerJob?.isActive}")
 
         // Verifica se já está capturando/reproduzindo
-        if (captureJob?.isActive == true && playbackJob?.isActive == true) {
-            Log.w(TAG, "⚠️ Captura e reprodução JÁ ESTÃO ATIVAS! Ignorando chamada duplicada")
+        if (captureJob?.isActive == true && playbackJob?.isActive == true &&
+            receiveJob?.isActive == true && mixerJob?.isActive == true) {
+            Log.w(TAG, "⚠️ Todas as coroutines JÁ ESTÃO ATIVAS! Ignorando chamada duplicada")
             return
         }
 
@@ -931,10 +1190,13 @@ class ChamadaManager(private val context: Context) {
             }
         }
 
-        iniciarCaptura()
-        iniciarReproducao()
+        // Inicia todas as coroutines na ordem correta
+        iniciarCaptura()        // 1. Captura áudio do microfone
+        iniciarRecepcaoTCP()    // 2. Recebe áudio TCP e adiciona ao mixing
+        iniciarMixer()          // 3. Mixa áudio a cada 23ms
+        iniciarReproducao()     // 4. Reproduz áudio mixado a cada 23ms
 
-        Log.d(TAG, "=== CAPTURA E REPRODUÇÃO DISPARADAS ===")
+        Log.d(TAG, "=== TODAS AS COROUTINES DISPARADAS ===")
     }
     
     fun cleanup() {
