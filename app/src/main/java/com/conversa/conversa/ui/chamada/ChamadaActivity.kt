@@ -391,8 +391,17 @@ class ChamadaActivity : AppCompatActivity(),
                 atualizarListaParticipantes()
                 evento.participanteNome?.let { nome ->
                     Toast.makeText(this, "$nome saiu da chamada", Toast.LENGTH_SHORT).show()
+                }
+
+                // Só finaliza automaticamente se for chamada simples (2 participantes)
+                // Para chamada em grupo, apenas atualiza a lista - o servidor enviará
+                // evento CHAMADA_FINALIZADA quando o último participante sair
+                val chamada = repository.chamadaAtualFlow.value
+                if (chamada != null && chamada.usuarios.size == 2) {
                     lifecycleScope.launch {
                         kotlinx.coroutines.delay(2000)
+                        repository.finalizarChamada()
+                        removerNotificacaoChamada()
                         finish()
                     }
                 }

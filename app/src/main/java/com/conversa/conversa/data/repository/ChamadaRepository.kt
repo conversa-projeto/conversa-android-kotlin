@@ -568,8 +568,11 @@ class ChamadaRepository(
                 val token = userPreferences.authToken.first()
                 if (token != null) {
                     try {
-                        api.finalizarChamada("Bearer $token", ChamadaIdRequest(chamada.id))
-                        Log.d(TAG, "API notificada sobre finalização")
+                        // Sempre chama sairChamada - o servidor decide se finaliza:
+                        // - Chamada Simples (2 participantes): servidor finaliza automaticamente
+                        // - Chamada em Grupo: servidor só finaliza quando último participante sair
+                        api.sairChamada("Bearer $token", ChamadaIdRequest(chamada.id))
+                        Log.d(TAG, "API notificada sobre saída da chamada")
                     } catch (e: Exception) {
                         Log.e(TAG, "Erro ao notificar API, mas áudio já foi finalizado", e)
                     }
