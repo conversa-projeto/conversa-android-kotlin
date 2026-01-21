@@ -623,15 +623,11 @@ class ChamadaActivity : AppCompatActivity(),
 
     override fun getParticipantes(): List<ParticipanteItem> {
         val chamada = repository.chamadaAtual ?: return emptyList()
+        val timestamps = repository.getLastAudioTimestamps()
 
-        Log.d(TAG, "👥 getParticipantes - usuarioLogadoId: $usuarioLogadoId")
-        Log.d(TAG, "👥 Total de usuários na chamada: ${chamada.usuarios.size}")
-
-        val participantes = chamada.usuarios
-            .filter { it.usuarioId != usuarioLogadoId } // Filtra o participante atual (usuário logado)
+        return chamada.usuarios
+            .filter { it.usuarioId != usuarioLogadoId }
             .map { usuario ->
-                Log.d(TAG, "👤 Participante: ${usuario.usuarioNome} (ID: ${usuario.usuarioId}, Status: ${usuario.status})")
-
                 val status = when (usuario.status) {
                     UsuarioChamadaStatus.ENTROU.valor -> "Conectado"
                     UsuarioChamadaStatus.PENDENTE.valor -> "Aguardando..."
@@ -646,12 +642,10 @@ class ChamadaActivity : AppCompatActivity(),
                     fotoUrl = null,
                     audioAtivo = usuario.status == UsuarioChamadaStatus.ENTROU.valor,
                     status = status,
-                    mutadoLocalmente = participantesMutados.contains(usuario.usuarioId)
+                    mutadoLocalmente = participantesMutados.contains(usuario.usuarioId),
+                    lastAudioTimestamp = timestamps[usuario.usuarioId] ?: 0L
                 )
             }
-
-        Log.d(TAG, "👥 Total de participantes filtrados: ${participantes.size}")
-        return participantes
     }
 
     override fun onMutarParticipante(participante: ParticipanteItem) {

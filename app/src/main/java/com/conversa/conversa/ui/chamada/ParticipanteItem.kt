@@ -5,6 +5,7 @@ data class ParticipanteItem(
     val nome: String,
     val fotoUrl: String?,
     val audioAtivo: Boolean,
-    val status: String, // Status textual: "Conectado", "Aguardando", etc
-    val mutadoLocalmente: Boolean = false // Se EU mutei este participante
+    val status: String,
+    val mutadoLocalmente: Boolean = false,
+    val lastAudioTimestamp: Long = 0L
 )

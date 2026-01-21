@@ -5,10 +5,12 @@ import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import androidx.fragment.app.Fragment
-import androidx.recyclerview.widget.GridLayoutManager
+import androidx.lifecycle.lifecycleScope
 import androidx.recyclerview.widget.LinearLayoutManager
 import com.conversa.conversa.R
 import com.conversa.conversa.databinding.FragmentGroupCallBinding
+import kotlinx.coroutines.delay
+import kotlinx.coroutines.launch
 
 class GroupCallFragment : Fragment() {
 
@@ -17,6 +19,7 @@ class GroupCallFragment : Fragment() {
 
     private var listener: GroupCallListener? = null
     private lateinit var participantesAdapter: ParticipantesAdapter
+    private var atualizadorJob: kotlinx.coroutines.Job? = null
 
     interface GroupCallListener {
         fun onEncerrarChamada()
@@ -61,6 +64,16 @@ class GroupCallFragment : Fragment() {
         atualizarTimer()
         atualizarBotoes()
         atualizarListaParticipantes()
+        iniciarAtualizadorParticipantes()
+    }
+
+    private fun iniciarAtualizadorParticipantes() {
+        atualizadorJob = viewLifecycleOwner.lifecycleScope.launch {
+            while (true) {
+                delay(1000)
+                atualizarListaParticipantes()
+            }
+        }
     }
 
     private fun setupListeners() {
@@ -133,6 +146,7 @@ class GroupCallFragment : Fragment() {
 
     override fun onDestroyView() {
         super.onDestroyView()
+        atualizadorJob?.cancel()
         _binding = null
     }
 }

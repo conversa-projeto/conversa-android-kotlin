@@ -107,6 +107,10 @@ class ChamadaManager(private val context: Context) {
     // Controle de bytes acumulados por cliente (para gerenciar overflow)
     private val mixingBufferSizes = mutableMapOf<Int, Int>()
 
+    // Timestamp do último pacote de áudio recebido por cliente
+    private val lastAudioTimestamps = mutableMapOf<Int, Long>()
+    val lastAudioTimestampsMap: Map<Int, Long> get() = lastAudioTimestamps.toMap()
+
     // Buffer intermediário entre mixer e reprodução
     private val mixedOutputBuffer = LinkedBlockingQueue<ShortArray>(10) // ~230ms máximo
 
@@ -867,6 +871,9 @@ class ChamadaManager(private val context: Context) {
     }
 
     private fun adicionarAoMixing(clientId: Int, audioData: ShortArray) {
+        // Registra timestamp do último áudio recebido
+        lastAudioTimestamps[clientId] = System.currentTimeMillis()
+
         // Ignora áudio de participantes mutados localmente
         if (isParticipanteMutado(clientId)) {
             Log.d(TAG, "❌ MUTE: Ignorando áudio de clientId=$clientId (mutado localmente)")
@@ -1066,6 +1073,7 @@ class ChamadaManager(private val context: Context) {
         mixingBuffers.clear()
         mixingBufferSizes.clear()
         mixedOutputBuffer.clear()
+        lastAudioTimestamps.clear()
 
         // Reseta estado de suavização
         lastSample = 0

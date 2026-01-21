@@ -672,4 +672,8 @@ class ChamadaRepository(
     fun toggleSpeaker(speakerOn: Boolean) {
         chamadaManager.toggleSpeaker(speakerOn)
     }
+
+    fun getLastAudioTimestamps(): Map<Int, Long> {
+        return chamadaManager.lastAudioTimestampsMap
+    }
 }

@@ -67,7 +67,7 @@ class ParticipantesAdapter(
 
         fun bind(participante: ParticipanteItem) {
             binding.tvNomeParticipante.text = participante.nome
-            binding.tvStatusParticipante.text = participante.status
+            binding.tvStatusParticipante.text = formatarTempoAudio(participante)
 
             if (participante.fotoUrl != null) {
                 Glide.with(binding.root.context)
@@ -79,24 +79,29 @@ class ParticipantesAdapter(
                 binding.ivAvatarParticipante.setImageResource(R.drawable.ic_person)
             }
 
-            // Mostra ícone de mic mudo se o participante não estiver com áudio ativo
             if (!participante.audioAtivo) {
                 binding.ivMicParticipante.visibility = android.view.View.VISIBLE
             } else {
                 binding.ivMicParticipante.visibility = android.view.View.GONE
             }
 
-            // Atualiza ícone de volume baseado no estado
             if (participante.mutadoLocalmente) {
                 binding.ivStatusParticipante.setImageResource(R.drawable.ic_volume_off)
             } else {
                 binding.ivStatusParticipante.setImageResource(R.drawable.ic_volume_up)
             }
 
-            // Click listener para mutar/desmutar
             binding.ivStatusParticipante.setOnClickListener {
                 onMuteClick?.invoke(participante)
             }
+        }
+
+        private fun formatarTempoAudio(participante: ParticipanteItem): String {
+            if (!participante.audioAtivo || participante.lastAudioTimestamp == 0L) {
+                return participante.status
+            }
+            val diff = (System.currentTimeMillis() - participante.lastAudioTimestamp) / 1000
+            return "\u00daltimo \u00e1udio: ${diff}s"
         }
     }
 
@@ -107,7 +112,7 @@ class ParticipantesAdapter(
 
         fun bind(participante: ParticipanteItem) {
             binding.tvNomeParticipante.text = participante.nome
-            binding.tvStatusParticipante.text = participante.status
+            binding.tvStatusParticipante.text = formatarTempoAudio(participante)
             
             if (participante.fotoUrl != null) {
                 Glide.with(binding.root.context)
@@ -119,17 +124,23 @@ class ParticipantesAdapter(
                 binding.ivAvatarParticipante.setImageResource(R.drawable.ic_person)
             }
             
-            // Atualiza ícone de volume baseado no estado
             if (participante.mutadoLocalmente) {
                 binding.ivStatusParticipante.setImageResource(R.drawable.ic_volume_off)
             } else {
                 binding.ivStatusParticipante.setImageResource(R.drawable.ic_volume_up)
             }
             
-            // Click listener para mutar/desmutar
             binding.ivStatusParticipante.setOnClickListener {
                 onMuteClick?.invoke(participante)
             }
+        }
+
+        private fun formatarTempoAudio(participante: ParticipanteItem): String {
+            if (!participante.audioAtivo || participante.lastAudioTimestamp == 0L) {
+                return participante.status
+            }
+            val diff = (System.currentTimeMillis() - participante.lastAudioTimestamp) / 1000
+            return "\u00daltimo \u00e1udio: ${diff}s"
         }
     }
 
