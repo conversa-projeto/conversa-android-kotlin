@@ -871,8 +871,11 @@ class ChamadaManager(private val context: Context) {
     }
 
     private fun adicionarAoMixing(clientId: Int, audioData: ShortArray) {
-        // Registra timestamp do último áudio recebido
-        lastAudioTimestamps[clientId] = System.currentTimeMillis()
+        // Registra timestamp apenas se amplitude média indicar áudio real
+        val amplitudeMedia = audioData.map { kotlin.math.abs(it.toInt()) }.average()
+        if (amplitudeMedia > 100) {
+            lastAudioTimestamps[clientId] = System.currentTimeMillis()
+        }
 
         // Ignora áudio de participantes mutados localmente
         if (isParticipanteMutado(clientId)) {
