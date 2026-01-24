@@ -261,7 +261,7 @@ class ChamadaService : Service() {
             ACTION_CHAMADA_FINALIZADA -> {
                 val chamadaId = intent.getIntExtra(EXTRA_CHAMADA_ID, -1)
                 if (chamadaId == chamadaIdAtual) {
-                    finalizarChamada()
+                    finalizarChamadaENotificarAPI()
                 }
             }
 
@@ -474,7 +474,7 @@ class ChamadaService : Service() {
      * Encerra chamada em andamento
      */
     fun encerrarChamada() {
-        finalizarChamada()
+        finalizarChamadaENotificarAPI()
     }
 
     /**
@@ -1044,7 +1044,7 @@ class ChamadaService : Service() {
                         receberAudioDoServidor()
                     } catch (e: EOFException) {
                         Log.e(TAG, "Conexão encerrada")
-                        finalizarChamada()
+                        finalizarChamadaENotificarAPI()
                         break
                     } catch (e: SocketTimeoutException) {
                         delay(10)
@@ -1418,7 +1418,7 @@ class ChamadaService : Service() {
 
     // ==================== FINALIZAÇÃO ====================
 
-    private fun finalizarChamada() {
+    private fun finalizarChamadaENotificarAPI() {
         scope.launch {
             try {
                 val token = userPreferences.authToken.first()
