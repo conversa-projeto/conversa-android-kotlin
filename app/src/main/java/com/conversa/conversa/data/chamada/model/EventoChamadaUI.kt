@@ -1,6 +1,7 @@
 package com.conversa.conversa.data.chamada.model
 
 enum class TipoEventoChamadaUI {
+    CHAMADA_RECEBIDA,
     PARTICIPANTE_ENTROU,
     PARTICIPANTE_SAIU,
     CHAMADA_RECUSADA,
