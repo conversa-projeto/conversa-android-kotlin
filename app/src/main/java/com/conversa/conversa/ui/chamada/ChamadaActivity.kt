@@ -31,6 +31,7 @@ import com.conversa.conversa.data.preferences.UserPreferences
 import com.conversa.conversa.data.repository.ChamadaRepository
 import com.conversa.conversa.service.ChamadaRingtoneManager
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
@@ -259,6 +260,19 @@ class ChamadaActivity : AppCompatActivity(),
             return
         }
 
+        // Aguarda cleanup da instância anterior
+        repository?.let {
+            lifecycleScope.launch {
+                it.cleanup()
+                delay(500) // Aguarda recursos de áudio serem liberados
+                criarNovoRepository(socketManager)
+            }
+        } ?: run {
+            criarNovoRepository(socketManager)
+        }
+    }
+
+    private fun criarNovoRepository(socketManager: SocketManager) {
         repository = ChamadaRepository(
             context = this,
             api = RetrofitClient.api,

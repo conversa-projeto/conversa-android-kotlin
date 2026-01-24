@@ -5,6 +5,9 @@ import android.media.*
 import android.util.Log
 import kotlinx.coroutines.*
 import kotlinx.coroutines.channels.Channel
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
 import java.io.*
@@ -92,7 +95,11 @@ class ChamadaManager(private val context: Context) {
     private var audioRecord: AudioRecord? = null
     @Volatile
     private var audioTrack: AudioTrack? = null
-    
+
+    // Estado de inicialização do áudio (para evitar race conditions)
+    private val _audioInicializadoFlow = MutableStateFlow(false)
+    val audioInicializado: StateFlow<Boolean> = _audioInicializadoFlow
+
     // Coroutines
     private val scope = CoroutineScope(Dispatchers.IO + SupervisorJob())
     private var captureJob: Job? = null
@@ -261,6 +268,9 @@ class ChamadaManager(private val context: Context) {
      * Retorna true se bem-sucedido, false caso contrário
      */
     private fun inicializarAudio(): Boolean {
+        // Reseta o estado no início
+        _audioInicializadoFlow.value = false
+
         return try {
             Log.d(TAG, "→ Verificando suporte de áudio...")
 
@@ -318,6 +328,7 @@ class ChamadaManager(private val context: Context) {
 
             if (!recordCriado) {
                 Log.e(TAG, "❌ Não foi possível criar AudioRecord com nenhuma fonte")
+                _audioInicializadoFlow.value = false
                 return false
             }
 
@@ -329,6 +340,7 @@ class ChamadaManager(private val context: Context) {
             if (minBufferSizeTrack == AudioTrack.ERROR ||
                 minBufferSizeTrack == AudioTrack.ERROR_BAD_VALUE) {
                 Log.e(TAG, "❌ Erro ao calcular buffer AudioTrack: $minBufferSizeTrack")
+                _audioInicializadoFlow.value = false
                 return false
             }
 
@@ -362,6 +374,7 @@ class ChamadaManager(private val context: Context) {
                 Log.e(TAG, "❌ AudioTrack não inicializado. Estado: ${audioTrack?.state}")
                 audioTrack?.release()
                 audioTrack = null
+                _audioInicializadoFlow.value = false
                 return false
             }
 
@@ -370,10 +383,15 @@ class ChamadaManager(private val context: Context) {
             Log.d(TAG, "   - audioRecord final: ${if (audioRecord == null) "NULL" else "INICIALIZADO" }")
             Log.d(TAG, "   - audioTrack final: ${if (audioTrack == null) "NULL" else "INICIALIZADO" }")
 
+            // Marca como inicializado apenas se AMBOS estiverem OK
+            _audioInicializadoFlow.value = true
+            Log.d(TAG, "✅ Estado audioInicializado = true")
+
             true
-            
+
         } catch (e: Exception) {
             Log.e(TAG, "❌ Exceção ao inicializar áudio", e)
+            _audioInicializadoFlow.value = false
             false
         }
     }
@@ -1024,6 +1042,7 @@ class ChamadaManager(private val context: Context) {
         Log.d(TAG, "[$instanceId] Finalizando chamada")
 
         emChamada = false
+        _audioInicializadoFlow.value = false
 
         // Cancela jobs de forma explícita
         captureJob?.cancel()
@@ -1045,17 +1064,29 @@ class ChamadaManager(private val context: Context) {
             Log.w(TAG, "Erro ao fechar fila de envio: ${e.message}")
         }
 
+        // Aguarda um pouco para threads finalizarem
+        Thread.sleep(100)
+
+        // Para e libera componentes de áudio
         try {
-            if (audioRecord?.recordingState == AudioRecord.RECORDSTATE_RECORDING) {
-                audioRecord?.stop()
+            audioRecord?.let {
+                if (it.recordingState == AudioRecord.RECORDSTATE_RECORDING) {
+                    it.stop()
+                    Log.d(TAG, "AudioRecord parado")
+                }
+                it.release()
+                Log.d(TAG, "AudioRecord liberado")
             }
-            audioRecord?.release()
             audioRecord = null
 
-            if (audioTrack?.playState == AudioTrack.PLAYSTATE_PLAYING) {
-                audioTrack?.stop()
+            audioTrack?.let {
+                if (it.playState == AudioTrack.PLAYSTATE_PLAYING) {
+                    it.stop()
+                    Log.d(TAG, "AudioTrack parado")
+                }
+                it.release()
+                Log.d(TAG, "AudioTrack liberado")
             }
-            audioTrack?.release()
             audioTrack = null
         } catch (e: Exception) {
             Log.e(TAG, "Erro ao liberar áudio", e)
@@ -1174,41 +1205,53 @@ class ChamadaManager(private val context: Context) {
     }
     
     fun iniciarCapturaEReproducao() {
-        Log.d(TAG, "[$instanceId] === INICIANDO CAPTURA E REPRODUÇÃO ===")
-        Log.d(TAG, "[$instanceId] Estado emChamada: $emChamada")
-        Log.d(TAG, "[$instanceId] Thread: ${Thread.currentThread().name}")
-        Log.d(TAG, "[$instanceId] audioRecord: ${if (audioRecord == null) "NULL" else "OK (estado=${audioRecord?.state})" }")
-        Log.d(TAG, "[$instanceId] audioTrack: ${if (audioTrack == null) "NULL" else "OK (estado=${audioTrack?.state})" }")
-        Log.d(TAG, "captureJob ativo: ${captureJob?.isActive}")
-        Log.d(TAG, "playbackJob ativo: ${playbackJob?.isActive}")
-        Log.d(TAG, "receiveJob ativo: ${receiveJob?.isActive}")
-        Log.d(TAG, "mixerJob ativo: ${mixerJob?.isActive}")
+        scope.launch {
+            Log.d(TAG, "[$instanceId] === INICIANDO CAPTURA E REPRODUÇÃO ===")
+            Log.d(TAG, "[$instanceId] Estado emChamada: $emChamada")
+            Log.d(TAG, "[$instanceId] Thread: ${Thread.currentThread().name}")
 
-        // Verifica se já está capturando/reproduzindo
-        if (captureJob?.isActive == true && playbackJob?.isActive == true &&
-            receiveJob?.isActive == true && mixerJob?.isActive == true) {
-            Log.w(TAG, "⚠️ Todas as coroutines JÁ ESTÃO ATIVAS! Ignorando chamada duplicada")
-            return
-        }
-
-        if (audioRecord == null || audioTrack == null) {
-            Log.e(TAG, "❌ ERRO CRÍTICO: Componentes de áudio são NULL!")
-            Log.e(TAG, "Tentando reinicializar componentes de áudio...")
-            if (inicializarAudio()) {
-                Log.d(TAG, "✅ Componentes reinicializados com sucesso")
-            } else {
-                Log.e(TAG, "❌ Falha ao reinicializar componentes")
-                return
+            // Verifica se já está capturando/reproduzindo
+            if (captureJob?.isActive == true && playbackJob?.isActive == true &&
+                receiveJob?.isActive == true && mixerJob?.isActive == true) {
+                Log.w(TAG, "⚠️ Todas as coroutines JÁ ESTÃO ATIVAS! Ignorando chamada duplicada")
+                return@launch
             }
+
+            // ⏳ AGUARDA o áudio estar inicializado (proteção contra race condition)
+            Log.d(TAG, "⏳ Aguardando áudio ser inicializado...")
+            withTimeoutOrNull(5000) {
+                audioInicializado.first { it == true }
+            }
+
+            Log.d(TAG, "[$instanceId] audioRecord: ${if (audioRecord == null) "NULL" else "OK (estado=${audioRecord?.state})" }")
+            Log.d(TAG, "[$instanceId] audioTrack: ${if (audioTrack == null) "NULL" else "OK (estado=${audioTrack?.state})" }")
+            Log.d(TAG, "captureJob ativo: ${captureJob?.isActive}")
+            Log.d(TAG, "playbackJob ativo: ${playbackJob?.isActive}")
+            Log.d(TAG, "receiveJob ativo: ${receiveJob?.isActive}")
+            Log.d(TAG, "mixerJob ativo: ${mixerJob?.isActive}")
+
+            // Verifica novamente se componentes estão OK após aguardar
+            if (audioRecord == null || audioTrack == null) {
+                Log.e(TAG, "❌ ERRO CRÍTICO: Componentes de áudio AINDA NULL após espera!")
+                Log.e(TAG, "Tentando reinicializar componentes de áudio...")
+                if (inicializarAudio()) {
+                    Log.d(TAG, "✅ Componentes reinicializados com sucesso")
+                } else {
+                    Log.e(TAG, "❌ Falha ao reinicializar componentes")
+                    return@launch
+                }
+            }
+
+            Log.d(TAG, "✅ Áudio pronto para captura e reprodução")
+
+            // Inicia todas as coroutines na ordem correta
+            iniciarCaptura()        // 1. Captura áudio do microfone
+            iniciarRecepcaoTCP()    // 2. Recebe áudio TCP e adiciona ao mixing
+            iniciarMixer()          // 3. Mixa áudio a cada 23ms
+            iniciarReproducao()     // 4. Reproduz áudio mixado a cada 23ms
+
+            Log.d(TAG, "=== TODAS AS COROUTINES DISPARADAS ===")
         }
-
-        // Inicia todas as coroutines na ordem correta
-        iniciarCaptura()        // 1. Captura áudio do microfone
-        iniciarRecepcaoTCP()    // 2. Recebe áudio TCP e adiciona ao mixing
-        iniciarMixer()          // 3. Mixa áudio a cada 23ms
-        iniciarReproducao()     // 4. Reproduz áudio mixado a cada 23ms
-
-        Log.d(TAG, "=== TODAS AS COROUTINES DISPARADAS ===")
     }
     
     fun cleanup() {
