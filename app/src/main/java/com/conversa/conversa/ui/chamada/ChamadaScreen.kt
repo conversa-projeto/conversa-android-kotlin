@@ -5,7 +5,6 @@ import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
 import com.conversa.conversa.service.ChamadaService
-import com.conversa.conversa.service.EstadoChamadaService
 import com.conversa.conversa.ui.chamada.screens.ActiveCallScreen
 import com.conversa.conversa.ui.chamada.screens.OutgoingCallScreen
 
@@ -30,7 +29,7 @@ fun ChamadaScreen(
     val timer by chamadaService.timerFlow.collectAsState()
 
     when (estado) {
-        EstadoChamadaService.RECEBENDO_CHAMADA -> {
+        ChamadaService.EstadoChamadaService.RECEBENDO_CHAMADA -> {
             // IncomingCallScreen já existe e é usado no IncomingCallFragment
             // Aqui seria chamado via IncomingCallScreen diretamente se necessário
             IncomingCallScreen(
@@ -47,8 +46,8 @@ fun ChamadaScreen(
             )
         }
 
-        EstadoChamadaService.INICIANDO_CHAMADA,
-        EstadoChamadaService.CONECTANDO_AUDIO -> {
+        ChamadaService.EstadoChamadaService.INICIANDO_CHAMADA,
+        ChamadaService.EstadoChamadaService.CONECTANDO_AUDIO -> {
             // Tela de chamada sainte
             OutgoingCallScreen(
                 callerName = chamada?.usuarios?.firstOrNull()?.usuarioNome ?: "Desconhecido",
@@ -60,7 +59,7 @@ fun ChamadaScreen(
             )
         }
 
-        EstadoChamadaService.EM_CHAMADA -> {
+        ChamadaService.EstadoChamadaService.EM_CHAMADA -> {
             // Tela de chamada ativa
             val participantes = chamadaService.getParticipantes()
 
@@ -86,8 +85,8 @@ fun ChamadaScreen(
             )
         }
 
-        EstadoChamadaService.IDLE,
-        EstadoChamadaService.FINALIZANDO -> {
+        ChamadaService.EstadoChamadaService.IDLE,
+        ChamadaService.EstadoChamadaService.FINALIZANDO -> {
             // Chamada finalizada - fechar Activity
             onFinish()
         }
