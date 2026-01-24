@@ -243,9 +243,9 @@ class SocketService : Service() {
 
             val intent = Intent(this, ChamadaService::class.java).apply {
                 action = ChamadaServiceActions.ACTION_CHAMADA_RECEBIDA
-                putExtra("chamadaId", chamadaId)
-                putExtra("usuarioId", usuarioId)
-                putExtra("usuarioNome", usuarioNome)
+                putExtra(ChamadaService.EXTRA_CHAMADA_ID, chamadaId)
+                putExtra(ChamadaService.EXTRA_USUARIO_ID, usuarioId)
+                putExtra(ChamadaService.EXTRA_USUARIO_NOME, usuarioNome)
             }
 
             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
@@ -265,8 +265,8 @@ class SocketService : Service() {
 
             val intent = Intent(this, ChamadaService::class.java).apply {
                 action = ChamadaServiceActions.ACTION_CHAMADA_FINALIZADA
-                putExtra("chamadaId", chamadaId)
-                putExtra("usuarioId", usuarioId)
+                putExtra(ChamadaService.EXTRA_CHAMADA_ID, chamadaId)
+                putExtra(ChamadaService.EXTRA_USUARIO_ID, usuarioId)
             }
             startService(intent)
         }
@@ -276,8 +276,8 @@ class SocketService : Service() {
 
             val intent = Intent(this, ChamadaService::class.java).apply {
                 action = ChamadaServiceActions.ACTION_USUARIO_ENTROU
-                putExtra("chamadaId", chamadaId)
-                putExtra("usuarioId", usuarioId)
+                putExtra(ChamadaService.EXTRA_CHAMADA_ID, chamadaId)
+                putExtra(ChamadaService.EXTRA_USUARIO_ID, usuarioId)
             }
             startService(intent)
         }
@@ -287,8 +287,8 @@ class SocketService : Service() {
 
             val intent = Intent(this, ChamadaService::class.java).apply {
                 action = ChamadaServiceActions.ACTION_USUARIO_SAIU
-                putExtra("chamadaId", chamadaId)
-                putExtra("usuarioId", usuarioId)
+                putExtra(ChamadaService.EXTRA_CHAMADA_ID, chamadaId)
+                putExtra(ChamadaService.EXTRA_USUARIO_ID, usuarioId)
             }
             startService(intent)
         }
@@ -298,8 +298,8 @@ class SocketService : Service() {
 
             val intent = Intent(this, ChamadaService::class.java).apply {
                 action = ChamadaServiceActions.ACTION_USUARIO_RECUSOU
-                putExtra("chamadaId", chamadaId)
-                putExtra("usuarioId", usuarioId)
+                putExtra(ChamadaService.EXTRA_CHAMADA_ID, chamadaId)
+                putExtra(ChamadaService.EXTRA_USUARIO_ID, usuarioId)
             }
             startService(intent)
         }
@@ -415,9 +415,9 @@ class SocketService : Service() {
 
             val intent = Intent(this, ChamadaService::class.java).apply {
                 action = ChamadaServiceActions.ACTION_CHAMADA_RECEBIDA
-                putExtra("chamadaId", chamadaId)
-                putExtra("usuarioId", usuarioId)
-                putExtra("usuarioNome", usuarioNome)
+                putExtra(ChamadaService.EXTRA_CHAMADA_ID, chamadaId)
+                putExtra(ChamadaService.EXTRA_USUARIO_ID, usuarioId)
+                putExtra(ChamadaService.EXTRA_USUARIO_NOME, usuarioNome)
             }
 
             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
@@ -437,8 +437,8 @@ class SocketService : Service() {
 
             val intent = Intent(this, ChamadaService::class.java).apply {
                 action = ChamadaServiceActions.ACTION_CHAMADA_FINALIZADA
-                putExtra("chamadaId", chamadaId)
-                putExtra("usuarioId", usuarioId)
+                putExtra(ChamadaService.EXTRA_CHAMADA_ID, chamadaId)
+                putExtra(ChamadaService.EXTRA_USUARIO_ID, usuarioId)
             }
             startService(intent)
         }
@@ -448,8 +448,8 @@ class SocketService : Service() {
 
             val intent = Intent(this, ChamadaService::class.java).apply {
                 action = ChamadaServiceActions.ACTION_USUARIO_ENTROU
-                putExtra("chamadaId", chamadaId)
-                putExtra("usuarioId", usuarioId)
+                putExtra(ChamadaService.EXTRA_CHAMADA_ID, chamadaId)
+                putExtra(ChamadaService.EXTRA_USUARIO_ID, usuarioId)
             }
             startService(intent)
         }
@@ -459,8 +459,8 @@ class SocketService : Service() {
 
             val intent = Intent(this, ChamadaService::class.java).apply {
                 action = ChamadaServiceActions.ACTION_USUARIO_SAIU
-                putExtra("chamadaId", chamadaId)
-                putExtra("usuarioId", usuarioId)
+                putExtra(ChamadaService.EXTRA_CHAMADA_ID, chamadaId)
+                putExtra(ChamadaService.EXTRA_USUARIO_ID, usuarioId)
             }
             startService(intent)
         }
@@ -470,8 +470,8 @@ class SocketService : Service() {
 
             val intent = Intent(this, ChamadaService::class.java).apply {
                 action = ChamadaServiceActions.ACTION_USUARIO_RECUSOU
-                putExtra("chamadaId", chamadaId)
-                putExtra("usuarioId", usuarioId)
+                putExtra(ChamadaService.EXTRA_CHAMADA_ID, chamadaId)
+                putExtra(ChamadaService.EXTRA_USUARIO_ID, usuarioId)
             }
             startService(intent)
         }
