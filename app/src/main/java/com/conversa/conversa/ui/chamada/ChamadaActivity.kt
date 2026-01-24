@@ -200,7 +200,7 @@ class ChamadaActivity : ComponentActivity(), SensorEventListener {
             val service = chamadaService
             if (service != null) {
                 val estado = service.estadoFlow.value
-                val emChamada = estado == com.conversa.conversa.service.EstadoChamadaService.EM_CHAMADA
+                val emChamada = estado == ChamadaService.EstadoChamadaService.EM_CHAMADA
 
                 if (emChamada) {
                     if (isNear) {
