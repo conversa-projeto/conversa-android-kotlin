@@ -3,8 +3,6 @@ package com.conversa.conversa.service
 import android.app.*
 import android.content.Context
 import android.content.Intent
-import android.media.AudioAttributes
-import android.media.RingtoneManager
 import android.os.Binder
 import android.os.Build
 import android.os.IBinder
@@ -13,12 +11,10 @@ import android.util.Log
 import androidx.core.app.NotificationCompat
 import com.conversa.conversa.MainActivity
 import com.conversa.conversa.R
-import com.conversa.conversa.data.api.RetrofitClient
 import com.conversa.conversa.data.socket.SocketManager
-import androidx.localbroadcastmanager.content.LocalBroadcastManager
-import com.conversa.conversa.ui.chamada.ChamadaActivity
 import com.conversa.conversa.utils.AppLifecycleManager
 import com.conversa.conversa.notification.MensagemNotificationManager
+import com.conversa.conversa.service.ChamadaService
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
@@ -26,6 +22,17 @@ import kotlinx.coroutines.cancel
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.isActive
 import kotlinx.coroutines.launch
+
+/**
+ * Constantes para Intents enviadas ao ChamadaService
+ */
+object ChamadaServiceActions {
+    const val ACTION_CHAMADA_RECEBIDA = "com.conversa.chamada.RECEBIDA"
+    const val ACTION_CHAMADA_FINALIZADA = "com.conversa.chamada.FINALIZADA"
+    const val ACTION_USUARIO_ENTROU = "com.conversa.chamada.USUARIO_ENTROU"
+    const val ACTION_USUARIO_SAIU = "com.conversa.chamada.USUARIO_SAIU"
+    const val ACTION_USUARIO_RECUSOU = "com.conversa.chamada.USUARIO_RECUSOU"
+}
 
 class SocketService : Service() {
 
@@ -51,15 +58,10 @@ class SocketService : Service() {
         private const val TAG = "SocketService"
 
         private const val NOTIFICATION_ID_SERVICE = 1001
-        private const val NOTIFICATION_ID_CHAMADA = 1002
         private const val NOTIFICATION_ID_MENSAGEM = 1003
 
         private const val CHANNEL_ID_SERVICE = "conversa_service_channel"
-        private const val CHANNEL_ID_CHAMADAS = "conversa_chamadas_channel"
         private const val CHANNEL_ID_MENSAGENS = "conversa_mensagens_channel"
-
-        private const val ACTION_ACEITAR_CHAMADA = "com.conversa.ACTION_ACEITAR_CHAMADA"
-        private const val ACTION_RECUSAR_CHAMADA = "com.conversa.ACTION_RECUSAR_CHAMADA"
         
         private const val EXTRA_HOST = "host"
         private const val EXTRA_PORT = "port"
@@ -237,49 +239,69 @@ class SocketService : Service() {
      */
     private fun registrarListenersSocket() {
         socketManager.onChamadaRecebida = { chamadaId, usuarioId, usuarioNome ->
-            Log.d(TAG, "📞 Chamada recebida: chamadaId=$chamadaId, usuarioId=$usuarioId")
+            Log.d(TAG, "📞 Chamada recebida: enviando Intent para ChamadaService")
 
-            // CRÍTICO: Buscar dados ANTES de mostrar qualquer UI
-            scope.launch {
-                val chamadaData = SocketServiceHelper.buscarDadosChamada(chamadaId, currentToken ?: "")
+            val intent = Intent(this, ChamadaService::class.java).apply {
+                action = ChamadaServiceActions.ACTION_CHAMADA_RECEBIDA
+                putExtra("chamadaId", chamadaId)
+                putExtra("usuarioId", usuarioId)
+                putExtra("usuarioNome", usuarioNome)
+            }
 
-                // Formata nome e descrição com dados completos
-                val nomeExibicao = SocketServiceHelper.formatarNomeExibicao(chamadaData, usuarioNome)
-                val descricao = SocketServiceHelper.formatarTextoNotificacao(chamadaData)
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+                startForegroundService(intent)
+            } else {
+                startService(intent)
+            }
 
-                Log.d(TAG, "✅ Dados obtidos - Nome: $nomeExibicao, Descrição: $descricao")
-
-                // Verifica se o dispositivo está bloqueado
-                val isDeviceLocked = isDeviceLocked()
-                Log.d(TAG, "Dispositivo bloqueado: $isDeviceLocked")
-
-                if (isDeviceLocked) {
-                    // Dispositivo bloqueado: abre tela de chamada fullscreen
-                    Log.d(TAG, "Dispositivo bloqueado - Abrindo tela de chamada")
-                    mostrarTelaChamadaFullscreen(chamadaId, usuarioId, nomeExibicao, chamadaData)
-                } else {
-                    // Dispositivo desbloqueado: mostra notificação com botões
-                    Log.d(TAG, "Dispositivo desbloqueado - Mostrando notificação")
-                    mostrarNotificacaoChamada(chamadaId, usuarioId, nomeExibicao, chamadaData)
-                }
-
-                // CRÍTICO: Sempre inicia ringtone, independente do estado do app
-                Log.d(TAG, "🔔 Iniciando ChamadaRingtoneManager")
-                ChamadaRingtoneManager.getInstance(this@SocketService).iniciar()
-
-                // Notifica o listener se o app estiver conectado
-                if (isAppBound && callListener != null) {
-                    callListener?.onChamadaRecebida(chamadaId.toString(), usuarioId, nomeExibicao)
-                }
+            // Notifica o listener se o app estiver conectado
+            if (isAppBound && callListener != null) {
+                callListener?.onChamadaRecebida(chamadaId.toString(), usuarioId, usuarioNome)
             }
         }
 
         socketManager.onChamadaFinalizada = { chamadaId, usuarioId ->
-            Log.d(TAG, "📴 Chamada finalizada: chamadaId=$chamadaId, usuarioId=$usuarioId")
+            Log.d(TAG, "📴 Chamada finalizada: enviando Intent para ChamadaService")
 
-            // Cancela a notificação de chamada recebida
-            cancelarNotificacaoChamada()
-            Log.d(TAG, "✅ Notificação cancelada para chamada finalizada")
+            val intent = Intent(this, ChamadaService::class.java).apply {
+                action = ChamadaServiceActions.ACTION_CHAMADA_FINALIZADA
+                putExtra("chamadaId", chamadaId)
+                putExtra("usuarioId", usuarioId)
+            }
+            startService(intent)
+        }
+
+        socketManager.onUsuarioEntrou = { chamadaId, usuarioId ->
+            Log.d(TAG, "👤 Usuário entrou: enviando Intent para ChamadaService")
+
+            val intent = Intent(this, ChamadaService::class.java).apply {
+                action = ChamadaServiceActions.ACTION_USUARIO_ENTROU
+                putExtra("chamadaId", chamadaId)
+                putExtra("usuarioId", usuarioId)
+            }
+            startService(intent)
+        }
+
+        socketManager.onUsuarioSaiu = { chamadaId, usuarioId ->
+            Log.d(TAG, "👋 Usuário saiu: enviando Intent para ChamadaService")
+
+            val intent = Intent(this, ChamadaService::class.java).apply {
+                action = ChamadaServiceActions.ACTION_USUARIO_SAIU
+                putExtra("chamadaId", chamadaId)
+                putExtra("usuarioId", usuarioId)
+            }
+            startService(intent)
+        }
+
+        socketManager.onUsuarioRecusou = { chamadaId, usuarioId ->
+            Log.d(TAG, "❌ Usuário recusou: enviando Intent para ChamadaService")
+
+            val intent = Intent(this, ChamadaService::class.java).apply {
+                action = ChamadaServiceActions.ACTION_USUARIO_RECUSOU
+                putExtra("chamadaId", chamadaId)
+                putExtra("usuarioId", usuarioId)
+            }
+            startService(intent)
         }
 
         socketManager.onNovaMensagem = { conversaId, remetenteId, destinatarioId, titulo, mensagem, tipo ->
@@ -313,19 +335,17 @@ class SocketService : Service() {
     override fun onDestroy() {
         super.onDestroy()
         Log.d(TAG, "Service destruído")
-        
+
         isRunning = false
-        
-        ChamadaActivity.sharedSocketManager = null
-        
+
         if (::socketManager.isInitialized) {
             socketManager.desconectar()
         }
-        
+
         if (wakeLock.isHeld) {
             wakeLock.release()
         }
-        
+
         scope.cancel()
     }
     
@@ -334,7 +354,6 @@ class SocketService : Service() {
             // Remove canais antigos para recriar com novas configurações
             try {
                 notificationManager.deleteNotificationChannel(CHANNEL_ID_SERVICE)
-                notificationManager.deleteNotificationChannel(CHANNEL_ID_CHAMADAS)
                 notificationManager.deleteNotificationChannel(CHANNEL_ID_MENSAGENS)
                 Log.d(TAG, "Canais antigos removidos")
             } catch (e: Exception) {
@@ -350,29 +369,7 @@ class SocketService : Service() {
                 setShowBadge(false)
                 lockscreenVisibility = android.app.Notification.VISIBILITY_PUBLIC
             }
-            
-            val soundUri = RingtoneManager.getDefaultUri(RingtoneManager.TYPE_RINGTONE)
-            
-            val chamadasChannel = NotificationChannel(
-                CHANNEL_ID_CHAMADAS,
-                "Chamadas VoIP",
-                NotificationManager.IMPORTANCE_HIGH  // HIGH para heads-up (MAX pode causar problemas)
-            ).apply {
-                description = "Chamadas de voz e vídeo recebidas"
-                // Som e vibração desabilitados - controlados pelo RingtoneManager
-                enableVibration(false)
-                setSound(null, null) // Remove som do canal
-                enableLights(true)
-                lightColor = android.graphics.Color.GREEN
-                setShowBadge(true)
-                setBypassDnd(true)
-                lockscreenVisibility = android.app.Notification.VISIBILITY_PUBLIC
-                // CRÍTICO: Permite que notificações apareçam sobre outras apps
-                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
-                    setAllowBubbles(true)
-                }
-            }
-            
+
             val mensagensChannel = NotificationChannel(
                 CHANNEL_ID_MENSAGENS,
                 "Mensagens",
@@ -382,12 +379,11 @@ class SocketService : Service() {
                 enableVibration(true)
                 setShowBadge(true)
             }
-            
+
             notificationManager.createNotificationChannel(serviceChannel)
-            notificationManager.createNotificationChannel(chamadasChannel)
             notificationManager.createNotificationChannel(mensagensChannel)
 
-            Log.d(TAG, "✅ Canais de notificação criados com padrão de vibração personalizado")
+            Log.d(TAG, "✅ Canais de notificação criados")
         }
     }
     
@@ -413,53 +409,71 @@ class SocketService : Service() {
     
     private fun inicializarSocket(host: String, port: Int, token: String) {
         socketManager = SocketManager(this)
-        
-        ChamadaActivity.sharedSocketManager = socketManager
-        
+
         socketManager.onChamadaRecebida = { chamadaId, usuarioId, usuarioNome ->
-            Log.d(TAG, "📞 Chamada recebida: chamadaId=$chamadaId, usuarioId=$usuarioId")
+            Log.d(TAG, "📞 Chamada recebida: enviando Intent para ChamadaService")
 
-            // CRÍTICO: Buscar dados ANTES de mostrar qualquer UI
-            scope.launch {
-                val chamadaData = SocketServiceHelper.buscarDadosChamada(chamadaId, currentToken ?: "")
+            val intent = Intent(this, ChamadaService::class.java).apply {
+                action = ChamadaServiceActions.ACTION_CHAMADA_RECEBIDA
+                putExtra("chamadaId", chamadaId)
+                putExtra("usuarioId", usuarioId)
+                putExtra("usuarioNome", usuarioNome)
+            }
 
-                // Formata nome e descrição com dados completos
-                val nomeExibicao = SocketServiceHelper.formatarNomeExibicao(chamadaData, usuarioNome)
-                val descricao = SocketServiceHelper.formatarTextoNotificacao(chamadaData)
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+                startForegroundService(intent)
+            } else {
+                startService(intent)
+            }
 
-                Log.d(TAG, "✅ Dados obtidos - Nome: $nomeExibicao, Descrição: $descricao")
-
-                // Verifica se o dispositivo está bloqueado
-                val isDeviceLocked = isDeviceLocked()
-                Log.d(TAG, "Dispositivo bloqueado: $isDeviceLocked")
-
-                if (isDeviceLocked) {
-                    // Dispositivo bloqueado: abre tela de chamada fullscreen
-                    Log.d(TAG, "Dispositivo bloqueado - Abrindo tela de chamada")
-                    mostrarTelaChamadaFullscreen(chamadaId, usuarioId, nomeExibicao, chamadaData)
-                } else {
-                    // Dispositivo desbloqueado: mostra notificação com botões
-                    Log.d(TAG, "Dispositivo desbloqueado - Mostrando notificação")
-                    mostrarNotificacaoChamada(chamadaId, usuarioId, nomeExibicao, chamadaData)
-                }
-
-                // CRÍTICO: Sempre inicia ringtone, independente do estado do app
-                Log.d(TAG, "🔔 Iniciando ChamadaRingtoneManager")
-                ChamadaRingtoneManager.getInstance(this@SocketService).iniciar()
-
-                // Notifica o listener se o app estiver conectado
-                if (isAppBound && callListener != null) {
-                    callListener?.onChamadaRecebida(chamadaId.toString(), usuarioId, nomeExibicao)
-                }
+            // Notifica o listener se o app estiver conectado
+            if (isAppBound && callListener != null) {
+                callListener?.onChamadaRecebida(chamadaId.toString(), usuarioId, usuarioNome)
             }
         }
 
         socketManager.onChamadaFinalizada = { chamadaId, usuarioId ->
-            Log.d(TAG, "📴 Chamada finalizada: chamadaId=$chamadaId, usuarioId=$usuarioId")
+            Log.d(TAG, "📴 Chamada finalizada: enviando Intent para ChamadaService")
 
-            // Cancela a notificação de chamada recebida
-            cancelarNotificacaoChamada()
-            Log.d(TAG, "✅ Notificação cancelada para chamada finalizada")
+            val intent = Intent(this, ChamadaService::class.java).apply {
+                action = ChamadaServiceActions.ACTION_CHAMADA_FINALIZADA
+                putExtra("chamadaId", chamadaId)
+                putExtra("usuarioId", usuarioId)
+            }
+            startService(intent)
+        }
+
+        socketManager.onUsuarioEntrou = { chamadaId, usuarioId ->
+            Log.d(TAG, "👤 Usuário entrou: enviando Intent para ChamadaService")
+
+            val intent = Intent(this, ChamadaService::class.java).apply {
+                action = ChamadaServiceActions.ACTION_USUARIO_ENTROU
+                putExtra("chamadaId", chamadaId)
+                putExtra("usuarioId", usuarioId)
+            }
+            startService(intent)
+        }
+
+        socketManager.onUsuarioSaiu = { chamadaId, usuarioId ->
+            Log.d(TAG, "👋 Usuário saiu: enviando Intent para ChamadaService")
+
+            val intent = Intent(this, ChamadaService::class.java).apply {
+                action = ChamadaServiceActions.ACTION_USUARIO_SAIU
+                putExtra("chamadaId", chamadaId)
+                putExtra("usuarioId", usuarioId)
+            }
+            startService(intent)
+        }
+
+        socketManager.onUsuarioRecusou = { chamadaId, usuarioId ->
+            Log.d(TAG, "❌ Usuário recusou: enviando Intent para ChamadaService")
+
+            val intent = Intent(this, ChamadaService::class.java).apply {
+                action = ChamadaServiceActions.ACTION_USUARIO_RECUSOU
+                putExtra("chamadaId", chamadaId)
+                putExtra("usuarioId", usuarioId)
+            }
+            startService(intent)
         }
 
         socketManager.onNovaMensagem = { conversaId, remetenteId, destinatarioId, titulo, mensagem, tipo ->
@@ -534,195 +548,6 @@ class SocketService : Service() {
             .build()
         
         notificationManager.notify(NOTIFICATION_ID_SERVICE, notification)
-    }
-    
-
-    /**
-     * Verifica se o dispositivo está bloqueado
-     */
-    private fun isDeviceLocked(): Boolean {
-        val keyguardManager = getSystemService(Context.KEYGUARD_SERVICE) as KeyguardManager
-        return if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP_MR1) {
-            keyguardManager.isDeviceLocked
-        } else {
-            @Suppress("DEPRECATION")
-            keyguardManager.isKeyguardLocked
-        }
-    }
-
-    /**
-     * Abre a tela de chamada fullscreen (para dispositivo bloqueado)
-     */
-    private fun mostrarTelaChamadaFullscreen(
-        chamadaId: Int,
-        usuarioId: Int,
-        usuarioNome: String,
-        chamadaData: com.conversa.conversa.data.model.ChamadaResponse?
-    ) {
-        val intent = Intent(this, ChamadaActivity::class.java).apply {
-            flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TOP
-            putExtra(ChamadaActivity.EXTRA_CHAMADA_ID, chamadaId)
-            putExtra(ChamadaActivity.EXTRA_USUARIO_ID, usuarioId)
-            putExtra(ChamadaActivity.EXTRA_USUARIO_NOME, usuarioNome)
-            putExtra(ChamadaActivity.EXTRA_IS_INCOMING, true)
-
-            // Passa informações adicionais se disponíveis
-            chamadaData?.let { chamada ->
-                putExtra("EXTRA_TIPO_CHAMADA", chamada.tipo)
-                putExtra("EXTRA_NUM_PARTICIPANTES", chamada.usuarios.size)
-            }
-        }
-        startActivity(intent)
-    }
-
-    /**
-     * Mostra notificação de chamada recebida com botões de atender/recusar
-     */
-    private fun mostrarNotificacaoChamada(
-        chamadaId: Int,
-        usuarioId: Int,
-        usuarioNome: String,
-        chamadaData: com.conversa.conversa.data.model.ChamadaResponse?
-    ) {
-        Log.d(TAG, "📲 Preparando notificação para chamada $chamadaId de $usuarioNome")
-
-        // Mostra notificação com dados completos
-        atualizarNotificacaoChamada(chamadaId, usuarioId, usuarioNome, chamadaData)
-    }
-
-    private fun atualizarNotificacaoChamada(
-        chamadaId: Int,
-        usuarioId: Int,
-        usuarioNome: String,
-        chamada: com.conversa.conversa.data.model.ChamadaResponse?
-    ) {
-        // Intent FULLSCREEN para abrir a tela de chamada (heads-up)
-        val fullScreenIntent = Intent(this, ChamadaActivity::class.java).apply {
-            putExtra(ChamadaActivity.EXTRA_CHAMADA_ID, chamadaId)
-            putExtra(ChamadaActivity.EXTRA_USUARIO_ID, usuarioId)
-            putExtra(ChamadaActivity.EXTRA_USUARIO_NOME, usuarioNome)
-            putExtra(ChamadaActivity.EXTRA_IS_INCOMING, true)
-            flags = Intent.FLAG_ACTIVITY_NEW_TASK or
-                    Intent.FLAG_ACTIVITY_CLEAR_TOP or
-                    Intent.FLAG_ACTIVITY_NO_USER_ACTION
-        }
-
-        val fullScreenPendingIntent = PendingIntent.getActivity(
-            this,
-            chamadaId,
-            fullScreenIntent,
-            PendingIntent.FLAG_IMMUTABLE or PendingIntent.FLAG_UPDATE_CURRENT
-        )
-
-        // Intent DIRETO para atender chamada (abre Activity, não BroadcastReceiver)
-        val aceitarIntent = Intent(this, ChamadaActivity::class.java).apply {
-            flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TOP
-            putExtra(ChamadaActivity.EXTRA_CHAMADA_ID, chamadaId)
-            putExtra(ChamadaActivity.EXTRA_USUARIO_ID, usuarioId)
-            putExtra(ChamadaActivity.EXTRA_USUARIO_NOME, usuarioNome)
-            putExtra(ChamadaActivity.EXTRA_IS_INCOMING, true)
-            putExtra("auto_answer", true)
-        }
-
-        val aceitarPendingIntent = PendingIntent.getActivity(
-            this,
-            chamadaId + 1000,
-            aceitarIntent,
-            PendingIntent.FLAG_IMMUTABLE or PendingIntent.FLAG_UPDATE_CURRENT
-        )
-
-        // Intent para recusar chamada (usa BroadcastReceiver pois não precisa abrir Activity)
-        val recusarIntent = Intent(this, ChamadaActionReceiver::class.java).apply {
-            action = ACTION_RECUSAR_CHAMADA
-            putExtra(ChamadaActivity.EXTRA_CHAMADA_ID, chamadaId)
-        }
-
-        val recusarPendingIntent = PendingIntent.getBroadcast(
-            this,
-            chamadaId + 2000,
-            recusarIntent,
-            PendingIntent.FLAG_IMMUTABLE or PendingIntent.FLAG_UPDATE_CURRENT
-        )
-
-        val tituloNotificacao = SocketServiceHelper.formatarNomeExibicao(chamada, usuarioNome)
-        val textoNotificacao = SocketServiceHelper.formatarTextoNotificacao(chamada)
-
-        // CRÍTICO: Cancela notificação anterior para forçar nova exibição heads-up
-        notificationManager.cancel(NOTIFICATION_ID_CHAMADA)
-        Log.d(TAG, "🗑️ Notificação anterior cancelada para exibir nova")
-
-        // Verifica se o Android suporta CallStyle (API 31+)
-        val notification = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
-            // Usa CallStyle nativo do Android 12+
-            Log.d(TAG, "📱 Usando CallStyle (API ${Build.VERSION.SDK_INT})")
-
-            val person = androidx.core.app.Person.Builder()
-                .setName(tituloNotificacao)
-                .setImportant(true)
-                .build()
-
-            val callStyle = NotificationCompat.CallStyle.forIncomingCall(
-                person,
-                recusarPendingIntent,
-                aceitarPendingIntent
-            )
-
-            NotificationCompat.Builder(this, CHANNEL_ID_CHAMADAS)
-                .setSmallIcon(R.drawable.ic_notification)
-                .setContentTitle(tituloNotificacao)
-                .setContentText(textoNotificacao)
-                .setContentIntent(fullScreenPendingIntent)
-                .setFullScreenIntent(fullScreenPendingIntent, true)
-                .setPriority(NotificationCompat.PRIORITY_HIGH)
-                .setCategory(NotificationCompat.CATEGORY_CALL)
-                .setVisibility(NotificationCompat.VISIBILITY_PUBLIC)
-                .setOngoing(true)
-                .setAutoCancel(false)
-                .setDefaults(0)
-                .setSilent(true)
-                .setOnlyAlertOnce(false)
-                .setStyle(callStyle)
-                .setTimeoutAfter(60000)
-                .setWhen(System.currentTimeMillis())
-                .setShowWhen(true)
-                .build()
-        } else {
-            // Fallback para versões antigas (API < 31)
-            Log.d(TAG, "📱 Usando notificação tradicional (API ${Build.VERSION.SDK_INT})")
-
-            NotificationCompat.Builder(this, CHANNEL_ID_CHAMADAS)
-                .setSmallIcon(R.drawable.ic_notification)
-                .setContentTitle(tituloNotificacao)
-                .setContentText(textoNotificacao)
-                .setContentIntent(fullScreenPendingIntent)
-                .setFullScreenIntent(fullScreenPendingIntent, true)
-                .setPriority(NotificationCompat.PRIORITY_MAX)
-                .setCategory(NotificationCompat.CATEGORY_CALL)
-                .setVisibility(NotificationCompat.VISIBILITY_PUBLIC)
-                .setOngoing(true)
-                .setAutoCancel(false)
-                .setDefaults(0)
-                .setSilent(true)
-                .setOnlyAlertOnce(false)
-                .setTimeoutAfter(60000)
-                .setWhen(System.currentTimeMillis())
-                .setShowWhen(true)
-                .addAction(R.drawable.ic_call_end, "Recusar", recusarPendingIntent)
-                .addAction(R.drawable.ic_call, "Atender", aceitarPendingIntent)
-                .build()
-        }
-
-        notificationManager.notify(NOTIFICATION_ID_CHAMADA, notification)
-        Log.d(TAG, "✅ Notificação heads-up exibida: $tituloNotificacao")
-    }
-
-    /**
-     * Cancela a notificação de chamada recebida
-     */
-    fun cancelarNotificacaoChamada() {
-        notificationManager.cancel(NOTIFICATION_ID_CHAMADA)
-        // Para o ringtone quando a notificação é cancelada
-        ChamadaRingtoneManager.getInstance(this).parar()
     }
 
     /**

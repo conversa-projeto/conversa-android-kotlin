@@ -50,6 +50,12 @@
             android:exported="false"
             android:foregroundServiceType="dataSync|phoneCall|microphone"></service>
 
+        <service
+            android:name=".service.ChamadaService"
+            android:enabled="true"
+            android:exported="false"
+            android:foregroundServiceType="microphone|phoneCall"></service>
+
         <receiver
             android:name=".service.ChamadaActionReceiver"
             android:enabled="true"
