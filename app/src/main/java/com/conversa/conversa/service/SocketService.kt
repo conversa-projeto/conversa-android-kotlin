@@ -115,7 +115,9 @@ class SocketService : Service() {
             PowerManager.PARTIAL_WAKE_LOCK,
             "Conversa::SocketServiceWakeLock"
         )
-        wakeLock.acquire(10 * 60 * 1000L)
+        // WakeLock sem timeout - foreground service mantém ativo
+        @Suppress("WakelockTimeout")
+        wakeLock.acquire()
 
         // Inicia monitoramento do lifecycle do app
         iniciarMonitoramentoLifecycle()
@@ -123,6 +125,7 @@ class SocketService : Service() {
 
     /**
      * Monitora o lifecycle do app e re-registra listeners quando volta ao foreground
+     * Também verifica se o socket ainda está conectado e reconecta se necessário
      */
     private fun iniciarMonitoramentoLifecycle() {
         scope.launch {
@@ -136,6 +139,17 @@ class SocketService : Service() {
                     Log.d(TAG, "🔄 App voltou ao FOREGROUND - Re-registrando listeners")
                     if (::socketManager.isInitialized) {
                         registrarListenersSocket()
+
+                        // Verifica se socket ainda está conectado
+                        if (!socketManager.isConectado()) {
+                            Log.d(TAG, "⚠️ Socket desconectado - Forçando reconexão")
+                            socketManager.resetReconnectAttempts()
+                            val host = currentHost
+                            val token = currentToken
+                            if (host != null && token != null && currentPort > 0) {
+                                socketManager.conectar(host, currentPort, token)
+                            }
+                        }
                     }
                 }
 

@@ -33,9 +33,9 @@ class SocketManager(private val context: Context) {
         const val TYPE_CHAMADA_USUARIO_ENTROU = 54
         const val TYPE_CHAMADA_USUARIO_SAIU = 55
         
-        // Configurações de reconexão
-        private const val RECONNECT_DELAY_MS = 5000L
-        private const val MAX_RECONNECT_ATTEMPTS = 5
+        // Configurações de reconexão (infinita com backoff)
+        private const val RECONNECT_DELAY_MS = 3000L       // 3 segundos inicial
+        private const val MAX_RECONNECT_DELAY_MS = 30000L  // Máximo 30 segundos
     }
     
     private var webSocket: WebSocket? = null
@@ -44,7 +44,7 @@ class SocketManager(private val context: Context) {
             .connectTimeout(30, TimeUnit.SECONDS)
             .readTimeout(0, TimeUnit.SECONDS) // Sem timeout de leitura (WebSocket mantém conexão)
             .writeTimeout(30, TimeUnit.SECONDS)
-            .pingInterval(60, TimeUnit.SECONDS) // Ping a cada 60s (mais espaçado)
+            // Sem pingInterval - evita desconexão por timeout de pong
             .retryOnConnectionFailure(true) // Retry automático
             .build()
     }
@@ -81,7 +81,8 @@ class SocketManager(private val context: Context) {
         currentHost = host
         currentPort = port
         currentToken = token
-        
+        shouldReconnect = true // Habilita reconexão automática
+
         scope.launch {
             try {
                 Log.d(TAG, "Conectando ao WebSocket: ws://$host:$port")
@@ -296,42 +297,58 @@ class SocketManager(private val context: Context) {
     }
     
     /**
-     * Tenta reconectar ao servidor
+     * Tenta reconectar ao servidor (reconexão infinita com backoff exponencial)
      */
     private fun tentarReconectar() {
-        if (reconnectAttempts >= MAX_RECONNECT_ATTEMPTS) {
-            Log.e(TAG, "Máximo de tentativas de reconexão atingido")
-            onErro?.invoke("Não foi possível reconectar ao servidor")
+        if (!shouldReconnect) {
+            Log.d(TAG, "Reconexão desabilitada (desconexão intencional)")
             return
         }
-        
+
         reconnectAttempts++
-        Log.d(TAG, "Tentando reconectar ($reconnectAttempts/$MAX_RECONNECT_ATTEMPTS)")
-        
+
+        // Backoff exponencial: 3s, 6s, 12s, 24s, 30s (máximo)
+        val delay = minOf(
+            RECONNECT_DELAY_MS * (1L shl minOf(reconnectAttempts - 1, 4)),
+            MAX_RECONNECT_DELAY_MS
+        )
+
+        Log.d(TAG, "Tentando reconectar em ${delay}ms (tentativa $reconnectAttempts)")
+
         scope.launch {
-            delay(RECONNECT_DELAY_MS)
-            if (scope.isActive && currentHost != null && currentPort > 0) {
+            delay(delay)
+            if (scope.isActive && shouldReconnect && currentHost != null && currentPort > 0 && currentToken != null) {
                 conectar(currentHost!!, currentPort, currentToken!!)
             }
         }
     }
+
+    /**
+     * Reseta o contador de tentativas de reconexão
+     */
+    fun resetReconnectAttempts() {
+        reconnectAttempts = 0
+    }
     
+    // Flag para impedir reconexão quando desconexão é intencional
+    private var shouldReconnect = true
+
     /**
      * Desconecta o WebSocket
      */
     fun desconectar() {
         Log.d(TAG, "Desconectando WebSocket")
-        
+
         isConnected = false
-        reconnectAttempts = MAX_RECONNECT_ATTEMPTS // Impede reconexão
-        
+        shouldReconnect = false // Impede reconexão
+
         webSocket?.close(1000, "Desconexão intencional")
         webSocket = null
-        
+
         currentHost = null
         currentPort = 0
         currentToken = null
-        
+
         onDesconectado?.invoke()
     }
     

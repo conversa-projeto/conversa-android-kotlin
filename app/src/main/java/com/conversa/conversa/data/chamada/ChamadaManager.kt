@@ -167,6 +167,7 @@ class ChamadaManager(private val context: Context) {
                 soTimeout = 0  // 0 = sem timeout, aguarda indefinidamente (mas não trava a thread)
                 keepAlive = true
                 receiveBufferSize = BUFFER_SIZE * 8
+                trafficClass = 0xB8  // DSCP EF (Expedited Forwarding) - Prioridade VoIP
             }
             
             outputStream = DataOutputStream(socket!!.getOutputStream())
