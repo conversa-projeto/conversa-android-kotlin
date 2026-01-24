@@ -592,7 +592,7 @@ class ChatActivity : AppCompatActivity(), ChamadaBroadcast.ChamadaListener {
     override fun onOptionsItemSelected(item: MenuItem): Boolean {
         return when (item.itemId) {
             android.R.id.home -> {
-                onBackPressed()
+                onBackPressedDispatcher.onBackPressed()
                 true
             }
             else -> super.onOptionsItemSelected(item)
@@ -852,18 +852,6 @@ class ChatActivity : AppCompatActivity(), ChamadaBroadcast.ChamadaListener {
                     Toast.LENGTH_SHORT
                 ).show()
 
-                // Usa SocketManager compartilhado do Service
-                val socketManager = com.conversa.conversa.ui.chamada.ChamadaActivity.sharedSocketManager
-
-                if (socketManager == null) {
-                    Toast.makeText(
-                        this@ChatActivity,
-                        "Erro: serviço não disponível",
-                        Toast.LENGTH_SHORT
-                    ).show()
-                    return@launch
-                }
-
                 // Obter token de autenticação
                 val token = userPreferences.authToken.first()
                 if (token.isNullOrEmpty()) {
@@ -879,12 +867,12 @@ class ChatActivity : AppCompatActivity(), ChamadaBroadcast.ChamadaListener {
                 val participantesIds = mutableListOf<Int>()
 
                 // Se for conversa em grupo, buscar dados da conversa para obter todos os participantes
-                if (conversaId != null && conversaId!! > 0) {
+                if (conversaId > 0) {
                     android.util.Log.d(TAG, "Buscando dados da conversa $conversaId para obter participantes")
 
                     val response = RetrofitClient.api.obterDadosConversa(
                         token = "Bearer $token",
-                        conversaId = conversaId!!
+                        conversaId = conversaId
                     )
 
                     if (response.isSuccessful && response.body() != null) {
@@ -923,40 +911,25 @@ class ChatActivity : AppCompatActivity(), ChamadaBroadcast.ChamadaListener {
                     return@launch
                 }
 
-                // Limpa repository anterior se existir
-                chamadaRepository?.cleanup()
-
-                // Criar repository de chamada para esta chamada específica
-                chamadaRepository = com.conversa.conversa.data.repository.ChamadaRepository(
-                    context = this@ChatActivity,
-                    api = RetrofitClient.api,
-                    chamadaManager = com.conversa.conversa.data.chamada.ChamadaManager(this@ChatActivity),
-                    socketManager = socketManager,
-                    userPreferences = userPreferences
-                )
-
-                android.util.Log.d(TAG, "Repository criado para iniciar chamada com ${participantesIds.size} participante(s)")
-
-                // Iniciar chamada
-                val result = chamadaRepository!!.iniciarChamada(participantesIds)
-                
-                result.onSuccess { chamada ->
-                    val intent = android.content.Intent(this@ChatActivity, com.conversa.conversa.ui.chamada.ChamadaActivity::class.java).apply {
-                        putExtra(com.conversa.conversa.ui.chamada.ChamadaActivity.EXTRA_CHAMADA_ID, chamada.id)
-                        putExtra(com.conversa.conversa.ui.chamada.ChamadaActivity.EXTRA_USUARIO_NOME, conversaNome)
-                        putExtra(com.conversa.conversa.ui.chamada.ChamadaActivity.EXTRA_IS_INCOMING, false) // Quem inicia
-                    }
-                    startActivity(intent)
+                // Iniciar ChamadaService e abrir ChamadaActivity
+                val intent = android.content.Intent(this@ChatActivity, com.conversa.conversa.service.ChamadaService::class.java).apply {
+                    action = com.conversa.conversa.service.ChamadaService.ACTION_INICIAR_CHAMADA
+                    putExtra(com.conversa.conversa.service.ChamadaService.EXTRA_DESTINATARIOS, participantesIds.toIntArray())
                 }
-                
-                result.onFailure { erro ->
-                    android.util.Log.e(TAG, "Erro ao iniciar chamada", erro)
-                    Toast.makeText(
-                        this@ChatActivity,
-                        "Erro ao iniciar chamada: ${erro.message}",
-                        Toast.LENGTH_SHORT
-                    ).show()
+
+                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+                    startForegroundService(intent)
+                } else {
+                    startService(intent)
                 }
+
+                // Abrir ChamadaActivity
+                val activityIntent = android.content.Intent(this@ChatActivity, com.conversa.conversa.ui.chamada.ChamadaActivity::class.java).apply {
+                    putExtra(com.conversa.conversa.ui.chamada.ChamadaActivity.EXTRA_USUARIO_NOME, conversaNome)
+                    putExtra(com.conversa.conversa.ui.chamada.ChamadaActivity.EXTRA_IS_INCOMING, false)
+                }
+                startActivity(activityIntent)
+
             } catch (e: Exception) {
                 android.util.Log.e(TAG, "Erro ao iniciar chamada", e)
                 Toast.makeText(

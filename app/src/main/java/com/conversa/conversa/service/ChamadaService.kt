@@ -79,6 +79,7 @@ class ChamadaService : Service() {
         const val ACTION_USUARIO_RECUSOU = "com.conversa.chamada.USUARIO_RECUSOU"
 
         // Actions para controle da chamada
+        const val ACTION_INICIAR_CHAMADA = "com.conversa.chamada.INICIAR_CHAMADA"
         const val ACTION_ACEITAR = "com.conversa.chamada.ACEITAR"
         const val ACTION_RECUSAR = "com.conversa.chamada.RECUSAR"
         const val ACTION_ENCERRAR = "com.conversa.chamada.ENCERRAR"
@@ -289,6 +290,12 @@ class ChamadaService : Service() {
                 }
             }
 
+            ACTION_INICIAR_CHAMADA -> {
+                val destinatariosIds = intent.getIntArrayExtra(EXTRA_DESTINATARIOS)?.toList() ?: emptyList()
+                if (destinatariosIds.isNotEmpty()) {
+                    iniciarChamada(destinatariosIds)
+                }
+            }
             ACTION_ACEITAR -> aceitarChamada()
             ACTION_RECUSAR -> recusarChamada()
             ACTION_ENCERRAR -> encerrarChamada()
@@ -518,13 +525,39 @@ class ChamadaService : Service() {
     }
 
     /**
+     * Configura o speakerphone de forma compatível com diferentes versões do Android
+     */
+    @Suppress("DEPRECATION")
+    private fun setSpeakerphoneOn(on: Boolean) {
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
+            // Android 12+ (API 31+): usar setCommunicationDevice
+            val devices = audioManager.availableCommunicationDevices
+            val targetDevice = if (on) {
+                devices.firstOrNull { it.type == AudioDeviceInfo.TYPE_BUILTIN_SPEAKER }
+            } else {
+                devices.firstOrNull { it.type == AudioDeviceInfo.TYPE_BUILTIN_EARPIECE }
+            }
+
+            targetDevice?.let {
+                audioManager.setCommunicationDevice(it)
+            } ?: run {
+                // Fallback para método deprecado se dispositivo não encontrado
+                audioManager.isSpeakerphoneOn = on
+            }
+        } else {
+            // Android 11 e anterior: usar método deprecado
+            audioManager.isSpeakerphoneOn = on
+        }
+    }
+
+    /**
      * Alterna entre earpiece e speakerphone
      */
     fun toggleSpeaker() {
         isSpeakerOn = !isSpeakerOn
 
         audioManager.mode = AudioManager.MODE_IN_COMMUNICATION
-        audioManager.isSpeakerphoneOn = isSpeakerOn
+        setSpeakerphoneOn(isSpeakerOn)
 
         if (isSpeakerOn) {
             Log.d(TAG, "📢 Alto-falante ATIVADO")
@@ -545,7 +578,7 @@ class ChamadaService : Service() {
         isSpeakerOn = speakerOn
 
         audioManager.mode = AudioManager.MODE_IN_COMMUNICATION
-        audioManager.isSpeakerphoneOn = isSpeakerOn
+        setSpeakerphoneOn(isSpeakerOn)
 
         if (isSpeakerOn) {
             Log.d(TAG, "📢 Alto-falante ATIVADO")
@@ -591,8 +624,18 @@ class ChamadaService : Service() {
     /**
      * Retorna lista de participantes para UI
      */
-    fun getParticipantes(): List<ParticipanteItem> {
-        return _participantesFlow.value
+    fun getParticipantes(): List<com.conversa.conversa.ui.chamada.ParticipanteUI> {
+        return _participantesFlow.value.map { item ->
+            com.conversa.conversa.ui.chamada.ParticipanteUI(
+                id = item.usuarioId,
+                nome = item.nome,
+                fotoUrl = null,
+                isFalando = item.isFalando,
+                status = if (item.isFalando || item.volume > 0) "Conectado" else "Aguardando",
+                mutadoLocalmente = item.isMutado,
+                volume = item.volume
+            )
+        }
     }
 
     /**
@@ -781,7 +824,7 @@ class ChamadaService : Service() {
 
             // Configura AudioManager
             audioManager.mode = AudioManager.MODE_IN_COMMUNICATION
-            audioManager.isSpeakerphoneOn = isSpeakerOn
+            setSpeakerphoneOn(isSpeakerOn)
 
             emChamada = true
 

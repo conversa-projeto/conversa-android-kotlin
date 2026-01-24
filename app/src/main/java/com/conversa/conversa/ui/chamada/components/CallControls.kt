@@ -4,7 +4,11 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.*
+import androidx.compose.material.icons.filled.Add
+import androidx.compose.material.icons.filled.Call
+import androidx.compose.material.icons.filled.Close
+import androidx.compose.material.icons.filled.Phone
+import androidx.compose.material.icons.filled.Settings
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.runtime.Composable
@@ -37,7 +41,7 @@ fun CallControls(
         ) {
             // Botão Mute
             CallActionButton(
-                icon = if (isMuted) Icons.Default.MicOff else Icons.Default.Mic,
+                icon = if (isMuted) Icons.Default.Close else Icons.Default.Phone,
                 label = if (isMuted) "Mutado" else "Mudo",
                 backgroundColor = if (isMuted) Color(0xFFEF4444) else Color(0xFF4A5568),
                 isActive = isMuted,
@@ -46,7 +50,7 @@ fun CallControls(
 
             // Botão Speaker
             CallActionButton(
-                icon = if (isSpeakerOn) Icons.Default.VolumeUp else Icons.Default.VolumeDown,
+                icon = if (isSpeakerOn) Icons.Default.Settings else Icons.Default.Phone,
                 label = if (isSpeakerOn) "Speaker" else "Fone",
                 backgroundColor = if (isSpeakerOn) Color(0xFF22C55E) else Color(0xFF4A5568),
                 isActive = isSpeakerOn,
@@ -55,7 +59,7 @@ fun CallControls(
 
             // Botão Adicionar (SEMPRE DESABILITADO)
             CallActionButton(
-                icon = Icons.Default.PersonAdd,
+                icon = Icons.Default.Add,
                 label = "Adicionar",
                 backgroundColor = Color(0xFF4A5568),
                 enabled = false,
@@ -75,7 +79,7 @@ fun CallControls(
                 .background(Color(0xFFEF4444))
         ) {
             Icon(
-                imageVector = Icons.Default.CallEnd,
+                imageVector = Icons.Default.Close,
                 contentDescription = "Encerrar chamada",
                 tint = Color.White,
                 modifier = Modifier.size(32.dp)

@@ -5,7 +5,7 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.CallEnd
+import androidx.compose.material.icons.filled.Close
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.Text
@@ -112,7 +112,7 @@ fun OutgoingCallScreen(
                         .background(Color(0xFFEF4444))
                 ) {
                     Icon(
-                        imageVector = Icons.Default.CallEnd,
+                        imageVector = Icons.Default.Close,
                         contentDescription = "Cancelar chamada",
                         tint = Color.White,
                         modifier = Modifier.size(32.dp)
