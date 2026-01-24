@@ -92,11 +92,11 @@
         <activity
             android:name=".MainActivity"
             android:exported="false"
-            android:theme="@style/Theme.Conversa" />
+            android:theme="@style/Theme.Conversa.NoActionBar" />
         <activity
             android:name=".ui.chat.ChatActivity"
             android:exported="false"
-            android:theme="@style/Theme.Conversa"
+            android:theme="@style/Theme.Conversa.NoActionBar"
             android:windowSoftInputMode="adjustResize" />
         <activity
             android:name=".ui.chat.ImageViewerActivity"
