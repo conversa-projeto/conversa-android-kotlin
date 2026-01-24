@@ -1730,7 +1730,7 @@ class ChamadaService : Service() {
                     mutePendingIntent
                 )
                 .addAction(
-                    if (isSpeakerOn) R.drawable.ic_speaker else R.drawable.ic_speaker_off,
+                    if (isSpeakerOn) R.drawable.ic_volume_up else R.drawable.ic_volume_off,
                     if (isSpeakerOn) "Desativar viva-voz" else "Viva-voz",
                     speakerPendingIntent
                 )
@@ -1749,7 +1749,7 @@ class ChamadaService : Service() {
                     mutePendingIntent
                 )
                 .addAction(
-                    if (isSpeakerOn) R.drawable.ic_speaker else R.drawable.ic_speaker_off,
+                    if (isSpeakerOn) R.drawable.ic_volume_up else R.drawable.ic_volume_off,
                     if (isSpeakerOn) "Desativar" else "Viva-voz",
                     speakerPendingIntent
                 )
