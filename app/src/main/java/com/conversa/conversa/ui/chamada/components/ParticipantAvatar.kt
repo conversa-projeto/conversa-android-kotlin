@@ -25,24 +25,21 @@ fun ParticipantAvatar(
     size: Dp = 56.dp,
     modifier: Modifier = Modifier
 ) {
-    val infiniteTransition = rememberInfiniteTransition(label = "speaking")
-
-    val pulseScale by infiniteTransition.animateFloat(
-        initialValue = 1f,
-        targetValue = 1.15f,
-        animationSpec = if (isSpeaking) {
-            infiniteRepeatable(
+    val pulseScale = if (isSpeaking) {
+        val infiniteTransition = rememberInfiniteTransition(label = "speaking")
+        val scale by infiniteTransition.animateFloat(
+            initialValue = 1f,
+            targetValue = 1.15f,
+            animationSpec = infiniteRepeatable(
                 animation = tween(600, easing = LinearEasing),
                 repeatMode = RepeatMode.Reverse
-            )
-        } else {
-            infiniteRepeatable(
-                animation = tween(0),
-                repeatMode = RepeatMode.Restart
-            )
-        },
-        label = "pulseScale"
-    )
+            ),
+            label = "pulseScale"
+        )
+        scale
+    } else {
+        1f
+    }
 
     Box(
         modifier = modifier.size(size),
