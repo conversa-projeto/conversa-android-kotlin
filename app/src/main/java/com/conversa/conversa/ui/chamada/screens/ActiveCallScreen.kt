@@ -30,7 +30,9 @@ fun ActiveCallScreen(
     onEndCall: () -> Unit,
     modifier: Modifier = Modifier
 ) {
-    val isGroupCall = participants.size > 1
+    // Grupo = 3+ participantes (eu + 2 outros)
+    // Com 2 participantes (eu + 1), usa layout simples 1:1
+    val isGroupCall = participants.size > 2
 
     Box(
         modifier = modifier

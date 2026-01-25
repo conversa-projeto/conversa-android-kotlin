@@ -22,6 +22,22 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 
+/**
+ * @deprecated Esta classe foi substituída pelo ChamadaService que agora gerencia
+ * todas as notificações de chamada. Não use esta classe diretamente.
+ *
+ * A lógica de notificações foi centralizada no ChamadaService para:
+ * - Evitar notificações duplicadas
+ * - Garantir transição correta entre estados (recebendo -> em chamada -> finalizada)
+ * - Manter o foreground service ativo durante toda a chamada
+ *
+ * @see com.conversa.conversa.service.ChamadaService
+ */
+@Deprecated(
+    message = "Use ChamadaService para gerenciar notificações de chamada",
+    replaceWith = ReplaceWith("ChamadaService"),
+    level = DeprecationLevel.WARNING
+)
 class ChamadaNotificationManager(
     private val context: Context,
     private val api: ConversaApi,

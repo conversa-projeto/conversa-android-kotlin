@@ -105,7 +105,7 @@ class ChamadaService : Service() {
         private const val PACKET_TYPE_AUDIO: Byte = 1
 
         // Constantes de buffering
-        private const val MIN_BUFFER_START = 8192  // 8KB (~92ms) antes de iniciar reprodução
+        private const val MIN_BUFFER_START = 12288  // 12KB (~140ms) antes de iniciar reprodução
         private const val MIN_BUFFER_RUNNING = 4096 // 4KB (~46ms) mínimo durante reprodução
         private const val MAX_BUFFER_THRESHOLD = 8192 // ~92ms buffer máximo
         private const val PLAY_INTERVAL_MS = 23L // Intervalo entre reproduções (23ms)
@@ -114,7 +114,7 @@ class ChamadaService : Service() {
         private const val FADE_SAMPLES = 32 // Número de samples para fade in/out
 
         // Threshold para Voice Activity Detection
-        private const val VAD_THRESHOLD = 500
+        private const val VAD_THRESHOLD = 10
     }
 
     // Binder para Activities
@@ -137,6 +137,15 @@ class ChamadaService : Service() {
     // StateFlows públicos
     private val _estadoFlow = MutableStateFlow(EstadoChamadaService.IDLE)
     val estadoFlow: StateFlow<EstadoChamadaService> = _estadoFlow.asStateFlow()
+
+    // Helper para atualizar estado com log
+    private fun atualizarEstado(novoEstado: EstadoChamadaService) {
+        val estadoAnterior = _estadoFlow.value
+        if (estadoAnterior != novoEstado) {
+            Log.d(TAG, "📊 Estado: $estadoAnterior → $novoEstado")
+            _estadoFlow.value = novoEstado
+        }
+    }
 
     private val _chamadaAtualFlow = MutableStateFlow<ChamadaResponse?>(null)
     val chamadaAtualFlow: StateFlow<ChamadaResponse?> = _chamadaAtualFlow.asStateFlow()
@@ -191,7 +200,7 @@ class ChamadaService : Service() {
     private val mixingBuffers = mutableMapOf<Int, LinkedBlockingQueue<ShortArray>>()
     private val mixingBufferSizes = mutableMapOf<Int, Int>()
     private val lastAudioTimestamps = mutableMapOf<Int, Long>()
-    private val mixedOutputBuffer = LinkedBlockingQueue<ShortArray>(10) // ~230ms máximo
+    private val mixedOutputBuffer = LinkedBlockingQueue<ShortArray>(20) // ~460ms máximo
 
     // Controle de volume e mute por participante
     private val participantesAudio = mutableMapOf<Int, ParticipanteAudio>()
@@ -219,7 +228,9 @@ class ChamadaService : Service() {
 
     override fun onCreate() {
         super.onCreate()
-        Log.d(TAG, "Service onCreate()")
+        Log.d(TAG, "════════════════════════════════════════")
+        Log.d(TAG, "📱 ChamadaService CRIADO")
+        Log.d(TAG, "════════════════════════════════════════")
 
         // Inicializa dependências
         userPreferences = UserPreferences(applicationContext)
@@ -307,7 +318,9 @@ class ChamadaService : Service() {
     }
 
     override fun onDestroy() {
-        Log.d(TAG, "Service onDestroy()")
+        Log.d(TAG, "════════════════════════════════════════")
+        Log.d(TAG, "💀 ChamadaService DESTRUÍDO")
+        Log.d(TAG, "════════════════════════════════════════")
 
         finalizarChamadaInterno()
         liberarWakeLock()
@@ -324,7 +337,7 @@ class ChamadaService : Service() {
     fun iniciarChamada(destinatariosIds: List<Int>) {
         scope.launch {
             try {
-                _estadoFlow.value = EstadoChamadaService.INICIANDO_CHAMADA
+                atualizarEstado(EstadoChamadaService.INICIANDO_CHAMADA)
                 primeiroParticipanteEntrou = false
 
                 val token = userPreferences.authToken.first() ?: run {
@@ -365,11 +378,11 @@ class ChamadaService : Service() {
                     conectarAudioTcp(tcpHost, chamada.id)
                 } else {
                     Log.e(TAG, "❌ Erro API: ${response.code()}")
-                    _estadoFlow.value = EstadoChamadaService.IDLE
+                    atualizarEstado(EstadoChamadaService.IDLE)
                 }
             } catch (e: Exception) {
                 Log.e(TAG, "❌ Erro ao iniciar chamada", e)
-                _estadoFlow.value = EstadoChamadaService.IDLE
+                atualizarEstado(EstadoChamadaService.IDLE)
             }
         }
     }
@@ -402,6 +415,11 @@ class ChamadaService : Service() {
 
                 // Cancela notificação de chamada recebida
                 notificationManager.cancel(NOTIFICATION_ID_INCOMING)
+
+                // Mostra notificação de chamada em andamento imediatamente
+                // para evitar gap sem notificação (importante para foreground service)
+                atualizarEstado(EstadoChamadaService.CONECTANDO_AUDIO)
+                mostrarNotificacaoEmAndamento()
 
                 // Busca dados completos da chamada
                 val dadosResult = obterDadosChamada(chamadaIdAtual)
@@ -469,7 +487,7 @@ class ChamadaService : Service() {
 
                 chamadaIdAtual = 0
                 chamadaAtual = null
-                _estadoFlow.value = EstadoChamadaService.IDLE
+                atualizarEstado(EstadoChamadaService.IDLE)
 
             } catch (e: Exception) {
                 Log.e(TAG, "Erro ao recusar chamada", e)
@@ -667,7 +685,7 @@ class ChamadaService : Service() {
                 Log.d(TAG, "Processando chamada recebida: $chamadaId de $usuarioNome")
 
                 chamadaIdAtual = chamadaId
-                _estadoFlow.value = EstadoChamadaService.RECEBENDO_CHAMADA
+                atualizarEstado(EstadoChamadaService.RECEBENDO_CHAMADA)
 
                 // Busca dados da chamada
                 val resultado = obterDadosChamada(chamadaId)
@@ -700,13 +718,19 @@ class ChamadaService : Service() {
     private fun processarUsuarioEntrou(usuarioId: Int) {
         scope.launch {
             try {
-                Log.d(TAG, "Usuário $usuarioId entrou na chamada")
-
                 // Atualiza dados da chamada
                 val resultado = obterDadosChamada(chamadaIdAtual)
                 if (resultado.isSuccess) {
                     chamadaAtual = resultado.getOrNull()
                 }
+
+                val usuario = chamadaAtual?.usuarios?.find { it.usuarioId == usuarioId }
+                val participantesAtivos = chamadaAtual?.usuarios?.filter {
+                    it.status == 3 && it.usuarioId != usuarioIdAtual
+                } ?: emptyList()
+
+                Log.d(TAG, "👤 PARTICIPANTE ENTROU: id=$usuarioId, nome=${usuario?.usuarioNome}")
+                Log.d(TAG, "   Total participantes ativos (exceto eu): ${participantesAtivos.size}")
 
                 // Se é o primeiro participante diferente, inicia áudio
                 if (!primeiroParticipanteEntrou && usuarioId != usuarioIdAtual) {
@@ -715,7 +739,6 @@ class ChamadaService : Service() {
                     iniciarCapturaEReproducao()
                 }
 
-                val usuario = chamadaAtual?.usuarios?.find { it.usuarioId == usuarioId }
                 _eventosFlow.emit(
                     com.conversa.conversa.data.chamada.model.EventoChamadaUI(
                         tipo = com.conversa.conversa.data.chamada.model.TipoEventoChamadaUI.PARTICIPANTE_ENTROU,
@@ -733,8 +756,6 @@ class ChamadaService : Service() {
     private fun processarUsuarioSaiu(usuarioId: Int) {
         scope.launch {
             try {
-                Log.d(TAG, "Usuário $usuarioId saiu da chamada")
-
                 // Atualiza dados
                 val resultado = obterDadosChamada(chamadaIdAtual)
                 if (resultado.isSuccess) {
@@ -742,6 +763,23 @@ class ChamadaService : Service() {
                 }
 
                 val usuario = chamadaAtual?.usuarios?.find { it.usuarioId == usuarioId }
+
+                // Verifica quantos participantes ativos restam (status 3 = ENTROU)
+                val participantesAtivos = chamadaAtual?.usuarios?.filter {
+                    it.status == 3 && it.usuarioId != usuarioIdAtual
+                } ?: emptyList()
+
+                Log.d(TAG, "👤 PARTICIPANTE SAIU: id=$usuarioId, nome=${usuario?.usuarioNome}")
+                Log.d(TAG, "   Participantes restantes (exceto eu): ${participantesAtivos.map { "${it.usuarioId}:${it.usuarioNome}" }}")
+
+                // Se não restam outros participantes, finaliza a chamada automaticamente
+                if (participantesAtivos.isEmpty()) {
+                    Log.d(TAG, "📞 Único participante saiu - finalizando chamada automaticamente")
+                    finalizarChamadaENotificarAPI()
+                    return@launch
+                }
+
+                // Emite evento normalmente
                 _eventosFlow.emit(
                     com.conversa.conversa.data.chamada.model.EventoChamadaUI(
                         tipo = com.conversa.conversa.data.chamada.model.TipoEventoChamadaUI.PARTICIPANTE_SAIU,
@@ -786,12 +824,10 @@ class ChamadaService : Service() {
 
     private suspend fun conectarAudioTcp(serverHost: String, chamadaId: Int) = withContext(Dispatchers.IO) {
         try {
-            _estadoFlow.value = EstadoChamadaService.CONECTANDO_AUDIO
+            atualizarEstado(EstadoChamadaService.CONECTANDO_AUDIO)
 
-            Log.d(TAG, "=== CONECTANDO AUDIO TCP ===")
-            Log.d(TAG, "Servidor: $serverHost:$TCP_PORT")
-            Log.d(TAG, "ChamadaId: $chamadaId")
-            Log.d(TAG, "UsuarioId: $usuarioIdAtual")
+            Log.d(TAG, "🔌 TCP: Conectando a $serverHost:$TCP_PORT")
+            Log.d(TAG, "   ChamadaId: $chamadaId, UsuarioId: $usuarioIdAtual")
 
             // Recria fila de envio
             recriarFilaEnvio()
@@ -808,7 +844,7 @@ class ChamadaService : Service() {
             outputStream = DataOutputStream(socket!!.getOutputStream())
             inputStream = DataInputStream(socket!!.getInputStream())
 
-            Log.d(TAG, "Socket TCP conectado")
+            Log.d(TAG, "🔌 TCP: Socket conectado")
 
             // Registra cliente
             registrarCliente()
@@ -832,7 +868,7 @@ class ChamadaService : Service() {
             iniciarSender()
 
             // Muda para estado EM_CHAMADA
-            _estadoFlow.value = EstadoChamadaService.EM_CHAMADA
+            atualizarEstado(EstadoChamadaService.EM_CHAMADA)
 
             // Inicia timer
             iniciarTimer()
@@ -848,7 +884,7 @@ class ChamadaService : Service() {
                 )
             )
 
-            Log.d(TAG, "✅ Conexão TCP estabelecida")
+            Log.d(TAG, "🔌 TCP: Conexão estabelecida com sucesso")
 
         } catch (e: Exception) {
             Log.e(TAG, "❌ Erro ao conectar TCP", e)
@@ -870,7 +906,7 @@ class ChamadaService : Service() {
             outputStream?.flush()
         }
 
-        Log.d(TAG, "Cliente registrado: usuarioId=$usuarioIdAtual")
+        Log.d(TAG, "🔌 TCP: Cliente registrado (usuarioId=$usuarioIdAtual)")
     }
 
     private fun inicializarAudio(): Boolean {
@@ -1148,13 +1184,20 @@ class ChamadaService : Service() {
                     val agoraAtual = System.currentTimeMillis()
 
                     if (agoraAtual >= proximoTempo) {
-                        if (todosParticipantesProntos() || algumBufferCheio()) {
-                            val mixedAudio = mixar()
-                            if (mixedAudio.isNotEmpty()) {
-                                if (!mixedOutputBuffer.offer(mixedAudio)) {
-                                    mixedOutputBuffer.poll()
-                                    mixedOutputBuffer.offer(mixedAudio)
-                                }
+                        // Mixer sempre tenta produzir saída - função mixar() já retorna
+                        // ShortArray(0) quando não há dados, evitando underrun
+                        val buffersDisponiveis = mixingBuffers.mapValues { it.value.size }
+                        val bufferSizes = mixingBufferSizes.toMap()
+                        val mixedAudio = mixar()
+
+                        Log.d(TAG, "🎛️ Mixer: buffers=$buffersDisponiveis, sizes=$bufferSizes, " +
+                            "output=${mixedAudio.size} samples, outputQueue=${mixedOutputBuffer.size}")
+
+                        if (mixedAudio.isNotEmpty()) {
+                            if (!mixedOutputBuffer.offer(mixedAudio)) {
+                                Log.w(TAG, "🎛️ Mixer: buffer cheio, descartando mais antigo")
+                                mixedOutputBuffer.poll()
+                                mixedOutputBuffer.offer(mixedAudio)
                             }
                         }
 
@@ -1188,18 +1231,7 @@ class ChamadaService : Service() {
                     return@launch
                 }
 
-                // Aguarda buffer inicial
-                var bufferAcumulado = 0
-                while (bufferAcumulado < MIN_BUFFER_START && emChamada && isActive) {
-                    bufferAcumulado = mixingBufferSizes.values.sum()
-                    if (bufferAcumulado < MIN_BUFFER_START) {
-                        delay(10)
-                    }
-                }
-
                 if (!emChamada || !isActive) return@launch
-
-                Log.d(TAG, "✅ Buffer inicial atingido: $bufferAcumulado bytes")
 
                 track.play()
 
@@ -1219,10 +1251,19 @@ class ChamadaService : Service() {
                         val agoraAtual = System.currentTimeMillis()
 
                         if (agoraAtual >= proximoTempo) {
+                            Log.d(TAG, "🔊 Reprodução: Obtendo dados")
                             val mixedAudio = mixedOutputBuffer.poll()
+                            val queueSize = mixedOutputBuffer.size
 
-                            if (mixedAudio != null && !reproducaoPausada) {
-                                reproduzirAudio(mixedAudio)
+                            if (!reproducaoPausada) {
+                                if (mixedAudio != null) {
+                                    Log.d(TAG, "🔊 Reprodução: ${mixedAudio.size} samples, fila=$queueSize")
+                                    reproduzirAudio(mixedAudio)
+                                } else {
+                                    // Alimenta silêncio para evitar underrun no AudioTrack
+                                    Log.w(TAG, "🔇 Reprodução: buffer vazio, alimentando silêncio")
+                                    reproduzirAudio(ShortArray(BUFFER_SIZE / 2))
+                                }
                             }
 
                             proximoTempo += PLAY_INTERVAL_MS
@@ -1326,39 +1367,67 @@ class ChamadaService : Service() {
     }
 
     private fun mixar(): ShortArray {
-        if (mixingBuffers.isEmpty()) return ShortArray(0)
+        if (mixingBuffers.isEmpty()) {
+            Log.d(TAG, "🎚️ mixar(): mixingBuffers vazio, retornando silêncio")
+            return ShortArray(0)
+        }
 
         val mixedBuffer = ShortArray(BUFFER_SIZE / 2)
         val buffersToMix = mutableListOf<Pair<Int, ShortArray>>()
+        val detalhesColeta = mutableListOf<String>()
 
         // Coletar buffers de participantes NÃO mutados
         mixingBuffers.forEach { (clientId, queue) ->
             val participante = participantesAudio[clientId]
+            val queueSize = queue.size
 
             if (participante?.isMutado == true) {
                 queue.poll()
+                detalhesColeta.add("p$clientId: MUTADO (descartado)")
                 return@forEach
             }
 
             queue.poll()?.let { buffer ->
                 buffersToMix.add(clientId to buffer)
+                detalhesColeta.add("p$clientId: ${buffer.size} samples (fila=$queueSize)")
 
                 val currentSize = mixingBufferSizes[clientId] ?: 0
                 mixingBufferSizes[clientId] = (currentSize - buffer.size * 2).coerceAtLeast(0)
+            } ?: run {
+                detalhesColeta.add("p$clientId: SEM DADOS (fila vazia)")
             }
         }
 
-        if (buffersToMix.isEmpty()) return ShortArray(0)
+        Log.d(TAG, "🎚️ mixar() coleta: ${detalhesColeta.joinToString(", ")}")
+
+        if (buffersToMix.isEmpty()) {
+            Log.d(TAG, "🎚️ mixar(): nenhum buffer coletado, retornando silêncio")
+            return ShortArray(0)
+        }
 
         // Aplicar volume e verificar VAD
+        val detalhesVAD = mutableListOf<String>()
         val buffersComVolume = buffersToMix.mapNotNull { (clientId, buffer) ->
             val participante = participantesAudio[clientId] ?: return@mapNotNull null
             val bufferComVolume = aplicarVolume(buffer, participante.volume)
+            val amplitudeMedia = buffer.map { kotlin.math.abs(it.toInt()) }.average().toInt()
             val temDados = detectarAtividadeVoz(bufferComVolume)
-            if (temDados) bufferComVolume else null
+
+            if (temDados) {
+                detalhesVAD.add("p$clientId: VOZ (amp=$amplitudeMedia, vol=${participante.volume}%)")
+                bufferComVolume
+            } else {
+                detalhesVAD.add("p$clientId: SILÊNCIO (amp=$amplitudeMedia)")
+                null
+            }
         }
 
-        if (buffersComVolume.isEmpty()) return ShortArray(0)
+        Log.d(TAG, "🎚️ mixar() VAD: ${detalhesVAD.joinToString(", ")}")
+
+        if (buffersComVolume.isEmpty()) {
+            Log.d(TAG, "🎚️ mixar(): todos silenciosos após VAD, retornando silêncio")
+            return ShortArray(0)
+        }
 
         val numStreamsAtivos = buffersComVolume.size
 
@@ -1379,6 +1448,9 @@ class ChamadaService : Service() {
                 Short.MAX_VALUE.toInt()
             ).toShort()
         }
+
+        val amplitudeSaida = mixedBuffer.map { kotlin.math.abs(it.toInt()) }.average().toInt()
+        Log.d(TAG, "🎚️ mixar() SAÍDA: ${mixedBuffer.size} samples, $numStreamsAtivos streams, amp=$amplitudeSaida")
 
         return mixedBuffer
     }
@@ -1484,12 +1556,15 @@ class ChamadaService : Service() {
     }
 
     private fun finalizarChamadaInterno() {
-        Log.d(TAG, "Finalizando chamada interno")
+        Log.d(TAG, "════════════════════════════════════════")
+        Log.d(TAG, "🔚 FINALIZANDO CHAMADA")
+        Log.d(TAG, "════════════════════════════════════════")
 
         emChamada = false
         primeiroParticipanteEntrou = false
 
         // Cancela jobs
+        Log.d(TAG, "   ⏹️ Cancelando jobs de áudio...")
         captureJob?.cancel()
         playbackJob?.cancel()
         senderJob?.cancel()
@@ -1514,6 +1589,7 @@ class ChamadaService : Service() {
         Thread.sleep(100)
 
         // Para e libera áudio
+        Log.d(TAG, "   🎤 Liberando AudioRecord...")
         try {
             audioRecord?.let {
                 if (it.recordingState == AudioRecord.RECORDSTATE_RECORDING) {
@@ -1523,6 +1599,7 @@ class ChamadaService : Service() {
             }
             audioRecord = null
 
+            Log.d(TAG, "   🔊 Liberando AudioTrack...")
             audioTrack?.let {
                 if (it.playState == AudioTrack.PLAYSTATE_PLAYING) {
                     it.stop()
@@ -1535,6 +1612,7 @@ class ChamadaService : Service() {
         }
 
         // Fecha socket
+        Log.d(TAG, "   🔌 Fechando socket TCP...")
         try {
             outputStream?.close()
             inputStream?.close()
@@ -1563,8 +1641,16 @@ class ChamadaService : Service() {
         notificationManager.cancel(NOTIFICATION_ID_INCOMING)
         notificationManager.cancel(NOTIFICATION_ID_ONGOING)
 
+        // Para o serviço foreground e remove notificação
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.N) {
+            stopForeground(STOP_FOREGROUND_REMOVE)
+        } else {
+            @Suppress("DEPRECATION")
+            stopForeground(true)
+        }
+
         // Reseta estado
-        _estadoFlow.value = EstadoChamadaService.IDLE
+        atualizarEstado(EstadoChamadaService.IDLE)
         chamadaIdAtual = 0
         chamadaAtual = null
         isMutedMicrofone = false
@@ -1580,7 +1666,11 @@ class ChamadaService : Service() {
             )
         }
 
-        Log.d(TAG, "Chamada finalizada completamente")
+        Log.d(TAG, "   ✅ Chamada finalizada completamente")
+        Log.d(TAG, "   🛑 Chamando stopSelf()...")
+
+        // Para o serviço completamente
+        stopSelf()
     }
 
     // ==================== API ====================
@@ -1704,6 +1794,7 @@ class ChamadaService : Service() {
                 .setFullScreenIntent(fullScreenPendingIntent, true)
                 .setCategory(NotificationCompat.CATEGORY_CALL)
                 .setOngoing(true)
+                .setOnlyAlertOnce(true)
                 .setPriority(NotificationCompat.PRIORITY_HIGH)
                 .setTimeoutAfter(60000)
                 .build()
@@ -1718,6 +1809,7 @@ class ChamadaService : Service() {
                 .setFullScreenIntent(fullScreenPendingIntent, true)
                 .setCategory(NotificationCompat.CATEGORY_CALL)
                 .setOngoing(true)
+                .setOnlyAlertOnce(true)
                 .setPriority(NotificationCompat.PRIORITY_HIGH)
                 .setTimeoutAfter(60000)
                 .build()
@@ -1779,6 +1871,7 @@ class ChamadaService : Service() {
                 )
                 .setCategory(NotificationCompat.CATEGORY_CALL)
                 .setOngoing(true)
+                .setOnlyAlertOnce(true)
                 .setPriority(NotificationCompat.PRIORITY_LOW)
                 .build()
         } else {
@@ -1799,23 +1892,31 @@ class ChamadaService : Service() {
                 .addAction(R.drawable.ic_call_end, "Encerrar", hangupPendingIntent)
                 .setCategory(NotificationCompat.CATEGORY_CALL)
                 .setOngoing(true)
+                .setOnlyAlertOnce(true)
                 .setPriority(NotificationCompat.PRIORITY_LOW)
                 .build()
         }
 
+        // Usa startForeground para Android 12+ para garantir que o service continue ativo
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.UPSIDE_DOWN_CAKE) {
+            // Android 14+: precisa especificar foregroundServiceType
             startForeground(
                 NOTIFICATION_ID_ONGOING,
                 notification,
                 ServiceInfo.FOREGROUND_SERVICE_TYPE_MICROPHONE or ServiceInfo.FOREGROUND_SERVICE_TYPE_PHONE_CALL
             )
+        } else if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
+            // Android 12-13: startForeground sem tipo específico
+            startForeground(NOTIFICATION_ID_ONGOING, notification)
         } else {
+            // Android < 12: apenas notify
             notificationManager.notify(NOTIFICATION_ID_ONGOING, notification)
         }
     }
 
     private fun atualizarNotificacaoEmAndamento() {
-        if (_estadoFlow.value == EstadoChamadaService.EM_CHAMADA) {
+        val estado = _estadoFlow.value
+        if (estado == EstadoChamadaService.EM_CHAMADA || estado == EstadoChamadaService.CONECTANDO_AUDIO) {
             mostrarNotificacaoEmAndamento()
         }
     }

@@ -86,6 +86,13 @@ class ChamadaActionReceiver : BroadcastReceiver() {
         // Remove notificação ao recusar
         removerNotificacao(context)
 
+        // Notifica ChamadaService para finalizar e parar o serviço
+        val serviceIntent = Intent(context, ChamadaService::class.java).apply {
+            action = ChamadaServiceActions.ACTION_CHAMADA_FINALIZADA
+            putExtra(ChamadaService.EXTRA_CHAMADA_ID, chamadaId)
+        }
+        context.startService(serviceIntent)
+
         val scope = CoroutineScope(Dispatchers.IO + SupervisorJob())
         scope.launch {
             try {
