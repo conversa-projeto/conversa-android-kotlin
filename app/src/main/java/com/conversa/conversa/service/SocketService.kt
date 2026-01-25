@@ -57,11 +57,11 @@ class SocketService : Service() {
     companion object {
         private const val TAG = "SocketService"
 
-        private const val NOTIFICATION_ID_SERVICE = 1001
-        private const val NOTIFICATION_ID_MENSAGEM = 1003
+        private const val NOTIFICATION_ID_SERVICE = 1000
+        private const val NOTIFICATION_ID_MENSAGEM = 3001
 
         private const val CHANNEL_ID_SERVICE = "conversa_service_channel"
-        private const val CHANNEL_ID_MENSAGENS = "conversa_mensagens_channel"
+        private const val CHANNEL_ID_MENSAGENS = "conversa_mensagem_channel"
         
         private const val EXTRA_HOST = "host"
         private const val EXTRA_PORT = "port"

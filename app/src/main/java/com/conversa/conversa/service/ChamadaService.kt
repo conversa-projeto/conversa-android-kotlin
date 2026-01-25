@@ -38,6 +38,11 @@ import java.net.SocketTimeoutException
 import java.nio.ByteBuffer
 import java.nio.ByteOrder
 import java.util.concurrent.LinkedBlockingQueue
+import com.conversa.conversa.service.NotificationConstants.CHANNEL_ID_CHAMADAS
+import com.conversa.conversa.service.NotificationConstants.NOTIFICATION_ID_CHAMADA_FOREGROUND
+import com.conversa.conversa.service.NotificationConstants.NOTIFICATION_ID_CHAMADA_INCOMING
+import com.conversa.conversa.service.NotificationConstants.NOTIFICATION_ID_CHAMADA_ONGOING
+import com.conversa.conversa.service.NotificationConstants.NOTIFICATION_ID_CHAMADA_MISSED
 
 /**
  * Service dedicado para gerenciar chamadas de voz.
@@ -61,15 +66,6 @@ class ChamadaService : Service() {
 
     companion object {
         private const val TAG = "ChamadaService"
-
-        // IDs de notificação
-        private const val NOTIFICATION_ID_FOREGROUND = 1001
-        private const val NOTIFICATION_ID_INCOMING = 1002
-        private const val NOTIFICATION_ID_ONGOING = 1003
-        private const val NOTIFICATION_ID_MISSED = 1004
-
-        // Canal de notificação
-        private const val CHANNEL_ID_CHAMADAS = "chamadas_channel"
 
         // Actions para Intents do SocketService
         const val ACTION_CHAMADA_RECEBIDA = "com.conversa.chamada.RECEBIDA"
@@ -246,7 +242,7 @@ class ChamadaService : Service() {
         adquirirWakeLock()
 
         // Inicia foreground com notificação vazia
-        startForeground(NOTIFICATION_ID_FOREGROUND, criarNotificacaoForeground())
+        startForeground(NOTIFICATION_ID_CHAMADA_FOREGROUND, criarNotificacaoForeground())
 
         Log.d(TAG, "Service criado com sucesso")
     }
@@ -414,7 +410,7 @@ class ChamadaService : Service() {
                 ringtoneManager.parar()
 
                 // Cancela notificação de chamada recebida
-                notificationManager.cancel(NOTIFICATION_ID_INCOMING)
+                notificationManager.cancel(NOTIFICATION_ID_CHAMADA_INCOMING)
 
                 // Mostra notificação de chamada em andamento imediatamente
                 // para evitar gap sem notificação (importante para foreground service)
@@ -475,7 +471,7 @@ class ChamadaService : Service() {
                 Log.d(TAG, "Recusando chamada $chamadaIdAtual")
 
                 ringtoneManager.parar()
-                notificationManager.cancel(NOTIFICATION_ID_INCOMING)
+                notificationManager.cancel(NOTIFICATION_ID_CHAMADA_INCOMING)
 
                 val response = api.recusarChamada("Bearer $token", ChamadaIdRequest(chamadaIdAtual))
 
@@ -1638,8 +1634,8 @@ class ChamadaService : Service() {
         ringtoneManager.parar()
 
         // Cancela notificações
-        notificationManager.cancel(NOTIFICATION_ID_INCOMING)
-        notificationManager.cancel(NOTIFICATION_ID_ONGOING)
+        notificationManager.cancel(NOTIFICATION_ID_CHAMADA_INCOMING)
+        notificationManager.cancel(NOTIFICATION_ID_CHAMADA_ONGOING)
 
         // Para o serviço foreground e remove notificação
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.N) {
@@ -1815,7 +1811,7 @@ class ChamadaService : Service() {
                 .build()
         }
 
-        notificationManager.notify(NOTIFICATION_ID_INCOMING, notification)
+        notificationManager.notify(NOTIFICATION_ID_CHAMADA_INCOMING, notification)
     }
 
     private fun mostrarNotificacaoEmAndamento() {
@@ -1901,16 +1897,16 @@ class ChamadaService : Service() {
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.UPSIDE_DOWN_CAKE) {
             // Android 14+: precisa especificar foregroundServiceType
             startForeground(
-                NOTIFICATION_ID_ONGOING,
+                NOTIFICATION_ID_CHAMADA_ONGOING,
                 notification,
                 ServiceInfo.FOREGROUND_SERVICE_TYPE_MICROPHONE or ServiceInfo.FOREGROUND_SERVICE_TYPE_PHONE_CALL
             )
         } else if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
             // Android 12-13: startForeground sem tipo específico
-            startForeground(NOTIFICATION_ID_ONGOING, notification)
+            startForeground(NOTIFICATION_ID_CHAMADA_ONGOING, notification)
         } else {
             // Android < 12: apenas notify
-            notificationManager.notify(NOTIFICATION_ID_ONGOING, notification)
+            notificationManager.notify(NOTIFICATION_ID_CHAMADA_ONGOING, notification)
         }
     }
 

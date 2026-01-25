@@ -41,6 +41,19 @@
 - ⏳ Build e testes (requer Java 17)
 - ⏳ Remoção de arquivos deprecados após validação
 
+#### ⚠️ Correções Pendentes:
+
+1. **Classificar eventos por fase da chamada (antes/depois de atender)**
+   - Identificar quais eventos podem ocorrer ANTES de atender a chamada (ex: "usuário entrou", "usuário saiu", "usuário recusou")
+   - Identificar quais eventos só devem ser processados DEPOIS de atender (ex: atualizações de áudio, status de mute, VAD)
+   - Eventos "antes" podem atualizar a UI normalmente (mostrar quem está na chamada aguardando)
+   - Eventos "depois" só devem ser processados quando estado for `EM_CHAMADA` ou `CONECTANDO_AUDIO`
+
+2. **Suportar múltiplas chamadas simultâneas nos IDs de notificação**
+   - Problema: Os IDs de notificação são fixos (2001, 2002, etc.), o que impede múltiplas chamadas simultâneas
+   - Solução: Usar o `chamadaId` como parte do ID da notificação, ex: `baseId + chamadaId`
+   - Exemplo: `NOTIFICATION_ID_CHAMADA_INCOMING + chamadaId` para garantir IDs únicos por chamada
+
 ---
 
 ## Visao Geral da Arquitetura Atual
@@ -534,15 +547,63 @@ class ChamadaService : Service() {
 
 ### Notificacoes do ChamadaService - Detalhamento Completo
 
+#### Constantes Centralizadas
+
+As constantes de notificacao estao centralizadas em `NotificationConstants.kt`:
+
+```kotlin
+object NotificationConstants {
+    // Canal
+    const val CHANNEL_ID_CHAMADAS = "conversa_chamada_channel"
+
+    // IDs de Notificacao - Chamadas (2000-2099)
+    const val NOTIFICATION_ID_CHAMADA_FOREGROUND = 2000
+    const val NOTIFICATION_ID_CHAMADA_INCOMING = 2001
+    const val NOTIFICATION_ID_CHAMADA_ONGOING = 2002
+    const val NOTIFICATION_ID_CHAMADA_MISSED = 2003
+}
+```
+
 #### Tipos de Notificacao
 
 | Tipo | ID | Quando | Duracao |
 |------|-----|--------|---------|
-| Chamada Recebida | 1002 | Ao receber chamada | Ate atender/recusar/timeout |
-| Chamada em Andamento | 1003 | Durante chamada ativa | Ate encerrar |
-| Chamada Perdida | 1004 | Apos timeout sem atender | Persistente |
+| Foreground Service | 2000 | Servico ativo | Enquanto servico rodar |
+| Chamada Recebida | 2001 | Ao receber chamada | Ate atender/recusar/timeout |
+| Chamada em Andamento | 2002 | Durante chamada ativa | Ate encerrar |
+| Chamada Perdida | 2003 | Apos timeout sem atender | Persistente |
 
-#### 1. Notificacao de Chamada Recebida (NOTIFICATION_ID = 1002)
+#### Comportamento de Visibilidade das Notificacoes
+
+1. **Notificacao de Chamada Recebida (2001)**:
+   - Exibe como heads-up (popup na tela) com botoes de Atender/Recusar
+   - Quando a chamada for atendida, esta notificacao e oculta imediatamente
+   - A notificacao de chamada em andamento assume, mas fica apenas na barra de titulo
+
+2. **Notificacao de Chamada em Andamento (2002)**:
+   - Nao exibe como heads-up (sem popup)
+   - Fica apenas na barra de titulo (status bar)
+   - Atualizada a cada segundo com o timer
+
+3. **Notificacao do Foreground Service (2000)**:
+   - Nao exibe em tela (sem heads-up)
+   - Fica oculta apenas na barra de titulo
+   - Necessaria para manter o servico ativo em background
+
+#### Remocao de Notificacoes ao Encerrar Servico
+
+Quando o servico e encerrado (em `finalizarChamadaInterno()`), todas as notificacoes sao removidas:
+
+```kotlin
+// Cancela notificacoes
+notificationManager.cancel(NOTIFICATION_ID_CHAMADA_INCOMING)
+notificationManager.cancel(NOTIFICATION_ID_CHAMADA_ONGOING)
+
+// Para o servico foreground e remove notificacao
+stopForeground(STOP_FOREGROUND_REMOVE)
+```
+
+#### 1. Notificacao de Chamada Recebida (NOTIFICATION_ID = 2001)
 
 **Caracteristicas:**
 - Categoria: `CATEGORY_CALL`
@@ -590,7 +651,7 @@ val notification = NotificationCompat.Builder(context, CHANNEL_CHAMADAS)
     .build()
 ```
 
-#### 2. Notificacao de Chamada em Andamento (NOTIFICATION_ID = 1003)
+#### 2. Notificacao de Chamada em Andamento (NOTIFICATION_ID = 2002)
 
 **Caracteristicas:**
 - Categoria: `CATEGORY_CALL`
@@ -638,7 +699,7 @@ val notification = NotificationCompat.Builder(context, CHANNEL_CHAMADAS)
 notificationManager.notify(NOTIFICATION_ID_ONGOING, notification)
 ```
 
-#### 3. Notificacao de Chamada Perdida (NOTIFICATION_ID = 1004)
+#### 3. Notificacao de Chamada Perdida (NOTIFICATION_ID = 2003)
 
 **Caracteristicas:**
 - Categoria: `CATEGORY_MISSED_CALL`
@@ -663,7 +724,8 @@ val notification = NotificationCompat.Builder(context, CHANNEL_CHAMADAS)
 ```
                   +-------------------+
                   | Chamada Recebida  |
-                  |    (ID: 1002)     |
+                  |    (ID: 2001)     |
+                  |   [heads-up]      |
                   +-------------------+
                            |
           +----------------+----------------+
@@ -674,11 +736,12 @@ val notification = NotificationCompat.Builder(context, CHANNEL_CHAMADAS)
     +----------+    +----------+    +------------+
           |                |                |
           v                |                v
-    +----------+           |         +------------+
-    | Chamada  |           |         | Chamada    |
-    | Andamento|           |         | Perdida    |
-    | (ID:1003)|           |         | (ID: 1004) |
-    +----------+           |         +------------+
+    +------------+         |         +------------+
+    | Chamada    |         |         | Chamada    |
+    | Andamento  |         |         | Perdida    |
+    | (ID:2002)  |         |         | (ID: 2003) |
+    | [barra]    |         |         +------------+
+    +------------+         |
           |                |
           v                v
     +----------+    +----------+
@@ -690,14 +753,20 @@ val notification = NotificationCompat.Builder(context, CHANNEL_CHAMADAS)
     | Cancela  |
     | notif    |
     +----------+
+
+Legenda:
+- [heads-up]: Exibe popup na tela
+- [barra]: Fica apenas na barra de titulo (status bar)
 ```
 
 #### Canal de Notificacao
 
+**ID do Canal**: `conversa_chamada_channel` (definido em `NotificationConstants.CHANNEL_ID_CHAMADAS`)
+
 ```kotlin
 // Criar canal (Android 8+)
 val channel = NotificationChannel(
-    CHANNEL_ID_CHAMADAS,
+    CHANNEL_ID_CHAMADAS,  // "conversa_chamada_channel"
     "Chamadas",
     NotificationManager.IMPORTANCE_HIGH
 ).apply {

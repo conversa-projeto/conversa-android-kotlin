@@ -14,12 +14,12 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
+import com.conversa.conversa.service.NotificationConstants.NOTIFICATION_ID_CHAMADA_INCOMING
 
 class ChamadaActionReceiver : BroadcastReceiver() {
-    
+
     companion object {
         private const val TAG = "ChamadaActionReceiver"
-        private const val NOTIFICATION_ID = 1002
 
         const val ACTION_ANSWER = "com.conversa.conversa.ACTION_ANSWER_CALL"
         const val ACTION_DECLINE = "com.conversa.conversa.ACTION_DECLINE_CALL"
@@ -121,6 +121,6 @@ class ChamadaActionReceiver : BroadcastReceiver() {
     
     private fun removerNotificacao(context: Context) {
         val notificationManager = context.getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
-        notificationManager.cancel(NOTIFICATION_ID)
+        notificationManager.cancel(NOTIFICATION_ID_CHAMADA_INCOMING)
     }
 }
