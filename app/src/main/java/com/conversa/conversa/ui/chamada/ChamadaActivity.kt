@@ -62,7 +62,7 @@ class ChamadaActivity : ComponentActivity(), SensorEventListener {
     }
 
     // Serviço de chamada
-    private var chamadaService: ChamadaService? = null
+    private var chamadaService by mutableStateOf<ChamadaService?>(null)
     private var bound by mutableStateOf(false)
 
     // Sensor de proximidade
