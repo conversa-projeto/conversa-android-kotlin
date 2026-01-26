@@ -113,10 +113,6 @@ class ChamadaActivity : ComponentActivity(), SensorEventListener {
         // Para ringtone
         ChamadaRingtoneManager.getInstance(this).parar()
 
-        // Cancela notificação
-        val notificationManager = getSystemService(NotificationManager::class.java)
-        notificationManager.cancel(1002)
-
         // Extrai extras
         chamadaIdFromIntent = intent.getIntExtra(EXTRA_CHAMADA_ID, -1)
         isIncoming = intent.getBooleanExtra(EXTRA_IS_INCOMING, false)

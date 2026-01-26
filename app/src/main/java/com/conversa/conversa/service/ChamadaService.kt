@@ -40,9 +40,6 @@ import java.nio.ByteOrder
 import java.util.concurrent.LinkedBlockingQueue
 import com.conversa.conversa.service.NotificationConstants.CHANNEL_ID_CHAMADAS
 import com.conversa.conversa.service.NotificationConstants.NOTIFICATION_ID_CHAMADA_FOREGROUND
-import com.conversa.conversa.service.NotificationConstants.NOTIFICATION_ID_CHAMADA_INCOMING
-import com.conversa.conversa.service.NotificationConstants.NOTIFICATION_ID_CHAMADA_ONGOING
-import com.conversa.conversa.service.NotificationConstants.NOTIFICATION_ID_CHAMADA_MISSED
 
 /**
  * Service dedicado para gerenciar chamadas de voz.
@@ -409,8 +406,9 @@ class ChamadaService : Service() {
                 // Para ringtone
                 ringtoneManager.parar()
 
-                // Cancela notificação de chamada recebida
-                notificationManager.cancel(NOTIFICATION_ID_CHAMADA_INCOMING)
+                // Cancela notificação de chamada recebida e move para em andamento
+                notificationManager.cancel(NotificationConstants.getNotificationIdIncoming(chamadaIdAtual))
+                NotificationConstants.moverParaEmAndamento(chamadaIdAtual)
 
                 // Mostra notificação de chamada em andamento imediatamente
                 // para evitar gap sem notificação (importante para foreground service)
@@ -471,7 +469,8 @@ class ChamadaService : Service() {
                 Log.d(TAG, "Recusando chamada $chamadaIdAtual")
 
                 ringtoneManager.parar()
-                notificationManager.cancel(NOTIFICATION_ID_CHAMADA_INCOMING)
+                notificationManager.cancel(NotificationConstants.getNotificationIdIncoming(chamadaIdAtual))
+                NotificationConstants.limparChamada(chamadaIdAtual)
 
                 val response = api.recusarChamada("Bearer $token", ChamadaIdRequest(chamadaIdAtual))
 
@@ -678,31 +677,40 @@ class ChamadaService : Service() {
     private fun processarChamadaRecebida(chamadaId: Int, usuarioId: Int, usuarioNome: String) {
         scope.launch {
             try {
-                Log.d(TAG, "Processando chamada recebida: $chamadaId de $usuarioNome")
+                Log.d(TAG, "Processando chamada recebida: $chamadaId de usuarioId=$usuarioId")
 
                 chamadaIdAtual = chamadaId
                 atualizarEstado(EstadoChamadaService.RECEBENDO_CHAMADA)
 
-                // Busca dados da chamada
+                // Busca dados da chamada PRIMEIRO para obter o nome correto
                 val resultado = obterDadosChamada(chamadaId)
                 if (resultado.isSuccess) {
                     chamadaAtual = resultado.getOrNull()
                     Log.d(TAG, "Dados carregados: ${chamadaAtual?.usuarios?.size} participantes")
                 }
 
+                // Extrai o nome do usuário dos dados da chamada
+                // Prioriza dados da API, usa fallback do WebSocket se não encontrar
+                val nomeParaExibir = chamadaAtual?.usuarios
+                    ?.find { it.usuarioId == usuarioId }
+                    ?.usuarioNome
+                    ?: usuarioNome.ifEmpty { "Desconhecido" }
+
+                Log.d(TAG, "Nome do chamador: $nomeParaExibir")
+
                 // Inicia ringtone
                 ringtoneManager.iniciar()
 
-                // Mostra notificação
-                mostrarNotificacaoChamadaRecebida(chamadaId, usuarioNome)
+                // Mostra notificação com nome correto dos dados da chamada
+                mostrarNotificacaoChamadaRecebida(chamadaId, nomeParaExibir)
 
-                // Emite evento
+                // Emite evento com nome correto
                 _eventosFlow.emit(
                     com.conversa.conversa.data.chamada.model.EventoChamadaUI(
                         tipo = com.conversa.conversa.data.chamada.model.TipoEventoChamadaUI.CHAMADA_RECEBIDA,
                         chamadaId = chamadaId,
                         participanteId = usuarioId,
-                        participanteNome = usuarioNome
+                        participanteNome = nomeParaExibir
                     )
                 )
             } catch (e: Exception) {
@@ -1633,9 +1641,13 @@ class ChamadaService : Service() {
         // Para ringtone
         ringtoneManager.parar()
 
-        // Cancela notificações
-        notificationManager.cancel(NOTIFICATION_ID_CHAMADA_INCOMING)
-        notificationManager.cancel(NOTIFICATION_ID_CHAMADA_ONGOING)
+        // Guarda o ID antes de resetar para cancelar notificações corretamente
+        val chamadaIdParaLimpar = chamadaIdAtual
+
+        // Cancela notificações usando ID dinâmico
+        notificationManager.cancel(NotificationConstants.getNotificationIdIncoming(chamadaIdParaLimpar))
+        notificationManager.cancel(NotificationConstants.getNotificationIdOngoing(chamadaIdParaLimpar))
+        NotificationConstants.limparChamada(chamadaIdParaLimpar)
 
         // Para o serviço foreground e remove notificação
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.N) {
@@ -1745,6 +1757,9 @@ class ChamadaService : Service() {
     }
 
     private fun mostrarNotificacaoChamadaRecebida(chamadaId: Int, usuarioNome: String) {
+        // Registra a chamada como recebendo
+        NotificationConstants.adicionarChamadaRecebendo(chamadaId)
+
         val answerIntent = Intent(this, ChamadaActionReceiver::class.java).apply {
             action = ChamadaActionReceiver.ACTION_ANSWER
             putExtra(EXTRA_CHAMADA_ID, chamadaId)
@@ -1787,6 +1802,7 @@ class ChamadaService : Service() {
                     declinePendingIntent,
                     answerPendingIntent
                 ))
+                .setContentIntent(fullScreenPendingIntent)
                 .setFullScreenIntent(fullScreenPendingIntent, true)
                 .setCategory(NotificationCompat.CATEGORY_CALL)
                 .setOngoing(true)
@@ -1802,6 +1818,7 @@ class ChamadaService : Service() {
                 .setContentText("Chamada de voz")
                 .addAction(R.drawable.ic_call_end, "Recusar", declinePendingIntent)
                 .addAction(R.drawable.ic_call, "Atender", answerPendingIntent)
+                .setContentIntent(fullScreenPendingIntent)
                 .setFullScreenIntent(fullScreenPendingIntent, true)
                 .setCategory(NotificationCompat.CATEGORY_CALL)
                 .setOngoing(true)
@@ -1811,10 +1828,20 @@ class ChamadaService : Service() {
                 .build()
         }
 
-        notificationManager.notify(NOTIFICATION_ID_CHAMADA_INCOMING, notification)
+        notificationManager.notify(NotificationConstants.getNotificationIdIncoming(chamadaId), notification)
     }
 
     private fun mostrarNotificacaoEmAndamento() {
+        // Intent para abrir a tela de chamada ao clicar na notificação
+        val openActivityIntent = Intent(this, ChamadaActivity::class.java).apply {
+            putExtra(EXTRA_CHAMADA_ID, chamadaIdAtual)
+            flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_SINGLE_TOP
+        }
+        val openActivityPendingIntent = PendingIntent.getActivity(
+            this, chamadaIdAtual + 6000, openActivityIntent,
+            PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
+        )
+
         val hangupIntent = Intent(this, ChamadaService::class.java).apply {
             action = ACTION_ENCERRAR
         }
@@ -1854,6 +1881,7 @@ class ChamadaService : Service() {
                     caller,
                     hangupPendingIntent
                 ))
+                .setContentIntent(openActivityPendingIntent)
                 .setContentText(timerText)
                 .addAction(
                     if (isMutedMicrofone) R.drawable.ic_mic_off else R.drawable.ic_mic,
@@ -1875,6 +1903,7 @@ class ChamadaService : Service() {
                 .setSmallIcon(R.drawable.ic_call)
                 .setContentTitle("Em chamada com $nomeContato")
                 .setContentText(timerText)
+                .setContentIntent(openActivityPendingIntent)
                 .addAction(
                     if (isMutedMicrofone) R.drawable.ic_mic_off else R.drawable.ic_mic,
                     if (isMutedMicrofone) "Ativar" else "Mutar",
@@ -1893,20 +1922,23 @@ class ChamadaService : Service() {
                 .build()
         }
 
+        // Calcula o ID da notificação dinamicamente
+        val notificationId = NotificationConstants.getNotificationIdOngoing(chamadaIdAtual)
+
         // Usa startForeground para Android 12+ para garantir que o service continue ativo
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.UPSIDE_DOWN_CAKE) {
             // Android 14+: precisa especificar foregroundServiceType
             startForeground(
-                NOTIFICATION_ID_CHAMADA_ONGOING,
+                notificationId,
                 notification,
                 ServiceInfo.FOREGROUND_SERVICE_TYPE_MICROPHONE or ServiceInfo.FOREGROUND_SERVICE_TYPE_PHONE_CALL
             )
         } else if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
             // Android 12-13: startForeground sem tipo específico
-            startForeground(NOTIFICATION_ID_CHAMADA_ONGOING, notification)
+            startForeground(notificationId, notification)
         } else {
             // Android < 12: apenas notify
-            notificationManager.notify(NOTIFICATION_ID_CHAMADA_ONGOING, notification)
+            notificationManager.notify(notificationId, notification)
         }
     }
 

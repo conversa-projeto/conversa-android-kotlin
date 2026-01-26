@@ -49,10 +49,20 @@
    - Eventos "antes" podem atualizar a UI normalmente (mostrar quem está na chamada aguardando)
    - Eventos "depois" só devem ser processados quando estado for `EM_CHAMADA` ou `CONECTANDO_AUDIO`
 
-2. **Suportar múltiplas chamadas simultâneas nos IDs de notificação**
-   - Problema: Os IDs de notificação são fixos (2001, 2002, etc.), o que impede múltiplas chamadas simultâneas
-   - Solução: Usar o `chamadaId` como parte do ID da notificação, ex: `baseId + chamadaId`
-   - Exemplo: `NOTIFICATION_ID_CHAMADA_INCOMING + chamadaId` para garantir IDs únicos por chamada
+2. ✅ **Suportar múltiplas chamadas simultâneas nos IDs de notificação** - IMPLEMENTADO
+   - IDs dinâmicos: `baseId + (chamadaId % faixa)`
+   - Faixas: INCOMING (2001-2099), ONGOING (2100-2199), MISSED (2300-2399)
+   - Gerenciamento via `NotificationConstants` com listas de chamadas ativas
+
+3. ✅ **Corrigir nome "Desconhecido" na notificação de chamada recebida** - IMPLEMENTADO
+   - Problema: WebSocket envia mensagem sem `usuario_nome`, resultando em "Desconhecido"
+   - Solução: `processarChamadaRecebida()` agora busca dados da chamada via API ANTES de mostrar notificação
+   - Nome extraído de `chamadaAtual?.usuarios?.find { it.usuarioId == usuarioId }?.usuarioNome`
+
+4. ✅ **Adicionar contentIntent nas notificações de chamada** - IMPLEMENTADO
+   - Notificação de chamada recebida: `setContentIntent(fullScreenPendingIntent)` abre `ChamadaActivity`
+   - Notificação de chamada em andamento: `setContentIntent(openActivityPendingIntent)` com `FLAG_ACTIVITY_SINGLE_TOP`
+   - Permite ao usuário voltar para a tela de chamada clicando na notificação
 
 ---
 
@@ -556,62 +566,117 @@ object NotificationConstants {
     // Canal
     const val CHANNEL_ID_CHAMADAS = "conversa_chamada_channel"
 
-    // IDs de Notificacao - Chamadas (2000-2099)
-    const val NOTIFICATION_ID_CHAMADA_FOREGROUND = 2000
-    const val NOTIFICATION_ID_CHAMADA_INCOMING = 2001
-    const val NOTIFICATION_ID_CHAMADA_ONGOING = 2002
-    const val NOTIFICATION_ID_CHAMADA_MISSED = 2003
+    // IDs BASE de Notificacao - Chamadas (suporta multiplas chamadas)
+    const val NOTIFICATION_ID_CHAMADA_FOREGROUND = 1002  // Fixo
+    const val NOTIFICATION_ID_CHAMADA_INCOMING = 2000    // Base: 2000-2699
+    const val NOTIFICATION_ID_CHAMADA_ONGOING = 2700     // Base: 2700-2899
+    const val NOTIFICATION_ID_CHAMADA_MISSED = 2900      // Base: 2900-3099
+
+    // Metodos para obter ID dinamico (baseado em mapa interno)
+    fun getNotificationIdIncoming(chamadaId: Int): Int  // 2000 + posicao no mapa
+    fun getNotificationIdOngoing(chamadaId: Int): Int   // 2700 + posicao no mapa
+    fun getNotificationIdMissed(chamadaId: Int): Int    // 2900 + posicao no mapa
+
+    // Gerenciamento de transicoes
+    fun adicionarChamadaRecebendo(chamadaId: Int)
+    fun moverParaEmAndamento(chamadaId: Int)  // Remove de recebendo, adiciona em andamento
+    fun moverParaPerdida(chamadaId: Int)      // Remove de recebendo, adiciona em perdida
+    fun removerChamadaRecebendo(chamadaId: Int)
+    fun removerChamadaEmAndamento(chamadaId: Int)
+    fun limparChamada(chamadaId: Int)
+    fun limparTodasChamadas()
 }
 ```
 
-#### Tipos de Notificacao
+#### Estrutura de IDs para Multiplas Chamadas
 
-| Tipo | ID | Quando | Duracao |
-|------|-----|--------|---------|
-| Foreground Service | 2000 | Servico ativo | Enquanto servico rodar |
-| Chamada Recebida | 2001 | Ao receber chamada | Ate atender/recusar/timeout |
-| Chamada em Andamento | 2002 | Durante chamada ativa | Ate encerrar |
-| Chamada Perdida | 2003 | Apos timeout sem atender | Persistente |
+Como o `chamadaId` do servidor e um autoincremento (pode ser 1, 50, 1000, 50000...),
+usamos mapas internos para associar cada chamadaId a uma posicao no array:
+
+```
+chamadaId do servidor (ex: 45678)
+         |
+    Mapa interno (chamadaId -> posicao)
+         |
+    ID da notificacao = BASE + posicao
+```
+
+| Tipo | Faixa de IDs | Max | Calculo |
+|------|--------------|-----|---------|
+| Foreground Service | 1002 (fixo) | 1 | - |
+| Chamada Recebida | 2000-2699 | 700 | 2000 + posicao |
+| Chamada em Andamento | 2700-2899 | 200 | 2700 + posicao |
+| Chamada Perdida | 2900-3099 | 200 | 2900 + posicao |
+
+**Exemplo de fluxo:**
+1. Chamada 45678 chega -> adiciona ao mapa recebendo -> posicao 0 -> notificacao 2000
+2. Chamada 89012 chega -> adiciona ao mapa recebendo -> posicao 1 -> notificacao 2001
+3. Chamada 45678 atendida -> move para mapa em andamento -> posicao 0 -> notificacao 2700
+4. Chamada 45678 encerrada -> remove dos mapas -> posicao 0 liberada para reutilizacao
+5. Nova chamada 99999 -> reutiliza posicao 0 -> notificacao 2000
+
+#### Gerenciamento de Chamadas Ativas
+
+O `NotificationConstants` mantem mapas de `chamadaId -> posicao` para cada estado:
+- `mapaRecebendo`: Chamadas aguardando usuario atender
+- `mapaEmAndamento`: Chamadas ativas com audio
+- `mapaPerdidas`: Chamadas nao atendidas
+
+Quando uma chamada muda de estado:
+1. Ao receber: `adicionarChamadaRecebendo(chamadaId)` - aloca posicao no mapa
+2. Ao atender: `moverParaEmAndamento(chamadaId)` - libera posicao em recebendo, aloca em andamento
+3. Ao perder: `moverParaPerdida(chamadaId)` - libera posicao em recebendo, aloca em perdida
+4. Ao encerrar: `limparChamada(chamadaId)` - libera posicoes em todos os mapas
+
+As posicoes liberadas sao reutilizadas por novas chamadas (pool de posicoes livres).
 
 #### Comportamento de Visibilidade das Notificacoes
 
-1. **Notificacao de Chamada Recebida (2001)**:
+1. **Notificacao de Chamada Recebida (2000+)**:
    - Exibe como heads-up (popup na tela) com botoes de Atender/Recusar
    - Quando a chamada for atendida, esta notificacao e oculta imediatamente
    - A notificacao de chamada em andamento assume, mas fica apenas na barra de titulo
 
-2. **Notificacao de Chamada em Andamento (2002)**:
+2. **Notificacao de Chamada em Andamento (2700+)**:
    - Nao exibe como heads-up (sem popup)
    - Fica apenas na barra de titulo (status bar)
    - Atualizada a cada segundo com o timer
 
-3. **Notificacao do Foreground Service (2000)**:
+3. **Notificacao do Foreground Service (1002)**:
    - Nao exibe em tela (sem heads-up)
    - Fica oculta apenas na barra de titulo
    - Necessaria para manter o servico ativo em background
 
 #### Remocao de Notificacoes ao Encerrar Servico
 
-Quando o servico e encerrado (em `finalizarChamadaInterno()`), todas as notificacoes sao removidas:
+Quando o servico e encerrado (em `finalizarChamadaInterno()`), todas as notificacoes sao removidas usando IDs dinamicos:
 
 ```kotlin
-// Cancela notificacoes
-notificationManager.cancel(NOTIFICATION_ID_CHAMADA_INCOMING)
-notificationManager.cancel(NOTIFICATION_ID_CHAMADA_ONGOING)
+// Guarda o ID antes de resetar
+val chamadaIdParaLimpar = chamadaIdAtual
+
+// Cancela notificacoes usando ID dinamico
+notificationManager.cancel(NotificationConstants.getNotificationIdIncoming(chamadaIdParaLimpar))
+notificationManager.cancel(NotificationConstants.getNotificationIdOngoing(chamadaIdParaLimpar))
+NotificationConstants.limparChamada(chamadaIdParaLimpar)
 
 // Para o servico foreground e remove notificacao
 stopForeground(STOP_FOREGROUND_REMOVE)
 ```
 
-#### 1. Notificacao de Chamada Recebida (NOTIFICATION_ID = 2001)
+#### 1. Notificacao de Chamada Recebida (NOTIFICATION_ID = 2000+)
 
 **Caracteristicas:**
 - Categoria: `CATEGORY_CALL`
 - Prioridade: `PRIORITY_HIGH` (heads-up)
 - Ongoing: `true` (nao pode ser dispensada)
 - Full Screen Intent: `true` (abre tela automaticamente se bloqueado)
+- Content Intent: Abre `ChamadaActivity` ao clicar na notificação
 - Timeout: 60 segundos (depois mostra "chamada perdida")
 - Som: Desabilitado (ringtone gerenciado separadamente)
+
+**Obtenção do nome do chamador:**
+O nome é obtido dos dados da chamada via API (`obterDadosChamada()`), não do WebSocket que pode não incluir o campo `usuario_nome`.
 
 **Android 12+ (CallStyle):**
 ```kotlin
@@ -627,6 +692,7 @@ val notification = NotificationCompat.Builder(context, CHANNEL_CHAMADAS)
         declinePendingIntent,
         answerPendingIntent
     ))
+    .setContentIntent(fullScreenPendingIntent)  // Abre ChamadaActivity ao clicar
     .setFullScreenIntent(fullScreenPendingIntent, true)
     .setCategory(NotificationCompat.CATEGORY_CALL)
     .setOngoing(true)
@@ -643,6 +709,7 @@ val notification = NotificationCompat.Builder(context, CHANNEL_CHAMADAS)
     .setContentText("Chamada de voz")
     .addAction(R.drawable.ic_call_end, "Recusar", declinePendingIntent)
     .addAction(R.drawable.ic_call, "Atender", answerPendingIntent)
+    .setContentIntent(fullScreenPendingIntent)  // Abre ChamadaActivity ao clicar
     .setFullScreenIntent(fullScreenPendingIntent, true)
     .setCategory(NotificationCompat.CATEGORY_CALL)
     .setOngoing(true)
@@ -651,12 +718,13 @@ val notification = NotificationCompat.Builder(context, CHANNEL_CHAMADAS)
     .build()
 ```
 
-#### 2. Notificacao de Chamada em Andamento (NOTIFICATION_ID = 2002)
+#### 2. Notificacao de Chamada em Andamento (NOTIFICATION_ID = 2700+)
 
 **Caracteristicas:**
 - Categoria: `CATEGORY_CALL`
 - Prioridade: `PRIORITY_LOW` (nao faz heads-up)
 - Ongoing: `true` (nao pode ser dispensada)
+- Content Intent: Abre `ChamadaActivity` ao clicar na notificação (com `FLAG_ACTIVITY_SINGLE_TOP` para não duplicar)
 - Atualizada a cada segundo (timer)
 - Botoes: Mute, Speaker, Encerrar
 
@@ -673,12 +741,23 @@ val notification = NotificationCompat.Builder(context, CHANNEL_CHAMADAS)
 
 **Implementacao Android 12+ (CallStyle):**
 ```kotlin
+// Intent para abrir a tela de chamada ao clicar
+val openActivityIntent = Intent(context, ChamadaActivity::class.java).apply {
+    putExtra(EXTRA_CHAMADA_ID, chamadaIdAtual)
+    flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_SINGLE_TOP
+}
+val openActivityPendingIntent = PendingIntent.getActivity(
+    context, chamadaIdAtual + 6000, openActivityIntent,
+    PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
+)
+
 val notification = NotificationCompat.Builder(context, CHANNEL_CHAMADAS)
     .setSmallIcon(R.drawable.ic_call)
     .setStyle(NotificationCompat.CallStyle.forOngoingCall(
         caller,
         hangupPendingIntent
     ))
+    .setContentIntent(openActivityPendingIntent)  // Abre ChamadaActivity ao clicar
     .setContentText(timerText)  // "02:45"
     .addAction(
         if (isMuted) R.drawable.ic_mic_off else R.drawable.ic_mic,
@@ -699,7 +778,7 @@ val notification = NotificationCompat.Builder(context, CHANNEL_CHAMADAS)
 notificationManager.notify(NOTIFICATION_ID_ONGOING, notification)
 ```
 
-#### 3. Notificacao de Chamada Perdida (NOTIFICATION_ID = 2003)
+#### 3. Notificacao de Chamada Perdida (NOTIFICATION_ID = 2900+)
 
 **Caracteristicas:**
 - Categoria: `CATEGORY_MISSED_CALL`
@@ -722,11 +801,11 @@ val notification = NotificationCompat.Builder(context, CHANNEL_CHAMADAS)
 #### Fluxo de Transicao de Notificacoes
 
 ```
-                  +-------------------+
-                  | Chamada Recebida  |
-                  |    (ID: 2001)     |
-                  |   [heads-up]      |
-                  +-------------------+
+                  +----------------------+
+                  | Chamada Recebida     |
+                  | ID: 2000 + posicao   |
+                  |     [heads-up]       |
+                  +----------------------+
                            |
           +----------------+----------------+
           |                |                |
@@ -736,12 +815,12 @@ val notification = NotificationCompat.Builder(context, CHANNEL_CHAMADAS)
     +----------+    +----------+    +------------+
           |                |                |
           v                |                v
-    +------------+         |         +------------+
-    | Chamada    |         |         | Chamada    |
-    | Andamento  |         |         | Perdida    |
-    | (ID:2002)  |         |         | (ID: 2003) |
-    | [barra]    |         |         +------------+
-    +------------+         |
+    +--------------+       |         +--------------+
+    | Chamada      |       |         | Chamada      |
+    | Andamento    |       |         | Perdida      |
+    | ID:2700+pos  |       |         | ID: 2900+pos |
+    | [barra]      |       |         +--------------+
+    +--------------+       |
           |                |
           v                v
     +----------+    +----------+
@@ -749,14 +828,16 @@ val notification = NotificationCompat.Builder(context, CHANNEL_CHAMADAS)
     +----------+    | notif    |
           |         +----------+
           v
-    +----------+
-    | Cancela  |
-    | notif    |
-    +----------+
+    +----------------+
+    | limparChamada(id)
+    | Libera posicoes
+    | Cancela notif
+    +----------------+
 
 Legenda:
 - [heads-up]: Exibe popup na tela
 - [barra]: Fica apenas na barra de titulo (status bar)
+- posicao: indice no mapa interno (reutilizavel)
 ```
 
 #### Canal de Notificacao

@@ -14,8 +14,6 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
-import com.conversa.conversa.service.NotificationConstants.NOTIFICATION_ID_CHAMADA_INCOMING
-
 class ChamadaActionReceiver : BroadcastReceiver() {
 
     companion object {
@@ -74,7 +72,7 @@ class ChamadaActionReceiver : BroadcastReceiver() {
         context.startActivity(activityIntent)
 
         // Remove notificação após abrir a activity
-        removerNotificacao(context)
+        removerNotificacao(context, chamadaId)
     }
 
     private fun recusarChamada(context: Context, chamadaId: Int) {
@@ -84,7 +82,7 @@ class ChamadaActionReceiver : BroadcastReceiver() {
         ChamadaRingtoneManager.getInstance(context).parar()
 
         // Remove notificação ao recusar
-        removerNotificacao(context)
+        removerNotificacao(context, chamadaId)
 
         // Notifica ChamadaService para finalizar e parar o serviço
         val serviceIntent = Intent(context, ChamadaService::class.java).apply {
@@ -119,8 +117,9 @@ class ChamadaActionReceiver : BroadcastReceiver() {
         }
     }
     
-    private fun removerNotificacao(context: Context) {
+    private fun removerNotificacao(context: Context, chamadaId: Int) {
         val notificationManager = context.getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
-        notificationManager.cancel(NOTIFICATION_ID_CHAMADA_INCOMING)
+        notificationManager.cancel(NotificationConstants.getNotificationIdIncoming(chamadaId))
+        NotificationConstants.removerChamadaRecebendo(chamadaId)
     }
 }
