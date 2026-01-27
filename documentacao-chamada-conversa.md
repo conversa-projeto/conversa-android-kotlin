@@ -641,6 +641,8 @@ As posicoes liberadas sao reutilizadas por novas chamadas (pool de posicoes livr
    - Nao exibe como heads-up (sem popup)
    - Fica apenas na barra de titulo (status bar)
    - Atualizada a cada segundo com o timer
+   - Android 12+: Apenas botao Encerrar (limitacao do CallStyle)
+   - Android < 12: Botoes Mute, Speaker, Encerrar
 
 3. **Notificacao do Foreground Service (1002)**:
    - Nao exibe em tela (sem heads-up)
@@ -726,16 +728,36 @@ val notification = NotificationCompat.Builder(context, CHANNEL_CHAMADAS)
 - Ongoing: `true` (nao pode ser dispensada)
 - Content Intent: Abre `ChamadaActivity` ao clicar na notificação (com `FLAG_ACTIVITY_SINGLE_TOP` para não duplicar)
 - Atualizada a cada segundo (timer)
-- Botoes: Mute, Speaker, Encerrar
 
-**Layout:**
+**Botoes por versao do Android:**
+- **Android 12+ (CallStyle)**: Apenas botao Encerrar (nativo do CallStyle)
+- **Android < 12**: Mute, Speaker, Encerrar (via addAction)
+
+> **⚠️ LIMITACAO DO CALLSTYLE**: O `CallStyle.forOngoingCall()` do Android 12+ nao renderiza
+> corretamente botoes extras via `addAction()`. Tentativas de adicionar botoes de Mute/Speaker
+> resultam em botoes em branco ou mal formatados. Por isso, no Android 12+, apenas o botao
+> Encerrar (nativo do CallStyle) e exibido. Controles de Mute/Speaker ficam disponiveis
+> apenas na tela da chamada (ChamadaActivity).
+
+**Layout Android 12+ (CallStyle):**
 ```
 ┌──────────────────────────────────────────┐
 │ 📞 Conversa                      02:45   │
 │                                          │
 │ Em chamada com Nome do Contato           │
 │                                          │
-│ [🔇]  [🔊]  [❌ Encerrar]                │
+│              [❌ Encerrar]               │
+└──────────────────────────────────────────┘
+```
+
+**Layout Android < 12 (Tradicional):**
+```
+┌──────────────────────────────────────────┐
+│ 📞 Conversa                      02:45   │
+│                                          │
+│ Em chamada com Nome do Contato           │
+│                                          │
+│ [🔇 Mutar]  [🔊 Viva-voz]  [❌ Encerrar] │
 └──────────────────────────────────────────┘
 ```
 
@@ -751,6 +773,9 @@ val openActivityPendingIntent = PendingIntent.getActivity(
     PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
 )
 
+// CallStyle do Android 12+ não suporta bem addAction() extras
+// Mantemos apenas o botão Encerrar nativo do CallStyle
+// Controles de Mute/Speaker ficam disponíveis na tela da chamada
 val notification = NotificationCompat.Builder(context, CHANNEL_CHAMADAS)
     .setSmallIcon(R.drawable.ic_call)
     .setStyle(NotificationCompat.CallStyle.forOngoingCall(
@@ -759,16 +784,6 @@ val notification = NotificationCompat.Builder(context, CHANNEL_CHAMADAS)
     ))
     .setContentIntent(openActivityPendingIntent)  // Abre ChamadaActivity ao clicar
     .setContentText(timerText)  // "02:45"
-    .addAction(
-        if (isMuted) R.drawable.ic_mic_off else R.drawable.ic_mic,
-        if (isMuted) "Ativar mic" else "Mutar",
-        mutePendingIntent
-    )
-    .addAction(
-        if (isSpeaker) R.drawable.ic_speaker else R.drawable.ic_speaker_off,
-        if (isSpeaker) "Desativar viva-voz" else "Viva-voz",
-        speakerPendingIntent
-    )
     .setCategory(NotificationCompat.CATEGORY_CALL)
     .setOngoing(true)
     .setPriority(NotificationCompat.PRIORITY_LOW)
@@ -776,6 +791,30 @@ val notification = NotificationCompat.Builder(context, CHANNEL_CHAMADAS)
 
 // Atualizar a cada segundo
 notificationManager.notify(NOTIFICATION_ID_ONGOING, notification)
+```
+
+**Implementacao Android < 12 (Tradicional com 3 botoes):**
+```kotlin
+val notification = NotificationCompat.Builder(context, CHANNEL_CHAMADAS)
+    .setSmallIcon(R.drawable.ic_call)
+    .setContentTitle("Em chamada com $nomeContato")
+    .setContentText(timerText)
+    .setContentIntent(openActivityPendingIntent)
+    .addAction(
+        if (isMuted) R.drawable.ic_mic_off else R.drawable.ic_mic,
+        if (isMuted) "Ativar" else "Mutar",
+        mutePendingIntent
+    )
+    .addAction(
+        if (isSpeaker) R.drawable.ic_volume_up else R.drawable.ic_volume_off,
+        if (isSpeaker) "Desativar" else "Viva-voz",
+        speakerPendingIntent
+    )
+    .addAction(R.drawable.ic_call_end, "Encerrar", hangupPendingIntent)
+    .setCategory(NotificationCompat.CATEGORY_CALL)
+    .setOngoing(true)
+    .setPriority(NotificationCompat.PRIORITY_LOW)
+    .build()
 ```
 
 #### 3. Notificacao de Chamada Perdida (NOTIFICATION_ID = 2900+)

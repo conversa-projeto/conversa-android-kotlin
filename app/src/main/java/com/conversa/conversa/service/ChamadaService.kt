@@ -1875,6 +1875,9 @@ class ChamadaService : Service() {
                 .setImportant(true)
                 .build()
 
+            // CallStyle do Android 12+ não suporta bem addAction() extras
+            // Mantemos apenas o botão Encerrar nativo do CallStyle
+            // Controles de Mute/Speaker ficam disponíveis na tela da chamada
             NotificationCompat.Builder(this, CHANNEL_ID_CHAMADAS)
                 .setSmallIcon(R.drawable.ic_call)
                 .setStyle(NotificationCompat.CallStyle.forOngoingCall(
@@ -1883,16 +1886,6 @@ class ChamadaService : Service() {
                 ))
                 .setContentIntent(openActivityPendingIntent)
                 .setContentText(timerText)
-                .addAction(
-                    if (isMutedMicrofone) R.drawable.ic_mic_off else R.drawable.ic_mic,
-                    if (isMutedMicrofone) "Ativar mic" else "Mutar",
-                    mutePendingIntent
-                )
-                .addAction(
-                    if (isSpeakerOn) R.drawable.ic_volume_up else R.drawable.ic_volume_off,
-                    if (isSpeakerOn) "Desativar viva-voz" else "Viva-voz",
-                    speakerPendingIntent
-                )
                 .setCategory(NotificationCompat.CATEGORY_CALL)
                 .setOngoing(true)
                 .setOnlyAlertOnce(true)
