@@ -16,6 +16,12 @@
             android:layout_height="wrap_content"
             android:theme="@style/Theme.Conversa.AppBarOverlay">
 
+            <!-- Banner de chamada ativa - DENTRO da AppBarLayout, empurra a Toolbar -->
+            <androidx.compose.ui.platform.ComposeView
+                android:id="@+id/callBannerComposeView"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content" />
+
             <androidx.appcompat.widget.Toolbar
                 android:id="@+id/toolbar"
                 android:layout_width="match_parent"

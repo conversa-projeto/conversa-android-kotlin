@@ -307,7 +307,9 @@ class ChamadaService : Service() {
             ACTION_TOGGLE_SPEAKER -> toggleSpeaker()
         }
 
-        return START_STICKY
+        // START_NOT_STICKY: não reinicia o serviço automaticamente se for morto
+        // Chamadas serão tratadas por novos startService quando necessário
+        return START_NOT_STICKY
     }
 
     override fun onDestroy() {
@@ -635,21 +637,28 @@ class ChamadaService : Service() {
     }
 
     /**
-     * Retorna lista de participantes para UI
+     * Retorna lista de participantes para UI (excluindo o usuário local)
      */
     fun getParticipantes(): List<com.conversa.conversa.ui.chamada.ParticipanteUI> {
-        return _participantesFlow.value.map { item ->
-            com.conversa.conversa.ui.chamada.ParticipanteUI(
-                id = item.usuarioId,
-                nome = item.nome,
-                fotoUrl = null,
-                isFalando = item.isFalando,
-                status = if (item.isFalando || item.volume > 0) "Conectado" else "Aguardando",
-                mutadoLocalmente = item.isMutado,
-                volume = item.volume
-            )
-        }
+        return _participantesFlow.value
+            .filter { it.usuarioId != usuarioIdAtual }  // Excluir usuário local
+            .map { item ->
+                com.conversa.conversa.ui.chamada.ParticipanteUI(
+                    id = item.usuarioId,
+                    nome = item.nome,
+                    fotoUrl = null,
+                    isFalando = item.isFalando,
+                    status = if (item.isFalando || item.volume > 0) "Conectado" else "Aguardando",
+                    mutadoLocalmente = item.isMutado,
+                    volume = item.volume
+                )
+            }
     }
+
+    /**
+     * Retorna o ID do usuário atual (para filtrar participantes na UI)
+     */
+    fun getUsuarioIdAtual(): Int = usuarioIdAtual
 
     /**
      * Verifica se microfone está mutado
@@ -679,8 +688,10 @@ class ChamadaService : Service() {
             try {
                 Log.d(TAG, "Processando chamada recebida: $chamadaId de usuarioId=$usuarioId")
 
+                // Inicializa usuarioIdAtual para filtrar participantes corretamente
+                usuarioIdAtual = userPreferences.userId.first() ?: 0
+
                 chamadaIdAtual = chamadaId
-                atualizarEstado(EstadoChamadaService.RECEBENDO_CHAMADA)
 
                 // Busca dados da chamada PRIMEIRO para obter o nome correto
                 val resultado = obterDadosChamada(chamadaId)
@@ -688,6 +699,9 @@ class ChamadaService : Service() {
                     chamadaAtual = resultado.getOrNull()
                     Log.d(TAG, "Dados carregados: ${chamadaAtual?.usuarios?.size} participantes")
                 }
+
+                // Atualiza estado DEPOIS de carregar os dados para UI mostrar nome correto
+                atualizarEstado(EstadoChamadaService.RECEBENDO_CHAMADA)
 
                 // Extrai o nome do usuário dos dados da chamada
                 // Prioriza dados da API, usa fallback do WebSocket se não encontrar

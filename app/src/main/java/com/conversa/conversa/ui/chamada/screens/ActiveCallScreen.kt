@@ -1,11 +1,17 @@
 package com.conversa.conversa.ui.chamada.screens
 
 import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.KeyboardArrowDown
+import androidx.compose.material3.Icon
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
@@ -28,11 +34,12 @@ fun ActiveCallScreen(
     onToggleSpeaker: () -> Unit,
     onAddParticipant: () -> Unit,
     onEndCall: () -> Unit,
+    onMinimize: () -> Unit,
     modifier: Modifier = Modifier
 ) {
-    // Grupo = 3+ participantes (eu + 2 outros)
-    // Com 2 participantes (eu + 1), usa layout simples 1:1
-    val isGroupCall = participants.size > 2
+    // Grupo = 2+ outros participantes (excluindo eu)
+    // Com 1 participante (só o outro), usa layout simples 1:1
+    val isGroupCall = participants.size > 1
 
     Box(
         modifier = modifier
@@ -47,6 +54,14 @@ fun ActiveCallScreen(
                 )
             )
     ) {
+        // Botão de minimizar no canto superior esquerdo
+        MinimizeButton(
+            onClick = onMinimize,
+            modifier = Modifier
+                .align(Alignment.TopStart)
+                .padding(16.dp)
+        )
+
         if (isGroupCall) {
             // Layout para chamada em grupo
             GroupCallLayout(
@@ -194,6 +209,33 @@ private fun GroupCallLayout(
             onAddParticipant = onAddParticipant,
             onEndCall = onEndCall,
             modifier = Modifier.padding(horizontal = 32.dp, vertical = 16.dp)
+        )
+    }
+}
+
+/**
+ * Botão de minimizar a chamada.
+ * Ao clicar, a Activity vai para background e o usuário pode usar o app normalmente.
+ * O CallBanner aparece nas outras telas para retornar à chamada.
+ */
+@Composable
+private fun MinimizeButton(
+    onClick: () -> Unit,
+    modifier: Modifier = Modifier
+) {
+    Box(
+        modifier = modifier
+            .size(48.dp)
+            .clip(CircleShape)
+            .background(Color.White.copy(alpha = 0.15f))
+            .clickable(onClick = onClick),
+        contentAlignment = Alignment.Center
+    ) {
+        Icon(
+            imageVector = Icons.Default.KeyboardArrowDown,
+            contentDescription = "Minimizar chamada",
+            tint = Color.White,
+            modifier = Modifier.size(28.dp)
         )
     }
 }

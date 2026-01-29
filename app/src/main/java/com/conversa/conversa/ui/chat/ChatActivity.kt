@@ -22,7 +22,10 @@ import com.conversa.conversa.data.model.Mensagem
 import com.conversa.conversa.data.preferences.UserPreferences
 import com.conversa.conversa.databinding.ActivityChatBinding
 import com.conversa.conversa.ui.chamada.ChamadaActivity
+import com.conversa.conversa.ui.chamada.ChamadaNavigator
+import com.conversa.conversa.ui.chamada.components.setupCallBanner
 import com.conversa.conversa.utils.ChamadaBroadcast
+import com.conversa.conversa.utils.ChamadaServiceObserver
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
 import java.io.File
@@ -58,6 +61,9 @@ class ChatActivity : AppCompatActivity(), ChamadaBroadcast.ChamadaListener {
     // Repository de chamada (para limpar quando a chamada terminar)
     private var chamadaRepository: com.conversa.conversa.data.repository.ChamadaRepository? = null
 
+    // Observer para ChamadaService (exibe CallBanner)
+    private lateinit var chamadaObserver: ChamadaServiceObserver
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         
@@ -80,6 +86,7 @@ class ChatActivity : AppCompatActivity(), ChamadaBroadcast.ChamadaListener {
         setupToolbar()
         setupRecyclerView()
         setupListeners()
+        setupCallBanner()
         
         lifecycleScope.launch {
             carregarDadosUsuario()
@@ -220,6 +227,24 @@ class ChatActivity : AppCompatActivity(), ChamadaBroadcast.ChamadaListener {
                 binding.btnMicrofone.visibility = if (temTexto) View.GONE else View.VISIBLE
             }
         })
+    }
+
+    /**
+     * Configura o CallBanner para mostrar quando há chamada ativa
+     */
+    private fun setupCallBanner() {
+        chamadaObserver = ChamadaServiceObserver(this)
+
+        lifecycleScope.launch {
+            val meuUsuarioId = userPreferences.userId.first() ?: 0
+            binding.callBannerComposeView.setupCallBanner(
+                chamadaObserver = chamadaObserver,
+                meuUsuarioId = meuUsuarioId,
+                onBannerClick = {
+                    ChamadaNavigator.voltarParaChamadaAtiva(this@ChatActivity)
+                }
+            )
+        }
     }
 
     /**
@@ -948,11 +973,17 @@ class ChatActivity : AppCompatActivity(), ChamadaBroadcast.ChamadaListener {
         // (a chamada foi encerrada)
         chamadaRepository?.cleanup()
         chamadaRepository = null
+
+        // Vincula ao ChamadaService para exibir CallBanner
+        chamadaObserver.bind()
     }
-    
+
     override fun onPause() {
         super.onPause()
         ChamadaBroadcast.removeListener(this)
+
+        // Desvincula do ChamadaService
+        chamadaObserver.unbind()
     }
     
     override fun onChamadaRecebida(chamadaId: Int, usuarioId: Int, usuarioNome: String) {

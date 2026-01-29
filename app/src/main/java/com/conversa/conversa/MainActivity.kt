@@ -36,8 +36,11 @@ import com.conversa.conversa.databinding.DialogContatosBinding
 import com.conversa.conversa.service.SocketService
 import com.conversa.conversa.service.ChamadaRingtoneManager
 import com.conversa.conversa.ui.chamada.ChamadaActivity
+import com.conversa.conversa.ui.chamada.ChamadaNavigator
+import com.conversa.conversa.ui.chamada.components.setupCallBanner
 import com.conversa.conversa.ui.chat.ChatActivity
 import com.conversa.conversa.utils.ChamadaBroadcast
+import com.conversa.conversa.utils.ChamadaServiceObserver
 import com.google.android.material.navigation.NavigationView
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
@@ -55,9 +58,12 @@ class MainActivity : AppCompatActivity(),
     private lateinit var conversasAdapter: ConversasAdapter
     private lateinit var toggle: ActionBarDrawerToggle
 
-    // ServiceConnection
+    // ServiceConnection para SocketService
     private var socketService: SocketService? = null
     private var isBound = false
+
+    // Observer para ChamadaService (exibe CallBanner)
+    private lateinit var chamadaObserver: ChamadaServiceObserver
 
     private val serviceConnection = object : ServiceConnection {
         override fun onServiceConnected(name: ComponentName?, service: IBinder?) {
@@ -104,6 +110,7 @@ class MainActivity : AppCompatActivity(),
         setupNavigationDrawer()
         setupRecyclerView()
         setupListeners()
+        setupCallBanner()
         
         // CRÍTICO: Solicita permissões necessárias
         verificarPermissoes()
@@ -265,6 +272,24 @@ class MainActivity : AppCompatActivity(),
             lifecycleScope.launch {
                 carregarConversas()
             }
+        }
+    }
+
+    /**
+     * Configura o CallBanner para mostrar quando há chamada ativa
+     */
+    private fun setupCallBanner() {
+        chamadaObserver = ChamadaServiceObserver(this)
+
+        lifecycleScope.launch {
+            val meuUsuarioId = userPreferences.userId.first() ?: 0
+            binding.callBannerComposeView.setupCallBanner(
+                chamadaObserver = chamadaObserver,
+                meuUsuarioId = meuUsuarioId,
+                onBannerClick = {
+                    ChamadaNavigator.voltarParaChamadaAtiva(this@MainActivity)
+                }
+            )
         }
     }
     
@@ -472,6 +497,9 @@ class MainActivity : AppCompatActivity(),
         val intent = Intent(this, SocketService::class.java)
         bindService(intent, serviceConnection, Context.BIND_AUTO_CREATE)
 
+        // Vincula ao ChamadaService para exibir CallBanner
+        chamadaObserver.bind()
+
         if (!isFirstLoad) {
             lifecycleScope.launch {
                 carregarConversas()
@@ -492,6 +520,9 @@ class MainActivity : AppCompatActivity(),
             isBound = false
             android.util.Log.d("MainActivity", "🔌 Service desvinculado (listener mantido para rebind)")
         }
+
+        // Desvincula do ChamadaService
+        chamadaObserver.unbind()
     }
     
     // Implementação de ChamadaBroadcast.ChamadaListener (fallback)

@@ -7,25 +7,31 @@
 
 ### Resumo do que foi implementado:
 
-#### ✅ Arquivos Criados (14 novos):
+#### ✅ Arquivos Criados (16 novos):
 - ✅ **ChamadaService.kt** (1500+ linhas) - Service principal com áudio TCP e mixer avançado
 - ✅ **OutgoingCallScreen.kt** - Tela de chamada sainte (Compose)
-- ✅ **ActiveCallScreen.kt** - Tela de chamada ativa 1:1 e grupo (Compose)
+- ✅ **ActiveCallScreen.kt** - Tela de chamada ativa 1:1 e grupo (Compose) + botão minimizar
 - ✅ **CallTimer.kt** - Componente de timer
 - ✅ **CallControls.kt** - Botões de controle (mute/speaker/adicionar/encerrar)
 - ✅ **ParticipantAvatar.kt** - Avatar com indicador VAD
 - ✅ **ParticipantsList.kt** - Lista de participantes
 - ✅ **CallActionButton.kt** - Botão redondo estilizado
 - ✅ **CallBanner.kt** - Banner de chamada ativa
+- ✅ **CallBannerIntegration.kt** - Extension para setup do ComposeView em Activities XML
 - ✅ **ChamadaScreen.kt** - Composable principal
 - ✅ **ChamadaNavigator.kt** - Helper de navegação
+- ✅ **ChamadaServiceObserver.kt** - Helper para observar estado do service de qualquer Activity
 - ✅ **ParticipanteUI.kt** - Data class para UI
 - ✅ **IMPLEMENTACAO-COMPLETA.md** - Documentação da implementação
 
-#### ✅ Arquivos Modificados (3):
+#### ✅ Arquivos Modificados (7):
 - ✅ **SocketService.kt** - Refatorado para enviar Intents ao ChamadaService
-- ✅ **ChamadaActivity.kt** - Reescrito com Full Compose + ServiceConnection
+- ✅ **ChamadaActivity.kt** - Reescrito com Full Compose + ServiceConnection + minimizar chamada
 - ✅ **AndroidManifest.xml** - Registro do ChamadaService
+- ✅ **MainActivity.kt** - Integração do CallBanner + ChamadaServiceObserver
+- ✅ **ChatActivity.kt** - Integração do CallBanner + ChamadaServiceObserver
+- ✅ **activity_main.xml** - Adicionado ComposeView para CallBanner
+- ✅ **activity_chat.xml** - Adicionado ComposeView para CallBanner
 
 #### ✅ Funcionalidades Implementadas:
 - ✅ Sistema de mixer avançado com VAD (Voice Activity Detection)
@@ -36,6 +42,8 @@
 - ✅ Suporte Android 9-14 com adaptações
 - ✅ UI Full Compose reativa com StateFlows
 - ✅ Foreground Service dedicado para chamadas
+- ✅ **In-App Banner**: Banner verde no topo de MainActivity/ChatActivity quando há chamada ativa
+- ✅ **Minimizar Chamada**: Botão de minimizar + back button permitem sair da tela de chamada mantendo a chamada ativa
 
 #### ⏳ Pendente:
 - ⏳ Build e testes (requer Java 17)
@@ -1823,27 +1831,55 @@ Quando o usuario esta navegando em outras telas do app durante uma chamada, deve
 
 ```
 ┌─────────────────────────────────────────┐
-│ 🟢 Em chamada com Nome  02:45  [Voltar] │  <- Banner verde fixo
+│ 🟢 Em chamada com Nome  02:45  [Voltar] │  <- Banner verde fixo (ACIMA da toolbar)
+├─────────────────────────────────────────┤
+│ [Toolbar/ActionBar]                     │  <- Toolbar empurrada para baixo
 ├─────────────────────────────────────────┤
 │                                         │
 │         Conteudo normal do app          │
 │         (Lista de conversas,            │
 │          Chat, Contatos, etc.)          │
 │                                         │
-│                                         │
-│                                         │
-│                                         │
-│                                         │
-│                                         │
 └─────────────────────────────────────────┘
 ```
 
 ### Comportamento
 - **Visivel**: Apenas quando ha chamada ativa e usuario NAO esta na ChamadaActivity
-- **Cor**: Verde (chamada ativa) ou Amarelo (chamada em espera)
-- **Conteudo**: Nome do contato + timer em tempo real
+- **Posicionamento**: DENTRO da AppBarLayout, ANTES da Toolbar (empurra a toolbar para baixo)
+- **Cor**: Verde gradiente (chamada ativa)
+- **Conteudo**: Ícone de telefone + nome do contato + timer em tempo real
 - **Acao**: Clique retorna para ChamadaActivity
 - **Animacao**: Slide down ao aparecer, slide up ao sair
+
+### Implementação no Layout XML
+
+O banner é um `ComposeView` posicionado **dentro da AppBarLayout**, como primeiro filho (antes da Toolbar):
+
+```xml
+<com.google.android.material.appbar.AppBarLayout
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content">
+
+    <!-- Banner PRIMEIRO - empurra a Toolbar para baixo quando visível -->
+    <androidx.compose.ui.platform.ComposeView
+        android:id="@+id/callBannerComposeView"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content" />
+
+    <Toolbar
+        android:id="@+id/toolbar"
+        ... />
+
+</com.google.android.material.appbar.AppBarLayout>
+```
+
+### ChamadaServiceObserver
+
+O `ChamadaServiceObserver` é usado pelas Activities para observar o estado do `ChamadaService`:
+
+- **Binding sem auto-create**: Usa flag `0` em vez de `BIND_AUTO_CREATE` para não iniciar o service desnecessariamente
+- **StateFlows**: Expõe `estadoFlow`, `chamadaAtualFlow` e `timerFlow` para a UI observar
+- **Bind/Unbind**: Deve ser chamado em `onResume()`/`onPause()` da Activity
 
 ### Implementacao com Compose
 
@@ -3317,11 +3353,16 @@ Mostrar na UI a qualidade da conexao de audio:
 - [ ] Criar `ParticipantsList` componente
 - [ ] Criar `ParticipanteVolumeControl` componente (slider volume + mute + indicador VAD)
 
-### Fase 10: CallBanner e Navegacao
-- [ ] Criar `ChamadaNavigator` helper (metodo generico para abrir chamada)
-- [ ] Criar `CallBanner` Composable
-- [ ] Integrar CallBanner na MainActivity/MainScreen
-- [ ] Implementar clique no banner usando `ChamadaNavigator.abrirChamadaAtiva()`
+### Fase 10: CallBanner e Navegacao ✅ IMPLEMENTADO
+- [x] Criar `ChamadaNavigator` helper (metodo generico para abrir chamada)
+- [x] Criar `CallBanner` Composable
+- [x] Criar `ChamadaServiceObserver` helper (observa estado do service de qualquer Activity)
+- [x] Criar `CallBannerIntegration.kt` extension (setup do ComposeView)
+- [x] Integrar CallBanner na MainActivity (XML + ComposeView)
+- [x] Integrar CallBanner na ChatActivity (XML + ComposeView)
+- [x] Implementar clique no banner usando `ChamadaNavigator.voltarParaChamadaAtiva()`
+- [x] Implementar botão minimizar na ActiveCallScreen
+- [x] Modificar ChamadaActivity.onBackPressed() para permitir minimizar quando EM_CHAMADA
 - [ ] Implementar abertura de chamada via mensagem no chat (se ativa)
 - [ ] Testar navegacao de volta para chamada de varios pontos
 

@@ -16,6 +16,7 @@ import com.conversa.conversa.ui.chamada.screens.OutgoingCallScreen
 fun ChamadaScreen(
     chamadaService: ChamadaService?,
     onFinish: () -> Unit,
+    onMinimize: () -> Unit = {},
     modifier: Modifier = Modifier
 ) {
     if (chamadaService == null) {
@@ -28,12 +29,23 @@ fun ChamadaScreen(
     val chamada by chamadaService.chamadaAtualFlow.collectAsState()
     val timer by chamadaService.timerFlow.collectAsState()
 
+    // Calcula o nome do outro participante baseado nos dados observados
+    // Isso garante que o Compose re-renderiza quando chamada é atualizada
+    val outroParticipanteNome = chamada?.usuarios
+        ?.filter { it.usuarioId != chamadaService.getUsuarioIdAtual() }
+        ?.let { outros ->
+            when {
+                outros.size > 1 -> "Chamada em Grupo"
+                outros.isNotEmpty() -> outros.first().usuarioNome
+                else -> "Carregando..."
+            }
+        } ?: "Carregando..."
+
     when (estado) {
         ChamadaService.EstadoChamadaService.RECEBENDO_CHAMADA -> {
-            // IncomingCallScreen já existe e é usado no IncomingCallFragment
-            // Aqui seria chamado via IncomingCallScreen diretamente se necessário
+            // Tela de chamada recebida - mostra nome do outro participante
             IncomingCallScreen(
-                callerName = chamada?.usuarios?.firstOrNull()?.usuarioNome ?: "Desconhecido",
+                callerName = outroParticipanteNome,
                 callerDescription = if (chamada?.tipo == 2) "Chamada em Grupo" else "Chamada de voz",
                 onAccept = {
                     chamadaService.aceitarChamada()
@@ -48,9 +60,9 @@ fun ChamadaScreen(
 
         ChamadaService.EstadoChamadaService.INICIANDO_CHAMADA,
         ChamadaService.EstadoChamadaService.CONECTANDO_AUDIO -> {
-            // Tela de chamada sainte
+            // Tela de chamada sainte - mostra nome do outro participante
             OutgoingCallScreen(
-                callerName = chamada?.usuarios?.firstOrNull()?.usuarioNome ?: "Desconhecido",
+                callerName = outroParticipanteNome,
                 onCancel = {
                     chamadaService.finalizarChamada()
                     onFinish()
@@ -81,6 +93,7 @@ fun ChamadaScreen(
                     chamadaService.finalizarChamada()
                     onFinish()
                 },
+                onMinimize = onMinimize,
                 modifier = modifier
             )
         }

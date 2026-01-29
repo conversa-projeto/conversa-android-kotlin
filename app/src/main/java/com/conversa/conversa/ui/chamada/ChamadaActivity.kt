@@ -85,6 +85,21 @@ class ChamadaActivity : ComponentActivity(), SensorEventListener {
             chamadaService = (binder as ChamadaService.LocalBinder).getService()
             bound = true
 
+            // Se chamadaId não veio no intent, obtém do service (caso de REORDER_TO_FRONT)
+            if (chamadaIdFromIntent == -1) {
+                val chamadaAtual = chamadaService?.chamadaAtualFlow?.value
+                if (chamadaAtual != null) {
+                    chamadaIdFromIntent = chamadaAtual.id
+                    Log.d(TAG, "chamadaId obtido do service: $chamadaIdFromIntent")
+                } else {
+                    // Sem chamada ativa no service, não há o que mostrar
+                    Log.e(TAG, "Nenhuma chamada ativa no service")
+                    Toast.makeText(this@ChamadaActivity, "Nenhuma chamada ativa", Toast.LENGTH_SHORT).show()
+                    finish()
+                    return
+                }
+            }
+
             // Auto-answer se necessário
             if (autoAnswer && isIncoming) {
                 lifecycleScope.launch {
@@ -96,9 +111,11 @@ class ChamadaActivity : ComponentActivity(), SensorEventListener {
         }
 
         override fun onServiceDisconnected(name: ComponentName?) {
-            Log.d(TAG, "Service desconectado")
+            Log.d(TAG, "Service desconectado - fechando Activity")
             chamadaService = null
             bound = false
+            // Serviço foi finalizado, fechar Activity
+            finish()
         }
     }
 
@@ -120,10 +137,10 @@ class ChamadaActivity : ComponentActivity(), SensorEventListener {
 
         Log.d(TAG, "Extras: chamadaId=$chamadaIdFromIntent, isIncoming=$isIncoming, autoAnswer=$autoAnswer")
 
+        // Se chamadaId == -1, pode ser REORDER_TO_FRONT de uma chamada em andamento
+        // O chamadaId será obtido do service no onServiceConnected
         if (chamadaIdFromIntent == -1) {
-            Toast.makeText(this, "Erro: chamada inválida", Toast.LENGTH_SHORT).show()
-            finish()
-            return
+            Log.d(TAG, "chamadaId não fornecido no intent - será obtido do service")
         }
 
         // Inicializar sensor de proximidade
@@ -255,9 +272,17 @@ class ChamadaActivity : ComponentActivity(), SensorEventListener {
     private fun inicializarUI() {
         Log.d(TAG, "Inicializando UI")
 
-        // Vincular ao ChamadaService
+        // Vincular ao ChamadaService (sem BIND_AUTO_CREATE para não recriar se finalizado)
         val intent = Intent(this, ChamadaService::class.java)
-        bindService(intent, connection, Context.BIND_AUTO_CREATE)
+        val bindResult = bindService(intent, connection, 0)
+
+        // Se binding falhou, serviço não está rodando - fechar Activity
+        if (!bindResult) {
+            Log.e(TAG, "ChamadaService não está rodando - fechando Activity")
+            Toast.makeText(this, "Nenhuma chamada ativa", Toast.LENGTH_SHORT).show()
+            finish()
+            return
+        }
 
         // Ativar sensor de proximidade
         ativarSensorProximidade()
@@ -272,6 +297,9 @@ class ChamadaActivity : ComponentActivity(), SensorEventListener {
                         onFinish = {
                             Log.d(TAG, "onFinish chamado - encerrando Activity")
                             finish()
+                        },
+                        onMinimize = {
+                            minimizarChamada()
                         }
                     )
                 } else {
@@ -310,7 +338,43 @@ class ChamadaActivity : ComponentActivity(), SensorEventListener {
 
     @Deprecated("Deprecated in Java")
     override fun onBackPressed() {
-        // Não permite voltar durante chamada
-        Log.d(TAG, "onBackPressed - bloqueado")
+        val service = chamadaService
+        if (service != null) {
+            val estado = service.estadoFlow.value
+            when (estado) {
+                ChamadaService.EstadoChamadaService.EM_CHAMADA -> {
+                    // Permite minimizar durante chamada ativa
+                    // A chamada continua em background e o banner aparece nas outras telas
+                    // Usa finish() para voltar à Activity anterior (ChatActivity/MainActivity)
+                    Log.d(TAG, "onBackPressed - minimizando chamada (estado: $estado)")
+                    finish()
+                }
+                ChamadaService.EstadoChamadaService.RECEBENDO_CHAMADA,
+                ChamadaService.EstadoChamadaService.INICIANDO_CHAMADA,
+                ChamadaService.EstadoChamadaService.CONECTANDO_AUDIO -> {
+                    // Bloqueia durante esses estados para evitar comportamento inesperado
+                    Log.d(TAG, "onBackPressed - bloqueado (estado: $estado)")
+                }
+                else -> {
+                    // Permite navegação normal em outros estados (IDLE, FINALIZANDO)
+                    Log.d(TAG, "onBackPressed - permitido (estado: $estado)")
+                    @Suppress("DEPRECATION")
+                    super.onBackPressed()
+                }
+            }
+        } else {
+            @Suppress("DEPRECATION")
+            super.onBackPressed()
+        }
+    }
+
+    /**
+     * Minimiza a chamada e volta para a tela anterior.
+     * A chamada continua em background e o banner aparece nas outras telas.
+     * Usa finish() para voltar à Activity anterior na pilha.
+     */
+    fun minimizarChamada() {
+        Log.d(TAG, "Minimizando chamada")
+        finish()
     }
 }
