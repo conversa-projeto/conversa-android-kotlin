@@ -272,17 +272,9 @@ class ChamadaActivity : ComponentActivity(), SensorEventListener {
     private fun inicializarUI() {
         Log.d(TAG, "Inicializando UI")
 
-        // Vincular ao ChamadaService (sem BIND_AUTO_CREATE para não recriar se finalizado)
-        val intent = Intent(this, ChamadaService::class.java)
-        val bindResult = bindService(intent, connection, 0)
-
-        // Se binding falhou, serviço não está rodando - fechar Activity
-        if (!bindResult) {
-            Log.e(TAG, "ChamadaService não está rodando - fechando Activity")
-            Toast.makeText(this, "Nenhuma chamada ativa", Toast.LENGTH_SHORT).show()
-            finish()
-            return
-        }
+        // Tenta vincular ao ChamadaService com retry para aguardar o serviço inicializar
+        // (sem BIND_AUTO_CREATE para não recriar o serviço se já foi finalizado)
+        tentarVincularService()
 
         // Ativar sensor de proximidade
         ativarSensorProximidade()
@@ -311,6 +303,26 @@ class ChamadaActivity : ComponentActivity(), SensorEventListener {
                         CircularProgressIndicator()
                     }
                 }
+            }
+        }
+    }
+
+    private fun tentarVincularService(tentativa: Int = 1) {
+        val maxTentativas = 5
+        val intent = Intent(this, ChamadaService::class.java)
+        val bindResult = bindService(intent, connection, 0)
+
+        if (!bindResult) {
+            if (tentativa < maxTentativas) {
+                Log.d(TAG, "Serviço não disponível, tentativa $tentativa/$maxTentativas")
+                lifecycleScope.launch {
+                    delay(100)
+                    tentarVincularService(tentativa + 1)
+                }
+            } else {
+                Log.e(TAG, "ChamadaService não está rodando após $maxTentativas tentativas")
+                Toast.makeText(this, "Nenhuma chamada ativa", Toast.LENGTH_SHORT).show()
+                finish()
             }
         }
     }
