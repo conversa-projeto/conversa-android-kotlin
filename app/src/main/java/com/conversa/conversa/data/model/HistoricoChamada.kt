@@ -17,13 +17,15 @@ data class HistoricoChamada(
     @SerializedName("status_chamada") val statusChamada: Int, // 1-6
     @SerializedName("criado_por_id") val criadoPorId: Int,
     @SerializedName("criado_por") val criadoPor: String,
-    @SerializedName("adicionado_em") val adicionadoEm: LocalDateTime?,
-    @SerializedName("adicionado_por_id") val adicionadoPorId: Int?,
-    @SerializedName("adicionado_por") val adicionadoPor: String?,
+    @SerializedName("usuario_exibido_id") val usuarioId: Int?,
+    @SerializedName("usuario_exibido_nome") val usuarioNome: String?,
     @SerializedName("recusou_em") val recusouEm: LocalDateTime?,
     @SerializedName("entrou_em") val entrouEm: LocalDateTime?,
     @SerializedName("saiu_em") val saiuEm: LocalDateTime?,
     @SerializedName("status_usuario") val statusUsuario: Int, // 1-5
+    @SerializedName("adicionado_em") val adicionadoEm: LocalDateTime?,
+    @SerializedName("adicionado_por_id") val adicionadoPorId: Int?,
+    @SerializedName("adicionado_por") val adicionadoPor: String?,
     @SerializedName("tipo_acao") val tipoAcao: Int // 1=Realizada, 2=Recebida, 3=Desconhecido
 )
 

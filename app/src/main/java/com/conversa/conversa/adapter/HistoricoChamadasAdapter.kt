@@ -40,7 +40,7 @@ class HistoricoChamadasAdapter(
         fun bind(chamada: HistoricoChamada) {
             binding.apply {
                 // Nome do contato
-                tvNomeContato.text = chamada.criadoPor
+                tvNomeContato.text = chamada.usuarioNome
 
                 // Icone de tipo de chamada baseado em status E tipo_chamada
                 val tipoAcao = TipoAcaoChamada.fromInt(chamada.tipoAcao)
