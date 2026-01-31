@@ -1,0 +1,184 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:orientation="vertical"
+    android:padding="24dp">
+
+    <!-- Avatar e Nome -->
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:gravity="center"
+        android:orientation="vertical">
+
+        <ImageView
+            android:id="@+id/ivAvatar"
+            android:layout_width="72dp"
+            android:layout_height="72dp"
+            android:background="?attr/colorPrimary"
+            android:contentDescription="Avatar do contato"
+            android:padding="16dp"
+            android:src="@drawable/ic_person"
+            app:tint="@android:color/white" />
+
+        <TextView
+            android:id="@+id/tvNomeContato"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="12dp"
+            android:textColor="?android:textColorPrimary"
+            android:textSize="20sp"
+            android:textStyle="bold"
+            tools:text="Joao Silva" />
+
+    </LinearLayout>
+
+    <!-- Informacoes da chamada -->
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="24dp"
+        android:orientation="vertical">
+
+        <!-- Tipo de chamada -->
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal"
+            android:paddingVertical="8dp">
+
+            <ImageView
+                android:id="@+id/ivIconeTipo"
+                android:layout_width="24dp"
+                android:layout_height="24dp"
+                android:layout_gravity="center_vertical"
+                android:contentDescription="Tipo"
+                tools:src="@drawable/ic_call_made" />
+
+            <TextView
+                android:id="@+id/tvTipoChamada"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginStart="16dp"
+                android:layout_gravity="center_vertical"
+                android:textColor="?android:textColorPrimary"
+                android:textSize="16sp"
+                tools:text="Chamada realizada" />
+
+        </LinearLayout>
+
+        <!-- Status da chamada -->
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal"
+            android:paddingVertical="8dp">
+
+            <ImageView
+                android:layout_width="24dp"
+                android:layout_height="24dp"
+                android:layout_gravity="center_vertical"
+                android:contentDescription="Status"
+                android:src="@drawable/ic_call"
+                app:tint="?android:textColorSecondary" />
+
+            <TextView
+                android:id="@+id/tvStatusChamada"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginStart="16dp"
+                android:layout_gravity="center_vertical"
+                android:textColor="?android:textColorPrimary"
+                android:textSize="16sp"
+                tools:text="Atendida" />
+
+        </LinearLayout>
+
+        <!-- Data e hora -->
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal"
+            android:paddingVertical="8dp">
+
+            <ImageView
+                android:layout_width="24dp"
+                android:layout_height="24dp"
+                android:layout_gravity="center_vertical"
+                android:contentDescription="Data"
+                android:src="@drawable/ic_history"
+                app:tint="?android:textColorSecondary" />
+
+            <TextView
+                android:id="@+id/tvDataHora"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginStart="16dp"
+                android:layout_gravity="center_vertical"
+                android:textColor="?android:textColorPrimary"
+                android:textSize="16sp"
+                tools:text="25/01/2025 as 10:30" />
+
+        </LinearLayout>
+
+        <!-- Duracao -->
+        <LinearLayout
+            android:id="@+id/layoutDuracao"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal"
+            android:paddingVertical="8dp"
+            android:visibility="gone"
+            tools:visibility="visible">
+
+            <ImageView
+                android:layout_width="24dp"
+                android:layout_height="24dp"
+                android:layout_gravity="center_vertical"
+                android:contentDescription="Duracao"
+                android:src="@android:drawable/ic_menu_recent_history"
+                app:tint="?android:textColorSecondary" />
+
+            <TextView
+                android:id="@+id/tvDuracao"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginStart="16dp"
+                android:layout_gravity="center_vertical"
+                android:textColor="?android:textColorPrimary"
+                android:textSize="16sp"
+                tools:text="2 minutos e 30 segundos" />
+
+        </LinearLayout>
+
+    </LinearLayout>
+
+    <!-- Botoes -->
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="24dp"
+        android:orientation="horizontal">
+
+        <com.google.android.material.button.MaterialButton
+            android:id="@+id/btnFechar"
+            style="@style/Widget.Material3.Button.TextButton"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:text="Fechar" />
+
+        <com.google.android.material.button.MaterialButton
+            android:id="@+id/btnLigar"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:text="Ligar"
+            app:icon="@drawable/ic_call" />
+
+    </LinearLayout>
+
+</LinearLayout>

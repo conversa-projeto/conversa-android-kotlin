@@ -1,10 +1,15 @@
 <menu xmlns:android="http://schemas.android.com/apk/res/android">
-    
+
     <item
         android:id="@+id/nav_contatos"
         android:icon="@drawable/ic_person"
         android:title="Contatos" />
-    
+
+    <item
+        android:id="@+id/nav_historico_chamadas"
+        android:icon="@drawable/ic_call"
+        android:title="Chamadas" />
+
     <item
         android:id="@+id/nav_criar_grupo"
         android:icon="@drawable/ic_person"

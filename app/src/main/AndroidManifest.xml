@@ -115,6 +115,11 @@
             android:label="Contatos"
             android:parentActivityName=".MainActivity" />
         <activity
+            android:name=".HistoricoChamadasActivity"
+            android:exported="false"
+            android:label="Chamadas"
+            android:parentActivityName=".MainActivity" />
+        <activity
             android:name=".CriarGrupoActivity"
             android:exported="false"
             android:label="Novo Grupo"

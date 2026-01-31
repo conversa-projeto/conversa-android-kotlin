@@ -182,6 +182,14 @@ interface ConversaApi {
         @Header("Authorization") token: String,
         @Query("id") chamadaId: Int
     ): Response<ChamadaResponse>
+
+    /**
+     * Lista o historico de chamadas do usuario
+     */
+    @GET("chamadas")
+    suspend fun listarHistoricoChamadas(
+        @Header("Authorization") token: String
+    ): Response<List<HistoricoChamada>>
 }
 
 data class AnexoExisteResponse(

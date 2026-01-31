@@ -234,6 +234,10 @@ class MainActivity : AppCompatActivity(),
                 val intent = Intent(this, ContatosActivity::class.java)
                 startActivity(intent)
             }
+            R.id.nav_historico_chamadas -> {
+                val intent = Intent(this, HistoricoChamadasActivity::class.java)
+                startActivity(intent)
+            }
             R.id.nav_criar_grupo -> {
                 val intent = Intent(this, CriarGrupoActivity::class.java)
                 startActivity(intent)
