@@ -51,11 +51,10 @@
 
 #### ⚠️ Correções Pendentes:
 
-1. **Classificar eventos por fase da chamada (antes/depois de atender)**
-   - Identificar quais eventos podem ocorrer ANTES de atender a chamada (ex: "usuário entrou", "usuário saiu", "usuário recusou")
-   - Identificar quais eventos só devem ser processados DEPOIS de atender (ex: atualizações de áudio, status de mute, VAD)
-   - Eventos "antes" podem atualizar a UI normalmente (mostrar quem está na chamada aguardando)
-   - Eventos "depois" só devem ser processados quando estado for `EM_CHAMADA` ou `CONECTANDO_AUDIO`
+1. ✅ **Classificar eventos por fase da chamada (antes/depois de atender)** - IMPLEMENTADO
+   - Eventos que NÃO devem iniciar o ChamadaService foram classificados
+   - `SocketService` verifica flag `chamadaServiceAtivo` antes de enviar Intents
+   - Ver seção "Eventos que NÃO Devem Iniciar o ChamadaService" abaixo
 
 2. ✅ **Suportar múltiplas chamadas simultâneas nos IDs de notificação** - IMPLEMENTADO
    - IDs dinâmicos: `baseId + (chamadaId % faixa)`
@@ -71,6 +70,60 @@
    - Notificação de chamada recebida: `setContentIntent(fullScreenPendingIntent)` abre `ChamadaActivity`
    - Notificação de chamada em andamento: `setContentIntent(openActivityPendingIntent)` com `FLAG_ACTIVITY_SINGLE_TOP`
    - Permite ao usuário voltar para a tela de chamada clicando na notificação
+
+---
+
+## ✅ Eventos que NÃO Devem Iniciar o ChamadaService
+
+Os seguintes eventos de socket só devem ser processados se já houver uma chamada ativa:
+
+| Tipo | Constante | Valor | Deve Iniciar Serviço? |
+|------|-----------|-------|----------------------|
+| TYPE_CHAMADA_RECEBIDA | 51 | ✅ **SIM** - Nova chamada recebida |
+| TYPE_CHAMADA_FINALIZADA | 52 | ❌ **NÃO** - Só relevante se já em chamada |
+| TYPE_CHAMADA_USUARIO_RECUSOU | 53 | ❌ **NÃO** - Só relevante se já em chamada |
+| TYPE_CHAMADA_USUARIO_ENTROU | 54 | ❌ **NÃO** - Só relevante se já em chamada |
+| TYPE_CHAMADA_USUARIO_SAIU | 55 | ❌ **NÃO** - Só relevante se já em chamada |
+
+### Implementação
+
+O `SocketService` verifica `SocketService.chamadaServiceAtivo` antes de enviar
+Intents para eventos que não iniciam chamadas. Esta flag é atualizada pelo
+`ChamadaService` quando uma chamada inicia ou termina.
+
+```kotlin
+// SocketService.kt - companion object
+@Volatile
+var chamadaServiceAtivo: Boolean = false
+
+// Nos callbacks que NÃO devem iniciar serviço:
+socketManager.onChamadaFinalizada = { chamadaId, usuarioId ->
+    if (chamadaServiceAtivo) {  // SÓ envia se serviço está ativo
+        val intent = Intent(this, ChamadaService::class.java).apply {
+            action = ChamadaServiceActions.ACTION_CHAMADA_FINALIZADA
+            // ...
+        }
+        startService(intent)
+    }
+}
+```
+
+### Proteção Contra Chamadas Simultâneas
+
+O `ChamadaService` também verifica em `ACTION_CHAMADA_RECEBIDA` se já existe
+uma chamada ativa, ignorando novas chamadas para evitar sobrescrita de estado:
+
+```kotlin
+// ChamadaService.kt - onStartCommand
+ACTION_CHAMADA_RECEBIDA -> {
+    // Verificação: ignora nova chamada se já houver uma chamada ativa
+    if (chamadaIdAtual != 0 && chamadaIdAtual != chamadaId) {
+        Log.w(TAG, "Ignorando nova chamada $chamadaId - já em chamada $chamadaIdAtual")
+        return START_NOT_STICKY
+    }
+    // ...
+}
+```
 
 ---
 

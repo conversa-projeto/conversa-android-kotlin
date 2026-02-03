@@ -62,14 +62,29 @@ class SocketService : Service() {
 
         private const val CHANNEL_ID_SERVICE = "conversa_service_channel"
         private const val CHANNEL_ID_MENSAGENS = "conversa_mensagem_channel"
-        
+
         private const val EXTRA_HOST = "host"
         private const val EXTRA_PORT = "port"
         private const val EXTRA_TOKEN = "auth_token"
-        
+
         private var lastValidHost: String? = null
         private var lastValidPort: Int = 0
         private var lastValidToken: String? = null
+
+        /**
+         * Flag que indica se o ChamadaService está ativo com uma chamada.
+         * Atualizada pelo ChamadaService quando inicia/finaliza uma chamada.
+         *
+         * Eventos que NÃO devem iniciar o ChamadaService verificam esta flag:
+         * - ACTION_CHAMADA_FINALIZADA
+         * - ACTION_USUARIO_ENTROU
+         * - ACTION_USUARIO_SAIU
+         * - ACTION_USUARIO_RECUSOU
+         *
+         * Apenas ACTION_CHAMADA_RECEBIDA pode iniciar o serviço.
+         */
+        @Volatile
+        var chamadaServiceAtivo: Boolean = false
         
         fun start(context: Context, host: String, port: Int, token: String) {
             val intent = Intent(context, SocketService::class.java).apply {
@@ -261,47 +276,67 @@ class SocketService : Service() {
         }
 
         socketManager.onChamadaFinalizada = { chamadaId, usuarioId ->
-            Log.d(TAG, "📴 Chamada finalizada: enviando Intent para ChamadaService")
+            // Só envia Intent se ChamadaService está ativo (há chamada em andamento)
+            if (chamadaServiceAtivo) {
+                Log.d(TAG, "📴 Chamada finalizada: enviando Intent para ChamadaService")
 
-            val intent = Intent(this, ChamadaService::class.java).apply {
-                action = ChamadaServiceActions.ACTION_CHAMADA_FINALIZADA
-                putExtra(ChamadaService.EXTRA_CHAMADA_ID, chamadaId)
-                putExtra(ChamadaService.EXTRA_USUARIO_ID, usuarioId)
+                val intent = Intent(this, ChamadaService::class.java).apply {
+                    action = ChamadaServiceActions.ACTION_CHAMADA_FINALIZADA
+                    putExtra(ChamadaService.EXTRA_CHAMADA_ID, chamadaId)
+                    putExtra(ChamadaService.EXTRA_USUARIO_ID, usuarioId)
+                }
+                startService(intent)
+            } else {
+                Log.d(TAG, "📴 Chamada finalizada ignorada: ChamadaService não está ativo")
             }
-            startService(intent)
         }
 
         socketManager.onUsuarioEntrou = { chamadaId, usuarioId ->
-            Log.d(TAG, "👤 Usuário entrou: enviando Intent para ChamadaService")
+            // Só envia Intent se ChamadaService está ativo (há chamada em andamento)
+            if (chamadaServiceAtivo) {
+                Log.d(TAG, "👤 Usuário entrou: enviando Intent para ChamadaService")
 
-            val intent = Intent(this, ChamadaService::class.java).apply {
-                action = ChamadaServiceActions.ACTION_USUARIO_ENTROU
-                putExtra(ChamadaService.EXTRA_CHAMADA_ID, chamadaId)
-                putExtra(ChamadaService.EXTRA_USUARIO_ID, usuarioId)
+                val intent = Intent(this, ChamadaService::class.java).apply {
+                    action = ChamadaServiceActions.ACTION_USUARIO_ENTROU
+                    putExtra(ChamadaService.EXTRA_CHAMADA_ID, chamadaId)
+                    putExtra(ChamadaService.EXTRA_USUARIO_ID, usuarioId)
+                }
+                startService(intent)
+            } else {
+                Log.d(TAG, "👤 Usuário entrou ignorado: ChamadaService não está ativo")
             }
-            startService(intent)
         }
 
         socketManager.onUsuarioSaiu = { chamadaId, usuarioId ->
-            Log.d(TAG, "👋 Usuário saiu: enviando Intent para ChamadaService")
+            // Só envia Intent se ChamadaService está ativo (há chamada em andamento)
+            if (chamadaServiceAtivo) {
+                Log.d(TAG, "👋 Usuário saiu: enviando Intent para ChamadaService")
 
-            val intent = Intent(this, ChamadaService::class.java).apply {
-                action = ChamadaServiceActions.ACTION_USUARIO_SAIU
-                putExtra(ChamadaService.EXTRA_CHAMADA_ID, chamadaId)
-                putExtra(ChamadaService.EXTRA_USUARIO_ID, usuarioId)
+                val intent = Intent(this, ChamadaService::class.java).apply {
+                    action = ChamadaServiceActions.ACTION_USUARIO_SAIU
+                    putExtra(ChamadaService.EXTRA_CHAMADA_ID, chamadaId)
+                    putExtra(ChamadaService.EXTRA_USUARIO_ID, usuarioId)
+                }
+                startService(intent)
+            } else {
+                Log.d(TAG, "👋 Usuário saiu ignorado: ChamadaService não está ativo")
             }
-            startService(intent)
         }
 
         socketManager.onUsuarioRecusou = { chamadaId, usuarioId ->
-            Log.d(TAG, "❌ Usuário recusou: enviando Intent para ChamadaService")
+            // Só envia Intent se ChamadaService está ativo (há chamada em andamento)
+            if (chamadaServiceAtivo) {
+                Log.d(TAG, "❌ Usuário recusou: enviando Intent para ChamadaService")
 
-            val intent = Intent(this, ChamadaService::class.java).apply {
-                action = ChamadaServiceActions.ACTION_USUARIO_RECUSOU
-                putExtra(ChamadaService.EXTRA_CHAMADA_ID, chamadaId)
-                putExtra(ChamadaService.EXTRA_USUARIO_ID, usuarioId)
+                val intent = Intent(this, ChamadaService::class.java).apply {
+                    action = ChamadaServiceActions.ACTION_USUARIO_RECUSOU
+                    putExtra(ChamadaService.EXTRA_CHAMADA_ID, chamadaId)
+                    putExtra(ChamadaService.EXTRA_USUARIO_ID, usuarioId)
+                }
+                startService(intent)
+            } else {
+                Log.d(TAG, "❌ Usuário recusou ignorado: ChamadaService não está ativo")
             }
-            startService(intent)
         }
 
         socketManager.onNovaMensagem = { conversaId, remetenteId, destinatarioId, titulo, mensagem, tipo ->
@@ -433,47 +468,67 @@ class SocketService : Service() {
         }
 
         socketManager.onChamadaFinalizada = { chamadaId, usuarioId ->
-            Log.d(TAG, "📴 Chamada finalizada: enviando Intent para ChamadaService")
+            // Só envia Intent se ChamadaService está ativo (há chamada em andamento)
+            if (chamadaServiceAtivo) {
+                Log.d(TAG, "📴 Chamada finalizada: enviando Intent para ChamadaService")
 
-            val intent = Intent(this, ChamadaService::class.java).apply {
-                action = ChamadaServiceActions.ACTION_CHAMADA_FINALIZADA
-                putExtra(ChamadaService.EXTRA_CHAMADA_ID, chamadaId)
-                putExtra(ChamadaService.EXTRA_USUARIO_ID, usuarioId)
+                val intent = Intent(this, ChamadaService::class.java).apply {
+                    action = ChamadaServiceActions.ACTION_CHAMADA_FINALIZADA
+                    putExtra(ChamadaService.EXTRA_CHAMADA_ID, chamadaId)
+                    putExtra(ChamadaService.EXTRA_USUARIO_ID, usuarioId)
+                }
+                startService(intent)
+            } else {
+                Log.d(TAG, "📴 Chamada finalizada ignorada: ChamadaService não está ativo")
             }
-            startService(intent)
         }
 
         socketManager.onUsuarioEntrou = { chamadaId, usuarioId ->
-            Log.d(TAG, "👤 Usuário entrou: enviando Intent para ChamadaService")
+            // Só envia Intent se ChamadaService está ativo (há chamada em andamento)
+            if (chamadaServiceAtivo) {
+                Log.d(TAG, "👤 Usuário entrou: enviando Intent para ChamadaService")
 
-            val intent = Intent(this, ChamadaService::class.java).apply {
-                action = ChamadaServiceActions.ACTION_USUARIO_ENTROU
-                putExtra(ChamadaService.EXTRA_CHAMADA_ID, chamadaId)
-                putExtra(ChamadaService.EXTRA_USUARIO_ID, usuarioId)
+                val intent = Intent(this, ChamadaService::class.java).apply {
+                    action = ChamadaServiceActions.ACTION_USUARIO_ENTROU
+                    putExtra(ChamadaService.EXTRA_CHAMADA_ID, chamadaId)
+                    putExtra(ChamadaService.EXTRA_USUARIO_ID, usuarioId)
+                }
+                startService(intent)
+            } else {
+                Log.d(TAG, "👤 Usuário entrou ignorado: ChamadaService não está ativo")
             }
-            startService(intent)
         }
 
         socketManager.onUsuarioSaiu = { chamadaId, usuarioId ->
-            Log.d(TAG, "👋 Usuário saiu: enviando Intent para ChamadaService")
+            // Só envia Intent se ChamadaService está ativo (há chamada em andamento)
+            if (chamadaServiceAtivo) {
+                Log.d(TAG, "👋 Usuário saiu: enviando Intent para ChamadaService")
 
-            val intent = Intent(this, ChamadaService::class.java).apply {
-                action = ChamadaServiceActions.ACTION_USUARIO_SAIU
-                putExtra(ChamadaService.EXTRA_CHAMADA_ID, chamadaId)
-                putExtra(ChamadaService.EXTRA_USUARIO_ID, usuarioId)
+                val intent = Intent(this, ChamadaService::class.java).apply {
+                    action = ChamadaServiceActions.ACTION_USUARIO_SAIU
+                    putExtra(ChamadaService.EXTRA_CHAMADA_ID, chamadaId)
+                    putExtra(ChamadaService.EXTRA_USUARIO_ID, usuarioId)
+                }
+                startService(intent)
+            } else {
+                Log.d(TAG, "👋 Usuário saiu ignorado: ChamadaService não está ativo")
             }
-            startService(intent)
         }
 
         socketManager.onUsuarioRecusou = { chamadaId, usuarioId ->
-            Log.d(TAG, "❌ Usuário recusou: enviando Intent para ChamadaService")
+            // Só envia Intent se ChamadaService está ativo (há chamada em andamento)
+            if (chamadaServiceAtivo) {
+                Log.d(TAG, "❌ Usuário recusou: enviando Intent para ChamadaService")
 
-            val intent = Intent(this, ChamadaService::class.java).apply {
-                action = ChamadaServiceActions.ACTION_USUARIO_RECUSOU
-                putExtra(ChamadaService.EXTRA_CHAMADA_ID, chamadaId)
-                putExtra(ChamadaService.EXTRA_USUARIO_ID, usuarioId)
+                val intent = Intent(this, ChamadaService::class.java).apply {
+                    action = ChamadaServiceActions.ACTION_USUARIO_RECUSOU
+                    putExtra(ChamadaService.EXTRA_CHAMADA_ID, chamadaId)
+                    putExtra(ChamadaService.EXTRA_USUARIO_ID, usuarioId)
+                }
+                startService(intent)
+            } else {
+                Log.d(TAG, "❌ Usuário recusou ignorado: ChamadaService não está ativo")
             }
-            startService(intent)
         }
 
         socketManager.onNovaMensagem = { conversaId, remetenteId, destinatarioId, titulo, mensagem, tipo ->

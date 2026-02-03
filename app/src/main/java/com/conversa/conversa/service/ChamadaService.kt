@@ -258,6 +258,13 @@ class ChamadaService : Service() {
                 val usuarioId = intent.getIntExtra(EXTRA_USUARIO_ID, -1)
                 val usuarioNome = intent.getStringExtra(EXTRA_USUARIO_NOME) ?: ""
 
+                // Verificação: ignora nova chamada se já houver uma chamada ativa
+                if (chamadaIdAtual != 0 && chamadaIdAtual != chamadaId) {
+                    Log.w(TAG, "⚠️ Ignorando nova chamada $chamadaId - já em chamada $chamadaIdAtual")
+                    // TODO: Considerar recusar automaticamente via API
+                    return START_NOT_STICKY
+                }
+
                 if (chamadaId != -1) {
                     processarChamadaRecebida(chamadaId, usuarioId, usuarioNome)
                 }
@@ -317,6 +324,9 @@ class ChamadaService : Service() {
         Log.d(TAG, "💀 ChamadaService DESTRUÍDO")
         Log.d(TAG, "════════════════════════════════════════")
 
+        // Garante que flag seja resetada mesmo se finalizarChamadaInterno falhar
+        SocketService.chamadaServiceAtivo = false
+
         finalizarChamadaInterno()
         liberarWakeLock()
         scope.cancel()
@@ -332,11 +342,15 @@ class ChamadaService : Service() {
     fun iniciarChamada(destinatariosIds: List<Int>) {
         scope.launch {
             try {
+                // Atualiza flag para indicar que ChamadaService está ativo
+                SocketService.chamadaServiceAtivo = true
+
                 atualizarEstado(EstadoChamadaService.INICIANDO_CHAMADA)
                 primeiroParticipanteEntrou = false
 
                 val token = userPreferences.authToken.first() ?: run {
                     Log.e(TAG, "Token não disponível")
+                    SocketService.chamadaServiceAtivo = false  // Reseta em caso de erro
                     return@launch
                 }
 
@@ -373,10 +387,12 @@ class ChamadaService : Service() {
                     conectarAudioTcp(tcpHost, chamada.id)
                 } else {
                     Log.e(TAG, "❌ Erro API: ${response.code()}")
+                    SocketService.chamadaServiceAtivo = false  // Reseta em caso de erro
                     atualizarEstado(EstadoChamadaService.IDLE)
                 }
             } catch (e: Exception) {
                 Log.e(TAG, "❌ Erro ao iniciar chamada", e)
+                SocketService.chamadaServiceAtivo = false  // Reseta em caso de erro
                 atualizarEstado(EstadoChamadaService.IDLE)
             }
         }
@@ -687,6 +703,10 @@ class ChamadaService : Service() {
         scope.launch {
             try {
                 Log.d(TAG, "Processando chamada recebida: $chamadaId de usuarioId=$usuarioId")
+
+                // Atualiza flag para indicar que ChamadaService está ativo
+                // Isso impede que eventos de outras chamadas iniciem este serviço
+                SocketService.chamadaServiceAtivo = true
 
                 // Inicializa usuarioIdAtual para filtrar participantes corretamente
                 usuarioIdAtual = userPreferences.userId.first() ?: 0
@@ -1577,6 +1597,10 @@ class ChamadaService : Service() {
         Log.d(TAG, "════════════════════════════════════════")
         Log.d(TAG, "🔚 FINALIZANDO CHAMADA")
         Log.d(TAG, "════════════════════════════════════════")
+
+        // Atualiza flag para indicar que ChamadaService não está mais ativo
+        // Isso permite que eventos de socket sejam ignorados se não houver chamada ativa
+        SocketService.chamadaServiceAtivo = false
 
         emChamada = false
         primeiroParticipanteEntrou = false
