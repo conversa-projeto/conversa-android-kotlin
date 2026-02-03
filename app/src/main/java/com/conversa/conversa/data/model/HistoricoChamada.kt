@@ -15,6 +15,7 @@ data class HistoricoChamada(
     @SerializedName("conversa_id") val conversaId: Int?,
     @SerializedName("tipo_chamada") val tipoChamada: Int, // 1=Simples, 2=Grupo
     @SerializedName("status_chamada") val statusChamada: Int, // 1-6
+    @SerializedName("criado_em") val criadoEm: LocalDateTime?,
     @SerializedName("criado_por_id") val criadoPorId: Int,
     @SerializedName("criado_por") val criadoPor: String,
     @SerializedName("usuario_exibido_id") val usuarioId: Int?,

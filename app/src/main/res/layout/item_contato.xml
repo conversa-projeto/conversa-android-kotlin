@@ -43,7 +43,7 @@
                 android:text="Nome do Contato"
                 android:textSize="16sp"
                 android:textStyle="bold"
-                android:textColor="@android:color/black"
+                android:textColor="?android:textColorPrimary"
                 android:maxLines="1"
                 android:ellipsize="end" />
 
@@ -53,7 +53,7 @@
                 android:layout_height="wrap_content"
                 android:text="@login"
                 android:textSize="14sp"
-                android:textColor="@android:color/darker_gray"
+                android:textColor="?android:textColorSecondary"
                 android:maxLines="1"
                 android:ellipsize="end"
                 android:layout_marginTop="4dp" />

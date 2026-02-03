@@ -67,8 +67,8 @@ class HistoricoChamadasAdapter(
                     ivAvatar.setImageResource(R.drawable.ic_person)
                 }
 
-                // Data/hora usando adicionado_em (ja convertido para local pelo deserializer)
-                val dt = chamada.adicionadoEm
+                // Data/hora usando adicionado_em, com fallback para criado_em
+                val dt = chamada.adicionadoEm ?: chamada.criadoEm
                 if (dt != null) {
                     val (dataFormatada, horaFormatada) = formatarDataHora(dt)
                     tvDetalhes.text = "$dataFormatada, $horaFormatada"

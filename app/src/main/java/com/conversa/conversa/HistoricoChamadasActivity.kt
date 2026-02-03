@@ -15,7 +15,11 @@ import com.conversa.conversa.data.model.TipoAcaoChamada
 import com.conversa.conversa.data.preferences.UserPreferences
 import com.conversa.conversa.databinding.ActivityHistoricoChamadasBinding
 import com.conversa.conversa.databinding.DialogDetalhesChamadaBinding
-import com.conversa.conversa.ui.chamada.ChamadaNavigator
+import android.content.Intent
+import android.os.Build
+import android.widget.Toast
+import com.conversa.conversa.service.ChamadaService
+import com.conversa.conversa.ui.chamada.ChamadaActivity
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
 import java.time.Duration
@@ -183,8 +187,8 @@ class HistoricoChamadasActivity : AppCompatActivity() {
             }
             tvStatusChamada.text = statusTexto
 
-            // Data e hora usando adicionado_em
-            val dataHora = chamada.adicionadoEm
+            // Data e hora usando adicionado_em, com fallback para criado_em
+            val dataHora = chamada.adicionadoEm ?: chamada.criadoEm
             if (dataHora != null) {
                 tvDataHora.text = formatarDataHoraCompleta(dataHora)
             } else {
@@ -205,18 +209,73 @@ class HistoricoChamadasActivity : AppCompatActivity() {
                 dialog.dismiss()
             }
 
-            // Botao Ligar
+            // Botao Ligar - busca dados da chamada e inicia nova com os mesmos participantes
             btnLigar.setOnClickListener {
                 dialog.dismiss()
-                ChamadaNavigator.iniciarChamada(
-                    context = this@HistoricoChamadasActivity,
-                    usuarioId = chamada.criadoPorId,
-                    nomeExibicao = chamada.criadoPor
-                )
+                iniciarNovaChamada(chamada.chamadaId, chamada.tipoChamada)
             }
         }
 
         dialog.show()
+    }
+
+    private fun iniciarNovaChamada(chamadaId: Int, tipoChamada: Int) {
+        lifecycleScope.launch {
+            try {
+                val token = userPreferences.authToken.first()
+                val userId = userPreferences.userId.first()
+
+                if (token.isNullOrEmpty() || userId == null) {
+                    Toast.makeText(this@HistoricoChamadasActivity, "Sessao expirada", Toast.LENGTH_SHORT).show()
+                    return@launch
+                }
+
+                val response = RetrofitClient.api.obterDadosChamada("Bearer $token", chamadaId)
+
+                if (response.isSuccessful && response.body() != null) {
+                    val dadosChamada = response.body()!!
+
+                    // Filtra usuarios excluindo o usuario atual
+                    val outrosUsuarios = dadosChamada.usuarios.filter { it.usuarioId != userId }
+
+                    if (outrosUsuarios.isEmpty()) {
+                        Toast.makeText(this@HistoricoChamadasActivity, "Nenhum participante encontrado", Toast.LENGTH_SHORT).show()
+                        return@launch
+                    }
+
+                    // 1. Iniciar ChamadaService com os destinatarios
+                    val serviceIntent = Intent(this@HistoricoChamadasActivity, ChamadaService::class.java).apply {
+                        action = ChamadaService.ACTION_INICIAR_CHAMADA
+                        putExtra(ChamadaService.EXTRA_DESTINATARIOS, outrosUsuarios.map { it.usuarioId }.toIntArray())
+                    }
+
+                    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+                        startForegroundService(serviceIntent)
+                    } else {
+                        startService(serviceIntent)
+                    }
+
+                    // 2. Abrir ChamadaActivity
+                    val nomeExibicao = if (tipoChamada == 2 || outrosUsuarios.size > 1) {
+                        outrosUsuarios.joinToString(", ") { it.usuarioNome }
+                    } else {
+                        outrosUsuarios.first().usuarioNome
+                    }
+
+                    val activityIntent = Intent(this@HistoricoChamadasActivity, ChamadaActivity::class.java).apply {
+                        putExtra(ChamadaActivity.EXTRA_USUARIO_NOME, nomeExibicao)
+                        putExtra(ChamadaActivity.EXTRA_IS_INCOMING, false)
+                    }
+                    startActivity(activityIntent)
+
+                } else {
+                    Toast.makeText(this@HistoricoChamadasActivity, "Erro ao obter dados da chamada", Toast.LENGTH_SHORT).show()
+                }
+            } catch (e: Exception) {
+                e.printStackTrace()
+                Toast.makeText(this@HistoricoChamadasActivity, "Erro: ${e.message}", Toast.LENGTH_SHORT).show()
+            }
+        }
     }
 
     private fun formatarDataHoraCompleta(dt: LocalDateTime): String {

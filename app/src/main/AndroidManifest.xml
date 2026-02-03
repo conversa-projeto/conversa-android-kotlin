@@ -113,12 +113,14 @@
             android:name=".ContatosActivity"
             android:exported="false"
             android:label="Contatos"
-            android:parentActivityName=".MainActivity" />
+            android:parentActivityName=".MainActivity"
+            android:theme="@style/Theme.Conversa.NoActionBar" />
         <activity
             android:name=".HistoricoChamadasActivity"
             android:exported="false"
             android:label="Chamadas"
-            android:parentActivityName=".MainActivity" />
+            android:parentActivityName=".MainActivity"
+            android:theme="@style/Theme.Conversa.NoActionBar" />
         <activity
             android:name=".CriarGrupoActivity"
             android:exported="false"
