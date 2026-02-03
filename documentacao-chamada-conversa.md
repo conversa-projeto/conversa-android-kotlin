@@ -71,6 +71,23 @@
    - Notificação de chamada em andamento: `setContentIntent(openActivityPendingIntent)` com `FLAG_ACTIVITY_SINGLE_TOP`
    - Permite ao usuário voltar para a tela de chamada clicando na notificação
 
+5. ✅ **Corrigir tela de chamada fechando sozinha em chat novo** - IMPLEMENTADO
+   - Problema: Race condition entre `ChamadaActivity` e `ChamadaService` - Activity lia `.value` antes da API retornar
+   - Solução: `ChamadaActivity.onServiceConnected()` agora usa `filterNotNull().first()` com timeout de 10s
+   - Mais frequente em chats novos (sem `conversaId`) pois não há delay de `obterDadosConversa()`
+
+6. ✅ **Corrigir timer iniciando antes do atendimento** - IMPLEMENTADO
+   - Problema: `iniciarTimer()` era chamado em `conectarAudioTcp()` quando TCP conectava
+   - Solução: Novo estado `CHAMANDO` entre `CONECTANDO_AUDIO` e `EM_CHAMADA`
+   - Timer só inicia em `processarUsuarioEntrou()` quando primeiro participante entra
+   - Estado `EM_CHAMADA` só é atingido quando há comunicação real
+
+7. ✅ **Otimizar atualizações silenciosas das notificações de serviço** - IMPLEMENTADO
+   - Problema: Atualizações de notificação causavam "flash" visual
+   - Solução ChamadaService: Flag `foregroundNotificacaoExibida` controla se usa `startForeground()` (primeira vez) ou `notify()` (atualizações)
+   - Solução SocketService: Adicionado `setOnlyAlertOnce(true)` em ambas as funções de notificação
+   - Garante atualizações silenciosas sem alertas visuais/sonoros desnecessários
+
 ---
 
 ## ✅ Eventos que NÃO Devem Iniciar o ChamadaService
@@ -547,9 +564,26 @@ enum class EstadoChamadaService {
     RECEBENDO_CHAMADA,       // Chamada recebida, aguardando acao do usuario
     INICIANDO_CHAMADA,       // Usuario iniciou chamada, aguardando outros
     CONECTANDO_AUDIO,        // Conectando ao servidor TCP
-    EM_CHAMADA,              // Chamada em andamento
+    CHAMANDO,                // TCP conectado, aguardando participante atender
+    EM_CHAMADA,              // Chamada em andamento (participante atendeu, timer rodando)
     FINALIZANDO              // Encerrando chamada
 }
+```
+
+**Fluxo de estados para chamada sainte:**
+```
+IDLE → INICIANDO_CHAMADA → CONECTANDO_AUDIO → CHAMANDO → EM_CHAMADA → FINALIZANDO → IDLE
+                                                 ↑            ↑
+                                            TCP conecta   Participante entra
+                                            (sem timer)   (timer inicia)
+```
+
+**Fluxo de estados para chamada recebida:**
+```
+IDLE → RECEBENDO_CHAMADA → CONECTANDO_AUDIO → CHAMANDO → EM_CHAMADA → FINALIZANDO → IDLE
+              ↑                                  ↑            ↑
+         Usuário atende                     TCP conecta   Outro participante
+                                            (sem timer)   (timer inicia)
 ```
 
 ### ✅ Arquivos a Criar/Modificar [CONCLUÍDO]
@@ -847,10 +881,11 @@ val notification = NotificationCompat.Builder(context, CHANNEL_CHAMADAS)
     .setContentText(timerText)  // "02:45"
     .setCategory(NotificationCompat.CATEGORY_CALL)
     .setOngoing(true)
+    .setOnlyAlertOnce(true)  // Importante: evita alertas em atualizações
     .setPriority(NotificationCompat.PRIORITY_LOW)
     .build()
 
-// Atualizar a cada segundo
+// Atualizar a cada segundo - usa notify() para atualização silenciosa
 notificationManager.notify(NOTIFICATION_ID_ONGOING, notification)
 ```
 
@@ -874,9 +909,55 @@ val notification = NotificationCompat.Builder(context, CHANNEL_CHAMADAS)
     .addAction(R.drawable.ic_call_end, "Encerrar", hangupPendingIntent)
     .setCategory(NotificationCompat.CATEGORY_CALL)
     .setOngoing(true)
+    .setOnlyAlertOnce(true)  // Importante: evita alertas em atualizações
     .setPriority(NotificationCompat.PRIORITY_LOW)
     .build()
 ```
+
+#### Técnicas para Atualizações Silenciosas de Notificações
+
+**Problema**: Atualizar notificações de foreground service frequentemente (ex: timer a cada segundo) pode causar:
+- "Flash" visual na notificação
+- Alertas sonoros/vibração repetidos
+- Comportamento inconsistente entre versões do Android
+
+**Solução implementada em `ChamadaService`:**
+
+```kotlin
+private var foregroundNotificacaoExibida = false
+
+private fun mostrarNotificacaoEmAndamento() {
+    val notification = // ... construir notificação com setOnlyAlertOnce(true)
+
+    val notificationId = NotificationConstants.getNotificationIdOngoing(chamadaIdAtual)
+
+    if (!foregroundNotificacaoExibida) {
+        // Primeira exibição: usa startForeground para iniciar foreground service
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.UPSIDE_DOWN_CAKE) {
+            startForeground(notificationId, notification,
+                ServiceInfo.FOREGROUND_SERVICE_TYPE_MICROPHONE or
+                ServiceInfo.FOREGROUND_SERVICE_TYPE_PHONE_CALL)
+        } else {
+            startForeground(notificationId, notification)
+        }
+        foregroundNotificacaoExibida = true
+    } else {
+        // Atualizações subsequentes: usa notify para atualização silenciosa
+        notificationManager.notify(notificationId, notification)
+    }
+}
+
+private fun finalizarChamadaInterno() {
+    // ... resetar outros estados
+    foregroundNotificacaoExibida = false  // Permitir novo startForeground na próxima chamada
+}
+```
+
+**Pontos-chave:**
+1. `setOnlyAlertOnce(true)` - Previne som/vibração em atualizações
+2. `startForeground()` - Usado apenas **uma vez** para iniciar o foreground service
+3. `notificationManager.notify()` - Usado para **atualizações** subsequentes (silencioso por natureza)
+4. Flag de controle - Rastreia se já exibiu a notificação foreground
 
 #### 3. Notificacao de Chamada Perdida (NOTIFICATION_ID = 2900+)
 

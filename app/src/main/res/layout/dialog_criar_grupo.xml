@@ -12,7 +12,7 @@
         android:text="Novo Grupo"
         android:textSize="20sp"
         android:textStyle="bold"
-        android:textColor="@android:color/black"
+        android:textColor="?android:textColorPrimary"
         android:layout_marginBottom="4dp" />
 
     <TextView
@@ -20,7 +20,7 @@
         android:layout_height="wrap_content"
         android:text="Selecione os membros"
         android:textSize="14sp"
-        android:textColor="@android:color/darker_gray"
+        android:textColor="?android:textColorSecondary"
         android:layout_marginBottom="16dp" />
 
     <com.google.android.material.textfield.TextInputLayout
@@ -35,7 +35,8 @@
             android:layout_height="wrap_content"
             android:hint="Pesquisar contato"
             android:inputType="text"
-            android:maxLines="1" />
+            android:maxLines="1"
+            android:textColor="?android:textColorPrimary" />
     </com.google.android.material.textfield.TextInputLayout>
 
     <TextView
@@ -71,7 +72,7 @@
             android:layout_height="wrap_content"
             android:layout_gravity="center"
             android:text="Nenhum contato encontrado"
-            android:textColor="@android:color/darker_gray"
+            android:textColor="?android:textColorSecondary"
             android:visibility="gone" />
 
         <TextView

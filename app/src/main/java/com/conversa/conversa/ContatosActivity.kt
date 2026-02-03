@@ -1,10 +1,15 @@
 package com.conversa.conversa
 
+import android.Manifest
 import android.content.Intent
+import android.content.pm.PackageManager
+import android.os.Build
 import android.os.Bundle
 import android.view.View
 import android.widget.Toast
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.appcompat.app.AppCompatActivity
+import androidx.core.content.ContextCompat
 import androidx.core.widget.addTextChangedListener
 import androidx.lifecycle.lifecycleScope
 import com.conversa.conversa.adapter.ContatosAdapter
@@ -15,6 +20,8 @@ import com.conversa.conversa.data.model.Conversa
 import com.conversa.conversa.data.model.CriarConversaRequest
 import com.conversa.conversa.data.preferences.UserPreferences
 import com.conversa.conversa.databinding.ActivityContatosBinding
+import com.conversa.conversa.service.ChamadaService
+import com.conversa.conversa.ui.chamada.ChamadaActivity
 import com.conversa.conversa.ui.chat.ChatActivity
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
@@ -27,6 +34,22 @@ class ContatosActivity : AppCompatActivity() {
     private lateinit var userPreferences: UserPreferences
     private lateinit var adapter: ContatosAdapter
     private var listaContatos: List<Contato> = emptyList()
+    private var contatoParaChamar: Contato? = null
+
+    private val solicitarPermissaoMicrofoneLauncher = registerForActivityResult(
+        ActivityResultContracts.RequestPermission()
+    ) { isGranted ->
+        if (isGranted) {
+            contatoParaChamar?.let { iniciarChamada(it) }
+        } else {
+            Toast.makeText(
+                this,
+                "Permissão de microfone necessária para chamadas",
+                Toast.LENGTH_SHORT
+            ).show()
+        }
+        contatoParaChamar = null
+    }
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -52,13 +75,54 @@ class ContatosActivity : AppCompatActivity() {
     }
 
     private fun setupRecyclerView() {
-        adapter = ContatosAdapter { contato ->
-            lifecycleScope.launch {
-                iniciarConversa(contato)
+        adapter = ContatosAdapter(
+            onChatClick = { contato ->
+                lifecycleScope.launch {
+                    iniciarConversa(contato)
+                }
+            },
+            onChamadaClick = { contato ->
+                verificarPermissoesEIniciarChamada(contato)
             }
-        }
+        )
 
         binding.rvContatos.adapter = adapter
+    }
+
+    private fun verificarPermissoesEIniciarChamada(contato: Contato) {
+        if (ContextCompat.checkSelfPermission(
+                this,
+                Manifest.permission.RECORD_AUDIO
+            ) != PackageManager.PERMISSION_GRANTED
+        ) {
+            contatoParaChamar = contato
+            solicitarPermissaoMicrofoneLauncher.launch(Manifest.permission.RECORD_AUDIO)
+        } else {
+            iniciarChamada(contato)
+        }
+    }
+
+    private fun iniciarChamada(contato: Contato) {
+        Toast.makeText(this, "Iniciando chamada com ${contato.nome}...", Toast.LENGTH_SHORT).show()
+
+        // Iniciar ChamadaService
+        val serviceIntent = Intent(this, ChamadaService::class.java).apply {
+            action = ChamadaService.ACTION_INICIAR_CHAMADA
+            putExtra(ChamadaService.EXTRA_DESTINATARIOS, intArrayOf(contato.id))
+        }
+
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+            startForegroundService(serviceIntent)
+        } else {
+            startService(serviceIntent)
+        }
+
+        // Abrir ChamadaActivity
+        val activityIntent = Intent(this, ChamadaActivity::class.java).apply {
+            putExtra(ChamadaActivity.EXTRA_USUARIO_NOME, contato.nome)
+            putExtra(ChamadaActivity.EXTRA_IS_INCOMING, false)
+        }
+        startActivity(activityIntent)
     }
 
     private fun setupListeners() {

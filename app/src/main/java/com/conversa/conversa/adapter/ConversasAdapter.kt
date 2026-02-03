@@ -50,14 +50,17 @@ class ConversasAdapter(
                     tvHoraMensagem.text = ""
                 }
 
-                // Ícone baseado no tipo
-                ivIconeTipo.setImageResource(
-                    if (conversa.tipo == 1) {
-                        android.R.drawable.ic_menu_share // Ícone de grupo
-                    } else {
-                        android.R.drawable.ic_menu_myplaces // Ícone de pessoa
-                    }
-                )
+                // Avatar baseado no tipo
+                if (conversa.tipo == 2) {
+                    // Grupo: mostrar ícone de grupo
+                    tvInicialNome.visibility = android.view.View.GONE
+                    ivIconeGrupo.visibility = android.view.View.VISIBLE
+                } else {
+                    // Chat 1:1: mostrar inicial do nome
+                    tvInicialNome.visibility = android.view.View.VISIBLE
+                    ivIconeGrupo.visibility = android.view.View.GONE
+                    tvInicialNome.text = conversa.descricao?.firstOrNull()?.toString()?.uppercase() ?: "?"
+                }
                 
                 // Click listener
                 root.setOnClickListener {

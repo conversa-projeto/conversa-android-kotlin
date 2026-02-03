@@ -8,6 +8,7 @@
         android:id="@+id/appBarLayout"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
+        android:theme="@style/Theme.Conversa.AppBarOverlay"
         app:layout_constraintTop_toTopOf="parent">
 
         <androidx.appcompat.widget.Toolbar
@@ -16,7 +17,9 @@
             android:layout_height="?attr/actionBarSize"
             android:background="?attr/colorPrimary"
             app:navigationIcon="@drawable/ic_arrow_back"
-            app:title="Contatos" />
+            app:popupTheme="@style/Theme.Conversa.PopupOverlay"
+            app:title="Contatos"
+            app:titleTextColor="@android:color/white" />
 
     </com.google.android.material.appbar.AppBarLayout>
 
@@ -28,7 +31,9 @@
         android:padding="16dp"
         android:drawableStart="@drawable/ic_person"
         android:drawablePadding="8dp"
-        android:background="@android:color/white"
+        android:background="?android:colorBackground"
+        android:textColor="?android:textColorPrimary"
+        android:textColorHint="?android:textColorHint"
         app:layout_constraintTop_toBottomOf="@id/appBarLayout"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintEnd_toEndOf="parent" />
@@ -59,6 +64,7 @@
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:text="Nenhum contato encontrado"
+        android:textColor="?android:textColorSecondary"
         android:textSize="16sp"
         android:visibility="gone"
         app:layout_constraintTop_toBottomOf="@id/etPesquisar"
@@ -71,6 +77,7 @@
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:text="Erro ao carregar contatos"
+        android:textColor="?android:textColorSecondary"
         android:textSize="16sp"
         android:visibility="gone"
         app:layout_constraintTop_toBottomOf="@id/etPesquisar"

@@ -8,6 +8,9 @@
         <item name="colorSecondary">@color/corPrimaria</item>
         <item name="colorSecondaryVariant">@color/corPrimaria</item>
         <item name="colorOnSecondary">@color/white</item>
+        <!-- Cores de texto -->
+        <item name="android:textColorPrimary">@color/black</item>
+        <item name="android:textColorSecondary">#666666</item>
     </style>
 
     <style name="Theme.Conversa" parent="Base.Theme.Conversa" />

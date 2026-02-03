@@ -4,7 +4,7 @@
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:orientation="vertical"
-    android:background="@android:color/white">
+    android:background="?android:colorBackground">
 
     <!-- Toolbar -->
     <com.google.android.material.appbar.MaterialToolbar
@@ -69,7 +69,8 @@
                     android:layout_height="wrap_content"
                     android:inputType="textCapSentences"
                     android:maxLength="50"
-                    android:maxLines="1" />
+                    android:maxLines="1"
+                    android:textColor="?android:textColorPrimary" />
             </com.google.android.material.textfield.TextInputLayout>
 
             <!-- Descrição do grupo (opcional) -->
@@ -89,7 +90,8 @@
                     android:maxLength="200"
                     android:maxLines="3"
                     android:minLines="2"
-                    android:gravity="top" />
+                    android:gravity="top"
+                    android:textColor="?android:textColorPrimary" />
             </com.google.android.material.textfield.TextInputLayout>
 
             <!-- Membros -->
@@ -99,7 +101,7 @@
                 android:text="Membros"
                 android:textSize="16sp"
                 android:textStyle="bold"
-                android:textColor="@android:color/black"
+                android:textColor="?android:textColorPrimary"
                 android:layout_marginBottom="8dp" />
 
             <TextView
@@ -108,7 +110,7 @@
                 android:layout_height="wrap_content"
                 android:text="Você + 0 outros"
                 android:textSize="14sp"
-                android:textColor="@android:color/darker_gray"
+                android:textColor="?android:textColorSecondary"
                 android:lineSpacingExtra="4dp" />
 
         </LinearLayout>
@@ -121,7 +123,7 @@
         android:orientation="horizontal"
         android:padding="16dp"
         android:elevation="8dp"
-        android:background="@android:color/white">
+        android:background="?android:colorBackground">
 
         <Button
             android:id="@+id/btnVoltar"

@@ -123,7 +123,8 @@ class ChamadaService : Service() {
         RECEBENDO_CHAMADA,       // Chamada recebida, aguardando ação do usuário
         INICIANDO_CHAMADA,       // Usuário iniciou chamada, aguardando outros
         CONECTANDO_AUDIO,        // Conectando ao servidor TCP
-        EM_CHAMADA,              // Chamada em andamento
+        CHAMANDO,                // TCP conectado, aguardando participante atender
+        EM_CHAMADA,              // Chamada em andamento (participante atendeu)
         FINALIZANDO              // Encerrando chamada
     }
 
@@ -205,6 +206,7 @@ class ChamadaService : Service() {
     private var capturaPausada = false
     private var reproducaoPausada = false
     private var emChamada = false
+    private var foregroundNotificacaoExibida = false
 
     // Dependências
     private lateinit var userPreferences: UserPreferences
@@ -458,6 +460,11 @@ class ChamadaService : Service() {
                     if (outrosParticipantes.isNotEmpty()) {
                         Log.d(TAG, "⚡ Já existem ${outrosParticipantes.size} participante(s)")
                         primeiroParticipanteEntrou = true
+
+                        // Muda para EM_CHAMADA e inicia timer
+                        atualizarEstado(EstadoChamadaService.EM_CHAMADA)
+                        iniciarTimer()
+
                         iniciarCapturaEReproducao()
                     } else {
                         Log.d(TAG, "⏳ Aguardando outros participantes")
@@ -530,9 +537,7 @@ class ChamadaService : Service() {
         }
 
         // Atualiza notificação
-        if (_estadoFlow.value == EstadoChamadaService.EM_CHAMADA) {
-            atualizarNotificacaoEmAndamento()
-        }
+        atualizarNotificacaoEmAndamento()
     }
 
     /**
@@ -550,9 +555,7 @@ class ChamadaService : Service() {
         }
 
         // Atualiza notificação
-        if (_estadoFlow.value == EstadoChamadaService.EM_CHAMADA) {
-            atualizarNotificacaoEmAndamento()
-        }
+        atualizarNotificacaoEmAndamento()
     }
 
     /**
@@ -597,9 +600,7 @@ class ChamadaService : Service() {
         }
 
         // Atualiza notificação
-        if (_estadoFlow.value == EstadoChamadaService.EM_CHAMADA) {
-            atualizarNotificacaoEmAndamento()
-        }
+        atualizarNotificacaoEmAndamento()
     }
 
     /**
@@ -618,9 +619,7 @@ class ChamadaService : Service() {
         }
 
         // Atualiza notificação
-        if (_estadoFlow.value == EstadoChamadaService.EM_CHAMADA) {
-            atualizarNotificacaoEmAndamento()
-        }
+        atualizarNotificacaoEmAndamento()
     }
 
     /**
@@ -770,10 +769,15 @@ class ChamadaService : Service() {
                 Log.d(TAG, "👤 PARTICIPANTE ENTROU: id=$usuarioId, nome=${usuario?.usuarioNome}")
                 Log.d(TAG, "   Total participantes ativos (exceto eu): ${participantesAtivos.size}")
 
-                // Se é o primeiro participante diferente, inicia áudio
+                // Se é o primeiro participante diferente, inicia áudio e timer
                 if (!primeiroParticipanteEntrou && usuarioId != usuarioIdAtual) {
                     primeiroParticipanteEntrou = true
-                    Log.d(TAG, "⚡ Primeiro participante entrou, iniciando áudio")
+                    Log.d(TAG, "⚡ Primeiro participante entrou, iniciando áudio e timer")
+
+                    // Agora SIM muda para EM_CHAMADA e inicia timer
+                    atualizarEstado(EstadoChamadaService.EM_CHAMADA)
+                    iniciarTimer()
+
                     iniciarCapturaEReproducao()
                 }
 
@@ -905,11 +909,9 @@ class ChamadaService : Service() {
             // Inicia worker de envio
             iniciarSender()
 
-            // Muda para estado EM_CHAMADA
-            atualizarEstado(EstadoChamadaService.EM_CHAMADA)
-
-            // Inicia timer
-            iniciarTimer()
+            // Muda para estado CHAMANDO (aguardando participante atender)
+            // O timer será iniciado quando o primeiro participante entrar
+            atualizarEstado(EstadoChamadaService.CHAMANDO)
 
             // Mostra notificação de chamada em andamento
             mostrarNotificacaoEmAndamento()
@@ -1701,6 +1703,7 @@ class ChamadaService : Service() {
         chamadaAtual = null
         isMutedMicrofone = false
         isSpeakerOn = false
+        foregroundNotificacaoExibida = false
 
         // Emite evento
         scope.launch {
@@ -1956,26 +1959,30 @@ class ChamadaService : Service() {
         // Calcula o ID da notificação dinamicamente
         val notificationId = NotificationConstants.getNotificationIdOngoing(chamadaIdAtual)
 
-        // Usa startForeground para Android 12+ para garantir que o service continue ativo
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.UPSIDE_DOWN_CAKE) {
-            // Android 14+: precisa especificar foregroundServiceType
-            startForeground(
-                notificationId,
-                notification,
-                ServiceInfo.FOREGROUND_SERVICE_TYPE_MICROPHONE or ServiceInfo.FOREGROUND_SERVICE_TYPE_PHONE_CALL
-            )
-        } else if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
-            // Android 12-13: startForeground sem tipo específico
-            startForeground(notificationId, notification)
+        if (!foregroundNotificacaoExibida) {
+            // Primeira exibição: usa startForeground para iniciar foreground service
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.UPSIDE_DOWN_CAKE) {
+                // Android 14+: precisa especificar foregroundServiceType
+                startForeground(
+                    notificationId,
+                    notification,
+                    ServiceInfo.FOREGROUND_SERVICE_TYPE_MICROPHONE or ServiceInfo.FOREGROUND_SERVICE_TYPE_PHONE_CALL
+                )
+            } else {
+                startForeground(notificationId, notification)
+            }
+            foregroundNotificacaoExibida = true
         } else {
-            // Android < 12: apenas notify
+            // Atualizações subsequentes: usa notify para atualização silenciosa
             notificationManager.notify(notificationId, notification)
         }
     }
 
     private fun atualizarNotificacaoEmAndamento() {
         val estado = _estadoFlow.value
-        if (estado == EstadoChamadaService.EM_CHAMADA || estado == EstadoChamadaService.CONECTANDO_AUDIO) {
+        if (estado == EstadoChamadaService.EM_CHAMADA ||
+            estado == EstadoChamadaService.CHAMANDO ||
+            estado == EstadoChamadaService.CONECTANDO_AUDIO) {
             mostrarNotificacaoEmAndamento()
         }
     }

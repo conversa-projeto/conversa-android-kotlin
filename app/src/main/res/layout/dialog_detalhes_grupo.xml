@@ -16,7 +16,7 @@
             android:text="Detalhes do Grupo"
             android:textSize="20sp"
             android:textStyle="bold"
-            android:textColor="@android:color/black"
+            android:textColor="?android:textColorPrimary"
             android:layout_marginBottom="16dp" />
 
         <!-- Ícone do Grupo -->
@@ -46,7 +46,8 @@
                 android:layout_height="wrap_content"
                 android:hint="Nome do grupo *"
                 android:inputType="textCapWords"
-                android:maxLines="1" />
+                android:maxLines="1"
+                android:textColor="?android:textColorPrimary" />
         </com.google.android.material.textfield.TextInputLayout>
 
         <!-- Campo Descrição (Opcional) -->
@@ -61,7 +62,8 @@
                 android:layout_height="wrap_content"
                 android:hint="Descrição (opcional)"
                 android:inputType="textCapSentences|textMultiLine"
-                android:maxLines="3" />
+                android:maxLines="3"
+                android:textColor="?android:textColorPrimary" />
         </com.google.android.material.textfield.TextInputLayout>
 
         <!-- Lista de Membros Selecionados -->
@@ -71,7 +73,7 @@
             android:text="Membros selecionados:"
             android:textSize="14sp"
             android:textStyle="bold"
-            android:textColor="@android:color/black"
+            android:textColor="?android:textColorPrimary"
             android:layout_marginBottom="8dp" />
 
         <TextView
@@ -80,7 +82,7 @@
             android:layout_height="wrap_content"
             android:text="Você + 2 outros"
             android:textSize="14sp"
-            android:textColor="@android:color/darker_gray"
+            android:textColor="?android:textColorSecondary"
             android:layout_marginBottom="16dp" />
 
         <!-- Botões -->

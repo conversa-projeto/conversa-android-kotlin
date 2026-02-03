@@ -17,18 +17,43 @@
         android:layout_height="wrap_content"
         android:padding="12dp">
 
-        <!-- Ícone de tipo (pessoa/grupo) -->
-        <ImageView
-            android:id="@+id/ivIconeTipo"
+        <!-- Avatar container -->
+        <FrameLayout
+            android:id="@+id/avatarContainer"
             android:layout_width="48dp"
             android:layout_height="48dp"
-            android:background="?attr/colorPrimary"
-            android:contentDescription="Ícone do tipo de conversa"
-            android:padding="8dp"
-            android:tint="@android:color/white"
+            android:background="@drawable/badge_circle"
+            android:backgroundTint="?attr/colorPrimary"
             app:layout_constraintStart_toStartOf="parent"
-            app:layout_constraintTop_toTopOf="parent"
-            tools:src="@android:drawable/ic_menu_myplaces" />
+            app:layout_constraintTop_toTopOf="parent">
+
+            <!-- Inicial do nome (chat 1:1) -->
+            <TextView
+                android:id="@+id/tvInicialNome"
+                android:layout_width="match_parent"
+                android:layout_height="match_parent"
+                android:fontFamily="monospace"
+                android:gravity="center"
+                android:textColor="@android:color/white"
+                android:textSize="20sp"
+                android:textStyle="bold"
+                android:visibility="gone"
+                tools:text="J"
+                tools:visibility="visible" />
+
+            <!-- Ícone de grupo -->
+            <ImageView
+                android:id="@+id/ivIconeGrupo"
+                android:layout_width="match_parent"
+                android:layout_height="match_parent"
+                android:padding="10dp"
+                android:contentDescription="Grupo"
+                android:src="@drawable/ic_group_call"
+                android:visibility="gone"
+                app:tint="@android:color/white"
+                tools:visibility="gone" />
+
+        </FrameLayout>
 
         <!-- Nome da conversa -->
         <TextView
@@ -43,8 +68,8 @@
             android:textSize="16sp"
             android:textStyle="bold"
             app:layout_constraintEnd_toStartOf="@id/tvHoraMensagem"
-            app:layout_constraintStart_toEndOf="@id/ivIconeTipo"
-            app:layout_constraintTop_toTopOf="@id/ivIconeTipo"
+            app:layout_constraintStart_toEndOf="@id/avatarContainer"
+            app:layout_constraintTop_toTopOf="@id/avatarContainer"
             tools:text="João Silva" />
 
         <!-- Hora da última mensagem -->
@@ -71,7 +96,7 @@
             android:textColor="?android:textColorSecondary"
             android:textSize="14sp"
             app:layout_constraintEnd_toStartOf="@id/tvBadgeNaoLidas"
-            app:layout_constraintStart_toEndOf="@id/ivIconeTipo"
+            app:layout_constraintStart_toEndOf="@id/avatarContainer"
             app:layout_constraintTop_toBottomOf="@id/tvNomeConversa"
             tools:text="Olá! Como você está?" />
 

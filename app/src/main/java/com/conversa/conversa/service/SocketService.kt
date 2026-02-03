@@ -58,10 +58,8 @@ class SocketService : Service() {
         private const val TAG = "SocketService"
 
         private const val NOTIFICATION_ID_SERVICE = 1000
-        private const val NOTIFICATION_ID_MENSAGEM = 3001
 
         private const val CHANNEL_ID_SERVICE = "conversa_service_channel"
-        private const val CHANNEL_ID_MENSAGENS = "conversa_mensagem_channel"
 
         private const val EXTRA_HOST = "host"
         private const val EXTRA_PORT = "port"
@@ -389,7 +387,7 @@ class SocketService : Service() {
             // Remove canais antigos para recriar com novas configurações
             try {
                 notificationManager.deleteNotificationChannel(CHANNEL_ID_SERVICE)
-                notificationManager.deleteNotificationChannel(CHANNEL_ID_MENSAGENS)
+                notificationManager.deleteNotificationChannel(NotificationConstants.CHANNEL_ID_MENSAGENS)
                 Log.d(TAG, "Canais antigos removidos")
             } catch (e: Exception) {
                 Log.d(TAG, "Canais ainda não existiam")
@@ -406,7 +404,7 @@ class SocketService : Service() {
             }
 
             val mensagensChannel = NotificationChannel(
-                CHANNEL_ID_MENSAGENS,
+                NotificationConstants.CHANNEL_ID_MENSAGENS,
                 "Mensagens",
                 NotificationManager.IMPORTANCE_DEFAULT
             ).apply {
@@ -437,6 +435,7 @@ class SocketService : Service() {
             .setSmallIcon(R.drawable.ic_notification)
             .setContentIntent(pendingIntent)
             .setOngoing(true)
+            .setOnlyAlertOnce(true)
             .setPriority(NotificationCompat.PRIORITY_LOW)
             .setCategory(NotificationCompat.CATEGORY_SERVICE)
             .build()
@@ -598,10 +597,11 @@ class SocketService : Service() {
             .setSmallIcon(R.drawable.ic_notification)
             .setContentIntent(pendingIntent)
             .setOngoing(true)
+            .setOnlyAlertOnce(true)
             .setPriority(NotificationCompat.PRIORITY_LOW)
             .setCategory(NotificationCompat.CATEGORY_SERVICE)
             .build()
-        
+
         notificationManager.notify(NOTIFICATION_ID_SERVICE, notification)
     }
 

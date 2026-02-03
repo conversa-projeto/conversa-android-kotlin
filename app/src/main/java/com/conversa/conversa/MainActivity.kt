@@ -118,11 +118,6 @@ class MainActivity : AppCompatActivity(),
             inicializarSocket() // Inicia IMEDIATAMENTE
             carregarConversas()
         }
-
-        binding.fab.setOnClickListener {
-            val intent = Intent(this, ContatosActivity::class.java)
-            startActivity(intent)
-        }
     }
     
     /**

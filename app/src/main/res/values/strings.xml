@@ -35,6 +35,8 @@
     <string name="atender">Atender</string>
     <string name="em_chamada_com">Em chamada com %1$s</string>
     <string name="chamada_grupo">Chamada em grupo</string>
+    <string name="chat">Chat</string>
+    <string name="chamada">Chamada</string>
 
     <string name="lorem_ipsum">
         Lorem ipsum dolor sit amet, consectetur adipiscing elit. Nam in scelerisque sem. Mauris

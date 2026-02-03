@@ -13,7 +13,8 @@ import com.conversa.conversa.databinding.ItemContatoBinding
  * Usado para conversas 1:1
  */
 class ContatosAdapter(
-    private val onContatoClick: (Contato) -> Unit
+    private val onChatClick: (Contato) -> Unit,
+    private val onChamadaClick: (Contato) -> Unit
 ) : ListAdapter<Contato, ContatosAdapter.ContatoViewHolder>(ContatoDiffCallback()) {
 
     private var listaCompleta: List<Contato> = emptyList()
@@ -24,7 +25,7 @@ class ContatosAdapter(
             parent,
             false
         )
-        return ContatoViewHolder(binding, onContatoClick)
+        return ContatoViewHolder(binding, onChatClick, onChamadaClick)
     }
 
     override fun onBindViewHolder(holder: ContatoViewHolder, position: Int) {
@@ -50,7 +51,8 @@ class ContatosAdapter(
 
     class ContatoViewHolder(
         private val binding: ItemContatoBinding,
-        private val onContatoClick: (Contato) -> Unit
+        private val onChatClick: (Contato) -> Unit,
+        private val onChamadaClick: (Contato) -> Unit
     ) : RecyclerView.ViewHolder(binding.root) {
 
         fun bind(contato: Contato) {
@@ -61,8 +63,12 @@ class ContatosAdapter(
                 // Primeira letra do nome como avatar
                 tvIconeContato.text = contato.nome.firstOrNull()?.toString()?.uppercase() ?: "?"
 
-                root.setOnClickListener {
-                    onContatoClick(contato)
+                btnChat.setOnClickListener {
+                    onChatClick(contato)
+                }
+
+                btnChamada.setOnClickListener {
+                    onChamadaClick(contato)
                 }
             }
         }
@@ -78,3 +84,4 @@ class ContatosAdapter(
         }
     }
 }
+

@@ -4,19 +4,27 @@ import android.app.NotificationManager
 import android.app.PendingIntent
 import android.content.Context
 import android.content.Intent
+import android.os.Build
 import android.util.Log
 import androidx.core.app.NotificationCompat
+import androidx.core.app.Person
+import androidx.core.app.RemoteInput
 import com.conversa.conversa.MainActivity
 import com.conversa.conversa.R
+import com.conversa.conversa.service.NotificationConstants
 import java.util.concurrent.ConcurrentHashMap
 
 /**
  * Gerenciador de notificações de mensagens agrupadas por conversa
+ * 
+ * Utiliza MessagingStyle para exibir mensagens no estilo nativo do Android
+ * e RemoteInput para permitir resposta direta da notificação.
  */
 object MensagemNotificationManager {
     private const val TAG = "MensagemNotificationManager"
-    private const val CHANNEL_ID_MENSAGENS = "conversa_mensagens_channel"
-    private const val BASE_NOTIFICATION_ID = 2000 // Base para IDs de notificação de mensagens
+
+    /** Chave para extrair texto da resposta direta */
+    const val KEY_TEXT_REPLY = "key_text_reply"
 
     /**
      * Dados de uma mensagem para notificação
@@ -42,6 +50,9 @@ object MensagemNotificationManager {
 
     // Armazena informações de conversas com mensagens
     private val conversasInfo = ConcurrentHashMap<Int, ConversaInfo>()
+
+    // Cache de Person objects para reutilização
+    private val personCache = ConcurrentHashMap<Int, Person>()
 
     /**
      * Adiciona uma nova mensagem e atualiza a notificação da conversa
@@ -90,7 +101,19 @@ object MensagemNotificationManager {
     }
 
     /**
-     * Atualiza a notificação de uma conversa específica
+     * Cria ou obtém um Person object para um remetente
+     */
+    private fun getPerson(remetenteId: Int, nome: String): Person {
+        return personCache.getOrPut(remetenteId) {
+            Person.Builder()
+                .setKey(remetenteId.toString())
+                .setName(nome)
+                .build()
+        }
+    }
+
+    /**
+     * Atualiza a notificação de uma conversa específica usando MessagingStyle
      */
     private fun atualizarNotificacaoConversa(context: Context, conversaId: Int) {
         val conversaInfo = conversasInfo[conversaId] ?: return
@@ -101,7 +124,7 @@ object MensagemNotificationManager {
         }
 
         val notificationManager = context.getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
-        val notificationId = BASE_NOTIFICATION_ID + conversaId
+        val notificationId = NotificationConstants.getNotificationIdMensagem(conversaId)
 
         val mensagens = conversaInfo.mensagens
         val ultimaMensagem = mensagens.last()
@@ -120,44 +143,104 @@ object MensagemNotificationManager {
             PendingIntent.FLAG_IMMUTABLE or PendingIntent.FLAG_UPDATE_CURRENT
         )
 
-        // Cria o estilo de notificação com múltiplas linhas
-        val inboxStyle = NotificationCompat.InboxStyle()
+        // Cria RemoteInput para resposta direta
+        val remoteInput = RemoteInput.Builder(KEY_TEXT_REPLY)
+            .setLabel("Responder")
+            .build()
 
-        // Adiciona as últimas 5 mensagens ao estilo inbox
-        // Mostra "Nome do Remetente: mensagem" para cada linha
-        mensagens.takeLast(5).forEach { msg ->
-            inboxStyle.addLine("${msg.titulo}: ${msg.mensagem}")
+        // Intent para resposta direta
+        val replyIntent = Intent(context, MensagemActionReceiver::class.java).apply {
+            action = MensagemActionReceiver.ACTION_REPLY
+            putExtra(MensagemActionReceiver.EXTRA_CONVERSA_ID, conversaId)
+            putExtra(MensagemActionReceiver.EXTRA_DESTINATARIO_ID, ultimaMensagem.remetenteId)
         }
 
-        // Define o resumo
-        val textoResumo = if (quantidadeMensagens > 1) {
-            "$quantidadeMensagens novas mensagens"
-        } else {
-            "Nova mensagem"
-        }
-        inboxStyle.setSummaryText(textoResumo)
+        val replyPendingIntent = PendingIntent.getBroadcast(
+            context,
+            conversaId,
+            replyIntent,
+            PendingIntent.FLAG_MUTABLE or PendingIntent.FLAG_UPDATE_CURRENT
+        )
 
-        // Título da notificação = Nome da conversa/grupo
-        // Subtítulo = Nome do remetente da última mensagem
-        // Texto = Apenas a mensagem (sem o nome do remetente)
-        val notification = NotificationCompat.Builder(context, CHANNEL_ID_MENSAGENS)
+        // Cria ação de resposta direta
+        val replyAction = NotificationCompat.Action.Builder(
+            R.drawable.ic_notification,
+            "Responder",
+            replyPendingIntent
+        )
+            .addRemoteInput(remoteInput)
+            .setAllowGeneratedReplies(true)
+            .build()
+
+        // Cria o estilo MessagingStyle
+        val user = Person.Builder()
+            .setName("Eu")
+            .build()
+
+        val messagingStyle = NotificationCompat.MessagingStyle(user)
+            .setConversationTitle(conversaInfo.nomeConversa)
+
+        // Adiciona as últimas 10 mensagens ao estilo
+        mensagens.takeLast(10).forEach { msg ->
+            val sender = getPerson(msg.remetenteId, msg.titulo)
+            messagingStyle.addMessage(
+                msg.mensagem,
+                msg.timestamp,
+                sender
+            )
+        }
+
+        // Constrói a notificação
+        val notification = NotificationCompat.Builder(context, NotificationConstants.CHANNEL_ID_MENSAGENS)
             .setSmallIcon(R.drawable.ic_notification)
-            .setContentTitle(conversaInfo.nomeConversa) // Nome da conversa/grupo
-            .setSubText(ultimaMensagem.titulo) // Nome do remetente
-            .setContentText(ultimaMensagem.mensagem) // Apenas a mensagem
+            .setStyle(messagingStyle)
             .setContentIntent(pendingIntent)
+            .addAction(replyAction)
             .setAutoCancel(true)
-            .setPriority(NotificationCompat.PRIORITY_DEFAULT)
+            .setPriority(NotificationCompat.PRIORITY_HIGH)
             .setCategory(NotificationCompat.CATEGORY_MESSAGE)
-            .setStyle(inboxStyle)
             .setNumber(quantidadeMensagens)
-            .setGroup("group_conversa_$conversaId") // Agrupa por conversa
+            .setGroup("group_mensagens")
             .setWhen(ultimaMensagem.timestamp)
             .setShowWhen(true)
+            .setOnlyAlertOnce(mensagens.size > 1) // Só alerta na primeira mensagem
             .build()
 
         notificationManager.notify(notificationId, notification)
         Log.d(TAG, "✅ Notificação atualizada - Conversa: ${conversaInfo.nomeConversa}, Remetente: ${ultimaMensagem.titulo}, Total mensagens: $quantidadeMensagens")
+    }
+
+    /**
+     * Atualiza a notificação após enviar uma resposta
+     */
+    fun atualizarNotificacaoAposResposta(context: Context, conversaId: Int, mensagemEnviada: String) {
+        val conversaInfo = conversasInfo[conversaId] ?: return
+        
+        Log.d(TAG, "📤 Atualizando notificação após resposta - Conversa: $conversaId")
+        
+        // Limpa as mensagens após responder e remove a notificação
+        limparMensagensConversa(context, conversaId)
+    }
+
+    /**
+     * Mostra erro na notificação quando falha ao enviar resposta
+     */
+    fun mostrarErroResposta(context: Context, conversaId: Int, erro: String) {
+        val notificationManager = context.getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
+        val notificationId = NotificationConstants.getNotificationIdMensagem(conversaId)
+        
+        val conversaInfo = conversasInfo[conversaId]
+        val nomeConversa = conversaInfo?.nomeConversa ?: "Conversa"
+
+        val notification = NotificationCompat.Builder(context, NotificationConstants.CHANNEL_ID_MENSAGENS)
+            .setSmallIcon(R.drawable.ic_notification)
+            .setContentTitle(nomeConversa)
+            .setContentText("Falha ao enviar: $erro")
+            .setPriority(NotificationCompat.PRIORITY_DEFAULT)
+            .setAutoCancel(true)
+            .build()
+
+        notificationManager.notify(notificationId, notification)
     }
 
     /**
@@ -169,7 +252,7 @@ object MensagemNotificationManager {
         conversasInfo.remove(conversaId)
 
         val notificationManager = context.getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
-        val notificationId = BASE_NOTIFICATION_ID + conversaId
+        val notificationId = NotificationConstants.getNotificationIdMensagem(conversaId)
         notificationManager.cancel(notificationId)
 
         Log.d(TAG, "✅ Notificação cancelada para conversa $conversaId")
@@ -184,11 +267,12 @@ object MensagemNotificationManager {
         val notificationManager = context.getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
 
         conversasInfo.keys.forEach { conversaId ->
-            val notificationId = BASE_NOTIFICATION_ID + conversaId
+            val notificationId = NotificationConstants.getNotificationIdMensagem(conversaId)
             notificationManager.cancel(notificationId)
         }
 
         conversasInfo.clear()
+        personCache.clear()
         Log.d(TAG, "✅ Todas as notificações canceladas")
     }
 
@@ -204,5 +288,12 @@ object MensagemNotificationManager {
      */
     fun getQuantidadeConversasComMensagens(): Int {
         return conversasInfo.size
+    }
+
+    /**
+     * Retorna informações de uma conversa
+     */
+    fun getConversaInfo(conversaId: Int): ConversaInfo? {
+        return conversasInfo[conversaId]
     }
 }

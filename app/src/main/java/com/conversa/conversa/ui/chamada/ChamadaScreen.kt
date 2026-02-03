@@ -59,7 +59,8 @@ fun ChamadaScreen(
         }
 
         ChamadaService.EstadoChamadaService.INICIANDO_CHAMADA,
-        ChamadaService.EstadoChamadaService.CONECTANDO_AUDIO -> {
+        ChamadaService.EstadoChamadaService.CONECTANDO_AUDIO,
+        ChamadaService.EstadoChamadaService.CHAMANDO -> {
             // Tela de chamada sainte - mostra nome do outro participante
             OutgoingCallScreen(
                 callerName = outroParticipanteNome,

@@ -1,9 +1,14 @@
 package com.conversa.conversa
 
+import android.Manifest
 import android.content.Intent
+import android.content.pm.PackageManager
+import android.os.Build
 import android.os.Bundle
 import android.widget.Toast
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.appcompat.app.AppCompatActivity
+import androidx.core.content.ContextCompat
 import androidx.lifecycle.lifecycleScope
 import com.conversa.conversa.data.api.RetrofitClient
 import com.conversa.conversa.data.preferences.UserPreferences
@@ -12,19 +17,62 @@ import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
 
 class SplashActivity : AppCompatActivity() {
-    
+
     private lateinit var userPreferences: UserPreferences
-    
+
+    // Permissoes de runtime necessarias para o funcionamento do app
+    private val permissoesNecessarias: Array<String> by lazy {
+        mutableListOf<String>().apply {
+            // Necessaria para foregroundServiceType="microphone" e chamadas de voz
+            add(Manifest.permission.RECORD_AUDIO)
+            // Necessaria para exibir notificacoes (Android 13+)
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+                add(Manifest.permission.POST_NOTIFICATIONS)
+            }
+            // Necessaria para audio Bluetooth em chamadas (Android 12+)
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
+                add(Manifest.permission.BLUETOOTH_CONNECT)
+            }
+        }.toTypedArray()
+    }
+
+    // Launcher para solicitar multiplas permissoes
+    private val requestPermissionsLauncher = registerForActivityResult(
+        ActivityResultContracts.RequestMultiplePermissions()
+    ) { _ ->
+        // Continua independente do resultado (usuario pode negar)
+        // O app funcionara com funcionalidade limitada se permissoes forem negadas
+        lifecycleScope.launch {
+            verificarConfiguracao()
+        }
+    }
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_splash)
-        
+
         userPreferences = UserPreferences(this)
-        
-        // Aguarda 2 segundos e verifica configurações
+
+        // Aguarda 2 segundos e verifica permissoes
         lifecycleScope.launch {
             delay(2000)
-            verificarConfiguracao()
+            verificarPermissoes()
+        }
+    }
+
+    private fun verificarPermissoes() {
+        val permissoesFaltando = permissoesNecessarias.filter {
+            ContextCompat.checkSelfPermission(this, it) != PackageManager.PERMISSION_GRANTED
+        }
+
+        if (permissoesFaltando.isNotEmpty()) {
+            // Solicita as permissoes que ainda nao foram concedidas
+            requestPermissionsLauncher.launch(permissoesFaltando.toTypedArray())
+        } else {
+            // Todas as permissoes ja foram concedidas, continua o fluxo
+            lifecycleScope.launch {
+                verificarConfiguracao()
+            }
         }
     }
     

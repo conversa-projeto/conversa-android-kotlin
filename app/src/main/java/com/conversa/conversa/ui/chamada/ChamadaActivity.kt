@@ -34,8 +34,13 @@ import androidx.core.app.ActivityCompat
 import androidx.lifecycle.lifecycleScope
 import com.conversa.conversa.service.ChamadaRingtoneManager
 import com.conversa.conversa.service.ChamadaService
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay
+import kotlinx.coroutines.flow.filterNotNull
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
+import kotlinx.coroutines.withTimeoutOrNull
 
 /**
  * Activity de chamada usando Compose e vinculada ao ChamadaService.
@@ -85,18 +90,33 @@ class ChamadaActivity : ComponentActivity(), SensorEventListener {
             chamadaService = (binder as ChamadaService.LocalBinder).getService()
             bound = true
 
-            // Se chamadaId não veio no intent, obtém do service (caso de REORDER_TO_FRONT)
+            // Se chamadaId não veio no intent, aguarda do service (com timeout)
             if (chamadaIdFromIntent == -1) {
-                val chamadaAtual = chamadaService?.chamadaAtualFlow?.value
-                if (chamadaAtual != null) {
-                    chamadaIdFromIntent = chamadaAtual.id
-                    Log.d(TAG, "chamadaId obtido do service: $chamadaIdFromIntent")
-                } else {
-                    // Sem chamada ativa no service, não há o que mostrar
-                    Log.e(TAG, "Nenhuma chamada ativa no service")
-                    Toast.makeText(this@ChamadaActivity, "Nenhuma chamada ativa", Toast.LENGTH_SHORT).show()
-                    finish()
-                    return
+                lifecycleScope.launch {
+                    try {
+                        // Aguarda chamada ser criada (máx 10 segundos)
+                        val chamadaAtual = withTimeoutOrNull(10_000L) {
+                            chamadaService?.chamadaAtualFlow
+                                ?.filterNotNull()
+                                ?.first()
+                        }
+
+                        if (chamadaAtual != null) {
+                            chamadaIdFromIntent = chamadaAtual.id
+                            Log.d(TAG, "chamadaId obtido do service: $chamadaIdFromIntent")
+                        } else {
+                            Log.e(TAG, "Timeout aguardando chamada no service")
+                            withContext(Dispatchers.Main) {
+                                Toast.makeText(this@ChamadaActivity, "Erro ao iniciar chamada", Toast.LENGTH_SHORT).show()
+                                finish()
+                            }
+                        }
+                    } catch (e: Exception) {
+                        Log.e(TAG, "Erro ao aguardar chamada", e)
+                        withContext(Dispatchers.Main) {
+                            finish()
+                        }
+                    }
                 }
             }
 
@@ -213,7 +233,8 @@ class ChamadaActivity : ComponentActivity(), SensorEventListener {
             val service = chamadaService
             if (service != null) {
                 val estado = service.estadoFlow.value
-                val emChamada = estado == ChamadaService.EstadoChamadaService.EM_CHAMADA
+                val emChamada = estado == ChamadaService.EstadoChamadaService.EM_CHAMADA ||
+                                estado == ChamadaService.EstadoChamadaService.CHAMANDO
 
                 if (emChamada) {
                     if (isNear) {
@@ -354,8 +375,9 @@ class ChamadaActivity : ComponentActivity(), SensorEventListener {
         if (service != null) {
             val estado = service.estadoFlow.value
             when (estado) {
-                ChamadaService.EstadoChamadaService.EM_CHAMADA -> {
-                    // Permite minimizar durante chamada ativa
+                ChamadaService.EstadoChamadaService.EM_CHAMADA,
+                ChamadaService.EstadoChamadaService.CHAMANDO -> {
+                    // Permite minimizar durante chamada ativa ou chamando
                     // A chamada continua em background e o banner aparece nas outras telas
                     // Usa finish() para voltar à Activity anterior (ChatActivity/MainActivity)
                     Log.d(TAG, "onBackPressed - minimizando chamada (estado: $estado)")

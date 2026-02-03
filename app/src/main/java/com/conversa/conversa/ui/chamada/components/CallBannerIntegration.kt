@@ -67,8 +67,9 @@ private fun CallBannerContent(
     val chamada by chamadaObserver.chamadaAtualFlow.collectAsState()
     val timer by chamadaObserver.timerFlow.collectAsState()
 
-    // O banner só é visível quando há chamada em andamento
-    val isVisible = estado == ChamadaService.EstadoChamadaService.EM_CHAMADA
+    // O banner só é visível quando há chamada em andamento (CHAMANDO ou EM_CHAMADA)
+    val isVisible = estado == ChamadaService.EstadoChamadaService.EM_CHAMADA ||
+                    estado == ChamadaService.EstadoChamadaService.CHAMANDO
 
     // Obtém o nome do contato/grupo
     val callerName = chamadaObserver.getCallerName(meuUsuarioId)

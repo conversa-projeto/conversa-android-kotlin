@@ -71,10 +71,11 @@ class ChamadaServiceObserver(private val context: Context) {
 
     /**
      * Verifica se o banner deve ser exibido.
-     * O banner é visível quando há uma chamada em andamento (EM_CHAMADA).
+     * O banner é visível quando há uma chamada em andamento (CHAMANDO ou EM_CHAMADA).
      */
     val shouldShowBanner: Boolean
-        get() = _estadoFlow.value == ChamadaService.EstadoChamadaService.EM_CHAMADA
+        get() = _estadoFlow.value == ChamadaService.EstadoChamadaService.EM_CHAMADA ||
+                _estadoFlow.value == ChamadaService.EstadoChamadaService.CHAMANDO
 
     /**
      * Retorna o nome do contato/grupo da chamada atual.

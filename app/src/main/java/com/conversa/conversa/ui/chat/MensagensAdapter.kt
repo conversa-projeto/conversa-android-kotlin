@@ -620,3 +620,17 @@ class MensagemDiffCallback : DiffUtil.ItemCallback<Mensagem>() {
         return oldItem == newItem
     }
 }
+
+/**
+ * Extension function para adicionar uma nova mensagem à lista existente
+ * Isso evita recarregar toda a lista quando uma nova mensagem chega
+ */
+fun MensagensAdapter.addMensagem(mensagem: Mensagem) {
+    val currentList = currentList.toMutableList()
+    
+    // Verifica se a mensagem já existe na lista (evita duplicatas)
+    if (currentList.none { it.id == mensagem.id }) {
+        currentList.add(mensagem)
+        submitList(currentList)
+    }
+}

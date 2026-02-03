@@ -1,10 +1,14 @@
 package com.conversa.conversa.ui.chat
 
 import android.Manifest
+import android.content.ComponentName
+import android.content.ServiceConnection
 import android.content.pm.PackageManager
 import android.net.Uri
 import android.os.Build
 import android.os.Bundle
+import android.os.IBinder
+import android.util.Log
 import android.view.MenuItem
 import android.view.View
 import android.widget.Toast
@@ -21,15 +25,18 @@ import com.conversa.conversa.data.model.EnviarMensagemRequest
 import com.conversa.conversa.data.model.Mensagem
 import com.conversa.conversa.data.preferences.UserPreferences
 import com.conversa.conversa.databinding.ActivityChatBinding
+import com.conversa.conversa.service.SocketService
 import com.conversa.conversa.ui.chamada.ChamadaActivity
 import com.conversa.conversa.ui.chamada.ChamadaNavigator
 import com.conversa.conversa.ui.chamada.components.setupCallBanner
 import com.conversa.conversa.utils.ChamadaServiceObserver
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 import java.io.File
 
-class ChatActivity : AppCompatActivity() {
+class ChatActivity : AppCompatActivity(), SocketService.CallListener {
 
     private lateinit var binding: ActivityChatBinding
     private lateinit var userPreferences: UserPreferences
@@ -62,6 +69,26 @@ class ChatActivity : AppCompatActivity() {
 
     // Observer para ChamadaService (exibe CallBanner)
     private lateinit var chamadaObserver: ChamadaServiceObserver
+
+    // Conexão com SocketService para receber mensagens em tempo real
+    private var socketService: SocketService? = null
+    private var socketBound = false
+    
+    private val socketConnection = object : ServiceConnection {
+        override fun onServiceConnected(name: ComponentName?, service: IBinder?) {
+            val binder = service as SocketService.LocalBinder
+            socketService = binder.getService()
+            socketService?.setCallListener(this@ChatActivity)
+            socketBound = true
+            Log.d(TAG, "SocketService vinculado à ChatActivity")
+        }
+
+        override fun onServiceDisconnected(name: ComponentName?) {
+            socketService = null
+            socketBound = false
+            Log.d(TAG, "SocketService desvinculado da ChatActivity")
+        }
+    }
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -472,9 +499,8 @@ class ChatActivity : AppCompatActivity() {
             return
         }
         
-        // Desabilita input enquanto envia
-        binding.etMensagem.isEnabled = false
-        binding.btnEnviar.isEnabled = false
+        // Limpa o campo de texto imediatamente
+        binding.etMensagem.setText("")
         
         lifecycleScope.launch {
             try {
@@ -484,8 +510,6 @@ class ChatActivity : AppCompatActivity() {
                     if (conversaCriada) {
                         criarConversa = false // Marca como criada
                     } else {
-                        binding.etMensagem.isEnabled = true
-                        binding.btnEnviar.isEnabled = true
                         return@launch
                     }
                 }
@@ -507,11 +531,8 @@ class ChatActivity : AppCompatActivity() {
                 )
                 
                 if (response.isSuccessful) {
-                    // Limpa o campo de texto
-                    binding.etMensagem.setText("")
-                    
-                    // Recarrega mensagens
-                    carregarMensagens()
+                    // Busca as mensagens atualizadas sem mostrar loading
+                    atualizarMensagensSemLoading()
                 } else {
                     Toast.makeText(
                         this@ChatActivity,
@@ -527,11 +548,41 @@ class ChatActivity : AppCompatActivity() {
                     "Erro ao enviar: ${e.message}",
                     Toast.LENGTH_SHORT
                 ).show()
-            } finally {
-                // Reabilita input
-                binding.etMensagem.isEnabled = true
-                binding.btnEnviar.isEnabled = true
             }
+        }
+    }
+    
+    /**
+     * Atualiza as mensagens sem mostrar loading (sem piscar a tela)
+     */
+    private suspend fun atualizarMensagensSemLoading() {
+        try {
+            val response = RetrofitClient.api.obterMensagens(
+                token = "Bearer $authToken",
+                conversaId = conversaId,
+                mensagemReferencia = 0,
+                mensagensPrevias = 50,
+                mensagensSeguintes = 0
+            )
+            
+            if (response.isSuccessful && response.body() != null) {
+                val mensagens = response.body()!!
+                
+                withContext(Dispatchers.Main) {
+                    // Atualiza a lista e faz scroll após a lista ser atualizada
+                    mensagensAdapter.submitList(mensagens) {
+                        // Este callback é executado após a lista ser atualizada
+                        if (mensagens.isNotEmpty()) {
+                            binding.rvMensagens.scrollToPosition(mensagens.size - 1)
+                        }
+                    }
+                }
+                
+                // Marca mensagens como visualizadas
+                marcarMensagensComoVisualizadas(mensagens)
+            }
+        } catch (e: Exception) {
+            Log.e(TAG, "Erro ao atualizar mensagens", e)
         }
     }
     
@@ -974,6 +1025,12 @@ class ChatActivity : AppCompatActivity() {
 
         // Vincula ao ChamadaService para exibir CallBanner
         chamadaObserver.bind()
+        
+        // Vincula ao SocketService para receber mensagens em tempo real
+        bindSocketService()
+        
+        // Limpa notificações desta conversa
+        socketService?.limparNotificacoesConversa(conversaId)
     }
 
     override fun onPause() {
@@ -981,5 +1038,168 @@ class ChatActivity : AppCompatActivity() {
 
         // Desvincula do ChamadaService
         chamadaObserver.unbind()
+        
+        // Desvincula do SocketService
+        unbindSocketService()
+    }
+    
+    /**
+     * Vincula ao SocketService para receber mensagens em tempo real
+     */
+    private fun bindSocketService() {
+        if (!socketBound) {
+            val intent = android.content.Intent(this, SocketService::class.java)
+            bindService(intent, socketConnection, android.content.Context.BIND_AUTO_CREATE)
+        }
+    }
+    
+    /**
+     * Desvincula do SocketService
+     */
+    private fun unbindSocketService() {
+        if (socketBound) {
+            socketService?.setCallListener(null)
+            unbindService(socketConnection)
+            socketBound = false
+        }
+    }
+    
+    // ==== Implementação do SocketService.CallListener ====
+    
+    override fun onNovaMensagem(
+        conversaIdRecebida: Int,
+        remetenteId: Int,
+        destinatarioId: Int,
+        titulo: String,
+        mensagem: String,
+        tipo: Int
+    ) {
+        Log.d(TAG, "📨 Nova mensagem recebida via socket - Conversa: $conversaIdRecebida, Esta: $conversaId, Tipo: $tipo")
+        
+        // Só processa se for uma mensagem desta conversa
+        if (conversaIdRecebida != conversaId) {
+            Log.d(TAG, "Mensagem ignorada - conversa diferente")
+            return
+        }
+        
+        // Ignora mensagens enviadas por mim (já foram adicionadas localmente)
+        if (remetenteId == usuarioId) {
+            Log.d(TAG, "Mensagem ignorada - enviada por mim")
+            return
+        }
+        
+        // Verifica se o adapter foi inicializado
+        if (!::mensagensAdapter.isInitialized) {
+            Log.w(TAG, "Adapter ainda não inicializado, ignorando mensagem")
+            return
+        }
+        
+        // Verifica se temos o token de autenticação
+        if (authToken.isEmpty()) {
+            Log.w(TAG, "Token vazio, tentando carregar...")
+            lifecycleScope.launch {
+                authToken = userPreferences.authToken.first() ?: ""
+                apiUrl = userPreferences.apiUrl.first() ?: ""
+                if (authToken.isNotEmpty()) {
+                    buscarEAdicionarNovaMensagem()
+                }
+            }
+            return
+        }
+        
+        buscarEAdicionarNovaMensagem()
+    }
+    
+    /**
+     * Busca os dados completos da nova mensagem da API e adiciona à lista
+     */
+    private fun buscarEAdicionarNovaMensagem() {
+        lifecycleScope.launch {
+            try {
+                Log.d(TAG, "📨 Buscando nova mensagem da API com token: ${authToken.take(20)}...")
+                
+                // Busca as últimas mensagens para pegar a nova com todos os conteúdos
+                val response = RetrofitClient.api.obterMensagens(
+                    token = "Bearer $authToken",
+                    conversaId = conversaId,
+                    mensagemReferencia = 0,
+                    mensagensPrevias = 5, // Busca algumas mensagens para garantir
+                    mensagensSeguintes = 0
+                )
+                
+                if (response.isSuccessful && response.body() != null) {
+                    val mensagensRecebidas = response.body()!!
+                    
+                    // Pega os IDs das mensagens já exibidas
+                    val idsExistentes = mensagensAdapter.currentList.map { it.id }.toSet()
+                    
+                    // Filtra apenas as novas mensagens (que não estão na lista)
+                    val novasMensagens = mensagensRecebidas.filter { it.id !in idsExistentes }
+                    
+                    Log.d(TAG, "📨 Mensagens novas encontradas: ${novasMensagens.size}")
+                    
+                    withContext(Dispatchers.Main) {
+                        novasMensagens.forEach { novaMensagem ->
+                            // Log detalhado dos conteúdos
+                            novaMensagem.conteudos.forEach { conteudo ->
+                                Log.d(TAG, "📨 Conteúdo: tipo=${conteudo.tipo}, id=${conteudo.id}")
+                            }
+                            
+                            Log.d(TAG, "📨 Adicionando mensagem ${novaMensagem.id} com ${novaMensagem.conteudos.size} conteúdos")
+                            
+                            // Adiciona a nova mensagem à lista
+                            mensagensAdapter.addMensagem(novaMensagem)
+                            
+                            // Marca como visualizada
+                            marcarMensagemComoVisualizada(novaMensagem)
+                        }
+                        
+                        // Scroll para a última mensagem se houve novas
+                        if (novasMensagens.isNotEmpty()) {
+                            binding.rvMensagens.scrollToPosition(mensagensAdapter.itemCount - 1)
+                        }
+                    }
+                } else {
+                    Log.e(TAG, "📨 Erro na resposta: ${response.code()}")
+                }
+            } catch (e: Exception) {
+                Log.e(TAG, "Erro ao buscar nova mensagem", e)
+            }
+        }
+    }
+    
+    /**
+     * Marca uma única mensagem como visualizada
+     */
+    private suspend fun marcarMensagemComoVisualizada(mensagem: Mensagem) {
+        try {
+            if (mensagem.usuarioId != usuarioId && !mensagem.visualizada) {
+                RetrofitClient.api.visualizarMensagem(
+                    token = "Bearer $authToken",
+                    conversaId = conversaId,
+                    mensagemId = mensagem.id
+                )
+            }
+        } catch (e: Exception) {
+            // Silenciosamente falha - não é crítico
+            Log.w(TAG, "Erro ao marcar mensagem como visualizada", e)
+        }
+    }
+    
+    override fun onChamadaRecebida(chamadaId: String, usuarioId: Int, usuarioNome: String?) {
+        // Chamadas são tratadas pelo ChamadaService
+        Log.d(TAG, "Chamada recebida - tratada pelo ChamadaService")
+    }
+    
+    override fun onSocketConectado() {
+        Log.d(TAG, "✅ Socket conectado")
+    }
+    
+    override fun onSocketDesconectado() {
+        Log.d(TAG, "❌ Socket desconectado")
+    }
+    
+    override fun onSocketErro(erro: String) {
+        Log.e(TAG, "❌ Erro no socket: $erro")
     }
 }

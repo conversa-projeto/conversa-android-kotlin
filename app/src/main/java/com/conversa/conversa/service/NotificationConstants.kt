@@ -41,8 +41,24 @@ object NotificationConstants {
     /** Base para notificação de chamada em andamento (2700-2899) */
     const val NOTIFICATION_ID_CHAMADA_ONGOING = 2700
 
-    /** Base para notificação de chamada perdida (2900-3099) */
+    /** Base para notificação de chamada perdida (2900-2999) */
     const val NOTIFICATION_ID_CHAMADA_MISSED = 2900
+
+    // ==================== IDs BASE DE NOTIFICAÇÃO - MENSAGENS ====================
+
+    /** Canal para notificações de mensagens */
+    const val CHANNEL_ID_MENSAGENS = "conversa_mensagem_channel"
+
+    /** Base para notificação de mensagem (3000-3999) */
+    const val NOTIFICATION_ID_MENSAGEM_BASE = 3000
+
+    /**
+     * Obtém o ID da notificação de mensagem para uma conversa.
+     * Cada conversa tem seu próprio ID de notificação.
+     */
+    fun getNotificationIdMensagem(conversaId: Int): Int {
+        return NOTIFICATION_ID_MENSAGEM_BASE + (conversaId % 1000)
+    }
 
     // Limites de cada faixa
     private const val MAX_INCOMING = 700

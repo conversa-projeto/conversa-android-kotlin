@@ -68,6 +68,16 @@
             </intent-filter>
         </receiver>
 
+        <receiver
+            android:name=".notification.MensagemActionReceiver"
+            android:enabled="true"
+            android:exported="false">
+            <intent-filter>
+                <action android:name="com.conversa.conversa.ACTION_REPLY_MESSAGE" />
+                <action android:name="com.conversa.conversa.ACTION_MARK_READ" />
+            </intent-filter>
+        </receiver>
+
         <activity
             android:name=".SplashActivity"
             android:exported="true"
@@ -81,11 +91,13 @@
         <activity
             android:name=".ConfigApiActivity"
             android:exported="false"
-            android:theme="@style/Theme.Conversa.NoActionBar" />
+            android:theme="@style/Theme.Conversa.NoActionBar"
+            android:windowSoftInputMode="adjustResize" />
         <activity
             android:name=".LoginActivity"
             android:exported="false"
-            android:theme="@style/Theme.Conversa.NoActionBar" />
+            android:theme="@style/Theme.Conversa.NoActionBar"
+            android:windowSoftInputMode="adjustResize" />
         <activity
             android:name=".MainActivity"
             android:exported="false"
