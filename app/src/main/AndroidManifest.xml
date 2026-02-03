@@ -68,15 +68,6 @@
             </intent-filter>
         </receiver>
 
-        <receiver
-            android:name=".receiver.ChamadaBroadcastReceiver"
-            android:enabled="true"
-            android:exported="false">
-            <intent-filter>
-                <action android:name="com.conversa.CHAMADA_RECEBIDA" />
-            </intent-filter>
-        </receiver>
-
         <activity
             android:name=".SplashActivity"
             android:exported="true"

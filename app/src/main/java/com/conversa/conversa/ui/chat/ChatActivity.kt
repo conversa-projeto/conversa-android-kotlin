@@ -24,13 +24,12 @@ import com.conversa.conversa.databinding.ActivityChatBinding
 import com.conversa.conversa.ui.chamada.ChamadaActivity
 import com.conversa.conversa.ui.chamada.ChamadaNavigator
 import com.conversa.conversa.ui.chamada.components.setupCallBanner
-import com.conversa.conversa.utils.ChamadaBroadcast
 import com.conversa.conversa.utils.ChamadaServiceObserver
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
 import java.io.File
 
-class ChatActivity : AppCompatActivity(), ChamadaBroadcast.ChamadaListener {
+class ChatActivity : AppCompatActivity() {
 
     private lateinit var binding: ActivityChatBinding
     private lateinit var userPreferences: UserPreferences
@@ -968,7 +967,6 @@ class ChatActivity : AppCompatActivity(), ChamadaBroadcast.ChamadaListener {
     
     override fun onResume() {
         super.onResume()
-        ChamadaBroadcast.addListener(this)
         // Limpa repository de chamada quando volta para o chat
         // (a chamada foi encerrada)
         chamadaRepository?.cleanup()
@@ -980,21 +978,8 @@ class ChatActivity : AppCompatActivity(), ChamadaBroadcast.ChamadaListener {
 
     override fun onPause() {
         super.onPause()
-        ChamadaBroadcast.removeListener(this)
 
         // Desvincula do ChamadaService
         chamadaObserver.unbind()
-    }
-    
-    override fun onChamadaRecebida(chamadaId: Int, usuarioId: Int, usuarioNome: String) {
-        android.util.Log.d(TAG, "📱 Chamada recebida via broadcast: $usuarioNome")
-        
-        val intent = android.content.Intent(this, ChamadaActivity::class.java).apply {
-            putExtra(ChamadaActivity.EXTRA_CHAMADA_ID, chamadaId)
-            putExtra(ChamadaActivity.EXTRA_USUARIO_ID, usuarioId)
-            putExtra(ChamadaActivity.EXTRA_USUARIO_NOME, usuarioNome)
-            putExtra(ChamadaActivity.EXTRA_IS_INCOMING, true)
-        }
-        startActivity(intent)
     }
 }

@@ -39,7 +39,6 @@ import com.conversa.conversa.ui.chamada.ChamadaActivity
 import com.conversa.conversa.ui.chamada.ChamadaNavigator
 import com.conversa.conversa.ui.chamada.components.setupCallBanner
 import com.conversa.conversa.ui.chat.ChatActivity
-import com.conversa.conversa.utils.ChamadaBroadcast
 import com.conversa.conversa.utils.ChamadaServiceObserver
 import com.google.android.material.navigation.NavigationView
 import kotlinx.coroutines.flow.first
@@ -49,7 +48,6 @@ import java.time.format.DateTimeFormatter
 
 class MainActivity : AppCompatActivity(),
     NavigationView.OnNavigationItemSelectedListener,
-    ChamadaBroadcast.ChamadaListener,
     SocketService.CallListener {
     private var isFirstLoad = true
     private lateinit var binding: ActivityMainBinding
@@ -494,9 +492,6 @@ class MainActivity : AppCompatActivity(),
     override fun onResume() {
         super.onResume()
 
-        // Registra listener para receber chamadas quando app está aberto
-        ChamadaBroadcast.addListener(this)
-
         // Vincula ao SocketService
         val intent = Intent(this, SocketService::class.java)
         bindService(intent, serviceConnection, Context.BIND_AUTO_CREATE)
@@ -515,9 +510,6 @@ class MainActivity : AppCompatActivity(),
     override fun onPause() {
         super.onPause()
 
-        // Remove listener quando sai da tela
-        ChamadaBroadcast.removeListener(this)
-
         // Desvincula do SocketService (MAS não remove o callListener - permite rebind)
         if (isBound) {
             unbindService(serviceConnection)
@@ -529,12 +521,6 @@ class MainActivity : AppCompatActivity(),
         chamadaObserver.unbind()
     }
     
-    // Implementação de ChamadaBroadcast.ChamadaListener (fallback)
-    override fun onChamadaRecebida(chamadaId: Int, usuarioId: Int, usuarioNome: String) {
-        android.util.Log.d("MainActivity", "📱 Chamada recebida via broadcast: $usuarioNome")
-        abrirChamada(chamadaId, usuarioId, usuarioNome)
-    }
-
     // Implementação de SocketService.CallListener (callback direto quando vinculado)
     // NOTA: Notificações são gerenciadas exclusivamente pelo ChamadaService
     // O SocketService já envia Intent para ChamadaService, então aqui apenas logamos
