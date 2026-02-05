@@ -525,8 +525,8 @@ class MainActivity : AppCompatActivity(),
         // Não criamos ChamadaNotificationManager aqui para evitar notificações duplicadas
     }
 
-    override fun onNovaMensagem(conversaId: Int, remetenteId: Int, destinatarioId: Int, titulo: String, mensagem: String, tipo: Int) {
-        android.util.Log.d("MainActivity", "💬 Nova mensagem recebida - Conversa: $conversaId, Remetente: $remetenteId")
+    override fun onNovaMensagem(conversaId: Int, remetenteId: Int, destinatarioId: Int, titulo: String, subtitulo: String, mensagem: String, tipoConversa: Int) {
+        android.util.Log.d("MainActivity", "💬 Nova mensagem recebida - Conversa: $conversaId, Remetente: $subtitulo")
         // Recarrega conversas para mostrar nova mensagem
         lifecycleScope.launch {
             carregarConversas()

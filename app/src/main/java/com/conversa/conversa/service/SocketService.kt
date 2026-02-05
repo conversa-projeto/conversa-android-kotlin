@@ -39,7 +39,7 @@ class SocketService : Service() {
     // Interface para callbacks de chamadas e mensagens
     interface CallListener {
         fun onChamadaRecebida(chamadaId: String, usuarioId: Int, usuarioNome: String?)
-        fun onNovaMensagem(conversaId: Int, remetenteId: Int, destinatarioId: Int, titulo: String, mensagem: String, tipo: Int)
+        fun onNovaMensagem(conversaId: Int, remetenteId: Int, destinatarioId: Int, titulo: String, subtitulo: String, mensagem: String, tipoConversa: Int)
         fun onSocketConectado()
         fun onSocketDesconectado()
         fun onSocketErro(erro: String)
@@ -337,23 +337,27 @@ class SocketService : Service() {
             }
         }
 
-        socketManager.onNovaMensagem = { conversaId, remetenteId, destinatarioId, titulo, mensagem, tipo ->
-            Log.d(TAG, "📨 Nova mensagem - Conversa: $conversaId, Remetente: $remetenteId")
+        socketManager.onNovaMensagem = { conversaId, remetenteId, destinatarioId, titulo, subtitulo, mensagem, tipoConversa ->
+            Log.d(TAG, "📨 Nova mensagem - Conversa: $conversaId, Remetente: $subtitulo, Tipo: $tipoConversa")
 
             // Adiciona à notificação agrupada
+            // titulo = nome da conversa (grupo ou contato)
+            // subtitulo = nome do remetente
+            // tipoConversa = 1 (individual) ou 2 (grupo)
             MensagemNotificationManager.adicionarMensagem(
                 this@SocketService,
                 conversaId,
                 remetenteId,
                 destinatarioId,
-                titulo,
+                subtitulo,      // Nome do remetente (para Person na notificação)
                 mensagem,
-                tipo
+                tipoConversa,   // Tipo da conversa (1=individual, 2=grupo)
+                titulo          // Nome da conversa (título da notificação)
             )
 
             // Também notifica o listener se o app estiver conectado
             if (isAppBound && callListener != null) {
-                callListener?.onNovaMensagem(conversaId, remetenteId, destinatarioId, titulo, mensagem, tipo)
+                callListener?.onNovaMensagem(conversaId, remetenteId, destinatarioId, titulo, subtitulo, mensagem, tipoConversa)
             }
         }
 
@@ -406,11 +410,12 @@ class SocketService : Service() {
             val mensagensChannel = NotificationChannel(
                 NotificationConstants.CHANNEL_ID_MENSAGENS,
                 "Mensagens",
-                NotificationManager.IMPORTANCE_DEFAULT
+                NotificationManager.IMPORTANCE_HIGH
             ).apply {
                 description = "Notificações de novas mensagens"
                 enableVibration(true)
                 setShowBadge(true)
+                lockscreenVisibility = android.app.Notification.VISIBILITY_PRIVATE
             }
 
             notificationManager.createNotificationChannel(serviceChannel)
@@ -530,23 +535,27 @@ class SocketService : Service() {
             }
         }
 
-        socketManager.onNovaMensagem = { conversaId, remetenteId, destinatarioId, titulo, mensagem, tipo ->
-            Log.d(TAG, "📨 Nova mensagem - Conversa: $conversaId, Remetente: $remetenteId")
+        socketManager.onNovaMensagem = { conversaId, remetenteId, destinatarioId, titulo, subtitulo, mensagem, tipoConversa ->
+            Log.d(TAG, "📨 Nova mensagem - Conversa: $conversaId, Remetente: $subtitulo, Tipo: $tipoConversa")
 
             // Adiciona à notificação agrupada
+            // titulo = nome da conversa (grupo ou contato)
+            // subtitulo = nome do remetente
+            // tipoConversa = 1 (individual) ou 2 (grupo)
             MensagemNotificationManager.adicionarMensagem(
                 this@SocketService,
                 conversaId,
                 remetenteId,
                 destinatarioId,
-                titulo,
+                subtitulo,      // Nome do remetente (para Person na notificação)
                 mensagem,
-                tipo
+                tipoConversa,   // Tipo da conversa (1=individual, 2=grupo)
+                titulo          // Nome da conversa (título da notificação)
             )
 
             // Também notifica o listener se o app estiver conectado
             if (isAppBound && callListener != null) {
-                callListener?.onNovaMensagem(conversaId, remetenteId, destinatarioId, titulo, mensagem, tipo)
+                callListener?.onNovaMensagem(conversaId, remetenteId, destinatarioId, titulo, subtitulo, mensagem, tipoConversa)
             }
         }
 

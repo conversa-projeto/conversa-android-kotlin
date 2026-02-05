@@ -1071,10 +1071,11 @@ class ChatActivity : AppCompatActivity(), SocketService.CallListener {
         remetenteId: Int,
         destinatarioId: Int,
         titulo: String,
+        subtitulo: String,
         mensagem: String,
-        tipo: Int
+        tipoConversa: Int
     ) {
-        Log.d(TAG, "📨 Nova mensagem recebida via socket - Conversa: $conversaIdRecebida, Esta: $conversaId, Tipo: $tipo")
+        Log.d(TAG, "📨 Nova mensagem recebida via socket - Conversa: $conversaIdRecebida, Esta: $conversaId")
         
         // Só processa se for uma mensagem desta conversa
         if (conversaIdRecebida != conversaId) {

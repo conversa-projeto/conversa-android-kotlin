@@ -66,7 +66,7 @@ class SocketManager(private val context: Context) {
     var onUsuarioSaiu: ((chamadaId: Int, usuarioId: Int) -> Unit)? = null
     
     // Callbacks para eventos de mensagem
-    var onNovaMensagem: ((conversaId: Int, remetenteId: Int, destinatarioId: Int, titulo: String, mensagem: String, tipo: Int) -> Unit)? = null
+    var onNovaMensagem: ((conversaId: Int, remetenteId: Int, destinatarioId: Int, titulo: String, subtitulo: String, mensagem: String, tipoConversa: Int) -> Unit)? = null
     var onStatusMensagemAtualizado: ((conversaId: Int, mensagensIds: List<Int>) -> Unit)? = null
     
     // Callbacks de conexão
@@ -211,10 +211,11 @@ class SocketManager(private val context: Context) {
                     val remetenteId = obj.getInt("remetente_id")
                     val destinatarioId = obj.getInt("destinatario_id")
                     val titulo = obj.getString("titulo")
+                    val subtitulo = obj.optString("subtitulo", titulo) // fallback para titulo se não existir
                     val mensagem = obj.getString("mensagem")
-                    val tipo = obj.getInt("tipo")
-                    Log.d(TAG, "Nova mensagem recebida - Conversa: $conversaId, Remetente: $remetenteId")
-                    onNovaMensagem?.invoke(conversaId, remetenteId, destinatarioId, titulo, mensagem, tipo)
+                    val tipoConversa = obj.optInt("tipo_conversa", 1) // 1=individual, 2=grupo
+                    Log.d(TAG, "Nova mensagem recebida - Conversa: $conversaId, Remetente: $subtitulo, Tipo: $tipoConversa")
+                    onNovaMensagem?.invoke(conversaId, remetenteId, destinatarioId, titulo, subtitulo, mensagem, tipoConversa)
                 }
                 
                 TYPE_STATUS_MENSAGEM -> {

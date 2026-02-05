@@ -45,6 +45,7 @@ object MensagemNotificationManager {
     data class ConversaInfo(
         val conversaId: Int,
         var nomeConversa: String, // Nome do grupo ou contato
+        var tipoConversa: Int = 1, // 1=individual, 2=grupo
         val mensagens: MutableList<MensagemNotificacao> = mutableListOf()
     )
 
@@ -57,6 +58,7 @@ object MensagemNotificationManager {
     /**
      * Adiciona uma nova mensagem e atualiza a notificação da conversa
      * @param titulo - Nome do remetente (quem enviou a mensagem)
+     * @param tipoConversa - Tipo da conversa (1=individual, 2=grupo)
      * @param nomeConversa - Nome da conversa/grupo (opcional, usa o titulo se não fornecido)
      */
     fun adicionarMensagem(
@@ -66,10 +68,10 @@ object MensagemNotificationManager {
         destinatarioId: Int,
         titulo: String,
         mensagem: String,
-        tipo: Int,
+        tipoConversa: Int,
         nomeConversa: String? = null
     ) {
-        Log.d(TAG, "📨 Adicionando mensagem - Conversa: $conversaId, Remetente: $titulo")
+        Log.d(TAG, "📨 Adicionando mensagem - Conversa: $conversaId, Remetente: $titulo, Tipo: $tipoConversa")
 
         val novaMensagem = MensagemNotificacao(
             conversaId = conversaId,
@@ -77,14 +79,15 @@ object MensagemNotificationManager {
             destinatarioId = destinatarioId,
             titulo = titulo,
             mensagem = mensagem,
-            tipo = tipo
+            tipo = tipoConversa
         )
 
         // Obtém ou cria a info da conversa
         val conversaInfo = conversasInfo.getOrPut(conversaId) {
             ConversaInfo(
                 conversaId = conversaId,
-                nomeConversa = nomeConversa ?: titulo // Usa o título como fallback
+                nomeConversa = nomeConversa ?: titulo,
+                tipoConversa = tipoConversa
             )
         }
 
@@ -92,6 +95,7 @@ object MensagemNotificationManager {
         if (nomeConversa != null) {
             conversaInfo.nomeConversa = nomeConversa
         }
+        conversaInfo.tipoConversa = tipoConversa
 
         // Adiciona a mensagem
         conversaInfo.mensagens.add(novaMensagem)
@@ -179,6 +183,7 @@ object MensagemNotificationManager {
 
         val messagingStyle = NotificationCompat.MessagingStyle(user)
             .setConversationTitle(conversaInfo.nomeConversa)
+            .setGroupConversation(conversaInfo.tipoConversa == 2) // Exibe nome do remetente apenas em grupos
 
         // Adiciona as últimas 10 mensagens ao estilo
         mensagens.takeLast(10).forEach { msg ->
@@ -203,7 +208,7 @@ object MensagemNotificationManager {
             .setGroup("group_mensagens")
             .setWhen(ultimaMensagem.timestamp)
             .setShowWhen(true)
-            .setOnlyAlertOnce(mensagens.size > 1) // Só alerta na primeira mensagem
+            .setDefaults(NotificationCompat.DEFAULT_ALL) // Som, vibração e luzes
             .build()
 
         notificationManager.notify(notificationId, notification)
