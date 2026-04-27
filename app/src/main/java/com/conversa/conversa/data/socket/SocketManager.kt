@@ -22,17 +22,25 @@ class SocketManager(private val context: Context) {
     companion object {
         private const val TAG = "SocketManager"
         
-        // Tipos de mensagem
+        // Tipos de mensagem (ver docs/websocket.md)
         const val TYPE_ERRO = 0
         const val TYPE_LOGIN = 1
-        const val TYPE_NOVA_MENSAGEM = 20
+        // ATENCAO: alinhado com backend Delphi (WebSocket.pas TSocketMessageType.NovaMensagem = 2)
+        // e com cliente web (TipoEventoSocket.NovaMensagem = 2). Antes estava 20 (divergente).
+        const val TYPE_NOVA_MENSAGEM = 2
         const val TYPE_STATUS_MENSAGEM = 3
+        const val TYPE_DIGITANDO = 4
+        const val TYPE_GRAVANDO_AUDIO = 5
+        const val TYPE_REACAO_MENSAGEM = 7
+        const val TYPE_CONVERSA_ATUALIZADA = 40
+        const val TYPE_STATUS_USUARIO = 60
         const val TYPE_CHAMADA_RECEBIDA = 51
         const val TYPE_CHAMADA_FINALIZADA = 52
         const val TYPE_CHAMADA_USUARIO_RECUSOU = 53
         const val TYPE_CHAMADA_USUARIO_ENTROU = 54
         const val TYPE_CHAMADA_USUARIO_SAIU = 55
-        
+        const val TYPE_CHAMADA_VIDEO_ATIVADO = 56
+
         // Configurações de reconexão (infinita com backoff)
         private const val RECONNECT_DELAY_MS = 3000L       // 3 segundos inicial
         private const val MAX_RECONNECT_DELAY_MS = 30000L  // Máximo 30 segundos
@@ -64,15 +72,31 @@ class SocketManager(private val context: Context) {
     var onUsuarioRecusou: ((chamadaId: Int, usuarioId: Int) -> Unit)? = null
     var onUsuarioEntrou: ((chamadaId: Int, usuarioId: Int) -> Unit)? = null
     var onUsuarioSaiu: ((chamadaId: Int, usuarioId: Int) -> Unit)? = null
-    
+    var onVideoAtivado: ((chamadaId: Int, usuarioId: Int) -> Unit)? = null
+
     // Callbacks para eventos de mensagem
     var onNovaMensagem: ((conversaId: Int, remetenteId: Int, destinatarioId: Int, titulo: String, subtitulo: String, mensagem: String, tipoConversa: Int) -> Unit)? = null
     var onStatusMensagemAtualizado: ((conversaId: Int, mensagensIds: List<Int>) -> Unit)? = null
+    var onDigitando: ((conversaId: Int, usuarioId: Int) -> Unit)? = null
+    var onGravandoAudio: ((conversaId: Int, usuarioId: Int) -> Unit)? = null
+    var onReacaoMensagem: ((conversaId: Int, mensagemId: Int, usuarioId: Int, emoji: String, acao: String) -> Unit)? = null
+    var onConversaAtualizada: ((conversaId: Int) -> Unit)? = null
+    var onStatusUsuario: ((usuarioId: Int, online: Boolean) -> Unit)? = null
     
     // Callbacks de conexão
     var onConectado: (() -> Unit)? = null
     var onDesconectado: (() -> Unit)? = null
     var onErro: ((erro: String) -> Unit)? = null
+
+    // Multiplos consumidores podem reagir a onConectado sem sobrescrever o principal
+    private val extrasOnConectado = mutableListOf<() -> Unit>()
+    fun adicionarOnConectado(cb: () -> Unit) { extrasOnConectado += cb }
+    fun removerOnConectado(cb: () -> Unit) { extrasOnConectado -= cb }
+    internal fun dispararExtrasOnConectado() {
+        extrasOnConectado.toList().forEach {
+            try { it() } catch (e: Exception) { Log.w(TAG, "onConectado extra: ${e.message}") }
+        }
+    }
     
     /**
      * Conecta ao servidor WebSocket
@@ -123,6 +147,7 @@ class SocketManager(private val context: Context) {
             
             scope.launch(Dispatchers.Main) {
                 onConectado?.invoke()
+                dispararExtrasOnConectado()
             }
         }
         
@@ -207,22 +232,57 @@ class SocketManager(private val context: Context) {
                 }
                 
                 TYPE_NOVA_MENSAGEM -> {
-                    val conversaId = obj.getInt("conversa_id")
-                    val remetenteId = obj.getInt("remetente_id")
-                    val destinatarioId = obj.getInt("destinatario_id")
-                    val titulo = obj.getString("titulo")
-                    val subtitulo = obj.optString("subtitulo", titulo) // fallback para titulo se não existir
-                    val mensagem = obj.getString("mensagem")
-                    val tipoConversa = obj.optInt("tipo_conversa", 1) // 1=individual, 2=grupo
-                    Log.d(TAG, "Nova mensagem recebida - Conversa: $conversaId, Remetente: $subtitulo, Tipo: $tipoConversa")
-                    onNovaMensagem?.invoke(conversaId, remetenteId, destinatarioId, titulo, subtitulo, mensagem, tipoConversa)
+                    // Novo payload (alinhado com backend): { tipo:2, mensagem: { id, conversa_id, usuario_id, inserida, conteudo[] } }
+                    // Legacy payload (pre-existente no app): campos diretos titulo/mensagem/remetente_id.
+                    // Tentamos primeiro o formato novo; fallback para legacy.
+                    val msgObj = obj.optJSONObject("mensagem")
+                    if (msgObj != null) {
+                        val conversaId = msgObj.getInt("conversa_id")
+                        val remetenteId = msgObj.optInt("usuario_id", msgObj.optInt("remetente_id", 0))
+                        val titulo = obj.optString("titulo", "")
+                        val subtitulo = obj.optString("subtitulo", titulo)
+                        val texto = msgObj.optString("texto", "") // ou derivar de conteudo[0]
+                        val tipoConversa = obj.optInt("tipo_conversa", 1)
+                        val destId = obj.optInt("destinatario_id", 0)
+                        Log.d(TAG, "NovaMensagem (novo payload) conv=$conversaId de=$remetenteId")
+                        onNovaMensagem?.invoke(conversaId, remetenteId, destId, titulo, subtitulo, texto, tipoConversa)
+                    } else if (obj.has("conversa_id")) {
+                        val conversaId = obj.getInt("conversa_id")
+                        val remetenteId = obj.getInt("remetente_id")
+                        val destinatarioId = obj.getInt("destinatario_id")
+                        val titulo = obj.optString("titulo", "")
+                        val subtitulo = obj.optString("subtitulo", titulo)
+                        val mensagem = obj.optString("mensagem", "")
+                        val tipoConversa = obj.optInt("tipo_conversa", 1)
+                        Log.d(TAG, "NovaMensagem (legacy payload) conv=$conversaId")
+                        onNovaMensagem?.invoke(conversaId, remetenteId, destinatarioId, titulo, subtitulo, mensagem, tipoConversa)
+                    } else {
+                        Log.w(TAG, "NovaMensagem sem formato reconhecido: $json")
+                    }
                 }
-                
+
                 TYPE_STATUS_MENSAGEM -> {
-                    val conversaId = obj.getInt("grupo")
-                    val mensagensStr = obj.getString("mensagens")
-                    val mensagensIds = mensagensStr.split(",").map { it.toInt() }
-                    onStatusMensagemAtualizado?.invoke(conversaId, mensagensIds)
+                    // Payload oficial: { tipo:3, grupo: boolean, mensagens: [{conversa_id, mensagem_id, usuario_id, ...}, ...] }
+                    // Tolera ambos formatos (grupo int legacy vs bool novo, mensagens CSV vs array).
+                    val mensagensField = obj.opt("mensagens")
+                    val (convId, ids) = when {
+                        mensagensField is org.json.JSONArray -> {
+                            val arr = mensagensField
+                            val cid = if (arr.length() > 0) arr.getJSONObject(0).optInt("conversa_id", 0) else 0
+                            val list = (0 until arr.length()).map { arr.getJSONObject(it).getInt("mensagem_id") }
+                            cid to list
+                        }
+                        mensagensField is String -> {
+                            // Legacy: grupo=int + mensagens CSV
+                            val cid = obj.optInt("grupo", 0)
+                            val list = mensagensField.split(",").mapNotNull { it.trim().toIntOrNull() }
+                            cid to list
+                        }
+                        else -> 0 to emptyList()
+                    }
+                    if (ids.isNotEmpty() && convId > 0) {
+                        onStatusMensagemAtualizado?.invoke(convId, ids)
+                    }
                 }
                 
                 TYPE_CHAMADA_RECEBIDA -> {
@@ -260,7 +320,49 @@ class SocketManager(private val context: Context) {
                     Log.d(TAG, "Usuário saiu da chamada: $chamadaId")
                     onUsuarioSaiu?.invoke(chamadaId, usuarioId)
                 }
-                
+
+                TYPE_CHAMADA_VIDEO_ATIVADO -> {
+                    val chamadaId = obj.getInt("chamada_id")
+                    val usuarioId = obj.getInt("usuario_id")
+                    Log.d(TAG, "Video ativado na chamada: $chamadaId por $usuarioId")
+                    onVideoAtivado?.invoke(chamadaId, usuarioId)
+                }
+
+                TYPE_DIGITANDO -> {
+                    val conversaId = obj.getInt("conversa_id")
+                    val usuarioId = obj.getInt("usuario_id")
+                    onDigitando?.invoke(conversaId, usuarioId)
+                }
+
+                TYPE_GRAVANDO_AUDIO -> {
+                    val conversaId = obj.getInt("conversa_id")
+                    val usuarioId = obj.getInt("usuario_id")
+                    onGravandoAudio?.invoke(conversaId, usuarioId)
+                }
+
+                TYPE_REACAO_MENSAGEM -> {
+                    val conversaId = obj.getInt("conversa_id")
+                    val mensagemId = obj.getInt("mensagem_id")
+                    val usuarioId = obj.getInt("usuario_id")
+                    val emoji = obj.optString("emoji", "")
+                    val acao = obj.optString("acao", "add") // "add" ou "remove"
+                    Log.d(TAG, "Reacao: $emoji $acao em msg $mensagemId")
+                    onReacaoMensagem?.invoke(conversaId, mensagemId, usuarioId, emoji, acao)
+                }
+
+                TYPE_CONVERSA_ATUALIZADA -> {
+                    val conversaId = obj.optInt("conversa_id", obj.optJSONObject("conversa")?.optInt("id", 0) ?: 0)
+                    Log.d(TAG, "Conversa atualizada: $conversaId")
+                    onConversaAtualizada?.invoke(conversaId)
+                }
+
+                TYPE_STATUS_USUARIO -> {
+                    val usuarioId = obj.getInt("usuario_id")
+                    val online = obj.optBoolean("online", false)
+                    Log.d(TAG, "Status usuario $usuarioId: online=$online")
+                    onStatusUsuario?.invoke(usuarioId, online)
+                }
+
                 else -> {
                     Log.w(TAG, "Tipo de mensagem desconhecido: $tipo")
                 }

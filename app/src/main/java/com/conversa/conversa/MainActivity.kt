@@ -464,7 +464,7 @@ class MainActivity : AppCompatActivity(),
                 val host = apiUrl.replace("http://", "")
                                  .replace("https://", "")
                                  .split(":")[0]
-                val port = 8090
+                val port = 9090
 
                 val token = userPreferences.authToken.first() ?: ""
                 

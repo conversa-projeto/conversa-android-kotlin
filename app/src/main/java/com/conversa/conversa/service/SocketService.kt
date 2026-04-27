@@ -11,7 +11,10 @@ import android.util.Log
 import androidx.core.app.NotificationCompat
 import com.conversa.conversa.MainActivity
 import com.conversa.conversa.R
+import com.conversa.conversa.data.api.RetrofitClient
+import com.conversa.conversa.data.preferences.UserPreferences
 import com.conversa.conversa.data.socket.SocketManager
+import kotlinx.coroutines.flow.first
 import com.conversa.conversa.utils.AppLifecycleManager
 import com.conversa.conversa.notification.MensagemNotificationManager
 import com.conversa.conversa.service.ChamadaService
@@ -83,6 +86,11 @@ class SocketService : Service() {
          */
         @Volatile
         var chamadaServiceAtivo: Boolean = false
+
+        // SocketManager global reutilizado pelo ChamadaService para assinar eventos
+        // WS sem duplicar a conexao
+        @Volatile
+        var socketManagerGlobal: SocketManager? = null
         
         fun start(context: Context, host: String, port: Int, token: String) {
             val intent = Intent(context, SocketService::class.java).apply {
@@ -448,6 +456,7 @@ class SocketService : Service() {
     
     private fun inicializarSocket(host: String, port: Int, token: String) {
         socketManager = SocketManager(this)
+        socketManagerGlobal = socketManager
 
         socketManager.onChamadaRecebida = { chamadaId, usuarioId, usuarioNome ->
             Log.d(TAG, "📞 Chamada recebida: enviando Intent para ChamadaService")
@@ -566,6 +575,9 @@ class SocketService : Service() {
             if (isAppBound && callListener != null) {
                 callListener?.onSocketConectado()
             }
+
+            // Recupera toques perdidos durante desconexao
+            scope.launch { recuperarChamadasPendentes() }
         }
 
         socketManager.onDesconectado = {
@@ -612,6 +624,33 @@ class SocketService : Service() {
             .build()
 
         notificationManager.notify(NOTIFICATION_ID_SERVICE, notification)
+    }
+
+    /**
+     * Busca GET /chamadas/pendentes e simula eventos de chamada recebida (WS tipo 51)
+     * para cada uma. Evita perder toques durante desconexao do WS.
+     */
+    private suspend fun recuperarChamadasPendentes() {
+        try {
+            val token = UserPreferences(applicationContext).authToken.first() ?: return
+            val resp = RetrofitClient.api.listarChamadasPendentes("Bearer $token")
+            if (!resp.isSuccessful) return
+            val pendentes = resp.body() ?: return
+            if (pendentes.isEmpty()) return
+
+            val meuUid = UserPreferences(applicationContext).userId.first() ?: 0
+            pendentes.forEach { chamada ->
+                val origem = chamada.usuarios.firstOrNull { it.usuarioId != meuUid }
+                val chamadaId = chamada.id
+                val usuarioId = origem?.usuarioId ?: chamada.criadoPor
+                val usuarioNome = origem?.usuarioNome ?: "Desconhecido"
+
+                Log.d(TAG, "Recuperando chamada pendente: id=$chamadaId de $usuarioNome")
+                socketManager.onChamadaRecebida?.invoke(chamadaId, usuarioId, usuarioNome)
+            }
+        } catch (e: Exception) {
+            Log.w(TAG, "Erro recuperando chamadas pendentes: ${e.message}")
+        }
     }
 
     /**

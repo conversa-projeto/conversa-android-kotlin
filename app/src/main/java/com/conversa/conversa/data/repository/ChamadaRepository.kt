@@ -3,7 +3,8 @@ package com.conversa.conversa.data.repository
 import android.content.Context
 import android.util.Log
 import com.conversa.conversa.data.api.ConversaApi
-import com.conversa.conversa.data.chamada.ChamadaManager
+import com.conversa.conversa.data.chamada.model.EventoChamadaUI
+import com.conversa.conversa.data.chamada.model.TipoEventoChamadaUI
 import com.conversa.conversa.data.model.ChamadaIdRequest
 import com.conversa.conversa.data.model.ChamadaResponse
 import com.conversa.conversa.data.model.EstadoChamadaLocal
@@ -12,11 +13,11 @@ import com.conversa.conversa.data.model.IniciarChamadaRequest
 import com.conversa.conversa.data.model.UsuarioIdDto
 import com.conversa.conversa.data.preferences.UserPreferences
 import com.conversa.conversa.data.socket.SocketManager
+import com.conversa.conversa.data.webrtc.WebRTCManager
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.cancel
-import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharedFlow
@@ -26,654 +27,281 @@ import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.firstOrNull
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.sync.Mutex
+import kotlinx.coroutines.sync.withLock
 import kotlinx.coroutines.withContext
 
 /**
- * Repository para gerenciar chamadas de áudio
+ * Orquestra chamadas WebRTC: eventos WS 51-56 e REST /api/chamada.
+ * Sinalizacao SDP/ICE delegada ao WebRTCManager (WHIP/WHEP direto no MediaMTX).
  */
 class ChamadaRepository(
     private val context: Context,
     private val api: ConversaApi,
-    private val chamadaManager: ChamadaManager,
+    private val webRTCManager: WebRTCManager,
     private val socketManager: SocketManager,
-    private val userPreferences: UserPreferences
+    private val userPreferences: UserPreferences,
 ) {
-    
-    companion object {
-        private const val TAG = "ChamadaRepository"
-        const val TCP_PORT = 9090
-    }
-    
+    companion object { private const val TAG = "ChamadaRepository" }
+
     private val scope = CoroutineScope(Dispatchers.IO + SupervisorJob())
-    
-    private val _chamadaAtualFlow = MutableStateFlow<ChamadaResponse?>(null)
-    val chamadaAtualFlow: StateFlow<ChamadaResponse?> = _chamadaAtualFlow.asStateFlow()
-    
-    private val _estadoLocalFlow = MutableStateFlow(EstadoChamadaLocal.DESCONHECIDO)
-    val estadoLocalFlow: StateFlow<EstadoChamadaLocal> = _estadoLocalFlow.asStateFlow()
-    
-    private val _eventosChamadaFlow = MutableSharedFlow<EventoChamada>(replay = 0)
-    val eventosChamadaFlow: SharedFlow<EventoChamada> = _eventosChamadaFlow.asSharedFlow()
-    
-    private val _eventosUIFlow = MutableSharedFlow<com.conversa.conversa.data.chamada.model.EventoChamadaUI>(replay = 0)
-    val eventosUIFlow: SharedFlow<com.conversa.conversa.data.chamada.model.EventoChamadaUI> = _eventosUIFlow.asSharedFlow()
-    
-    var chamadaAtual: ChamadaResponse? = null
-        private set(value) {
-            field = value
-            _chamadaAtualFlow.value = value
-        }
-    
+    private val sincronizarMutex = Mutex()
+
+    private val _chamadaAtual = MutableStateFlow<ChamadaResponse?>(null)
+    val chamadaAtualFlow: StateFlow<ChamadaResponse?> = _chamadaAtual.asStateFlow()
+
+    private val _estadoLocal = MutableStateFlow(EstadoChamadaLocal.DESCONHECIDO)
+    val estadoLocalFlow: StateFlow<EstadoChamadaLocal> = _estadoLocal.asStateFlow()
+
+    private val _eventos = MutableSharedFlow<EventoChamada>(replay = 0)
+    val eventosChamadaFlow: SharedFlow<EventoChamada> = _eventos.asSharedFlow()
+
+    private val _eventosUI = MutableSharedFlow<EventoChamadaUI>(replay = 0)
+    val eventosUIFlow: SharedFlow<EventoChamadaUI> = _eventosUI.asSharedFlow()
+
+    private val _videoRemotoAtivado = MutableSharedFlow<Pair<Int, Int>>(replay = 0)
+    val videoRemotoAtivadoFlow: SharedFlow<Pair<Int, Int>> = _videoRemotoAtivado.asSharedFlow()
+
     var onChamadaIniciada: ((ChamadaResponse) -> Unit)? = null
     var onChamadaConectada: (() -> Unit)? = null
-    var onChamadaRealmenteIniciada: (() -> Unit)? = null
     var onChamadaFinalizada: (() -> Unit)? = null
     var onErro: ((String) -> Unit)? = null
-    var onConexaoTcpEstabelecida: (() -> Unit)? = null
-    
-    private var primeiroParticipanteEntrou: Boolean = false
+
+    val chamadaAtual: ChamadaResponse? get() = _chamadaAtual.value
 
     init {
-        Log.d(TAG, "Repository criado - Limpando listeners antigos")
-        limparListenersAntigos()
-        resetarEstado()
-        setupSocketEventListeners()
-        setupChamadaManagerCallbacks()
-        observarEventosParaUI()
+        webRTCManager.inicializar()
+        registrarHandlersSocket()
+        registrarCallbacksWebRTC()
     }
 
-    /**
-     * Limpa listeners antigos do SocketManager para evitar duplicação
-     */
-    private fun limparListenersAntigos() {
-        socketManager.onChamadaRecebida = null
-        socketManager.onChamadaFinalizada = null
-        socketManager.onUsuarioRecusou = null
-        socketManager.onUsuarioEntrou = null
-        socketManager.onUsuarioSaiu = null
-        Log.d(TAG, "Listeners antigos do SocketManager removidos")
-    }
+    // ─── REST ────────────────────────────────────────────────────────────────
 
-    /**
-     * Reseta todos os estados internos
-     */
-    private fun resetarEstado() {
-        primeiroParticipanteEntrou = false
-        chamadaAtual = null
-        _estadoLocalFlow.value = EstadoChamadaLocal.DESCONHECIDO
-        Log.d(TAG, "Estado interno resetado")
-    }
-    
-    private fun observarEventosParaUI() {
-        scope.launch {
-            eventosChamadaFlow.collect { evento ->
-                when (evento) {
-                    is EventoChamada.UsuarioEntrou -> {
-                        val usuario = chamadaAtual?.usuarios?.find { it.usuarioId == evento.usuarioId }
-                        _eventosUIFlow.emit(
-                            com.conversa.conversa.data.chamada.model.EventoChamadaUI(
-                                tipo = com.conversa.conversa.data.chamada.model.TipoEventoChamadaUI.PARTICIPANTE_ENTROU,
-                                chamadaId = evento.chamadaId,
-                                participanteId = evento.usuarioId,
-                                participanteNome = usuario?.usuarioNome
-                            )
-                        )
-                    }
-                    
-                    is EventoChamada.UsuarioSaiu -> {
-                        val usuario = chamadaAtual?.usuarios?.find { it.usuarioId == evento.usuarioId }
-                        _eventosUIFlow.emit(
-                            com.conversa.conversa.data.chamada.model.EventoChamadaUI(
-                                tipo = com.conversa.conversa.data.chamada.model.TipoEventoChamadaUI.PARTICIPANTE_SAIU,
-                                chamadaId = evento.chamadaId,
-                                participanteId = evento.usuarioId,
-                                participanteNome = usuario?.usuarioNome
-                            )
-                        )
-                    }
-                    
-                    is EventoChamada.UsuarioRecusou -> {
-                        val usuario = chamadaAtual?.usuarios?.find { it.usuarioId == evento.usuarioId }
-                        _eventosUIFlow.emit(
-                            com.conversa.conversa.data.chamada.model.EventoChamadaUI(
-                                tipo = com.conversa.conversa.data.chamada.model.TipoEventoChamadaUI.CHAMADA_RECUSADA,
-                                chamadaId = evento.chamadaId,
-                                participanteId = evento.usuarioId,
-                                participanteNome = usuario?.usuarioNome
-                            )
-                        )
-                    }
-                    
-                    is EventoChamada.Finalizada -> {
-                        _eventosUIFlow.emit(
-                            com.conversa.conversa.data.chamada.model.EventoChamadaUI(
-                                tipo = com.conversa.conversa.data.chamada.model.TipoEventoChamadaUI.CHAMADA_FINALIZADA,
-                                chamadaId = evento.chamadaId,
-                                participanteId = evento.usuarioId
-                            )
-                        )
-                    }
-                    
-                    is EventoChamada.Recebida -> {
-                        // Evento de chamada recebida não precisa ser propagado para UI
-                        // pois é tratado diretamente pela Activity de chamada recebida
-                    }
-                }
-            }
-        }
-    }
-    
-    private fun setupChamadaManagerCallbacks() {
-        Log.d(TAG, "Configurando callbacks do ChamadaManager")
-        
-        chamadaManager.onConexaoTcpEstabelecida = {
-            Log.d(TAG, "ChamadaManager: Conexão TCP estabelecida")
-            
-            scope.launch(Dispatchers.Main) {
-                onConexaoTcpEstabelecida?.invoke()
-            }
-        }
-        
-        chamadaManager.onConexaoEstabelecida = {
-            Log.d(TAG, "ChamadaManager: Conexão TCP de áudio estabelecida")
-            Log.d(TAG, ">>> EMITINDO EVENTO CHAMADA_CONECTADA <<<")
-            _estadoLocalFlow.value = EstadoChamadaLocal.CHAMADA_EM_ANDAMENTO
-            
-            scope.launch {
-                _eventosUIFlow.emit(
-                    com.conversa.conversa.data.chamada.model.EventoChamadaUI(
-                        tipo = com.conversa.conversa.data.chamada.model.TipoEventoChamadaUI.CHAMADA_CONECTADA,
-                        chamadaId = chamadaAtual?.id ?: 0
-                    )
-                )
-                Log.d(TAG, ">>> EVENTO CHAMADA_CONECTADA EMITIDO <<<")
-            }
-            
-            scope.launch(Dispatchers.Main) {
-                onChamadaConectada?.invoke()
-            }
-        }
-        
-        chamadaManager.onConexaoFalhou = { erro ->
-            Log.e(TAG, "ChamadaManager: Falha na conexão de áudio: $erro")
-            
-            scope.launch(Dispatchers.Main) {
-                onErro?.invoke("Falha ao conectar áudio: $erro")
-            }
-        }
-        
-        chamadaManager.onChamadaFinalizada = {
-            Log.d(TAG, "ChamadaManager: Chamada finalizada")
-            _estadoLocalFlow.value = EstadoChamadaLocal.CHAMADA_FINALIZADA
-            
-            scope.launch {
-                _eventosUIFlow.emit(
-                    com.conversa.conversa.data.chamada.model.EventoChamadaUI(
-                        tipo = com.conversa.conversa.data.chamada.model.TipoEventoChamadaUI.CHAMADA_FINALIZADA,
-                        chamadaId = chamadaAtual?.id ?: 0
-                    )
-                )
-            }
-            
-            scope.launch(Dispatchers.Main) {
-                onChamadaFinalizada?.invoke()
-            }
-        }
-    }
-    
-    private fun setupSocketEventListeners() {
-        
-        socketManager.onChamadaRecebida = { chamadaId, usuarioId, usuarioNome ->
-            Log.d(TAG, "Socket: Chamada recebida $chamadaId de $usuarioNome")
-            
-            scope.launch {
-                try {
-                    val resultado = obterDadosChamada(chamadaId)
-                    
-                    if (resultado.isSuccess) {
-                        val chamada = resultado.getOrNull()!!
-                        chamadaAtual = chamada
-                        _estadoLocalFlow.value = EstadoChamadaLocal.RECEBENDO_CHAMADA
-                        
-                        _eventosChamadaFlow.emit(
-                            EventoChamada.Recebida(chamadaId, usuarioId, usuarioNome)
-                        )
-                        
-                        Log.d(TAG, "Dados da chamada recebida carregados: ${chamada.usuarios.size} participantes")
-                    } else {
-                        Log.e(TAG, "Erro ao buscar dados da chamada recebida", resultado.exceptionOrNull())
-                    }
-                } catch (e: Exception) {
-                    Log.e(TAG, "Exceção ao processar chamada recebida", e)
-                }
-            }
-        }
-        
-        socketManager.onChamadaFinalizada = { chamadaId, usuarioId ->
-            Log.d(TAG, "Socket: Chamada finalizada $chamadaId")
-            
-            scope.launch {
-                _estadoLocalFlow.value = EstadoChamadaLocal.CHAMADA_FINALIZADA
-                
-                if (chamadaAtual?.id == chamadaId) {
-                    chamadaAtual = null
-                }
-                
-                _eventosChamadaFlow.emit(
-                    EventoChamada.Finalizada(chamadaId, usuarioId)
-                )
-                
-                chamadaManager.finalizarChamada()
-                
-                withContext(Dispatchers.Main) {
-                    onChamadaFinalizada?.invoke()
-                }
-            }
-        }
-        
-        socketManager.onUsuarioRecusou = { chamadaId, usuarioId ->
-            Log.d(TAG, "Socket: Usuário $usuarioId recusou chamada $chamadaId")
-            
-            scope.launch {
-                if (chamadaAtual?.id == chamadaId) {
-                    val resultado = obterDadosChamada(chamadaId)
-                    if (resultado.isSuccess) {
-                        chamadaAtual = resultado.getOrNull()
-                    }
-                }
-                
-                _eventosChamadaFlow.emit(
-                    EventoChamada.UsuarioRecusou(chamadaId, usuarioId)
-                )
-            }
-        }
-        
-        socketManager.onUsuarioEntrou = { chamadaId, usuarioId ->
-            Log.d(TAG, "Socket: Usuário $usuarioId entrou na chamada $chamadaId")
-            
-            scope.launch {
-                val usuarioAtualId = userPreferences.userId.firstOrNull() ?: 0
-                
-                // Sempre atualiza dados da chamada
-                if (chamadaAtual?.id == chamadaId || chamadaAtual == null) {
-                    val resultado = obterDadosChamada(chamadaId)
-                    if (resultado.isSuccess) {
-                        chamadaAtual = resultado.getOrNull()
-                        Log.d(TAG, "Dados da chamada atualizados: ${chamadaAtual?.usuarios?.size} participantes")
-                    }
-                }
-                
-                // Verifica se é o primeiro participante diferente do usuário atual
-                if (!primeiroParticipanteEntrou && usuarioId != usuarioAtualId) {
-                    primeiroParticipanteEntrou = true
-                    Log.d(TAG, "⚡ PRIMEIRO participante diferente entrou: $usuarioId (eu sou: $usuarioAtualId)")
-                    Log.d(TAG, "🎙️ Iniciando captura e reprodução - Quem ESTAVA ESPERANDO")
-                    
-                    val chamadaIdAtual = chamadaAtual?.id
-                    
-                    if (chamadaIdAtual != null) {
-                        _eventosUIFlow.emit(
-                            com.conversa.conversa.data.chamada.model.EventoChamadaUI(
-                                tipo = com.conversa.conversa.data.chamada.model.TipoEventoChamadaUI.CHAMADA_REALMENTE_INICIADA,
-                                chamadaId = chamadaIdAtual
-                            )
-                        )
-                        
-                        withContext(Dispatchers.Main) {
-                            onChamadaRealmenteIniciada?.invoke()
-                        }
-                        
-                        chamadaManager.iniciarCapturaEReproducao()
-                        Log.d(TAG, "✅ Captura e reprodução iniciadas com sucesso")
-                    } else {
-                        Log.e(TAG, "❌ ERRO: chamadaAtual ainda é null ao detectar primeiro participante")
-                    }
-                } else {
-                    if (usuarioId == usuarioAtualId) {
-                        Log.d(TAG, "⏭️ Evento ignorado: sou eu mesmo entrando ($usuarioId)")
-                    } else if (primeiroParticipanteEntrou) {
-                        Log.d(TAG, "⏭️ Evento ignorado: áudio já foi iniciado anteriormente")
-                    }
-                }
-                
-                _eventosChamadaFlow.emit(
-                    EventoChamada.UsuarioEntrou(chamadaId, usuarioId)
-                )
-            }
-        }
-        
-        socketManager.onUsuarioSaiu = { chamadaId, usuarioId ->
-            Log.d(TAG, "Socket: Usuário $usuarioId saiu da chamada $chamadaId")
-            
-            scope.launch {
-                if (chamadaAtual?.id == chamadaId) {
-                    val resultado = obterDadosChamada(chamadaId)
-                    if (resultado.isSuccess) {
-                        chamadaAtual = resultado.getOrNull()
-                    }
-                }
-                
-                _eventosChamadaFlow.emit(
-                    EventoChamada.UsuarioSaiu(chamadaId, usuarioId)
-                )
-            }
-        }
-    }
-    
-    suspend fun iniciarChamada(destinatariosIds: List<Int>): Result<ChamadaResponse> {
-        return try {
-            primeiroParticipanteEntrou = false
-            _estadoLocalFlow.value = EstadoChamadaLocal.INICIANDO_CHAMADA
-            
-            val token = userPreferences.authToken.first()
-            if (token == null) {
-                return Result.failure(Exception("Token não disponível"))
-            }
-            
-            val usuarioId = userPreferences.userId.first() ?: 0
-            val apiUrl = userPreferences.apiUrl.first() ?: ""
-            val tcpHost = extrairHost(apiUrl)
-            
-            Log.d(TAG, "=== INICIANDO CHAMADA ===")
-            Log.d(TAG, "UsuarioId: $usuarioId")
-            Log.d(TAG, "Destinatarios: $destinatariosIds")
-            
-            val todosUsuarios = destinatariosIds.toMutableList()
-            if (usuarioId !in todosUsuarios) {
-                todosUsuarios.add(0, usuarioId)
-            }
-            
-            val tipo = if (todosUsuarios.size == 2) 1 else 2
+    suspend fun iniciarChamada(destinatariosIds: List<Int>, comVideo: Boolean = false): Result<ChamadaResponse> =
+        runCatching {
+            val (token, meuUid) = credenciais()
+            _estadoLocal.value = EstadoChamadaLocal.INICIANDO_CHAMADA
+
+            val todosUsuarios = (listOf(meuUid) + destinatariosIds).distinct()
             val request = IniciarChamadaRequest(
-                tipo = tipo,
-                usuarios = todosUsuarios.map { UsuarioIdDto(it) }
+                tipo = if (todosUsuarios.size == 2) 1 else 2,
+                usuarios = todosUsuarios.map { UsuarioIdDto(it) },
             )
-            
             val response = api.iniciarChamada("Bearer $token", request)
-            
-            if (response.isSuccessful) {
-                val chamada = response.body()!!
-                
-                Log.d(TAG, "✅ Chamada criada via API: ${chamada.id}")
-                Log.d(TAG, "Atribuindo chamadaAtual ANTES de conectar TCP")
-                
-                // CRÍTICO: Atribui ANTES de conectar ao TCP
-                chamadaAtual = chamada
-                
-                // Delay para garantir que servidor processou
-                delay(200)
-                
-                val sucesso = chamadaManager.iniciarChamada(
-                    serverHost = tcpHost,
-                    serverPort = TCP_PORT,
-                    chamadaId = chamada.id,
-                    usuarioId = usuarioId
-                )
-                
-                if (sucesso) {
-                    Log.d(TAG, "✅ Conectado ao TCP - Quem INICIA")
-                    
-                    withContext(Dispatchers.Main) {
-                        onChamadaIniciada?.invoke(chamada)
-                    }
-                    
-                    Result.success(chamada)
-                } else {
-                    Log.e(TAG, "❌ Falha ao conectar TCP")
-                    _estadoLocalFlow.value = EstadoChamadaLocal.DESCONHECIDO
-                    Result.failure(Exception("Falha ao conectar áudio"))
-                }
-            } else {
-                Log.e(TAG, "❌ Erro API ao iniciar: ${response.code()}")
-                _estadoLocalFlow.value = EstadoChamadaLocal.DESCONHECIDO
-                Result.failure(Exception("Erro ao iniciar chamada: ${response.code()}"))
+            if (!response.isSuccessful) error("Erro ao iniciar chamada: ${response.code()}")
+            val chamada = response.body()!!
+            _chamadaAtual.value = chamada
+
+            webRTCManager.adquirirMidiaLocal(comVideo)
+            webRTCManager.publicarLocalNaSala(chamada.id, meuUid)
+
+            withContext(Dispatchers.Main) { onChamadaIniciada?.invoke(chamada) }
+            chamada
+        }.onFailure {
+            Log.e(TAG, "iniciarChamada falhou", it)
+            _estadoLocal.value = EstadoChamadaLocal.DESCONHECIDO
+        }
+
+    suspend fun aceitarChamada(chamadaId: Int, comVideo: Boolean = false): Result<Unit> = runCatching {
+        val (token, meuUid) = credenciais()
+
+        val dados = obterDadosChamada(chamadaId).getOrThrow()
+        _chamadaAtual.value = dados
+
+        val response = api.entrarChamada("Bearer $token", ChamadaIdRequest(chamadaId))
+        if (!response.isSuccessful) error("Erro API entrarChamada: ${response.code()}")
+
+        webRTCManager.adquirirMidiaLocal(comVideo)
+        webRTCManager.publicarLocalNaSala(chamadaId, meuUid)
+
+        dados.usuarios.filter { it.usuarioId != meuUid && it.status == STATUS_ENTROU }
+            .forEach { webRTCManager.assinarDePeer(chamadaId, it.usuarioId) }
+
+        _estadoLocal.value = EstadoChamadaLocal.CHAMADA_EM_ANDAMENTO
+        withContext(Dispatchers.Main) { onChamadaConectada?.invoke(); Unit }
+    }.onFailure { Log.e(TAG, "aceitarChamada falhou", it) }
+
+    suspend fun recusarChamada(chamadaId: Int): Result<Unit> = runCatching {
+        val token = userPreferences.authToken.first() ?: error("Sem token")
+        val response = api.recusarChamada("Bearer $token", ChamadaIdRequest(chamadaId))
+        if (!response.isSuccessful) error("Erro API recusarChamada: ${response.code()}")
+        _estadoLocal.value = EstadoChamadaLocal.RECUSADA
+        if (_chamadaAtual.value?.id == chamadaId) _chamadaAtual.value = null
+    }
+
+    suspend fun finalizarChamada(): Result<Unit> = runCatching {
+        val chamada = _chamadaAtual.value
+        webRTCManager.desligar()
+        if (chamada != null) {
+            val token = userPreferences.authToken.firstOrNull()
+            if (token != null) {
+                try { api.sairChamada("Bearer $token", ChamadaIdRequest(chamada.id)) }
+                catch (e: Exception) { Log.w(TAG, "sairChamada API falhou: ${e.message}") }
             }
-        } catch (e: Exception) {
-            Log.e(TAG, "❌ Exceção ao iniciar chamada", e)
-            _estadoLocalFlow.value = EstadoChamadaLocal.DESCONHECIDO
-            Result.failure(e)
+        }
+        _chamadaAtual.value = null
+        _estadoLocal.value = EstadoChamadaLocal.CHAMADA_FINALIZADA
+        withContext(Dispatchers.Main) { onChamadaFinalizada?.invoke() }
+    }
+
+    /**
+     * Popula _chamadaAtual e estadoLocal a partir de um evento RECEBIDA externo
+     * (chamado pelo ChamadaService quando o handler de socket foi sobrescrito por outro consumidor).
+     * Garante que aceitarChamada()/recusarChamada() consigam ler o id depois.
+     */
+    suspend fun processarEventoChamadaRecebida(chamadaId: Int, usuarioId: Int): Result<ChamadaResponse> = runCatching {
+        val dados = obterDadosChamada(chamadaId).getOrThrow()
+        _chamadaAtual.value = dados
+        _estadoLocal.value = EstadoChamadaLocal.RECEBENDO_CHAMADA
+        val nome = dados.usuarios.firstOrNull { it.usuarioId == usuarioId }?.usuarioNome ?: ""
+        _eventos.emit(EventoChamada.Recebida(chamadaId, usuarioId, nome))
+        dados
+    }
+
+    suspend fun obterDadosChamada(chamadaId: Int): Result<ChamadaResponse> = runCatching {
+        val token = userPreferences.authToken.first() ?: error("Sem token")
+        val response = api.obterDadosChamada("Bearer $token", chamadaId)
+        if (!response.isSuccessful) error("Erro API obterDadosChamada: ${response.code()}")
+        response.body()!!
+    }
+
+    /** Upgrade audio→video: bate no endpoint REST + liga video no manager (renegocia WHIP). */
+    suspend fun alternarVideo(ativar: Boolean): Result<Unit> = runCatching {
+        val chamada = _chamadaAtual.value ?: error("Sem chamada ativa")
+        if (ativar) {
+            val token = userPreferences.authToken.first() ?: error("Sem token")
+            val resp = api.ativarVideoChamada("Bearer $token", ChamadaIdRequest(chamada.id))
+            if (!resp.isSuccessful) error("ativarVideoChamada: ${resp.code()}")
+        }
+        webRTCManager.alternarVideo(ativar)
+    }
+
+    // ─── Sincronizacao de peers (espelha sincronizarPeersAtivos do web) ──────
+
+    /**
+     * Busca /api/chamada/dados, assina peers com status=Entrou e fecha peers
+     * que nao estao mais na lista. Tambem chamada ao reconectar WS.
+     */
+    suspend fun sincronizarPeersAtivos() {
+        if (_estadoLocal.value != EstadoChamadaLocal.CHAMADA_EM_ANDAMENTO) return
+        if (!sincronizarMutex.tryLock()) return
+        try {
+            val chamadaId = _chamadaAtual.value?.id ?: return
+            val meuUid = userPreferences.userId.firstOrNull() ?: return
+            val dados = obterDadosChamada(chamadaId).getOrNull() ?: return
+            _chamadaAtual.value = dados
+
+            val ativos = dados.usuarios.filter { it.usuarioId != meuUid && it.status == STATUS_ENTROU }
+            val idsAtivos = ativos.map { it.usuarioId }.toSet()
+
+            val peersAtuais = webRTCManager.peers.value.keys.toSet()
+            peersAtuais.filter { it !in idsAtivos }.forEach { webRTCManager.desconectarPeer(it) }
+
+            for (usuario in ativos) {
+                try { webRTCManager.assinarDePeer(chamadaId, usuario.usuarioId) }
+                catch (e: Exception) { Log.e(TAG, "Falha sincronizar peer ${usuario.usuarioId}", e) }
+            }
+        } finally {
+            sincronizarMutex.unlock()
         }
     }
-    
-    suspend fun aceitarChamada(chamadaId: Int): Result<Unit> {
-        return try {
-            primeiroParticipanteEntrou = false
-            
-            val token = userPreferences.authToken.first()
-            if (token == null) {
-                return Result.failure(Exception("Token não disponível"))
-            }
-            
-            val usuarioId = userPreferences.userId.firstOrNull() ?: 0
-            val apiUrl = userPreferences.apiUrl.firstOrNull() ?: ""
-            val tcpHost = extrairHost(apiUrl)
-            
-            Log.d(TAG, "=== ACEITANDO CHAMADA ===")
-            Log.d(TAG, "ChamadaId: $chamadaId")
-            Log.d(TAG, "UsuarioId: $usuarioId")
-            
-            // 1. Busca dados completos PRIMEIRO
-            Log.d(TAG, "Buscando dados da chamada $chamadaId...")
-            val resultado = obterDadosChamada(chamadaId)
-            if (resultado.isFailure) {
-                Log.e(TAG, "Erro ao buscar dados da chamada")
-                return Result.failure(Exception("Erro ao buscar dados da chamada"))
-            }
-            
-            // CRÍTICO: Atribui ANTES de qualquer operação
-            chamadaAtual = resultado.getOrNull()
-            Log.d(TAG, "✅ chamadaAtual atribuído: id=${chamadaAtual?.id}, ${chamadaAtual?.usuarios?.size} participantes")
-            
-            // 2. Notifica API que está entrando
-            val response = api.entrarChamada("Bearer $token", ChamadaIdRequest(chamadaId))
-            
-            if (response.isSuccessful) {
-                Log.d(TAG, "✅ API notificada: entrou na chamada $chamadaId")
-                
-                // 3. Delay reduzido para garantir que servidor processou
-                Log.d(TAG, "Aguardando servidor processar entrada...")
-                delay(500)
-                
-                // 4. Conecta ao TCP (chamadaAtual já está definido)
-                Log.d(TAG, "Conectando ao TCP com chamadaAtual.id=${chamadaAtual?.id}...")
-                val sucesso = chamadaManager.iniciarChamada(
-                    serverHost = tcpHost,
-                    serverPort = TCP_PORT,
-                    chamadaId = chamadaId,
-                    usuarioId = usuarioId
-                )
-                
-                if (sucesso) {
-                    Log.d(TAG, "✅ Conectado ao TCP - Quem ACEITA")
-                    
-                    // CRÍTICO: Verifica se já tem outros participantes conectados
-                    val outrosParticipantes = chamadaAtual?.usuarios?.filter { 
-                        it.usuarioId != usuarioId 
-                    } ?: emptyList()
-                    
-                    Log.d(TAG, "Verificando participantes: total=${chamadaAtual?.usuarios?.size}, outros=${outrosParticipantes.size}")
-                    
-                    if (outrosParticipantes.isNotEmpty()) {
-                        Log.d(TAG, "⚡ Já existem ${outrosParticipantes.size} participante(s) conectado(s)")
-                        outrosParticipantes.forEach { p ->
-                            Log.d(TAG, "   - Participante: ${p.usuarioNome} (id=${p.usuarioId})")
-                        }
-                        Log.d(TAG, "🎙️ Iniciando captura e reprodução IMEDIATAMENTE - Quem ACEITOU")
-                        primeiroParticipanteEntrou = true
-                        chamadaManager.iniciarCapturaEReproducao()
-                        
-                        withContext(Dispatchers.Main) {
-                            onChamadaRealmenteIniciada?.invoke()
-                        }
-                        
-                        Log.d(TAG, "✅ Captura e reprodução iniciadas com sucesso")
-                    } else {
-                        Log.d(TAG, "⏳ Nenhum outro participante conectado ainda, aguardando entrada...")
-                    }
-                    
-                    Result.success(Unit)
-                } else {
-                    Log.e(TAG, "❌ Falha ao conectar TCP")
-                    Result.failure(Exception("Falha ao conectar áudio"))
-                }
-            } else {
-                Log.e(TAG, "❌ Erro API ao aceitar: ${response.code()}")
-                Result.failure(Exception("Erro ao aceitar chamada: ${response.code()}"))
-            }
-        } catch (e: Exception) {
-            Log.e(TAG, "❌ Exceção ao aceitar chamada", e)
-            Result.failure(e)
-        }
-    }
-    
-    suspend fun recusarChamada(chamadaId: Int): Result<Unit> {
-        return try {
-            val token = userPreferences.authToken.first()
-            if (token == null) {
-                return Result.failure(Exception("Token não disponível"))
-            }
-            
-            Log.d(TAG, "Recusando chamada $chamadaId...")
-            
-            val response = api.recusarChamada("Bearer $token", ChamadaIdRequest(chamadaId))
-            
-            if (response.isSuccessful) {
-                Log.d(TAG, "Chamada recusada: $chamadaId")
-                _estadoLocalFlow.value = EstadoChamadaLocal.RECUSADA
-                
-                if (chamadaAtual?.id == chamadaId) {
-                    chamadaAtual = null
-                }
-                
-                Result.success(Unit)
-            } else {
-                Log.e(TAG, "Erro ao recusar chamada: ${response.code()}")
-                Result.failure(Exception("Erro ao recusar chamada: ${response.code()}"))
-            }
-        } catch (e: Exception) {
-            Log.e(TAG, "Exceção ao recusar chamada", e)
-            Result.failure(e)
-        }
-    }
-    
-    suspend fun finalizarChamada(): Result<Unit> {
-        return try {
-            val chamada = chamadaAtual
-            
-            Log.d(TAG, "Finalizando chamada: ${chamada?.id ?: "nenhuma"}")
-            
-            chamadaManager.finalizarChamada()
-            
-            if (chamada != null) {
-                val token = userPreferences.authToken.first()
-                if (token != null) {
-                    try {
-                        // Sempre chama sairChamada - o servidor decide se finaliza:
-                        // - Chamada Simples (2 participantes): servidor finaliza automaticamente
-                        // - Chamada em Grupo: servidor só finaliza quando último participante sair
-                        api.sairChamada("Bearer $token", ChamadaIdRequest(chamada.id))
-                        Log.d(TAG, "API notificada sobre saída da chamada")
-                    } catch (e: Exception) {
-                        Log.e(TAG, "Erro ao notificar API, mas áudio já foi finalizado", e)
-                    }
-                }
-            }
-            
-            primeiroParticipanteEntrou = false
-            chamadaAtual = null
-            _estadoLocalFlow.value = EstadoChamadaLocal.CHAMADA_FINALIZADA
-            
-            Log.d(TAG, "Chamada finalizada completamente")
-            
-            Result.success(Unit)
-        } catch (e: Exception) {
-            Log.e(TAG, "Erro ao finalizar chamada", e)
-            Result.failure(e)
-        }
-    }
-    
-    suspend fun obterDadosChamada(chamadaId: Int): Result<ChamadaResponse> {
-        return try {
-            val token = userPreferences.authToken.first()
-            if (token == null) {
-                return Result.failure(Exception("Token não disponível"))
-            }
-            
-            val response = api.obterDadosChamada("Bearer $token", chamadaId)
-            
-            if (response.isSuccessful) {
-                val chamada = response.body()!!
-                Result.success(chamada)
-            } else {
-                Result.failure(Exception("Erro ao obter dados da chamada: ${response.code()}"))
-            }
-        } catch (e: Exception) {
-            Log.e(TAG, "Erro ao obter dados da chamada", e)
-            Result.failure(e)
-        }
-    }
-    
-    private fun extrairHost(url: String): String {
-        return try {
-            val semProtocolo = url.replace("http://", "").replace("https://", "")
-            semProtocolo.split(":").first().split("/").first()
-        } catch (e: Exception) {
-            Log.e(TAG, "Erro ao extrair host", e)
-            "localhost"
-        }
-    }
-    
+
+    // ─── Controles de midia ──────────────────────────────────────────────────
+
+    fun toggleMuteMicrofone(mutado: Boolean) = webRTCManager.alternarMicrofone(mutado)
+    fun toggleCamera(mutada: Boolean) = webRTCManager.alternarCamera(mutada)
+    fun trocarCamera() = webRTCManager.trocarCamera()
+    fun toggleSpeaker(ligado: Boolean) = webRTCManager.alternarAltoFalante(ligado)
+
+    // ─── Lifecycle ───────────────────────────────────────────────────────────
+
     fun cleanup() {
-        Log.d(TAG, "Cleanup do repository")
-        
-        // Apenas finaliza o ChamadaManager (áudio local)
-        chamadaManager.cleanup()
-        
-        // Limpa estados locais
-        chamadaAtual = null
-        _estadoLocalFlow.value = EstadoChamadaLocal.DESCONHECIDO
-        
-        // Cancela escopo local
+        scope.launch { webRTCManager.desligar() }
+        _chamadaAtual.value = null
+        _estadoLocal.value = EstadoChamadaLocal.DESCONHECIDO
         scope.cancel()
-        
-        // NÃO toca no SocketManager - ele pertence ao serviço!
-        Log.d(TAG, "Repository limpo (SocketManager preservado)")
-    }
-    
-    fun pausarCaptura() {
-        chamadaManager.pausarCaptura()
     }
 
-    fun retormarCaptura() {
-        chamadaManager.retormarCaptura()
+    // ─── Internals ───────────────────────────────────────────────────────────
+
+    private suspend fun credenciais(): Pair<String, Int> {
+        val token = userPreferences.authToken.first() ?: error("Sem token")
+        val uid = userPreferences.userId.first() ?: error("Sem userId")
+        return token to uid
     }
 
-    fun atualizarParticipantesMutados(mutados: Set<Int>) {
-        chamadaManager.atualizarParticipantesMutados(mutados)
+    private fun registrarHandlersSocket() {
+        socketManager.onChamadaRecebida = { chamadaId, usuarioId, _ ->
+            scope.launch {
+                obterDadosChamada(chamadaId).onSuccess { c ->
+                    _chamadaAtual.value = c
+                    _estadoLocal.value = EstadoChamadaLocal.RECEBENDO_CHAMADA
+                    _eventos.emit(EventoChamada.Recebida(chamadaId, usuarioId, c.usuarios
+                        .firstOrNull { it.usuarioId == usuarioId }?.usuarioNome ?: ""))
+                }
+            }
+        }
+
+        socketManager.onUsuarioEntrou = { chamadaId, peerId ->
+            scope.launch {
+                val meuUid = userPreferences.userId.firstOrNull()
+                if (peerId != meuUid && _chamadaAtual.value?.id == chamadaId) {
+                    _estadoLocal.value = EstadoChamadaLocal.CHAMADA_EM_ANDAMENTO
+                    sincronizarPeersAtivos()
+                }
+                _eventos.emit(EventoChamada.UsuarioEntrou(chamadaId, peerId))
+                _eventosUI.emit(EventoChamadaUI(TipoEventoChamadaUI.PARTICIPANTE_ENTROU, chamadaId, peerId))
+            }
+        }
+
+        socketManager.onUsuarioSaiu = { chamadaId, peerId ->
+            scope.launch {
+                if (_chamadaAtual.value?.id == chamadaId) {
+                    webRTCManager.desconectarPeer(peerId)
+                    obterDadosChamada(chamadaId).onSuccess { _chamadaAtual.value = it }
+                }
+                _eventos.emit(EventoChamada.UsuarioSaiu(chamadaId, peerId))
+                _eventosUI.emit(EventoChamadaUI(TipoEventoChamadaUI.PARTICIPANTE_SAIU, chamadaId, peerId))
+            }
+        }
+
+        socketManager.onUsuarioRecusou = { chamadaId, peerId ->
+            scope.launch {
+                _eventos.emit(EventoChamada.UsuarioRecusou(chamadaId, peerId))
+                _eventosUI.emit(EventoChamadaUI(TipoEventoChamadaUI.CHAMADA_RECUSADA, chamadaId, peerId))
+            }
+        }
+
+        socketManager.onChamadaFinalizada = { chamadaId, usuarioId ->
+            scope.launch {
+                if (_chamadaAtual.value?.id == chamadaId) {
+                    webRTCManager.desligar()
+                    _chamadaAtual.value = null
+                    _estadoLocal.value = EstadoChamadaLocal.CHAMADA_FINALIZADA
+                }
+                _eventos.emit(EventoChamada.Finalizada(chamadaId, usuarioId))
+                _eventosUI.emit(EventoChamadaUI(TipoEventoChamadaUI.CHAMADA_FINALIZADA, chamadaId, usuarioId))
+                withContext(Dispatchers.Main) { onChamadaFinalizada?.invoke() }
+            }
+        }
+
+        socketManager.onVideoAtivado = { chamadaId, peerId ->
+            scope.launch { _videoRemotoAtivado.emit(chamadaId to peerId) }
+        }
+
+        // Reconexao WS: ressincronizar peers (chamadas pendentes sao puxadas pelo SocketService)
+        socketManager.adicionarOnConectado {
+            scope.launch { sincronizarPeersAtivos() }
+        }
     }
 
-    /**
-     * Muta/desmuta o microfone
-     */
-    fun toggleMuteMicrofone(muted: Boolean) {
-        chamadaManager.toggleMuteMicrofone(muted)
-    }
-
-    /**
-     * Muta/desmuta o áudio (reprodução)
-     */
-    fun toggleMuteAudio(muted: Boolean) {
-        chamadaManager.toggleMuteAudio(muted)
-    }
-
-    /**
-     * Alterna entre earpiece e speakerphone
-     */
-    fun toggleSpeaker(speakerOn: Boolean) {
-        chamadaManager.toggleSpeaker(speakerOn)
-    }
-
-    fun getLastAudioTimestamps(): Map<Int, Long> {
-        return chamadaManager.lastAudioTimestampsMap
+    private fun registrarCallbacksWebRTC() {
+        webRTCManager.onErro = { msg ->
+            Log.e(TAG, "WebRTC erro: $msg")
+            scope.launch(Dispatchers.Main) { onErro?.invoke(msg) }
+        }
     }
 }
+
+// 1=Pendente, 2=Recusou, 3=Entrou, 4=Saiu, 5=Desconectou
+private const val STATUS_ENTROU = 3

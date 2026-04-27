@@ -384,8 +384,7 @@ class ChamadaActivity : ComponentActivity(), SensorEventListener {
                     finish()
                 }
                 ChamadaService.EstadoChamadaService.RECEBENDO_CHAMADA,
-                ChamadaService.EstadoChamadaService.INICIANDO_CHAMADA,
-                ChamadaService.EstadoChamadaService.CONECTANDO_AUDIO -> {
+                ChamadaService.EstadoChamadaService.INICIANDO_CHAMADA -> {
                     // Bloqueia durante esses estados para evitar comportamento inesperado
                     Log.d(TAG, "onBackPressed - bloqueado (estado: $estado)")
                 }

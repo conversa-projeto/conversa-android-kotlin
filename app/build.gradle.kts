@@ -2,6 +2,11 @@ plugins {
     alias(libs.plugins.android.application)
     alias(libs.plugins.kotlin.android)
     alias(libs.plugins.kotlin.compose)
+    // IMPORTANTE: para FCM funcionar, adicionar plugin google-services:
+    // 1. Adicionar em libs.versions.toml: googleServices = { id = "com.google.gms.google-services", version = "4.4.2" }
+    // 2. Aplicar aqui: alias(libs.plugins.googleServices)
+    // 3. Colocar google-services.json (do Firebase Console) em app/
+    // Sem isso as chamadas a FirebaseApp.initializeApp falham em runtime.
 }
 
 android {
@@ -18,7 +23,9 @@ android {
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
         
         // Configurações da API (alterar conforme seu servidor)
-        buildConfigField("String", "API_URL", "\"http://192.168.2.4:90/\"")
+        buildConfigField("String", "API_URL", "\"https://192.168.2.5:4430/api/\"")
+        buildConfigField("String", "MEDIAMTX_URL", "\"https://192.168.2.5:4430/webrtc\"")
+        buildConfigField("String", "STUN_URL", "\"stun:stun.l.google.com:19302\"")
     }
 
     buildTypes {
@@ -65,7 +72,16 @@ dependencies {
     
     // WebSocket
     implementation("com.squareup.okhttp3:okhttp:4.12.0")
-    
+
+    // WebRTC (fork ativo do google-webrtc com AARs pré-compilados)
+    // Substitui o antigo org.webrtc:google-webrtc:1.0.32006 descontinuado
+    implementation("io.github.webrtc-sdk:android:125.6422.07")
+
+    // Firebase Cloud Messaging (push notifications)
+    // Requer google-services.json em app/ e plugin com.google.gms.google-services aplicado
+    implementation(platform("com.google.firebase:firebase-bom:33.5.1"))
+    implementation("com.google.firebase:firebase-messaging-ktx")
+
     // DataStore para salvar preferências
     implementation("androidx.datastore:datastore-preferences:1.0.0")
     

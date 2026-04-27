@@ -6,6 +6,10 @@
     <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
     <uses-permission android:name="android.permission.RECORD_AUDIO" />
     <uses-permission android:name="android.permission.MODIFY_AUDIO_SETTINGS" />
+    <uses-permission android:name="android.permission.CAMERA" />
+    <uses-permission android:name="android.permission.FOREGROUND_SERVICE_CAMERA" />
+    <uses-feature android:name="android.hardware.camera" android:required="false" />
+    <uses-feature android:name="android.hardware.camera.autofocus" android:required="false" />
     <uses-permission
         android:name="android.permission.WRITE_EXTERNAL_STORAGE"
         android:maxSdkVersion="28" />
@@ -54,7 +58,16 @@
             android:name=".service.ChamadaService"
             android:enabled="true"
             android:exported="false"
-            android:foregroundServiceType="microphone|phoneCall"></service>
+            android:foregroundServiceType="microphone|phoneCall|camera"></service>
+
+        <!-- Firebase Cloud Messaging receiver. Requer google-services.json configurado. -->
+        <service
+            android:name=".service.ConversaFcmService"
+            android:exported="false">
+            <intent-filter>
+                <action android:name="com.google.firebase.MESSAGING_EVENT" />
+            </intent-filter>
+        </service>
 
         <receiver
             android:name=".service.ChamadaActionReceiver"

@@ -25,6 +25,8 @@ class SplashActivity : AppCompatActivity() {
         mutableListOf<String>().apply {
             // Necessaria para foregroundServiceType="microphone" e chamadas de voz
             add(Manifest.permission.RECORD_AUDIO)
+            // Necessaria para foregroundServiceType="camera" e chamadas de video
+            add(Manifest.permission.CAMERA)
             // Necessaria para exibir notificacoes (Android 13+)
             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
                 add(Manifest.permission.POST_NOTIFICATIONS)
