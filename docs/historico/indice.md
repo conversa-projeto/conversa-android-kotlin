@@ -29,6 +29,7 @@
 
 ## Mensagens (etapa 3)
 - 2026-10-07 · [Etapa 3 — regras do chat, carregar, ler e enviar](2026-10-07-06-etapa-3-regras-e-dados.md) — classificação e links do web, paginação, fila de leitura, envio com WorkManager; status do WS 3 só nas minhas; 159 testes
+- 2026-10-07 · [Etapa 3 — tela de chat, testada no emulador](2026-10-07-07-etapa-3-tela-de-chat.md) — `:feature:chat` (bolhas, Últimas, FABs, links, digitando, status, reenviar); app fechava por regex do ICU (corrigido + teste instrumentado); 164 testes
 
 ## Anexos e mídia (etapa 4)
 _(nada ainda)_

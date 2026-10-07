@@ -7,6 +7,7 @@ import com.conversa.app.core.database.dao.MensagemDao
 import com.conversa.app.core.model.Mensagem
 import com.conversa.app.core.network.api.ConversaApi
 import com.conversa.app.core.network.di.EscopoAplicacao
+import com.conversa.app.core.network.dto.IdDto
 import com.conversa.app.core.network.dto.MarcarStatusRequisicao
 import com.conversa.app.core.network.http.chamarApi
 import javax.inject.Inject
@@ -57,6 +58,11 @@ class MensagensRepositorio @Inject constructor(
     private suspend fun salvar(lista: List<com.conversa.app.core.network.dto.MensagemDto>): Int {
         mensagemDao.salvarCompletas(lista.map { it.paraEntidade() })
         return lista.size
+    }
+
+    /** `POST /conversa/digitando` (ENV-15). Melhor esforço: falha não importa. */
+    suspend fun avisarDigitando(conversaId: Long) {
+        chamarApi { api.avisarDigitando(IdDto(conversaId)) }
     }
 
     // --- Lida (MSG-04) ---

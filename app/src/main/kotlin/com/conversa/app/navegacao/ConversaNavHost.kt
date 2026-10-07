@@ -8,12 +8,12 @@ import androidx.navigation.compose.rememberNavController
 import androidx.navigation.toRoute
 import com.conversa.app.MainViewModel
 import com.conversa.app.NavegacaoGlobal
-import com.conversa.app.chat.ChatProvisorio
 import com.conversa.app.core.ui.estado.ColetarEventos
 import com.conversa.app.feature.auth.cadastro.CadastroRotaTela
 import com.conversa.app.feature.auth.login.AvisoLogin
 import com.conversa.app.feature.auth.login.LoginRotaTela
 import com.conversa.app.feature.auth.servidor.ServidorRotaTela
+import com.conversa.app.feature.chat.ChatRotaTela
 import com.conversa.app.feature.conversas.grupo.CriarGrupoRotaTela
 import com.conversa.app.feature.conversas.lista.ConversasRotaTela
 import com.conversa.app.feature.conversas.membros.MembrosRotaTela
@@ -81,7 +81,11 @@ fun ConversaNavHost(destinoInicial: Any, principal: MainViewModel) {
             )
         }
         composable<RotaChat> {
-            ChatProvisorio(aoMembros = { nav.navigate(RotaMembros(it)) }, aoVoltar = { nav.popBackStack() })
+            ChatRotaTela(
+                aoVoltar = { nav.popBackStack() },
+                aoMembros = { nav.navigate(RotaMembros(it)) },
+                aoAbrirConversa = { nav.navigate(RotaChat(it)) },
+            )
         }
         composable<RotaNovaConversa> {
             NovaConversaRotaTela(

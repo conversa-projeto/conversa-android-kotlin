@@ -15,11 +15,13 @@ sealed interface SegmentoCodigo {
 private val REGEX_MENCAO = Regex("""@\[([^\]]+)\]\((\d+)\)""")
 
 // Abertura: 3 ou mais crases e a linguagem, seguidas de quebra de linha.
-private val ABERTURA = Regex("(`{3,})(\\w*)\\n")
+// Atenção: o regex do Android é o do ICU, não o da JVM dos testes. Não usar flags
+// como (?U) (o ICU recusa e o app fecha) e não usar \w: no ICU ele aceita letras
+// acentuadas, na JVM e no JS do web só ASCII. Por isso [A-Za-z0-9_] explícito.
+private val ABERTURA = Regex("(`{3,})([A-Za-z0-9_]*)\\n")
 private val LINHA_SO_CRASES = Regex("(`{3,})\\s*")
-private val LINHA_CRASES_LINGUAGEM = Regex("(`{3,})(\\w*)\\s*")
+private val LINHA_CRASES_LINGUAGEM = Regex("(`{3,})([A-Za-z0-9_]*)\\s*")
 private val MARKDOWN = Regex("md|markdown", RegexOption.IGNORE_CASE)
-private val ESPACOS = Regex("(?U)\\s+")
 
 private data class Fechamento(val conteudoFim: Int, val fim: Int)
 
@@ -116,8 +118,21 @@ fun resumirCodigo(texto: String): String = separarBlocosDeCodigo(texto)
             is SegmentoCodigo.Codigo -> " Código${segmento.linguagem?.let { " ($it)" }.orEmpty()} "
         }
     }
-    .replace(ESPACOS, " ")
-    .trim()
+    .let(::juntarEspacos)
+
+/** Troca cada sequência de espaços (inclusive Unicode, como no `\s` do JS) por um espaço só, e apara. */
+private fun juntarEspacos(texto: String): String = buildString(texto.length) {
+    var emEspaco = false
+    for (c in texto) {
+        if (c.isWhitespace()) {
+            emEspaco = true
+        } else {
+            if (emEspaco && isNotEmpty()) append(' ')
+            emEspaco = false
+            append(c)
+        }
+    }
+}
 
 /**
  * Texto de uma linha para prévias (lista de conversas, resposta, notificação):

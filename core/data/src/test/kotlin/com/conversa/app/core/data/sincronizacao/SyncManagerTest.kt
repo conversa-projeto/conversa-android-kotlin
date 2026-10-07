@@ -147,4 +147,21 @@ class SyncManagerTest {
         coVerify { mensagemDao.atualizarOculta(102, Instant.parse("2026-10-06T12:00:00Z").toEpochMilli()) }
         coVerify(exactly = 0) { mensagemDao.atualizarStatusDaMinha(any(), neq(7L), any(), any(), any()) }
     }
+
+    @Test
+    fun `WS 3 com id que nao esta no cache busca as mensagens que faltam`() = runTest {
+        prepararApi()
+        coEvery { api.statusMensagens(any(), any()) } returns emptyList()
+        coEvery { mensagemDao.buscar(105) } returns null
+        coEvery { mensagemDao.ultimaSalva(42) } returns 100L
+        val sync = SyncManager(api, tempoReal, conversaDao, mensagemDao, syncEstadoDao, presenca, sessao, escopoDoTeste())
+        sync.iniciar()
+        advanceUntilIdle()
+
+        // Resumo de chamada: só chega por WS 3 (contrato §9.8).
+        eventos.emit(EventoSocket.StatusMensagens(42, listOf(105)))
+        advanceUntilIdle()
+
+        coVerify { api.mensagens(42, mensagemReferencia = 100, mensagensPrevias = 0, mensagensSeguintes = 100) }
+    }
 }

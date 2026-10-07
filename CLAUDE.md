@@ -60,7 +60,7 @@ Instruções para quem trabalha neste repositório, pessoas ou agentes de IA. Le
   - PowerShell: `$env:JAVA_HOME = "C:\Program Files\Android\Android Studio\jbr"`
 - `./gradlew assembleDebug` (Git Bash) ou `.\gradlew.bat assembleDebug` (PowerShell).
 - O `local.properties` não é versionado; o `gradle-wrapper.jar` é.
-- Testes: `./gradlew testDebugUnitTest :core:model:test :core:testing:test`. Estilo: `./gradlew ktlintCheck` (`ktlintFormat` corrige). Lint: `./gradlew :app:lintDebug`.
+- Testes: `./gradlew testDebugUnitTest :core:model:test :core:testing:test`. No emulador (Android de verdade): `./gradlew :app:connectedDebugAndroidTest` — **desinstala o app no fim** (servidor e sessão somem); guia em `docs/desenvolvimento/emulador.md`. Estilo: `./gradlew ktlintCheck` (`ktlintFormat` corrige). Lint: `./gradlew :app:lintDebug`.
 - Toolchain: Gradle 9.8, AGP 9.4 (Kotlin embutido), Kotlin 2.4, compileSdk 37, targetSdk 36, minSdk 28. Versões só no `gradle/libs.versions.toml`.
 
 ## Estrutura dos módulos (nova base)
@@ -73,7 +73,7 @@ Instruções para quem trabalha neste repositório, pessoas ou agentes de IA. Le
 - `:core:data` — repositórios, `ConexaoTempoReal`, `SyncManager`.
 - `:core:ui` — tema (cores do FMX: `docs/design/cores.md`), componentes, `UiState`.
 - `:core:testing` — regras de teste e fixtures JSON do contrato.
-- `:feature:*` — uma por área (hoje: `auth` — servidor, login, cadastro; `conversas` — lista, nova conversa, grupos, membros).
+- `:feature:*` — uma por área (hoje: `auth` — servidor, login, cadastro; `conversas` — lista, nova conversa, grupos, membros; `chat` — a conversa aberta).
 - Convention plugins em `build-logic/`. O app antigo está em `app-legado/`, fora do build.
 - **Cores:** só as de `docs/design/cores.md` (vêm do `conversa-windows-fmx`), nunca as do web.
 
@@ -88,3 +88,5 @@ Instruções para quem trabalha neste repositório, pessoas ou agentes de IA. Le
   - nunca guardar a senha do usuário.
 - **Textos de UI:** sempre em `strings.xml`. Quando existir no web, use o mesmo texto (doc 03 §6).
 - **Testes:** parsers, mapeadores e a máquina de estados de chamada sempre com teste unitário.
+- **Regex:** o Android usa o regex do **ICU**, não o da JVM dos testes unitários. Um padrão aceito nos testes pode fechar o app (aconteceu com `(?U)`). Evite flags embutidas e classes de propriedade Unicode; não use `\w` (no ICU aceita acentos; use `[A-Za-z0-9_]`). Toda função nova com regex entra no `app/src/androidTest/.../RegexNoAndroidTest.kt`.
+- **Campos de texto:** o valor do `TextField` fica em estado local (síncrono). Passar pelo `combine`/`stateIn` do ViewModel atrasa um quadro e o cursor pula.

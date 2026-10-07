@@ -27,10 +27,4 @@
     <string name="config_em_breve">Perfil, senha, notificações e as demais opções chegam na etapa 8.</string>
 
 
-    <!-- Chat provisório (as mensagens chegam na etapa 3) -->
-    <string name="voltar">Voltar</string>
-    <string name="chat_online">online</string>
-    <string name="chat_membros">Membros do grupo</string>
-    <string name="chat_em_breve">As mensagens chegam na próxima etapa</string>
-    <string name="chat_em_breve_descricao">Por enquanto dá para ver quem está online e digitando, e gerenciar os membros do grupo.</string>
 </resources>

@@ -1,0 +1,68 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- Cabeçalho (CON-09) -->
+    <string name="voltar">Voltar</string>
+    <string name="online">online</string>
+    <string name="chamada_de_voz">Chamada de voz</string>
+    <string name="chamada_de_video">Chamada de vídeo</string>
+    <string name="membros_do_grupo">Membros do grupo</string>
+    <string name="chamadas_em_breve">As chamadas chegam na etapa 6.</string>
+
+    <!-- Digitando/gravando (ENV-15), textos do web -->
+    <string name="digitando">Digitando…</string>
+    <string name="gravando">Gravando áudio…</string>
+    <string name="esta_digitando">está digitando</string>
+    <string name="esta_gravando">está gravando áudio</string>
+    <string name="estao_digitando">estão digitando</string>
+    <string name="estao_gravando">estão gravando áudio</string>
+    <string name="um_nome">%1$s %2$s…</string>
+    <string name="dois_nomes">%1$s e %2$s %3$s…</string>
+    <string name="tres_nomes">%1$s, %2$s e %3$s %4$s…</string>
+    <plurals name="e_outras_pessoas">
+        <item quantity="one">%1$s, %2$s, %3$s e outra %4$d pessoa %5$s…</item>
+        <item quantity="other">%1$s, %2$s, %3$s e outras %4$d pessoas %5$s…</item>
+    </plurals>
+
+    <!-- Lista (MSG-01…05) -->
+    <string name="chat_vazio">Nenhuma mensagem ainda</string>
+    <string name="chat_vazio_descricao">Mande a primeira!</string>
+    <string name="carregando_anteriores">Carregando mensagens anteriores…</string>
+    <string name="hoje">Hoje</string>
+    <string name="ontem">Ontem</string>
+    <string name="ultimas">Últimas</string>
+    <string name="ha_novas_mensagens">Há novas mensagens</string>
+    <string name="ir_para_o_final">Ir para o final</string>
+
+    <!-- Bolhas -->
+    <string name="mensagem_oculta">Mensagem oculta</string>
+    <string name="encaminhada_de">Encaminhado de %1$s</string>
+    <string name="conteudo_imagem">Imagem</string>
+    <string name="conteudo_arquivo">Arquivo</string>
+    <string name="conteudo_audio">Áudio</string>
+    <string name="conteudo_figurinha">Figurinha</string>
+    <string name="conteudo_desconhecido">Conteúdo que esta versão ainda não mostra</string>
+    <string name="votacao">Votação</string>
+    <string name="votacao_no_computador">Abra no computador para votar</string>
+    <string name="status_enviando">Enviando</string>
+    <string name="status_falhou">Não enviada</string>
+    <string name="status_enviada">Enviada</string>
+    <string name="status_entregue">Entregue</string>
+    <string name="status_lida">Lida</string>
+    <string name="reenviar">Reenviar</string>
+    <string name="apagar">Apagar</string>
+
+    <!-- Bolha de chamada (MSG-13), textos do web -->
+    <string name="chamada_audio">Chamada de áudio</string>
+    <string name="chamada_video">Chamada de vídeo</string>
+    <string name="chamada_audio_grupo">Chamada de áudio em grupo</string>
+    <string name="chamada_video_grupo">Chamada de vídeo em grupo</string>
+    <string name="chamada_recusada">Recusada</string>
+    <string name="chamada_perdida">Perdida</string>
+    <string name="chamada_cancelada">Cancelada</string>
+    <string name="participante_recusou">Recusou</string>
+    <string name="participante_desconectou">Desconectou</string>
+
+    <!-- Campo (ENV-01) -->
+    <string name="digite_uma_mensagem">Mensagem</string>
+    <string name="enviar">Enviar</string>
+</resources>

@@ -335,85 +335,87 @@
 
 ## Etapa 3 — Mensagens (núcleo)
 
-- [ ] Criar o módulo `:feature:chat` (adiado da 1.2)
+> Executada em 2026-10-07 na branch `reescrita` (`docs/historico/2026-10-07-06` e `-07`), testada no emulador contra o servidor de dev. Os itens abertos dependem das etapas 4 (anexos, microfone), 6 (chamadas), 7 (menu, salto para mensagem) e 8 (perfil, pesquisa).
+
+- [x] Criar o módulo `:feature:chat` (adiado da 1.2) — `feature/chat` (`ChatViewModel`, `ChatTela`, `Bolhas`)
 ### 3.1 Tela de chat (FC-300, CON-09)
-- [ ] Cabeçalho: voltar, avatar (toque → perfil do outro), título, bolinha online
-- [ ] Subtítulo: direta → "online"/nada; grupo → nomes dos membros; digitando/gravando substitui
-- [ ] Ações do topo: chamada de voz, chamada de vídeo, pesquisa, membros (grupo)
-- [ ] Lista: `LazyColumn` com `reverseLayout`
-- [ ] Campo de mensagem + botão Enviar/Microfone + botão de anexo
+- [ ] Cabeçalho: voltar, avatar (toque → perfil do outro), título, bolinha online — 🔄 voltar, avatar com bolinha, título; o toque no avatar abre o perfil na etapa 8 (AUT-10)
+- [x] Subtítulo: direta → "online"/nada; grupo → nomes dos membros; digitando/gravando substitui — digitando/gravando com os textos do web; direta "online"; grupo com os nomes dos membros
+- [ ] Ações do topo: chamada de voz, chamada de vídeo, pesquisa, membros (grupo) — 🔄 voz e vídeo (avisam "As chamadas chegam na etapa 6") e membros no grupo; a pesquisa entra na etapa 8
+- [x] Lista: `LazyColumn` com `reverseLayout` — itens ao contrário, a mais nova é o item 0
+- [ ] Campo de mensagem + botão Enviar/Microfone + botão de anexo — 🔄 campo + Enviar; microfone e anexo entram na etapa 4
 
 ### 3.2 Carregar e paginar (FC-301, MSG-01)
 - [x] Abrir: `GET /mensagens?conversa=X&mensagemreferencia=0&mensagensprevias=80&mensagensseguintes=0` (máximo de 100 por chamada) — `MensagensRepositorio.carregarRecentes` (+ `MensagensTest`)
-- [ ] Mostrar o que está no Room antes da rede
+- [x] Mostrar o que está no Room antes da rede — o Room aparece na hora; a rede só acrescenta
 - [x] Rolar para cima: `mensagemreferencia=<mais antiga>&mensagensprevias=60`; parar quando vier vazio — `carregarAnteriores`: descarta a de referência (o servidor a inclui); 0 = começo (+ teste)
 - [x] Rolar para baixo (depois de um salto): `mensagemreferencia=<mais nova>&mensagensseguintes=60` — `carregarSeguintes` (mesma regra)
 - [x] Ordem: `coalesce(visivel_em, inserida)`, depois `id`; ids negativos (enviando) no fim — `ordenarMensagens` em `core/model/Chat.kt` (+ `ChatTest`)
-- [ ] Indicadores "Carregando mensagens anteriores/seguintes"
-- [ ] **Teste:** rolar até o início de uma conversa com 1000+ mensagens sem travar
+- [ ] Indicadores "Carregando mensagens anteriores/seguintes" — 🔄 "Carregando mensagens anteriores…" no topo; o de "seguintes" entra com o salto para uma mensagem (etapa 7)
+- [x] **Teste:** rolar até o início de uma conversa com 1000+ mensagens sem travar — no emulador: conversa com 1050 mensagens, 70 gestos até a "Mensagem número 1" (≈17 páginas de 60), sem fechar
 
 ### 3.3 Classificação e bolhas (FC-302, FC-303, MSG-07)
 - [x] Portar `classificarMensagem.ts` com a prioridade: oculta > chamada > imagem > enquete (tipo 8, mesmo com referência) > figurinha > código > emoji > com referência > texto curto > padrão — `classificarMensagem` em `core/model/Chat.kt`; "só emojis" por faixas de código (o regex de propriedades Unicode difere entre Android/ICU e JVM)
 - [x] Testes unitários copiando os casos do web — `ChatTest` (14 casos, inclusive todos os do `classificarMensagem.test.ts`)
-- [ ] Bolha padrão (texto multi-linha) e bolha curta (≤ 60 caracteres, uma linha, hora ao lado)
-- [ ] Bolha só de emojis (fonte grande, sem fundo) (MSG-14)
-- [ ] Placeholders para imagem, figurinha, código e citação (preenchidos nas etapas seguintes)
-- [ ] Placeholder da votação (tipo 8): "📊 Votação" + "Abra no computador para votar" (a bolha nunca fica vazia; a bolha real vem na 7.12)
+- [x] Bolha padrão (texto multi-linha) e bolha curta (≤ 60 caracteres, uma linha, hora ao lado) — `TextoCurto` (hora ao lado) e `CorpoPadrao` (hora embaixo)
+- [x] Bolha só de emojis (fonte grande, sem fundo) (MSG-14) — `BolhaEmoji` (40 sp, sem fundo)
+- [x] Placeholders para imagem, figurinha, código e citação (preenchidos nas etapas seguintes) — `Marcador` para imagem/arquivo/áudio/figurinha; código em bloco monoespaçado com a linguagem; citação com o resumo do web
+- [x] Placeholder da votação (tipo 8): "📊 Votação" + "Abra no computador para votar" (a bolha nunca fica vazia; a bolha real vem na 7.12) — "📊 Votação" + "Abra no computador para votar"
 
 ### 3.4 Mensagem oculta (FC-304, MSG-16)
-- [ ] `excluida_em != null` → bolha "Mensagem oculta" + hora/status
-- [ ] Toque alterna revelar/ocultar o conteúdo original
-- [ ] Sem menu e sem reações; fora da galeria de imagens
-- [ ] Citação de mensagem oculta → "Mensagem oculta" sem conteúdo
+- [x] `excluida_em != null` → bolha "Mensagem oculta" + hora/status — `BolhaOculta`
+- [x] Toque alterna revelar/ocultar o conteúdo original
+- [ ] Sem menu e sem reações; fora da galeria de imagens — 🔄 ainda não há menu nem reações (etapa 7 respeita); galeria na etapa 4
+- [x] Citação de mensagem oculta → "Mensagem oculta" sem conteúdo — `resumoCitacao` → "Mensagem oculta"
 
 ### 3.5 Bolha de chamada (FC-305, MSG-13)
 - [x] Ler o JSON do conteúdo tipo 6: `{chamada_id, tipo, status, iniciada, finalizada, duracao, participantes[]}` — `ChamadaConteudoDto` + `lerChamadaDaMensagem` (datas sem fuso; JSON inválido → nulo) + teste com a fixture
-- [ ] Título: "Chamada de áudio"/"Chamada de vídeo" (+ " em grupo" se > 2)
-- [ ] Direta: "<remetente> · mm:ss" ou o status ("Recusada", "Perdida", "Cancelada")
-- [ ] Grupo: lista de participantes com a duração ou o status
-- [ ] Cores: verde (encerrada), vermelho (recusada/perdida); sem status de entrega
-- [ ] Toque → ligar de novo (mesmo tipo)
+- [x] Título: "Chamada de áudio"/"Chamada de vídeo" (+ " em grupo" se > 2) — `BolhaChamada`
+- [x] Direta: "<remetente> · mm:ss" ou o status ("Recusada", "Perdida", "Cancelada")
+- [x] Grupo: lista de participantes com a duração ou o status
+- [x] Cores: verde (encerrada), vermelho (recusada/perdida); sem status de entrega — ícone verde (`chamadaRecebida`) / vermelho (`chamadaPerdida`), cores do FMX; sem status de entrega
+- [ ] Toque → ligar de novo (mesmo tipo) — 🔄 toque chama `aoLigar` (hoje só o aviso; liga de verdade na etapa 6)
 
 ### 3.6 Separadores e hora (FC-306, MSG-02)
-- [ ] Separador de dia ("seg., 05/10/2026" ou "Hoje"/"Ontem") — 🔄 regra pronta (`montarItensChat` + `rotuloDia`, Hoje/Ontem/data; dia pela data efetiva); falta desenhar (bloco da tela)
-- [ ] Grupo: nome do remetente acima das bolhas recebidas quando muda o remetente — 🔄 regra pronta (`ItemChat.Bolha.mostrarRemetente`); falta desenhar
-- [ ] Hora `HH:mm` formatada direto do `Instant` (nada de `toString()`, ver #29)
+- [x] Separador de dia ("seg., 05/10/2026" ou "Hoje"/"Ontem") — "Hoje"/"Ontem"/"qua., 07/10/2026"; dia pela data efetiva
+- [x] Grupo: nome do remetente acima das bolhas recebidas quando muda o remetente — `ItemChat.Bolha.mostrarRemetente` (só o primeiro nome, como o servidor manda)
+- [x] Hora `HH:mm` formatada direto do `Instant` (nada de `toString()`, ver #29) — `horaDa` com `DateTimeFormatter` no fuso do aparelho
 
 ### 3.7 Enviar texto (FC-307, ENV-01)
 - [x] Ao enviar: criar a mensagem otimista com id negativo e `enviando=true` no Room — `EnvioMensagens.enviarTexto` (+ teste)
 - [x] Guardar em `EnvioPendente` e disparar o `EnvioWorker` (WorkManager, com rede) — `envio_pendente` + `EnvioWorker` (`@HiltWorker`, rede obrigatória, `APPEND_OR_REPLACE`); WorkManager iniciado pelo app com o Hilt
 - [x] Worker: `PUT /mensagem {conversa_id, conteudos:[{ordem:1, tipo:1, conteudo}]}` → trocar o id negativo pelo real — `processarPendentes`: em ordem; troca pela real (`mensagemreferencia=id`) ou, se não vier, grava a otimista com o id real (+ teste)
-- [ ] Erro definitivo → marcar a mensagem como "falhou" com o botão "Reenviar"/"Apagar" — 🔄 regra pronta: 4xx ou 5 erros do servidor → `falhou`; `reenviar`/`descartar` (+ teste); sem rede não conta tentativa; falta o botão na bolha
-- [ ] O texto do campo só é limpo depois de salvo no Room (nunca se perde)
-- [ ] Após enviar: rolar ao fim e atualizar a lista de conversas
-- [ ] **Teste:** enviar em modo avião → religar → a mensagem sai sozinha
+- [x] Erro definitivo → marcar a mensagem como "falhou" com o botão "Reenviar"/"Apagar" — regra (4xx ou 5 erros do servidor → `falhou`; sem rede não conta) + botões "Reenviar"/"Apagar" embaixo da bolha
+- [x] O texto do campo só é limpo depois de salvo no Room (nunca se perde) — o campo só limpa no retorno do `enviar` (depois de gravar no Room), e só se o texto não mudou nesse meio-tempo
+- [x] Após enviar: rolar ao fim e atualizar a lista de conversas — `EventoChat.RolarAoFim`; a lista de conversas atualiza ao terminar o envio (`processarPendentes`)
+- [x] **Teste:** enviar em modo avião → religar → a mensagem sai sozinha — no emulador, derrubando a API (`docker stop api`): ficou "Enviando" (relógio), saiu sozinha quando a API voltou, virou "Enviada", sem duplicar
 
 ### 3.8 Lida e status (FC-308, FC-309, MSG-04, MSG-08, MSG-10)
-- [ ] Detectar as mensagens visíveis na tela (de outros, não visualizadas, app em primeiro plano)
+- [x] Detectar as mensagens visíveis na tela (de outros, não visualizadas, app em primeiro plano) — `snapshotFlow` dos itens visíveis, só com a tela `RESUMED`; o ViewModel filtra (de outros, não lidas, id > 0) (+ teste)
 - [x] Para cada uma: `POST /mensagem/visualizar {conversa, mensagem}` (fila serial; trocar por lote quando S9 existir) — `MensagensRepositorio.marcarLida`: fila serial, uma vez por mensagem, tenta de novo se falhar (+ teste)
 - [ ] Descontar o contador da conversa (otimista); ao chegar a 0, cancelar a notificação da conversa — 🔄 desconta o contador e marca lida no Room na hora (+ teste); cancelar a notificação entra na etapa 5
-- [ ] Ícone de status nas minhas mensagens: relógio → ✓ → ✓✓ cinza → ✓✓ cor primária — 🔄 regra pronta (`statusEntrega`: enviando/falhou/✓/✓✓/lida); falta desenhar
+- [x] Ícone de status nas minhas mensagens: relógio → ✓ → ✓✓ cinza → ✓✓ cor primária — relógio → ✓ → ✓✓ cinza → ✓✓ azul (`statusLida`); ⚠ vermelho se falhou
 - [x] WS 3 `{grupo:conversaId, mensagens:"12,13"}` → `GET /mensagem/status?conversa=&mensagem=12,13` → atualizar `recebida`/`visualizada`/`reproduzida`/`excluida_em` — `SyncManager`; **corrigido**: o status dessa rota é o agregado de todos os destinatários, então só é aplicado nas minhas mensagens (`atualizarStatusDaMinha`); ocultar vale para todas (+ teste no `SyncManagerTest` e no `BancoTest`)
-- [ ] Se algum id do WS 3 não está carregado e a conversa está aberta → recarregar
-- [ ] **Teste:** ler no web → o ✓✓ do celular fica azul sem recarregar
+- [x] Se algum id do WS 3 não está carregado e a conversa está aberta → recarregar — `SyncManager`: id do WS 3 fora do cache → busca as seguintes da conversa (sempre, não só com a conversa aberta). Necessário para o resumo de chamada, que só chega por WS 3 (+ teste)
+- [x] **Teste:** ler no web → o ✓✓ do celular fica azul sem recarregar — no emulador com um 2º cliente (Node, conta B) lendo as mensagens: ✓✓ ficou azul sozinho
 
 ### 3.9 Linha "Últimas", FABs e links (FC-310, FC-311, MSG-03, MSG-05, MSG-11)
-- [ ] Linha "Últimas" antes da primeira não lida (posição fixada ao abrir; fica até sair da conversa)
-- [ ] Ao abrir com não lidas: posicionar a primeira não lida no topo; sem não lidas: ir ao fim
-- [ ] FAB "ir para o final" quando estiver longe do fim
-- [ ] FAB "Há novas mensagens" quando chegar mensagem com o usuário longe do fim
-- [ ] Links clicáveis (`https?://` e `www.`) com as regras de pontuação do web; abrir no navegador — 🔄 regra pronta (`separarLinks`/`separarTexto`, com as regras de pontuação e parênteses do web); falta desenhar e abrir
+- [x] Linha "Últimas" antes da primeira não lida (posição fixada ao abrir; fica até sair da conversa) — decidida uma vez só depois da 1ª carga; não pula enquanto lê (+ teste). **Corrigido no emulador**: a tela se posicionava antes da decisão quando o Room já tinha mensagens
+- [x] Ao abrir com não lidas: posicionar a primeira não lida no topo; sem não lidas: ir ao fim — primeira não lida no topo; sem não lidas, o fim
+- [x] FAB "ir para o final" quando estiver longe do fim — `SmallFloatingActionButton` quando o 1º visível passa do 6º item
+- [x] FAB "Há novas mensagens" quando chegar mensagem com o usuário longe do fim — aparece quando chega mensagem de outra pessoa com a lista longe do fim
+- [x] Links clicáveis (`https?://` e `www.`) com as regras de pontuação do web; abrir no navegador — `separarTexto` + `LinkAnnotation.Url` (abre no navegador); menção abre a conversa direta (`LinkAnnotation.Clickable`); testado no emulador (o "." final fica fora do link)
 
 ### 3.10 Digitando (FC-312, ENV-15)
-- [ ] Ao digitar texto não vazio: `POST /conversa/digitando {id: conversaId}`, no máximo 1 a cada 2,5 s (o último é adiado, não descartado)
-- [ ] Resetar o throttle ao enviar
-- [ ] Receber o WS 4 `{conversa_id, usuario_id}`; ignorar o meu; expirar em 4 s; sumir quando chegar mensagem
-- [ ] Textos: "Digitando…", "Ana está digitando…", "Ana e Beto estão digitando…", "Ana, Beto e Caio…", "… e outras N pessoas…" — 🔄 regra pronta (`atividadeDaConversa`); textos entram com a tela
-- [ ] Quem não é contato: "Usuário #id" — 🔄 regra pronta (`atividadeDaConversa`)
+- [x] Ao digitar texto não vazio: `POST /conversa/digitando {id: conversaId}`, no máximo 1 a cada 2,5 s (o último é adiado, não descartado) — `ChatViewModel.aoDigitar` (+ teste com tempo virtual)
+- [x] Resetar o throttle ao enviar — (+ teste)
+- [x] Receber o WS 4 `{conversa_id, usuario_id}`; ignorar o meu; expirar em 4 s; sumir quando chegar mensagem — `PresencaRepositorio` (etapa 2) + `atividadeDaConversa` ignora o meu
+- [x] Textos: "Digitando…", "Ana está digitando…", "Ana e Beto estão digitando…", "Ana, Beto e Caio…", "… e outras N pessoas…" — `textoAtividade` com os textos do web (+ plural "outra/outras")
+- [x] Quem não é contato: "Usuário #id" — `atividadeDaConversa`
 
 ### 3.11 Deep link (FC-314, CON-12)
-- [ ] Abrir `chat/{id}` pela notificação → **recarregar as mensagens** antes de mostrar
-- [ ] Com `mensagem={id}` → ir para a mensagem (usa a 6.3)
+- [x] Abrir `chat/{id}` pela notificação → **recarregar as mensagens** antes de mostrar — o chat sempre recarrega as recentes ao abrir (`carregarRecentes`), venha de onde vier
+- [ ] Com `mensagem={id}` → ir para a mensagem (usa a 6.3) — ⛔ o salto para uma mensagem é da etapa 7 (ações sobre mensagens); hoje abre no lugar padrão
 
 ---
 

@@ -129,15 +129,7 @@ class SyncManager @Inject constructor(
         if (novas.isEmpty()) return
 
         for (nova in novas) {
-            val ultima = mensagemDao.ultimaSalva(nova.conversaId)
-            val resultado = chamarApi {
-                if (ultima != null) {
-                    api.mensagens(nova.conversaId, mensagemReferencia = ultima, mensagensSeguintes = LOTE)
-                } else {
-                    api.mensagens(nova.conversaId, mensagensPrevias = LOTE_INICIAL)
-                }
-            }
-            resultado.onSuccess { mensagens -> mensagemDao.salvarCompletas(mensagens.map { it.paraEntidade() }) }
+            buscarSeguintes(nova.conversaId)
             // Mensagem nova na conversa: quem estava digitando terminou (como no web).
             presenca.limparDigitando(nova.conversaId)
         }
@@ -145,6 +137,18 @@ class SyncManager @Inject constructor(
         val maior = novas.maxByOrNull { lerInstant(it.ate) ?: java.time.Instant.EPOCH }?.ate
         if (maior != null) syncEstadoDao.gravar(SyncEstadoEntidade(CURSOR_MENSAGENS, maior))
         sincronizarConversas()
+    }
+
+    /** Mensagens depois da última salva da conversa (ou as [LOTE_INICIAL] últimas, se não há nenhuma). */
+    private suspend fun buscarSeguintes(conversaId: Long) {
+        val ultima = mensagemDao.ultimaSalva(conversaId)
+        chamarApi {
+            if (ultima != null) {
+                api.mensagens(conversaId, mensagemReferencia = ultima, mensagensSeguintes = LOTE)
+            } else {
+                api.mensagens(conversaId, mensagensPrevias = LOTE_INICIAL)
+            }
+        }.onSuccess { mensagens -> mensagemDao.salvarCompletas(mensagens.map { it.paraEntidade() }) }
     }
 
     /**
@@ -181,6 +185,10 @@ class SyncManager @Inject constructor(
 
     private suspend fun atualizarStatus(evento: EventoSocket.StatusMensagens) {
         if (evento.mensagens.isEmpty()) return
+        // Id que ainda não está no cache: mensagem nova que chegou sem WS 2 — por exemplo o
+        // resumo de chamada (tipo 6), que só gera WS 3 (contrato §9.8). Busca o que falta.
+        val faltando = evento.mensagens.filter { mensagemDao.buscar(it) == null }
+        if (faltando.isNotEmpty()) buscarSeguintes(evento.conversaId)
         chamarApi { api.statusMensagens(evento.conversaId, evento.mensagens.joinToString(",")) }
             .onSuccess { lista ->
                 val eu = sessao.sessao.value?.usuarioId ?: return@onSuccess
