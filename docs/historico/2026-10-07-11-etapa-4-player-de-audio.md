@@ -4,7 +4,7 @@
 - **Tipo:** código / testes / build (módulo e dependência novos)
 - **Itens:** `TODO.md` 1.2 (`:core:media`), 4.3 (download com URL vencida), 4.5; ANX-10, ANX-14
 - **Branch:** `reescrita`
-- **Commits:** (preencher)
+- **Commits:** `1ceaad0`
 
 ## Contexto
 Áudios (tipo 4, arquivo, e tipo 5, gravação) apareciam como arquivo, só com "Abrir". O web toca o áudio na bolha, um por vez, e marca o áudio de outra pessoa como ouvido no primeiro play (doc 03, ANX-10).
