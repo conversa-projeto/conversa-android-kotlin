@@ -1,0 +1,21 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+    TLS do app (FC-106, problema #11 do legado).
+    - Release: só HTTPS e só certificados do sistema. Nada de "aceitar tudo".
+    - Debug: também confia nas CAs instaladas pelo usuário no aparelho, para o
+      servidor de desenvolvimento com certificado do mkcert. Instale o rootCA.pem
+      (mkcert -CAROOT) em Configurações > Segurança > Credenciais > Instalar certificado.
+-->
+<network-security-config>
+    <base-config cleartextTrafficPermitted="false">
+        <trust-anchors>
+            <certificates src="system" />
+        </trust-anchors>
+    </base-config>
+    <debug-overrides>
+        <trust-anchors>
+            <certificates src="system" />
+            <certificates src="user" />
+        </trust-anchors>
+    </debug-overrides>
+</network-security-config>

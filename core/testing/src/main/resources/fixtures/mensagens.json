@@ -1,0 +1,74 @@
+[
+  {
+    "id": 101,
+    "remetente_id": 7,
+    "remetente": "Ana",
+    "conversa_id": 42,
+    "inserida": "2026-10-06T12:00:00.123Z",
+    "alterada": null,
+    "visivel_em": null,
+    "excluida_em": null,
+    "mensagem_referencia": {
+      "tipo": 1,
+      "mensagem": {
+        "id": 99,
+        "conversa_id": 42,
+        "remetente": "Bruno",
+        "inserida": "2026-10-06T11:59:00.000Z",
+        "excluida_em": null,
+        "conteudos": [
+          { "id": 550, "ordem": 1, "tipo": 1, "conteudo": "bom dia", "nome": "", "extensao": "", "transcricao_status": 0, "transcricao": "" }
+        ]
+      }
+    },
+    "recebida": true,
+    "visualizada": false,
+    "reproduzida": false,
+    "conteudos": [
+      { "id": 556, "ordem": 2, "tipo": 2, "conteudo": "e3b0c442", "nome": "foto", "extensao": "jpg", "transcricao_status": 0, "transcricao": "" },
+      { "id": 555, "ordem": 1, "tipo": 1, "conteudo": "oi", "nome": "", "extensao": "", "transcricao_status": 0, "transcricao": "" }
+    ],
+    "reacoes": [
+      {
+        "emoji": "👍",
+        "quantidade": 2,
+        "reagiu": true,
+        "usuarios": [ { "usuario_id": 8, "nome": "Bruno Lima", "reagido_em": "2026-10-06T12:01:00.000Z", "avatar_url": null } ]
+      }
+    ]
+  },
+  {
+    "id": 102,
+    "remetente_id": 8,
+    "remetente": "Bruno",
+    "conversa_id": 42,
+    "inserida": "2026-10-06T12:05:00.000Z",
+    "alterada": null,
+    "visivel_em": null,
+    "excluida_em": "2026-10-06T12:06:00.000Z",
+    "recebida": true,
+    "visualizada": true,
+    "reproduzida": true,
+    "conteudos": [
+      { "id": 557, "ordem": 1, "tipo": 1, "conteudo": "texto que foi ocultado", "nome": "", "extensao": "", "transcricao_status": 0, "transcricao": "" }
+    ]
+  },
+  {
+    "id": 103,
+    "remetente_id": 7,
+    "remetente": "Ana",
+    "conversa_id": 50,
+    "inserida": "2026-10-06T12:10:00.000Z",
+    "alterada": null,
+    "visivel_em": null,
+    "excluida_em": null,
+    "recebida": true,
+    "visualizada": true,
+    "reproduzida": true,
+    "conteudos": [
+      { "id": 558, "ordem": 1, "tipo": 6, "conteudo": "{\"chamada_id\":10,\"tipo\":1,\"status\":4,\"iniciada\":\"2026-10-06T12:00:05\",\"finalizada\":\"2026-10-06T12:02:10\",\"duracao\":125,\"participantes\":[]}", "nome": "", "extensao": "", "transcricao_status": 0, "transcricao": "" },
+      { "id": 559, "ordem": 2, "tipo": 8, "conteudo": "42", "nome": "", "extensao": "", "transcricao_status": 0, "transcricao": "" },
+      { "id": 560, "ordem": 3, "tipo": 99, "conteudo": "tipo futuro", "nome": "", "extensao": "", "transcricao_status": 0, "transcricao": "" }
+    ]
+  }
+]

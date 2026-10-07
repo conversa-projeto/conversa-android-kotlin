@@ -1,0 +1,37 @@
+{
+  "pendentes": [ { "id": 10, "tipo": 2, "status": 1, "iniciada": null, "finalizada": null, "conversa_id": 0, "criado_em": "2026-10-06T12:00:00.000Z", "criado_por": 7 } ],
+  "historico": [ {
+    "id": 10, "tipo": 1, "status": 4, "criado_em": "2026-10-06T12:00:00.000Z", "criado_por": 7, "conversa_id": 42,
+    "iniciada": "2026-10-06T12:00:05.000Z", "finalizada": "2026-10-06T12:02:10.000Z", "duracao": 125,
+    "participantes": [ { "usuario_id": 7, "nome": "Ana Souza", "status": 3, "duracao": null, "avatar_url": null } ]
+  } ],
+  "ice": {
+    "iceServers": [ { "urls": "turns:meu.dominio:8443?transport=tcp", "username": "1791234567:7", "credential": "c2VncmVkbw==" } ],
+    "iceTransportPolicy": "relay"
+  },
+  "ice_lista": {
+    "iceServers": [ { "urls": ["turn:a:3478?transport=tcp", "turns:a:443?transport=tcp"] } ],
+    "iceTransportPolicy": "all"
+  },
+  "atividades": [ {
+    "id": 33, "tipo": 1, "criado_em": "2026-10-06T12:00:00.000Z", "nova": true,
+    "autor_id": 8, "autor_nome": "Bruno Lima",
+    "conversa_id": 42, "conversa_tipo": 1, "conversa_descricao": null,
+    "mensagem_id": 101, "conteudo_tipo": 1, "texto": "bom dia",
+    "chamada_id": null, "chamada_tipo": null, "emoji": "😂",
+    "autor_avatar_url": null
+  } ],
+  "enquete": {
+    "id": 42, "conversa_id": 50, "mensagem_id": 900, "pergunta": "Onde vamos almoçar?",
+    "multipla": false, "criado_por": 7,
+    "opcoes": [ { "id": 1, "texto": "Centro", "votantes": [ { "id": 7, "nome": "Ana Souza" } ] },
+                { "id": 2, "texto": "Shopping", "votantes": [] } ],
+    "total_votantes": 1,
+    "meus_votos": [1]
+  },
+  "anexo_novo": { "existe": false, "id": 5, "upload_url": "https://conversa.local/storage/chat/conversa/2026/10/06/abc?X-Amz-Signature=1", "upload_status": 0 },
+  "anexo_existente": { "existe": true, "id": "5", "upload_url": "https://conversa.local/storage/chat/conversa/2026/10/06/abc?X-Amz-Signature=2" },
+  "mensagens_novas": [ { "conversa_id": 42, "mensagem_id": 105, "ate": "2026-10-06T12:00:00.123Z" } ],
+  "status": [ { "conversa_id": 42, "mensagem_id": 101, "recebida": true, "visualizada": true, "reproduzida": false, "excluida_em": null } ],
+  "sip_vazio": {}
+}

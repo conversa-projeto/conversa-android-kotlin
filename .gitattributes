@@ -1,2 +1,5 @@
 # Patches guardados como estao (sem conversao de fim de linha)
 *.patch -text
+# Scripts do Gradle com o fim de linha certo em qualquer sistema
+gradlew text eol=lf
+*.bat text eol=crlf

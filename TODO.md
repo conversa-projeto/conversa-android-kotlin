@@ -100,143 +100,144 @@
 ## Etapa 1 — Fundação do app novo
 
 ### 1.1 Projeto (FC-100)
-- [ ] Criar a branch `reescrita` a partir de `novo`
-- [ ] Renomear o `app/` atual para `app-legado/` e tirá-lo do `settings.gradle.kts`
-- [ ] Criar o módulo `app/` novo (Empty Compose Activity)
-- [ ] `applicationId = "com.conversa.conversa"` (atualiza por cima do instalado) e `namespace = "com.conversa.app"`
-- [ ] `compileSdk 36`, `targetSdk 36`, `minSdk 28`
-- [ ] `jvmToolchain(17)`
-- [ ] Limpar o `gradle.properties`: remover `android.builtInKotlin=false`, `android.newDsl=false` e as demais flags depreciadas
-- [ ] Pôr **todas** as dependências e plugins no `gradle/libs.versions.toml`
-- [ ] Atualizar o Kotlin, o Compose BOM, o AndroidX e as coroutines para as versões estáveis mais novas
-- [ ] **Teste:** `gradlew assembleDebug` passa
+- [x] Criar a branch `reescrita` a partir de `novo`
+- [x] Renomear o `app/` atual para `app-legado/` e tirá-lo do `settings.gradle.kts`
+- [x] Criar o módulo `app/` novo (Empty Compose Activity) — `MainActivity` Compose + splash + navegação
+- [x] `applicationId = "com.conversa.conversa"` (atualiza por cima do instalado) e `namespace = "com.conversa.app"`
+- [x] `compileSdk 36`, `targetSdk 36`, `minSdk 28` — **compileSdk 37**: as bibliotecas estáveis atuais (Compose 1.12, core 1.19, OkHttp 5.5, Coil 3.6) exigem; o AGP instalou a plataforma 37.0 no SDK
+- [x] `jvmToolchain(17)` — feito com `compileOptions`/`jvmTarget` 17 (sem toolchain: a máquina só tem o JDK 21)
+- [x] Limpar o `gradle.properties`: remover `android.builtInKotlin=false`, `android.newDsl=false` e as demais flags depreciadas
+- [x] Pôr **todas** as dependências e plugins no `gradle/libs.versions.toml` — AGP 9.4.1, Kotlin 2.4.20, KSP 2.3.12, Hilt 2.60.1, Gradle 9.8.0
+- [x] Atualizar o Kotlin, o Compose BOM, o AndroidX e as coroutines para as versões estáveis mais novas — Compose BOM 2026.09.00, coroutines 1.11.0
+- [x] **Teste:** `gradlew assembleDebug` passa — `BUILD SUCCESSFUL`, APK debug gerado (2026-10-07)
 
 ### 1.2 Módulos (FC-101)
-- [ ] Criar `:core:model` (Kotlin puro)
-- [ ] Criar `:core:network`
-- [ ] Criar `:core:database`
-- [ ] Criar `:core:datastore`
-- [ ] Criar `:core:data`
-- [ ] Criar `:core:ui`
-- [ ] Criar `:core:media`
-- [ ] Criar `:core:webrtc`
-- [ ] Criar `:core:testing`
-- [ ] Criar `:feature:auth`, `:feature:conversas`, `:feature:chat`, `:feature:chamada`, `:feature:atividades`, `:feature:pesquisa`, `:feature:config`
-- [ ] Criar convention plugins em `build-logic/` (android-library, compose, hilt, feature)
-- [ ] **Teste:** o build passa e não há dependência circular
+- [x] Criar `:core:model` (Kotlin puro)
+- [x] Criar `:core:network`
+- [x] Criar `:core:database`
+- [x] Criar `:core:datastore`
+- [x] Criar `:core:data`
+- [x] Criar `:core:ui`
+- [ ] Criar `:core:media` — ⏭ adiado: será criado quando a etapa 4 começar (módulo vazio agora só atrasa o build)
+- [ ] Criar `:core:webrtc` — ⏭ adiado: será criado quando a etapa 6 começar
+- [x] Criar `:core:testing`
+- [ ] Criar `:feature:auth`, `:feature:conversas`, `:feature:chat`, `:feature:chamada`, `:feature:atividades`, `:feature:pesquisa`, `:feature:config` — ⏭ `:feature:auth` criado; os demais têm uma linha no início da etapa onde são usados
+- [x] Criar convention plugins em `build-logic/` (android-library, compose, hilt, feature) — `Plugins.kt`: application, library, compose, hilt, feature, jvm
+- [x] **Teste:** o build passa e não há dependência circular — o build com todos os módulos passou
 
 ### 1.3 CI e qualidade (FC-102)
-- [ ] Adicionar ktlint (ou spotless) e detekt com configuração inicial
-- [ ] Ativar o Android Lint com `warningsAsErrors` só para as categorias de segurança
-- [ ] Criar `.github/workflows/android.yml`: checkout → JDK 17 → cache do Gradle → `assembleDebug lint detekt test`
-- [ ] Publicar o APK de debug como artefato do workflow
-- [ ] **Teste:** abrir um PR e ver o check verde
+- [x] Adicionar ktlint (ou spotless) e detekt com configuração inicial — ktlint (estilo `android_studio`, `.editorconfig`) passando em todos os módulos; **detekt adiado**: a versão estável (1.23) não roda com Kotlin 2.4
+- [x] Ativar o Android Lint com `warningsAsErrors` só para as categorias de segurança — `app/lint.xml`: problemas de segurança viram erro; resultado "No issues found"
+- [x] Criar `.github/workflows/android.yml`: checkout → JDK 17 → cache do Gradle → `assembleDebug lint detekt test` — `.github/workflows/android.yml` (instala a plataforma 37; ktlint → testes → lint → APK)
+- [x] Publicar o APK de debug como artefato do workflow
+- [ ] **Teste:** abrir um PR e ver o check verde — ⛔ depende do push para o GitHub (bloqueado aqui; ver etapa 0.2)
 
 ### 1.4 Hilt e padrão de telas (FC-103)
-- [ ] Adicionar o Hilt e criar a `ConversaApplication` com `@HiltAndroidApp`
-- [ ] Criar a `MainActivity` (`@AndroidEntryPoint`) com `enableEdgeToEdge()`
-- [ ] Criar `UiState<T>` (`Carregando` / `Conteudo` / `Vazio` / `Erro`) em `:core:ui`
-- [ ] Criar a base de ViewModel com `StateFlow<UiState>` + `Channel` de eventos únicos
-- [ ] Criar uma tela de exemplo + teste de ViewModel com `kotlinx-coroutines-test` e Turbine
-- [ ] **Teste:** `gradlew test` passa
+- [x] Adicionar o Hilt e criar a `ConversaApplication` com `@HiltAndroidApp` — `ConversaApplication` (Timber só no debug; Coil com o OkHttp do app)
+- [x] Criar a `MainActivity` (`@AndroidEntryPoint`) com `enableEdgeToEdge()` — com splash (`core-splashscreen`)
+- [x] Criar `UiState<T>` (`Carregando` / `Conteudo` / `Vazio` / `Erro`) em `:core:ui` — `core/ui/estado/UiState.kt`
+- [x] Criar a base de ViewModel com `StateFlow<UiState>` + `Channel` de eventos únicos — `EventosUnicos` (Channel) + `ColetarEventos`
+- [x] Criar uma tela de exemplo + teste de ViewModel com `kotlinx-coroutines-test` e Turbine — tela "Servidor" + `ServidorViewModelTest` (6 testes, mockk + Turbine)
+- [x] **Teste:** `gradlew test` passa — 65 testes, 0 falhas (rodado 3× seguidas)
 
 ### 1.5 Design system (FC-104)
-- [ ] Tema Material 3: cores claras/escuras (partir das cores do web), tipografia, formas
-- [ ] Componente `Avatar(url, nome)` com fallback para a inicial — primeiro grafema, que funciona com emoji (GER-07)
-- [ ] Componente `ConfirmDialog` com variante "perigo" (foco em Cancelar) (GER-03)
-- [ ] `SnackbarHost` global para erros (GER-01)
-- [ ] Componentes `EstadoVazio`, `EstadoErro` (com "Tentar de novo") e `Carregando`
-- [ ] Ícones: adicionar `material-icons-extended`, ou vetores próprios
-- [ ] Back preditivo: `android:enableOnBackInvokedCallback="true"` e `BackHandler` onde precisar
-- [ ] `strings.xml` como regra: nenhum texto literal na UI
-- [ ] Previews de todos os componentes (claro e escuro)
+- [x] Tema Material 3: cores claras/escuras (partir das cores do web), tipografia, formas — **cores do conversa-windows-fmx** (pedido do usuário; `docs/design/cores.md`), não do web; escuro é proposta e fica desligado
+- [x] Componente `Avatar(url, nome)` com fallback para a inicial — primeiro grafema, que funciona com emoji (GER-07) — `Avatar` + `inicialDoNome` (BreakIterator)
+- [x] Componente `ConfirmDialog` com variante "perigo" (foco em Cancelar) (GER-03) — `DialogoConfirmacao` e `DialogoAviso`
+- [x] `SnackbarHost` global para erros (GER-01) — `AreaDeAvisos` + `LocalAvisos` na raiz da `MainActivity`
+- [x] Componentes `EstadoVazio`, `EstadoErro` (com "Tentar de novo") e `Carregando` — `Carregando`, `EstadoVazio`, `EstadoErro`
+- [x] Ícones: adicionar `material-icons-extended`, ou vetores próprios — `material-icons-extended`
+- [x] Back preditivo: `android:enableOnBackInvokedCallback="true"` e `BackHandler` onde precisar — `enableOnBackInvokedCallback` no manifest; `BackHandler` entra quando alguma tela precisar
+- [x] `strings.xml` como regra: nenhum texto literal na UI — regra no `CLAUDE.md`; todo texto de tela está em `strings.xml`
+- [x] Previews de todos os componentes (claro e escuro) — previews em todos os componentes e na tela Servidor; escuro no Avatar (o escuro é proposta)
 
 ### 1.6 Configuração do servidor (FC-105)
-- [ ] `ServerConfig(base)` com `api`, `ws` (`wss://host[:porta]/ws/`) e `webrtc` derivados
-- [ ] Teste unitário: `https://x` → `wss://x/ws/`; `http://x:8080` → `ws://x:8080/ws/`; barra final sempre presente
-- [ ] Guardar a `base` no DataStore e expor um `StateFlow<ServerConfig?>`
-- [ ] Interceptor do OkHttp que troca o host pela configuração atual (não recriar o Retrofit)
-- [ ] Tela "Servidor": campo URL, botão "Testar conexão" (espera 401 numa rota protegida = servidor OK), "Salvar"
-- [ ] Mostrar o erro amigável: certificado inválido, host inacessível, não é um servidor Conversa
-- [ ] **Teste:** trocar a URL em tempo de execução muda REST, WS e WebRTC sem reiniciar o app
+- [x] `ServerConfig(base)` com `api`, `ws` (`wss://host[:porta]/ws/`) e `webrtc` derivados
+- [x] Teste unitário: `https://x` → `wss://x/ws/`; `http://x:8080` → `ws://x:8080/ws/`; barra final sempre presente — `ServerConfigTest` (8 testes)
+- [x] Guardar a `base` no DataStore e expor um `StateFlow<ServerConfig?>` — `PreferenciasStore` + `ServidorRepositorio.atual`
+- [x] Interceptor do OkHttp que troca o host pela configuração atual (não recriar o Retrofit) — `EnderecoInterceptor` (base fictícia `conversa.invalid`)
+- [x] Tela "Servidor": campo URL, botão "Testar conexão" (espera 401 numa rota protegida = servidor OK), "Salvar" — `ServidorTela` + `ServidorViewModel`: testar espera 401 com `{error}` em `/api/usuario/permissoes`; salvar sempre testa antes
+- [x] Mostrar o erro amigável: certificado inválido, host inacessível, não é um servidor Conversa — certificado, host não encontrado, indisponível, não é Conversa, sem conexão
+- [x] **Teste:** trocar a URL em tempo de execução muda REST, WS e WebRTC sem reiniciar o app — REST: teste `trocar o servidor vale na proxima requisicao`; WS: `ConexaoTempoReal` reabre ao mudar o servidor; WebRTC lê a mesma config (etapa 6)
 
 ### 1.7 TLS (FC-106)
-- [ ] `res/xml/network_security_config.xml`: `cleartextTrafficPermitted="false"`
-- [ ] `<debug-overrides>` com `@raw/mkcert_ca` (só no debug)
-- [ ] Referenciar no manifest (`android:networkSecurityConfig`)
-- [ ] **Teste:** debug conecta ao servidor de dev com mkcert; release recusa certificado inválido
-- [ ] Garantir que não existe `TrustManager` "aceita tudo" em lugar nenhum (busca no código)
+- [x] `res/xml/network_security_config.xml`: `cleartextTrafficPermitted="false"`
+- [x] `<debug-overrides>` com `@raw/mkcert_ca` (só no debug) — **mudou**: em vez de embutir `@raw/mkcert_ca`, o debug confia nas CAs instaladas pelo usuário (`certificates src=user`) — nada de certificado no repositório; instruções no XML e no README
+- [x] Referenciar no manifest (`android:networkSecurityConfig`)
+- [ ] **Teste:** debug conecta ao servidor de dev com mkcert; release recusa certificado inválido — ⛔ precisa do servidor de dev e de um aparelho (fica para o primeiro teste em aparelho, etapa 2)
+- [x] Garantir que não existe `TrustManager` "aceita tudo" em lugar nenhum (busca no código) — busca por `TrustManager`/`hostnameVerifier`/`sslSocketFactory` no código novo: nada; lint de segurança como erro
 
 ### 1.8 Rede (FC-107, FC-109)
-- [ ] Prover um **único** `OkHttpClient` via Hilt (timeouts, `pingInterval(20s)`)
-- [ ] `HttpLoggingInterceptor`: `BODY` só em `BuildConfig.DEBUG`, com `redactHeader("Authorization")`
-- [ ] `AuthInterceptor`: adiciona `Authorization: Bearer <token>` quando há sessão
-- [ ] Retrofit + converter kotlinx.serialization (`ignoreUnknownKeys = true`, `explicitNulls = false`, `coerceInputValues = true`)
-- [ ] Ler o erro padrão do servidor: corpo `{error: string}` (§3)
-- [ ] Mapear 401 → evento global `SessaoExpirada`
-- [ ] Mapear resposta HTML (502/504 do nginx) → "Servidor indisponível"
-- [ ] Mapear 400/403/404/429/500 → mensagens amigáveis (manter a original no log de debug)
-- [ ] Testes com MockWebServer: sucesso, 401, `{error}`, HTML, timeout
+- [x] Prover um **único** `OkHttpClient` via Hilt (timeouts, `pingInterval(20s)`)
+- [x] `HttpLoggingInterceptor`: `BODY` só em `BuildConfig.DEBUG`, com `redactHeader("Authorization")` — nível `BASIC` no debug (`BODY` exporia conteúdo de mensagens), `NONE` no release
+- [x] `AuthInterceptor`: adiciona `Authorization: Bearer <token>` quando há sessão — `AutenticacaoInterceptor`; rotas públicas marcadas com cabeçalho e não disparam sessão expirada
+- [x] Retrofit + converter kotlinx.serialization (`ignoreUnknownKeys = true`, `explicitNulls = false`, `coerceInputValues = true`)
+- [x] Ler o erro padrão do servidor: corpo `{error: string}` (§3)
+- [x] Mapear 401 → evento global `SessaoExpirada` — `EventosSessao.sessaoExpirada`
+- [x] Mapear resposta HTML (502/504 do nginx) → "Servidor indisponível"
+- [x] Mapear 400/403/404/429/500 → mensagens amigáveis (manter a original no log de debug) — `ErroApi` + `mensagemAmigavel()`
+- [x] Testes com MockWebServer: sucesso, 401, `{error}`, HTML, timeout — `RedeTest` (12 testes): sucesso, query, troca de servidor, 401 de sessão, 401 do login, `{error}`, 500, HTML 502, 503 de limite, sem servidor, tempo esgotado, JSON inválido
 
 ### 1.9 Modelos do contrato (FC-108)
-- [ ] Baixar o OpenAPI do servidor (`/api/docs/json`) para `docs/contrato/openapi.json`, como referência das entradas de cada rota
-- [ ] Copiar JSONs reais de `conversa/tests/*.test.ts` para `:core:testing/fixtures/`
-- [ ] Serializer de data: ISO-8601 com `Z` → `Instant`, tolerante (aceita sem `Z`, aceita espaço)
-- [ ] Serializer de id tolerante (número ou string → `Long`)
-- [ ] DTO login: `{id, nome, email, telefone, avatar_identificador, dispositivo{…}, token}`
-- [ ] DTO conversa (§9 do doc 01 / CON-01)
-- [ ] DTO mensagem (§10.2): `excluida_em`, `visivel_em`, `mensagem_referencia` (recursivo, opcional), `reacoes` (opcional), conteúdos com `transcricao_status`/`transcricao`
-- [ ] DTO conteúdo de chamada (tipo 6), com datas fora do padrão (§9.8)
-- [ ] DTOs de status (`/mensagem/status` = booleanos; `/mensagem/status/detalhe` = datas)
-- [ ] DTOs de anexo (`PUT /anexo` nos dois formatos de resposta; `GET /anexo` → `{url}`; `/anexos`)
-- [ ] DTOs de chamada (`dados da chamada`, `pendentes` **sem `usuarios`**, histórico `ChamadaHistoricoItem`)
-- [ ] DTO ICE (camelCase: `urls`, `username`, `credential`)
-- [ ] DTOs de atividade, permissões, parâmetros, SIP, contatos, membros
-- [ ] DTO `Enquete` (`opcoes[].votantes[]`, `total_votantes`, `meus_votos`) e resposta do `PUT /enquete` (mensagem + `enquete_id`)
-- [ ] Mapeadores DTO → modelo de domínio em `:core:model`
-- [ ] Um teste de desserialização por DTO, usando as fixtures
+- [ ] Baixar o OpenAPI do servidor (`/api/docs/json`) para `docs/contrato/openapi.json`, como referência das entradas de cada rota — ⛔ precisa do servidor rodando (o JSON é gerado em tempo de execução pelo Elysia)
+- [x] Copiar JSONs reais de `conversa/tests/*.test.ts` para `:core:testing/fixtures/` — fixtures montadas a partir dos exemplos do doc 01 (os testes do servidor são TypeScript, não JSON)
+- [x] Serializer de data: ISO-8601 com `Z` → `Instant`, tolerante (aceita sem `Z`, aceita espaço)
+- [x] Serializer de id tolerante (número ou string → `Long`)
+- [x] DTO login: `{id, nome, email, telefone, avatar_identificador, dispositivo{…}, token}`
+- [x] DTO conversa (§9 do doc 01 / CON-01)
+- [x] DTO mensagem (§10.2): `excluida_em`, `visivel_em`, `mensagem_referencia` (recursivo, opcional), `reacoes` (opcional), conteúdos com `transcricao_status`/`transcricao`
+- [x] DTO conteúdo de chamada (tipo 6), com datas fora do padrão (§9.8)
+- [x] DTOs de status (`/mensagem/status` = booleanos; `/mensagem/status/detalhe` = datas)
+- [x] DTOs de anexo (`PUT /anexo` nos dois formatos de resposta; `GET /anexo` → `{url}`; `/anexos`)
+- [x] DTOs de chamada (`dados da chamada`, `pendentes` **sem `usuarios`**, histórico `ChamadaHistoricoItem`)
+- [x] DTO ICE (camelCase: `urls`, `username`, `credential`)
+- [x] DTOs de atividade, permissões, parâmetros, SIP, contatos, membros
+- [x] DTO `Enquete` (`opcoes[].votantes[]`, `total_votantes`, `meus_votos`) e resposta do `PUT /enquete` (mensagem + `enquete_id`)
+- [x] Mapeadores DTO → modelo de domínio em `:core:model` — ficaram em `:core:network` (`dto/Mapeadores.kt`): o `:core:model` não conhece o servidor
+- [x] Um teste de desserialização por DTO, usando as fixtures — `DesserializacaoTest` (12) + `ConversaJsonTest`
 
 ### 1.10 Banco local (FC-110)
-- [ ] Entidades Room: `ConversaEntity`, `MensagemEntity`, `ConteudoEntity`, `ReacaoEntity`, `ContatoEntity`, `AtividadeEntity`, `ChamadaHistoricoEntity`, `EnvioPendenteEntity`, `SyncEstadoEntity` (cursor `ate`)
-- [ ] DAOs com `Flow` para a UI
-- [ ] Exportar o schema (`room.schemaLocation`) e criar o teste de migração
-- [ ] **Teste:** inserir e ler cada entidade
+- [x] Entidades Room: `ConversaEntity`, `MensagemEntity`, `ConteudoEntity`, `ReacaoEntity`, `ContatoEntity`, `AtividadeEntity`, `ChamadaHistoricoEntity`, `EnvioPendenteEntity`, `SyncEstadoEntity` (cursor `ate`) — nomes em português: `ConversaEntidade` etc.
+- [x] DAOs com `Flow` para a UI
+- [ ] Exportar o schema (`room.schemaLocation`) e criar o teste de migração — ⏭ schema da versão 1 exportado em `core/database/schemas`; o teste de migração nasce junto com a versão 2 (não há o que migrar ainda)
+- [x] **Teste:** inserir e ler cada entidade — `BancoTest` (Robolectric, Room em memória): todas as entidades
 
 ### 1.11 Sessão segura (FC-111)
-- [ ] `SessaoStore`: token, `usuario_id`, nome e `dispositivo_id`, cifrados (Tink/Keystore)
-- [ ] **Nunca** salvar a senha
-- [ ] `allowBackup="false"` (ou `data_extraction_rules` excluindo a sessão)
-- [ ] `SessaoRepository` com `StateFlow<Sessao?>`
-- [ ] **Teste:** matar o app, reabrir e a sessão continua; um backup não contém o token
+- [x] `SessaoStore`: token, `usuario_id`, nome e `dispositivo_id`, cifrados (Tink/Keystore)
+- [x] **Nunca** salvar a senha
+- [x] `allowBackup="false"` (ou `data_extraction_rules` excluindo a sessão) — `allowBackup=false`, `fullBackupContent=false` e `regras_extracao.xml` excluindo tudo
+- [x] `SessaoRepository` com `StateFlow<Sessao?>` — `SessaoRepositorio` (também encerra a sessão em qualquer 401)
+- [ ] **Teste:** matar o app, reabrir e a sessão continua; um backup não contém o token — 🔄 automatizado: `SessaoStoreTest` (cifrado, ida e volta, arquivo ilegível); `allowBackup=false` + regras de extração vazias. ⛔ falta conferir no aparelho (matar o app e reabrir)
 
 ### 1.12 WebSocket — `RealtimeClient` (FC-112)
-- [ ] Sealed class `EventoSocket` com todos os tipos: 0, 2, 3, 4, 5, 7, 9, 40, 51–57, 60, 61, 62 (`EnqueteAtualizada {enquete_id, conversa_id}`) e `Desconhecido`
-- [ ] Parser JSON → `EventoSocket` (testes com um payload real de cada tipo, §6.6)
-- [ ] Máquina de estados: `Desconectado` / `Conectando` / `Autenticando` / `Conectado` / `Aguardando`
-- [ ] No `onOpen`: enviar `{"tipo":1,"token":…}` (sem resposta de sucesso; erro vem como 0/9)
-- [ ] `SharedFlow<EventoSocket>` multi-assinante (`extraBufferCapacity = 64`)
-- [ ] Id de geração por conexão; ignorar callbacks de sockets antigos
-- [ ] Backoff com jitter: 1 s → 2 → 4 → … → 30 s
-- [ ] Conectar só com sessão válida **e** app em primeiro plano (`ProcessLifecycleOwner`) **ou** chamada ativa
-- [ ] Desconectar ao ir para segundo plano (com uma pequena tolerância, ex.: 10 s)
-- [ ] `enviarSinal(chamadaId, dados)` → `{tipo:57, chamada_id, dados}`
-- [ ] Nenhum log de frame com token ou conteúdo
-- [ ] **Teste:** derrubar o Wi-Fi → reconecta sozinho; nunca há 2 sockets abertos
+- [x] Sealed class `EventoSocket` com todos os tipos: 0, 2, 3, 4, 5, 7, 9, 40, 51–57, 60, 61, 62 (`EnqueteAtualizada {enquete_id, conversa_id}`) e `Desconhecido`
+- [x] Parser JSON → `EventoSocket` (testes com um payload real de cada tipo, §6.6) — 🔄 parser feito, testes a seguir — `EventoSocketParserTest` (10 testes, todos os tipos)
+- [x] Máquina de estados: `Desconectado` / `Conectando` / `Autenticando` / `Conectado` / `Aguardando` — estados `DESCONECTADO`, `CONECTANDO`, `CONECTADO`, `AGUARDANDO` (sem "autenticando": o servidor não confirma o login)
+- [x] No `onOpen`: enviar `{"tipo":1,"token":…}` (sem resposta de sucesso; erro vem como 0/9)
+- [x] `SharedFlow<EventoSocket>` multi-assinante (`extraBufferCapacity = 64`) — buffer de 256
+- [x] Id de geração por conexão; ignorar callbacks de sockets antigos
+- [x] Backoff com jitter: 1 s → 2 → 4 → … → 30 s
+- [x] Conectar só com sessão válida **e** app em primeiro plano (`ProcessLifecycleOwner`) **ou** chamada ativa — `ConexaoTempoReal` + `MonitorPrimeiroPlano`; a flag `chamadaAtiva` será ligada na etapa 6
+- [x] Desconectar ao ir para segundo plano (com uma pequena tolerância, ex.: 10 s) — tolerância de 10 s
+- [x] `enviarSinal(chamadaId, dados)` → `{tipo:57, chamada_id, dados}`
+- [x] Nenhum log de frame com token ou conteúdo
+- [ ] **Teste:** derrubar o Wi-Fi → reconecta sozinho; nunca há 2 sockets abertos — 🔄 automatizado: `RealtimeClientTest` (reconecta quando o servidor fecha, mesmo token não abre 2º socket, login recusado não insiste). ⛔ falta conferir derrubando o Wi-Fi no aparelho
 
 ### 1.13 Sincronização (FC-113)
-- [ ] `SyncManager.ressincronizar()` disparado ao conectar, ao voltar ao primeiro plano e ao receber push
-- [ ] `GET /mensagens/novas?desde=<cursor>` → buscar as mensagens que faltam por conversa → Room → salvar `ate`
-- [ ] `GET /conversas` → Room
-- [ ] `GET /contatos/online` → presença
-- [ ] `GET /atividades/novas` → badge
-- [ ] `GET /chamadas/pendentes` → `CallManager`
-- [ ] Tratar o WS 2 (sem `conversa_id`, pode chegar duplicado) como gatilho de sincronização incremental, com debounce
-- [ ] **Teste:** desligar a rede por 2 min, mandar mensagens pelo web e religar → tudo aparece, sem duplicar
+- [x] `SyncManager.ressincronizar()` disparado ao conectar, ao voltar ao primeiro plano e ao receber push — `SyncManager.ressincronizar()` ao conectar (cobre a volta ao primeiro plano); a chamada pelo push entra na etapa 5
+- [x] `GET /mensagens/novas?desde=<cursor>` → buscar as mensagens que faltam por conversa → Room → salvar `ate` — busca a partir da última mensagem salva (100) ou as 80 últimas
+- [x] `GET /conversas` → Room
+- [x] `GET /contatos/online` → presença — `SyncManager.online` + WS 60
+- [x] `GET /atividades/novas` → badge — `SyncManager.atividadesNovas` + WS 61
+- [x] `GET /chamadas/pendentes` → `CallManager` — `SyncManager.chamadasPendentes` (o `CallManager` consome na etapa 6)
+- [x] Tratar o WS 2 (sem `conversa_id`, pode chegar duplicado) como gatilho de sincronização incremental, com debounce — debounce de 300 ms
+- [ ] **Teste:** desligar a rede por 2 min, mandar mensagens pelo web e religar → tudo aparece, sem duplicar — ⛔ precisa do servidor e de aparelho; a lógica tem `SyncManagerTest` (4 testes: cursor, falha parcial, eventos, debounce)
 
 ---
 
 ## Etapa 2 — Sessão, conversas, contatos e presença
 
+- [ ] Criar o módulo `:feature:conversas` (adiado da 1.2)
 ### 2.1 Login e entrada (FC-200, AUT-01)
 - [ ] Tela Splash/decisão: sem servidor → Servidor; sem sessão → Login; com sessão → Principal
 - [ ] Tela Login: logo, "Usuário", "Senha", botão "Entrar"/"Entrando…", link "Não tem conta? Criar conta"
@@ -329,6 +330,7 @@
 
 ## Etapa 3 — Mensagens (núcleo)
 
+- [ ] Criar o módulo `:feature:chat` (adiado da 1.2)
 ### 3.1 Tela de chat (FC-300, CON-09)
 - [ ] Cabeçalho: voltar, avatar (toque → perfil do outro), título, bolinha online
 - [ ] Subtítulo: direta → "online"/nada; grupo → nomes dos membros; digitando/gravando substitui
@@ -412,6 +414,7 @@
 
 ## Etapa 4 — Anexos e mídia
 
+- [ ] Criar o módulo `:core:media` (adiado da 1.2)
 ### 4.1 Upload (FC-400, ANX-02)
 - [ ] Calcular o SHA-256 em streaming (`DigestInputStream`, sem carregar o arquivo inteiro)
 - [ ] `PUT /anexo {identificador, tipo, nome, extensao (≤ 10), tamanho}`
@@ -548,6 +551,7 @@
 
 ## Etapa 6 — Chamadas
 
+- [ ] Criar os módulos `:core:webrtc` e `:feature:chamada` (adiados da 1.2)
 ### 6.1 Infra de mídia (FC-703, FC-704)
 - [ ] Transplantar o `WhipWhepClient` para `:core:webrtc`, usando o OkHttp compartilhado
 - [ ] WHIP/WHEP: ler o header `Location` e fazer `DELETE` ao encerrar
@@ -770,6 +774,7 @@
 
 ## Etapa 8 — Atividades, pesquisa, perfil e configurações
 
+- [ ] Criar os módulos `:feature:atividades`, `:feature:pesquisa` e `:feature:config` (adiados da 1.2)
 ### 8.1 Atividades (FC-800, ATV-01, ATV-02)
 - [ ] Aba Atividades: `GET /atividades?antes=0&limite=30`
 - [ ] Paginação: perto do fim → `antes=<id da última>`; fim quando vierem < 30

@@ -58,6 +58,22 @@ Instruções para quem trabalha neste repositório, pessoas ou agentes de IA. Le
   - PowerShell: `$env:JAVA_HOME = "C:\Program Files\Android\Android Studio\jbr"`
 - `./gradlew assembleDebug` (Git Bash) ou `.\gradlew.bat assembleDebug` (PowerShell).
 - O `local.properties` não é versionado; o `gradle-wrapper.jar` é.
+- Testes: `./gradlew testDebugUnitTest :core:model:test :core:testing:test`. Estilo: `./gradlew ktlintCheck` (`ktlintFormat` corrige). Lint: `./gradlew :app:lintDebug`.
+- Toolchain: Gradle 9.8, AGP 9.4 (Kotlin embutido), Kotlin 2.4, compileSdk 37, targetSdk 36, minSdk 28. Versões só no `gradle/libs.versions.toml`.
+
+## Estrutura dos módulos (nova base)
+
+- `:app` — Application, MainActivity, navegação.
+- `:core:model` — modelos de domínio (Kotlin puro).
+- `:core:network` — `ServerConfig`, Retrofit (`ConversaApi`, 67 rotas), DTOs + mapeadores, erros (`ErroApi`), `RealtimeClient` (WebSocket).
+- `:core:datastore` — sessão cifrada (Tink/Keystore) e preferências.
+- `:core:database` — Room (cache local).
+- `:core:data` — repositórios, `ConexaoTempoReal`, `SyncManager`.
+- `:core:ui` — tema (cores do FMX: `docs/design/cores.md`), componentes, `UiState`.
+- `:core:testing` — regras de teste e fixtures JSON do contrato.
+- `:feature:*` — uma por área (hoje: `auth`).
+- Convention plugins em `build-logic/`. O app antigo está em `app-legado/`, fora do build.
+- **Cores:** só as de `docs/design/cores.md` (vêm do `conversa-windows-fmx`), nunca as do web.
 
 ## Convenções
 

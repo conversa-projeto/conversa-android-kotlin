@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="ok">OK</string>
+    <string name="cancelar">Cancelar</string>
+    <string name="tentar_de_novo">Tentar de novo</string>
+    <string name="voltar">Voltar</string>
+</resources>

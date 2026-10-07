@@ -1,0 +1,27 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+    Lint do app: tudo que é de segurança vira erro e quebra o build (FC-102).
+    O resto fica com a severidade padrão.
+-->
+<lint>
+    <issue id="TrustAllX509TrustManager" severity="error" />
+    <issue id="BadHostnameVerifier" severity="error" />
+    <issue id="AllowAllHostnameVerifier" severity="error" />
+    <issue id="SSLCertificateSocketFactoryGetInsecure" severity="error" />
+    <issue id="SSLCertificateSocketFactoryCreateSocket" severity="error" />
+    <issue id="InsecureBaseConfiguration" severity="error" />
+    <issue id="AcceptsUserCertificates" severity="ignore" />
+    <issue id="UnsafeIntentLaunch" severity="error" />
+    <issue id="UnspecifiedImmutableFlag" severity="error" />
+    <issue id="ExportedService" severity="error" />
+    <issue id="ExportedReceiver" severity="error" />
+    <issue id="ExportedContentProvider" severity="error" />
+    <issue id="AllowBackup" severity="error" />
+    <issue id="HardcodedDebugMode" severity="error" />
+    <issue id="SetJavaScriptEnabled" severity="error" />
+    <issue id="WorldReadableFiles" severity="error" />
+    <issue id="WorldWriteableFiles" severity="error" />
+    <issue id="PackageManagerGetSignatures" severity="error" />
+    <!-- targetSdk 36 de propósito: subir para 37 é decisão à parte (mudanças de comportamento). -->
+    <issue id="OldTargetApi" severity="ignore" />
+</lint>

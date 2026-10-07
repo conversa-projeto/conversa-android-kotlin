@@ -2,7 +2,7 @@
 
 Cliente Android (Kotlin) do **Conversa**: mensagens, anexos, chamadas de áudio e vídeo e notificações. Fala com o servidor [`conversa`](https://github.com/conversa-projeto) (Bun + Elysia) e busca paridade com o cliente web `conversa-web`.
 
-## Estado atual: em reescrita
+## Estado atual: em reescrita (branch `reescrita`)
 
 Em 2026-10-06 uma auditoria concluiu que o app (escrito contra o antigo servidor Delphi) está defasado demais. A decisão foi **construir uma nova base** (ADR `docs/adr/0001-nova-base.md`).
 
@@ -16,7 +16,7 @@ Em 2026-10-06 uma auditoria concluiu que o app (escrito contra o antigo servidor
 
 Requisitos:
 - **JDK 17 ou mais novo.** O `java` do PATH pode ser 1.8; use o JDK que vem com o Android Studio.
-- Android SDK instalado; o `local.properties` com `sdk.dir` é criado pelo Android Studio e não é versionado.
+- Android SDK com a **plataforma 37** (o Gradle instala sozinho na primeira compilação, se as licenças estiverem aceitas); o `local.properties` com `sdk.dir` é criado pelo Android Studio e não é versionado.
 
 No Git Bash:
 

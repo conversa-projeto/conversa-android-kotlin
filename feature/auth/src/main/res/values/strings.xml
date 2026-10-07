@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="servidor_titulo">Servidor</string>
+    <string name="servidor_explicacao">Informe o endereço do servidor Conversa. Ex.: o endereço que você usa no navegador.</string>
+    <string name="servidor_campo">Endereço do servidor</string>
+    <string name="servidor_exemplo">conversa.empresa.com.br</string>
+    <string name="servidor_sera_usado">Será usado: %1$s</string>
+    <string name="servidor_testar">Testar conexão</string>
+    <string name="salvar_servidor">Salvar</string>
+    <string name="voltar">Voltar</string>
+    <string name="servidor_aviso_invalido">Endereço inválido.</string>
+    <string name="servidor_aviso_ok">Conexão OK: é um servidor Conversa.</string>
+    <string name="servidor_aviso_nao_conversa">O endereço respondeu, mas não é um servidor Conversa.</string>
+    <string name="servidor_aviso_certificado">Certificado não confiável. Em desenvolvimento, instale a CA do mkcert no aparelho.</string>
+    <string name="servidor_aviso_host">Endereço não encontrado. Confira o nome ou o IP.</string>
+    <string name="servidor_aviso_indisponivel">O servidor está fora do ar. Tente de novo em instantes.</string>
+    <string name="servidor_aviso_sem_conexao">Não foi possível conectar. Verifique a rede e o endereço.</string>
+</resources>

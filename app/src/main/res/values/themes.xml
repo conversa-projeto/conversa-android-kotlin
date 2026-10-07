@@ -1,26 +1,14 @@
-<resources xmlns:tools="http://schemas.android.com/tools">
-    <!-- Base application theme. -->
-    <style name="Base.Theme.Conversa" parent="Theme.Material3.DayNight">
-        <!-- Customize your light theme here. -->
-        <item name="colorPrimary">@color/corPrimaria</item>
-        <item name="colorPrimaryVariant">@color/corPrimaria</item>
-        <item name="colorOnPrimary">@color/white</item>
-        <item name="colorSecondary">@color/corPrimaria</item>
-        <item name="colorSecondaryVariant">@color/corPrimaria</item>
-        <item name="colorOnSecondary">@color/white</item>
-        <!-- Cores de texto -->
-        <item name="android:textColorPrimary">@color/black</item>
-        <item name="android:textColorSecondary">#666666</item>
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- Tema da janela; as telas usam o ConversaTema (Compose). Cores: docs/design/cores.md. -->
+    <style name="Theme.Conversa" parent="android:Theme.Material.Light.NoActionBar">
+        <item name="android:windowBackground">@color/fundo_app</item>
     </style>
 
-    <style name="Theme.Conversa" parent="Base.Theme.Conversa" />
-    
-    <style name="Theme.Conversa.NoActionBar" parent="Base.Theme.Conversa">
-        <item name="windowActionBar">false</item>
-        <item name="windowNoTitle">true</item>
+    <!-- Splash (androidx.core.splashscreen) -->
+    <style name="Theme.Conversa.Inicial" parent="Theme.SplashScreen">
+        <item name="windowSplashScreenBackground">@color/fundo_app</item>
+        <item name="windowSplashScreenAnimatedIcon">@mipmap/ic_launcher</item>
+        <item name="postSplashScreenTheme">@style/Theme.Conversa</item>
     </style>
-    
-    <style name="Theme.Conversa.AppBarOverlay" parent="ThemeOverlay.Material3.Dark.ActionBar" />
-    
-    <style name="Theme.Conversa.PopupOverlay" parent="ThemeOverlay.Material3.Light" />
 </resources>

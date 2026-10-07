@@ -1,4 +1,5 @@
 pluginManagement {
+    includeBuild("build-logic")
     repositories {
         google {
             content {
@@ -11,6 +12,7 @@ pluginManagement {
         gradlePluginPortal()
     }
 }
+
 dependencyResolutionManagement {
     repositoriesMode.set(RepositoriesMode.FAIL_ON_PROJECT_REPOS)
     repositories {
@@ -20,4 +22,16 @@ dependencyResolutionManagement {
 }
 
 rootProject.name = "Conversa"
+
+enableFeaturePreview("TYPESAFE_PROJECT_ACCESSORS")
+
+// O app legado (servidor Delphi) fica em app-legado/, fora do build.
 include(":app")
+include(":core:model")
+include(":core:network")
+include(":core:datastore")
+include(":core:database")
+include(":core:data")
+include(":core:ui")
+include(":core:testing")
+include(":feature:auth")
