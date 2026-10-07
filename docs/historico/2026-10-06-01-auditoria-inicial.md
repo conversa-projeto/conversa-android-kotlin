@@ -2,6 +2,7 @@
 
 - **Fluxo:** Planejamento e documentação
 - **Tipo:** documentação (nenhum código alterado)
+- **Commits:** `87ba4b5` (registrado retroativamente)
 - **Referências:** `docs/auditoria-2026-10/00` a `08`
 
 ## Contexto

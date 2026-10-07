@@ -2,6 +2,7 @@
 
 - **Fluxo:** Sincronização com servidor e web
 - **Tipo:** documentação
+- **Commits:** `87ba4b5` (registrado retroativamente)
 - **Commits de origem:**
   - servidor `8031fa5` (2026-10-06 21:22): "Votação em grupo: enquete com escolha única ou múltipla";
   - web `39d06f9` (2026-10-06 21:22): "Campo de mensagem rico, votação em grupo e chat completo na chamada".

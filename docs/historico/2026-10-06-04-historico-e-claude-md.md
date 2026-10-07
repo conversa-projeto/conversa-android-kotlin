@@ -2,6 +2,7 @@
 
 - **Fluxo:** Planejamento e documentação
 - **Tipo:** documentação / processo
+- **Commits:** `87ba4b5` (registrado retroativamente)
 
 ## O que foi feito
 - Criada a pasta `docs/historico/`:

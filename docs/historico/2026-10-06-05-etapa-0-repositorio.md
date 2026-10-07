@@ -5,7 +5,8 @@
 - **Itens:** `TODO.md` etapas 0.1–0.4 (FC-001…FC-007)
 - **Commits:**
   - `855e72d` — limpeza e gradle wrapper;
-  - o commit de documentação da mesma data — docs, histórico, `CLAUDE.md`.
+  - `87ba4b5` — docs, histórico, `CLAUDE.md`, ADR, README;
+  - o commit seguinte só preenche estes hashes.
 
 ## Contexto
 Primeira etapa do `TODO.md`: guardar tudo o que existia antes de começar a nova base e deixar o repositório limpo.

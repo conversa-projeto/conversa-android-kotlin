@@ -61,7 +61,7 @@
 - [x] Escrever `docs/adr/0001-nova-base.md`
 - [x] Criar o `CLAUDE.md` (onde está cada coisa, regra do histórico, TODO, build, convenções)
 - [x] Criar `docs/historico/` (`indice.md` por fluxo, `_modelo.md`, entradas 01–05 do dia)
-- [x] Commitar: `docs: organiza documentação, registra a nova base e cria o histórico`
+- [x] Commitar: `docs: organiza documentação, registra a nova base e cria o histórico` ✔ 87ba4b5
 
 ### 0.5 Spike de mídia, para provar a chamada antes de investir (doc 07 §9) — ⛔ precisa do servidor de dev rodando e de um aparelho/emulador
 - [ ] Criar o projeto descartável `spike-midia` (fora do app, Compose vazio)

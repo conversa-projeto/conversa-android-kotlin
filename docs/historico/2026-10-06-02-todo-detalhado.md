@@ -2,6 +2,7 @@
 
 - **Fluxo:** Planejamento e documentação
 - **Tipo:** documentação
+- **Commits:** `87ba4b5` (registrado retroativamente)
 - **Referências:** `TODO.md`, `docs/auditoria-2026-10/07`, `docs/auditoria-2026-10/08`
 
 ## O que foi feito
