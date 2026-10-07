@@ -1,11 +1,13 @@
 package com.conversa.app.core.data.anexos
 
 import android.content.Context
+import android.content.Intent
 import android.provider.OpenableColumns
 import androidx.core.net.toUri
 import com.conversa.app.core.model.TipoConteudo
 import com.conversa.app.core.model.tipoPorMime
 import dagger.hilt.android.qualifiers.ApplicationContext
+import java.io.File
 import java.io.InputStream
 import javax.inject.Inject
 
@@ -19,6 +21,12 @@ interface FontesArquivo {
 
     /** Fonte para o envio; `null` se o acesso ao URI acabou (ex.: permissão temporária). */
     fun abrir(uri: String): FonteArquivo?
+
+    /**
+     * O arquivo já foi enviado (ou a mensagem descartada): devolve a permissão guardada
+     * (o Android limita quantas um app pode ter) e apaga a foto da câmera do cache.
+     */
+    fun liberar(uri: String)
 }
 
 class FontesArquivoAndroid @Inject constructor(@ApplicationContext private val contexto: Context) : FontesArquivo {
@@ -54,6 +62,21 @@ class FontesArquivoAndroid @Inject constructor(@ApplicationContext private val c
 
             override fun abrir(): InputStream = contexto.contentResolver.openInputStream(uri.toUri())
                 ?: throw java.io.IOException("Arquivo indisponível")
+        }
+    }
+
+    override fun liberar(uri: String) {
+        val alvo = uri.toUri()
+        // Foto da câmera: é um arquivo do próprio app (FileProvider, pasta "camera" do cache).
+        if (alvo.authority == contexto.packageName + ".arquivos") {
+            val segmentos = alvo.pathSegments
+            if (segmentos.size == 2 && segmentos[0] == "camera") File(File(contexto.cacheDir, "camera"), nomeSeguro(segmentos[1])).delete()
+            return
+        }
+        try {
+            contexto.contentResolver.releasePersistableUriPermission(alvo, Intent.FLAG_GRANT_READ_URI_PERMISSION)
+        } catch (_: SecurityException) {
+            // Não havia permissão guardada (provedor sem suporte): nada a devolver.
         }
     }
 }

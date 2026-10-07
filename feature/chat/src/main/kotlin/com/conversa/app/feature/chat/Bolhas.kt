@@ -83,14 +83,11 @@ private val FORMATO_HORA = DateTimeFormatter.ofPattern("HH:mm")
 fun horaDa(mensagem: Mensagem, zona: ZoneId = ZoneId.systemDefault()): String = FORMATO_HORA.format(mensagem.dataEfetiva.atZone(zona))
 
 /** O que a bolha pode pedir. */
-class AcoesBolha(
+data class AcoesBolha(
     val aoReenviar: (Long) -> Unit = {},
     val aoDescartar: (Long) -> Unit = {},
     val aoMencao: (Long) -> Unit = {},
     val aoLigar: (TipoChamada) -> Unit = {},
-    /** URL assinada de um anexo (cache por identificador). */
-    val urlDoAnexo: suspend (String) -> String? = { null },
-    val esquecerUrl: (String) -> Unit = {},
     val aoAbrirArquivo: (Conteudo) -> Unit = {},
     val aoAbrirImagem: (Mensagem, Conteudo) -> Unit = { _, _ -> },
 )
@@ -190,7 +187,6 @@ private fun ConteudoNaBolha(mensagem: Mensagem, conteudo: Conteudo, cor: Color, 
         }
         TipoConteudo.IMAGEM -> ImagemAnexo(
             conteudo,
-            acoes,
             Modifier
                 .sizeIn(minWidth = 120.dp, minHeight = 90.dp, maxWidth = 240.dp, maxHeight = 280.dp)
                 .clip(RoundedCornerShape(8.dp))

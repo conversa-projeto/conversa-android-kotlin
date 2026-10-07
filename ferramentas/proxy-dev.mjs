@@ -10,6 +10,10 @@
 //       adb reverse tcp:8081 tcp:8081
 //       no app (build de debug): servidor = http://localhost:8081
 // Só para desenvolvimento: escuta apenas em 127.0.0.1. Guia: docs/desenvolvimento/emulador.md.
+//
+// Simular URL vencida: URL_VENCIDA=1 node ferramentas/proxy-dev.mjs
+//   o primeiro GET de cada arquivo em /storage recebe 403 (como o MinIO com a URL expirada);
+//   os seguintes passam. Serve para testar a renovação da URL no app (TODO 4.3).
 
 import http from 'node:http'
 import net from 'node:net'
@@ -17,6 +21,8 @@ import net from 'node:net'
 const PORTA = Number(process.env.PORTA ?? 8081)
 const API = { host: '127.0.0.1', port: Number(process.env.API_PORTA ?? 8080) }
 const MINIO = { host: '127.0.0.1', port: Number(process.env.MINIO_PORTA ?? 9000) }
+const URL_VENCIDA = process.env.URL_VENCIDA === '1'
+const jaRecusados = new Set()
 
 function destino(url) {
   if (url.startsWith('/storage/')) return { ...MINIO, path: url.slice('/storage'.length) }
@@ -24,6 +30,16 @@ function destino(url) {
 }
 
 const servidor = http.createServer((req, res) => {
+  if (URL_VENCIDA && req.method === 'GET' && req.url.startsWith('/storage/')) {
+    const arquivo = req.url.split('?')[0]
+    if (!jaRecusados.has(arquivo)) {
+      jaRecusados.add(arquivo)
+      console.log('URL_VENCIDA: 403 na primeira leitura de', arquivo.slice(-20))
+      res.writeHead(403, { 'content-type': 'application/xml' })
+      res.end('<Error><Code>AccessDenied</Code><Message>Request has expired</Message></Error>')
+      return
+    }
+  }
   const alvo = destino(req.url)
   const cabecalhos = { ...req.headers, 'x-forwarded-proto': 'http' }
   const repasse = http.request({ ...alvo, method: req.method, headers: cabecalhos }, (resposta) => {

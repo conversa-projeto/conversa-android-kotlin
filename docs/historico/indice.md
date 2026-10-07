@@ -34,6 +34,7 @@
 ## Anexos e mídia (etapa 4)
 - 2026-10-07 · [Etapa 4 — envio de anexos, URLs assinadas, token só na API e proxy de dev](2026-10-07-08-etapa-4-upload-e-proxy-dev.md) — `AnexosRepositorio` (SHA-256 em fluxo, dedup, URL vencida), `AutenticacaoInterceptor` só para `/api/`, `ferramentas/proxy-dev.mjs`; 171 testes
 - 2026-10-07 · [Etapa 4 — envio com anexos, bolhas de imagem e arquivo (parcial)](2026-10-07-09-etapa-4-envio-com-anexos-e-bolhas.md) — worker sobe os anexos e manda a mensagem; bolhas de imagem/arquivo, abrir com FileProvider; seletor no campo e teste no emulador ficaram para a volta; 174 testes
+- 2026-10-07 · [Etapa 4 — seletor de anexos, visualizador e teste no emulador](2026-10-07-10-etapa-4-seletor-visualizador-e-teste-no-emulador.md) — galeria/câmera/documento no campo, visualizador, `FetcherAnexo` (URL vencida renovada no Coil), lista acompanha mensagem nova; testado nos dois sentidos e com 200 MB; 177 testes
 
 ## Notificações e push (etapa 5)
 _(nada ainda)_

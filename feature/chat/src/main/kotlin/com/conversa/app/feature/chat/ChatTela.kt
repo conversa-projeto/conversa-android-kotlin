@@ -1,5 +1,13 @@
 package com.conversa.app.feature.chat
 
+import android.content.ActivityNotFoundException
+import android.content.Context
+import android.content.Intent
+import android.net.Uri
+import android.webkit.MimeTypeMap
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.PickVisualMediaRequest
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
@@ -24,11 +32,17 @@ import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.automirrored.filled.Send
+import androidx.compose.material.icons.automirrored.outlined.InsertDriveFile
+import androidx.compose.material.icons.outlined.AttachFile
 import androidx.compose.material.icons.outlined.Call
 import androidx.compose.material.icons.outlined.Group
+import androidx.compose.material.icons.outlined.Image
 import androidx.compose.material.icons.outlined.KeyboardArrowDown
+import androidx.compose.material.icons.outlined.PhotoCamera
 import androidx.compose.material.icons.outlined.Videocam
 import androidx.compose.material3.CircularProgressIndicator
+import androidx.compose.material3.DropdownMenu
+import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.FilledIconButton
 import androidx.compose.material3.HorizontalDivider
@@ -49,6 +63,7 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.runtime.snapshotFlow
@@ -61,15 +76,18 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.input.KeyboardCapitalization
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
+import androidx.core.content.FileProvider
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.compose.LocalLifecycleOwner
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.repeatOnLifecycle
+import com.conversa.app.core.data.anexos.AnexoLocal
 import com.conversa.app.core.model.AtividadeConversa
 import com.conversa.app.core.model.ItemChat
 import com.conversa.app.core.model.RotuloDia
 import com.conversa.app.core.model.TipoChamada
+import com.conversa.app.core.model.TipoConteudo
 import com.conversa.app.core.model.rotuloDia
 import com.conversa.app.core.ui.componentes.Avatar
 import com.conversa.app.core.ui.componentes.Carregando
@@ -79,6 +97,7 @@ import com.conversa.app.core.ui.componentes.LocalAvisos
 import com.conversa.app.core.ui.componentes.mostrarErro
 import com.conversa.app.core.ui.estado.ColetarEventos
 import com.conversa.app.core.ui.tema.ConversaTema
+import java.io.File
 import java.time.Instant
 import java.time.ZoneId
 import java.time.format.DateTimeFormatter
@@ -135,8 +154,6 @@ fun ChatRotaTela(
                 aoDescartar = viewModel::descartar,
                 aoMencao = viewModel::abrirDireta,
                 aoLigar = aoLigar,
-                urlDoAnexo = viewModel::urlDoAnexo,
-                esquecerUrl = viewModel::esquecerUrl,
                 aoAbrirArquivo = { viewModel.abrirArquivo(it.conteudo, it.nome.ifBlank { it.conteudo }, null) },
             ),
             aoIrAoFim = { escopo.launch { lista.animateScrollToItem(0) } },
@@ -148,17 +165,15 @@ fun ChatRotaTela(
 }
 
 /** Abre o arquivo baixado com outro app, pelo `FileProvider` (permissão só de leitura e temporária). */
-private fun abrirComOutroApp(contexto: android.content.Context, arquivo: java.io.File, mime: String?): Boolean {
-    val uri = androidx.core.content.FileProvider.getUriForFile(contexto, contexto.packageName + ".arquivos", arquivo)
-    val tipo = mime ?: android.webkit.MimeTypeMap.getSingleton()
-        .getMimeTypeFromExtension(arquivo.extension.lowercase()) ?: "application/octet-stream"
-    val intencao = android.content.Intent(android.content.Intent.ACTION_VIEW)
-        .setDataAndType(uri, tipo)
-        .addFlags(android.content.Intent.FLAG_GRANT_READ_URI_PERMISSION or android.content.Intent.FLAG_ACTIVITY_NEW_TASK)
+private fun abrirComOutroApp(contexto: Context, arquivo: File, mime: String?): Boolean {
+    val tipo = mime ?: MimeTypeMap.getSingleton().getMimeTypeFromExtension(arquivo.extension.lowercase()) ?: "application/octet-stream"
+    val intencao = Intent(Intent.ACTION_VIEW)
+        .setDataAndType(uriCompartilhado(contexto, arquivo), tipo)
+        .addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION or Intent.FLAG_ACTIVITY_NEW_TASK)
     return try {
-        contexto.startActivity(android.content.Intent.createChooser(intencao, null).addFlags(android.content.Intent.FLAG_ACTIVITY_NEW_TASK))
+        contexto.startActivity(Intent.createChooser(intencao, null).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK))
         true
-    } catch (_: android.content.ActivityNotFoundException) {
+    } catch (_: ActivityNotFoundException) {
         false
     }
 }
@@ -215,17 +230,43 @@ fun ChatTela(estado: ChatUiState, lista: androidx.compose.foundation.lazy.LazyLi
     }
 
     val longeDoFim by remember { derivedStateOf { lista.firstVisibleItemIndex > LONGE_DO_FIM } }
-    // "Há novas mensagens": chegou mensagem de outra pessoa enquanto a pessoa estava longe do fim.
+    // Chegou mensagem nova. Perto do fim: acompanha (o LazyColumn mantém na tela o item que
+    // estava visível, pela chave, e a nova ficaria escondida embaixo). Longe do fim e de outra
+    // pessoa: "Há novas mensagens".
     var haNovas by remember { mutableStateOf(false) }
     val maisNova = (itens.firstOrNull() as? ItemChat.Bolha)?.mensagem
     LaunchedEffect(maisNova?.id) {
-        if (maisNova != null && maisNova.remetenteId != estado.eu && longeDoFim) haNovas = true
+        if (maisNova == null || !posicionou) return@LaunchedEffect
+        when {
+            !longeDoFim -> lista.animateScrollToItem(0)
+            maisNova.remetenteId != estado.eu -> haNovas = true
+        }
     }
     LaunchedEffect(longeDoFim) { if (!longeDoFim) haNovas = false }
 
+    // Visualizador de imagens (ANX-05): guarda qual imagem foi tocada (mensagem + identificador).
+    var abertaMensagem by rememberSaveable { mutableStateOf<Long?>(null) }
+    var abertaConteudo by rememberSaveable { mutableStateOf<String?>(null) }
+    val acoesBolha = remember(acoes.bolha) {
+        acoes.bolha.copy(aoAbrirImagem = { mensagem, conteudo ->
+            abertaMensagem = mensagem.id
+            abertaConteudo = conteudo.conteudo
+        })
+    }
+    if (abertaMensagem != null) {
+        val imagens = remember(estado.itens) { imagensDaConversa(estado.itens) }
+        val inicial = imagens.indexOfFirst { it.mensagem.id == abertaMensagem && it.conteudo.conteudo == abertaConteudo }
+        val fechar = {
+            abertaMensagem = null
+            abertaConteudo = null
+        }
+        // A mensagem pode ter sumido (apagada, ocultada) com o visualizador aberto.
+        if (inicial < 0) LaunchedEffect(Unit) { fechar() } else VisualizadorImagens(imagens, inicial, acoesBolha, fechar)
+    }
+
     Scaffold(
         topBar = { Cabecalho(estado, acoes) },
-        bottomBar = { Campo(acoes) },
+        bottomBar = { Campo(estado.fila, acoes) },
     ) { margens ->
         Box(Modifier.fillMaxSize().padding(margens).background(MaterialTheme.colorScheme.background)) {
             when {
@@ -248,7 +289,8 @@ fun ChatTela(estado: ChatUiState, lista: androidx.compose.foundation.lazy.LazyLi
                                 mensagem = item.mensagem,
                                 propria = item.mensagem.remetenteId == estado.eu,
                                 mostrarRemetente = item.mostrarRemetente,
-                                acoes = acoes.bolha,
+                                acoes = acoesBolha,
+                                progresso = estado.progresso[item.mensagem.id],
                             )
                         }
                     }
@@ -424,26 +466,36 @@ private fun SeparadorNaoLidas() {
 }
 
 /**
- * Campo de mensagem (ENV-01). O texto fica em estado local (síncrono) e só é limpo
- * depois que a mensagem foi gravada no Room: nunca se perde.
+ * Campo de mensagem (ENV-01) com o botão de anexo e a fila (ANX-01, ANX-03). O texto fica
+ * em estado local (síncrono) e só é limpo depois que a mensagem foi gravada no Room: nunca se perde.
  */
 @Composable
-private fun Campo(acoes: AcoesChat) {
+private fun Campo(fila: List<AnexoLocal>, acoes: AcoesChat) {
     var texto by rememberSaveable { mutableStateOf("") }
-    Row(
+    Column(
         Modifier
             .fillMaxWidth()
             .background(MaterialTheme.colorScheme.surface)
             .navigationBarsPadding()
-            .imePadding()
-            .padding(horizontal = 8.dp, vertical = 6.dp),
-        verticalAlignment = Alignment.Bottom,
-        horizontalArrangement = Arrangement.spacedBy(8.dp),
+            .imePadding(),
     ) {
+        if (fila.isNotEmpty()) FilaAnexos(fila, acoes.aoRemoverAnexo)
+        LinhaDoCampo(texto, { texto = it }, fila.isNotEmpty(), acoes)
+    }
+}
+
+@Composable
+private fun LinhaDoCampo(texto: String, aoMudar: (String) -> Unit, temAnexos: Boolean, acoes: AcoesChat) {
+    Row(
+        Modifier.fillMaxWidth().padding(horizontal = 8.dp, vertical = 6.dp),
+        verticalAlignment = Alignment.Bottom,
+        horizontalArrangement = Arrangement.spacedBy(4.dp),
+    ) {
+        BotaoAnexar(acoes)
         TextField(
             value = texto,
             onValueChange = {
-                texto = it
+                aoMudar(it)
                 acoes.aoDigitar(it)
             },
             placeholder = { Text(stringResource(R.string.digite_uma_mensagem)) },
@@ -458,15 +510,104 @@ private fun Campo(acoes: AcoesChat) {
             keyboardOptions = KeyboardOptions(capitalization = KeyboardCapitalization.Sentences),
             modifier = Modifier.weight(1f),
         )
+        // O texto atual é lido na hora do retorno (pode ter mudado enquanto gravava).
+        val atual by rememberUpdatedState(texto)
         FilledIconButton(
             onClick = {
                 val enviado = texto
-                acoes.aoEnviar(enviado) { if (texto == enviado) texto = "" }
+                acoes.aoEnviar(enviado) { if (atual == enviado) aoMudar("") }
             },
-            enabled = texto.isNotBlank(),
+            enabled = texto.isNotBlank() || temAnexos,
             modifier = Modifier.size(48.dp),
         ) {
             Icon(Icons.AutoMirrored.Filled.Send, contentDescription = stringResource(R.string.enviar))
         }
     }
+}
+
+/**
+ * Anexar (ANX-01): galeria (seletor de fotos do sistema, sem permissão), câmera e documento.
+ * O acesso ao arquivo é mantido (`takePersistableUriPermission`) porque o envio pode
+ * acontecer depois, pelo WorkManager, com o app já fechado.
+ */
+@Composable
+private fun BotaoAnexar(acoes: AcoesChat) {
+    val contexto = LocalContext.current
+    val avisos = LocalAvisos.current
+    val escopo = rememberCoroutineScope()
+    val semCamera = stringResource(R.string.sem_app_de_camera)
+    var menu by remember { mutableStateOf(false) }
+    // Arquivo da foto: sobrevive à recriação da Activity enquanto a câmera está aberta.
+    var fotoPendente by rememberSaveable { mutableStateOf<String?>(null) }
+
+    val galeria = rememberLauncherForActivityResult(ActivityResultContracts.PickMultipleVisualMedia()) { uris ->
+        acoes.aoAdicionarAnexos(manterAcesso(contexto, uris), null)
+    }
+    val documentos = rememberLauncherForActivityResult(ActivityResultContracts.OpenMultipleDocuments()) { uris ->
+        acoes.aoAdicionarAnexos(manterAcesso(contexto, uris), null)
+    }
+    val camera = rememberLauncherForActivityResult(ActivityResultContracts.TakePicture()) { tirou ->
+        val arquivo = fotoPendente?.let(::File)
+        fotoPendente = null
+        if (arquivo == null) return@rememberLauncherForActivityResult
+        if (tirou && arquivo.length() > 0) {
+            acoes.aoAdicionarAnexos(listOf(uriCompartilhado(contexto, arquivo).toString()), TipoConteudo.IMAGEM)
+        } else {
+            arquivo.delete()
+        }
+    }
+
+    Box {
+        IconButton(onClick = { menu = true }, modifier = Modifier.size(48.dp)) {
+            Icon(Icons.Outlined.AttachFile, contentDescription = stringResource(R.string.anexar))
+        }
+        DropdownMenu(expanded = menu, onDismissRequest = { menu = false }) {
+            DropdownMenuItem(
+                text = { Text(stringResource(R.string.anexar_galeria)) },
+                leadingIcon = { Icon(Icons.Outlined.Image, contentDescription = null) },
+                onClick = {
+                    menu = false
+                    galeria.launch(PickVisualMediaRequest(ActivityResultContracts.PickVisualMedia.ImageAndVideo))
+                },
+            )
+            DropdownMenuItem(
+                text = { Text(stringResource(R.string.anexar_camera)) },
+                leadingIcon = { Icon(Icons.Outlined.PhotoCamera, contentDescription = null) },
+                onClick = {
+                    menu = false
+                    val pasta = acoes.pastaCamera() ?: return@DropdownMenuItem
+                    val arquivo = File(pasta, "foto-${System.currentTimeMillis()}.jpg")
+                    fotoPendente = arquivo.path
+                    try {
+                        camera.launch(uriCompartilhado(contexto, arquivo))
+                    } catch (_: ActivityNotFoundException) {
+                        fotoPendente = null
+                        escopo.launch { avisos.mostrarErro(semCamera) }
+                    }
+                },
+            )
+            DropdownMenuItem(
+                text = { Text(stringResource(R.string.anexar_documento)) },
+                leadingIcon = { Icon(Icons.AutoMirrored.Outlined.InsertDriveFile, contentDescription = null) },
+                onClick = {
+                    menu = false
+                    documentos.launch(arrayOf("*/*"))
+                },
+            )
+        }
+    }
+}
+
+/** URI do `FileProvider` para um arquivo do cache do app (foto da câmera, anexo baixado). */
+private fun uriCompartilhado(contexto: Context, arquivo: File): Uri =
+    FileProvider.getUriForFile(contexto, contexto.packageName + ".arquivos", arquivo)
+
+/** Guarda a permissão de leitura de cada URI escolhido. Alguns provedores não oferecem; aí vale a temporária. */
+private fun manterAcesso(contexto: Context, uris: List<Uri>): List<String> = uris.map { uri ->
+    try {
+        contexto.contentResolver.takePersistableUriPermission(uri, Intent.FLAG_GRANT_READ_URI_PERMISSION)
+    } catch (_: SecurityException) {
+        // Sem permissão persistente: o envio ainda funciona enquanto o app estiver aberto.
+    }
+    uri.toString()
 }

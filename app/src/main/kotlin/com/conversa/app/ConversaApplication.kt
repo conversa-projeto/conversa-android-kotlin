@@ -9,6 +9,7 @@ import coil3.PlatformContext
 import coil3.SingletonImageLoader
 import coil3.network.okhttp.OkHttpNetworkFetcherFactory
 import com.conversa.app.core.data.SessaoRepositorio
+import com.conversa.app.core.data.anexos.AnexosRepositorio
 import com.conversa.app.core.data.presenca.PresencaRepositorio
 import com.conversa.app.core.data.sessao.IniciadorSessao
 import com.conversa.app.core.data.sessao.LimpezaSessao
@@ -16,6 +17,8 @@ import com.conversa.app.core.data.sincronizacao.SyncManager
 import com.conversa.app.core.data.tempoReal.ConexaoTempoReal
 import com.conversa.app.core.data.tempoReal.MonitorPrimeiroPlano
 import com.conversa.app.core.network.di.EscopoAplicacao
+import com.conversa.app.core.ui.componentes.AnexoRemoto
+import com.conversa.app.imagens.FetcherAnexo
 import dagger.Lazy
 import dagger.hilt.android.HiltAndroidApp
 import javax.inject.Inject
@@ -46,6 +49,8 @@ class ConversaApplication :
     @Inject lateinit var limpezaSessao: LimpezaSessao
 
     @Inject lateinit var okHttp: Lazy<OkHttpClient>
+
+    @Inject lateinit var anexos: Lazy<AnexosRepositorio>
 
     @Inject lateinit var sessao: SessaoRepositorio
 
@@ -86,8 +91,15 @@ class ConversaApplication :
     override val workManagerConfiguration: Configuration
         get() = Configuration.Builder().setWorkerFactory(fabricaWorkers).build()
 
-    /** Coil usa o mesmo OkHttp do app (mesmas regras de TLS e de log). */
+    /**
+     * Coil usa o mesmo OkHttp do app (mesmas regras de TLS e de log). Anexos entram como
+     * [AnexoRemoto]: o [FetcherAnexo] obtém e renova a URL assinada.
+     */
     override fun newImageLoader(context: PlatformContext): ImageLoader = ImageLoader.Builder(context)
-        .components { add(OkHttpNetworkFetcherFactory(callFactory = { okHttp.get() })) }
+        .components {
+            add(OkHttpNetworkFetcherFactory(callFactory = { okHttp.get() }))
+            add(FetcherAnexo.Fabrica { anexos.get() })
+            add(FetcherAnexo.Chave())
+        }
         .build()
 }

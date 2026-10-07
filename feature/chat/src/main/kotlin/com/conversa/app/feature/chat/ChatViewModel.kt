@@ -94,7 +94,6 @@ class ChatViewModel @Inject constructor(
     sessao: SessaoRepositorio,
     private val mensagens: MensagensRepositorio,
     private val envio: EnvioMensagens,
-    private val anexos: AnexosRepositorio,
     private val arquivos: ArquivosLocais,
     private val fontes: FontesArquivo,
     private val relogio: Clock,
@@ -227,13 +226,8 @@ class ChatViewModel @Inject constructor(
 
     fun removerAnexo(uri: String) {
         fila.value = fila.value.filterNot { it.uri == uri }
+        viewModelScope.launch { envio.desistirDoArquivo(uri) }
     }
-
-    /** URL assinada para mostrar uma imagem (cache por identificador). */
-    suspend fun urlDoAnexo(identificador: String): String? = anexos.url(identificador).getOrNull()
-
-    /** A imagem não carregou (URL vencida): a próxima busca pede outra. */
-    fun esquecerUrl(identificador: String) = anexos.esquecerUrl(identificador)
 
     /** Baixa para o cache (uma vez) e pede para a tela abrir com outro app. */
     fun abrirArquivo(identificador: String, nome: String, mime: String?) {

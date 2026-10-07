@@ -23,10 +23,13 @@ import com.conversa.app.core.network.dto.SucessoDto
 import com.conversa.app.core.network.http.ErroApi
 import com.conversa.app.core.testing.escopoDoTeste
 import com.google.common.truth.Truth.assertThat
+import io.mockk.Runs
 import io.mockk.coEvery
 import io.mockk.coVerify
 import io.mockk.every
+import io.mockk.just
 import io.mockk.mockk
+import io.mockk.verify
 import java.io.IOException
 import java.time.Clock
 import java.time.Instant
@@ -239,6 +242,7 @@ class MensagensTest {
 
         every { fontes.abrir("content://x/1") } returns fonte("foto.jpg", 100)
         every { fontes.abrir("content://x/2") } returns fonte("doc.pdf", 300)
+        every { fontes.liberar(any()) } just Runs
         coEvery { anexos.enviar(match { it.nome == "foto.jpg" }, TipoConteudo.IMAGEM, any()) } returns
             Result.success(AnexoEnviado(1, "hash1", TipoConteudo.IMAGEM, "foto.jpg", "jpg", 100))
         coEvery { anexos.enviar(match { it.nome == "doc.pdf" }, TipoConteudo.ARQUIVO, any()) } returns
@@ -247,6 +251,8 @@ class MensagensTest {
         assertThat(envio.processarPendentes()).isEqualTo(ResultadoEnvio.TENTAR_DEPOIS)
         coVerify(exactly = 0) { api.enviarMensagem(any()) }
         assertThat(banco.envioPendenteDao().todos().single().payloadJson).contains("hash1")
+        // Ainda na fila: o acesso aos arquivos continua.
+        verify(exactly = 0) { fontes.liberar(any()) }
 
         coEvery { anexos.enviar(match { it.nome == "doc.pdf" }, TipoConteudo.ARQUIVO, any()) } returns
             Result.success(AnexoEnviado(2, "hash2", TipoConteudo.ARQUIVO, "doc.pdf", "pdf", 300))
@@ -267,6 +273,37 @@ class MensagensTest {
         assertThat(banco.mensagemDao().buscar(700)!!.conteudos.sortedBy { it.ordem }.map { it.conteudo })
             .containsExactly("veja", "hash1", "hash2").inOrder()
         assertThat(envio.progresso.value).isEmpty()
+        // Enviada: devolve o acesso aos dois arquivos.
+        verify { fontes.liberar("content://x/1") }
+        verify { fontes.liberar("content://x/2") }
+    }
+
+    @Test
+    fun `arquivo usado por outra mensagem da fila so e liberado quando a ultima sai`() = runTest {
+        val envio = envio()
+        val foto = AnexoLocal("content://x/1", "foto.jpg", 100, "image/jpeg", TipoConteudo.IMAGEM)
+        val primeira = envio.enviar(42, "", listOf(foto))
+        val segunda = envio.enviar(42, "de novo", listOf(foto))
+        every { fontes.liberar(any()) } just Runs
+
+        envio.descartar(primeira)
+        verify(exactly = 0) { fontes.liberar(any()) }
+
+        envio.descartar(segunda)
+        verify(exactly = 1) { fontes.liberar("content://x/1") }
+    }
+
+    @Test
+    fun `tirar da fila do campo libera, a nao ser que uma mensagem na fila use o arquivo`() = runTest {
+        val envio = envio()
+        every { fontes.liberar(any()) } just Runs
+        envio.enviar(42, "", listOf(AnexoLocal("content://x/1", "foto.jpg", 100, "image/jpeg", TipoConteudo.IMAGEM)))
+
+        envio.desistirDoArquivo("content://x/1")
+        envio.desistirDoArquivo("content://x/2")
+
+        verify(exactly = 0) { fontes.liberar("content://x/1") }
+        verify(exactly = 1) { fontes.liberar("content://x/2") }
     }
 
     @Test

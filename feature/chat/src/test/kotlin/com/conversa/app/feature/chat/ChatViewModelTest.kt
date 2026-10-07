@@ -83,7 +83,6 @@ class ChatViewModelTest {
             envio,
             mockk(relaxed = true),
             mockk(relaxed = true),
-            mockk(relaxed = true),
             Clock.fixed(agora, ZoneOffset.UTC),
         )
         backgroundScope.launch { vm.estado.collect {} }

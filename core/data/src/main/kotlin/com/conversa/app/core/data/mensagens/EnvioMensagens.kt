@@ -190,6 +190,7 @@ class EnvioMensagens @Inject constructor(
             val mensagem = mensagemDao.buscar(pendente.mensagemIdLocal)
             if (mensagem == null) {
                 envioDao.remover(pendente.mensagemIdLocal)
+                liberarArquivos(pendente.payloadJson)
                 continue
             }
             if (mensagem.mensagem.falhou) continue
@@ -216,6 +217,7 @@ class EnvioMensagens @Inject constructor(
             if (criada != null) {
                 trocarPelaReal(mensagem, criada.id, pacote)
                 envioDao.remover(pendente.mensagemIdLocal)
+                liberarArquivos(pendente.payloadJson)
                 _progresso.update { it - pendente.mensagemIdLocal }
                 enviouAlguma = true
                 continue
@@ -317,10 +319,32 @@ class EnvioMensagens @Inject constructor(
 
     /** "Apagar" numa mensagem que falhou (ela nunca chegou ao servidor). */
     suspend fun descartar(idLocal: Long) {
+        val pendente = envioDao.buscar(idLocal)
         envioDao.remover(idLocal)
         mensagemDao.remover(idLocal)
         _progresso.update { it - idLocal }
+        if (pendente != null) liberarArquivos(pendente.payloadJson)
     }
+
+    /** A pessoa tirou o arquivo da fila do campo sem enviar: libera, se nenhuma mensagem da fila o usa. */
+    suspend fun desistirDoArquivo(uri: String) = liberar(listOf(uri))
+
+    /**
+     * Saiu da fila: devolve o acesso aos arquivos dela e apaga as fotos da câmera
+     * ([FontesArquivo.liberar]), menos os que outra mensagem da fila ainda vai enviar.
+     * Chamar depois de remover a linha da fila.
+     */
+    private suspend fun liberarArquivos(payloadJson: String) = liberar(lerPacote(payloadJson)?.anexos?.map { it.uri }.orEmpty())
+
+    private suspend fun liberar(uris: List<String>) {
+        if (uris.isEmpty()) return
+        val emUso = envioDao.todos().flatMap { lerPacote(it.payloadJson)?.anexos.orEmpty() }.map { it.uri }.toSet()
+        uris.distinct().filterNot { it in emUso }.forEach { fontes.liberar(it) }
+    }
+
+    private fun lerPacote(json: String): PacoteEnvio? = runCatching {
+        ConversaJson.decodeFromString(PacoteEnvio.serializer(), json)
+    }.getOrNull()
 
     /** Na abertura da sessão: se sobrou algo na fila (app morto no meio), agenda. */
     suspend fun retomar() {

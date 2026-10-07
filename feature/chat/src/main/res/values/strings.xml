@@ -67,6 +67,11 @@
     <string name="enviar">Enviar</string>
 
     <!-- Anexos (ANX-01…09) -->
+    <string name="anexar">Anexar</string>
+    <string name="anexar_galeria">Galeria</string>
+    <string name="anexar_camera">Câmera</string>
+    <string name="anexar_documento">Documento</string>
+    <string name="sem_app_de_camera">Nenhum app de câmera instalado.</string>
     <string name="remover_anexo">Remover %1$s</string>
     <string name="abrir">Abrir</string>
     <string name="abrir_com">Abrir com…</string>

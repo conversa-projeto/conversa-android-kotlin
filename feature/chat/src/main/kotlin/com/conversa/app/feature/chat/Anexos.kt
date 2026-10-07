@@ -41,9 +41,7 @@ import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableFloatStateOf
-import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.produceState
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
@@ -55,7 +53,6 @@ import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.layout.ContentScale
-import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
@@ -63,15 +60,17 @@ import androidx.compose.ui.window.Dialog
 import androidx.compose.ui.window.DialogProperties
 import androidx.core.net.toUri
 import coil3.compose.AsyncImage
-import coil3.request.ImageRequest
+import coil3.compose.AsyncImagePainter
 import com.conversa.app.core.data.anexos.AnexoLocal
 import com.conversa.app.core.model.Conteudo
+import com.conversa.app.core.model.ItemChat
 import com.conversa.app.core.model.Mensagem
 import com.conversa.app.core.model.PREFIXO_LOCAL
 import com.conversa.app.core.model.TipoConteudo
 import com.conversa.app.core.model.ehVideo
 import com.conversa.app.core.model.formatarTamanho
 import com.conversa.app.core.model.local
+import com.conversa.app.core.ui.componentes.AnexoRemoto
 import com.conversa.app.core.ui.tema.ConversaTema
 
 /** Ícone pela extensão/tipo (ANX-09). */
@@ -84,44 +83,27 @@ fun iconeDoArquivo(conteudo: Conteudo): ImageVector = when {
 }
 
 /**
- * Imagem de anexo. Remota: busca a URL assinada e carrega com a chave de cache =
- * identificador (a URL muda a cada 10 min, o conteúdo não). Se falhar, esquece a URL
- * e tenta mais uma vez (URL vencida, ANX-14). Local (ainda enviando): o próprio arquivo.
+ * Imagem de anexo. Remota: [AnexoRemoto] (o Coil obtém a URL assinada, renova se vencer
+ * e guarda no cache pelo identificador, ANX-14). Local (ainda enviando): o próprio arquivo.
  */
 @Composable
-fun ImagemAnexo(conteudo: Conteudo, acoes: AcoesBolha, modifier: Modifier = Modifier, contentScale: ContentScale = ContentScale.Fit) {
-    val contexto = LocalContext.current
-    var tentativa by remember(conteudo.conteudo) { mutableIntStateOf(0) }
-    val modelo by produceState<Any?>(null, conteudo.conteudo, tentativa) {
-        value = if (conteudo.local) {
-            conteudo.conteudo.removePrefix(PREFIXO_LOCAL).toUri()
-        } else {
-            acoes.urlDoAnexo(conteudo.conteudo)?.let { url ->
-                ImageRequest.Builder(contexto)
-                    .data(url)
-                    .memoryCacheKey(conteudo.conteudo)
-                    .diskCacheKey(conteudo.conteudo)
-                    .build()
-            }
-        }
+fun ImagemAnexo(conteudo: Conteudo, modifier: Modifier = Modifier, contentScale: ContentScale = ContentScale.Fit) {
+    val modelo = remember(conteudo.conteudo) {
+        if (conteudo.local) conteudo.conteudo.removePrefix(PREFIXO_LOCAL).toUri() else AnexoRemoto(conteudo.conteudo)
     }
-    var falhou by remember(conteudo.conteudo, tentativa) { mutableStateOf(false) }
+    var estado by remember(conteudo.conteudo) { mutableStateOf<AsyncImagePainter.State>(AsyncImagePainter.State.Empty) }
     Box(modifier, contentAlignment = Alignment.Center) {
-        when {
-            falhou && tentativa > 0 -> Icon(Icons.Outlined.BrokenImage, contentDescription = null, tint = ConversaTema.cores.iconeDiscreto)
-            modelo == null -> CircularProgressIndicator(Modifier.size(24.dp), strokeWidth = 2.dp)
-            else -> AsyncImage(
-                model = modelo,
-                contentDescription = conteudo.nome.ifBlank { stringResource(R.string.conteudo_imagem) },
-                contentScale = contentScale,
-                onError = {
-                    falhou = true
-                    if (tentativa == 0 && !conteudo.local) {
-                        acoes.esquecerUrl(conteudo.conteudo)
-                        tentativa = 1
-                    }
-                },
-            )
+        AsyncImage(
+            model = modelo,
+            contentDescription = conteudo.nome.ifBlank { stringResource(R.string.conteudo_imagem) },
+            contentScale = contentScale,
+            onState = { estado = it },
+        )
+        when (estado) {
+            is AsyncImagePainter.State.Loading -> CircularProgressIndicator(Modifier.size(24.dp), strokeWidth = 2.dp)
+            is AsyncImagePainter.State.Error ->
+                Icon(Icons.Outlined.BrokenImage, contentDescription = null, tint = ConversaTema.cores.iconeDiscreto)
+            else -> Unit
         }
     }
 }
@@ -136,7 +118,7 @@ fun BolhaImagem(mensagem: Mensagem, propria: Boolean, progresso: Float?, acoes: 
             .background(if (propria) ConversaTema.cores.bolhaPropria else ConversaTema.cores.bolhaOutro)
             .clickable { acoes.aoAbrirImagem(mensagem, conteudo) },
     ) {
-        ImagemAnexo(conteudo, acoes, Modifier.sizeIn(minWidth = 120.dp, minHeight = 90.dp, maxWidth = 260.dp, maxHeight = 320.dp))
+        ImagemAnexo(conteudo, Modifier.sizeIn(minWidth = 120.dp, minHeight = 90.dp, maxWidth = 260.dp, maxHeight = 320.dp))
         Box(
             Modifier
                 .align(Alignment.BottomEnd)
@@ -193,46 +175,40 @@ fun FilaAnexos(fila: List<AnexoLocal>, aoRemover: (String) -> Unit) {
         horizontalArrangement = Arrangement.spacedBy(8.dp),
     ) {
         fila.forEach { anexo ->
-            Box(
+            Row(
                 Modifier
-                    .widthIn(max = 160.dp)
+                    .widthIn(max = 200.dp)
                     .clip(RoundedCornerShape(10.dp))
-                    .background(ConversaTema.cores.campoEntrada),
+                    .background(ConversaTema.cores.campoEntrada)
+                    .padding(start = 6.dp, top = 6.dp, bottom = 6.dp),
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.spacedBy(6.dp),
             ) {
-                Row(
-                    Modifier.padding(6.dp),
-                    verticalAlignment = Alignment.CenterVertically,
-                    horizontalArrangement = Arrangement.spacedBy(6.dp),
-                ) {
-                    if (anexo.tipo == TipoConteudo.IMAGEM) {
-                        AsyncImage(
-                            model = anexo.uri.toUri(),
-                            contentDescription = null,
-                            contentScale = ContentScale.Crop,
-                            modifier = Modifier.size(44.dp).clip(RoundedCornerShape(6.dp)),
-                        )
-                    } else {
-                        val icone = iconeDoArquivo(Conteudo(null, 0, anexo.tipo, "", anexo.nome, anexo.nome.substringAfterLast('.', "")))
-                        Icon(icone, contentDescription = null, tint = MaterialTheme.colorScheme.primary, modifier = Modifier.size(32.dp))
-                    }
-                    Column(Modifier.widthIn(max = 80.dp)) {
-                        Text(anexo.nome, style = MaterialTheme.typography.labelMedium, maxLines = 1, overflow = TextOverflow.Ellipsis)
-                        Text(
-                            formatarTamanho(anexo.tamanho),
-                            style = MaterialTheme.typography.labelSmall,
-                            color = ConversaTema.cores.textoTerciario,
-                        )
-                    }
+                if (anexo.tipo == TipoConteudo.IMAGEM) {
+                    AsyncImage(
+                        model = anexo.uri.toUri(),
+                        contentDescription = null,
+                        contentScale = ContentScale.Crop,
+                        modifier = Modifier.size(44.dp).clip(RoundedCornerShape(6.dp)),
+                    )
+                } else {
+                    val icone = iconeDoArquivo(Conteudo(null, 0, anexo.tipo, "", anexo.nome, anexo.nome.substringAfterLast('.', "")))
+                    Icon(icone, contentDescription = null, tint = MaterialTheme.colorScheme.primary, modifier = Modifier.size(32.dp))
                 }
-                IconButton(
-                    onClick = { aoRemover(anexo.uri) },
-                    modifier = Modifier.align(Alignment.TopEnd).size(24.dp).background(Color.Black.copy(alpha = 0.4f), CircleShape),
-                ) {
+                Column(Modifier.weight(1f, fill = false)) {
+                    Text(anexo.nome, style = MaterialTheme.typography.labelMedium, maxLines = 1, overflow = TextOverflow.Ellipsis)
+                    Text(
+                        formatarTamanho(anexo.tamanho),
+                        style = MaterialTheme.typography.labelSmall,
+                        color = ConversaTema.cores.textoTerciario,
+                    )
+                }
+                IconButton(onClick = { aoRemover(anexo.uri) }, modifier = Modifier.size(36.dp)) {
                     Icon(
                         Icons.Outlined.Close,
                         contentDescription = stringResource(R.string.remover_anexo, anexo.nome),
-                        tint = Color.White,
-                        modifier = Modifier.size(14.dp),
+                        tint = ConversaTema.cores.iconeDiscreto,
+                        modifier = Modifier.size(18.dp),
                     )
                 }
             }
@@ -245,6 +221,14 @@ data class ImagemDaConversa(val mensagem: Mensagem, val conteudo: Conteudo) {
     val legenda: String get() = mensagem.conteudos.filter { it.tipo == TipoConteudo.TEXTO }.joinToString("\n") { it.conteudo }
 }
 
+/** Todas as imagens da conversa, em ordem cronológica, menos as de mensagens ocultas (ANX-05). */
+fun imagensDaConversa(itens: List<ItemChat>): List<ImagemDaConversa> = itens.asSequence()
+    .filterIsInstance<ItemChat.Bolha>()
+    .map { it.mensagem }
+    .filterNot { it.oculta }
+    .flatMap { mensagem -> mensagem.conteudos.filter { it.tipo == TipoConteudo.IMAGEM }.map { ImagemDaConversa(mensagem, it) } }
+    .toList()
+
 /**
  * Visualizador em tela cheia (ANX-05): todas as imagens da conversa (menos as ocultas),
  * deslizando para os lados; pinça e duplo toque dão zoom; legenda embaixo.
@@ -255,9 +239,17 @@ fun VisualizadorImagens(imagens: List<ImagemDaConversa>, inicial: Int, acoes: Ac
         val paginas = rememberPagerState(initialPage = inicial.coerceIn(0, (imagens.size - 1).coerceAtLeast(0))) { imagens.size }
         Box(Modifier.fillMaxSize().background(ConversaTema.cores.fundoVisualizadorMidia)) {
             HorizontalPager(state = paginas, modifier = Modifier.fillMaxSize()) { pagina ->
-                ImagemComZoom(imagens[pagina].conteudo, acoes)
+                ImagemComZoom(imagens[pagina].conteudo)
             }
-            IconButton(onClick = aoFechar, modifier = Modifier.align(Alignment.TopEnd).statusBarsPadding().padding(8.dp)) {
+            // Fundo escuro no "×": continua visível sobre imagens claras e com zoom.
+            IconButton(
+                onClick = aoFechar,
+                modifier = Modifier
+                    .align(Alignment.TopEnd)
+                    .statusBarsPadding()
+                    .padding(8.dp)
+                    .background(Color.Black.copy(alpha = 0.5f), CircleShape),
+            ) {
                 Icon(Icons.Outlined.Close, contentDescription = stringResource(R.string.fechar), tint = Color.White)
             }
             val atual = imagens.getOrNull(paginas.currentPage)
@@ -290,7 +282,7 @@ fun VisualizadorImagens(imagens: List<ImagemDaConversa>, inicial: Int, acoes: Ac
 }
 
 @Composable
-private fun ImagemComZoom(conteudo: Conteudo, acoes: AcoesBolha) {
+private fun ImagemComZoom(conteudo: Conteudo) {
     var escala by remember { mutableFloatStateOf(1f) }
     var deslocamento by remember { mutableStateOf(Offset.Zero) }
     val estado = rememberTransformableState { zoom, mover, _ ->
@@ -311,6 +303,6 @@ private fun ImagemComZoom(conteudo: Conteudo, acoes: AcoesBolha) {
             .graphicsLayer(scaleX = escala, scaleY = escala, translationX = deslocamento.x, translationY = deslocamento.y),
         contentAlignment = Alignment.Center,
     ) {
-        ImagemAnexo(conteudo, acoes, Modifier.fillMaxSize())
+        ImagemAnexo(conteudo, Modifier.fillMaxSize())
     }
 }

@@ -405,6 +405,7 @@
 - [x] Ao abrir com não lidas: posicionar a primeira não lida no topo; sem não lidas: ir ao fim — primeira não lida no topo; sem não lidas, o fim
 - [x] FAB "ir para o final" quando estiver longe do fim — `SmallFloatingActionButton` quando o 1º visível passa do 6º item
 - [x] FAB "Há novas mensagens" quando chegar mensagem com o usuário longe do fim — aparece quando chega mensagem de outra pessoa com a lista longe do fim
+- [x] 🆕 Perto do fim, a lista acompanha a mensagem que chega — o `LazyColumn` mantinha na tela o item visível (pela chave) e a nova ficava escondida embaixo, sem aviso; agora rola até ela (achado no emulador com uma mensagem de imagem do B)
 - [x] Links clicáveis (`https?://` e `www.`) com as regras de pontuação do web; abrir no navegador — `separarTexto` + `LinkAnnotation.Url` (abre no navegador); menção abre a conversa direta (`LinkAnnotation.Clickable`); testado no emulador (o "." final fica fora do link)
 
 ### 3.10 Digitando (FC-312, ENV-15)
@@ -428,30 +429,31 @@
 - [x] `PUT /anexo {identificador, tipo, nome, extensao (≤ 10), tamanho}` — nome ≤ 255, extensão minúscula ≤ 10; acima de 1 GiB nem começa (+ teste)
 - [x] Resposta "não existe" → URL assinada de upload (vale 300 s)
 - [x] Resposta "já existe" → `id` (string) + URL de download → pular o upload — não sobe nada e guarda a URL devolvida como a de leitura (+ teste)
-- [ ] `PUT` do arquivo na URL assinada (streaming, `RequestBody` a partir do `ContentResolver`) com progresso — 🔄 `RequestBody` em fluxo com progresso, sem token (+ teste com MockWebServer conferindo os bytes); a leitura pelo `ContentResolver` entra com o seletor (4.2)
+- [x] `PUT` do arquivo na URL assinada (streaming, `RequestBody` a partir do `ContentResolver`) com progresso — `RequestBody` em fluxo com progresso, sem token (+ teste com MockWebServer conferindo os bytes); no emulador, 2 imagens da galeria subiram pelo proxy com o tamanho exato no MinIO
 - [x] `POST /anexo/confirmar?identificador=` (na **query**) — (+ teste)
 - [x] URL vencida no meio → pedir de novo — 403 do MinIO → pede outra URL uma vez (+ teste)
 - [x] Tudo dentro de um `UploadWorker` (sobrevive a fechar o app) — o mesmo `EnvioWorker` da 3.7 sobe os anexos antes de mandar a mensagem; o identificador de cada anexo é gravado na fila assim que sobe (nova tentativa não sobe de novo) (+ teste)
-- [ ] **Teste:** um vídeo de 200 MB sobe sem estourar a memória; o mesmo arquivo de novo não sobe
+- [x] **Teste:** um vídeo de 200 MB sobe sem estourar a memória; o mesmo arquivo de novo não sobe — no emulador, 200 MB (`dd`) pelo seletor de documento: subiu inteiro (209.715.200 bytes no servidor) com a memória do app estável (PSS ~116–125 MB durante todo o envio); de novo: só `PUT /anexo` (já existe) e `PUT /mensagem`, nada para o `/storage`
 
 ### 4.2 Fila e envio de anexos (FC-401, FC-402, ANX-01, ANX-03)
-- [ ] Botão de anexo → Galeria (Photo Picker múltiplo), Câmera, Documento (`OpenMultipleDocuments`) — 🔄 `FontesArquivo` (nome, tamanho, MIME pelo `ContentResolver`), fila no ViewModel e pasta da câmera prontos; **próximo passo**: o botão e os seletores no campo
-- [ ] Fila acima do campo: miniaturas (imagem), ícone + nome + tamanho (outros), "Remover" — 🔄 `FilaAnexos` pronto; falta ligar no campo (próximo passo)
+- [x] Botão de anexo → Galeria (Photo Picker múltiplo), Câmera, Documento (`OpenMultipleDocuments`) — `BotaoAnexar` no campo; `takePersistableUriPermission` (o envio pode ser depois, pelo WorkManager); câmera grava em `cache/camera` pelo `FileProvider` (sem permissão de câmera). No emulador: 2 fotos da galeria, PDF por documento e foto da câmera enviados
+- [x] Fila acima do campo: miniaturas (imagem), ícone + nome + tamanho (outros), "Remover" — `FilaAnexos`; Enviar habilitado só com anexos (testado no emulador)
+- [x] 🆕 Devolver o acesso aos arquivos ao sair da fila (enviada, descartada ou removida do campo) e apagar a foto da câmera; o Android limita as permissões guardadas por app — `FontesArquivo.liberar` + `EnvioMensagens.desistirDoArquivo`; arquivo ainda usado por outra mensagem da fila não é liberado (+ teste; no emulador a foto some de `cache/camera` ao enviar e ao remover)
 - [x] Tipo: `image/*` → 2; `audio/*` → 4; gravação do microfone → **5**; resto → 3 (vídeo = 3 com extensão) — `tipoPorMime` + `ehVideo` (extensão, como o web) em `core/model/Chat.kt` (+ teste); a gravação é sempre 5
-- [ ] Mensagem: [encaminhados] → texto → figurinha → arquivos, com `ordem` 1..n — 🔄 texto (ordem 1) → arquivos na ordem escolhida (+ teste); encaminhados e figurinha entram nas etapas 7
+- [ ] Mensagem: [encaminhados] → texto → figurinha → arquivos, com `ordem` 1..n — 🔄 texto (ordem 1) → arquivos na ordem escolhida (+ teste; no emulador o banco gravou texto=1, imagens=2 e 3); encaminhados e figurinha entram nas etapas 7
 - [x] Erro em qualquer upload cancela a mensagem inteira (como no web) — arquivo inacessível, grande demais ou recusado → a mensagem inteira vira "falhou"; sem rede espera (+ teste)
-- [ ] Indicador de upload (nome, barra, %) na bolha otimista — 🔄 `EnvioMensagens.progresso` (fração por mensagem) pronto; a barra na bolha entra com a tela
+- [x] Indicador de upload (nome, barra, %) na bolha otimista — `EnvioMensagens.progresso` (fração por mensagem) → barra na bolha (`LinhaMensagem(progresso)`), com o nome do arquivo e o relógio de "enviando"; visto no emulador com o arquivo de 200 MB (sem o número em %, a barra basta)
 
 ### 4.3 URLs assinadas (FC-403, ANX-14)
 - [x] `GET /anexo?identificador=` → `{url}` — `AnexosRepositorio.url`
 - [x] Cache identificador → (url, expira_em) — vale até 1 min antes dos 600 s (+ teste)
-- [x] Coil 3 com o OkHttp compartilhado e chave de cache = identificador (não a URL) — `ImagemAnexo`: `memoryCacheKey`/`diskCacheKey` = identificador; o OkHttp do app já não manda o token para o MinIO
-- [ ] Imagem falhou (403/expirada) → renovar a URL e tentar uma vez — 🔄 `ImagemAnexo`: falhou → `esquecerUrl` e tenta mais uma vez; falta testar no emulador
+- [x] Coil 3 com o OkHttp compartilhado e chave de cache = identificador (não a URL) — modelo `AnexoRemoto(identificador)` + `FetcherAnexo` no `:app`: cache de memória (`Keyer`) e de disco pelo identificador; já no disco, nem pede URL ao servidor (no emulador: reabrir a conversa = 0 pedidos); o OkHttp do app já não manda o token para o MinIO
+- [x] Imagem falhou (403/expirada) → renovar a URL e tentar uma vez — dentro do `FetcherAnexo` (a primeira versão, na tela, trocava o modelo do `AsyncImage` e o Coil não refazia o pedido). Testado com `URL_VENCIDA=1 node ferramentas/proxy-dev.mjs` (403 na primeira leitura de cada arquivo): as 3 imagens renovaram a URL e apareceram
 
 ### 4.4 Imagens e vídeos (FC-404, FC-408, ANX-04, ANX-05)
-- [ ] Bolha de imagem (proporção preservada, hora sobre a imagem) — 🔄 `BolhaImagem` (até 260×320 dp, hora e status por cima, barra de envio); falta testar no emulador
-- [ ] Visualizador em tela cheia: pager com todas as imagens e vídeos da conversa (exceto ocultas) — 🔄 `VisualizadorImagens` (pager com as imagens da conversa, menos as ocultas); falta ligar o toque na bolha e testar
-- [ ] Zoom com pinça e duplo toque; legenda = textos da mesma mensagem; tira de miniaturas — 🔄 pinça e duplo toque (sem zoom o arrasto troca de imagem); legenda = textos da mensagem; falta a tira de miniaturas e testar
+- [x] Bolha de imagem (proporção preservada, hora sobre a imagem) — `BolhaImagem` (até 260×320 dp, hora e status por cima, barra de envio); imagem com texto vai na bolha padrão. Testado no emulador (galeria e câmera; a imagem enviada volta pelo servidor)
+- [ ] Visualizador em tela cheia: pager com todas as imagens e vídeos da conversa (exceto ocultas) — 🔄 `VisualizadorImagens` aberto pelo toque na imagem, pager com as imagens da conversa menos as ocultas (`imagensDaConversa` + teste), "Abrir com…"; testado no emulador. Falta: vídeos (com o Media3)
+- [ ] Zoom com pinça e duplo toque; legenda = textos da mesma mensagem; tira de miniaturas — 🔄 pinça e duplo toque (sem zoom o arrasto troca de imagem); legenda = remetente, hora e textos da mensagem; testado no emulador. Falta a tira de miniaturas
 - [ ] Vídeo na bolha: primeiro quadro + ícone de play
 - [ ] Vídeo no visualizador: Media3 com controles
 - [ ] Ações do visualizador: compartilhar, baixar
@@ -476,7 +478,7 @@
 ### 4.7 Arquivos e download (FC-407, ANX-09)
 - [ ] Bolha de arquivo: ícone pela extensão, nome, tamanho, "Baixar"/"Abrir" — 🔄 `LinhaArquivo` (ícone pela extensão, nome, "Abrir"); tamanho não vem na mensagem; falta testar no emulador
 - [ ] Baixar: URL assinada → `MediaStore.Downloads` (sanitizar o nome: nada de `../`)
-- [ ] Abrir: `ACTION_VIEW` com `FileProvider` — 🔄 `ArquivosLocais.baixar` (cache, `.part` → renomeia) + `FileProvider` (`caminhos_arquivos.xml`) + `ACTION_VIEW`; falta testar no emulador
+- [x] Abrir: `ACTION_VIEW` com `FileProvider` — `ArquivosLocais.baixar` (cache, `.part` → renomeia) + `FileProvider` (`caminhos_arquivos.xml`) + `ACTION_VIEW`; no emulador o PDF enviado baixou pelo proxy e abriu no leitor de PDF do sistema
 - [ ] Notificação de download concluído
 
 ### 4.8 Transcrição (FC-409, ANX-12)
