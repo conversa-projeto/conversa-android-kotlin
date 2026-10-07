@@ -4,7 +4,7 @@
 - **Tipo:** código / testes / documentação / configuração de debug
 - **Itens:** `TODO.md` 2.6–2.11 (FC-204…FC-214); CON-01…08, CON-11, CON-13, PRE-01, GER-02
 - **Branch:** `reescrita`
-- **Commits:** _(preencher)_
+- **Commits:** `0d595af`
 
 ## Contexto
 Último bloco da etapa 2. O usuário ligou o servidor de desenvolvimento e pediu para seguir sozinho. Por isso, além do código, o app foi testado de ponta a ponta no emulador contra o servidor real.
