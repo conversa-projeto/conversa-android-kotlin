@@ -1,6 +1,7 @@
 package com.conversa.app.core.data.sincronizacao
 
 import com.conversa.app.core.data.paraEntidade
+import com.conversa.app.core.data.presenca.PresencaRepositorio
 import com.conversa.app.core.database.dao.ConversaDao
 import com.conversa.app.core.database.dao.MensagemDao
 import com.conversa.app.core.database.dao.SyncEstadoDao
@@ -45,7 +46,7 @@ import timber.log.Timber
  * [ressincronizar] busca tudo de novo de forma incremental:
  * 1. `GET /mensagens/novas?desde=<cursor>` e as mensagens que faltam por conversa;
  * 2. `GET /conversas`;
- * 3. `GET /contatos/online`;
+ * 3. `GET /contatos/online` (no [PresencaRepositorio]);
  * 4. `GET /atividades/novas`;
  * 5. `GET /chamadas/pendentes`.
  *
@@ -60,14 +61,10 @@ class SyncManager @Inject constructor(
     private val conversaDao: ConversaDao,
     private val mensagemDao: MensagemDao,
     private val syncEstadoDao: SyncEstadoDao,
+    private val presenca: PresencaRepositorio,
     @EscopoAplicacao private val escopo: CoroutineScope,
 ) {
     private val trava = Mutex()
-
-    private val _online = MutableStateFlow<Set<Long>>(emptySet())
-
-    /** Ids dos contatos online (só quem tem conversa direta com o usuário, contrato §15). */
-    val online: StateFlow<Set<Long>> = _online.asStateFlow()
 
     private val _atividadesNovas = MutableStateFlow(0)
     val atividadesNovas: StateFlow<Int> = _atividadesNovas.asStateFlow()
@@ -105,7 +102,7 @@ class SyncManager @Inject constructor(
                 listOf(
                     async { sincronizarMensagensNovasTravado() },
                     async { sincronizarConversas() },
-                    async { sincronizarOnline() },
+                    async { presenca.recarregarOnline() },
                     async { sincronizarAtividades() },
                     async { sincronizarChamadasPendentes() },
                 ).awaitAll()
@@ -139,6 +136,8 @@ class SyncManager @Inject constructor(
                 }
             }
             resultado.onSuccess { mensagens -> mensagemDao.salvarCompletas(mensagens.map { it.paraEntidade() }) }
+            // Mensagem nova na conversa: quem estava digitando terminou (como no web).
+            presenca.limparDigitando(nova.conversaId)
         }
         // Cursor = maior `ate`, guardado como veio (contrato §10.10).
         val maior = novas.maxByOrNull { lerInstant(it.ate) ?: java.time.Instant.EPOCH }?.ate
@@ -146,8 +145,19 @@ class SyncManager @Inject constructor(
         sincronizarConversas()
     }
 
-    private suspend fun sincronizarOnline() {
-        chamarApi { api.contatosOnline() }.onSuccess { _online.value = it.toSet() }
+    /**
+     * Atualização periódica enquanto o WebSocket está fora (o web faz a cada 8 s):
+     * mensagens novas e chamadas pendentes. Quem chama é a [ConexaoTempoReal].
+     */
+    suspend fun atualizacaoPeriodica() {
+        sincronizarMensagensNovas()
+        sincronizarChamadasPendentes()
+    }
+
+    /** Fim da sessão: zera o que fica só em memória (o banco é limpo à parte). */
+    fun limpar() {
+        _atividadesNovas.value = 0
+        _chamadasPendentes.resetReplayCache()
     }
 
     private suspend fun sincronizarAtividades() {
@@ -160,8 +170,6 @@ class SyncManager @Inject constructor(
 
     private fun tratarEvento(evento: EventoSocket) {
         when (evento) {
-            is EventoSocket.StatusUsuario ->
-                _online.value = if (evento.online) _online.value + evento.usuarioId else _online.value - evento.usuarioId
             is EventoSocket.NovaAtividade -> escopo.launch { sincronizarAtividades() }
             is EventoSocket.ConversaAtualizada -> escopo.launch { sincronizarConversas() }
             is EventoSocket.StatusMensagens -> escopo.launch { atualizarStatus(evento) }

@@ -22,7 +22,8 @@ data class LoginResposta(
     val telefone: String? = null,
     @SerialName("avatar_identificador") val avatarIdentificador: String? = null,
     val dispositivo: DispositivoDto? = null,
-    val token: String,
+    /** Vazio = resposta inválida ("Resposta de login inválida", AUT-01). */
+    val token: String = "",
 )
 
 @Serializable

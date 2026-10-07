@@ -19,4 +19,6 @@ dependencies {
 
     testImplementation(projects.core.testing)
     testImplementation(libs.okhttp.mockwebserver)
+    testImplementation(libs.robolectric)
+    testImplementation(libs.androidx.test.core)
 }

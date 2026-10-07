@@ -181,7 +181,7 @@
 - [x] Testes com MockWebServer: sucesso, 401, `{error}`, HTML, timeout — `RedeTest` (12 testes): sucesso, query, troca de servidor, 401 de sessão, 401 do login, `{error}`, 500, HTML 502, 503 de limite, sem servidor, tempo esgotado, JSON inválido
 
 ### 1.9 Modelos do contrato (FC-108)
-- [ ] Baixar o OpenAPI do servidor (`/api/docs/json`) para `docs/contrato/openapi.json`, como referência das entradas de cada rota — ⛔ precisa do servidor rodando (o JSON é gerado em tempo de execução pelo Elysia)
+- [x] Baixar o OpenAPI do servidor (`/api/docs/json`) para `docs/contrato/openapi.json`, como referência das entradas de cada rota — baixado em 2026-10-07 do servidor de dev (servidor `8031fa5`): 68 operações = as 67 rotas REST da `ConversaApi` (método e caminho conferidos um a um) + `/ws/`
 - [x] Copiar JSONs reais de `conversa/tests/*.test.ts` para `:core:testing/fixtures/` — fixtures montadas a partir dos exemplos do doc 01 (os testes do servidor são TypeScript, não JSON)
 - [x] Serializer de data: ISO-8601 com `Z` → `Instant`, tolerante (aceita sem `Z`, aceita espaço)
 - [x] Serializer de id tolerante (número ou string → `Long`)
@@ -326,6 +326,7 @@
 - [ ] `PresencaRepository`: conjunto de ids online a partir de `GET /contatos/online` + WS 60 `{usuario_id, online}`
 - [ ] Bolinha verde na lista, no cabeçalho do chat (direta) e nos contatos
 - [ ] Banner "Sem conexão em tempo real", depois de 5 s desconectado, com "Tentar agora"
+- [ ] Atualização periódica de 8 s (mensagens novas + chamadas pendentes) só enquanto o socket está fora, como o web (§1.4 do doc 03)
 - [ ] **Teste:** abrir e fechar o web com outro usuário → a bolinha acende e apaga no celular
 
 ---

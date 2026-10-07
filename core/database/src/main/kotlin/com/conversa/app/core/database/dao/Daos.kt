@@ -41,6 +41,38 @@ interface ConversaDao {
         if (conversas.isEmpty()) limpar() else removerForaDe(conversas.map { it.id })
         salvar(conversas)
     }
+
+    @Query("SELECT * FROM conversa")
+    suspend fun todas(): List<ConversaEntidade>
+
+    @Query("DELETE FROM conversa WHERE id = :id")
+    suspend fun remover(id: Long)
+
+    @Query("UPDATE conversa SET fixadaOrdem = NULL")
+    suspend fun desafixarTodas()
+
+    @Query("UPDATE conversa SET fixadaOrdem = :ordem WHERE id = :id")
+    suspend fun definirOrdemFixada(id: Long, ordem: Int)
+
+    /** Aplica a ordem completa das fixadas (posição = índice + 1), como o `PATCH /conversa/fixadas`. */
+    @Transaction
+    suspend fun aplicarFixadas(ids: List<Long>) {
+        desafixarTodas()
+        ids.forEachIndexed { indice, id -> definirOrdemFixada(id, indice + 1) }
+    }
+
+    @Query("UPDATE conversa SET arquivadaEm = :arquivadaEmMs WHERE id = :id")
+    suspend fun definirArquivada(id: Long, arquivadaEmMs: Long?)
+
+    /** Arquivar também desfixa (contrato §11.7). */
+    @Transaction
+    suspend fun marcarArquivada(id: Long, arquivadaEmMs: Long?) {
+        definirArquivada(id, arquivadaEmMs)
+        if (arquivadaEmMs != null) {
+            val restantes = todas().filter { it.fixadaOrdem != null && it.id != id }.sortedBy { it.fixadaOrdem }.map { it.id }
+            aplicarFixadas(restantes)
+        }
+    }
 }
 
 @Dao
@@ -107,9 +139,12 @@ interface ContatoDao {
     @Query("DELETE FROM contato WHERE id NOT IN (:ids)")
     suspend fun removerForaDe(ids: List<Long>)
 
+    @Query("DELETE FROM contato")
+    suspend fun limpar()
+
     @Transaction
     suspend fun substituirTodos(contatos: List<ContatoEntidade>) {
-        removerForaDe(contatos.map { it.id })
+        if (contatos.isEmpty()) limpar() else removerForaDe(contatos.map { it.id })
         salvar(contatos)
     }
 }

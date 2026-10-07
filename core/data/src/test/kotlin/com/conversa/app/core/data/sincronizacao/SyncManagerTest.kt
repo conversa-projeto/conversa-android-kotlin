@@ -1,5 +1,6 @@
 package com.conversa.app.core.data.sincronizacao
 
+import com.conversa.app.core.data.presenca.PresencaRepositorio
 import com.conversa.app.core.database.dao.ConversaDao
 import com.conversa.app.core.database.dao.MensagemDao
 import com.conversa.app.core.database.dao.SyncEstadoDao
@@ -12,19 +13,16 @@ import com.conversa.app.core.network.dto.QuantidadeDto
 import com.conversa.app.core.network.realtime.EstadoConexao
 import com.conversa.app.core.network.realtime.EventoSocket
 import com.conversa.app.core.network.realtime.RealtimeClient
+import com.conversa.app.core.testing.escopoDoTeste
 import com.google.common.truth.Truth.assertThat
 import io.mockk.coEvery
 import io.mockk.coVerify
 import io.mockk.every
 import io.mockk.mockk
 import java.io.IOException
-import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.first
-import kotlinx.coroutines.test.StandardTestDispatcher
-import kotlinx.coroutines.test.TestScope
 import kotlinx.coroutines.test.advanceUntilIdle
 import kotlinx.coroutines.test.runTest
 import org.junit.Test
@@ -40,6 +38,7 @@ class SyncManagerTest {
     private val conversaDao = mockk<ConversaDao>(relaxed = true)
     private val mensagemDao = mockk<MensagemDao>(relaxed = true)
     private val syncEstadoDao = mockk<SyncEstadoDao>(relaxed = true)
+    private val presenca = mockk<PresencaRepositorio>(relaxed = true)
 
     private fun prepararApi() {
         coEvery { api.mensagensNovas(any()) } returns listOf(
@@ -59,7 +58,7 @@ class SyncManagerTest {
     @Test
     fun `ressincronizar busca tudo e avanca o cursor`() = runTest {
         prepararApi()
-        val sync = SyncManager(api, tempoReal, conversaDao, mensagemDao, syncEstadoDao, escopoDoTeste())
+        val sync = SyncManager(api, tempoReal, conversaDao, mensagemDao, syncEstadoDao, presenca, escopoDoTeste())
 
         sync.ressincronizar()
 
@@ -69,7 +68,8 @@ class SyncManagerTest {
         coVerify { api.mensagens(50, mensagemReferencia = 0, mensagensPrevias = 80, mensagensSeguintes = 0) }
         coVerify { syncEstadoDao.gravar(SyncEstadoEntidade(SyncManager.CURSOR_MENSAGENS, "2026-10-06T12:05:00.000Z")) }
         coVerify { conversaDao.substituirTodas(any()) }
-        assertThat(sync.online.value).containsExactly(8L, 9L)
+        coVerify { presenca.recarregarOnline() }
+        coVerify { presenca.limparDigitando(42) }
         assertThat(sync.atividadesNovas.value).isEqualTo(3)
         assertThat(sync.chamadasPendentes.first().single().id).isEqualTo(10)
     }
@@ -78,7 +78,7 @@ class SyncManagerTest {
     fun `falha de rede numa parte nao derruba as outras`() = runTest {
         prepararApi()
         coEvery { api.mensagensNovas(any()) } throws IOException("sem rede")
-        val sync = SyncManager(api, tempoReal, conversaDao, mensagemDao, syncEstadoDao, escopoDoTeste())
+        val sync = SyncManager(api, tempoReal, conversaDao, mensagemDao, syncEstadoDao, presenca, escopoDoTeste())
 
         sync.ressincronizar()
 
@@ -87,20 +87,16 @@ class SyncManagerTest {
     }
 
     @Test
-    fun `conectar dispara a sincronizacao e eventos atualizam presenca e contador`() = runTest {
+    fun `conectar dispara a sincronizacao e eventos atualizam o contador`() = runTest {
         prepararApi()
-        val sync = SyncManager(api, tempoReal, conversaDao, mensagemDao, syncEstadoDao, escopoDoTeste())
+        val sync = SyncManager(api, tempoReal, conversaDao, mensagemDao, syncEstadoDao, presenca, escopoDoTeste())
         sync.iniciar()
         advanceUntilIdle()
 
         estado.value = EstadoConexao.CONECTADO
         advanceUntilIdle()
-        coVerify { api.contatosOnline() }
-
-        eventos.emit(EventoSocket.StatusUsuario(9, online = false))
-        eventos.emit(EventoSocket.StatusUsuario(11, online = true))
-        advanceUntilIdle()
-        assertThat(sync.online.value).containsExactly(8L, 11L)
+        coVerify { presenca.recarregarOnline() }
+        coVerify { api.conversas() }
 
         coEvery { api.atividadesNovas() } returns QuantidadeDto(5)
         eventos.emit(EventoSocket.NovaAtividade)
@@ -111,7 +107,7 @@ class SyncManagerTest {
     @Test
     fun `varias mensagens novas seguidas viram uma sincronizacao so`() = runTest {
         prepararApi()
-        val sync = SyncManager(api, tempoReal, conversaDao, mensagemDao, syncEstadoDao, escopoDoTeste())
+        val sync = SyncManager(api, tempoReal, conversaDao, mensagemDao, syncEstadoDao, presenca, escopoDoTeste())
         sync.iniciar()
         advanceUntilIdle()
 
@@ -121,6 +117,3 @@ class SyncManagerTest {
         coVerify(exactly = 1) { api.mensagensNovas(any()) }
     }
 }
-
-/** Escopo no mesmo relógio do teste (o backgroundScope não avança com advanceUntilIdle). */
-private fun TestScope.escopoDoTeste(): CoroutineScope = CoroutineScope(StandardTestDispatcher(testScheduler) + SupervisorJob())

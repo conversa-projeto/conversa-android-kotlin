@@ -1,10 +1,12 @@
 package com.conversa.app.core.data
 
+import com.conversa.app.core.database.entidades.ContatoEntidade
 import com.conversa.app.core.database.entidades.ConteudoEntidade
 import com.conversa.app.core.database.entidades.ConversaEntidade
 import com.conversa.app.core.database.entidades.MensagemCompleta
 import com.conversa.app.core.database.entidades.MensagemEntidade
 import com.conversa.app.core.database.entidades.ReacaoEntidade
+import com.conversa.app.core.model.Contato
 import com.conversa.app.core.model.Conteudo
 import com.conversa.app.core.model.Conversa
 import com.conversa.app.core.model.Mensagem
@@ -13,6 +15,7 @@ import com.conversa.app.core.model.StatusTranscricao
 import com.conversa.app.core.model.TipoConteudo
 import com.conversa.app.core.model.TipoConversa
 import com.conversa.app.core.model.UsuarioReacao
+import com.conversa.app.core.network.dto.ContatoDto
 import com.conversa.app.core.network.dto.ConversaDto
 import com.conversa.app.core.network.dto.MensagemDto
 import com.conversa.app.core.network.dto.ReferenciaDto
@@ -132,3 +135,14 @@ fun MensagemCompleta.paraModelo() = Mensagem(
         )
     },
 )
+
+internal fun ContatoDto.paraEntidade() = ContatoEntidade(
+    id = id,
+    nome = nome,
+    login = login,
+    email = email,
+    telefone = telefone,
+    avatarUrl = avatarUrl,
+)
+
+fun ContatoEntidade.paraModelo() = Contato(id = id, nome = nome, login = login, email = email, telefone = telefone, avatarUrl = avatarUrl)
