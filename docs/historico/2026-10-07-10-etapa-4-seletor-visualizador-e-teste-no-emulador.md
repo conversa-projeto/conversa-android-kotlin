@@ -4,7 +4,7 @@
 - **Tipo:** código / testes / ferramenta de desenvolvimento
 - **Itens:** `TODO.md` 4.1 (teste de 200 MB), 4.2, 4.3, 4.4, 4.7, e uma linha nova na 3; ANX-01, ANX-03, ANX-04, ANX-05, ANX-09, ANX-14
 - **Branch:** `reescrita`
-- **Commits:** (preencher)
+- **Commits:** `389e66d`
 
 ## Contexto
 Continuação do bloco 09. A tela de anexos estava pronta, mas não estava ligada ao campo e ainda não tinha sido testada no emulador. Ao testar, apareceram dois defeitos, ambos corrigidos aqui:
