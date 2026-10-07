@@ -90,6 +90,9 @@ data class AcoesBolha(
     val aoLigar: (TipoChamada) -> Unit = {},
     val aoAbrirArquivo: (Conteudo) -> Unit = {},
     val aoAbrirImagem: (Mensagem, Conteudo) -> Unit = { _, _ -> },
+    val aoAlternarAudio: (Mensagem, Conteudo) -> Unit = { _, _ -> },
+    /** Chave do áudio ([chaveDoAudio]) e fração da barra (0..1). */
+    val aoBuscarAudio: (String, Float) -> Unit = { _, _ -> },
 )
 
 /**
@@ -166,18 +169,14 @@ private fun CorpoPadrao(mensagem: Mensagem, propria: Boolean, acoes: AcoesBolha,
         mensagem.referencia?.let { referencia ->
             referencia.mensagem?.let { citada -> Citacao(referencia.tipo, citada.remetente, resumoCitacao(citada)) }
         }
-        mensagem.conteudos.forEach { ConteudoNaBolha(mensagem, it, cor, acoes) }
-        if (progresso !=
-            null
-        ) {
-            androidx.compose.material3.LinearProgressIndicator(progress = { progresso }, modifier = Modifier.fillMaxWidth())
-        }
+        mensagem.conteudos.forEach { ConteudoNaBolha(mensagem, it, propria, cor, acoes) }
+        progresso?.let { androidx.compose.material3.LinearProgressIndicator(progress = { it }, modifier = Modifier.fillMaxWidth()) }
         Rodape(mensagem, propria, Modifier.align(Alignment.End))
     }
 }
 
 @Composable
-private fun ConteudoNaBolha(mensagem: Mensagem, conteudo: Conteudo, cor: Color, acoes: AcoesBolha) {
+private fun ConteudoNaBolha(mensagem: Mensagem, conteudo: Conteudo, propria: Boolean, cor: Color, acoes: AcoesBolha) {
     when (conteudo.tipo) {
         TipoConteudo.TEXTO -> separarBlocosDeCodigo(conteudo.conteudo).forEach { parte ->
             when (parte) {
@@ -192,8 +191,8 @@ private fun ConteudoNaBolha(mensagem: Mensagem, conteudo: Conteudo, cor: Color, 
                 .clip(RoundedCornerShape(8.dp))
                 .clickable { acoes.aoAbrirImagem(mensagem, conteudo) },
         )
-        // Áudio também abre como arquivo até o player da 4.5.
-        TipoConteudo.ARQUIVO, TipoConteudo.AUDIO, TipoConteudo.GRAVACAO_AUDIO -> LinhaArquivo(conteudo, cor, acoes)
+        TipoConteudo.AUDIO, TipoConteudo.GRAVACAO_AUDIO -> PlayerNaBolha(mensagem, conteudo, propria, cor, acoes)
+        TipoConteudo.ARQUIVO -> LinhaArquivo(conteudo, cor, acoes)
         TipoConteudo.FIGURINHA -> Marcador("🏷", stringResource(R.string.conteudo_figurinha), cor)
         TipoConteudo.ENQUETE -> Column {
             Text("📊 " + stringResource(R.string.votacao), color = cor, fontWeight = FontWeight.SemiBold)

@@ -57,6 +57,7 @@ import androidx.compose.material3.TextField
 import androidx.compose.material3.TextFieldDefaults
 import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
@@ -129,6 +130,7 @@ fun ChatRotaTela(
     val contexto = LocalContext.current
     val recursos = LocalResources.current
     val semApp = stringResource(R.string.nenhum_app_para_abrir)
+    val audioFalhou = stringResource(R.string.audio_falhou)
     ColetarEventos(viewModel.eventos.fluxo) { evento ->
         when (evento) {
             is EventoChat.Erro -> avisos.mostrarErro(evento.mensagem)
@@ -136,32 +138,38 @@ fun ChatRotaTela(
             is EventoChat.AbrirConversa -> aoAbrirConversa(evento.conversaId)
             is EventoChat.ArquivoGrande -> avisos.mostrarErro(recursos.getString(R.string.arquivo_grande, evento.nome))
             is EventoChat.AbrirArquivo -> if (!abrirComOutroApp(contexto, evento.arquivo, evento.mime)) avisos.mostrarErro(semApp)
+            EventoChat.AudioFalhou -> avisos.mostrarErro(audioFalhou)
         }
     }
-    ChatTela(
-        estado = estado,
-        lista = lista,
-        acoes = AcoesChat(
-            aoVoltar = aoVoltar,
-            aoMembros = { aoMembros(viewModel.conversaId) },
-            aoLigar = aoLigar,
-            aoEnviar = viewModel::enviar,
-            aoDigitar = viewModel::aoDigitar,
-            aoCarregarAnteriores = viewModel::carregarAnteriores,
-            aoVerMensagens = viewModel::marcarLidas,
-            bolha = AcoesBolha(
-                aoReenviar = viewModel::reenviar,
-                aoDescartar = viewModel::descartar,
-                aoMencao = viewModel::abrirDireta,
+    // O áudio vai como fluxo: só as bolhas de áudio leem (ver LocalAudio).
+    CompositionLocalProvider(LocalAudio provides viewModel.audio) {
+        ChatTela(
+            estado = estado,
+            lista = lista,
+            acoes = AcoesChat(
+                aoVoltar = aoVoltar,
+                aoMembros = { aoMembros(viewModel.conversaId) },
                 aoLigar = aoLigar,
-                aoAbrirArquivo = { viewModel.abrirArquivo(it.conteudo, it.nome.ifBlank { it.conteudo }, null) },
+                aoEnviar = viewModel::enviar,
+                aoDigitar = viewModel::aoDigitar,
+                aoCarregarAnteriores = viewModel::carregarAnteriores,
+                aoVerMensagens = viewModel::marcarLidas,
+                bolha = AcoesBolha(
+                    aoReenviar = viewModel::reenviar,
+                    aoDescartar = viewModel::descartar,
+                    aoMencao = viewModel::abrirDireta,
+                    aoLigar = aoLigar,
+                    aoAbrirArquivo = { viewModel.abrirArquivo(it.conteudo, it.nome.ifBlank { it.conteudo }, null) },
+                    aoAlternarAudio = viewModel::alternarAudio,
+                    aoBuscarAudio = viewModel::buscarAudio,
+                ),
+                aoIrAoFim = { escopo.launch { lista.animateScrollToItem(0) } },
+                aoAdicionarAnexos = viewModel::adicionarAnexos,
+                aoRemoverAnexo = viewModel::removerAnexo,
+                pastaCamera = viewModel::pastaCamera,
             ),
-            aoIrAoFim = { escopo.launch { lista.animateScrollToItem(0) } },
-            aoAdicionarAnexos = viewModel::adicionarAnexos,
-            aoRemoverAnexo = viewModel::removerAnexo,
-            pastaCamera = viewModel::pastaCamera,
-        ),
-    )
+        )
+    }
 }
 
 /** Abre o arquivo baixado com outro app, pelo `FileProvider` (permissão só de leitura e temporária). */

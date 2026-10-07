@@ -144,6 +144,25 @@ class MensagensTest {
         escopo.cancel()
     }
 
+    @Test
+    fun `primeiro play marca reproduzida no Room e no servidor uma vez so`() = runTest {
+        val escopo = escopoDoTeste()
+        val repo = MensagensRepositorio(api, banco.mensagemDao(), banco.conversaDao(), escopo)
+        coEvery { api.mensagens(42, 0, 80, 0) } returns listOf(msg(104))
+        coEvery { api.reproduzir(any()) } returns SucessoDto(true)
+        repo.carregarRecentes(42)
+
+        repo.marcarReproduzida(42, 104)
+        repo.marcarReproduzida(42, 104)
+
+        val mensagem = banco.mensagemDao().buscar(104)!!.mensagem
+        assertThat(mensagem.reproduzida).isTrue()
+        // Ouvir não é ler (o servidor também não marca).
+        assertThat(mensagem.visualizada).isFalse()
+        coVerify(exactly = 1) { api.reproduzir(MarcarStatusRequisicao(42, 104)) }
+        escopo.cancel()
+    }
+
     // --- Envio ---
 
     @Test

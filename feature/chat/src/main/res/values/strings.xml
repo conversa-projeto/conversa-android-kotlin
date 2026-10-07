@@ -78,4 +78,9 @@
     <string name="fechar">Fechar</string>
     <string name="nenhum_app_para_abrir">Nenhum app instalado abre este tipo de arquivo.</string>
     <string name="arquivo_grande">%1$s passa de 1 GB e não pode ser enviado.</string>
+
+    <!-- Áudio (ANX-10) -->
+    <string name="ouvir_audio">Ouvir</string>
+    <string name="pausar_audio">Pausar</string>
+    <string name="audio_falhou">Não foi possível tocar este áudio.</string>
 </resources>

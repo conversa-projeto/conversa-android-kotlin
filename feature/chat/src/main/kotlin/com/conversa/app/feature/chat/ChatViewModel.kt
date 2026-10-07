@@ -14,14 +14,17 @@ import com.conversa.app.core.data.conversas.ConversasRepositorio
 import com.conversa.app.core.data.mensagens.EnvioMensagens
 import com.conversa.app.core.data.mensagens.MensagensRepositorio
 import com.conversa.app.core.data.presenca.PresencaRepositorio
+import com.conversa.app.core.media.PlayerAudio
 import com.conversa.app.core.model.AtividadeConversa
 import com.conversa.app.core.model.Conversa
 import com.conversa.app.core.model.ItemChat
 import com.conversa.app.core.model.MembroConversa
 import com.conversa.app.core.model.Mensagem
+import com.conversa.app.core.model.PREFIXO_LOCAL
 import com.conversa.app.core.model.TipoConteudo
 import com.conversa.app.core.model.TipoConversa
 import com.conversa.app.core.model.atividadeDaConversa
+import com.conversa.app.core.model.local
 import com.conversa.app.core.model.montarItensChat
 import com.conversa.app.core.network.http.mensagemAmigavel
 import com.conversa.app.core.network.http.paraErroApi
@@ -79,7 +82,30 @@ sealed interface EventoChat {
 
     /** Anexo baixado: a tela abre com outro app (ANX-09). */
     data class AbrirArquivo(val arquivo: java.io.File, val mime: String?) : EventoChat
+
+    /** O player não conseguiu tocar o áudio (formato não suportado ou arquivo inválido). */
+    data object AudioFalhou : EventoChat
 }
+
+/**
+ * Áudio na conversa (ANX-10), lido só pelas bolhas de áudio: a posição muda várias
+ * vezes por segundo e não pode recompor a lista inteira.
+ */
+@Immutable
+data class AudioNaConversa(
+    /** Áudio carregado no player ([chaveDoAudio]), se for desta conversa. */
+    val chave: String? = null,
+    val tocando: Boolean = false,
+    val posicaoMs: Long = 0,
+    /** Áudio sendo baixado antes de tocar. */
+    val baixando: String? = null,
+    /** Duração de cada áudio que já tocou (a bolha mostra "--:--" até saber). */
+    val duracoes: Map<String, Long> = emptyMap(),
+)
+
+/** Identifica um áudio na tela: a mesma gravação pode estar em duas mensagens (encaminhada). */
+fun chaveDoAudio(mensagem: Mensagem, conteudo: com.conversa.app.core.model.Conteudo): String =
+    "${mensagem.conversaId}:${mensagem.id}:${conteudo.ordem}"
 
 /**
  * Conversa aberta (CON-09, MSG-01…14, ENV-01, ENV-15). O Room é a fonte; ao abrir,
@@ -96,6 +122,7 @@ class ChatViewModel @Inject constructor(
     private val envio: EnvioMensagens,
     private val arquivos: ArquivosLocais,
     private val fontes: FontesArquivo,
+    private val player: PlayerAudio,
     private val relogio: Clock,
 ) : ViewModel() {
     val conversaId: Long = checkNotNull(salvo["conversaId"])
@@ -236,6 +263,79 @@ class ChatViewModel @Inject constructor(
                 .onSuccess { eventos.enviar(EventoChat.AbrirArquivo(it, mime)) }
                 .onFailure { eventos.enviar(EventoChat.Erro(it.paraErroApi().mensagemAmigavel())) }
         }
+    }
+
+    // --- Áudio (ANX-10): um por vez, baixado para o cache antes de tocar ---
+
+    private val baixandoAudio = MutableStateFlow<String?>(null)
+    private val duracoes = MutableStateFlow<Map<String, Long>>(emptyMap())
+    private val prefixoAudio = "$conversaId:"
+
+    val audio: StateFlow<AudioNaConversa> = combine(player.estado, baixandoAudio, duracoes) { p, baixando, d ->
+        val daqui = p.chave?.startsWith(prefixoAudio) == true
+        AudioNaConversa(
+            chave = p.chave.takeIf { daqui },
+            tocando = daqui && p.tocando,
+            posicaoMs = if (daqui) p.posicaoMs else 0,
+            baixando = baixando,
+            duracoes = d,
+        )
+    }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), AudioNaConversa())
+
+    init {
+        // Guarda a duração de cada áudio que tocou (a bolha continua mostrando depois de trocar de áudio).
+        viewModelScope.launch {
+            player.estado.collect { p ->
+                val chave = p.chave ?: return@collect
+                val duracao = p.duracaoMs ?: return@collect
+                if (chave.startsWith(prefixoAudio) && duracoes.value[chave] != duracao) duracoes.value += chave to duracao
+            }
+        }
+        viewModelScope.launch {
+            player.falhas.collect { chave -> if (chave.startsWith(prefixoAudio)) eventos.enviar(EventoChat.AudioFalhou) }
+        }
+    }
+
+    /** Saiu da conversa: o áudio dela para (ANX-10). */
+    override fun onCleared() {
+        if (player.estado.value.chave?.startsWith(prefixoAudio) == true) player.parar()
+    }
+
+    /** Play/pause na bolha. Na primeira vez baixa o arquivo; áudio de outra pessoa vira "ouvido". */
+    fun alternarAudio(mensagem: Mensagem, conteudo: com.conversa.app.core.model.Conteudo) {
+        val chave = chaveDoAudio(mensagem, conteudo)
+        val atual = player.estado.value
+        if (atual.chave == chave) {
+            if (atual.tocando) player.pausar() else player.continuar()
+            return
+        }
+        if (baixandoAudio.value == chave) return
+        if (conteudo.local) {
+            // Ainda enviando: toca o próprio arquivo escolhido.
+            player.tocar(chave, conteudo.conteudo.removePrefix(PREFIXO_LOCAL))
+            return
+        }
+        viewModelScope.launch {
+            baixandoAudio.value = chave
+            val baixado = arquivos.baixar(conteudo.conteudo, conteudo.nome.ifBlank { "audio" })
+            // Outro áudio pode ter sido pedido enquanto este baixava: só toca o último.
+            if (baixandoAudio.value != chave) return@launch
+            baixandoAudio.value = null
+            baixado
+                .onSuccess { arquivo ->
+                    // URI `file:` com o caminho codificado (nome com espaço, `#`…).
+                    player.tocar(chave, arquivo.toURI().toString())
+                    if (mensagem.remetenteId != eu && !mensagem.reproduzida) mensagens.marcarReproduzida(conversaId, mensagem.id)
+                }
+                .onFailure { eventos.enviar(EventoChat.Erro(it.paraErroApi().mensagemAmigavel())) }
+        }
+    }
+
+    /** Arrastou a barra do áudio que está no player. */
+    fun buscarAudio(chave: String, fracao: Float) {
+        val atual = player.estado.value
+        val duracao = atual.duracaoMs ?: return
+        if (atual.chave == chave) player.buscar((duracao * fracao.coerceIn(0f, 1f)).toLong())
     }
 
     fun reenviar(idLocal: Long) {

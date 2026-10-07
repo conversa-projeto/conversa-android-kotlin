@@ -135,6 +135,10 @@ interface MensagemDao {
     @Query("UPDATE mensagem SET recebida = 1, visualizada = 1 WHERE id = :id")
     suspend fun marcarLidaPorMim(id: Long)
 
+    /** Eu ouvi o áudio de outra pessoa (otimista). Não marca como lida (o servidor também não). */
+    @Query("UPDATE mensagem SET reproduzida = 1 WHERE id = :id")
+    suspend fun marcarReproduzidaPorMim(id: Long)
+
     /** Mensagem otimista: saindo, saiu ou desistiu. */
     @Query("UPDATE mensagem SET enviando = :enviando, falhou = :falhou WHERE id = :id")
     suspend fun marcarEnvio(id: Long, enviando: Boolean, falhou: Boolean)

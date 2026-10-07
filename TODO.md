@@ -120,7 +120,7 @@
 - [x] Criar `:core:datastore`
 - [x] Criar `:core:data`
 - [x] Criar `:core:ui`
-- [ ] Criar `:core:media` — ⏭ adiado: será criado quando a etapa 4 começar (módulo vazio agora só atrasa o build)
+- [x] Criar `:core:media` — criado na 4.5 (ver etapa 4)
 - [ ] Criar `:core:webrtc` — ⏭ adiado: será criado quando a etapa 6 começar
 - [x] Criar `:core:testing`
 - [ ] Criar `:feature:auth`, `:feature:conversas`, `:feature:chat`, `:feature:chamada`, `:feature:atividades`, `:feature:pesquisa`, `:feature:config` — ⏭ `:feature:auth` criado; os demais têm uma linha no início da etapa onde são usados
@@ -423,7 +423,7 @@
 
 ## Etapa 4 — Anexos e mídia
 
-- [ ] Criar o módulo `:core:media` (adiado da 1.2)
+- [x] Criar o módulo `:core:media` (adiado da 1.2) — Media3 1.11.1 (`media3-exoplayer`); por enquanto só o player de áudio
 ### 4.1 Upload (FC-400, ANX-02)
 - [x] Calcular o SHA-256 em streaming (`DigestInputStream`, sem carregar o arquivo inteiro) — `calcularSha256` (blocos de 64 KB) em `core/data/anexos/AnexosRepositorio.kt` (+ teste)
 - [x] `PUT /anexo {identificador, tipo, nome, extensao (≤ 10), tamanho}` — nome ≤ 255, extensão minúscula ≤ 10; acima de 1 GiB nem começa (+ teste)
@@ -449,6 +449,7 @@
 - [x] Cache identificador → (url, expira_em) — vale até 1 min antes dos 600 s (+ teste)
 - [x] Coil 3 com o OkHttp compartilhado e chave de cache = identificador (não a URL) — modelo `AnexoRemoto(identificador)` + `FetcherAnexo` no `:app`: cache de memória (`Keyer`) e de disco pelo identificador; já no disco, nem pede URL ao servidor (no emulador: reabrir a conversa = 0 pedidos); o OkHttp do app já não manda o token para o MinIO ✔ 389e66d
 - [x] Imagem falhou (403/expirada) → renovar a URL e tentar uma vez — dentro do `FetcherAnexo` (a primeira versão, na tela, trocava o modelo do `AsyncImage` e o Coil não refazia o pedido). Testado com `URL_VENCIDA=1 node ferramentas/proxy-dev.mjs` (403 na primeira leitura de cada arquivo): as 3 imagens renovaram a URL e apareceram ✔ 389e66d
+- [x] 🆕 Download de anexo (abrir arquivo, áudio) com URL vencida → pedir outra e tentar uma vez — `ArquivosLocais.baixar` só esquecia a URL e falhava ("Falha ao baixar (403)") (+ teste)
 
 ### 4.4 Imagens e vídeos (FC-404, FC-408, ANX-04, ANX-05)
 - [x] Bolha de imagem (proporção preservada, hora sobre a imagem) — `BolhaImagem` (até 260×320 dp, hora e status por cima, barra de envio); imagem com texto vai na bolha padrão. Testado no emulador (galeria e câmera; a imagem enviada volta pelo servidor) ✔ 389e66d
@@ -459,11 +460,11 @@
 - [ ] Ações do visualizador: compartilhar, baixar
 
 ### 4.5 Áudio (FC-405, ANX-10)
-- [ ] `PlayerUnico` (Media3): só um áudio toca por vez
-- [ ] Bolha de áudio: play/pause, barra com seek, `mm:ss`; nome do arquivo (tipo 4) ou só o player (tipo 5)
-- [ ] Download sob demanda para o cache: arquivo `.part` → rename ao terminar
-- [ ] Áudio de outro não ouvido: botão verde; o primeiro play chama `POST /mensagem/reproduzir {conversa, mensagem}`
-- [ ] Parar o áudio ao sair da conversa ou ao começar uma chamada
+- [x] `PlayerUnico` (Media3): só um áudio toca por vez — `PlayerAudio`/`PlayerMedia3` (singleton, foco de áudio, pausa ao desconectar o fone, posição a cada 200 ms); a chave é conversa:mensagem:ordem. No emulador: tocar o segundo para o primeiro
+- [x] Bolha de áudio: play/pause, barra com seek, `mm:ss`; nome do arquivo (tipo 4) ou só o player (tipo 5) — `PlayerNaBolha` (barra fina própria: tocar ou arrastar; o `Slider` do M3 é grande demais para a bolha); o estado chega por `LocalAudio` (fluxo) para a posição não recompor a lista. No emulador: WAV de 7 s e 4 s do B, pausa, pular para 75% (00:05), fim volta ao início
+- [x] Download sob demanda para o cache: arquivo `.part` → rename ao terminar — `ArquivosLocais.baixar` (o mesmo do "Abrir"), só no primeiro play; agora com URL vencida → pede outra e tenta de novo (+ teste `ArquivosLocaisTest`; achado no emulador com `URL_VENCIDA=1`)
+- [x] Áudio de outro não ouvido: botão verde; o primeiro play chama `POST /mensagem/reproduzir {conversa, mensagem}` — verde = `waveform` do FMX (o FMX não tem cor de "não ouvido"); `MensagensRepositorio.marcarReproduzida` (Room otimista + uma chamada; não marca lida) (+ testes). No emulador: `mensagem_status.reproduzida` gravado só no áudio tocado
+- [ ] Parar o áudio ao sair da conversa ou ao começar uma chamada — 🔄 sair da conversa: `ChatViewModel.onCleared` para o áudio dela (+ teste; no emulador, 0 players ativos depois de voltar); a chamada (etapa 6) deve chamar `PlayerAudio.parar()`
 
 ### 4.6 Gravação de áudio (FC-406, ANX-11, ENV-16)
 - [ ] Transplantar o `AudioRecorderHelper` (pegar `Exception` em `start()`, #48)

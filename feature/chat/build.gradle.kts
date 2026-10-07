@@ -9,4 +9,6 @@ android {
 dependencies {
     // Seletores do sistema (galeria, documento, câmera) para os anexos.
     implementation(libs.androidx.activity.compose)
+    // Player de áudio único (4.5).
+    implementation(projects.core.media)
 }

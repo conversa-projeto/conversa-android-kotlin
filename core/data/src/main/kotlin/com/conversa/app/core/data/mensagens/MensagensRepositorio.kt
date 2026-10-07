@@ -103,9 +103,29 @@ class MensagensRepositorio @Inject constructor(
         }
     }
 
+    // --- Reproduzida (ANX-10) ---
+
+    private val jaReproduzidas = mutableSetOf<Long>()
+
+    /**
+     * Primeiro play de um áudio de outra pessoa: o botão deixa de ser verde na hora
+     * (Room) e `POST /mensagem/reproduzir` vai uma vez. Se falhar, pode pedir de novo.
+     */
+    suspend fun marcarReproduzida(conversaId: Long, mensagemId: Long) {
+        if (mensagemId <= 0) return
+        if (!synchronized(jaReproduzidas) { jaReproduzidas.add(mensagemId) }) return
+        mensagemDao.marcarReproduzidaPorMim(mensagemId)
+        chamarApi { api.reproduzir(MarcarStatusRequisicao(conversaId, mensagemId)) }
+            .onFailure {
+                synchronized(jaReproduzidas) { jaReproduzidas.remove(mensagemId) }
+                Timber.d("Falha ao marcar como reproduzida: %s", it.javaClass.simpleName)
+            }
+    }
+
     /** Fim da sessão. */
     fun limpar() {
         synchronized(jaPedidas) { jaPedidas.clear() }
+        synchronized(jaReproduzidas) { jaReproduzidas.clear() }
     }
 
     companion object {
