@@ -1,6 +1,7 @@
 package com.conversa.app.core.data.sessao
 
 import com.conversa.app.core.data.SessaoRepositorio
+import com.conversa.app.core.data.anexos.AnexosRepositorio
 import com.conversa.app.core.data.autenticacao.AutenticacaoRepositorio
 import com.conversa.app.core.data.contatos.ContatosRepositorio
 import com.conversa.app.core.data.conversas.ConversasRepositorio
@@ -111,6 +112,7 @@ class LimpezaSessao @Inject constructor(
     private val sincronizacao: SyncManager,
     private val mensagens: MensagensRepositorio,
     private val agendadorEnvio: AgendadorEnvio,
+    private val anexos: AnexosRepositorio,
     @EscopoAplicacao private val escopo: CoroutineScope,
 ) {
     private var iniciado = false
@@ -126,6 +128,7 @@ class LimpezaSessao @Inject constructor(
         presenca.limpar()
         sincronizacao.limpar()
         mensagens.limpar()
+        anexos.limpar()
         withContext(Dispatchers.IO) { banco.clearAllTables() }
     }
 }

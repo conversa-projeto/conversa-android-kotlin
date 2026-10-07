@@ -32,7 +32,7 @@
 - 2026-10-07 · [Etapa 3 — tela de chat, testada no emulador](2026-10-07-07-etapa-3-tela-de-chat.md) — `:feature:chat` (bolhas, Últimas, FABs, links, digitando, status, reenviar); app fechava por regex do ICU (corrigido + teste instrumentado); 164 testes
 
 ## Anexos e mídia (etapa 4)
-_(nada ainda)_
+- 2026-10-07 · [Etapa 4 — envio de anexos, URLs assinadas, token só na API e proxy de dev](2026-10-07-08-etapa-4-upload-e-proxy-dev.md) — `AnexosRepositorio` (SHA-256 em fluxo, dedup, URL vencida), `AutenticacaoInterceptor` só para `/api/`, `ferramentas/proxy-dev.mjs`; 171 testes
 
 ## Notificações e push (etapa 5)
 _(nada ainda)_

@@ -71,7 +71,7 @@ object RedeModulo {
             .writeTimeout(30, TimeUnit.SECONDS)
             .pingInterval(20, TimeUnit.SECONDS)
             .addInterceptor(EnderecoInterceptor(config))
-            .addInterceptor(AutenticacaoInterceptor(tokens, eventos))
+            .addInterceptor(AutenticacaoInterceptor(tokens, eventos, config))
             .addInterceptor(log)
             .build()
     }

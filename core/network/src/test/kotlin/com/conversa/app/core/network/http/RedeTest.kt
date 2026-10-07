@@ -28,6 +28,7 @@ class RedeTest {
     private var token: String? = "tok"
     private val eventos = EventosSessao()
     private lateinit var api: ConversaApi
+    private lateinit var cliente: OkHttpClient
 
     @Before
     fun preparar() {
@@ -36,10 +37,10 @@ class RedeTest {
         val provedor = object : ServerConfigProvider {
             override val atual = config
         }
-        val cliente = OkHttpClient.Builder()
+        cliente = OkHttpClient.Builder()
             .readTimeout(1, TimeUnit.SECONDS)
             .addInterceptor(EnderecoInterceptor(provedor))
-            .addInterceptor(AutenticacaoInterceptor({ token }, eventos))
+            .addInterceptor(AutenticacaoInterceptor({ token }, eventos, provedor))
             .build()
         api = Retrofit.Builder()
             .baseUrl(BASE_FICTICIA)
@@ -67,6 +68,25 @@ class RedeTest {
         assertThat(requisicao.url.encodedPath).isEqualTo("/api/contatos/online")
         assertThat(requisicao.headers["Authorization"]).isEqualTo("Bearer tok")
         assertThat(requisicao.headers[AutenticacaoInterceptor.CABECALHO_PUBLICA]).isNull()
+    }
+
+    @Test
+    fun `token so vai para a api do servidor, nunca para o storage nem para outro host`() {
+        servidor.enqueue(MockResponse.Builder().code(200).build())
+        servidor.enqueue(MockResponse.Builder().code(200).build())
+        // URL assinada do MinIO no mesmo host: com Authorization o MinIO recusa.
+        cliente.newCall(okhttp3.Request.Builder().url(servidor.url("/storage/chat/x?X-Amz-Signature=a")).build()).execute().close()
+        assertThat(servidor.takeRequest().headers["Authorization"]).isNull()
+        // Mesmo caminho /api/ mas outro host (porta diferente): também sem token.
+        val outro = MockWebServer()
+        outro.start()
+        outro.enqueue(MockResponse.Builder().code(200).build())
+        cliente.newCall(okhttp3.Request.Builder().url(outro.url("/api/x")).build()).execute().close()
+        assertThat(outro.takeRequest().headers["Authorization"]).isNull()
+        outro.close()
+        // A API do servidor configurado, direto: com token.
+        cliente.newCall(okhttp3.Request.Builder().url(servidor.url("/api/contatos/online")).build()).execute().close()
+        assertThat(servidor.takeRequest().headers["Authorization"]).isEqualTo("Bearer tok")
     }
 
     @Test

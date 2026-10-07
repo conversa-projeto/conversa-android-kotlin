@@ -173,6 +173,7 @@
 - [x] Prover um **único** `OkHttpClient` via Hilt (timeouts, `pingInterval(20s)`)
 - [x] `HttpLoggingInterceptor`: `BODY` só em `BuildConfig.DEBUG`, com `redactHeader("Authorization")` — nível `BASIC` no debug (`BODY` exporia conteúdo de mensagens), `NONE` no release
 - [x] `AuthInterceptor`: adiciona `Authorization: Bearer <token>` quando há sessão — `AutenticacaoInterceptor`; rotas públicas marcadas com cabeçalho e não disparam sessão expirada
+- [x] 🆕 O token só vai para a API do servidor configurado (`<base>/api/`): nunca para as URLs assinadas do MinIO (que recusam duas autenticações), imagens ou outros endereços — achado na etapa 4 (+ teste no `RedeTest`)
 - [x] Retrofit + converter kotlinx.serialization (`ignoreUnknownKeys = true`, `explicitNulls = false`, `coerceInputValues = true`)
 - [x] Ler o erro padrão do servidor: corpo `{error: string}` (§3)
 - [x] Mapear 401 → evento global `SessaoExpirada` — `EventosSessao.sessaoExpirada`
@@ -423,13 +424,13 @@
 
 - [ ] Criar o módulo `:core:media` (adiado da 1.2)
 ### 4.1 Upload (FC-400, ANX-02)
-- [ ] Calcular o SHA-256 em streaming (`DigestInputStream`, sem carregar o arquivo inteiro)
-- [ ] `PUT /anexo {identificador, tipo, nome, extensao (≤ 10), tamanho}`
-- [ ] Resposta "não existe" → URL assinada de upload (vale 300 s)
-- [ ] Resposta "já existe" → `id` (string) + URL de download → pular o upload
-- [ ] `PUT` do arquivo na URL assinada (streaming, `RequestBody` a partir do `ContentResolver`) com progresso
-- [ ] `POST /anexo/confirmar?identificador=` (na **query**)
-- [ ] URL vencida no meio → pedir de novo
+- [x] Calcular o SHA-256 em streaming (`DigestInputStream`, sem carregar o arquivo inteiro) — `calcularSha256` (blocos de 64 KB) em `core/data/anexos/AnexosRepositorio.kt` (+ teste)
+- [x] `PUT /anexo {identificador, tipo, nome, extensao (≤ 10), tamanho}` — nome ≤ 255, extensão minúscula ≤ 10; acima de 1 GiB nem começa (+ teste)
+- [x] Resposta "não existe" → URL assinada de upload (vale 300 s)
+- [x] Resposta "já existe" → `id` (string) + URL de download → pular o upload — não sobe nada e guarda a URL devolvida como a de leitura (+ teste)
+- [ ] `PUT` do arquivo na URL assinada (streaming, `RequestBody` a partir do `ContentResolver`) com progresso — 🔄 `RequestBody` em fluxo com progresso, sem token (+ teste com MockWebServer conferindo os bytes); a leitura pelo `ContentResolver` entra com o seletor (4.2)
+- [x] `POST /anexo/confirmar?identificador=` (na **query**) — (+ teste)
+- [x] URL vencida no meio → pedir de novo — 403 do MinIO → pede outra URL uma vez (+ teste)
 - [ ] Tudo dentro de um `UploadWorker` (sobrevive a fechar o app)
 - [ ] **Teste:** um vídeo de 200 MB sobe sem estourar a memória; o mesmo arquivo de novo não sobe
 
@@ -442,10 +443,10 @@
 - [ ] Indicador de upload (nome, barra, %) na bolha otimista
 
 ### 4.3 URLs assinadas (FC-403, ANX-14)
-- [ ] `GET /anexo?identificador=` → `{url}`
-- [ ] Cache identificador → (url, expira_em)
+- [x] `GET /anexo?identificador=` → `{url}` — `AnexosRepositorio.url`
+- [x] Cache identificador → (url, expira_em) — vale até 1 min antes dos 600 s (+ teste)
 - [ ] Coil 3 com o OkHttp compartilhado e chave de cache = identificador (não a URL)
-- [ ] Imagem falhou (403/expirada) → renovar a URL e tentar uma vez
+- [ ] Imagem falhou (403/expirada) → renovar a URL e tentar uma vez — 🔄 `esquecerUrl` pronto; o uso no Coil entra com a bolha de imagem
 
 ### 4.4 Imagens e vídeos (FC-404, FC-408, ANX-04, ANX-05)
 - [ ] Bolha de imagem (proporção preservada, hora sobre a imagem)

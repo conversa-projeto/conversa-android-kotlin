@@ -38,12 +38,20 @@ class EnderecoInterceptor(private val config: ServerConfigProvider) : Intercepto
 /**
  * Coloca `Authorization: Bearer <token>` e transforma 401 em "sessão expirada".
  * O 401 do próprio login (senha errada) não conta.
+ *
+ * O token só vai para a API do servidor configurado (`<base>/api/...`). URLs assinadas
+ * do MinIO (`/storage/`), imagens e qualquer outro endereço vão sem ele: o MinIO recusa
+ * pedido com duas formas de autenticação, e o token nunca deve sair do servidor.
  */
-class AutenticacaoInterceptor(private val tokens: TokenProvider, private val eventos: EventosSessao) : Interceptor {
+class AutenticacaoInterceptor(
+    private val tokens: TokenProvider,
+    private val eventos: EventosSessao,
+    private val config: ServerConfigProvider,
+) : Interceptor {
     override fun intercept(chain: Interceptor.Chain): Response {
         val requisicao = chain.request()
         val publica = requisicao.header(CABECALHO_PUBLICA) != null
-        val token = if (publica) null else tokens.token()
+        val token = if (publica || !ehDaApi(requisicao.url)) null else tokens.token()
         val enviada = requisicao.newBuilder()
             .removeHeader(CABECALHO_PUBLICA)
             .apply { if (token != null) header("Authorization", "Bearer $token") }
@@ -51,6 +59,11 @@ class AutenticacaoInterceptor(private val tokens: TokenProvider, private val eve
         val resposta = chain.proceed(enviada)
         if (resposta.code == 401 && token != null) eventos.notificarSessaoExpirada()
         return resposta
+    }
+
+    private fun ehDaApi(url: HttpUrl): Boolean {
+        val api = config.atual.value?.api ?: return false
+        return url.scheme == api.scheme && url.host == api.host && url.port == api.port && url.encodedPath.startsWith(api.encodedPath)
     }
 
     companion object {
