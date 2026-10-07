@@ -111,6 +111,8 @@ fun MensagemCompleta.paraModelo() = Mensagem(
     recebida = mensagem.recebida,
     visualizada = mensagem.visualizada,
     reproduzida = mensagem.reproduzida,
+    enviando = mensagem.enviando,
+    falhou = mensagem.falhou,
     conteudos = conteudos.sortedBy { it.ordem }.map {
         Conteudo(
             id = it.id,

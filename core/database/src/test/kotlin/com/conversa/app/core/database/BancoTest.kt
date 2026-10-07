@@ -73,8 +73,16 @@ class BancoTest {
         dao.salvarCompletas(listOf(mensagem(1).copy(conteudos = emptyList(), reacoes = emptyList())))
         assertThat(dao.buscar(1)!!.conteudos).isEmpty()
 
-        dao.atualizarStatus(2, recebida = true, visualizada = true, reproduzida = false, excluidaEmMs = agora.toEpochMilli())
+        dao.atualizarOculta(2, agora.toEpochMilli())
         assertThat(dao.buscar(2)!!.mensagem.excluidaEm).isEqualTo(agora)
+
+        // Status agregado só vale para as minhas mensagens (contrato §10.5)
+        val remetente = dao.buscar(2)!!.mensagem.remetenteId
+        dao.atualizarStatusDaMinha(2, eu = remetente + 1, recebida = true, visualizada = true, reproduzida = true)
+        assertThat(dao.buscar(2)!!.mensagem.visualizada).isFalse()
+        dao.atualizarStatusDaMinha(2, eu = remetente, recebida = true, visualizada = true, reproduzida = false)
+        assertThat(dao.buscar(2)!!.mensagem.visualizada).isTrue()
+        assertThat(dao.primeiraSalva(42)).isEqualTo(1)
 
         dao.remover(2)
         assertThat(dao.buscar(2)).isNull()

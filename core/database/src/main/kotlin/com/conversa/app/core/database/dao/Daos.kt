@@ -61,6 +61,10 @@ interface ConversaDao {
         ids.forEachIndexed { indice, id -> definirOrdemFixada(id, indice + 1) }
     }
 
+    /** Uma não lida a menos (li uma mensagem); nunca abaixo de zero. */
+    @Query("UPDATE conversa SET naoLidas = MAX(0, naoLidas - 1) WHERE id = :id")
+    suspend fun descontarNaoLida(id: Long)
+
     @Query("UPDATE conversa SET arquivadaEm = :arquivadaEmMs WHERE id = :id")
     suspend fun definirArquivada(id: Long, arquivadaEmMs: Long?)
 
@@ -112,11 +116,31 @@ interface MensagemDao {
         salvarReacoes(mensagens.flatMap { it.reacoes })
     }
 
+    /**
+     * Status vindo de `GET /mensagem/status`, que é sempre o agregado de **todos** os
+     * destinatários (contrato §10.5). Só vale para as minhas mensagens; nas dos outros,
+     * os campos guardam o **meu** status e não podem ser sobrescritos.
+     */
     @Query(
-        "UPDATE mensagem SET recebida = :recebida, visualizada = :visualizada, reproduzida = :reproduzida, " +
-            "excluidaEm = :excluidaEmMs WHERE id = :id",
+        "UPDATE mensagem SET recebida = :recebida, visualizada = :visualizada, reproduzida = :reproduzida " +
+            "WHERE id = :id AND remetenteId = :eu",
     )
-    suspend fun atualizarStatus(id: Long, recebida: Boolean, visualizada: Boolean, reproduzida: Boolean, excluidaEmMs: Long?)
+    suspend fun atualizarStatusDaMinha(id: Long, eu: Long, recebida: Boolean, visualizada: Boolean, reproduzida: Boolean)
+
+    /** Ocultar vale para qualquer mensagem. */
+    @Query("UPDATE mensagem SET excluidaEm = :excluidaEmMs WHERE id = :id")
+    suspend fun atualizarOculta(id: Long, excluidaEmMs: Long?)
+
+    /** Eu li a mensagem de outra pessoa (otimista, antes da resposta do servidor). */
+    @Query("UPDATE mensagem SET recebida = 1, visualizada = 1 WHERE id = :id")
+    suspend fun marcarLidaPorMim(id: Long)
+
+    /** Mensagem otimista: saindo, saiu ou desistiu. */
+    @Query("UPDATE mensagem SET enviando = :enviando, falhou = :falhou WHERE id = :id")
+    suspend fun marcarEnvio(id: Long, enviando: Boolean, falhou: Boolean)
+
+    @Query("SELECT MIN(id) FROM mensagem WHERE conversaId = :conversaId AND id > 0")
+    suspend fun primeiraSalva(conversaId: Long): Long?
 
     @Query("DELETE FROM mensagem WHERE id = :id")
     suspend fun remover(id: Long)
@@ -177,6 +201,12 @@ interface EnvioPendenteDao {
 
     @Insert
     suspend fun inserir(envio: EnvioPendenteEntidade): Long
+
+    @Query("SELECT * FROM envio_pendente WHERE mensagemIdLocal = :mensagemIdLocal")
+    suspend fun buscar(mensagemIdLocal: Long): EnvioPendenteEntidade?
+
+    @Query("UPDATE envio_pendente SET tentativas = 0 WHERE mensagemIdLocal = :mensagemIdLocal")
+    suspend fun zerarTentativas(mensagemIdLocal: Long)
 
     @Query("DELETE FROM envio_pendente WHERE mensagemIdLocal = :mensagemIdLocal")
     suspend fun remover(mensagemIdLocal: Long)

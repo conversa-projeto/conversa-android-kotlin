@@ -102,3 +102,19 @@ data class IceDto(val iceServers: List<ServidorIceDto> = emptyList(), val iceTra
 
 @Serializable
 data class ServidorIceDto(val urls: JsonElement, val username: String? = null, val credential: String? = null)
+
+/**
+ * Conteúdo tipo 6 de mensagem: o resumo da chamada, em JSON dentro de `conteudo`
+ * (contrato §9.8). As datas vêm sem fuso e sem milissegundos (UTC); o serializer
+ * flexível de [Instant] aceita.
+ */
+@Serializable
+data class ChamadaConteudoDto(
+    @SerialName("chamada_id") val chamadaId: Long = 0,
+    val tipo: Int = 1,
+    val status: Int = 0,
+    val iniciada: Instant? = null,
+    val finalizada: Instant? = null,
+    val duracao: Long? = null,
+    val participantes: List<ParticipanteHistoricoDto> = emptyList(),
+)

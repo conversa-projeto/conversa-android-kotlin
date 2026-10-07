@@ -153,4 +153,25 @@ class DesserializacaoTest {
                 """{"conversa_id":42,"conteudos":[{"ordem":1,"tipo":1,"conteudo":"oi"}],"mensagem_referencia":{"tipo":1,"origem_mensagem_id":99}}""",
             )
     }
+
+    @Test
+    fun `resumo da chamada no conteudo tipo 6, com datas sem fuso`() {
+        val mensagens = ConversaJson.decodeFromString<List<MensagemDto>>(Fixtures.ler("mensagens.json"))
+        val conteudo = mensagens.flatMap { it.conteudos }.first { it.tipo == 6 }.conteudo!!
+        val chamada = lerChamadaDaMensagem(conteudo)!!
+        assertThat(chamada.chamadaId).isEqualTo(10)
+        assertThat(chamada.tipo).isEqualTo(com.conversa.app.core.model.TipoChamada.AUDIO)
+        assertThat(chamada.encerrada).isTrue()
+        assertThat(chamada.duracaoSegundos).isEqualTo(125)
+
+        val grupo = lerChamadaDaMensagem(
+            """{"chamada_id":11,"tipo":2,"status":5,"iniciada":null,"finalizada":null,"duracao":null,
+               "participantes":[{"usuario_id":7,"nome":"Ana","status":4,"duracao":60},{"usuario_id":8,"nome":"Bruno","status":1,"duracao":null},
+               {"usuario_id":9,"nome":"Caio","status":2,"duracao":null}]}""",
+        )!!
+        assertThat(grupo.emGrupo).isTrue()
+        assertThat(grupo.falhou).isTrue()
+        assertThat(grupo.participantes.map { it.duracaoSegundos }).containsExactly(60L, null, null).inOrder()
+        assertThat(lerChamadaDaMensagem("não é json")).isNull()
+    }
 }

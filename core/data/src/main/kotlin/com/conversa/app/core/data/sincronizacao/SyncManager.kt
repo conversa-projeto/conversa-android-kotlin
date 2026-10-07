@@ -1,5 +1,6 @@
 package com.conversa.app.core.data.sincronizacao
 
+import com.conversa.app.core.data.SessaoRepositorio
 import com.conversa.app.core.data.paraEntidade
 import com.conversa.app.core.data.presenca.PresencaRepositorio
 import com.conversa.app.core.database.dao.ConversaDao
@@ -62,6 +63,7 @@ class SyncManager @Inject constructor(
     private val mensagemDao: MensagemDao,
     private val syncEstadoDao: SyncEstadoDao,
     private val presenca: PresencaRepositorio,
+    private val sessao: SessaoRepositorio,
     @EscopoAplicacao private val escopo: CoroutineScope,
 ) {
     private val trava = Mutex()
@@ -181,8 +183,11 @@ class SyncManager @Inject constructor(
         if (evento.mensagens.isEmpty()) return
         chamarApi { api.statusMensagens(evento.conversaId, evento.mensagens.joinToString(",")) }
             .onSuccess { lista ->
+                val eu = sessao.sessao.value?.usuarioId ?: return@onSuccess
                 lista.forEach {
-                    mensagemDao.atualizarStatus(it.mensagemId, it.recebida, it.visualizada, it.reproduzida, it.excluidaEm?.toEpochMilli())
+                    // O status desta rota é o agregado de todos: só vale nas minhas mensagens (contrato §10.5).
+                    mensagemDao.atualizarStatusDaMinha(it.mensagemId, eu, it.recebida, it.visualizada, it.reproduzida)
+                    mensagemDao.atualizarOculta(it.mensagemId, it.excluidaEm?.toEpochMilli())
                 }
             }
         sincronizarConversas()

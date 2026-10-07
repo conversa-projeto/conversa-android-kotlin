@@ -1,15 +1,18 @@
 package com.conversa.app.core.data.sincronizacao
 
+import com.conversa.app.core.data.SessaoRepositorio
 import com.conversa.app.core.data.presenca.PresencaRepositorio
 import com.conversa.app.core.database.dao.ConversaDao
 import com.conversa.app.core.database.dao.MensagemDao
 import com.conversa.app.core.database.dao.SyncEstadoDao
 import com.conversa.app.core.database.entidades.SyncEstadoEntidade
+import com.conversa.app.core.model.Sessao
 import com.conversa.app.core.network.api.ConversaApi
 import com.conversa.app.core.network.dto.ChamadaPendenteDto
 import com.conversa.app.core.network.dto.ConversaDto
 import com.conversa.app.core.network.dto.NovaMensagemDto
 import com.conversa.app.core.network.dto.QuantidadeDto
+import com.conversa.app.core.network.dto.StatusMensagemDto
 import com.conversa.app.core.network.realtime.EstadoConexao
 import com.conversa.app.core.network.realtime.EventoSocket
 import com.conversa.app.core.network.realtime.RealtimeClient
@@ -20,6 +23,7 @@ import io.mockk.coVerify
 import io.mockk.every
 import io.mockk.mockk
 import java.io.IOException
+import java.time.Instant
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.first
@@ -39,6 +43,7 @@ class SyncManagerTest {
     private val mensagemDao = mockk<MensagemDao>(relaxed = true)
     private val syncEstadoDao = mockk<SyncEstadoDao>(relaxed = true)
     private val presenca = mockk<PresencaRepositorio>(relaxed = true)
+    private val sessao = mockk<SessaoRepositorio> { every { sessao } returns MutableStateFlow(Sessao("t", 7, "Ana")) }
 
     private fun prepararApi() {
         coEvery { api.mensagensNovas(any()) } returns listOf(
@@ -58,7 +63,7 @@ class SyncManagerTest {
     @Test
     fun `ressincronizar busca tudo e avanca o cursor`() = runTest {
         prepararApi()
-        val sync = SyncManager(api, tempoReal, conversaDao, mensagemDao, syncEstadoDao, presenca, escopoDoTeste())
+        val sync = SyncManager(api, tempoReal, conversaDao, mensagemDao, syncEstadoDao, presenca, sessao, escopoDoTeste())
 
         sync.ressincronizar()
 
@@ -78,7 +83,7 @@ class SyncManagerTest {
     fun `falha de rede numa parte nao derruba as outras`() = runTest {
         prepararApi()
         coEvery { api.mensagensNovas(any()) } throws IOException("sem rede")
-        val sync = SyncManager(api, tempoReal, conversaDao, mensagemDao, syncEstadoDao, presenca, escopoDoTeste())
+        val sync = SyncManager(api, tempoReal, conversaDao, mensagemDao, syncEstadoDao, presenca, sessao, escopoDoTeste())
 
         sync.ressincronizar()
 
@@ -89,7 +94,7 @@ class SyncManagerTest {
     @Test
     fun `conectar dispara a sincronizacao e eventos atualizam o contador`() = runTest {
         prepararApi()
-        val sync = SyncManager(api, tempoReal, conversaDao, mensagemDao, syncEstadoDao, presenca, escopoDoTeste())
+        val sync = SyncManager(api, tempoReal, conversaDao, mensagemDao, syncEstadoDao, presenca, sessao, escopoDoTeste())
         sync.iniciar()
         advanceUntilIdle()
 
@@ -107,7 +112,7 @@ class SyncManagerTest {
     @Test
     fun `varias mensagens novas seguidas viram uma sincronizacao so`() = runTest {
         prepararApi()
-        val sync = SyncManager(api, tempoReal, conversaDao, mensagemDao, syncEstadoDao, presenca, escopoDoTeste())
+        val sync = SyncManager(api, tempoReal, conversaDao, mensagemDao, syncEstadoDao, presenca, sessao, escopoDoTeste())
         sync.iniciar()
         advanceUntilIdle()
 
@@ -115,5 +120,31 @@ class SyncManagerTest {
         advanceUntilIdle()
 
         coVerify(exactly = 1) { api.mensagensNovas(any()) }
+    }
+
+    @Test
+    fun `WS 3 atualiza o status so nas minhas mensagens e o oculto em todas`() = runTest {
+        prepararApi()
+        coEvery { api.statusMensagens(42, "101,102") } returns listOf(
+            StatusMensagemDto(42, 101, recebida = true, visualizada = true, reproduzida = false, excluidaEm = null),
+            StatusMensagemDto(
+                42,
+                102,
+                recebida = true,
+                visualizada = false,
+                reproduzida = false,
+                excluidaEm = Instant.parse("2026-10-06T12:00:00Z"),
+            ),
+        )
+        val sync = SyncManager(api, tempoReal, conversaDao, mensagemDao, syncEstadoDao, presenca, sessao, escopoDoTeste())
+        sync.iniciar()
+        advanceUntilIdle()
+
+        eventos.emit(EventoSocket.StatusMensagens(42, listOf(101, 102)))
+        advanceUntilIdle()
+
+        coVerify { mensagemDao.atualizarStatusDaMinha(101, 7, true, true, false) }
+        coVerify { mensagemDao.atualizarOculta(102, Instant.parse("2026-10-06T12:00:00Z").toEpochMilli()) }
+        coVerify(exactly = 0) { mensagemDao.atualizarStatusDaMinha(any(), neq(7L), any(), any(), any()) }
     }
 }

@@ -4,6 +4,9 @@ import com.conversa.app.core.data.SessaoRepositorio
 import com.conversa.app.core.data.autenticacao.AutenticacaoRepositorio
 import com.conversa.app.core.data.contatos.ContatosRepositorio
 import com.conversa.app.core.data.conversas.ConversasRepositorio
+import com.conversa.app.core.data.mensagens.AgendadorEnvio
+import com.conversa.app.core.data.mensagens.EnvioMensagens
+import com.conversa.app.core.data.mensagens.MensagensRepositorio
 import com.conversa.app.core.data.presenca.PresencaRepositorio
 import com.conversa.app.core.data.sincronizacao.SyncManager
 import com.conversa.app.core.database.ConversaBanco
@@ -41,6 +44,7 @@ class IniciadorSessao @Inject constructor(
     private val conversas: ConversasRepositorio,
     private val contatos: ContatosRepositorio,
     private val autenticacao: AutenticacaoRepositorio,
+    private val envio: EnvioMensagens,
     @EscopoAplicacao private val escopo: CoroutineScope,
 ) {
     private val _falha = MutableStateFlow<ErroApi?>(null)
@@ -75,6 +79,8 @@ class IniciadorSessao @Inject constructor(
                 }
                 _falha.value = null
                 _carregada.value = true
+                // Mensagens que ficaram na fila (app fechado no meio do envio).
+                envio.retomar()
             }
         }
     }
@@ -103,6 +109,8 @@ class LimpezaSessao @Inject constructor(
     private val banco: ConversaBanco,
     private val presenca: PresencaRepositorio,
     private val sincronizacao: SyncManager,
+    private val mensagens: MensagensRepositorio,
+    private val agendadorEnvio: AgendadorEnvio,
     @EscopoAplicacao private val escopo: CoroutineScope,
 ) {
     private var iniciado = false
@@ -114,8 +122,10 @@ class LimpezaSessao @Inject constructor(
     }
 
     suspend fun limpar() {
+        agendadorEnvio.cancelar()
         presenca.limpar()
         sincronizacao.limpar()
+        mensagens.limpar()
         withContext(Dispatchers.IO) { banco.clearAllTables() }
     }
 }

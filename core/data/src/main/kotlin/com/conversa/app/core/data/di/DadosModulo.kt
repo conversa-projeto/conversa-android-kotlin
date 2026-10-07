@@ -4,6 +4,8 @@ import com.conversa.app.core.data.ServidorRepositorio
 import com.conversa.app.core.data.SessaoRepositorio
 import com.conversa.app.core.data.autenticacao.InfoDispositivo
 import com.conversa.app.core.data.autenticacao.InfoDispositivoAndroid
+import com.conversa.app.core.data.mensagens.AgendadorEnvio
+import com.conversa.app.core.data.mensagens.AgendadorEnvioWorkManager
 import com.conversa.app.core.network.auth.TokenProvider
 import com.conversa.app.core.network.config.ServerConfigProvider
 import dagger.Binds
@@ -21,6 +23,9 @@ abstract class DadosModulo {
 
     @Binds
     abstract fun token(repositorio: SessaoRepositorio): TokenProvider
+
+    @Binds
+    abstract fun agendadorEnvio(agendador: AgendadorEnvioWorkManager): AgendadorEnvio
 
     @Binds
     abstract fun infoDispositivo(info: InfoDispositivoAndroid): InfoDispositivo

@@ -103,6 +103,10 @@ data class Mensagem(
     val reproduzida: Boolean,
     val conteudos: List<Conteudo>,
     val reacoes: List<Reacao> = emptyList(),
+    /** Otimista, ainda saindo (só no aparelho). */
+    val enviando: Boolean = false,
+    /** O envio desistiu (erro definitivo): mostra "Reenviar"/"Apagar". */
+    val falhou: Boolean = false,
 ) {
     /** "Mensagem oculta" (antigo excluir): o conteúdo continua vindo, mas não é exibido. */
     val oculta: Boolean get() = excluidaEm != null

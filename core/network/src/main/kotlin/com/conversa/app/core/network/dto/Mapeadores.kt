@@ -2,6 +2,7 @@ package com.conversa.app.core.network.dto
 
 import com.conversa.app.core.model.Atividade
 import com.conversa.app.core.model.Chamada
+import com.conversa.app.core.model.ChamadaNaMensagem
 import com.conversa.app.core.model.ChamadaPendente
 import com.conversa.app.core.model.Contato
 import com.conversa.app.core.model.Conteudo
@@ -12,6 +13,7 @@ import com.conversa.app.core.model.Mensagem
 import com.conversa.app.core.model.MensagemResumida
 import com.conversa.app.core.model.OpcaoEnquete
 import com.conversa.app.core.model.ParticipanteChamada
+import com.conversa.app.core.model.ParticipanteNaMensagem
 import com.conversa.app.core.model.Reacao
 import com.conversa.app.core.model.ReferenciaMensagem
 import com.conversa.app.core.model.ServidorIce
@@ -26,6 +28,7 @@ import com.conversa.app.core.model.TipoConversa
 import com.conversa.app.core.model.TipoReferencia
 import com.conversa.app.core.model.UsuarioReacao
 import com.conversa.app.core.model.Votante
+import com.conversa.app.core.network.json.ConversaJson
 import kotlinx.serialization.json.JsonArray
 import kotlinx.serialization.json.JsonPrimitive
 import kotlinx.serialization.json.contentOrNull
@@ -166,3 +169,15 @@ fun EnqueteDto.paraModelo() = Enquete(
     totalVotantes = totalVotantes,
     meusVotos = meusVotos,
 )
+
+/** Lê o JSON do conteúdo tipo 6 (bolha de chamada, MSG-13). JSON inválido → `null` (a bolha mostra o padrão). */
+fun lerChamadaDaMensagem(conteudo: String): ChamadaNaMensagem? = runCatching {
+    val dto = ConversaJson.decodeFromString(ChamadaConteudoDto.serializer(), conteudo)
+    ChamadaNaMensagem(
+        chamadaId = dto.chamadaId,
+        tipo = TipoChamada.de(dto.tipo),
+        status = dto.status,
+        duracaoSegundos = dto.duracao,
+        participantes = dto.participantes.map { ParticipanteNaMensagem(it.usuarioId, it.nome, it.status, it.duracao) },
+    )
+}.getOrNull()

@@ -4,6 +4,7 @@ import com.conversa.app.core.data.SessaoRepositorio
 import com.conversa.app.core.data.autenticacao.AutenticacaoRepositorio
 import com.conversa.app.core.data.contatos.ContatosRepositorio
 import com.conversa.app.core.data.conversas.ConversasRepositorio
+import com.conversa.app.core.data.mensagens.EnvioMensagens
 import com.conversa.app.core.model.Sessao
 import com.conversa.app.core.network.http.ErroApi
 import com.conversa.app.core.testing.escopoDoTeste
@@ -25,6 +26,7 @@ class IniciadorSessaoTest {
     private val sessao = mockk<SessaoRepositorio> { every { sessao } returns sessaoAtual }
     private val conversas = mockk<ConversasRepositorio>()
     private val contatos = mockk<ContatosRepositorio>()
+    private val envio = mockk<EnvioMensagens>(relaxed = true)
     private val autenticacao = mockk<AutenticacaoRepositorio> { coEvery { registrarDispositivo() } returns Result.success(Unit) }
 
     @Test
@@ -36,7 +38,7 @@ class IniciadorSessaoTest {
         }
         coEvery { contatos.atualizar() } returns Result.success(Unit)
         val escopo = escopoDoTeste()
-        val iniciador = IniciadorSessao(sessao, conversas, contatos, autenticacao, escopo)
+        val iniciador = IniciadorSessao(sessao, conversas, contatos, autenticacao, envio, escopo)
         iniciador.iniciar()
 
         sessaoAtual.value = Sessao(token = "t", usuarioId = 7, nome = "Ana")
@@ -65,7 +67,7 @@ class IniciadorSessaoTest {
         coEvery { conversas.atualizar() } returns Result.failure(ErroApi.SessaoExpirada("Token inválido"))
         coEvery { contatos.atualizar() } returns Result.success(Unit)
         val escopo = escopoDoTeste()
-        val iniciador = IniciadorSessao(sessao, conversas, contatos, autenticacao, escopo)
+        val iniciador = IniciadorSessao(sessao, conversas, contatos, autenticacao, envio, escopo)
         iniciador.iniciar()
 
         sessaoAtual.value = Sessao(token = "t", usuarioId = 7, nome = "Ana")
@@ -81,7 +83,7 @@ class IniciadorSessaoTest {
     @Test
     fun `sem sessao nao carrega nada`() = runTest {
         val escopo = escopoDoTeste()
-        IniciadorSessao(sessao, conversas, contatos, autenticacao, escopo).iniciar()
+        IniciadorSessao(sessao, conversas, contatos, autenticacao, envio, escopo).iniciar()
         runCurrent()
         coVerify(exactly = 0) { conversas.atualizar() }
         escopo.cancel()

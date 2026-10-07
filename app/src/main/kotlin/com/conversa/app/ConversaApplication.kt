@@ -2,6 +2,8 @@ package com.conversa.app
 
 import android.app.Application
 import androidx.core.app.NotificationManagerCompat
+import androidx.hilt.work.HiltWorkerFactory
+import androidx.work.Configuration
 import coil3.ImageLoader
 import coil3.PlatformContext
 import coil3.SingletonImageLoader
@@ -27,7 +29,10 @@ import timber.log.Timber
 @HiltAndroidApp
 class ConversaApplication :
     Application(),
-    SingletonImageLoader.Factory {
+    SingletonImageLoader.Factory,
+    Configuration.Provider {
+    @Inject lateinit var fabricaWorkers: HiltWorkerFactory
+
     @Inject lateinit var primeiroPlano: MonitorPrimeiroPlano
 
     @Inject lateinit var conexaoTempoReal: ConexaoTempoReal
@@ -76,6 +81,10 @@ class ConversaApplication :
             }
         }
     }
+
+    /** WorkManager com injeção do Hilt (o envio de mensagens usa o EnvioWorker). */
+    override val workManagerConfiguration: Configuration
+        get() = Configuration.Builder().setWorkerFactory(fabricaWorkers).build()
 
     /** Coil usa o mesmo OkHttp do app (mesmas regras de TLS e de log). */
     override fun newImageLoader(context: PlatformContext): ImageLoader = ImageLoader.Builder(context)
