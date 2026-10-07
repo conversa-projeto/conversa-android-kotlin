@@ -99,6 +99,8 @@
 
 ## Etapa 1 — Fundação do app novo
 
+> Executada em 2026-10-07 na branch `reescrita` (commit `2127356`). Detalhe em `docs/historico/2026-10-07-02-etapa-1-fundacao.md`. Itens com ⛔ dependem de aparelho, do servidor rodando ou do push.
+
 ### 1.1 Projeto (FC-100)
 - [x] Criar a branch `reescrita` a partir de `novo`
 - [x] Renomear o `app/` atual para `app-legado/` e tirá-lo do `settings.gradle.kts`

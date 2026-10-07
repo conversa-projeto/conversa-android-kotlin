@@ -4,7 +4,7 @@
 - **Tipo:** código / build / configuração
 - **Itens:** `TODO.md` 1.1–1.13 (FC-100…FC-113)
 - **Branch:** `reescrita` (criada a partir de `novo`)
-- **Commits:** ver `git log reescrita` (primeiro commit da etapa 1)
+- **Commits:** `2127356`
 
 ## Contexto
 Começo da nova base (ADR 0001). O objetivo da etapa é a fundação: projeto, módulos, rede, banco, sessão, tempo real e sincronização. Telas de verdade começam na etapa 2.
