@@ -4,7 +4,7 @@
 - **Tipo:** código / testes / segurança / ferramenta / documentação
 - **Itens:** `TODO.md` 4.1, 4.3 (dados) e 1.8 (🆕); ANX-02, ANX-14
 - **Branch:** `reescrita`
-- **Commits:** _(preencher)_
+- **Commits:** `8c023bf`
 
 ## Contexto
 Primeiro bloco da etapa 4: o caminho dos arquivos até o servidor e de volta, antes das telas (bolhas de imagem/arquivo/áudio e seletor).
