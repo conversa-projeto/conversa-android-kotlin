@@ -10,6 +10,7 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.sizeIn
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.rememberScrollState
@@ -34,6 +35,7 @@ import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.platform.LocalWindowInfo
@@ -86,6 +88,11 @@ class AcoesBolha(
     val aoDescartar: (Long) -> Unit = {},
     val aoMencao: (Long) -> Unit = {},
     val aoLigar: (TipoChamada) -> Unit = {},
+    /** URL assinada de um anexo (cache por identificador). */
+    val urlDoAnexo: suspend (String) -> String? = { null },
+    val esquecerUrl: (String) -> Unit = {},
+    val aoAbrirArquivo: (Conteudo) -> Unit = {},
+    val aoAbrirImagem: (Mensagem, Conteudo) -> Unit = { _, _ -> },
 )
 
 /**
@@ -93,7 +100,7 @@ class AcoesBolha(
  * Minhas à direita (cor `bolhaPropria`), dos outros à esquerda (`bolhaOutro`), cores do FMX.
  */
 @Composable
-fun LinhaMensagem(mensagem: Mensagem, propria: Boolean, mostrarRemetente: Boolean, acoes: AcoesBolha) {
+fun LinhaMensagem(mensagem: Mensagem, propria: Boolean, mostrarRemetente: Boolean, acoes: AcoesBolha, progresso: Float? = null) {
     // Bolha ocupa no máximo 80% da largura da janela.
     val larguraMax = with(LocalDensity.current) { (LocalWindowInfo.current.containerSize.width * 0.8f).toDp() }
     Column(
@@ -115,7 +122,8 @@ fun LinhaMensagem(mensagem: Mensagem, propria: Boolean, mostrarRemetente: Boolea
                 TipoExibicao.OCULTA -> BolhaOculta(mensagem, propria)
                 TipoExibicao.TEXTO_CURTO -> Fundo(propria) { TextoCurto(mensagem, propria, acoes) }
                 TipoExibicao.CODIGO -> Fundo(propria) { CorpoPadrao(mensagem, propria, acoes) }
-                else -> Fundo(propria) { CorpoPadrao(mensagem, propria, acoes) }
+                TipoExibicao.IMAGEM -> BolhaImagem(mensagem, propria, progresso, acoes)
+                else -> Fundo(propria) { CorpoPadrao(mensagem, propria, acoes, progresso) }
             }
         }
         if (mensagem.falhou) {
@@ -155,19 +163,24 @@ private fun TextoCurto(mensagem: Mensagem, propria: Boolean, acoes: AcoesBolha) 
 
 /** Bolha padrão: citação (se houver), cada conteúdo e o rodapé embaixo à direita. */
 @Composable
-private fun CorpoPadrao(mensagem: Mensagem, propria: Boolean, acoes: AcoesBolha) {
+private fun CorpoPadrao(mensagem: Mensagem, propria: Boolean, acoes: AcoesBolha, progresso: Float? = null) {
     val cor = corTexto(propria)()
     Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
         mensagem.referencia?.let { referencia ->
             referencia.mensagem?.let { citada -> Citacao(referencia.tipo, citada.remetente, resumoCitacao(citada)) }
         }
-        mensagem.conteudos.forEach { ConteudoNaBolha(it, cor, acoes) }
+        mensagem.conteudos.forEach { ConteudoNaBolha(mensagem, it, cor, acoes) }
+        if (progresso !=
+            null
+        ) {
+            androidx.compose.material3.LinearProgressIndicator(progress = { progresso }, modifier = Modifier.fillMaxWidth())
+        }
         Rodape(mensagem, propria, Modifier.align(Alignment.End))
     }
 }
 
 @Composable
-private fun ConteudoNaBolha(conteudo: Conteudo, cor: Color, acoes: AcoesBolha) {
+private fun ConteudoNaBolha(mensagem: Mensagem, conteudo: Conteudo, cor: Color, acoes: AcoesBolha) {
     when (conteudo.tipo) {
         TipoConteudo.TEXTO -> separarBlocosDeCodigo(conteudo.conteudo).forEach { parte ->
             when (parte) {
@@ -175,9 +188,16 @@ private fun ConteudoNaBolha(conteudo: Conteudo, cor: Color, acoes: AcoesBolha) {
                 is SegmentoCodigo.Codigo -> BlocoCodigo(parte)
             }
         }
-        TipoConteudo.IMAGEM -> Marcador("🖼", stringResource(R.string.conteudo_imagem), cor)
-        TipoConteudo.ARQUIVO -> Marcador("📎", conteudo.nome.ifBlank { stringResource(R.string.conteudo_arquivo) }, cor)
-        TipoConteudo.AUDIO, TipoConteudo.GRAVACAO_AUDIO -> Marcador("🎤", stringResource(R.string.conteudo_audio), cor)
+        TipoConteudo.IMAGEM -> ImagemAnexo(
+            conteudo,
+            acoes,
+            Modifier
+                .sizeIn(minWidth = 120.dp, minHeight = 90.dp, maxWidth = 240.dp, maxHeight = 280.dp)
+                .clip(RoundedCornerShape(8.dp))
+                .clickable { acoes.aoAbrirImagem(mensagem, conteudo) },
+        )
+        // Áudio também abre como arquivo até o player da 4.5.
+        TipoConteudo.ARQUIVO, TipoConteudo.AUDIO, TipoConteudo.GRAVACAO_AUDIO -> LinhaArquivo(conteudo, cor, acoes)
         TipoConteudo.FIGURINHA -> Marcador("🏷", stringResource(R.string.conteudo_figurinha), cor)
         TipoConteudo.ENQUETE -> Column {
             Text("📊 " + stringResource(R.string.votacao), color = cor, fontWeight = FontWeight.SemiBold)

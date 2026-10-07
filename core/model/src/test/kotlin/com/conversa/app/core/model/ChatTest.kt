@@ -211,4 +211,22 @@ class ChatTest {
         assertThat(formatarDuracao(3_725)).isEqualTo("62:05")
         assertThat(formatarDuracao(-3)).isEqualTo("00:00")
     }
+
+    // --- anexos ---
+
+    @Test
+    fun `tipo pelo mime, video e tamanho`() {
+        assertThat(tipoPorMime("image/jpeg")).isEqualTo(TipoConteudo.IMAGEM)
+        assertThat(tipoPorMime("audio/ogg")).isEqualTo(TipoConteudo.AUDIO)
+        assertThat(tipoPorMime("video/mp4")).isEqualTo(TipoConteudo.ARQUIVO)
+        assertThat(tipoPorMime("application/pdf")).isEqualTo(TipoConteudo.ARQUIVO)
+        assertThat(tipoPorMime(null)).isEqualTo(TipoConteudo.ARQUIVO)
+        assertThat(ehVideo(Conteudo(1, 1, TipoConteudo.ARQUIVO, "x", "filme.MP4", ""))).isTrue()
+        assertThat(ehVideo(Conteudo(1, 1, TipoConteudo.ARQUIVO, "x", "a", ".mov"))).isTrue()
+        assertThat(ehVideo(Conteudo(1, 1, TipoConteudo.ARQUIVO, "x", "a.pdf", "pdf"))).isFalse()
+        assertThat(formatarTamanho(900)).isEqualTo("900 B")
+        assertThat(formatarTamanho(1536)).isEqualTo("1.5 KB")
+        assertThat(formatarTamanho(200L * 1024 * 1024)).isEqualTo("200.0 MB")
+        assertThat(Conteudo(null, 1, TipoConteudo.IMAGEM, "local:content://x/1").local).isTrue()
+    }
 }

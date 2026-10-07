@@ -54,6 +54,8 @@ import androidx.compose.runtime.setValue
 import androidx.compose.runtime.snapshotFlow
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.LocalResources
 import androidx.compose.ui.res.pluralStringResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.input.KeyboardCapitalization
@@ -105,11 +107,16 @@ fun ChatRotaTela(
     val avisoChamadas = stringResource(R.string.chamadas_em_breve)
     // Chamadas entram na etapa 6; até lá, só o aviso.
     val aoLigar: (TipoChamada) -> Unit = { escopo.launch { avisos.showSnackbar(avisoChamadas) } }
+    val contexto = LocalContext.current
+    val recursos = LocalResources.current
+    val semApp = stringResource(R.string.nenhum_app_para_abrir)
     ColetarEventos(viewModel.eventos.fluxo) { evento ->
         when (evento) {
             is EventoChat.Erro -> avisos.mostrarErro(evento.mensagem)
             EventoChat.RolarAoFim -> lista.animateScrollToItem(0)
             is EventoChat.AbrirConversa -> aoAbrirConversa(evento.conversaId)
+            is EventoChat.ArquivoGrande -> avisos.mostrarErro(recursos.getString(R.string.arquivo_grande, evento.nome))
+            is EventoChat.AbrirArquivo -> if (!abrirComOutroApp(contexto, evento.arquivo, evento.mime)) avisos.mostrarErro(semApp)
         }
     }
     ChatTela(
@@ -128,10 +135,32 @@ fun ChatRotaTela(
                 aoDescartar = viewModel::descartar,
                 aoMencao = viewModel::abrirDireta,
                 aoLigar = aoLigar,
+                urlDoAnexo = viewModel::urlDoAnexo,
+                esquecerUrl = viewModel::esquecerUrl,
+                aoAbrirArquivo = { viewModel.abrirArquivo(it.conteudo, it.nome.ifBlank { it.conteudo }, null) },
             ),
             aoIrAoFim = { escopo.launch { lista.animateScrollToItem(0) } },
+            aoAdicionarAnexos = viewModel::adicionarAnexos,
+            aoRemoverAnexo = viewModel::removerAnexo,
+            pastaCamera = viewModel::pastaCamera,
         ),
     )
+}
+
+/** Abre o arquivo baixado com outro app, pelo `FileProvider` (permissão só de leitura e temporária). */
+private fun abrirComOutroApp(contexto: android.content.Context, arquivo: java.io.File, mime: String?): Boolean {
+    val uri = androidx.core.content.FileProvider.getUriForFile(contexto, contexto.packageName + ".arquivos", arquivo)
+    val tipo = mime ?: android.webkit.MimeTypeMap.getSingleton()
+        .getMimeTypeFromExtension(arquivo.extension.lowercase()) ?: "application/octet-stream"
+    val intencao = android.content.Intent(android.content.Intent.ACTION_VIEW)
+        .setDataAndType(uri, tipo)
+        .addFlags(android.content.Intent.FLAG_GRANT_READ_URI_PERMISSION or android.content.Intent.FLAG_ACTIVITY_NEW_TASK)
+    return try {
+        contexto.startActivity(android.content.Intent.createChooser(intencao, null).addFlags(android.content.Intent.FLAG_ACTIVITY_NEW_TASK))
+        true
+    } catch (_: android.content.ActivityNotFoundException) {
+        false
+    }
 }
 
 class AcoesChat(
@@ -144,6 +173,10 @@ class AcoesChat(
     val aoVerMensagens: (List<com.conversa.app.core.model.Mensagem>) -> Unit = {},
     val bolha: AcoesBolha = AcoesBolha(),
     val aoIrAoFim: () -> Unit = {},
+    val aoAdicionarAnexos: (List<String>, com.conversa.app.core.model.TipoConteudo?) -> Unit = { _, _ -> },
+    val aoRemoverAnexo: (String) -> Unit = {},
+    /** Pasta (no cache do app) onde a câmera grava a foto antes de enviar. */
+    val pastaCamera: () -> java.io.File? = { null },
 )
 
 @OptIn(ExperimentalMaterial3Api::class)

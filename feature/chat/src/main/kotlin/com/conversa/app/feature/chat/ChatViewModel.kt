@@ -5,6 +5,10 @@ import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.conversa.app.core.data.SessaoRepositorio
+import com.conversa.app.core.data.anexos.AnexoLocal
+import com.conversa.app.core.data.anexos.AnexosRepositorio
+import com.conversa.app.core.data.anexos.ArquivosLocais
+import com.conversa.app.core.data.anexos.FontesArquivo
 import com.conversa.app.core.data.contatos.ContatosRepositorio
 import com.conversa.app.core.data.conversas.ConversasRepositorio
 import com.conversa.app.core.data.mensagens.EnvioMensagens
@@ -15,6 +19,7 @@ import com.conversa.app.core.model.Conversa
 import com.conversa.app.core.model.ItemChat
 import com.conversa.app.core.model.MembroConversa
 import com.conversa.app.core.model.Mensagem
+import com.conversa.app.core.model.TipoConteudo
 import com.conversa.app.core.model.TipoConversa
 import com.conversa.app.core.model.atividadeDaConversa
 import com.conversa.app.core.model.montarItensChat
@@ -24,6 +29,7 @@ import com.conversa.app.core.ui.estado.EventosUnicos
 import dagger.hilt.android.lifecycle.HiltViewModel
 import java.time.Clock
 import javax.inject.Inject
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -33,6 +39,7 @@ import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 
 @Immutable
 data class ChatUiState(
@@ -50,6 +57,10 @@ data class ChatUiState(
     val chegouAoInicio: Boolean = false,
     /** A primeira não lida já foi decidida: a tela pode se posicionar (MSG-05). */
     val pronto: Boolean = false,
+    /** Anexos escolhidos, esperando o Enviar (ANX-03). */
+    val fila: List<AnexoLocal> = emptyList(),
+    /** Mensagem otimista → fração enviada dos anexos. */
+    val progresso: Map<Long, Float> = emptyMap(),
 ) {
     val grupo: Boolean get() = conversa?.tipo == TipoConversa.GRUPO
 }
@@ -62,6 +73,12 @@ sealed interface EventoChat {
 
     /** Tocou numa menção: abrir a conversa direta com a pessoa (CON-06). */
     data class AbrirConversa(val conversaId: Long) : EventoChat
+
+    /** Arquivo acima de 1 GiB: nem entra na fila. */
+    data class ArquivoGrande(val nome: String) : EventoChat
+
+    /** Anexo baixado: a tela abre com outro app (ANX-09). */
+    data class AbrirArquivo(val arquivo: java.io.File, val mime: String?) : EventoChat
 }
 
 /**
@@ -77,6 +94,9 @@ class ChatViewModel @Inject constructor(
     sessao: SessaoRepositorio,
     private val mensagens: MensagensRepositorio,
     private val envio: EnvioMensagens,
+    private val anexos: AnexosRepositorio,
+    private val arquivos: ArquivosLocais,
+    private val fontes: FontesArquivo,
     private val relogio: Clock,
 ) : ViewModel() {
     val conversaId: Long = checkNotNull(salvo["conversaId"])
@@ -101,7 +121,9 @@ class ChatViewModel @Inject constructor(
         Presente(online, digitando[conversaId].orEmpty(), gravando[conversaId].orEmpty(), n)
     }
 
-    val estado: StateFlow<ChatUiState> = combine(
+    private val fila = MutableStateFlow<List<AnexoLocal>>(emptyList())
+
+    private val base = combine(
         conversas.observar(conversaId),
         mensagens.observar(conversaId),
         presente,
@@ -121,7 +143,10 @@ class ChatViewModel @Inject constructor(
             chegouAoInicio = c.inicio,
             pronto = naoLida != null,
         )
-    }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), ChatUiState(eu = eu))
+    }
+
+    val estado: StateFlow<ChatUiState> = combine(base, fila, envio.progresso) { b, f, p -> b.copy(fila = f, progresso = p) }
+        .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), ChatUiState(eu = eu))
 
     init {
         viewModelScope.launch {
@@ -163,9 +188,11 @@ class ChatViewModel @Inject constructor(
     /** Envia e avisa a tela para limpar o campo só depois de gravado no Room. */
     fun enviar(texto: String, aoGravar: () -> Unit) {
         val limpo = texto.trim()
-        if (limpo.isEmpty()) return
+        val anexosNaFila = fila.value
+        if (limpo.isEmpty() && anexosNaFila.isEmpty()) return
         viewModelScope.launch {
-            envio.enviarTexto(conversaId, limpo)
+            envio.enviar(conversaId, limpo, anexosNaFila)
+            fila.value = fila.value - anexosNaFila.toSet()
             aoGravar()
             reiniciarDigitando()
             eventos.enviar(EventoChat.RolarAoFim)
@@ -178,6 +205,41 @@ class ChatViewModel @Inject constructor(
         viewModelScope.launch {
             conversas.obterOuCriarDireta(usuarioId)
                 .onSuccess { if (it != conversaId) eventos.enviar(EventoChat.AbrirConversa(it)) }
+                .onFailure { eventos.enviar(EventoChat.Erro(it.paraErroApi().mensagemAmigavel())) }
+        }
+    }
+
+    // --- Anexos (ANX-01…14) ---
+
+    /** Arquivos escolhidos (galeria, documento, câmera). [tipo] força o tipo (ex.: foto da câmera). */
+    fun adicionarAnexos(uris: List<String>, tipo: TipoConteudo? = null) {
+        if (uris.isEmpty()) return
+        viewModelScope.launch {
+            val novos = withContext(Dispatchers.IO) { uris.mapNotNull { fontes.descrever(it, tipo) } }
+            val grandes = novos.filter { it.tamanho > AnexosRepositorio.LIMITE_BYTES }
+            if (grandes.isNotEmpty()) eventos.enviar(EventoChat.ArquivoGrande(grandes.first().nome))
+            fila.value = (fila.value + (novos - grandes.toSet())).distinctBy { it.uri }
+        }
+    }
+
+    /** Pasta do cache onde a câmera grava a foto (compartilhada pelo FileProvider). */
+    fun pastaCamera(): java.io.File = arquivos.pastaCamera
+
+    fun removerAnexo(uri: String) {
+        fila.value = fila.value.filterNot { it.uri == uri }
+    }
+
+    /** URL assinada para mostrar uma imagem (cache por identificador). */
+    suspend fun urlDoAnexo(identificador: String): String? = anexos.url(identificador).getOrNull()
+
+    /** A imagem não carregou (URL vencida): a próxima busca pede outra. */
+    fun esquecerUrl(identificador: String) = anexos.esquecerUrl(identificador)
+
+    /** Baixa para o cache (uma vez) e pede para a tela abrir com outro app. */
+    fun abrirArquivo(identificador: String, nome: String, mime: String?) {
+        viewModelScope.launch {
+            arquivos.baixar(identificador, nome)
+                .onSuccess { eventos.enviar(EventoChat.AbrirArquivo(it, mime)) }
                 .onFailure { eventos.enviar(EventoChat.Erro(it.paraErroApi().mensagemAmigavel())) }
         }
     }

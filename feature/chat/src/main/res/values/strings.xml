@@ -65,4 +65,12 @@
     <!-- Campo (ENV-01) -->
     <string name="digite_uma_mensagem">Mensagem</string>
     <string name="enviar">Enviar</string>
+
+    <!-- Anexos (ANX-01…09) -->
+    <string name="remover_anexo">Remover %1$s</string>
+    <string name="abrir">Abrir</string>
+    <string name="abrir_com">Abrir com…</string>
+    <string name="fechar">Fechar</string>
+    <string name="nenhum_app_para_abrir">Nenhum app instalado abre este tipo de arquivo.</string>
+    <string name="arquivo_grande">%1$s passa de 1 GB e não pode ser enviado.</string>
 </resources>

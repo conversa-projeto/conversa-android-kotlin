@@ -42,6 +42,17 @@
             </intent-filter>
         </activity>
 
+        <!-- Anexos baixados e fotos da câmera, compartilhados com outros apps só por URI com permissão temporária. -->
+        <provider
+            android:name="androidx.core.content.FileProvider"
+            android:authorities="${applicationId}.arquivos"
+            android:exported="false"
+            android:grantUriPermissions="true">
+            <meta-data
+                android:name="android.support.FILE_PROVIDER_PATHS"
+                android:resource="@xml/caminhos_arquivos" />
+        </provider>
+
         <!-- WorkManager é iniciado pela ConversaApplication (Configuration.Provider + Hilt). -->
         <provider
             android:name="androidx.startup.InitializationProvider"

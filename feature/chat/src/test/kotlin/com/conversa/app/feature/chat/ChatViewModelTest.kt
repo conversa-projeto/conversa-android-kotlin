@@ -43,7 +43,7 @@ class ChatViewModelTest {
         every { observar(42) } returns lista
         coEvery { carregarRecentes(42) } returns Result.success(0)
     }
-    private val envio = mockk<EnvioMensagens>(relaxed = true)
+    private val envio = mockk<EnvioMensagens>(relaxed = true) { every { progresso } returns MutableStateFlow(emptyMap()) }
     private val conversas = mockk<ConversasRepositorio>(relaxed = true) {
         every { observar(42) } returns MutableStateFlow(
             Conversa(42, TipoConversa.DIRETA, null, "Bruno", 8, 0, null, null, 0, null, null, null),
@@ -81,6 +81,9 @@ class ChatViewModelTest {
             sessao,
             mensagens,
             envio,
+            mockk(relaxed = true),
+            mockk(relaxed = true),
+            mockk(relaxed = true),
             Clock.fixed(agora, ZoneOffset.UTC),
         )
         backgroundScope.launch { vm.estado.collect {} }
@@ -149,7 +152,7 @@ class ChatViewModelTest {
 
     @Test
     fun `enviar grava, avisa para limpar o campo, rola ao fim e zera o digitando`() = runTest {
-        coEvery { envio.enviarTexto(42, "olá") } returns -1
+        coEvery { envio.enviar(42, "olá", any()) } returns -1
         val vm = criar()
         advanceUntilIdle()
         vm.aoDigitar("olá")
@@ -159,7 +162,7 @@ class ChatViewModelTest {
         vm.enviar("  olá  ") { limpou = true }
         advanceUntilIdle()
 
-        coVerify { envio.enviarTexto(42, "olá") }
+        coVerify { envio.enviar(42, "olá", emptyList()) }
         assertThat(limpou).isTrue()
         assertThat(vm.eventos.fluxo.first()).isEqualTo(EventoChat.RolarAoFim)
         // Depois de enviar, o próximo "digitando" sai na hora (o limite recomeça).
@@ -169,6 +172,6 @@ class ChatViewModelTest {
 
         vm.enviar("   ") { }
         advanceUntilIdle()
-        coVerify(exactly = 1) { envio.enviarTexto(any(), any()) }
+        coVerify(exactly = 1) { envio.enviar(any(), any(), any()) }
     }
 }

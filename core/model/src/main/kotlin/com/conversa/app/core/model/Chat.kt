@@ -309,3 +309,41 @@ data class ChamadaNaMensagem(
 }
 
 data class ParticipanteNaMensagem(val usuarioId: Long, val nome: String, val status: Int, val duracaoSegundos: Long?)
+
+// --- Anexos (ANX-01, ANX-03) ---
+
+/**
+ * Tipo do conteúdo pelo MIME (como o web): `image/` → imagem (2), `audio/` → áudio (4),
+ * o resto → arquivo (3), inclusive vídeo (o servidor não tem tipo de vídeo, §8.1).
+ * A gravação do microfone é sempre 5 e não passa por aqui.
+ */
+fun tipoPorMime(mime: String?): TipoConteudo = when {
+    mime == null -> TipoConteudo.ARQUIVO
+    mime.startsWith("image/") -> TipoConteudo.IMAGEM
+    mime.startsWith("audio/") -> TipoConteudo.AUDIO
+    else -> TipoConteudo.ARQUIVO
+}
+
+private val EXTENSOES_VIDEO = setOf("mp4", "webm", "ogg", "mov", "m4v", "mkv")
+
+/** Vídeo é enviado como arquivo (3); reconhecido pela extensão (como o `isVideoConteudo` do web). */
+fun ehVideo(conteudo: Conteudo): Boolean {
+    val extensao = conteudo.extensao.ifBlank { conteudo.nome.substringAfterLast('.', "") }.trim().lowercase().removePrefix(".")
+    return conteudo.tipo == TipoConteudo.ARQUIVO && extensao in EXTENSOES_VIDEO
+}
+
+/** Tamanho legível ("1.5 MB"), como o `formatarTamanho` do web. */
+fun formatarTamanho(bytes: Long): String {
+    if (bytes < 1024) return "$bytes B"
+    var valor = bytes / 1024.0
+    for (unidade in listOf("KB", "MB", "GB")) {
+        if (valor < 1024 || unidade == "GB") return "%.1f %s".format(java.util.Locale.ROOT, valor, unidade)
+        valor /= 1024
+    }
+    return "$bytes B"
+}
+
+/** Conteúdo de anexo ainda no aparelho (mensagem otimista): `conteudo = "local:<uri>"`. */
+const val PREFIXO_LOCAL = "local:"
+
+val Conteudo.local: Boolean get() = conteudo.startsWith(PREFIXO_LOCAL)

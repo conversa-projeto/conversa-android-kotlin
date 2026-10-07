@@ -2,6 +2,8 @@ package com.conversa.app.core.data.di
 
 import com.conversa.app.core.data.ServidorRepositorio
 import com.conversa.app.core.data.SessaoRepositorio
+import com.conversa.app.core.data.anexos.FontesArquivo
+import com.conversa.app.core.data.anexos.FontesArquivoAndroid
 import com.conversa.app.core.data.autenticacao.InfoDispositivo
 import com.conversa.app.core.data.autenticacao.InfoDispositivoAndroid
 import com.conversa.app.core.data.mensagens.AgendadorEnvio
@@ -26,6 +28,9 @@ abstract class DadosModulo {
 
     @Binds
     abstract fun agendadorEnvio(agendador: AgendadorEnvioWorkManager): AgendadorEnvio
+
+    @Binds
+    abstract fun fontesArquivo(fontes: FontesArquivoAndroid): FontesArquivo
 
     @Binds
     abstract fun infoDispositivo(info: InfoDispositivoAndroid): InfoDispositivo

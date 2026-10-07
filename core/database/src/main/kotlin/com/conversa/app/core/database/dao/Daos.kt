@@ -205,6 +205,10 @@ interface EnvioPendenteDao {
     @Query("SELECT * FROM envio_pendente WHERE mensagemIdLocal = :mensagemIdLocal")
     suspend fun buscar(mensagemIdLocal: Long): EnvioPendenteEntidade?
 
+    /** Corpo do envio atualizado (ex.: anexo já subiu e ganhou o identificador). */
+    @Query("UPDATE envio_pendente SET payloadJson = :payloadJson WHERE mensagemIdLocal = :mensagemIdLocal")
+    suspend fun atualizarPayload(mensagemIdLocal: Long, payloadJson: String)
+
     @Query("UPDATE envio_pendente SET tentativas = 0 WHERE mensagemIdLocal = :mensagemIdLocal")
     suspend fun zerarTentativas(mensagemIdLocal: Long)
 

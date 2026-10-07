@@ -3,10 +3,15 @@ package com.conversa.app.core.data.mensagens
 import androidx.room.Room
 import androidx.test.core.app.ApplicationProvider
 import com.conversa.app.core.data.SessaoRepositorio
+import com.conversa.app.core.data.anexos.AnexoEnviado
+import com.conversa.app.core.data.anexos.AnexoLocal
+import com.conversa.app.core.data.anexos.AnexosRepositorio
+import com.conversa.app.core.data.anexos.FontesArquivo
 import com.conversa.app.core.data.conversas.ConversasRepositorio
 import com.conversa.app.core.database.ConversaBanco
 import com.conversa.app.core.database.entidades.ConversaEntidade
 import com.conversa.app.core.model.Sessao
+import com.conversa.app.core.model.TipoConteudo
 import com.conversa.app.core.network.api.ConversaApi
 import com.conversa.app.core.network.dto.ConteudoDto
 import com.conversa.app.core.network.dto.ConteudoEnvioDto
@@ -50,6 +55,8 @@ class MensagensTest {
     private val agora = Instant.parse("2026-10-07T12:00:00Z")
     private val sessao = mockk<SessaoRepositorio> { every { sessao } returns MutableStateFlow(Sessao("t", 7, "Ana Souza")) }
     private val conversas = mockk<ConversasRepositorio>(relaxed = true)
+    private val anexos = mockk<AnexosRepositorio>()
+    private val fontes = mockk<FontesArquivo>()
     private val agendador = object : AgendadorEnvio {
         var agendados = 0
         var cancelados = 0
@@ -89,6 +96,8 @@ class MensagensTest {
         sessao,
         conversas,
         agendador,
+        anexos,
+        fontes,
         Clock.fixed(agora, ZoneOffset.UTC),
     )
 
@@ -206,5 +215,68 @@ class MensagensTest {
         assertThat(banco.mensagemDao().buscar(id)!!.mensagem.falhou).isFalse()
         assertThat(envio.processarPendentes()).isEqualTo(ResultadoEnvio.CONCLUIDO)
         assertThat(banco.mensagemDao().buscar(id)!!.mensagem.falhou).isTrue()
+    }
+
+    // --- Anexos (4.2) ---
+
+    private fun fonte(nome: String, tamanho: Long) = object : com.conversa.app.core.data.anexos.FonteArquivo {
+        override val nome = nome
+        override val tamanho = tamanho
+        override val mime = null
+
+        override fun abrir() = java.io.ByteArrayInputStream(ByteArray(tamanho.toInt()))
+    }
+
+    @Test
+    fun `anexos sobem antes, o identificador fica gravado e a ordem e texto e depois os arquivos`() = runTest {
+        val envio = envio()
+        val a1 = AnexoLocal("content://x/1", "foto.jpg", 100, "image/jpeg", TipoConteudo.IMAGEM)
+        val a2 = AnexoLocal("content://x/2", "doc.pdf", 300, "application/pdf", TipoConteudo.ARQUIVO)
+        val id = envio.enviar(42, "veja", listOf(a1, a2))
+
+        val otimista = banco.mensagemDao().buscar(id)!!.conteudos.sortedBy { it.ordem }
+        assertThat(otimista.map { it.conteudo }).containsExactly("veja", "local:content://x/1", "local:content://x/2").inOrder()
+
+        every { fontes.abrir("content://x/1") } returns fonte("foto.jpg", 100)
+        every { fontes.abrir("content://x/2") } returns fonte("doc.pdf", 300)
+        coEvery { anexos.enviar(match { it.nome == "foto.jpg" }, TipoConteudo.IMAGEM, any()) } returns
+            Result.success(AnexoEnviado(1, "hash1", TipoConteudo.IMAGEM, "foto.jpg", "jpg", 100))
+        coEvery { anexos.enviar(match { it.nome == "doc.pdf" }, TipoConteudo.ARQUIVO, any()) } returns
+            Result.failure(ErroApi.SemConexao(IOException("caiu")))
+
+        assertThat(envio.processarPendentes()).isEqualTo(ResultadoEnvio.TENTAR_DEPOIS)
+        coVerify(exactly = 0) { api.enviarMensagem(any()) }
+        assertThat(banco.envioPendenteDao().todos().single().payloadJson).contains("hash1")
+
+        coEvery { anexos.enviar(match { it.nome == "doc.pdf" }, TipoConteudo.ARQUIVO, any()) } returns
+            Result.success(AnexoEnviado(2, "hash2", TipoConteudo.ARQUIVO, "doc.pdf", "pdf", 300))
+        coEvery { api.enviarMensagem(any()) } returns MensagemCriadaDto(id = 700, conversaId = 42)
+        coEvery { api.mensagens(42, 700, 0, 0) } throws IOException("caiu")
+
+        assertThat(envio.processarPendentes()).isEqualTo(ResultadoEnvio.CONCLUIDO)
+        coVerify(exactly = 1) { anexos.enviar(match { it.nome == "foto.jpg" }, any(), any()) }
+        coVerify {
+            api.enviarMensagem(
+                EnviarMensagemRequisicao(
+                    42,
+                    listOf(ConteudoEnvioDto(1, 1, "veja"), ConteudoEnvioDto(2, 2, "hash1"), ConteudoEnvioDto(3, 3, "hash2")),
+                ),
+            )
+        }
+        // Sem a real, a otimista vira a real com os identificadores no lugar dos local:
+        assertThat(banco.mensagemDao().buscar(700)!!.conteudos.sortedBy { it.ordem }.map { it.conteudo })
+            .containsExactly("veja", "hash1", "hash2").inOrder()
+        assertThat(envio.progresso.value).isEmpty()
+    }
+
+    @Test
+    fun `sem acesso ao arquivo a mensagem falha e nao manda nada`() = runTest {
+        val envio = envio()
+        val id = envio.enviar(42, "", listOf(AnexoLocal("content://sumiu", "a.jpg", 10, null, TipoConteudo.IMAGEM)))
+        every { fontes.abrir(any()) } returns null
+
+        assertThat(envio.processarPendentes()).isEqualTo(ResultadoEnvio.CONCLUIDO)
+        assertThat(banco.mensagemDao().buscar(id)!!.mensagem.falhou).isTrue()
+        coVerify(exactly = 0) { api.enviarMensagem(any()) }
     }
 }
