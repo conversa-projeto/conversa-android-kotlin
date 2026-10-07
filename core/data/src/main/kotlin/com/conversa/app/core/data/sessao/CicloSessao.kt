@@ -48,6 +48,11 @@ class IniciadorSessao @Inject constructor(
     /** Erro da última tentativa de carregar a sessão; `null` quando deu certo ou não há sessão. */
     val falha: StateFlow<ErroApi?> = _falha.asStateFlow()
 
+    private val _carregada = MutableStateFlow(false)
+
+    /** A primeira carga desta sessão terminou (a lista pode dizer "nenhuma conversa" sem mentir). */
+    val carregada: StateFlow<Boolean> = _carregada.asStateFlow()
+
     private var iniciado = false
 
     fun iniciar() {
@@ -56,6 +61,7 @@ class IniciadorSessao @Inject constructor(
         escopo.launch {
             sessao.sessao.map { it?.usuarioId }.distinctUntilChanged().collectLatest { usuario ->
                 _falha.value = null
+                _carregada.value = false
                 if (usuario == null) return@collectLatest
                 launch {
                     autenticacao.registrarDispositivo()
@@ -68,6 +74,7 @@ class IniciadorSessao @Inject constructor(
                     delay(INTERVALO_MS)
                 }
                 _falha.value = null
+                _carregada.value = true
             }
         }
     }

@@ -1,0 +1,22 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+    Versão SÓ DO DEBUG (substitui a de src/main no build de debug; o release usa a de src/main).
+    Igual à principal (que no debug confia também nas CAs instaladas pelo usuário, para o mkcert),
+    mais uma exceção: HTTP sem TLS apenas para localhost/127.0.0.1.
+    Uso: emulador ligado à API de dev sem nginx, com `adb reverse tcp:8080 tcp:8080`
+    e o servidor configurado como http://localhost:8080 (docs/desenvolvimento/emulador.md).
+    Nenhum outro endereço aceita HTTP, nem no debug.
+    Sem <debug-overrides> aqui: este arquivo já é só do debug (e o lint não aceita dois).
+-->
+<network-security-config>
+    <base-config cleartextTrafficPermitted="false">
+        <trust-anchors>
+            <certificates src="system" />
+            <certificates src="user" />
+        </trust-anchors>
+    </base-config>
+    <domain-config cleartextTrafficPermitted="true">
+        <domain includeSubdomains="false">localhost</domain>
+        <domain includeSubdomains="false">127.0.0.1</domain>
+    </domain-config>
+</network-security-config>

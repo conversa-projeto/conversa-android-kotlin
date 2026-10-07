@@ -25,6 +25,8 @@ Instruções para quem trabalha neste repositório, pessoas ou agentes de IA. Le
 | **Passo a passo do trabalho** | `TODO.md` |
 | **Histórico de alterações** | `docs/historico/indice.md` + `docs/historico/*.md` |
 | Decisões de arquitetura | `docs/adr/NNNN-*.md` |
+| Testar no emulador contra o servidor de dev (e as contas de teste) | `docs/desenvolvimento/emulador.md` |
+| Contrato publicado pelo servidor (OpenAPI) | `docs/contrato/openapi.json` |
 | Documentação antiga (não usar como referência) | `docs/legado/` |
 
 ## Regra obrigatória: histórico de alterações
@@ -71,7 +73,7 @@ Instruções para quem trabalha neste repositório, pessoas ou agentes de IA. Le
 - `:core:data` — repositórios, `ConexaoTempoReal`, `SyncManager`.
 - `:core:ui` — tema (cores do FMX: `docs/design/cores.md`), componentes, `UiState`.
 - `:core:testing` — regras de teste e fixtures JSON do contrato.
-- `:feature:*` — uma por área (hoje: `auth`).
+- `:feature:*` — uma por área (hoje: `auth` — servidor, login, cadastro; `conversas` — lista, nova conversa, grupos, membros).
 - Convention plugins em `build-logic/`. O app antigo está em `app-legado/`, fora do build.
 - **Cores:** só as de `docs/design/cores.md` (vêm do `conversa-windows-fmx`), nunca as do web.
 

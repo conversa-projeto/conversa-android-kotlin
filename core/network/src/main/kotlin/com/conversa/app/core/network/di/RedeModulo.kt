@@ -17,6 +17,7 @@ import dagger.hilt.components.SingletonComponent
 import java.util.concurrent.TimeUnit
 import javax.inject.Qualifier
 import javax.inject.Singleton
+import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
@@ -32,6 +33,11 @@ import retrofit2.converter.kotlinx.serialization.asConverterFactory
 @Retention(AnnotationRetention.BINARY)
 annotation class EscopoAplicacao
 
+/** Dispatcher de E/S (rede, disco). Injetado para os testes trocarem pelo relógio virtual. */
+@Qualifier
+@Retention(AnnotationRetention.BINARY)
+annotation class DespachanteEs
+
 @Module
 @InstallIn(SingletonComponent::class)
 object RedeModulo {
@@ -39,6 +45,10 @@ object RedeModulo {
     @Singleton
     @EscopoAplicacao
     fun escopoAplicacao(): CoroutineScope = CoroutineScope(SupervisorJob() + Dispatchers.Default)
+
+    @Provides
+    @DespachanteEs
+    fun despachanteEs(): CoroutineDispatcher = Dispatchers.IO
 
     @Provides
     @Singleton

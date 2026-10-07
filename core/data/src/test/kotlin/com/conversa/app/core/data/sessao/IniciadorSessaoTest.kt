@@ -51,6 +51,7 @@ class IniciadorSessaoTest {
         advanceTimeBy(IniciadorSessao.INTERVALO_MS)
         runCurrent()
         assertThat(tentativas).isEqualTo(3)
+        assertThat(iniciador.carregada.value).isTrue()
         assertThat(iniciador.falha.value).isNull()
 
         advanceTimeBy(IniciadorSessao.INTERVALO_MS * 3)

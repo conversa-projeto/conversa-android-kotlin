@@ -6,13 +6,15 @@ import androidx.lifecycle.ProcessLifecycleOwner
 import com.conversa.app.core.data.ServidorRepositorio
 import com.conversa.app.core.data.SessaoRepositorio
 import com.conversa.app.core.data.sincronizacao.SyncManager
+import com.conversa.app.core.network.di.DespachanteEs
 import com.conversa.app.core.network.di.EscopoAplicacao
 import com.conversa.app.core.network.realtime.EstadoConexao
 import com.conversa.app.core.network.realtime.RealtimeClient
 import javax.inject.Inject
 import javax.inject.Singleton
+import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -64,6 +66,8 @@ class ConexaoTempoReal @Inject constructor(
     private val primeiroPlano: MonitorPrimeiroPlano,
     private val sincronizacao: SyncManager,
     @EscopoAplicacao private val escopo: CoroutineScope,
+    /** Onde rodam as chamadas do cliente WebSocket (Dispatchers.IO; o do teste nos testes). */
+    @DespachanteEs private val es: CoroutineDispatcher,
 ) {
     /** Ligado pelo gerenciador de chamadas (etapa 6) enquanto houver chamada. */
     val chamadaAtiva = MutableStateFlow(false)
@@ -103,10 +107,10 @@ class ConexaoTempoReal @Inject constructor(
                     if (desejado.token == null) {
                         // Só em segundo plano há tolerância; sem sessão, desliga já.
                         if (desejado.temSessao) delay(TOLERANCIA_MS)
-                        withContext(Dispatchers.IO) { cliente.desconectar() }
+                        withContext(es) { cliente.desconectar() }
                         ultimoServidor = null
                     } else {
-                        withContext(Dispatchers.IO) {
+                        withContext(es) {
                             val trocouServidor = ultimoServidor != null && ultimoServidor != desejado.config
                             cliente.conectar(desejado.token)
                             // Mesmo token, servidor novo: o conectar() não reabre sozinho.
@@ -122,13 +126,17 @@ class ConexaoTempoReal @Inject constructor(
                 .collectLatest { foraDoAr ->
                     _semTempoReal.value = false
                     if (!foraDoAr) return@collectLatest
-                    launch {
-                        delay(ESPERA_AVISO_MS)
-                        _semTempoReal.value = true
-                    }
-                    while (true) {
-                        delay(PERIODO_ATUALIZACAO_MS)
-                        sincronizacao.atualizacaoPeriodica()
+                    // coroutineScope: o aviso e o laço são filhos deste bloco e morrem
+                    // quando o socket conecta (um `launch` solto ficaria no escopo de fora).
+                    coroutineScope {
+                        launch {
+                            delay(ESPERA_AVISO_MS)
+                            _semTempoReal.value = true
+                        }
+                        while (true) {
+                            delay(PERIODO_ATUALIZACAO_MS)
+                            sincronizacao.atualizacaoPeriodica()
+                        }
                     }
                 }
         }
@@ -136,7 +144,7 @@ class ConexaoTempoReal @Inject constructor(
 
     /** Botão "Tentar agora" da faixa. */
     fun tentarAgora() {
-        escopo.launch(Dispatchers.IO) { cliente.reconectarAgora() }
+        escopo.launch(es) { cliente.reconectarAgora() }
     }
 
     private data class Desejado(val token: String?, val temSessao: Boolean, val config: String?)

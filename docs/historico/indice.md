@@ -25,6 +25,7 @@
 ## Sessão, conversas, contatos e presença (etapa 2)
 - 2026-10-07 · [Etapa 2 — camada de dados e OpenAPI](2026-10-07-03-etapa-2-camada-de-dados.md) — login/cadastro/dispositivo/sair, conversas (fixar, arquivar, direta, grupo), contatos, presença, início resiliente, limpeza; OpenAPI = 67 rotas
 - 2026-10-07 · [Etapa 2 — login, cadastro, navegação e saída](2026-10-07-04-etapa-2-login-cadastro-navegacao.md) — telas de login e cadastro, rotas tipadas, barra inferior, links `conversa://chat`, sair com limpeza; 124 testes
+- 2026-10-07 · [Etapa 2 — conversas, grupos e teste de ponta a ponta no emulador](2026-10-07-05-etapa-2-conversas-e-teste-no-emulador.md) — `:feature:conversas` (lista, nova conversa, grupos, membros), 6 correções achadas no emulador, S15/S16; 137 testes
 
 ## Mensagens (etapa 3)
 _(nada ainda)_

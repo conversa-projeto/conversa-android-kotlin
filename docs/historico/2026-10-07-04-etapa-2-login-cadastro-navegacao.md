@@ -4,7 +4,7 @@
 - **Tipo:** código / testes
 - **Itens:** `TODO.md` 2.1–2.5 (FC-200…FC-203); AUT-01…05, GER-02
 - **Branch:** `reescrita`
-- **Commits:** _(preencher)_
+- **Commits:** `7978455`
 
 ## Contexto
 Segundo bloco da etapa 2: as telas de entrada e a estrutura de navegação, em cima da camada de dados do bloco anterior (`2026-10-07-03`). A lista de conversas ainda é um espaço reservado; ela entra no próximo bloco.

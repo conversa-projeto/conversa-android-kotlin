@@ -8,13 +8,17 @@ import androidx.navigation.compose.rememberNavController
 import androidx.navigation.toRoute
 import com.conversa.app.MainViewModel
 import com.conversa.app.NavegacaoGlobal
+import com.conversa.app.chat.ChatProvisorio
 import com.conversa.app.core.ui.estado.ColetarEventos
 import com.conversa.app.feature.auth.cadastro.CadastroRotaTela
 import com.conversa.app.feature.auth.login.AvisoLogin
 import com.conversa.app.feature.auth.login.LoginRotaTela
 import com.conversa.app.feature.auth.servidor.ServidorRotaTela
+import com.conversa.app.feature.conversas.grupo.CriarGrupoRotaTela
+import com.conversa.app.feature.conversas.lista.ConversasRotaTela
+import com.conversa.app.feature.conversas.membros.MembrosRotaTela
+import com.conversa.app.feature.conversas.novaconversa.NovaConversaRotaTela
 import com.conversa.app.principal.ConfiguracoesProvisorias
-import com.conversa.app.principal.ConversasProvisorias
 import com.conversa.app.principal.PrincipalTela
 
 @Composable
@@ -60,13 +64,44 @@ fun ConversaNavHost(destinoInicial: Any, principal: MainViewModel) {
         }
         composable<RotaPrincipal> {
             PrincipalTela(
-                conversas = { modificador -> ConversasProvisorias(modificador) },
+                conversas = { modificador ->
+                    ConversasRotaTela(
+                        aoAbrirConversa = { nav.navigate(RotaChat(it)) },
+                        aoNovaConversa = { nav.navigate(RotaNovaConversa) },
+                        aoMembros = { nav.navigate(RotaMembros(it)) },
+                        modifier = modificador,
+                    )
+                },
                 configuracoes = { modificador ->
                     ConfiguracoesProvisorias(
                         aoTrocarServidor = { nav.navigate(RotaServidor(podeVoltar = true)) },
                         modifier = modificador,
                     )
                 },
+            )
+        }
+        composable<RotaChat> {
+            ChatProvisorio(aoMembros = { nav.navigate(RotaMembros(it)) }, aoVoltar = { nav.popBackStack() })
+        }
+        composable<RotaNovaConversa> {
+            NovaConversaRotaTela(
+                // Abre a conversa no lugar desta tela (voltar leva à lista).
+                aoAbrirConversa = { id -> nav.navigate(RotaChat(id)) { popUpTo<RotaNovaConversa> { inclusive = true } } },
+                aoNovoGrupo = { nav.navigate(RotaCriarGrupo) },
+                aoVoltar = { nav.popBackStack() },
+            )
+        }
+        composable<RotaCriarGrupo> {
+            CriarGrupoRotaTela(
+                aoCriado = { id -> nav.navigate(RotaChat(id)) { popUpTo<RotaPrincipal>() } },
+                aoVoltar = { nav.popBackStack() },
+            )
+        }
+        composable<RotaMembros> {
+            MembrosRotaTela(
+                // Saiu do grupo: a conversa some; volta à lista.
+                aoSair = { nav.popBackStack<RotaPrincipal>(inclusive = false) },
+                aoVoltar = { nav.popBackStack() },
             )
         }
     }

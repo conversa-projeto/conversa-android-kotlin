@@ -26,6 +26,8 @@ data class LoginUiState(
     val erro: TextoUi? = null,
     /** Endereço do servidor atual, mostrado discretamente (com o link para trocar). */
     val servidor: String = "",
+    /** O último login já foi lido (a tela decide o foco inicial). */
+    val pronto: Boolean = false,
 )
 
 sealed interface EventoLogin {
@@ -46,7 +48,7 @@ class LoginViewModel @Inject constructor(private val autenticacao: AutenticacaoR
     init {
         viewModelScope.launch {
             val ultimo = autenticacao.ultimoLogin.first().orEmpty()
-            _estado.update { if (it.usuario.isEmpty()) it.copy(usuario = ultimo) else it }
+            _estado.update { if (it.usuario.isEmpty()) it.copy(usuario = ultimo, pronto = true) else it.copy(pronto = true) }
         }
         viewModelScope.launch {
             servidor.atual.collect { config -> _estado.update { it.copy(servidor = config?.base?.host.orEmpty()) } }

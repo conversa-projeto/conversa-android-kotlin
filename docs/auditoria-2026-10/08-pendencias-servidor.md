@@ -101,6 +101,17 @@
 - O nginx limita o login a 10 por minuto. Uma rede com NAT compartilhado (empresa) pode bloquear vários usuários juntos.
 - Avaliar o limite por login, e não só por IP.
 
+### S15 · Remover participante do grupo 🆕 (2026-10-07)
+
+- `DELETE /api/conversa/usuario?id=` só aceita o **próprio** vínculo (`validarRemocaoConversaUsuario`, `src/autorizacao.ts`: "Regra atual: só auto-remoção. Admin de grupo via conversa.criado_por fica para depois"). O web mostra "Remover" para os outros membros, e o clique sempre dá 403.
+- No Android a opção não é oferecida; a tela de membros explica que cada pessoa só pode sair por conta própria.
+- **Proposta:** administrador de grupo (ao menos `conversa.criado_por`) pode remover; ou o web esconde o botão até lá.
+
+### S16 · Prévia da conversa sem o tipo do conteúdo 🆕 (2026-10-07)
+
+- Em `GET /conversas`, `ultima_mensagem_texto` vem `""` para arquivo, áudio, gravação e chamada (doc 01 §11.2). O cliente não sabe o que foi: o web mostra "Sem mensagens"; o Android mostra "Anexo ou chamada".
+- **Proposta:** incluir `ultima_mensagem_tipo` (tipo do primeiro conteúdo) na lista, para a prévia dizer "Áudio", "Arquivo", "Chamada perdida"…
+
 ---
 
 ## Prioridade sugerida no servidor
@@ -111,4 +122,4 @@
 | 2 | S4 | Segurança (ouvir chamadas e baixar anexos alheios) |
 | 3 | S3, S13 | Qualidade das notificações e da sessão no celular |
 | 4 | S7, S8, S9, S11 | Robustez para todos os clientes |
-| 5 | S5, S6, S10, S12, S14 | Higiene e evolução |
+| 5 | S5, S6, S10, S12, S14, S15, S16 | Higiene e evolução |

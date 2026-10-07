@@ -166,7 +166,7 @@
 - [x] `res/xml/network_security_config.xml`: `cleartextTrafficPermitted="false"`
 - [x] `<debug-overrides>` com `@raw/mkcert_ca` (só no debug) — **mudou**: em vez de embutir `@raw/mkcert_ca`, o debug confia nas CAs instaladas pelo usuário (`certificates src=user`) — nada de certificado no repositório; instruções no XML e no README
 - [x] Referenciar no manifest (`android:networkSecurityConfig`)
-- [ ] **Teste:** debug conecta ao servidor de dev com mkcert; release recusa certificado inválido — ⛔ precisa do servidor de dev e de um aparelho (fica para o primeiro teste em aparelho, etapa 2)
+- [ ] **Teste:** debug conecta ao servidor de dev com mkcert; release recusa certificado inválido — ⛔ instalar a CA do mkcert altera a segurança do aparelho: fica para a pessoa fazer num aparelho de teste. Enquanto isso, o emulador usa a API sem TLS só em `localhost` (debug; `docs/desenvolvimento/emulador.md`)
 - [x] Garantir que não existe `TrustManager` "aceita tudo" em lugar nenhum (busca no código) — busca por `TrustManager`/`hostnameVerifier`/`sslSocketFactory` no código novo: nada; lint de segurança como erro
 
 ### 1.8 Rede (FC-107, FC-109)
@@ -209,7 +209,7 @@
 - [x] **Nunca** salvar a senha
 - [x] `allowBackup="false"` (ou `data_extraction_rules` excluindo a sessão) — `allowBackup=false`, `fullBackupContent=false` e `regras_extracao.xml` excluindo tudo
 - [x] `SessaoRepository` com `StateFlow<Sessao?>` — `SessaoRepositorio` (também encerra a sessão em qualquer 401)
-- [ ] **Teste:** matar o app, reabrir e a sessão continua; um backup não contém o token — 🔄 automatizado: `SessaoStoreTest` (cifrado, ida e volta, arquivo ilegível); `allowBackup=false` + regras de extração vazias. ⛔ falta conferir no aparelho (matar o app e reabrir)
+- [x] **Teste:** matar o app, reabrir e a sessão continua; um backup não contém o token — `SessaoStoreTest` + `allowBackup=false`/regras de extração vazias; no emulador (2026-10-07): `am force-stop` e reabrir → entra direto na lista
 
 ### 1.12 WebSocket — `RealtimeClient` (FC-112)
 - [x] Sealed class `EventoSocket` com todos os tipos: 0, 2, 3, 4, 5, 7, 9, 40, 51–57, 60, 61, 62 (`EnqueteAtualizada {enquete_id, conversa_id}`) e `Desconhecido`
@@ -223,7 +223,7 @@
 - [x] Desconectar ao ir para segundo plano (com uma pequena tolerância, ex.: 10 s) — tolerância de 10 s
 - [x] `enviarSinal(chamadaId, dados)` → `{tipo:57, chamada_id, dados}`
 - [x] Nenhum log de frame com token ou conteúdo
-- [ ] **Teste:** derrubar o Wi-Fi → reconecta sozinho; nunca há 2 sockets abertos — 🔄 automatizado: `RealtimeClientTest` (reconecta quando o servidor fecha, mesmo token não abre 2º socket, login recusado não insiste). ⛔ falta conferir derrubando o Wi-Fi no aparelho
+- [x] **Teste:** derrubar o Wi-Fi → reconecta sozinho; nunca há 2 sockets abertos — `RealtimeClientTest`; no emulador (2026-10-07) derrubando a **API** (`docker stop api`, sem mexer na rede do aparelho): tentativas em 2/4/8 s, faixa após 5 s, reconectou sozinho ao voltar e a faixa sumiu
 
 ### 1.13 Sincronização (FC-113)
 - [x] `SyncManager.ressincronizar()` disparado ao conectar, ao voltar ao primeiro plano e ao receber push — `SyncManager.ressincronizar()` ao conectar (cobre a volta ao primeiro plano); a chamada pelo push entra na etapa 5
@@ -239,7 +239,9 @@
 
 ## Etapa 2 — Sessão, conversas, contatos e presença
 
-- [ ] Criar o módulo `:feature:conversas` (adiado da 1.2)
+> Executada em 2026-10-07 na branch `reescrita`. Detalhe em `docs/historico/2026-10-07-03`, `-04` e `-05`. Testada no emulador contra o servidor de dev (`docs/desenvolvimento/emulador.md`). Itens ⛔ dependem das notificações (etapa 5), do web rodando ou do servidor (S15).
+
+- [x] Criar o módulo `:feature:conversas` (adiado da 1.2) — `feature/conversas` (lista, nova conversa, criar grupo, membros)
 ### 2.1 Login e entrada (FC-200, AUT-01)
 - [x] Tela Splash/decisão: sem servidor → Servidor; sem sessão → Login; com sessão → Principal — `MainViewModel` (splash fica até decidir)
 - [x] Tela Login: logo, "Usuário", "Senha", botão "Entrar"/"Entrando…", link "Não tem conta? Criar conta" — `LoginTela` (ícone + "Conversa", mostrar/esconder senha, autofill de usuário/senha, último login preenchido, servidor atual com "Trocar")
@@ -247,12 +249,12 @@
 - [x] Salvar o token e `dispositivo.id`; `trim()` no login — token na sessão cifrada; `dispositivo.id` nas preferências (sobrevive ao logout)
 - [x] Tratar 429/503 (limite de 10/min do nginx) → "Muitas tentativas, aguarde" — `ErroApi.MuitasTentativas` → "Muitas tentativas. Aguarde um minuto e tente de novo."
 - [x] Tratar resposta sem token → "Resposta de login inválida" — "Resposta de login inválida: token ausente."
-- [ ] **Teste:** logar, matar o app, abrir → entra direto
+- [x] **Teste:** logar, matar o app, abrir → entra direto — no emulador: `am force-stop` e reabrir → entra direto
 
 ### 2.2 Dispositivo (FC-201, AUT-04)
 - [x] Após o login: `PATCH /dispositivo {id, nome, modelo, versao_so, plataforma:"android"}` — feito a cada início de sessão (`IniciadorSessao`), não só no login
 - [x] Cortar os textos nos limites (nome/modelo 50, versão 15) para não dar 500 — `AutenticacaoRepositorio.registrarDispositivo` (+ teste)
-- [ ] **Teste:** conferir a linha do dispositivo no banco
+- [x] **Teste:** conferir a linha do dispositivo no banco — no emulador (2026-10-07): linha `dispositivo` com "Google sdk_gphone64_x86_64" / "Android 16" / "android"
 
 ### 2.3 Sessão expirada e logout (FC-202, AUT-03, AUT-05)
 - [x] Observar `SessaoExpirada` (401) em qualquer lugar → limpar a sessão → Login com o aviso "Sessão expirada" — `SessaoRepositorio` encerra → `MainViewModel` leva ao login com "Sua sessão expirou. Entre novamente."
@@ -260,7 +262,7 @@
 - [x] Logout: `PATCH /dispositivo {id, token_fcm:null}` — `AutenticacaoRepositorio.sair` (3 s de limite; sai mesmo sem rede)
 - [ ] Logout: fechar o WS e encerrar a chamada ativa — 🔄 o WS fecha na hora sem sessão (`ConexaoTempoReal`); encerrar a chamada ativa entra com o `CallManager` (etapa 6)
 - [ ] Logout: limpar o Room, o cache de imagens e de áudio e cancelar todas as notificações — 🔄 Room (`LimpezaSessao`), imagens do Coil e notificações (`ConversaApplication`); cache de áudio entra na etapa 4
-- [ ] **Teste:** depois do logout, mensagens do web não geram notificação
+- [ ] **Teste:** depois do logout, mensagens do web não geram notificação — ⛔ não há notificações antes da etapa 5; o logout já cancela todas e limpa o `token_fcm` (conferido no banco: nulo)
 
 ### 2.4 Cadastro (FC-203, AUT-02)
 - [x] Tela "Crie sua conta": Nome, Usuário, E-mail, Senha — `CadastroTela`
@@ -275,59 +277,59 @@
 - [x] Deep link `conversa://chat/{id}?mensagem={id}` — intent-filter + `MainViewModel.receberLink` (sem sessão, abre depois do login); `LinkConversaTest`
 
 ### 2.6 Lista de conversas (FC-204, FC-205, CON-01, CON-13)
-- [ ] Repositório: Room como fonte; `GET /conversas` para atualizar
-- [ ] Ordem: fixadas por `fixada_ordem`, depois as demais por `mensagem_id` desc
-- [ ] Título: `descricao || nome || "Conversa #id"`
-- [ ] Item: avatar, bolinha online (direta), título, etiqueta "Grupo", alfinete se fixada
-- [ ] Prévia: menção `@[Nome](id)` → `@Nome`; bloco de código → `Código (linguagem)`; vazio → "Sem mensagens"
-- [ ] Badge de não lidas (`mensagens_sem_visualizar`), escondido nas arquivadas
-- [ ] Hora: hoje `HH:mm`, ontem "Ontem", senão `dd/MM/aa`
-- [ ] Três pontinhos animados quando alguém digita naquela conversa
-- [ ] Atualizar (sem spinner por cima da lista) em WS 2, 3 e 40, ao enviar e ao ler
-- [ ] Pull-to-refresh
-- [ ] Estados vazio e de erro
-- [ ] **Teste:** comparar lado a lado com o web (8 casos do CON-01)
+- [x] Repositório: Room como fonte; `GET /conversas` para atualizar — `ConversasRepositorio` + `ConversasViewModel`
+- [x] Ordem: fixadas por `fixada_ordem`, depois as demais por `mensagem_id` desc — `ordenarConversas` (+ teste)
+- [x] Título: `descricao || nome || "Conversa #id"` — `Conversa.titulo`
+- [x] Item: avatar, bolinha online (direta), título, etiqueta "Grupo", alfinete se fixada — `LinhaConversa`: avatar com bolinha, título (negrito com não lidas), "Grupo", alfinete
+- [x] Prévia: menção `@[Nome](id)` → `@Nome`; bloco de código → `Código (linguagem)`; vazio → "Sem mensagens" — porte de `resumirTexto` do web (`TextoTest`); vazio com mensagem → "Anexo ou chamada" (pendência S16)
+- [x] Badge de não lidas (`mensagens_sem_visualizar`), escondido nas arquivadas — contador azul (99+), zerado nas arquivadas
+- [x] Hora: hoje `HH:mm`, ontem "Ontem", senão `dd/MM/aa` — `rotuloData` (+ teste)
+- [x] Três pontinhos animados quando alguém digita naquela conversa — `IndicadorDigitando` (WS 4, expira em 4 s); testado no emulador com um 2º cliente
+- [ ] Atualizar (sem spinner por cima da lista) em WS 2, 3 e 40, ao enviar e ao ler — 🔄 WS 2, 3 e 40 atualizam o Room e a lista acompanha (WS 40 testado no emulador: grupo criado por outro usuário apareceu sozinho); "ao enviar e ao ler" entram na etapa 3
+- [x] Pull-to-refresh — `PullToRefreshBox` (conversas + contatos)
+- [x] Estados vazio e de erro — carregando (até a 1ª carga), vazio, nada encontrado, erro em tela cheia com "Tentar de novo" (só com cache vazio)
+- [ ] **Teste:** comparar lado a lado com o web (8 casos do CON-01) — ⛔ o web não está rodando nesta máquina; as regras do CON-01 têm teste unitário (`ListaConversasTest`, `ConversasViewModelTest`) e foram vistas no emulador
 
 ### 2.7 Filtro e "Nova conversa" (FC-206, CON-02)
-- [ ] Campo de busca: filtra por título e prévia
-- [ ] Com termo, mostrar também as arquivadas (com a etiqueta "Arquivada")
-- [ ] Seção "Nova conversa" com contatos sem conversa direta (nome/login/e-mail)
+- [x] Campo de busca: filtra por título e prévia — sem acento e sem maiúscula (`conversaCombina`)
+- [x] Com termo, mostrar também as arquivadas (com a etiqueta "Arquivada") — com a etiqueta "Arquivada"
+- [x] Seção "Nova conversa" com contatos sem conversa direta (nome/login/e-mail) — também na tela "Nova conversa" (botão lápis)
 
 ### 2.8 Menu da conversa, fixar e arquivar (FC-207, FC-208, FC-209)
-- [ ] Toque longo no item → bottom sheet: Fixar/Desafixar, Arquivar/Desarquivar
-- [ ] Fixar: adicionar ao fim das fixadas → `PATCH /conversa/fixadas {conversas:[ids na ordem]}`
-- [ ] Reordenar fixadas: arrastar (ou "mover para cima/baixo") → mesmo PATCH com a lista inteira
-- [ ] Otimista; erro → recarregar `GET /conversas` e mostrar o aviso
-- [ ] Arquivar: `PATCH /conversa/arquivada {conversa, arquivada:true}` → tirar das fixadas, cancelar a notificação
-- [ ] Seção recolhível "Arquivadas (N)" no fim da lista
-- [ ] Arquivada: sem som e sem notificação
+- [x] Toque longo no item → bottom sheet: Fixar/Desafixar, Arquivar/Desarquivar — `MenuConversa` (+ "Mover para cima/baixo" e "Membros do grupo"); ação de acessibilidade "Mais opções"
+- [x] Fixar: adicionar ao fim das fixadas → `PATCH /conversa/fixadas {conversas:[ids na ordem]}` — conferido no banco pelo emulador
+- [x] Reordenar fixadas: arrastar (ou "mover para cima/baixo") → mesmo PATCH com a lista inteira — "Mover para cima/baixo" no menu (arrastar fica para depois); conferido no banco
+- [x] Otimista; erro → recarregar `GET /conversas` e mostrar o aviso — `ConversasRepositorioTest`: erro → recarrega; aviso no Snackbar
+- [ ] Arquivar: `PATCH /conversa/arquivada {conversa, arquivada:true}` → tirar das fixadas, cancelar a notificação — 🔄 arquivar desfixa e reordena as outras (conferido no banco); cancelar a notificação entra na etapa 5
+- [x] Seção recolhível "Arquivadas (N)" no fim da lista
+- [ ] Arquivada: sem som e sem notificação — ⛔ notificações são da etapa 5
 
 ### 2.9 Contatos e conversa direta (FC-210, CON-06, CON-11)
-- [ ] Tela/aba Contatos: `GET /usuario/contatos`, busca local
-- [ ] Avatar: usar o `avatar_url` do contato ou, na falta, o da conversa direta
-- [ ] "Obter ou criar direta": procurar `tipo=1 && destinatario_id=contato`
-- [ ] Se não existe: `PUT /conversa {descricao:"", tipo:1}`
-- [ ] → `PUT /conversa/usuario {conversa_id, usuario_id:eu}`
-- [ ] → `PUT /conversa/usuario {conversa_id, usuario_id:contato}`
-- [ ] → `GET /conversas` → abrir o chat
-- [ ] Falha no meio → mostrar o erro (e registrar a conversa órfã no log); depende de S8 para ficar atômico
+- [x] Tela/aba Contatos: `GET /usuario/contatos`, busca local — tela "Nova conversa" (lápis na lista): contatos, filtro e "Novo grupo"; atualiza ao abrir
+- [x] Avatar: usar o `avatar_url` do contato ou, na falta, o da conversa direta — `avatarDoContato`
+- [x] "Obter ou criar direta": procurar `tipo=1 && destinatario_id=contato` — `diretaCom`
+- [x] Se não existe: `PUT /conversa {descricao:"", tipo:1}`
+- [x] → `PUT /conversa/usuario {conversa_id, usuario_id:eu}`
+- [x] → `PUT /conversa/usuario {conversa_id, usuario_id:contato}` — ordem conferida em `ConversasRepositorioTest`; no emulador a conversa nasceu com os 2 membros
+- [x] → `GET /conversas` → abrir o chat — abre o chat (provisório até a etapa 3)
+- [x] Falha no meio → mostrar o erro (e registrar a conversa órfã no log); depende de S8 para ficar atômico — erro no Snackbar; `Timber.w` com o id da conversa incompleta
 
 ### 2.10 Grupos (FC-211, FC-212, CON-07, CON-08)
-- [ ] Tela "Criar grupo": "Nome do grupo", busca, checkboxes de contatos
-- [ ] Validações: "Informe o nome do grupo." / "Selecione ao menos um usuário."
-- [ ] `PUT /conversa {descricao, tipo:2}` → `PUT /conversa/usuario` para cada membro **e para mim** → abrir o grupo
-- [ ] Tela "Membros do grupo": `GET /conversa/usuarios?conversa=` (id = `conversa_usuario_id`)
-- [ ] Renomear: `PATCH /conversa {id, descricao}` → "Grupo renomeado com sucesso."
-- [ ] Adicionar: seletor de contatos fora do grupo → `PUT /conversa/usuario`
-- [ ] Remover (não para mim mesmo): `DELETE /conversa/usuario?id=<conversa_usuario_id>`
-- [ ] Sair do grupo: `DELETE /conversa/usuario?id=<meu conversa_usuario_id>`
+- [x] Tela "Criar grupo": "Nome do grupo", busca, checkboxes de contatos — `CriarGrupo.kt`
+- [x] Validações: "Informe o nome do grupo." / "Selecione ao menos um usuário." — `CriarGrupoViewModelTest` + emulador
+- [x] `PUT /conversa {descricao, tipo:2}` → `PUT /conversa/usuario` para cada membro **e para mim** → abrir o grupo — em paralelo, sem duplicar; testado no emulador
+- [x] Tela "Membros do grupo": `GET /conversa/usuarios?conversa=` (id = `conversa_usuario_id`) — `Membros.kt`; lista vazia = "Você não faz parte deste grupo."
+- [x] Renomear: `PATCH /conversa {id, descricao}` → "Grupo renomeado com sucesso." — testado no emulador (conferido no banco)
+- [x] Adicionar: seletor de contatos fora do grupo → `PUT /conversa/usuario` — seletor em bottom sheet com quem está fora do grupo
+- [ ] Remover (não para mim mesmo): `DELETE /conversa/usuario?id=<conversa_usuario_id>` — ⛔ o servidor só aceita remover o próprio vínculo (403 para os outros; o botão do web sempre falha). Não oferecido; a tela explica. Pendência S15
+- [x] Sair do grupo: `DELETE /conversa/usuario?id=<meu conversa_usuario_id>` — com confirmação de perigo; volta à lista
 
 ### 2.11 Presença e conexão (FC-213, FC-214, PRE-01, GER-02)
-- [ ] `PresencaRepository`: conjunto de ids online a partir de `GET /contatos/online` + WS 60 `{usuario_id, online}`
-- [ ] Bolinha verde na lista, no cabeçalho do chat (direta) e nos contatos
-- [ ] Banner "Sem conexão em tempo real", depois de 5 s desconectado, com "Tentar agora"
-- [ ] Atualização periódica de 8 s (mensagens novas + chamadas pendentes) só enquanto o socket está fora, como o web (§1.4 do doc 03)
-- [ ] **Teste:** abrir e fechar o web com outro usuário → a bolinha acende e apaga no celular
+- [x] `PresencaRepository`: conjunto de ids online a partir de `GET /contatos/online` + WS 60 `{usuario_id, online}` — `PresencaRepositorio` (+ teste)
+- [x] Bolinha verde na lista, no cabeçalho do chat (direta) e nos contatos — lista, cabeçalho do chat e contatos ("Nova conversa")
+- [x] Banner "Sem conexão em tempo real", depois de 5 s desconectado, com "Tentar agora" — `FaixaSemConexao` + `ConexaoTempoReal.semTempoReal` (+ `ConexaoTempoRealTest`); texto do web
+- [x] Atualização periódica de 8 s (mensagens novas + chamadas pendentes) só enquanto o socket está fora, como o web (§1.4 do doc 03) — `ConexaoTempoReal` → `SyncManager.atualizacaoPeriodica` (+ teste)
+- [x] **Teste:** abrir e fechar o web com outro usuário → a bolinha acende e apaga no celular — no emulador com um 2º cliente (Node, conta B): bolinha e "digitando" acendem e apagam
 
 ---
 

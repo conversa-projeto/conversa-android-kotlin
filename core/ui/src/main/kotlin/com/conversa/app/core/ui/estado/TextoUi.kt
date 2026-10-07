@@ -21,3 +21,9 @@ fun TextoUi.resolver(): String = when (this) {
     is TextoUi.Recurso -> stringResource(id)
     is TextoUi.Literal -> texto
 }
+
+/** Fora da composição (ex.: ao coletar um evento para mostrar no Snackbar). */
+fun TextoUi.resolver(contexto: android.content.Context): String = when (this) {
+    is TextoUi.Recurso -> contexto.getString(id)
+    is TextoUi.Literal -> texto
+}

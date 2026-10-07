@@ -41,6 +41,8 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.autofill.ContentType
 import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.focusRequester
+import androidx.compose.ui.platform.LocalFocusManager
+import androidx.compose.ui.platform.LocalSoftwareKeyboardController
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.LiveRegionMode
 import androidx.compose.ui.semantics.contentType
@@ -78,6 +80,8 @@ fun LoginRotaTela(
 ) {
     val estado by viewModel.estado.collectAsStateWithLifecycle()
     val avisos = LocalAvisos.current
+    val foco = LocalFocusManager.current
+    val teclado = LocalSoftwareKeyboardController.current
     val textoAviso = when (aviso) {
         AvisoLogin.NENHUM -> null
         AvisoLogin.SESSAO_EXPIRADA -> stringResource(R.string.login_sessao_expirada)
@@ -87,7 +91,12 @@ fun LoginRotaTela(
     LaunchedEffect(textoAviso) { textoAviso?.let { avisos.showSnackbar(it, withDismissAction = true) } }
     ColetarEventos(viewModel.eventos.fluxo) { evento ->
         when (evento) {
-            EventoLogin.Entrou -> aoEntrar()
+            EventoLogin.Entrou -> {
+                // Sem isso o foco e o teclado passam para o primeiro campo da próxima tela.
+                foco.clearFocus()
+                teclado?.hide()
+                aoEntrar()
+            }
         }
     }
     LoginTela(
@@ -113,8 +122,12 @@ fun LoginTela(
     var senhaVisivel by rememberSaveable { mutableStateOf(false) }
     val focoUsuario = remember { FocusRequester() }
     val focoSenha = remember { FocusRequester() }
-    // Foco inicial no usuário (como o web); se já vem preenchido, na senha.
-    LaunchedEffect(Unit) { runCatching { if (estado.usuario.isEmpty()) focoUsuario.requestFocus() else focoSenha.requestFocus() } }
+    // Foco inicial no usuário (como o web); quando ele chega preenchido (último login ou cadastro), na senha.
+
+    // Decide uma vez só, depois de ler o último login (senão a primeira letra digitada levaria o foco embora).
+    LaunchedEffect(estado.pronto) {
+        if (estado.pronto) runCatching { if (estado.usuario.isEmpty()) focoUsuario.requestFocus() else focoSenha.requestFocus() }
+    }
 
     Scaffold { margens ->
         Column(

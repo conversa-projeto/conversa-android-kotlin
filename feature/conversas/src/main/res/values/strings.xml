@@ -1,0 +1,62 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- Lista (CON-01…05); textos do web quando existem -->
+    <string name="conversas_titulo">Conversas</string>
+    <string name="pesquisar">Pesquisar…</string>
+    <string name="limpar_busca">Limpar a pesquisa</string>
+    <string name="conversas_vazio">Nenhuma conversa ainda</string>
+    <string name="conversas_vazio_descricao">Toque no lápis para começar uma conversa ou criar um grupo.</string>
+    <string name="busca_vazia">Nada encontrado</string>
+    <string name="nova_conversa">Nova conversa</string>
+    <string name="arquivadas_n">Arquivadas (%1$d)</string>
+    <string name="etiqueta_grupo">Grupo</string>
+    <string name="etiqueta_arquivada">Arquivada</string>
+    <string name="fixada">Fixada</string>
+    <string name="mais_opcoes">Mais opções</string>
+    <string name="fixar">Fixar</string>
+    <string name="desafixar">Desafixar</string>
+    <string name="mover_cima">Mover para cima</string>
+    <string name="mover_baixo">Mover para baixo</string>
+    <string name="arquivar">Arquivar</string>
+    <string name="desarquivar">Desarquivar</string>
+    <plurals name="nao_lidas">
+        <item quantity="one">%d mensagem não lida</item>
+        <item quantity="other">%d mensagens não lidas</item>
+    </plurals>
+
+    <!-- Nova conversa / contatos (CON-06, CON-11) -->
+    <string name="contatos_filtrar">Filtrar contatos</string>
+    <string name="novo_grupo">Novo grupo</string>
+    <string name="contatos_vazio">Nenhum contato</string>
+
+    <!-- Criar grupo (CON-07), textos do web -->
+    <string name="criar_grupo_titulo">Criar grupo</string>
+    <string name="criar_grupo_nome">Nome do grupo</string>
+    <string name="criar_grupo_exemplo">Ex: Projeto Alpha</string>
+    <string name="criar_grupo_selecionar">Selecionar usuários</string>
+    <string name="criar_grupo_criar">Criar</string>
+    <string name="criar_grupo_criando">Criando…</string>
+    <string name="criar_grupo_sem_nome">Informe o nome do grupo.</string>
+    <string name="criar_grupo_sem_membros">Selecione ao menos um usuário.</string>
+    <plurals name="selecionados">
+        <item quantity="one">%d selecionado</item>
+        <item quantity="other">%d selecionados</item>
+    </plurals>
+
+    <!-- Membros (CON-08), textos do web -->
+    <string name="membros_titulo">Membros do grupo</string>
+    <string name="membros_renomear">Renomear</string>
+    <string name="membros_salvando">Salvando…</string>
+    <string name="membros_renomeado">Grupo renomeado com sucesso.</string>
+    <string name="membros_adicionar">Adicionar participante</string>
+    <string name="membros_adicionando">Adicionando…</string>
+    <string name="membros_adicionado">Participante adicionado com sucesso.</string>
+    <string name="membros_voce">Você</string>
+    <string name="membros_sair">Sair do grupo</string>
+    <string name="membros_sair_confirmar">Você deixa de receber as mensagens deste grupo e só volta se alguém adicionar você de novo.</string>
+    <string name="membros_saindo">Saindo…</string>
+    <string name="membros_sem_acesso">Você não faz parte deste grupo.</string>
+    <string name="membros_remover_aviso">Hoje o servidor só permite que cada pessoa saia por conta própria; não é possível remover outros participantes.</string>
+    <string name="membros_todos">Todos os contatos já estão no grupo.</string>
+    <string name="voltar">Voltar</string>
+</resources>
