@@ -8,6 +8,7 @@ import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.Call
 import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.Phone
+import androidx.compose.material.icons.filled.PlayArrow
 import androidx.compose.material.icons.filled.Settings
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
@@ -27,7 +28,9 @@ fun CallControls(
     onToggleSpeaker: () -> Unit,
     onAddParticipant: () -> Unit,
     onEndCall: () -> Unit,
-    modifier: Modifier = Modifier
+    modifier: Modifier = Modifier,
+    isVideoOn: Boolean = false,
+    onToggleVideo: (() -> Unit)? = null
 ) {
     Column(
         modifier = modifier.fillMaxWidth(),
@@ -56,6 +59,18 @@ fun CallControls(
                 isActive = isSpeakerOn,
                 onClick = onToggleSpeaker
             )
+
+            // Botão Vídeo (upgrade áudio→vídeo). Ícone placeholder (PlayArrow) — trocar por
+            // Videocam quando material-icons-extended for adicionado.
+            if (onToggleVideo != null) {
+                CallActionButton(
+                    icon = Icons.Default.PlayArrow,
+                    label = if (isVideoOn) "Vídeo on" else "Vídeo",
+                    backgroundColor = if (isVideoOn) Color(0xFF22C55E) else Color(0xFF4A5568),
+                    isActive = isVideoOn,
+                    onClick = onToggleVideo
+                )
+            }
 
             // Botão Adicionar (SEMPRE DESABILITADO)
             CallActionButton(

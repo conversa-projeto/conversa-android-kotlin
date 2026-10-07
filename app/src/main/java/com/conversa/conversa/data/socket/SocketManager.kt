@@ -2,10 +2,16 @@ package com.conversa.conversa.data.socket
 
 import android.content.Context
 import android.util.Log
+import com.conversa.conversa.BuildConfig
 import kotlinx.coroutines.*
 import okhttp3.*
 import org.json.JSONObject
+import java.security.SecureRandom
+import java.security.cert.X509Certificate
 import java.util.concurrent.TimeUnit
+import javax.net.ssl.SSLContext
+import javax.net.ssl.TrustManager
+import javax.net.ssl.X509TrustManager
 
 /**
  * Gerenciador de WebSocket para notificações em tempo real
@@ -48,13 +54,26 @@ class SocketManager(private val context: Context) {
     
     private var webSocket: WebSocket? = null
     private val okHttpClient: OkHttpClient by lazy {
-        OkHttpClient.Builder()
+        val builder = OkHttpClient.Builder()
             .connectTimeout(30, TimeUnit.SECONDS)
             .readTimeout(0, TimeUnit.SECONDS) // Sem timeout de leitura (WebSocket mantém conexão)
             .writeTimeout(30, TimeUnit.SECONDS)
             // Sem pingInterval - evita desconexão por timeout de pong
             .retryOnConnectionFailure(true) // Retry automático
-            .build()
+
+        // Em DEBUG, confia em certificados self-signed (mkcert) do proxy wss:// — mesmo
+        // padrão de RetrofitClient/WhipWhepClient. NUNCA habilitar em release.
+        if (BuildConfig.DEBUG) {
+            val trustAll = arrayOf<TrustManager>(object : X509TrustManager {
+                override fun checkClientTrusted(chain: Array<X509Certificate>?, authType: String?) {}
+                override fun checkServerTrusted(chain: Array<X509Certificate>?, authType: String?) {}
+                override fun getAcceptedIssuers(): Array<X509Certificate> = arrayOf()
+            })
+            val sslContext = SSLContext.getInstance("TLS").apply { init(null, trustAll, SecureRandom()) }
+            builder.sslSocketFactory(sslContext.socketFactory, trustAll[0] as X509TrustManager)
+            builder.hostnameVerifier { _, _ -> true }
+        }
+        builder.build()
     }
 
     private var currentHost: String? = null
@@ -109,9 +128,11 @@ class SocketManager(private val context: Context) {
 
         scope.launch {
             try {
-                Log.d(TAG, "Conectando ao WebSocket: ws://$host:$port")
-                
-                val url = "ws://$host:$port"
+                // WS pelo proxy nginx com TLS, espelhando o cliente web (wss://host/ws/).
+                // `port` agora é a porta do proxy (ex.: 4430), não a 9090 direta.
+                val url = "wss://$host:$port/ws/"
+                Log.d(TAG, "Conectando ao WebSocket: $url")
+
                 val request = Request.Builder()
                     .url(url)
                     .build()
@@ -257,7 +278,14 @@ class SocketManager(private val context: Context) {
                         Log.d(TAG, "NovaMensagem (legacy payload) conv=$conversaId")
                         onNovaMensagem?.invoke(conversaId, remetenteId, destinatarioId, titulo, subtitulo, mensagem, tipoConversa)
                     } else {
-                        Log.w(TAG, "NovaMensagem sem formato reconhecido: $json")
+                        // Formato REAL do backend Delphi (WebSocket.pas:290): { tipo:2, titulo:string, mensagem:string }.
+                        // NAO ha conversa_id — este frame e apenas um GATILHO (como no cliente web). Repassamos com
+                        // conversaId=0 ("desconhecido"); os consumidores recarregam via REST: MainActivity recarrega a
+                        // lista de conversas e ChatActivity re-busca as mensagens da conversa aberta (deduplicando por id).
+                        val titulo = obj.optString("titulo", "")
+                        val texto = obj.optString("mensagem", "")
+                        Log.d(TAG, "NovaMensagem (gatilho backend) titulo=$titulo")
+                        onNovaMensagem?.invoke(0, 0, 0, titulo, titulo, texto, 1)
                     }
                 }
 

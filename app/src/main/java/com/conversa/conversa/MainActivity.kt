@@ -461,10 +461,14 @@ class MainActivity : AppCompatActivity(),
             val apiUrl = userPreferences.apiUrl.first()
             
             if (!apiUrl.isNullOrEmpty()) {
-                val host = apiUrl.replace("http://", "")
-                                 .replace("https://", "")
-                                 .split(":")[0]
-                val port = 9090
+                // WebSocket vai pelo MESMO host:porta do proxy (ex.: 4430) via wss:///ws/,
+                // como o cliente web. Antes ia direto na 9090 (texto puro) — divergente.
+                val ehHttps = apiUrl.startsWith("https")
+                val semEsquema = apiUrl.removePrefix("http://").removePrefix("https://")
+                val hostPorta = semEsquema.substringBefore("/")
+                val host = hostPorta.substringBefore(":")
+                val port = hostPorta.substringAfter(":", "").toIntOrNull()
+                    ?: if (ehHttps) 443 else 80
 
                 val token = userPreferences.authToken.first() ?: ""
                 

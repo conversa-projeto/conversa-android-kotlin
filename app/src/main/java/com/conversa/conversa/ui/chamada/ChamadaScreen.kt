@@ -72,14 +72,34 @@ fun ChamadaScreen(
         }
 
         ChamadaService.EstadoChamadaService.EM_CHAMADA -> {
-            // Tela de chamada ativa
-            val participantes = chamadaService.getParticipantes()
+            // Reativo: recompõe quando os tracks de vídeo chegam (ontrack) ou peers mudam.
+            val peers by chamadaService.peersFlow.collectAsState()
+            val localVideoTrack by chamadaService.localVideoTrackFlow.collectAsState()
+
+            val participantes = chamada?.usuarios
+                ?.filter { it.usuarioId != chamadaService.getUsuarioIdAtual() }
+                ?.map { u ->
+                    val peer = peers[u.usuarioId]
+                    ParticipanteUI(
+                        id = u.usuarioId,
+                        nome = u.usuarioNome,
+                        fotoUrl = null,
+                        status = if (peer != null) "Conectado" else "Aguardando",
+                        videoTrack = peer?.videoTrack
+                    )
+                } ?: emptyList()
 
             ActiveCallScreen(
                 participants = participantes,
                 timerText = timer,
                 isMuted = chamadaService.isMuted(),
                 isSpeakerOn = chamadaService.isSpeakerOn(),
+                localVideoTrack = localVideoTrack,
+                eglBaseContext = chamadaService.eglBaseContext,
+                isVideoOn = localVideoTrack != null,
+                onToggleVideo = {
+                    chamadaService.alternarVideo(localVideoTrack == null)
+                },
                 onToggleMute = {
                     chamadaService.toggleMute(!chamadaService.isMuted())
                 },

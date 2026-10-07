@@ -56,6 +56,8 @@ class ChatActivity : AppCompatActivity(), SocketService.CallListener {
     private var timerRunnable: Runnable? = null
     
     private var conversaId: Int = 0
+    private var digitandoJob: kotlinx.coroutines.Job? = null
+    private var ultimoDigitandoMs: Long = 0L
     private var conversaNome: String = ""
     private var conversaTipo: Int = 1 // 1 = Chat 1:1, 2 = Grupo
     private var destinatarioId: Int? = null
@@ -251,6 +253,22 @@ class ChatActivity : AppCompatActivity(), SocketService.CallListener {
                 val temTexto = !s.isNullOrEmpty()
                 binding.btnEnviar.visibility = if (temTexto) View.VISIBLE else View.GONE
                 binding.btnMicrofone.visibility = if (temTexto) View.GONE else View.VISIBLE
+
+                // Broadcast "digitando" ao servidor (throttle ~2.5s, como o cliente web)
+                if (temTexto && conversaId > 0 && authToken.isNotEmpty()) {
+                    val agora = System.currentTimeMillis()
+                    if (agora - ultimoDigitandoMs > 2500) {
+                        ultimoDigitandoMs = agora
+                        lifecycleScope.launch {
+                            try {
+                                RetrofitClient.api.broadcastDigitando(
+                                    "Bearer $authToken",
+                                    com.conversa.conversa.data.model.DigitandoRequest(conversaId)
+                                )
+                            } catch (_: Exception) { /* silencioso: indicador é best-effort */ }
+                        }
+                    }
+                }
             }
         })
     }
@@ -1077,8 +1095,10 @@ class ChatActivity : AppCompatActivity(), SocketService.CallListener {
     ) {
         Log.d(TAG, "📨 Nova mensagem recebida via socket - Conversa: $conversaIdRecebida, Esta: $conversaId")
         
-        // Só processa se for uma mensagem desta conversa
-        if (conversaIdRecebida != conversaId) {
+        // Processa se for desta conversa OU se vier sem id (gatilho do backend: conversaId=0),
+        // caso em que recarregamos a conversa aberta mesmo assim. buscarEAdicionarNovaMensagem()
+        // deduplica por id, então é seguro.
+        if (conversaIdRecebida != 0 && conversaIdRecebida != conversaId) {
             Log.d(TAG, "Mensagem ignorada - conversa diferente")
             return
         }
@@ -1114,6 +1134,17 @@ class ChatActivity : AppCompatActivity(), SocketService.CallListener {
     /**
      * Busca os dados completos da nova mensagem da API e adiciona à lista
      */
+    override fun onDigitando(conversaIdRecebida: Int, usuarioIdRemetente: Int) {
+        // Mostra "digitando..." no cabeçalho por 4s quando o OUTRO usuário desta conversa digita.
+        if (conversaIdRecebida != conversaId || usuarioIdRemetente == usuarioId) return
+        digitandoJob?.cancel()
+        digitandoJob = lifecycleScope.launch {
+            binding.tvStatusUsuario.text = "digitando..."
+            kotlinx.coroutines.delay(4000)
+            binding.tvStatusUsuario.text = "online"
+        }
+    }
+
     private fun buscarEAdicionarNovaMensagem() {
         lifecycleScope.launch {
             try {

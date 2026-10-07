@@ -335,6 +335,14 @@ class ChamadaService : Service() {
             }
     }
 
+    // ═══ Vídeo / render (exposto para a UI Compose) ═════════════════════════
+    /** Mapa reativo de peers remotos (id → PeerRemoto com videoTrack). */
+    val peersFlow get() = webRTCManager.peers
+    /** Track de vídeo local (preview da própria câmera; null = sem vídeo). */
+    val localVideoTrackFlow get() = webRTCManager.localVideoTrackFlow
+    /** Contexto EGL compartilhado para os SurfaceViewRenderer. */
+    val eglBaseContext get() = webRTCManager.eglBaseContext
+
     // ═══ Internal ═══════════════════════════════════════════════════════════
 
     /**

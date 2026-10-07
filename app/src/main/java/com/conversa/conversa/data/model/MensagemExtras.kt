@@ -66,7 +66,8 @@ data class PesquisaResultado(
 
 // Broadcast de digitando/gravando — POST /conversa/digitando ou /conversa/gravando
 data class DigitandoRequest(
-    @SerializedName("conversa_id") val conversaId: Int,
+    // Backend lê `id` (POST /conversa/digitando e /gravando: GetValue<Integer>('id')), igual ao web.
+    @SerializedName("id") val conversaId: Int,
 )
 
 // Contato (adicao/remocao) — PUT /usuario/contato?relacionamento_id=... | DELETE /usuario/contato?id=...

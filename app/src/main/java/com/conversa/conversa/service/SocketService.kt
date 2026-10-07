@@ -46,6 +46,9 @@ class SocketService : Service() {
         fun onSocketConectado()
         fun onSocketDesconectado()
         fun onSocketErro(erro: String)
+        // Métodos com corpo default: implementadores existentes não precisam sobrescrever.
+        fun onDigitando(conversaId: Int, usuarioId: Int) {}
+        fun onGravandoAudio(conversaId: Int, usuarioId: Int) {}
     }
 
     // Binder para vinculação com Activities
@@ -369,6 +372,13 @@ class SocketService : Service() {
             }
         }
 
+        socketManager.onDigitando = { conversaId, usuarioId ->
+            if (isAppBound && callListener != null) callListener?.onDigitando(conversaId, usuarioId)
+        }
+        socketManager.onGravandoAudio = { conversaId, usuarioId ->
+            if (isAppBound && callListener != null) callListener?.onGravandoAudio(conversaId, usuarioId)
+        }
+
         Log.d(TAG, "✅ Listeners do SocketManager re-registrados")
     }
 
@@ -566,6 +576,13 @@ class SocketService : Service() {
             if (isAppBound && callListener != null) {
                 callListener?.onNovaMensagem(conversaId, remetenteId, destinatarioId, titulo, subtitulo, mensagem, tipoConversa)
             }
+        }
+
+        socketManager.onDigitando = { conversaId, usuarioId ->
+            if (isAppBound && callListener != null) callListener?.onDigitando(conversaId, usuarioId)
+        }
+        socketManager.onGravandoAudio = { conversaId, usuarioId ->
+            if (isAppBound && callListener != null) callListener?.onGravandoAudio(conversaId, usuarioId)
         }
 
         socketManager.onConectado = {

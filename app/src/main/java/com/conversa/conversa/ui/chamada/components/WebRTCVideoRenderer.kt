@@ -29,6 +29,9 @@ fun WebRTCVideoRenderer(
     modifier: Modifier = Modifier,
     scalingType: RendererCommon.ScalingType = RendererCommon.ScalingType.SCALE_ASPECT_FILL,
 ) {
+    // Mantemos referencia explicita ao renderer para conseguir addSink/removeSink corretamente.
+    val rendererRef = remember { arrayOfNulls<SurfaceViewRenderer>(1) }
+
     Box(modifier = modifier) {
         if (videoTrack != null) {
             AndroidView(
@@ -39,21 +42,24 @@ fun WebRTCVideoRenderer(
                         setEnableHardwareScaler(true)
                         setScalingType(scalingType)
                         setMirror(mirror)
+                        rendererRef[0] = this
+                        // BUGFIX: sem este addSink o quadro nunca chega ao surface (renderiza preto).
+                        videoTrack.addSink(this)
                     }
                 },
                 update = { renderer ->
-                    // Caso o track mude, reatrelar a sink
                     renderer.setMirror(mirror)
                 }
             )
 
             DisposableEffect(videoTrack) {
-                // Re-obtemos o renderer via pequena gambiarra: adicionar via factory novamente nao eh
-                // possivel aqui. A solucao correta requer um wrapper. Neste Composable simplificado,
-                // assumimos que o track permanece o mesmo enquanto este Composable vive.
-                //
-                // Para cenario de troca dinamica de track, usar um `key(videoTrack) { ... }` em volta.
-                onDispose { }
+                onDispose {
+                    rendererRef[0]?.let { renderer ->
+                        try { videoTrack.removeSink(renderer) } catch (_: Exception) {}
+                        try { renderer.release() } catch (_: Exception) {}
+                    }
+                    rendererRef[0] = null
+                }
             }
         }
     }
