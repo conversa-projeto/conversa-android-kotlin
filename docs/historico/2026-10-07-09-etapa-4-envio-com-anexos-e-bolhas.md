@@ -4,7 +4,7 @@
 - **Tipo:** código / testes
 - **Itens:** `TODO.md` 4.1, 4.2, 4.3, 4.4, 4.7 (parte); ANX-01, ANX-03, ANX-04, ANX-05, ANX-09
 - **Branch:** `reescrita`
-- **Commits:** _(preencher)_
+- **Commits:** `c5cefbb`
 
 ## Contexto
 Segundo bloco da etapa 4. O usuário pediu uma pausa no meio. Este commit deixa tudo compilando e testado na parte de dados. A parte de tela que já existe ainda **não foi testada no emulador**: no TODO ela está com 🔄, nunca ✅.
