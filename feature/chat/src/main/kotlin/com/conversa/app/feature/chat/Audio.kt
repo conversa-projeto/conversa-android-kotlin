@@ -130,7 +130,7 @@ fun PlayerNaBolha(mensagem: Mensagem, conteudo: Conteudo, propria: Boolean, cor:
  * de toque é mais alta que a barra desenhada. Leitores de tela veem um controle de valor.
  */
 @Composable
-private fun BarraAudio(
+internal fun BarraAudio(
     fracao: Float,
     habilitada: Boolean,
     corTrilha: Color,

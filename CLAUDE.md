@@ -72,7 +72,7 @@ Instruções para quem trabalha neste repositório, pessoas ou agentes de IA. Le
 - `:core:database` — Room (cache local).
 - `:core:data` — repositórios, `ConexaoTempoReal`, `SyncManager`.
 - `:core:ui` — tema (cores do FMX: `docs/design/cores.md`), componentes, `UiState`.
-- `:core:media` — mídia com o Media3: `PlayerAudio` (um áudio por vez).
+- `:core:media` — mídia: `PlayerAudio` (Media3, um áudio por vez) e `GravadorAudio` (microfone em AAC/M4A, trechos juntados por `juntarTrechos`).
 - `:core:testing` — regras de teste e fixtures JSON do contrato.
 - `:feature:*` — uma por área (hoje: `auth` — servidor, login, cadastro; `conversas` — lista, nova conversa, grupos, membros; `chat` — a conversa aberta).
 - Convention plugins em `build-logic/`. O app antigo está em `app-legado/`, fora do build.

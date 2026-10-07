@@ -67,10 +67,15 @@ class FontesArquivoAndroid @Inject constructor(@ApplicationContext private val c
 
     override fun liberar(uri: String) {
         val alvo = uri.toUri()
-        // Foto da câmera: é um arquivo do próprio app (FileProvider, pasta "camera" do cache).
+        // Foto da câmera ou gravação: arquivo do próprio app (FileProvider, pastas "camera" e "gravacoes" do cache).
         if (alvo.authority == contexto.packageName + ".arquivos") {
-            val segmentos = alvo.pathSegments
-            if (segmentos.size == 2 && segmentos[0] == "camera") File(File(contexto.cacheDir, "camera"), nomeSeguro(segmentos[1])).delete()
+            val segmentos = alvo.pathSegments.map(::nomeSeguro)
+            when {
+                segmentos.size == 2 && segmentos[0] == "camera" -> File(File(contexto.cacheDir, "camera"), segmentos[1]).delete()
+                // gravacoes/<n>/audio-....m4a: apaga a pasta da gravação inteira (trechos que sobraram).
+                segmentos.size == 3 && segmentos[0] == "gravacoes" ->
+                    File(File(contexto.cacheDir, "gravacoes"), segmentos[1]).deleteRecursively()
+            }
             return
         }
         try {
@@ -81,8 +86,9 @@ class FontesArquivoAndroid @Inject constructor(@ApplicationContext private val c
     }
 }
 
-/** Só o nome do arquivo: sem caminho (`../`), sem barras e sem caracteres de controle. */
+/** Só o nome do arquivo: sem caminho (`../`), sem barras, sem caracteres de controle e nunca `.` ou `..`. */
 fun nomeSeguro(nome: String): String = nome.substringAfterLast('/').substringAfterLast('\\')
     .filter { it >= ' ' && it != ':' }
     .trim()
-    .ifBlank { "arquivo" }
+    .takeUnless { it.isBlank() || it.all { c -> c == '.' } }
+    ?: "arquivo"

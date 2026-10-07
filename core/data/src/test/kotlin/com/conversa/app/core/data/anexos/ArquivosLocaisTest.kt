@@ -70,6 +70,17 @@ class ArquivosLocaisTest {
         assertThat(minio.requestCount).isEqualTo(1)
     }
 
+    @Test
+    fun `nome seguro nunca sai da pasta`() {
+        assertThat(nomeSeguro("../../segredo.txt")).isEqualTo("segredo.txt")
+        assertThat(nomeSeguro("C:\\Windows\\a.exe")).isEqualTo("a.exe")
+        assertThat(nomeSeguro("..")).isEqualTo("arquivo")
+        assertThat(nomeSeguro(".")).isEqualTo("arquivo")
+        assertThat(nomeSeguro("  ")).isEqualTo("arquivo")
+        assertThat(nomeSeguro("nota\u0000fiscal.pdf")).isEqualTo("notafiscal.pdf")
+        assertThat(nomeSeguro(".bashrc")).isEqualTo(".bashrc")
+    }
+
     private fun responder403DepoisOk() {
         every { anexos.esquecerUrl(any()) } just Runs
         minio.enqueue(MockResponse.Builder().code(403).build())

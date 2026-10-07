@@ -1,6 +1,7 @@
 package com.conversa.app.core.data.anexos
 
 import android.content.Context
+import androidx.core.content.FileProvider
 import com.conversa.app.core.network.di.DespachanteEs
 import com.conversa.app.core.network.http.ErroApi
 import dagger.hilt.android.qualifiers.ApplicationContext
@@ -33,6 +34,13 @@ class ArquivosLocais @Inject constructor(
     private val cliente = okHttp
 
     val pastaCamera: File get() = File(contexto.cacheDir, "camera").apply { mkdirs() }
+
+    /** Pasta nova para uma gravação de áudio (trechos e o arquivo final): `cache/gravacoes/<n>/`. */
+    fun novaPastaGravacao(): File = File(contexto.cacheDir, "gravacoes/${System.nanoTime()}").apply { mkdirs() }
+
+    /** URI do `FileProvider` para um arquivo do cache do app (foto da câmera, gravação), para entrar na fila de envio. */
+    fun uriCompartilhado(arquivo: File): String =
+        FileProvider.getUriForFile(contexto, contexto.packageName + ".arquivos", arquivo).toString()
 
     /**
      * Baixa o anexo (se ainda não está no cache) e devolve o arquivo. Grava num `.part`
@@ -71,6 +79,7 @@ class ArquivosLocais @Inject constructor(
     fun limpar() {
         File(contexto.cacheDir, "anexos").deleteRecursively()
         File(contexto.cacheDir, "camera").deleteRecursively()
+        File(contexto.cacheDir, "gravacoes").deleteRecursively()
     }
 
     private fun identificadorSeguro(identificador: String) = identificador.filter { it.isLetterOrDigit() }.take(64).ifBlank { "x" }

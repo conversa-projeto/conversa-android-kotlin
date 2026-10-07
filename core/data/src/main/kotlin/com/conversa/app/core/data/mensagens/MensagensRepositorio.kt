@@ -65,6 +65,11 @@ class MensagensRepositorio @Inject constructor(
         chamarApi { api.avisarDigitando(IdDto(conversaId)) }
     }
 
+    /** Gravando áudio (ANX-11): a tela chama a cada 2,5 s enquanto a gravação está aberta (WS 5 aos outros). */
+    suspend fun avisarGravando(conversaId: Long) {
+        chamarApi { api.avisarGravando(IdDto(conversaId)) }
+    }
+
     // --- Lida (MSG-04) ---
 
     private val filaLida = Channel<Pair<Long, Long>>(Channel.UNLIMITED)

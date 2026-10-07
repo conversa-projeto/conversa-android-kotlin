@@ -3,11 +3,7 @@ package com.conversa.app.feature.chat
 import android.content.ActivityNotFoundException
 import android.content.Context
 import android.content.Intent
-import android.net.Uri
 import android.webkit.MimeTypeMap
-import androidx.activity.compose.rememberLauncherForActivityResult
-import androidx.activity.result.PickVisualMediaRequest
-import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
@@ -20,31 +16,20 @@ import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.imePadding
-import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
-import androidx.compose.material.icons.automirrored.filled.Send
-import androidx.compose.material.icons.automirrored.outlined.InsertDriveFile
-import androidx.compose.material.icons.outlined.AttachFile
 import androidx.compose.material.icons.outlined.Call
 import androidx.compose.material.icons.outlined.Group
-import androidx.compose.material.icons.outlined.Image
 import androidx.compose.material.icons.outlined.KeyboardArrowDown
-import androidx.compose.material.icons.outlined.PhotoCamera
 import androidx.compose.material.icons.outlined.Videocam
 import androidx.compose.material3.CircularProgressIndicator
-import androidx.compose.material3.DropdownMenu
-import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.ExperimentalMaterial3Api
-import androidx.compose.material3.FilledIconButton
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
@@ -53,11 +38,10 @@ import androidx.compose.material3.Scaffold
 import androidx.compose.material3.SmallFloatingActionButton
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
-import androidx.compose.material3.TextField
-import androidx.compose.material3.TextFieldDefaults
 import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
+import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
@@ -74,16 +58,14 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalResources
 import androidx.compose.ui.res.pluralStringResource
 import androidx.compose.ui.res.stringResource
-import androidx.compose.ui.text.input.KeyboardCapitalization
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
-import androidx.core.content.FileProvider
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.lifecycle.Lifecycle
+import androidx.lifecycle.LifecycleEventObserver
 import androidx.lifecycle.compose.LocalLifecycleOwner
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.repeatOnLifecycle
-import com.conversa.app.core.data.anexos.AnexoLocal
 import com.conversa.app.core.model.AtividadeConversa
 import com.conversa.app.core.model.ItemChat
 import com.conversa.app.core.model.RotuloDia
@@ -131,8 +113,14 @@ fun ChatRotaTela(
     val recursos = LocalResources.current
     val semApp = stringResource(R.string.nenhum_app_para_abrir)
     val audioFalhou = stringResource(R.string.audio_falhou)
+    val microfoneIndisponivel = stringResource(R.string.microfone_indisponivel)
+    val gravacaoCurta = stringResource(R.string.gravacao_curta)
+    val gravacaoFalhou = stringResource(R.string.gravacao_falhou)
     ColetarEventos(viewModel.eventos.fluxo) { evento ->
         when (evento) {
+            EventoChat.MicrofoneIndisponivel -> avisos.mostrarErro(microfoneIndisponivel)
+            EventoChat.GravacaoCurta -> avisos.showSnackbar(gravacaoCurta)
+            EventoChat.GravacaoFalhou -> avisos.mostrarErro(gravacaoFalhou)
             is EventoChat.Erro -> avisos.mostrarErro(evento.mensagem)
             EventoChat.RolarAoFim -> lista.animateScrollToItem(0)
             is EventoChat.AbrirConversa -> aoAbrirConversa(evento.conversaId)
@@ -167,6 +155,17 @@ fun ChatRotaTela(
                 aoAdicionarAnexos = viewModel::adicionarAnexos,
                 aoRemoverAnexo = viewModel::removerAnexo,
                 pastaCamera = viewModel::pastaCamera,
+                gravacao = AcoesGravacao(
+                    estado = viewModel.gravacao,
+                    aoIniciar = viewModel::iniciarGravacao,
+                    aoTravar = viewModel::travarGravacao,
+                    aoPausar = viewModel::pausarGravacao,
+                    aoContinuar = viewModel::continuarGravacao,
+                    aoOuvir = viewModel::ouvirGravacao,
+                    aoEnviar = viewModel::enviarGravacao,
+                    aoDescartar = viewModel::descartarGravacao,
+                    aoBuscar = viewModel::buscarAudio,
+                ),
             ),
         )
     }
@@ -200,6 +199,7 @@ class AcoesChat(
     val aoRemoverAnexo: (String) -> Unit = {},
     /** Pasta (no cache do app) onde a câmera grava a foto antes de enviar. */
     val pastaCamera: () -> java.io.File? = { null },
+    val gravacao: AcoesGravacao = AcoesGravacao(),
 )
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -215,6 +215,13 @@ fun ChatTela(estado: ChatUiState, lista: androidx.compose.foundation.lazy.LazyLi
             .distinctUntilChanged()
             .filter { it >= itens.size - MARGEM_PAGINA }
             .collect { acoes.aoCarregarAnteriores() }
+    }
+    // App em segundo plano com a gravação aberta: pausa (o Android corta o microfone de app em segundo plano).
+    val pausarGravacao by rememberUpdatedState(acoes.gravacao.aoPausar)
+    DisposableEffect(dono) {
+        val observador = LifecycleEventObserver { _, evento -> if (evento == Lifecycle.Event.ON_STOP) pausarGravacao() }
+        dono.lifecycle.addObserver(observador)
+        onDispose { dono.lifecycle.removeObserver(observador) }
     }
     // Marca como lidas as mensagens que aparecem na tela, só com o app visível (MSG-04).
     LaunchedEffect(lista, itens) {
@@ -365,16 +372,25 @@ private fun Cabecalho(estado: ChatUiState, acoes: AcoesChat) {
                         style = MaterialTheme.typography.titleMedium,
                     )
                     val atividade = textoAtividade(estado.atividade)
+                    // "Gravando áudio…" em vermelho (como o web e o FMX); digitando na cor primária.
+                    val corAtividade = if (gravandoAudio(
+                            estado.atividade,
+                        )
+                    ) {
+                        ConversaTema.cores.gravandoAudio
+                    } else {
+                        MaterialTheme.colorScheme.primary
+                    }
                     when {
                         atividade != null -> Row(
                             verticalAlignment = Alignment.CenterVertically,
                             horizontalArrangement = Arrangement.spacedBy(6.dp),
                         ) {
-                            IndicadorDigitando()
+                            IndicadorDigitando(cor = corAtividade)
                             Text(
                                 atividade,
                                 style = MaterialTheme.typography.labelSmall,
-                                color = MaterialTheme.colorScheme.primary,
+                                color = corAtividade,
                                 maxLines = 1,
                                 overflow = TextOverflow.Ellipsis,
                             )
@@ -410,6 +426,12 @@ private fun Subtitulo(texto: String) {
         maxLines = 1,
         overflow = TextOverflow.Ellipsis,
     )
+}
+
+private fun gravandoAudio(atividade: AtividadeConversa): Boolean = when (atividade) {
+    AtividadeConversa.Nenhuma -> false
+    is AtividadeConversa.Direta -> atividade.gravando
+    is AtividadeConversa.Grupo -> atividade.gravando
 }
 
 /** "Digitando…", "Ana está digitando…", "Ana e Beto estão…", "… e outras N pessoas…" (textos do web). */
@@ -471,151 +493,4 @@ private fun SeparadorNaoLidas() {
         )
         HorizontalDivider(Modifier.weight(1f), color = ConversaTema.cores.separadorNaoLidas)
     }
-}
-
-/**
- * Campo de mensagem (ENV-01) com o botão de anexo e a fila (ANX-01, ANX-03). O texto fica
- * em estado local (síncrono) e só é limpo depois que a mensagem foi gravada no Room: nunca se perde.
- */
-@Composable
-private fun Campo(fila: List<AnexoLocal>, acoes: AcoesChat) {
-    var texto by rememberSaveable { mutableStateOf("") }
-    Column(
-        Modifier
-            .fillMaxWidth()
-            .background(MaterialTheme.colorScheme.surface)
-            .navigationBarsPadding()
-            .imePadding(),
-    ) {
-        if (fila.isNotEmpty()) FilaAnexos(fila, acoes.aoRemoverAnexo)
-        LinhaDoCampo(texto, { texto = it }, fila.isNotEmpty(), acoes)
-    }
-}
-
-@Composable
-private fun LinhaDoCampo(texto: String, aoMudar: (String) -> Unit, temAnexos: Boolean, acoes: AcoesChat) {
-    Row(
-        Modifier.fillMaxWidth().padding(horizontal = 8.dp, vertical = 6.dp),
-        verticalAlignment = Alignment.Bottom,
-        horizontalArrangement = Arrangement.spacedBy(4.dp),
-    ) {
-        BotaoAnexar(acoes)
-        TextField(
-            value = texto,
-            onValueChange = {
-                aoMudar(it)
-                acoes.aoDigitar(it)
-            },
-            placeholder = { Text(stringResource(R.string.digite_uma_mensagem)) },
-            maxLines = 6,
-            shape = RoundedCornerShape(24.dp),
-            colors = TextFieldDefaults.colors(
-                focusedContainerColor = ConversaTema.cores.campoEntrada,
-                unfocusedContainerColor = ConversaTema.cores.campoEntrada,
-                focusedIndicatorColor = androidx.compose.ui.graphics.Color.Transparent,
-                unfocusedIndicatorColor = androidx.compose.ui.graphics.Color.Transparent,
-            ),
-            keyboardOptions = KeyboardOptions(capitalization = KeyboardCapitalization.Sentences),
-            modifier = Modifier.weight(1f),
-        )
-        // O texto atual é lido na hora do retorno (pode ter mudado enquanto gravava).
-        val atual by rememberUpdatedState(texto)
-        FilledIconButton(
-            onClick = {
-                val enviado = texto
-                acoes.aoEnviar(enviado) { if (atual == enviado) aoMudar("") }
-            },
-            enabled = texto.isNotBlank() || temAnexos,
-            modifier = Modifier.size(48.dp),
-        ) {
-            Icon(Icons.AutoMirrored.Filled.Send, contentDescription = stringResource(R.string.enviar))
-        }
-    }
-}
-
-/**
- * Anexar (ANX-01): galeria (seletor de fotos do sistema, sem permissão), câmera e documento.
- * O acesso ao arquivo é mantido (`takePersistableUriPermission`) porque o envio pode
- * acontecer depois, pelo WorkManager, com o app já fechado.
- */
-@Composable
-private fun BotaoAnexar(acoes: AcoesChat) {
-    val contexto = LocalContext.current
-    val avisos = LocalAvisos.current
-    val escopo = rememberCoroutineScope()
-    val semCamera = stringResource(R.string.sem_app_de_camera)
-    var menu by remember { mutableStateOf(false) }
-    // Arquivo da foto: sobrevive à recriação da Activity enquanto a câmera está aberta.
-    var fotoPendente by rememberSaveable { mutableStateOf<String?>(null) }
-
-    val galeria = rememberLauncherForActivityResult(ActivityResultContracts.PickMultipleVisualMedia()) { uris ->
-        acoes.aoAdicionarAnexos(manterAcesso(contexto, uris), null)
-    }
-    val documentos = rememberLauncherForActivityResult(ActivityResultContracts.OpenMultipleDocuments()) { uris ->
-        acoes.aoAdicionarAnexos(manterAcesso(contexto, uris), null)
-    }
-    val camera = rememberLauncherForActivityResult(ActivityResultContracts.TakePicture()) { tirou ->
-        val arquivo = fotoPendente?.let(::File)
-        fotoPendente = null
-        if (arquivo == null) return@rememberLauncherForActivityResult
-        if (tirou && arquivo.length() > 0) {
-            acoes.aoAdicionarAnexos(listOf(uriCompartilhado(contexto, arquivo).toString()), TipoConteudo.IMAGEM)
-        } else {
-            arquivo.delete()
-        }
-    }
-
-    Box {
-        IconButton(onClick = { menu = true }, modifier = Modifier.size(48.dp)) {
-            Icon(Icons.Outlined.AttachFile, contentDescription = stringResource(R.string.anexar))
-        }
-        DropdownMenu(expanded = menu, onDismissRequest = { menu = false }) {
-            DropdownMenuItem(
-                text = { Text(stringResource(R.string.anexar_galeria)) },
-                leadingIcon = { Icon(Icons.Outlined.Image, contentDescription = null) },
-                onClick = {
-                    menu = false
-                    galeria.launch(PickVisualMediaRequest(ActivityResultContracts.PickVisualMedia.ImageAndVideo))
-                },
-            )
-            DropdownMenuItem(
-                text = { Text(stringResource(R.string.anexar_camera)) },
-                leadingIcon = { Icon(Icons.Outlined.PhotoCamera, contentDescription = null) },
-                onClick = {
-                    menu = false
-                    val pasta = acoes.pastaCamera() ?: return@DropdownMenuItem
-                    val arquivo = File(pasta, "foto-${System.currentTimeMillis()}.jpg")
-                    fotoPendente = arquivo.path
-                    try {
-                        camera.launch(uriCompartilhado(contexto, arquivo))
-                    } catch (_: ActivityNotFoundException) {
-                        fotoPendente = null
-                        escopo.launch { avisos.mostrarErro(semCamera) }
-                    }
-                },
-            )
-            DropdownMenuItem(
-                text = { Text(stringResource(R.string.anexar_documento)) },
-                leadingIcon = { Icon(Icons.AutoMirrored.Outlined.InsertDriveFile, contentDescription = null) },
-                onClick = {
-                    menu = false
-                    documentos.launch(arrayOf("*/*"))
-                },
-            )
-        }
-    }
-}
-
-/** URI do `FileProvider` para um arquivo do cache do app (foto da câmera, anexo baixado). */
-private fun uriCompartilhado(contexto: Context, arquivo: File): Uri =
-    FileProvider.getUriForFile(contexto, contexto.packageName + ".arquivos", arquivo)
-
-/** Guarda a permissão de leitura de cada URI escolhido. Alguns provedores não oferecem; aí vale a temporária. */
-private fun manterAcesso(contexto: Context, uris: List<Uri>): List<String> = uris.map { uri ->
-    try {
-        contexto.contentResolver.takePersistableUriPermission(uri, Intent.FLAG_GRANT_READ_URI_PERMISSION)
-    } catch (_: SecurityException) {
-        // Sem permissão persistente: o envio ainda funciona enquanto o app estiver aberto.
-    }
-    uri.toString()
 }

@@ -83,4 +83,18 @@
     <string name="ouvir_audio">Ouvir</string>
     <string name="pausar_audio">Pausar</string>
     <string name="audio_falhou">Não foi possível tocar este áudio.</string>
+
+    <!-- Gravação de áudio (ANX-11); os títulos dos botões são os do web -->
+    <string name="gravar_audio">Gravar áudio</string>
+    <string name="deslize_para_cancelar">‹ Deslize para cancelar</string>
+    <string name="descartar">Descartar</string>
+    <string name="pausar_gravacao">Pausar gravação</string>
+    <string name="continuar_gravacao">Continuar gravação</string>
+    <string name="ouvir_gravacao">Ouvir gravação</string>
+    <string name="parar_preview">Parar preview</string>
+    <string name="enviar_audio">Enviar áudio</string>
+    <string name="microfone_sem_permissao">Sem permissão para usar o microfone. Libere nas configurações do app.</string>
+    <string name="microfone_indisponivel">Não foi possível iniciar a gravação</string>
+    <string name="gravacao_curta">Áudio muito curto. Segure o microfone para gravar.</string>
+    <string name="gravacao_falhou">Não foi possível salvar o áudio.</string>
 </resources>

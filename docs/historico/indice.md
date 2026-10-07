@@ -36,6 +36,7 @@
 - 2026-10-07 · [Etapa 4 — envio com anexos, bolhas de imagem e arquivo (parcial)](2026-10-07-09-etapa-4-envio-com-anexos-e-bolhas.md) — worker sobe os anexos e manda a mensagem; bolhas de imagem/arquivo, abrir com FileProvider; seletor no campo e teste no emulador ficaram para a volta; 174 testes
 - 2026-10-07 · [Etapa 4 — seletor de anexos, visualizador e teste no emulador](2026-10-07-10-etapa-4-seletor-visualizador-e-teste-no-emulador.md) — galeria/câmera/documento no campo, visualizador, `FetcherAnexo` (URL vencida renovada no Coil), lista acompanha mensagem nova; testado nos dois sentidos e com 200 MB; 177 testes
 - 2026-10-07 · [Etapa 4 — player de áudio (Media3) e `:core:media`](2026-10-07-11-etapa-4-player-de-audio.md) — um áudio por vez, barra com seek, verde até ouvir + `POST /mensagem/reproduzir`, para ao sair da conversa; download com URL vencida tenta de novo; 185 testes
+- 2026-10-07 · [Etapa 4 — gravação de áudio no campo](2026-10-07-12-etapa-4-gravacao-de-audio.md) — microfone (segurar envia, toque trava, arrastar cancela), barra com pausa/ouvir, AAC/M4A em trechos juntados, tipo 5, "gravando" a cada 2,5 s; `nomeSeguro` sem `..`; 193 testes
 
 ## Notificações e push (etapa 5)
 _(nada ainda)_

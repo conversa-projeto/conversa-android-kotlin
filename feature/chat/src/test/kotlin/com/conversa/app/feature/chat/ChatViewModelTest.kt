@@ -95,6 +95,7 @@ class ChatViewModelTest {
             arquivos,
             mockk(relaxed = true),
             player,
+            mockk(relaxed = true),
             Clock.fixed(agora, ZoneOffset.UTC),
         )
         backgroundScope.launch { vm.estado.collect {} }

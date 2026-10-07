@@ -14,6 +14,7 @@ import com.conversa.app.core.data.conversas.ConversasRepositorio
 import com.conversa.app.core.data.mensagens.EnvioMensagens
 import com.conversa.app.core.data.mensagens.MensagensRepositorio
 import com.conversa.app.core.data.presenca.PresencaRepositorio
+import com.conversa.app.core.media.GravadorAudio
 import com.conversa.app.core.media.PlayerAudio
 import com.conversa.app.core.model.AtividadeConversa
 import com.conversa.app.core.model.Conversa
@@ -85,6 +86,15 @@ sealed interface EventoChat {
 
     /** O player não conseguiu tocar o áudio (formato não suportado ou arquivo inválido). */
     data object AudioFalhou : EventoChat
+
+    /** O microfone não abriu (ocupado por outro app, por exemplo). */
+    data object MicrofoneIndisponivel : EventoChat
+
+    /** Gravação com menos de 1 s: descartada. */
+    data object GravacaoCurta : EventoChat
+
+    /** Não deu para montar o arquivo da gravação. */
+    data object GravacaoFalhou : EventoChat
 }
 
 /**
@@ -123,6 +133,7 @@ class ChatViewModel @Inject constructor(
     private val arquivos: ArquivosLocais,
     private val fontes: FontesArquivo,
     private val player: PlayerAudio,
+    gravador: GravadorAudio,
     private val relogio: Clock,
 ) : ViewModel() {
     val conversaId: Long = checkNotNull(salvo["conversaId"])
@@ -296,8 +307,41 @@ class ChatViewModel @Inject constructor(
         }
     }
 
-    /** Saiu da conversa: o áudio dela para (ANX-10). */
+    // --- Gravação (ANX-11): ver ControleGravacao ---
+
+    private val controleGravacao = ControleGravacao(
+        escopo = viewModelScope,
+        conversaId = conversaId,
+        gravador = gravador,
+        arquivos = arquivos,
+        envio = envio,
+        mensagens = mensagens,
+        player = player,
+        relogio = relogio,
+        es = Dispatchers.IO,
+        avisar = { eventos.enviar(it) },
+    )
+
+    /** Separado do [estado]: o tempo e o nível mudam 10 vezes por segundo e só o campo lê. */
+    val gravacao: StateFlow<EstadoGravacao> = controleGravacao.estado
+
+    fun iniciarGravacao() = controleGravacao.iniciar()
+
+    fun travarGravacao() = controleGravacao.travar()
+
+    fun pausarGravacao() = controleGravacao.pausar()
+
+    fun continuarGravacao() = controleGravacao.continuar()
+
+    fun ouvirGravacao() = controleGravacao.ouvir()
+
+    fun enviarGravacao() = controleGravacao.enviar()
+
+    fun descartarGravacao() = controleGravacao.descartar()
+
+    /** Saiu da conversa: o áudio dela para (ANX-10) e a gravação aberta é descartada. */
     override fun onCleared() {
+        controleGravacao.descartar()
         if (player.estado.value.chave?.startsWith(prefixoAudio) == true) player.parar()
     }
 
