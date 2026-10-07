@@ -4,7 +4,7 @@
 - **Tipo:** código / testes
 - **Itens:** `TODO.md` 3.2, 3.3, 3.5, 3.6, 3.7, 3.8, 3.9, 3.10 (só as partes de regra e de dados); MSG-01…14, ENV-01, ENV-15
 - **Branch:** `reescrita`
-- **Commits:** _(preencher)_
+- **Commits:** `0bdfe08`
 
 ## Contexto
 Primeiro bloco da etapa 3: tudo o que a tela de chat vai usar, testado sem tela. A tela vem no próximo bloco.
