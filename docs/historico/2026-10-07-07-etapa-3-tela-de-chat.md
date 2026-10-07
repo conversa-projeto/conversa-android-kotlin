@@ -4,7 +4,7 @@
 - **Tipo:** código / testes / documentação
 - **Itens:** `TODO.md` 3.1–3.11; CON-09, CON-12, MSG-01…16, ENV-01, ENV-15
 - **Branch:** `reescrita`
-- **Commits:** _(preencher)_
+- **Commits:** `d3f51e6`
 
 ## Contexto
 Segundo bloco da etapa 3: a conversa aberta, em cima das regras e da camada de dados do bloco anterior (`2026-10-07-06`). Substitui o chat provisório da etapa 2.
