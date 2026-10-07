@@ -4,7 +4,7 @@
 - **Tipo:** código / testes / manifesto (permissão nova)
 - **Itens:** `TODO.md` 4.6 e uma linha nova na 4.7 (`nomeSeguro`); ANX-11, ENV-16; problemas #32 e #48 do legado
 - **Branch:** `reescrita`
-- **Commits:** (preencher)
+- **Commits:** `399bae5`
 
 ## Contexto
 O campo não gravava áudio. O web grava pelo microfone (`useAudioRecording.ts`, `BarraGravacao.vue`, `MessageInput.vue`) e o app legado tinha o `AudioRecorderHelper`. Esse helper só pegava `IOException` em `start()` (#48) e pedia a permissão no lugar errado (#32).

@@ -467,19 +467,19 @@
 - [ ] Parar o áudio ao sair da conversa ou ao começar uma chamada — 🔄 sair da conversa: `ChatViewModel.onCleared` para o áudio dela (+ teste; no emulador, 0 players ativos depois de voltar); a chamada (etapa 6) deve chamar `PlayerAudio.parar()`
 
 ### 4.6 Gravação de áudio (FC-406, ANX-11, ENV-16)
-- [x] Transplantar o `AudioRecorderHelper` (pegar `Exception` em `start()`, #48) — `GravadorMediaRecorder` (`:core:media`): AAC/M4A mono 64 kbps (toca no web, no Windows e no Android), qualquer `Exception` ao abrir o microfone vira "Não foi possível iniciar a gravação"; pausa = fecha o trecho e `juntarTrechos` (MediaMuxer, sem recodificar) monta o arquivo. No emulador: 2 trechos juntados = 42,42 s contínuos (1827 quadros AAC)
-- [x] Segurar o microfone ≥ 300 ms e soltar → envia direto — o microfone aparece com o campo vazio (como o web); menos de 1 s é descartado com aviso. No emulador: segurar 3,5 s enviou
-- [x] Toque curto (ou arrastar para cima) → modo travado com barra: Descartar, tempo, Pausar/Continuar, Ouvir, Enviar — `BarraGravacao` (textos do web, nível do microfone, ponto piscando); pausada: ouvir com barra de progresso; app em segundo plano pausa a gravação. Testado no emulador
-- [x] Arrastar para o lado → cancelar — nada enviado e os arquivos apagados (testado no emulador)
-- [x] Enviar como conteúdo **tipo 5** — `audio-<hora>.m4a`, `audio/mp4`, pela mesma fila de envio (o arquivo e a pasta somem do cache depois de enviado) (+ testes `GravacaoTest`)
-- [x] Durante a gravação: `POST /conversa/gravando {id}` a cada 2,5 s — também pausada (a gravação continua aberta, como no web) (+ teste); no emulador o B recebeu o WS 5 a cada 2,5 s
-- [x] Receber o WS 5 → "Gravando áudio…" em vermelho (prioridade sobre o "digitando") — no cabeçalho (texto e pontos em `gravandoAudio`); a lista de conversas não mostra, igual ao web
-- [x] Permissão de microfone pedida na hora, com um launcher só para isso (#32) — `RECORD_AUDIO` no manifesto, pedida ao apertar o microfone; negada: "Sem permissão para usar o microfone…"
+- [x] Transplantar o `AudioRecorderHelper` (pegar `Exception` em `start()`, #48) — `GravadorMediaRecorder` (`:core:media`): AAC/M4A mono 64 kbps (toca no web, no Windows e no Android), qualquer `Exception` ao abrir o microfone vira "Não foi possível iniciar a gravação"; pausa = fecha o trecho e `juntarTrechos` (MediaMuxer, sem recodificar) monta o arquivo. No emulador: 2 trechos juntados = 42,42 s contínuos (1827 quadros AAC) ✔ 399bae5
+- [x] Segurar o microfone ≥ 300 ms e soltar → envia direto — o microfone aparece com o campo vazio (como o web); menos de 1 s é descartado com aviso. No emulador: segurar 3,5 s enviou ✔ 399bae5
+- [x] Toque curto (ou arrastar para cima) → modo travado com barra: Descartar, tempo, Pausar/Continuar, Ouvir, Enviar — `BarraGravacao` (textos do web, nível do microfone, ponto piscando); pausada: ouvir com barra de progresso; app em segundo plano pausa a gravação. Testado no emulador ✔ 399bae5
+- [x] Arrastar para o lado → cancelar — nada enviado e os arquivos apagados (testado no emulador) ✔ 399bae5
+- [x] Enviar como conteúdo **tipo 5** — `audio-<hora>.m4a`, `audio/mp4`, pela mesma fila de envio (o arquivo e a pasta somem do cache depois de enviado) (+ testes `GravacaoTest`) ✔ 399bae5
+- [x] Durante a gravação: `POST /conversa/gravando {id}` a cada 2,5 s — também pausada (a gravação continua aberta, como no web) (+ teste); no emulador o B recebeu o WS 5 a cada 2,5 s ✔ 399bae5
+- [x] Receber o WS 5 → "Gravando áudio…" em vermelho (prioridade sobre o "digitando") — no cabeçalho (texto e pontos em `gravandoAudio`); a lista de conversas não mostra, igual ao web ✔ 399bae5
+- [x] Permissão de microfone pedida na hora, com um launcher só para isso (#32) — `RECORD_AUDIO` no manifesto, pedida ao apertar o microfone; negada: "Sem permissão para usar o microfone…" ✔ 399bae5
 
 ### 4.7 Arquivos e download (FC-407, ANX-09)
 - [ ] Bolha de arquivo: ícone pela extensão, nome, tamanho, "Baixar"/"Abrir" — 🔄 `LinhaArquivo` (ícone pela extensão, nome, "Abrir"); tamanho não vem na mensagem; falta testar no emulador
 - [ ] Baixar: URL assinada → `MediaStore.Downloads` (sanitizar o nome: nada de `../`)
-- [x] 🆕 `nomeSeguro` nunca devolve `.` nem `..` (antes `..` passava e o arquivo baixado ou apagado podia sair da pasta) (+ teste)
+- [x] 🆕 `nomeSeguro` nunca devolve `.` nem `..` (antes `..` passava e o arquivo baixado ou apagado podia sair da pasta) (+ teste) ✔ 399bae5
 - [x] Abrir: `ACTION_VIEW` com `FileProvider` — `ArquivosLocais.baixar` (cache, `.part` → renomeia) + `FileProvider` (`caminhos_arquivos.xml`) + `ACTION_VIEW`; no emulador o PDF enviado baixou pelo proxy e abriu no leitor de PDF do sistema ✔ 389e66d
 - [ ] Notificação de download concluído
 
