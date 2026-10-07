@@ -1,0 +1,502 @@
+# Mensagem de Commit
+
+```
+feat: Padroniza notificações de mensagem com resposta direta
+
+Refatora o sistema de notificações de mensagens seguindo o padrão das
+notificações de chamada. Adiciona suporte para resposta direta e centraliza constantes.
+
+## Mudanças:
+
+### NotificationConstants.kt
+- Adiciona CHANNEL_ID_MENSAGENS centralizado
+- Adiciona NOTIFICATION_ID_MENSAGEM_BASE (3000-3999)
+- Adiciona função getNotificationIdMensagem(conversaId)
+- Corrige faixa de NOTIFICATION_ID_CHAMADA_MISSED para 2900-2999
+
+### MensagemNotificationManager.kt
+- Substitui InboxStyle por MessagingStyle (padrão nativo Android)
+- Adiciona Person API para identificar remetentes de forma dinâmica
+- Adiciona RemoteInput para resposta direta da notificação
+- Utiliza cache ConcurrentHashMap para Person objects
+- Implementa limpeza individual por conversa e limpeza total
+
+### MensagemActionReceiver.kt (NOVO)
+- BroadcastReceiver para processar ações de notificação em background
+- ACTION_REPLY: extrai texto do RemoteInput e envia via Retrofit
+- Corrige EnviarMensagemRequest para usar lista de ConteudoRequest (fix build)
+- Notifica sucesso ou erro após o processamento da resposta
+
+### SocketService.kt
+- Remove constantes duplicadas e utiliza NotificationConstants
+- Garante registro de listeners ao vincular/desvincular activities
+- Inicializa canais de notificação com configurações adequadas
+
+### AndroidManifest.xml
+- Registra MensagemActionReceiver com filtros de ação específicos
+- Define permissões necessárias para o receiver se aplicável
+
+### ChatActivity.kt
+- Limpa notificações da conversa específica no onResume
+- Sincroniza estado de leitura com o serviço de notificações
+
+Co-Authored-By: Claude Opus 4.5 <noreply@anthropic.com>
+```
+
+
+---
+
+```
+fix: Solicita permissões de runtime na SplashActivity
+
+Corrige SecurityException ao iniciar SocketService com foregroundServiceType="microphone".
+A partir do Android 14 (targetSDK 34), é obrigatório ter RECORD_AUDIO concedida antes de startForeground().
+
+## Mudanças:
+
+### SplashActivity.kt
+- Adiciona solicitação de permissões de runtime antes de iniciar o app
+- RECORD_AUDIO: necessária para FGS tipo microphone e chamadas de voz
+- POST_NOTIFICATIONS: necessária para notificações (Android 13+)
+- BLUETOOTH_CONNECT: necessária para áudio Bluetooth (Android 12+)
+- Usa ActivityResultContracts.RequestMultiplePermissions para solicitar
+
+## Fluxo:
+onCreate() → delay 2s → verificarPermissoes() → solicita se necessário → verificarConfiguracao()
+
+Co-Authored-By: Claude Opus 4.5 <noreply@anthropic.com>
+```
+
+---
+
+## Arquivos alterados:
+
+### Correção de crash
+- `SplashActivity.kt` - Solicita permissões de runtime antes de prosseguir
+
+### Erro corrigido:
+```
+java.lang.SecurityException: Starting FGS with type microphone
+requires permissions: [android.permission.FOREGROUND_SERVICE_MICROPHONE]
+any of [RECORD_AUDIO, ...]
+```
+
+---
+
+# Alterações de estilo (visual minimalista)
+
+## themes.xml
+- Adicionado `android:textColorPrimary` = `@color/black`
+- Adicionado `android:textColorSecondary` = `#666666`
+
+## Cards de contato (visual flat)
+- `item_contato.xml` - cardElevation, cornerRadius, margins → 0dp, background transparente
+- `item_contato_selecionavel.xml` - mesmas mudanças + cores de tema
+
+## Cores de texto (atributos de tema)
+- `dialog_contatos.xml` - textColor para textColorPrimary/Secondary
+- `dialog_criar_grupo.xml` - textColor para textColorPrimary/Secondary
+- `dialog_detalhes_grupo.xml` - textColor para textColorPrimary/Secondary
+- `activity_login.xml` - cor do título usando ?attr/colorPrimary
+
+## TextInputEditText (cor do texto digitado)
+- `activity_login.xml` - etLogin, etSenha
+- `dialog_contatos.xml` - etPesquisar
+- `dialog_criar_grupo.xml` - etPesquisar
+- `dialog_detalhes_grupo.xml` - etNomeGrupo, etDescricaoGrupo
+- `activity_config_api.xml` - etApiUrl
+- `activity_criar_grupo.xml` - etPesquisar
+- `activity_detalhes_grupo.xml` - etNomeGrupo, etDescricaoGrupo
+
+## Background usando tema (consistência)
+- `activity_splash.xml` - #FFFFFF → ?android:colorBackground
+- `activity_login.xml` - #FFFFFF → ?android:colorBackground
+- `activity_criar_grupo.xml` - @android:color/white → ?android:colorBackground
+- `activity_detalhes_grupo.xml` - @android:color/white → ?android:colorBackground
+
+---
+
+# Otimização de notificações silenciosas
+
+```
+refactor: Otimiza atualizações silenciosas das notificações de serviço
+
+Evita "flash" visual e alertas desnecessários nas atualizações de
+notificações dos foreground services.
+
+## Mudanças:
+
+### ChamadaService.kt
+- Adicionada flag `foregroundNotificacaoExibida` para controlar ciclo
+- `startForeground()` usado apenas na primeira exibição
+- `notificationManager.notify()` usado para atualizações subsequentes
+- Flag resetada em `finalizarChamadaInterno()` para próximas chamadas
+
+### SocketService.kt
+- Adicionado `setOnlyAlertOnce(true)` em `criarNotificacaoService()`
+- Adicionado `setOnlyAlertOnce(true)` em `atualizarNotificacaoService()`
+- Garante atualizações silenciosas quando status de conexão muda
+
+Co-Authored-By: Claude Opus 4.5 <noreply@anthropic.com>
+```
+
+## Arquivos alterados:
+
+### ChamadaService.kt
+- Nova variável `foregroundNotificacaoExibida` (linha 209)
+- `mostrarNotificacaoEmAndamento()`: Condicional para usar `startForeground()` ou `notify()`
+- `finalizarChamadaInterno()`: Reset da flag junto com outros estados
+
+### SocketService.kt
+- `criarNotificacaoService()`: Adicionado `.setOnlyAlertOnce(true)`
+- `atualizarNotificacaoService()`: Adicionado `.setOnlyAlertOnce(true)`
+
+---
+
+# Correção de bugs na inicialização de chamadas e timer
+
+```
+fix: Corrige bugs na inicialização de chamadas e timer
+
+## Problemas corrigidos:
+
+1. **Tela de chamada fechando sozinha em chat novo**
+   - Race condition entre ChamadaActivity e ChamadaService
+   - Activity lia .value antes da API retornar a chamada
+   - Solução: Usar filterNotNull().first() com timeout de 10s
+
+2. **Timer iniciando antes do atendimento**
+   - Timer começava quando TCP conectava, não quando participante atendia
+   - Solução: Novo estado CHAMANDO entre CONECTANDO_AUDIO e EM_CHAMADA
+   - Timer só inicia quando primeiro participante entra
+
+3. **Transição automática para tela de chamada ativa**
+   - Estado EM_CHAMADA era atingido na conexão TCP
+   - Agora só muda para EM_CHAMADA quando há comunicação real
+
+## Arquivos modificados:
+
+- ChamadaActivity.kt: Aguarda chamada com timeout em onServiceConnected()
+- ChamadaService.kt: Novo estado CHAMANDO, timer movido para processarUsuarioEntrou()
+- ChamadaScreen.kt: Trata estado CHAMANDO mostrando OutgoingCallScreen
+- ChamadaServiceObserver.kt: Banner visível em CHAMANDO e EM_CHAMADA
+- CallBannerIntegration.kt: Banner visível em CHAMANDO e EM_CHAMADA
+- documentacao-chamada-conversa.md: Documentação atualizada
+
+Co-Authored-By: Claude Opus 4.5 <noreply@anthropic.com>
+```
+
+## Arquivos alterados (para referência):
+
+### ChamadaActivity.kt
+- Adicionados imports: `Dispatchers`, `filterNotNull`, `first`, `withContext`, `withTimeoutOrNull`
+- `onServiceConnected()`: Agora usa coroutine com `withTimeoutOrNull(10_000L)` para aguardar chamada
+- `onSensorChanged()`: Sensor de proximidade ativo também em estado `CHAMANDO`
+- `onBackPressed()`: Permite minimizar também em estado `CHAMANDO`
+
+### ChamadaService.kt
+- Novo estado `CHAMANDO` no enum `EstadoChamadaService`
+- `conectarAudioTcp()`: Muda para `CHAMANDO` em vez de `EM_CHAMADA`, não inicia timer
+- `processarUsuarioEntrou()`: Inicia timer e muda para `EM_CHAMADA` quando primeiro participante entra
+- `aceitarChamada()`: Inicia timer e muda para `EM_CHAMADA` quando já há participantes
+- `atualizarNotificacaoEmAndamento()`: Inclui estado `CHAMANDO`
+- `toggleMute()`/`toggleSpeaker()`: Simplificado para chamar `atualizarNotificacaoEmAndamento()` diretamente
+
+### ChamadaScreen.kt
+- Estado `CHAMANDO` adicionado ao branch que mostra `OutgoingCallScreen`
+
+### ChamadaServiceObserver.kt
+- `shouldShowBanner`: Retorna true para `EM_CHAMADA` ou `CHAMANDO`
+
+### CallBannerIntegration.kt
+- `isVisible`: Verifica `EM_CHAMADA` ou `CHAMANDO`
+
+### documentacao-chamada-conversa.md
+- Adicionadas correções 5 e 6 na seção "Correções Pendentes"
+- Atualizado enum de estados com `CHAMANDO`
+- Adicionados diagramas de fluxo de estados
+
+---
+
+# Botões Chat e Chamada na lista de contatos
+
+```
+feat: Adiciona botões Chat e Chamada no item de contato
+
+Substitui o clique no card por dois botões explícitos para iniciar
+chat ou chamada diretamente da lista de contatos.
+
+## Mudanças:
+
+### item_contato.xml
+- Adicionado ImageButton btnChat com ícone ic_chat
+- Adicionado ImageButton btnChamada com ícone ic_call
+- Layout: [Avatar][Nome][espaço][Chat][Chamada]
+
+### ic_chat.xml (NOVO)
+- Ícone de chat (balão de mensagem) estilo Material Design
+
+### strings.xml
+- Adicionada string "chat" para acessibilidade
+- Adicionada string "chamada" para acessibilidade
+
+### ContatosAdapter.kt
+- Construtor atualizado: onChatClick e onChamadaClick callbacks
+- ViewHolder atualizado para configurar listeners nos botões
+- Removido clique no root do card
+
+### ContatosActivity.kt
+- Atualizada instanciação do adapter com dois callbacks
+- Adicionado verificarPermissoesEIniciarChamada()
+- Adicionado iniciarChamada() que inicia ChamadaService e abre ChamadaActivity
+- Adicionado ActivityResultLauncher para permissão de microfone
+
+Co-Authored-By: Claude Opus 4.5 <noreply@anthropic.com>
+```
+
+## Arquivos alterados:
+
+### Layout
+- `item_contato.xml` - Adicionados btnChat e btnChamada
+
+### Drawable
+- `ic_chat.xml` (NOVO) - Ícone de chat Material Design
+
+### Strings
+- `strings.xml` - Adicionadas "chat" e "chamada"
+
+### Kotlin
+- `ContatosAdapter.kt` - Callbacks separados para Chat e Chamada
+- `ContatosActivity.kt` - Lógica para iniciar chamadas da lista de contatos
+
+---
+
+# Remoção do botão flutuante (FAB)
+
+```
+refactor: Remove FloatingActionButton da tela principal
+
+O FAB não estava mais sendo utilizado, pois a navegação para contatos
+agora é feita pelo menu lateral (Navigation Drawer).
+
+## Mudanças:
+
+### activity_main.xml
+- Removido FloatingActionButton (fab) do layout
+- Layout simplificado sem o botão flutuante
+
+Co-Authored-By: Claude Opus 4.5 <noreply@anthropic.com>
+```
+
+## Arquivos alterados:
+
+### Layout
+- `activity_main.xml` - Removido FloatingActionButton
+
+---
+
+# Avatar dinâmico na lista de conversas
+
+```
+feat: Avatar dinâmico baseado no tipo de conversa
+
+Exibe a inicial do nome para chats 1:1 e ícone de grupo para conversas em grupo.
+
+## Mudanças:
+
+### item_conversa.xml
+- Substituído ImageView por FrameLayout como container do avatar
+- Adicionado TextView tvInicialNome para exibir inicial do nome
+- Adicionado ImageView ivIconeGrupo para exibir ícone de grupo
+- Atualizado background para usar badge_circle com tint
+
+### ConversasAdapter.kt
+- Lógica para alternar visibilidade entre tvInicialNome e ivIconeGrupo
+- Chat 1:1 (tipo != 2): mostra inicial do nome
+- Grupo (tipo == 2): mostra ícone de grupo
+
+Co-Authored-By: Claude Opus 4.5 <noreply@anthropic.com>
+```
+
+## Arquivos alterados:
+
+### Layout
+- `item_conversa.xml` - Avatar dinâmico com inicial ou ícone
+
+### Kotlin
+- `ConversasAdapter.kt` - Lógica de exibição do avatar
+
+---
+
+# Atualização incremental de mensagens via Socket
+
+```
+feat: Atualização incremental de mensagens via SocketService
+
+Ao receber uma nova mensagem, apenas adiciona a nova mensagem à lista
+em vez de recarregar todas as mensagens. Utiliza o SocketService para
+receber notificações em tempo real.
+
+## Problemas resolvidos:
+
+1. **Performance**: Não recarrega todas as mensagens ao receber uma nova
+   - Evita chamada à API para buscar todas as mensagens
+   - Apenas adiciona a nova mensagem à lista existente
+
+2. **Tempo real**: Mensagens aparecem instantaneamente via WebSocket
+   - ChatActivity se vincula ao SocketService
+   - Recebe callback onNovaMensagem quando mensagem chega
+
+## Mudanças:
+
+### MensagensAdapter.kt
+- Adicionada extension function `addMensagem()` para inserção incremental
+- Verifica duplicatas antes de adicionar (evita mensagens repetidas)
+- Usa DiffUtil para atualizar apenas o item novo
+
+### ChatActivity.kt
+- Implementa interface `SocketService.CallListener`
+- Adiciona bind/unbind ao SocketService em onResume/onPause
+- `onNovaMensagem()`: Filtra por conversa, busca dados completos e adiciona
+- `bindSocketService()`: Vincula ao serviço para receber eventos
+- `unbindSocketService()`: Desvincula quando sai da tela
+- Limpa notificações da conversa atual ao abrir
+
+Co-Authored-By: Claude Opus 4.5 <noreply@anthropic.com>
+```
+
+## Arquivos alterados:
+
+### Kotlin
+- `MensagensAdapter.kt` - Extension function addMensagem()
+- `ChatActivity.kt` - Integração com SocketService e callbacks
+
+---
+
+# Layouts responsivos com teclado
+
+```
+fix: Torna layouts responsivos quando o teclado está visível
+
+Corrige problemas de usabilidade onde campos de texto ficavam
+ocultos pelo teclado virtual.
+
+## Mudanças:
+
+### AndroidManifest.xml
+- Adicionado windowSoftInputMode="adjustResize" em LoginActivity
+- Adicionado windowSoftInputMode="adjustResize" em ConfigApiActivity
+- ChatActivity já possuía esta configuração
+
+### activity_login.xml
+- Layout envolvido com ScrollView (fillViewport="true")
+- Conteúdo rolável quando o teclado aparece
+- ConstraintLayout interno com height="wrap_content"
+
+### activity_config_api.xml
+- Layout envolvido com ScrollView (fillViewport="true")
+- Conteúdo rolável quando o teclado aparece
+- ConstraintLayout interno com height="wrap_content"
+
+### activity_chat.xml
+- Já estava corretamente configurado
+- CoordinatorLayout + adjustResize funciona bem
+- RecyclerView redimensiona, input fica visível
+
+Co-Authored-By: Claude Opus 4.5 <noreply@anthropic.com>
+```
+
+## Arquivos alterados:
+
+### Manifest
+- `AndroidManifest.xml` - windowSoftInputMode nas activities
+
+### Layout
+- `activity_login.xml` - ScrollView wrapper
+- `activity_config_api.xml` - ScrollView wrapper
+
+---
+
+# Melhorias no carregamento de mensagens via Socket
+
+```
+fix: Melhora carregamento de novas mensagens via socket
+
+Corrige problemas ao receber mensagens com imagem quando o chat
+nunca teve imagens antes, e adiciona verificações de inicialização.
+
+## Mudanças:
+
+### ChatActivity.kt
+- Verifica se adapter foi inicializado antes de processar mensagem
+- Verifica e carrega token se estiver vazio
+- Novo método buscarEAdicionarNovaMensagem() para melhor organização
+- Busca 5 mensagens em vez de 1 para garantir captura da nova
+- Filtra mensagens por ID para evitar duplicatas
+- Logs detalhados dos conteúdos (tipo e id) para debug
+- Log de erro de resposta da API
+
+Co-Authored-By: Claude Opus 4.5 <noreply@anthropic.com>
+```
+
+## Arquivos alterados:
+
+### Kotlin
+- `ChatActivity.kt` - Verificações de inicialização e logs
+
+---
+
+# Manter foco no campo de texto após enviar
+
+```
+fix: Mantém foco no editor após enviar mensagem
+
+Permite enviar mensagens consecutivas sem precisar tocar no campo
+de texto novamente.
+
+## Mudanças:
+
+### ChatActivity.kt
+- Adicionado requestFocus() após enviar mensagem
+- Foco mantido tanto em caso de sucesso quanto erro
+
+Co-Authored-By: Claude Opus 4.5 <noreply@anthropic.com>
+```
+
+## Arquivos alterados:
+
+### Kotlin
+- `ChatActivity.kt` - requestFocus() no bloco finally
+
+---
+
+# Melhorias no envio de mensagens
+
+```
+fix: Melhora experiência ao enviar mensagens
+
+Corrige problemas de UX ao enviar mensagens: tela piscando,
+foco perdido e scroll não funcionando.
+
+## Mudanças:
+
+### ChatActivity.kt
+- Novo método atualizarMensagensSemLoading() - atualiza sem piscar
+- Campo de texto limpo imediatamente ao enviar
+- Removido disable/enable do input - mantém foco natural
+- Scroll usa callback do submitList para garantir timing correto
+- Lista atualizada suavemente após enviar mensagem
+
+## Comportamento final:
+1. Usuário envia mensagem
+2. Campo limpa imediatamente (foco mantido)
+3. Lista atualiza sem loading (sem piscar)
+4. Scroll posiciona na última mensagem
+
+Co-Authored-By: Claude Opus 4.5 <noreply@anthropic.com>
+```
+
+## Arquivos alterados:
+
+### Kotlin
+- `ChatActivity.kt` - atualizarMensagensSemLoading() e callback do submitList

@@ -1,0 +1,2617 @@
+diff --git a/app/src/main/AndroidManifest.xml b/app/src/main/AndroidManifest.xml
+index c12082f..c47872e 100644
+--- a/app/src/main/AndroidManifest.xml
++++ b/app/src/main/AndroidManifest.xml
+@@ -21,6 +21,11 @@
+     <uses-permission android:name="android.permission.FOREGROUND_SERVICE_DATA_SYNC" />
+     <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />
+     <uses-permission android:name="android.permission.WAKE_LOCK" />
++    
++    <!-- NOVO: Permissões para tela bloqueada e sensor proximidade -->
++    <uses-permission android:name="android.permission.USE_FULL_SCREEN_INTENT" />
++    <uses-permission android:name="android.permission.SYSTEM_ALERT_WINDOW" />
++    <uses-permission android:name="android.permission.DISABLE_KEYGUARD" />
+ 
+     <application
+         android:allowBackup="true"
+@@ -84,7 +89,9 @@
+             android:name=".DetalhesGrupoActivity"
+             android:exported="false"
+             android:label="Detalhes do Grupo"
+-            android:parentActivityName=".CriarGrupoActivity" /> <!-- Activities de Chamada -->
++            android:parentActivityName=".CriarGrupoActivity" />
++            
++        <!-- Activities de Chamada -->
+         <activity
+             android:name=".ui.chamada.ChamadaIncomingActivity"
+             android:excludeFromRecents="true"
+@@ -92,15 +99,18 @@
+             android:launchMode="singleTop"
+             android:screenOrientation="portrait"
+             android:showWhenLocked="true"
+-            android:theme="@style/Theme.Conversa.NoActionBar"
+-            android:turnScreenOn="true" />
++            android:turnScreenOn="true"
++            android:theme="@style/Theme.Conversa.NoActionBar" />
++            
+         <activity
+             android:name=".ui.chamada.ChamadaActivity"
+             android:excludeFromRecents="true"
+             android:exported="false"
+             android:launchMode="singleTop"
+             android:screenOrientation="portrait"
++            android:showWhenLocked="true"
++            android:turnScreenOn="true"
+             android:theme="@style/Theme.Conversa.NoActionBar" />
+     </application>
+ 
+-</manifest>
+\ No newline at end of file
++</manifest>
+diff --git a/app/src/main/java/com/conversa/conversa/MainActivity.kt b/app/src/main/java/com/conversa/conversa/MainActivity.kt
+index ba72e12..dab53b5 100644
+--- a/app/src/main/java/com/conversa/conversa/MainActivity.kt
++++ b/app/src/main/java/com/conversa/conversa/MainActivity.kt
+@@ -1,7 +1,10 @@
+ package com.conversa.conversa
+ 
++import android.Manifest
+ import android.app.Dialog
+ import android.content.Intent
++import android.content.pm.PackageManager
++import android.os.Build
+ import android.os.Bundle
+ import android.view.MenuItem
+ import android.view.View
+@@ -10,6 +13,8 @@ import android.widget.TextView
+ import android.widget.Toast
+ import androidx.appcompat.app.ActionBarDrawerToggle
+ import androidx.appcompat.app.AppCompatActivity
++import androidx.core.app.ActivityCompat
++import androidx.core.content.ContextCompat
+ import androidx.core.view.GravityCompat
+ import androidx.lifecycle.lifecycleScope
+ import androidx.recyclerview.widget.DividerItemDecoration
+@@ -40,6 +45,11 @@ class MainActivity : AppCompatActivity(), NavigationView.OnNavigationItemSelecte
+     private lateinit var conversasAdapter: ConversasAdapter
+     private lateinit var toggle: ActionBarDrawerToggle
+ 
++    companion object {
++        private const val REQUEST_NOTIFICATION_PERMISSION = 101
++        private const val REQUEST_POST_NOTIFICATIONS = 102
++    }
++
+     override fun onCreate(savedInstanceState: Bundle?) {
+         super.onCreate(savedInstanceState)
+ 
+@@ -51,7 +61,6 @@ class MainActivity : AppCompatActivity(), NavigationView.OnNavigationItemSelecte
+ 
+         setSupportActionBar(binding.toolbar)
+         
+-        // Tratamento moderno do botão voltar
+         onBackPressedDispatcher.addCallback(this, object : androidx.activity.OnBackPressedCallback(true) {
+             override fun handleOnBackPressed() {
+                 if (binding.drawerLayout.isDrawerOpen(GravityCompat.START)) {
+@@ -66,9 +75,12 @@ class MainActivity : AppCompatActivity(), NavigationView.OnNavigationItemSelecte
+         setupRecyclerView()
+         setupListeners()
+         
++        // CRÍTICO: Solicita permissões necessárias
++        verificarPermissoes()
++        
+         lifecycleScope.launch {
+             carregarConfiguracoes()
+-            inicializarSocket()
++            inicializarSocket() // Inicia IMEDIATAMENTE
+             carregarConversas()
+         }
+ 
+@@ -78,6 +90,64 @@ class MainActivity : AppCompatActivity(), NavigationView.OnNavigationItemSelecte
+         }
+     }
+     
++    /**
++     * Verifica e solicita permissões necessárias para chamadas
++     */
++    private fun verificarPermissoes() {
++        val permissoesNecessarias = mutableListOf<String>()
++        
++        // Android 13+: POST_NOTIFICATIONS
++        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
++            if (ContextCompat.checkSelfPermission(
++                    this,
++                    Manifest.permission.POST_NOTIFICATIONS
++                ) != PackageManager.PERMISSION_GRANTED
++            ) {
++                permissoesNecessarias.add(Manifest.permission.POST_NOTIFICATIONS)
++            }
++        }
++        
++        // Android 12+: USE_FULL_SCREEN_INTENT via NotificationManager
++        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.UPSIDE_DOWN_CAKE) { // Android 14
++            val notificationManager = getSystemService(android.app.NotificationManager::class.java)
++            if (!notificationManager.canUseFullScreenIntent()) {
++                android.util.Log.w("MainActivity", "USE_FULL_SCREEN_INTENT não permitido. Solicite ao usuário nas configurações.")
++                // Não tem permissão runtime - usuário precisa habilitar manualmente
++            }
++        }
++        
++        if (permissoesNecessarias.isNotEmpty()) {
++            ActivityCompat.requestPermissions(
++                this,
++                permissoesNecessarias.toTypedArray(),
++                REQUEST_NOTIFICATION_PERMISSION
++            )
++        }
++    }
++    
++    override fun onRequestPermissionsResult(
++        requestCode: Int,
++        permissions: Array<out String>,
++        grantResults: IntArray
++    ) {
++        super.onRequestPermissionsResult(requestCode, permissions, grantResults)
++        
++        when (requestCode) {
++            REQUEST_NOTIFICATION_PERMISSION -> {
++                if (grantResults.isNotEmpty() && 
++                    grantResults.all { it == PackageManager.PERMISSION_GRANTED }) {
++                    android.util.Log.d("MainActivity", "Permissões de notificação concedidas")
++                } else {
++                    Toast.makeText(
++                        this,
++                        "Permissões necessárias para receber chamadas",
++                        Toast.LENGTH_LONG
++                    ).show()
++                }
++            }
++        }
++    }
++    
+     private fun setupNavigationDrawer() {
+         toggle = ActionBarDrawerToggle(
+             this,
+@@ -91,7 +161,6 @@ class MainActivity : AppCompatActivity(), NavigationView.OnNavigationItemSelecte
+         
+         binding.navView.setNavigationItemSelectedListener(this)
+         
+-        // Atualizar header com dados do usuário
+         lifecycleScope.launch {
+             val headerView = binding.navView.getHeaderView(0)
+             val tvNome = headerView.findViewById<TextView>(R.id.tvNomeUsuario)
+@@ -246,7 +315,6 @@ class MainActivity : AppCompatActivity(), NavigationView.OnNavigationItemSelecte
+         intent.putExtra("conversa_nome", conversa.nome ?: conversa.descricao)
+         intent.putExtra("conversa_tipo", conversa.tipo)
+         
+-        // Passa o destinatario_id se for uma conversa individual (tipo 1)
+         if (conversa.tipo == 1 && conversa.destinatario_id != null) {
+             intent.putExtra("destinatario_id", conversa.destinatario_id)
+         }
+@@ -256,7 +324,6 @@ class MainActivity : AppCompatActivity(), NavigationView.OnNavigationItemSelecte
+     
+     private fun realizarLogout() {
+         lifecycleScope.launch {
+-            // Para o SocketService
+             SocketService.stop(this@MainActivity)
+             
+             userPreferences.clear()
+@@ -268,43 +335,38 @@ class MainActivity : AppCompatActivity(), NavigationView.OnNavigationItemSelecte
+         }
+     }
+     
++    /**
++     * CRÍTICO: Inicia SocketService assim que MainActivity abre
++     * Service roda em background mesmo quando app fecha
++     */
+     private suspend fun inicializarSocket() {
+         try {
+             val apiUrl = userPreferences.apiUrl.first()
+             
+             if (!apiUrl.isNullOrEmpty()) {
+-                // Extrai host e define porta 8090
+                 val host = apiUrl.replace("http://", "")
+                                  .replace("https://", "")
+                                  .split(":")[0]
+                 val port = 8090
+ 
+-                val token = userPreferences.authToken.first() ?: "";
++                val token = userPreferences.authToken.first() ?: ""
+                 
+-                // Inicia SocketService em foreground
+-                SocketService.start(this, host, port, token)
+-                
+-                android.util.Log.d("MainActivity", "SocketService iniciado: $host:$port")
++                if (token.isNotEmpty()) {
++                    // Inicia SocketService em foreground
++                    SocketService.start(this, host, port, token)
++                    
++                    android.util.Log.d("MainActivity", "✅ SocketService iniciado: $host:$port")
++                } else {
++                    android.util.Log.e("MainActivity", "❌ Token vazio, não iniciou service")
++                }
++            } else {
++                android.util.Log.e("MainActivity", "❌ API URL vazia, não iniciou service")
+             }
+         } catch (e: Exception) {
+-            android.util.Log.e("MainActivity", "Erro ao inicializar SocketService", e)
++            android.util.Log.e("MainActivity", "❌ Erro ao inicializar SocketService", e)
+         }
+     }
+     
+-    private fun mostrarTelaChamadaRecebida(
+-        chamadaId: Int,
+-        usuarioId: Int,
+-        usuarioNome: String
+-    ) {
+-        val intent = Intent(this, com.conversa.conversa.ui.chamada.ChamadaIncomingActivity::class.java).apply {
+-            putExtra(com.conversa.conversa.ui.chamada.ChamadaIncomingActivity.EXTRA_CHAMADA_ID, chamadaId)
+-            putExtra(com.conversa.conversa.ui.chamada.ChamadaIncomingActivity.EXTRA_USUARIO_ID, usuarioId)
+-            putExtra(com.conversa.conversa.ui.chamada.ChamadaIncomingActivity.EXTRA_USUARIO_NOME, usuarioNome)
+-            flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TOP
+-        }
+-        startActivity(intent)
+-    }
+-    
+     override fun onResume() {
+         super.onResume()
+         if (!isFirstLoad) {
+@@ -318,5 +380,6 @@ class MainActivity : AppCompatActivity(), NavigationView.OnNavigationItemSelecte
+     override fun onDestroy() {
+         super.onDestroy()
+         // SocketService continua rodando em background
++        android.util.Log.d("MainActivity", "MainActivity destruída, Service continua ativo")
+     }
+ }
+diff --git a/app/src/main/java/com/conversa/conversa/adapter/ParticipantesAdapter.kt b/app/src/main/java/com/conversa/conversa/adapter/ParticipantesAdapter.kt
+new file mode 100644
+index 0000000..2bf8ec6
+--- /dev/null
++++ b/app/src/main/java/com/conversa/conversa/adapter/ParticipantesAdapter.kt
+@@ -0,0 +1,48 @@
++package com.conversa.conversa.adapter
++
++import android.view.LayoutInflater
++import android.view.ViewGroup
++import androidx.recyclerview.widget.DiffUtil
++import androidx.recyclerview.widget.ListAdapter
++import androidx.recyclerview.widget.RecyclerView
++import com.conversa.conversa.databinding.ItemParticipanteBinding
++import com.conversa.conversa.data.model.ParticipanteItem
++import com.conversa.conversa.data.model.UsuarioChamadaStatus
++
++class ParticipantesAdapter : ListAdapter<ParticipanteItem, ParticipantesAdapter.ViewHolder>(ParticipanteDiffCallback()) {
++
++    override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): ViewHolder {
++        val binding = ItemParticipanteBinding.inflate(
++            LayoutInflater.from(parent.context), parent, false
++        )
++        return ViewHolder(binding)
++    }
++
++    override fun onBindViewHolder(holder: ViewHolder, position: Int) {
++        holder.bind(getItem(position))
++    }
++
++    class ViewHolder(private val binding: ItemParticipanteBinding) : RecyclerView.ViewHolder(binding.root) {
++        fun bind(participante: ParticipanteItem) {
++            binding.tvNomeParticipante.text = participante.nome
++            
++            val statusText = when (participante.status) {
++                UsuarioChamadaStatus.PENDENTE -> "Chamando..."
++                UsuarioChamadaStatus.ENTROU -> "Conectado"
++                UsuarioChamadaStatus.SAIU -> "Desconectado"
++                UsuarioChamadaStatus.RECUSADO -> "Recusou"
++            }
++            binding.tvStatusParticipante.text = statusText
++        }
++    }
++
++    class ParticipanteDiffCallback : DiffUtil.ItemCallback<ParticipanteItem>() {
++        override fun areItemsTheSame(oldItem: ParticipanteItem, newItem: ParticipanteItem): Boolean {
++            return oldItem.usuarioId == newItem.usuarioId
++        }
++
++        override fun areContentsTheSame(oldItem: ParticipanteItem, newItem: ParticipanteItem): Boolean {
++            return oldItem == newItem
++        }
++    }
++}
+diff --git a/app/src/main/java/com/conversa/conversa/data/chamada/ChamadaManager.kt b/app/src/main/java/com/conversa/conversa/data/chamada/ChamadaManager.kt
+index fa25435..f1e3978 100644
+--- a/app/src/main/java/com/conversa/conversa/data/chamada/ChamadaManager.kt
++++ b/app/src/main/java/com/conversa/conversa/data/chamada/ChamadaManager.kt
+@@ -9,6 +9,7 @@ import kotlinx.coroutines.sync.Mutex
+ import kotlinx.coroutines.sync.withLock
+ import java.io.*
+ import java.net.Socket
++import java.net.SocketTimeoutException
+ import java.nio.ByteBuffer
+ import java.nio.ByteOrder
+ import java.util.concurrent.LinkedBlockingQueue
+@@ -30,6 +31,14 @@ import java.util.concurrent.LinkedBlockingQueue
+  */
+ class ChamadaManager(private val context: Context) {
+     
++    // ID único da instância para debug
++    private val instanceId = System.currentTimeMillis().toString().takeLast(6)
++    private val identityCode = System.identityHashCode(this)
++    
++    init {
++        Log.d(TAG, "[🆕 NOVA INSTÂNCIA] id=$instanceId, identityCode=$identityCode")
++    }
++    
+     companion object {
+         private const val TAG = "ChamadaManager"
+         
+@@ -45,10 +54,18 @@ class ChamadaManager(private val context: Context) {
+         private const val PACKET_TYPE_AUDIO: Byte = 1
+     }
+     
+-    // Estado da chamada
++    // Estado da chamada - @Volatile para garantir visibilidade entre threads
++    @Volatile
+     private var emChamada = false
++        set(value) {
++            Log.d(TAG, "[$instanceId] \u26a0\ufe0f emChamada mudando de $field para $value")
++            Log.d(TAG, "[$instanceId]    Thread: ${Thread.currentThread().name}")
++            field = value
++        }
+     private var chamadaId: Int = 0
+     private var usuarioId: Int = 0
++    private var capturaPausada: Boolean = false
++    private var reproducaoPausada: Boolean = false
+     
+     // Conexão TCP
+     private var socket: Socket? = null
+@@ -61,8 +78,10 @@ class ChamadaManager(private val context: Context) {
+     // Fila de pacotes para envio serializado
+     private val filaEnvio = Channel<ByteArray>(capacity = 100)
+     
+-    // Áudio
++    // Áudio - @Volatile para garantir visibilidade entre threads
++    @Volatile
+     private var audioRecord: AudioRecord? = null
++    @Volatile
+     private var audioTrack: AudioTrack? = null
+     
+     // Coroutines
+@@ -75,6 +94,7 @@ class ChamadaManager(private val context: Context) {
+     private val mixingBuffers = mutableMapOf<Int, LinkedBlockingQueue<ShortArray>>()
+     
+     // Callbacks
++    var onConexaoTcpEstabelecida: (() -> Unit)? = null
+     var onConexaoEstabelecida: (() -> Unit)? = null
+     var onConexaoFalhou: ((String) -> Unit)? = null
+     var onChamadaFinalizada: (() -> Unit)? = null
+@@ -92,7 +112,7 @@ class ChamadaManager(private val context: Context) {
+             this@ChamadaManager.chamadaId = chamadaId
+             this@ChamadaManager.usuarioId = usuarioId
+             
+-            Log.d(TAG, "=== INICIANDO CHAMADA ===")
++            Log.d(TAG, "[$instanceId] === INICIANDO CHAMADA ===")
+             Log.d(TAG, "Servidor: $serverHost:$serverPort")
+             Log.d(TAG, "ChamadaId: $chamadaId")
+             Log.d(TAG, "UsuarioId: $usuarioId")
+@@ -100,8 +120,9 @@ class ChamadaManager(private val context: Context) {
+             // Conecta ao servidor TCP
+             socket = Socket(serverHost, serverPort).apply {
+                 tcpNoDelay = true
+-                soTimeout = 5000
++                soTimeout = 0  // 0 = sem timeout, aguarda indefinidamente (mas não trava a thread)
+                 keepAlive = true
++                receiveBufferSize = BUFFER_SIZE * 8
+             }
+             
+             outputStream = DataOutputStream(socket!!.getOutputStream())
+@@ -109,6 +130,11 @@ class ChamadaManager(private val context: Context) {
+             
+             Log.d(TAG, "Socket TCP conectado")
+             
++            // Dispara callback de conexão TCP estabelecida
++            withContext(Dispatchers.Main) {
++                onConexaoTcpEstabelecida?.invoke()
++            }
++            
+             // Registra cliente no servidor
+             registrarCliente()
+             
+@@ -123,17 +149,17 @@ class ChamadaManager(private val context: Context) {
+                 return@withContext false
+             }
+             Log.d(TAG, "✅ Áudio inicializado com sucesso")
+-            
++            Log.d(TAG, "   - audioRecord: ${if (audioRecord == null) "NULL" else "OK (estado=${audioRecord?.state})" }")
++            Log.d(TAG, "   - audioTrack: ${if (audioTrack == null) "NULL" else "OK (estado=${audioTrack?.state})" }")
++
++            // IMPORTANTE: Seta emChamada para true ANTES de iniciar áudio
++            Log.d(TAG, "[$instanceId] Setando emChamada = true")
+             emChamada = true
+-            
++            Log.d(TAG, "[$instanceId] emChamada agora é: $emChamada")
++
+             // Inicia worker de envio serializado
+             iniciarSender()
+-            
+-            // Inicia captura e reprodução
+-            Log.d(TAG, "Iniciando captura e reprodução...")
+-            iniciarCaptura()
+-            iniciarReproducao()
+-            
++
+             // CRÍTICO: Dispara callback AQUI, após tudo inicializado
+             withContext(Dispatchers.Main) {
+                 onConexaoEstabelecida?.invoke()
+@@ -183,32 +209,32 @@ class ChamadaManager(private val context: Context) {
+     private fun inicializarAudio(): Boolean {
+         return try {
+             Log.d(TAG, "→ Verificando suporte de áudio...")
+-            
++
+             // Calcula buffer mínimo para AudioRecord
+             val minBufferSizeRecord = AudioRecord.getMinBufferSize(
+                 SAMPLE_RATE, CHANNEL_IN, AUDIO_FORMAT
+             )
+-            
++
+             if (minBufferSizeRecord == AudioRecord.ERROR ||
+                 minBufferSizeRecord == AudioRecord.ERROR_BAD_VALUE) {
+                 Log.e(TAG, "❌ Erro ao calcular buffer AudioRecord: $minBufferSizeRecord")
+                 return false
+             }
+-            
++
+             Log.d(TAG, "→ Buffer AudioRecord: $minBufferSizeRecord bytes")
+-            
++
+             // Tenta criar AudioRecord com diferentes fontes se VOICE_COMMUNICATION falhar
+             val audioSources = listOf(
+                 MediaRecorder.AudioSource.VOICE_COMMUNICATION,
+                 MediaRecorder.AudioSource.MIC,
+                 MediaRecorder.AudioSource.DEFAULT
+             )
+-            
++
+             var recordCriado = false
+             for (source in audioSources) {
+                 try {
+                     Log.d(TAG, "→ Tentando AudioSource: $source")
+-                    
++
+                     audioRecord = AudioRecord(
+                         source,
+                         SAMPLE_RATE,
+@@ -216,7 +242,7 @@ class ChamadaManager(private val context: Context) {
+                         AUDIO_FORMAT,
+                         maxOf(minBufferSizeRecord, BUFFER_SIZE * 2)
+                     )
+-                    
++
+                     if (audioRecord?.state == AudioRecord.STATE_INITIALIZED) {
+                         Log.d(TAG, "✅ AudioRecord criado com source=$source, estado=${audioRecord?.state}")
+                         recordCriado = true
+@@ -232,25 +258,25 @@ class ChamadaManager(private val context: Context) {
+                     audioRecord = null
+                 }
+             }
+-            
++
+             if (!recordCriado) {
+                 Log.e(TAG, "❌ Não foi possível criar AudioRecord com nenhuma fonte")
+                 return false
+             }
+-            
++
+             // Calcula buffer mínimo para AudioTrack
+             val minBufferSizeTrack = AudioTrack.getMinBufferSize(
+                 SAMPLE_RATE, CHANNEL_OUT, AUDIO_FORMAT
+             )
+-            
++
+             if (minBufferSizeTrack == AudioTrack.ERROR ||
+                 minBufferSizeTrack == AudioTrack.ERROR_BAD_VALUE) {
+                 Log.e(TAG, "❌ Erro ao calcular buffer AudioTrack: $minBufferSizeTrack")
+                 return false
+             }
+-            
++
+             Log.d(TAG, "→ Buffer AudioTrack: $minBufferSizeTrack bytes")
+-            
++
+             // Cria AudioTrack
+             audioTrack = AudioTrack(
+                 AudioManager.STREAM_VOICE_CALL,
+@@ -260,7 +286,7 @@ class ChamadaManager(private val context: Context) {
+                 maxOf(minBufferSizeTrack, BUFFER_SIZE * 4),
+                 AudioTrack.MODE_STREAM
+             )
+-            
++
+             // Verifica estado do AudioTrack
+             if (audioTrack?.state != AudioTrack.STATE_INITIALIZED) {
+                 Log.e(TAG, "❌ AudioTrack não inicializado. Estado: ${audioTrack?.state}")
+@@ -268,9 +294,12 @@ class ChamadaManager(private val context: Context) {
+                 audioTrack = null
+                 return false
+             }
+-            
++
+             Log.d(TAG, "✅ AudioTrack criado. Estado: ${audioTrack?.state}")
+-            
++            Log.d(TAG, "📦 Retornando TRUE de inicializarAudio()")
++            Log.d(TAG, "   - audioRecord final: ${if (audioRecord == null) "NULL" else "INICIALIZADO" }")
++            Log.d(TAG, "   - audioTrack final: ${if (audioTrack == null) "NULL" else "INICIALIZADO" }")
++
+             true
+             
+         } catch (e: Exception) {
+@@ -316,106 +345,56 @@ class ChamadaManager(private val context: Context) {
+         }
+     }
+     
++    /**
++     * Inicia captura de áudio do microfone e envio para servidor
++     */
+     /**
+      * Inicia captura de áudio do microfone e envio para servidor
+      */
+     private fun iniciarCaptura() {
+         captureJob = scope.launch {
+             try {
+-                val record = audioRecord
+-                if (record == null) {
+-                    Log.e(TAG, "❌ AudioRecord é null")
+-                    return@launch
+-                }
+-                
+-                if (record.state != AudioRecord.STATE_INITIALIZED) {
+-                    Log.e(TAG, "❌ AudioRecord não inicializado. Estado: ${record.state}")
+-                    return@launch
+-                }
+-                
+-                Log.d(TAG, "🎤 Iniciando gravação...")
+-                record.startRecording()
+-                
+-                delay(50) // Pequeno delay para garantir start
+-                
+-                if (record.recordingState != AudioRecord.RECORDSTATE_RECORDING) {
+-                    Log.e(TAG, "❌ AudioRecord NÃO está gravando. Estado: ${record.recordingState}")
+-                    return@launch
+-                }
+-                
+-                Log.d(TAG, "✅ 🎤 Gravação iniciada com sucesso!")
+-                
++                audioRecord?.startRecording()
++                Log.d(TAG, "Captura de áudio iniciada")
++
+                 val buffer = ByteArray(BUFFER_SIZE)
+                 var pacotesCapturados = 0
+-                var bytesCapturados = 0L
+-                var errosConsecutivos = 0
+-                
++
+                 while (emChamada && isActive) {
+-                    val bytesRead = record.read(buffer, 0, buffer.size)
+-                    
+-                    when {
+-                        bytesRead > 0 -> {
+-                            errosConsecutivos = 0
+-                            pacotesCapturados++
+-                            bytesCapturados += bytesRead
+-                            
+-                            val audioCopy = buffer.copyOf(bytesRead)
+-                            enviarAudio(audioCopy, bytesRead)
+-                            
+-                            if (pacotesCapturados == 1) {
+-                                Log.d(TAG, "🎤 PRIMEIRO pacote capturado: $bytesRead bytes")
+-                            }
+-                            
+-                            if (pacotesCapturados % 50 == 0) {
+-                                Log.d(TAG, "🎤 Capturados: $pacotesCapturados pacotes, ${bytesCapturados / 1024}KB")
+-                            }
+-                        }
+-                        
+-                        bytesRead == AudioRecord.ERROR_INVALID_OPERATION -> {
+-                            Log.e(TAG, "❌ AudioRecord: operação inválida")
+-                            errosConsecutivos++
+-                        }
+-                        
+-                        bytesRead == AudioRecord.ERROR_BAD_VALUE -> {
+-                            Log.e(TAG, "❌ AudioRecord: valor inválido")
+-                            errosConsecutivos++
+-                        }
+-                        
+-                        bytesRead == AudioRecord.ERROR_DEAD_OBJECT -> {
+-                            Log.e(TAG, "❌ AudioRecord: objeto morto")
+-                            break
+-                        }
+-                        
+-                        else -> {
+-                            Log.w(TAG, "⚠️ AudioRecord retorno inesperado: $bytesRead")
+-                            errosConsecutivos++
++                    val bytesRead = audioRecord?.read(buffer, 0, buffer.size) ?: -1
++
++                    if (bytesRead > 0) {
++                        pacotesCapturados++
++
++                        // Cria cópia do buffer antes de enfileirar
++                        val audioCopy = buffer.copyOf(bytesRead)
++                        enviarAudio(audioCopy, bytesRead)
++
++                        if (pacotesCapturados % 50 == 0) {
++                            Log.d(TAG, "Pacotes capturados: $pacotesCapturados, último: $bytesRead bytes")
++
+                         }
+                     }
+-                    
+-                    if (errosConsecutivos >= 10) {
+-                        Log.e(TAG, "❌ Muitos erros consecutivos ($errosConsecutivos), parando")
+-                        break
+-                    }
+                 }
+-                
+-                Log.d(TAG, "🎤 Captura finalizada. Total: $pacotesCapturados pacotes, ${bytesCapturados / 1024}KB")
+-                
+             } catch (e: Exception) {
+-                Log.e(TAG, "❌ Erro na captura de áudio", e)
++                Log.e(TAG, "Erro na captura de áudio", e)
+             } finally {
+                 try {
+-                    audioRecord?.stop()
+-                    Log.d(TAG, "AudioRecord parado")
++                    // Verifica estado antes de parar para evitar IllegalStateException
++                    if (audioRecord?.recordingState == AudioRecord.RECORDSTATE_RECORDING) {
++                        audioRecord?.stop()
++                        Log.d(TAG, "AudioRecord parado")
++                    } else {
++                        Log.d(TAG, "AudioRecord não estava gravando, estado: ${audioRecord?.recordingState}")
++                    }
+                 } catch (e: Exception) {
+                     Log.e(TAG, "Erro ao parar AudioRecord", e)
+                 }
++                Log.d(TAG, "Captura de áudio finalizada")
+             }
+         }
+     }
+     
+-    /**
+-     * Envia pacote de áudio para o servidor via fila
+-     */
+     private suspend fun enviarAudio(audioData: ByteArray, size: Int) {
+         try {
+             if (size <= 0 || size > BUFFER_SIZE) {
+@@ -448,11 +427,17 @@ class ChamadaManager(private val context: Context) {
+      * Inicia reprodução de áudio recebido do servidor
+      */
+     private fun iniciarReproducao() {
++        Log.d(TAG, "🔴 iniciarReproducao() chamado")
++        Log.d(TAG, "   - audioTrack antes de launch: ${if (audioTrack == null) "NULL" else "OK"}")
++        
+         playbackJob = scope.launch {
+             try {
++                Log.d(TAG, "🔵 Dentro da coroutine de reprodução")
+                 val track = audioTrack
++                Log.d(TAG, "   - audioTrack dentro da coroutine: ${if (track == null) "NULL" else "OK (estado=${track.state})" }")
++                
+                 if (track == null) {
+-                    Log.e(TAG, "❌ AudioTrack é null")
++                    Log.e(TAG, "❌ AudioTrack é null DENTRO DA COROUTINE")
+                     return@launch
+                 }
+                 
+@@ -472,27 +457,63 @@ class ChamadaManager(private val context: Context) {
+                 }
+                 
+                 Log.d(TAG, "✅ 🔊 Reprodução iniciada com sucesso!")
++                Log.d(TAG, "   - emChamada: $emChamada")
++                Log.d(TAG, "   - isActive: $isActive")
++                Log.d(TAG, "   - Condição do loop: ${emChamada && isActive}")
++                Log.d(TAG, "   - Entrando no loop de recepção...")
+                 
+                 var pacotesRecebidos = 0
++                var tentativasVazias = 0
++                var iteracoesLoop = 0
+                 
+                 while (emChamada && isActive) {
+-                    receberEReproducirAudio()
+-                    pacotesRecebidos++
++                    iteracoesLoop++
+                     
+-                    if (pacotesRecebidos == 1) {
+-                        Log.d(TAG, "🔊 PRIMEIRO pacote recebido")
++                    if (iteracoesLoop == 1) {
++                        Log.d(TAG, "🔵 PRIMEIRA iteração do loop de reprodução")
+                     }
+                     
+-                    if (pacotesRecebidos % 50 == 0) {
+-                        Log.d(TAG, "🔊 Recebidos: $pacotesRecebidos pacotes")
++                    try {
++                        receberEReproducirAudio()
++                        pacotesRecebidos++
++                        tentativasVazias = 0
++                        
++                        if (pacotesRecebidos == 1) {
++                            Log.d(TAG, "🔊 PRIMEIRO pacote recebido e processado")
++                        }
++                        
++                        if (pacotesRecebidos % 50 == 0) {
++                            Log.d(TAG, "🔊 Recebidos: $pacotesRecebidos pacotes")
++                        }
++                    } catch (e: Exception) {
++                        Log.e(TAG, "Erro no loop de reprodução: ${e.message}", e)
++                        tentativasVazias++
++                        
++                        if (tentativasVazias > 100) {
++                            Log.e(TAG, "Muitas falhas consecutivas, parando reprodução")
++                            break
++                        }
++                        
++                        delay(10)
+                     }
+                 }
++                
++                Log.d(TAG, "🔊 Loop de reprodução finalizado")
++                Log.d(TAG, "   - Total pacotes: $pacotesRecebidos")
++                Log.d(TAG, "   - Total iterações: $iteracoesLoop")
++                Log.d(TAG, "   - emChamada ao sair: $emChamada")
++                Log.d(TAG, "   - isActive ao sair: $isActive")
+             } catch (e: Exception) {
+                 Log.e(TAG, "❌ Erro na reprodução", e)
+             } finally {
+                 try {
+-                    audioTrack?.stop()
+-                    Log.d(TAG, "AudioTrack parado")
++                    // Verifica estado antes de parar para evitar IllegalStateException
++                    if (audioTrack?.playState == AudioTrack.PLAYSTATE_PLAYING) {
++                        audioTrack?.stop()
++                        Log.d(TAG, "AudioTrack parado")
++                    } else {
++                        Log.d(TAG, "AudioTrack não estava reproduzindo, estado: ${audioTrack?.playState}")
++                    }
+                 } catch (e: Exception) {
+                     Log.e(TAG, "Erro ao parar AudioTrack", e)
+                 }
+@@ -504,18 +525,30 @@ class ChamadaManager(private val context: Context) {
+      * Recebe áudio do servidor e reproduz
+      */
+     private suspend fun receberEReproducirAudio() {
++        Log.d(TAG, "🔴 receberEReproducirAudio() CHAMADO")
++        
+         try {
++            // Verifica se há dados disponíveis para leitura
++            val stream = inputStream
++            if (stream == null) {
++                Log.e(TAG, "InputStream é null")
++                delay(10)
++                return
++            }
++            
++            // Lê tamanho do pacote
+             val tamanhoBytes = ByteArray(4)
+-            inputStream?.readFully(tamanhoBytes)
++            stream.readFully(tamanhoBytes)
+             val tamanho = ByteBuffer.wrap(tamanhoBytes).order(ByteOrder.LITTLE_ENDIAN).int
+             
+-            if (tamanho <= 4) {
++            if (tamanho <= 4 || tamanho > (BUFFER_SIZE * 4 + 4)) {
+                 Log.w(TAG, "Pacote inválido: $tamanho bytes")
+                 return
+             }
+             
++            // Lê ID do cliente
+             val clientIdBytes = ByteArray(4)
+-            inputStream?.readFully(clientIdBytes)
++            stream.readFully(clientIdBytes)
+             val clientId = ByteBuffer.wrap(clientIdBytes).order(ByteOrder.LITTLE_ENDIAN).int
+             
+             val audioSize = tamanho - 4
+@@ -525,22 +558,28 @@ class ChamadaManager(private val context: Context) {
+                 return
+             }
+             
++            // Lê dados de áudio
+             val audioData = ByteArray(audioSize)
+-            inputStream?.readFully(audioData)
++            stream.readFully(audioData)
+             
+             val audioShorts = bytesToShorts(audioData)
+             adicionarAoMixing(clientId, audioShorts)
+             
+             val mixedAudio = mixar()
+-            if (mixedAudio.isNotEmpty()) {
++            if (mixedAudio.isNotEmpty() && !reproducaoPausada) {
+                 reproduzirAudio(mixedAudio)
+             }
+             
+         } catch (e: EOFException) {
+             Log.e(TAG, "Conexão encerrada pelo servidor")
+-            finalizarChamada()
++            withContext(Dispatchers.Main) {
++                finalizarChamada()
++            }
++        } catch (e: SocketTimeoutException) {
++            delay(10)
+         } catch (e: Exception) {
+-            Log.e(TAG, "Erro ao receber/reproduzir", e)
++            Log.e(TAG, "Erro ao receber/reproduzir: ${e.message}", e)
++            delay(10)
+         }
+     }
+     
+@@ -614,11 +653,15 @@ class ChamadaManager(private val context: Context) {
+         filaEnvio.close()
+         
+         try {
+-            audioRecord?.stop()
++            if (audioRecord?.recordingState == AudioRecord.RECORDSTATE_RECORDING) {
++                audioRecord?.stop()
++            }
+             audioRecord?.release()
+             audioRecord = null
+             
+-            audioTrack?.stop()
++            if (audioTrack?.playState == AudioTrack.PLAYSTATE_PLAYING) {
++                audioTrack?.stop()
++            }
+             audioTrack?.release()
+             audioTrack = null
+         } catch (e: Exception) {
+@@ -644,6 +687,53 @@ class ChamadaManager(private val context: Context) {
+         Log.d(TAG, "Chamada finalizada")
+     }
+     
++    fun pausarCaptura() {
++        capturaPausada = true
++        Log.d(TAG, "Captura pausada")
++    }
++    
++    fun retormarCaptura() {
++        capturaPausada = false
++        Log.d(TAG, "Captura retomada")
++    }
++    
++    fun pausarReproducao() {
++        reproducaoPausada = true
++        Log.d(TAG, "Reprodução pausada")
++    }
++    
++    fun retormarReproducao() {
++        reproducaoPausada = false
++        Log.d(TAG, "Reprodução retomada")
++    }
++    
++    fun iniciarCapturaEReproducao() {
++        Log.d(TAG, "[$instanceId] === INICIANDO CAPTURA E REPRODUÇÃO ===")
++        Log.d(TAG, "[$instanceId] Estado emChamada: $emChamada")
++        Log.d(TAG, "[$instanceId] Thread: ${Thread.currentThread().name}")
++        Log.d(TAG, "[$instanceId] audioRecord: ${if (audioRecord == null) "NULL" else "OK (estado=${audioRecord?.state})" }")
++        Log.d(TAG, "[$instanceId] audioTrack: ${if (audioTrack == null) "NULL" else "OK (estado=${audioTrack?.state})" }")
++        Log.d(TAG, "captureJob ativo: ${captureJob?.isActive}")
++        Log.d(TAG, "playbackJob ativo: ${playbackJob?.isActive}")
++        
++        if (audioRecord == null || audioTrack == null) {
++            Log.e(TAG, "❌ ERRO CRÍTICO: Componentes de áudio são NULL!")
++            Log.e(TAG, "Tentando reinicializar componentes de áudio...")
++            if (inicializarAudio()) {
++                Log.d(TAG, "✅ Componentes reinicializados com sucesso")
++            } else {
++                Log.e(TAG, "❌ Falha ao reinicializar componentes")
++                return
++            }
++        }
++
++        iniciarCaptura()
++        iniciarReproducao()
++        iniciarSender()
++
++        Log.d(TAG, "=== CAPTURA E REPRODUÇÃO DISPARADAS ===")
++    }
++    
+     fun cleanup() {
+         finalizarChamada()
+         scope.cancel()
+diff --git a/app/src/main/java/com/conversa/conversa/data/chamada/model/EventoChamada.kt b/app/src/main/java/com/conversa/conversa/data/chamada/model/EventoChamada.kt
+new file mode 100644
+index 0000000..548adbf
+--- /dev/null
++++ b/app/src/main/java/com/conversa/conversa/data/chamada/model/EventoChamada.kt
+@@ -0,0 +1,20 @@
++package com.conversa.conversa.data.chamada.model
++
++enum class TipoEventoChamada {
++    PARTICIPANTE_ENTROU,
++    PARTICIPANTE_SAIU,
++    CHAMADA_RECUSADA,
++    CHAMADA_CONECTADA,
++    CHAMADA_FINALIZADA,
++    AUDIO_ALTERADO,
++    VIDEO_ALTERADO
++}
++
++data class EventoChamada(
++    val tipo: TipoEventoChamada,
++    val chamadaId: Int,
++    val participanteId: Int? = null,
++    val participanteNome: String? = null,
++    val audioAtivo: Boolean? = null,
++    val videoAtivo: Boolean? = null
++)
+diff --git a/app/src/main/java/com/conversa/conversa/data/chamada/model/EventoChamadaUI.kt b/app/src/main/java/com/conversa/conversa/data/chamada/model/EventoChamadaUI.kt
+new file mode 100644
+index 0000000..afe0bcf
+--- /dev/null
++++ b/app/src/main/java/com/conversa/conversa/data/chamada/model/EventoChamadaUI.kt
+@@ -0,0 +1,21 @@
++package com.conversa.conversa.data.chamada.model
++
++enum class TipoEventoChamadaUI {
++    PARTICIPANTE_ENTROU,
++    PARTICIPANTE_SAIU,
++    CHAMADA_RECUSADA,
++    CHAMADA_CONECTADA,
++    CHAMADA_FINALIZADA,
++    AUDIO_ALTERADO,
++    VIDEO_ALTERADO,
++    CHAMADA_REALMENTE_INICIADA
++}
++
++data class EventoChamadaUI(
++    val tipo: TipoEventoChamadaUI,
++    val chamadaId: Int,
++    val participanteId: Int? = null,
++    val participanteNome: String? = null,
++    val audioAtivo: Boolean? = null,
++    val videoAtivo: Boolean? = null
++)
+diff --git a/app/src/main/java/com/conversa/conversa/data/model/ParticipanteItem.kt b/app/src/main/java/com/conversa/conversa/data/model/ParticipanteItem.kt
+new file mode 100644
+index 0000000..5206274
+--- /dev/null
++++ b/app/src/main/java/com/conversa/conversa/data/model/ParticipanteItem.kt
+@@ -0,0 +1,7 @@
++package com.conversa.conversa.data.model
++
++data class ParticipanteItem(
++    val usuarioId: Int,
++    val nome: String,
++    val status: UsuarioChamadaStatus
++)
+diff --git a/app/src/main/java/com/conversa/conversa/data/repository/ChamadaRepository.kt b/app/src/main/java/com/conversa/conversa/data/repository/ChamadaRepository.kt
+index da7fd8d..9eb6aef 100644
+--- a/app/src/main/java/com/conversa/conversa/data/repository/ChamadaRepository.kt
++++ b/app/src/main/java/com/conversa/conversa/data/repository/ChamadaRepository.kt
+@@ -55,6 +55,9 @@ class ChamadaRepository(
+     private val _eventosChamadaFlow = MutableSharedFlow<EventoChamada>(replay = 0)
+     val eventosChamadaFlow: SharedFlow<EventoChamada> = _eventosChamadaFlow.asSharedFlow()
+     
++    private val _eventosUIFlow = MutableSharedFlow<com.conversa.conversa.data.chamada.model.EventoChamadaUI>(replay = 0)
++    val eventosUIFlow: SharedFlow<com.conversa.conversa.data.chamada.model.EventoChamadaUI> = _eventosUIFlow.asSharedFlow()
++    
+     var chamadaAtual: ChamadaResponse? = null
+         private set(value) {
+             field = value
+@@ -63,20 +66,104 @@ class ChamadaRepository(
+     
+     var onChamadaIniciada: ((ChamadaResponse) -> Unit)? = null
+     var onChamadaConectada: (() -> Unit)? = null
++    var onChamadaRealmenteIniciada: (() -> Unit)? = null
+     var onChamadaFinalizada: (() -> Unit)? = null
+     var onErro: ((String) -> Unit)? = null
++    var onConexaoTcpEstabelecida: (() -> Unit)? = null
++    
++    private var primeiroParticipanteEntrou: Boolean = false
+     
+     init {
+         setupSocketEventListeners()
++        setupChamadaManagerCallbacks()
++        observarEventosParaUI()
++    }
++    
++    private fun observarEventosParaUI() {
++        scope.launch {
++            eventosChamadaFlow.collect { evento ->
++                when (evento) {
++                    is EventoChamada.UsuarioEntrou -> {
++                        val usuario = chamadaAtual?.usuarios?.find { it.usuarioId == evento.usuarioId }
++                        _eventosUIFlow.emit(
++                            com.conversa.conversa.data.chamada.model.EventoChamadaUI(
++                                tipo = com.conversa.conversa.data.chamada.model.TipoEventoChamadaUI.PARTICIPANTE_ENTROU,
++                                chamadaId = evento.chamadaId,
++                                participanteId = evento.usuarioId,
++                                participanteNome = usuario?.usuarioNome
++                            )
++                        )
++                    }
++                    
++                    is EventoChamada.UsuarioSaiu -> {
++                        val usuario = chamadaAtual?.usuarios?.find { it.usuarioId == evento.usuarioId }
++                        _eventosUIFlow.emit(
++                            com.conversa.conversa.data.chamada.model.EventoChamadaUI(
++                                tipo = com.conversa.conversa.data.chamada.model.TipoEventoChamadaUI.PARTICIPANTE_SAIU,
++                                chamadaId = evento.chamadaId,
++                                participanteId = evento.usuarioId,
++                                participanteNome = usuario?.usuarioNome
++                            )
++                        )
++                    }
++                    
++                    is EventoChamada.UsuarioRecusou -> {
++                        val usuario = chamadaAtual?.usuarios?.find { it.usuarioId == evento.usuarioId }
++                        _eventosUIFlow.emit(
++                            com.conversa.conversa.data.chamada.model.EventoChamadaUI(
++                                tipo = com.conversa.conversa.data.chamada.model.TipoEventoChamadaUI.CHAMADA_RECUSADA,
++                                chamadaId = evento.chamadaId,
++                                participanteId = evento.usuarioId,
++                                participanteNome = usuario?.usuarioNome
++                            )
++                        )
++                    }
++                    
++                    is EventoChamada.Finalizada -> {
++                        _eventosUIFlow.emit(
++                            com.conversa.conversa.data.chamada.model.EventoChamadaUI(
++                                tipo = com.conversa.conversa.data.chamada.model.TipoEventoChamadaUI.CHAMADA_FINALIZADA,
++                                chamadaId = evento.chamadaId,
++                                participanteId = evento.usuarioId
++                            )
++                        )
++                    }
++                    
++                    is EventoChamada.Recebida -> {
++                        // Evento de chamada recebida não precisa ser propagado para UI
++                        // pois é tratado diretamente pela Activity de chamada recebida
++                    }
++                }
++            }
++        }
+     }
+     
+     private fun setupChamadaManagerCallbacks() {
+         Log.d(TAG, "Configurando callbacks do ChamadaManager")
+         
++        chamadaManager.onConexaoTcpEstabelecida = {
++            Log.d(TAG, "ChamadaManager: Conexão TCP estabelecida")
++            
++            scope.launch(Dispatchers.Main) {
++                onConexaoTcpEstabelecida?.invoke()
++            }
++        }
++        
+         chamadaManager.onConexaoEstabelecida = {
+-            Log.d(TAG, "ChamadaManager: Conexão de áudio estabelecida")
++            Log.d(TAG, "ChamadaManager: Conexão TCP de áudio estabelecida")
++            Log.d(TAG, ">>> EMITINDO EVENTO CHAMADA_CONECTADA <<<")
+             _estadoLocalFlow.value = EstadoChamadaLocal.CHAMADA_EM_ANDAMENTO
+             
++            scope.launch {
++                _eventosUIFlow.emit(
++                    com.conversa.conversa.data.chamada.model.EventoChamadaUI(
++                        tipo = com.conversa.conversa.data.chamada.model.TipoEventoChamadaUI.CHAMADA_CONECTADA,
++                        chamadaId = chamadaAtual?.id ?: 0
++                    )
++                )
++                Log.d(TAG, ">>> EVENTO CHAMADA_CONECTADA EMITIDO <<<")
++            }
++            
+             scope.launch(Dispatchers.Main) {
+                 onChamadaConectada?.invoke()
+             }
+@@ -94,6 +181,15 @@ class ChamadaRepository(
+             Log.d(TAG, "ChamadaManager: Chamada finalizada")
+             _estadoLocalFlow.value = EstadoChamadaLocal.CHAMADA_FINALIZADA
+             
++            scope.launch {
++                _eventosUIFlow.emit(
++                    com.conversa.conversa.data.chamada.model.EventoChamadaUI(
++                        tipo = com.conversa.conversa.data.chamada.model.TipoEventoChamadaUI.CHAMADA_FINALIZADA,
++                        chamadaId = chamadaAtual?.id ?: 0
++                    )
++                )
++            }
++            
+             scope.launch(Dispatchers.Main) {
+                 onChamadaFinalizada?.invoke()
+             }
+@@ -171,10 +267,47 @@ class ChamadaRepository(
+             Log.d(TAG, "Socket: Usuário $usuarioId entrou na chamada $chamadaId")
+             
+             scope.launch {
+-                if (chamadaAtual?.id == chamadaId) {
++                val usuarioAtualId = userPreferences.userId.firstOrNull() ?: 0
++                
++                // Sempre atualiza dados da chamada
++                if (chamadaAtual?.id == chamadaId || chamadaAtual == null) {
+                     val resultado = obterDadosChamada(chamadaId)
+                     if (resultado.isSuccess) {
+                         chamadaAtual = resultado.getOrNull()
++                        Log.d(TAG, "Dados da chamada atualizados: ${chamadaAtual?.usuarios?.size} participantes")
++                    }
++                }
++                
++                // Verifica se é o primeiro participante diferente do usuário atual
++                if (!primeiroParticipanteEntrou && usuarioId != usuarioAtualId) {
++                    primeiroParticipanteEntrou = true
++                    Log.d(TAG, "⚡ PRIMEIRO participante diferente entrou: $usuarioId (eu sou: $usuarioAtualId)")
++                    Log.d(TAG, "🎙️ Iniciando captura e reprodução - Quem ESTAVA ESPERANDO")
++                    
++                    val chamadaIdAtual = chamadaAtual?.id
++                    
++                    if (chamadaIdAtual != null) {
++                        _eventosUIFlow.emit(
++                            com.conversa.conversa.data.chamada.model.EventoChamadaUI(
++                                tipo = com.conversa.conversa.data.chamada.model.TipoEventoChamadaUI.CHAMADA_REALMENTE_INICIADA,
++                                chamadaId = chamadaIdAtual
++                            )
++                        )
++                        
++                        withContext(Dispatchers.Main) {
++                            onChamadaRealmenteIniciada?.invoke()
++                        }
++                        
++                        chamadaManager.iniciarCapturaEReproducao()
++                        Log.d(TAG, "✅ Captura e reprodução iniciadas com sucesso")
++                    } else {
++                        Log.e(TAG, "❌ ERRO: chamadaAtual ainda é null ao detectar primeiro participante")
++                    }
++                } else {
++                    if (usuarioId == usuarioAtualId) {
++                        Log.d(TAG, "⏭️ Evento ignorado: sou eu mesmo entrando ($usuarioId)")
++                    } else if (primeiroParticipanteEntrou) {
++                        Log.d(TAG, "⏭️ Evento ignorado: áudio já foi iniciado anteriormente")
+                     }
+                 }
+                 
+@@ -204,10 +337,9 @@ class ChamadaRepository(
+     
+     suspend fun iniciarChamada(destinatariosIds: List<Int>): Result<ChamadaResponse> {
+         return try {
++            primeiroParticipanteEntrou = false
+             _estadoLocalFlow.value = EstadoChamadaLocal.INICIANDO_CHAMADA
+             
+-            setupChamadaManagerCallbacks()
+-            
+             val token = userPreferences.authToken.first()
+             if (token == null) {
+                 return Result.failure(Exception("Token não disponível"))
+@@ -236,9 +368,12 @@ class ChamadaRepository(
+             
+             if (response.isSuccessful) {
+                 val chamada = response.body()!!
+-                chamadaAtual = chamada
+                 
+                 Log.d(TAG, "✅ Chamada criada via API: ${chamada.id}")
++                Log.d(TAG, "Atribuindo chamadaAtual ANTES de conectar TCP")
++                
++                // CRÍTICO: Atribui ANTES de conectar ao TCP
++                chamadaAtual = chamada
+                 
+                 // Delay para garantir que servidor processou
+                 delay(200)
+@@ -277,7 +412,7 @@ class ChamadaRepository(
+     
+     suspend fun aceitarChamada(chamadaId: Int): Result<Unit> {
+         return try {
+-            setupChamadaManagerCallbacks()
++            primeiroParticipanteEntrou = false
+             
+             val token = userPreferences.authToken.first()
+             if (token == null) {
+@@ -292,25 +427,30 @@ class ChamadaRepository(
+             Log.d(TAG, "ChamadaId: $chamadaId")
+             Log.d(TAG, "UsuarioId: $usuarioId")
+             
+-            // 1. Notifica API que está entrando
++            // 1. Busca dados completos PRIMEIRO
++            Log.d(TAG, "Buscando dados da chamada $chamadaId...")
++            val resultado = obterDadosChamada(chamadaId)
++            if (resultado.isFailure) {
++                Log.e(TAG, "Erro ao buscar dados da chamada")
++                return Result.failure(Exception("Erro ao buscar dados da chamada"))
++            }
++            
++            // CRÍTICO: Atribui ANTES de qualquer operação
++            chamadaAtual = resultado.getOrNull()
++            Log.d(TAG, "✅ chamadaAtual atribuído: id=${chamadaAtual?.id}, ${chamadaAtual?.usuarios?.size} participantes")
++            
++            // 2. Notifica API que está entrando
+             val response = api.entrarChamada("Bearer $token", ChamadaIdRequest(chamadaId))
+             
+             if (response.isSuccessful) {
+                 Log.d(TAG, "✅ API notificada: entrou na chamada $chamadaId")
+                 
+-                // 2. Busca dados completos
+-                val resultado = obterDadosChamada(chamadaId)
+-                if (resultado.isSuccess) {
+-                    chamadaAtual = resultado.getOrNull()
+-                    Log.d(TAG, "Dados da chamada carregados: ${chamadaAtual?.usuarios?.size} participantes")
+-                }
+-                
+-                // 3. Delay para garantir que servidor processou
++                // 3. Delay reduzido para garantir que servidor processou
+                 Log.d(TAG, "Aguardando servidor processar entrada...")
+-                delay(3000)
++                delay(500)
+                 
+-                // 4. Conecta ao TCP
+-                Log.d(TAG, "Conectando ao TCP...")
++                // 4. Conecta ao TCP (chamadaAtual já está definido)
++                Log.d(TAG, "Conectando ao TCP com chamadaAtual.id=${chamadaAtual?.id}...")
+                 val sucesso = chamadaManager.iniciarChamada(
+                     serverHost = tcpHost,
+                     serverPort = TCP_PORT,
+@@ -320,6 +460,32 @@ class ChamadaRepository(
+                 
+                 if (sucesso) {
+                     Log.d(TAG, "✅ Conectado ao TCP - Quem ACEITA")
++                    
++                    // CRÍTICO: Verifica se já tem outros participantes conectados
++                    val outrosParticipantes = chamadaAtual?.usuarios?.filter { 
++                        it.usuarioId != usuarioId 
++                    } ?: emptyList()
++                    
++                    Log.d(TAG, "Verificando participantes: total=${chamadaAtual?.usuarios?.size}, outros=${outrosParticipantes.size}")
++                    
++                    if (outrosParticipantes.isNotEmpty()) {
++                        Log.d(TAG, "⚡ Já existem ${outrosParticipantes.size} participante(s) conectado(s)")
++                        outrosParticipantes.forEach { p ->
++                            Log.d(TAG, "   - Participante: ${p.usuarioNome} (id=${p.usuarioId})")
++                        }
++                        Log.d(TAG, "🎙️ Iniciando captura e reprodução IMEDIATAMENTE - Quem ACEITOU")
++                        primeiroParticipanteEntrou = true
++                        chamadaManager.iniciarCapturaEReproducao()
++                        
++                        withContext(Dispatchers.Main) {
++                            onChamadaRealmenteIniciada?.invoke()
++                        }
++                        
++                        Log.d(TAG, "✅ Captura e reprodução iniciadas com sucesso")
++                    } else {
++                        Log.d(TAG, "⏳ Nenhum outro participante conectado ainda, aguardando entrada...")
++                    }
++                    
+                     Result.success(Unit)
+                 } else {
+                     Log.e(TAG, "❌ Falha ao conectar TCP")
+@@ -385,6 +551,7 @@ class ChamadaRepository(
+                 }
+             }
+             
++            primeiroParticipanteEntrou = false
+             chamadaAtual = null
+             _estadoLocalFlow.value = EstadoChamadaLocal.CHAMADA_FINALIZADA
+             
+@@ -430,9 +597,26 @@ class ChamadaRepository(
+     
+     fun cleanup() {
+         Log.d(TAG, "Cleanup do repository")
++        
++        // Apenas finaliza o ChamadaManager (áudio local)
+         chamadaManager.cleanup()
++        
++        // Limpa estados locais
+         chamadaAtual = null
+         _estadoLocalFlow.value = EstadoChamadaLocal.DESCONHECIDO
++        
++        // Cancela escopo local
+         scope.cancel()
++        
++        // NÃO toca no SocketManager - ele pertence ao serviço!
++        Log.d(TAG, "Repository limpo (SocketManager preservado)")
++    }
++    
++    fun pausarCaptura() {
++        chamadaManager.pausarCaptura()
++    }
++    
++    fun retormarCaptura() {
++        chamadaManager.retormarCaptura()
+     }
+ }
+diff --git a/app/src/main/java/com/conversa/conversa/service/SocketService.kt b/app/src/main/java/com/conversa/conversa/service/SocketService.kt
+index 0658d0c..18c3e46 100644
+--- a/app/src/main/java/com/conversa/conversa/service/SocketService.kt
++++ b/app/src/main/java/com/conversa/conversa/service/SocketService.kt
+@@ -3,6 +3,9 @@ package com.conversa.conversa.service
+ import android.app.*
+ import android.content.Context
+ import android.content.Intent
++import android.media.AudioAttributes
++import android.media.RingtoneManager
++import android.net.Uri
+ import android.os.Build
+ import android.os.IBinder
+ import android.os.PowerManager
+@@ -10,6 +13,8 @@ import android.util.Log
+ import androidx.core.app.NotificationCompat
+ import com.conversa.conversa.MainActivity
+ import com.conversa.conversa.R
++import com.conversa.conversa.data.api.RetrofitClient
++import com.conversa.conversa.data.model.ChamadaResponse
+ import com.conversa.conversa.data.socket.SocketManager
+ import com.conversa.conversa.ui.chamada.ChamadaIncomingActivity
+ import kotlinx.coroutines.CoroutineScope
+@@ -17,34 +22,30 @@ import kotlinx.coroutines.Dispatchers
+ import kotlinx.coroutines.SupervisorJob
+ import kotlinx.coroutines.cancel
+ import kotlinx.coroutines.launch
++import kotlinx.coroutines.withContext
+ 
+-/**
+- * Service em foreground que mantém conexão TCP ativa
+- * Recebe notificações de chamadas e mensagens mesmo com app fechado
+- */
+ class SocketService : Service() {
+     
+     companion object {
+         private const val TAG = "SocketService"
+         
+-        // IDs de notificação
+         private const val NOTIFICATION_ID_SERVICE = 1001
+         private const val NOTIFICATION_ID_CHAMADA = 1002
+         private const val NOTIFICATION_ID_MENSAGEM = 1003
+         
+-        // Canais de notificação
+         private const val CHANNEL_ID_SERVICE = "conversa_service_channel"
+         private const val CHANNEL_ID_CHAMADAS = "conversa_chamadas_channel"
+         private const val CHANNEL_ID_MENSAGENS = "conversa_mensagens_channel"
+         
+-        // Extras do Intent
+         private const val EXTRA_HOST = "host"
+         private const val EXTRA_PORT = "port"
+         private const val EXTRA_TOKEN = "auth_token"
+         
+-        /**
+-         * Inicia o service
+-         */
++        // Mantém última configuração válida para reinicialização após crash
++        private var lastValidHost: String? = null
++        private var lastValidPort: Int = 0
++        private var lastValidToken: String? = null
++        
+         fun start(context: Context, host: String, port: Int, token: String) {
+             val intent = Intent(context, SocketService::class.java).apply {
+                 putExtra(EXTRA_HOST, host)
+@@ -59,9 +60,6 @@ class SocketService : Service() {
+             }
+         }
+         
+-        /**
+-         * Para o service
+-         */
+         fun stop(context: Context) {
+             val intent = Intent(context, SocketService::class.java)
+             context.stopService(intent)
+@@ -85,25 +83,23 @@ class SocketService : Service() {
+         
+         notificationManager = getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
+         
+-        // Cria canais de notificação
+         criarCanaisNotificacao()
+         
+-        // Adquire WakeLock para manter CPU ativa
+         val powerManager = getSystemService(Context.POWER_SERVICE) as PowerManager
+         wakeLock = powerManager.newWakeLock(
+             PowerManager.PARTIAL_WAKE_LOCK,
+             "Conversa::SocketServiceWakeLock"
+         )
+-        wakeLock.acquire(10 * 60 * 1000L) // 10 minutos, será renovado
++        wakeLock.acquire(10 * 60 * 1000L)
+     }
+     
+     override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
+         Log.d(TAG, "Service iniciado")
+         
+-        // Extrai parâmetros
+-        val host = intent?.getStringExtra(EXTRA_HOST)
+-        val token = intent?.getStringExtra(EXTRA_TOKEN)
+-        val port = intent?.getIntExtra(EXTRA_PORT, 8090) ?: 8090
++        // Tenta usar dados do intent, senão usa os últimos válidos (caso seja reinício após crash)
++        val host = intent?.getStringExtra(EXTRA_HOST) ?: lastValidHost
++        val token = intent?.getStringExtra(EXTRA_TOKEN) ?: lastValidToken
++        val port = intent?.getIntExtra(EXTRA_PORT, lastValidPort) ?: lastValidPort
+ 
+         if (host.isNullOrEmpty()) {
+             Log.e(TAG, "Host não fornecido, parando service")
+@@ -117,25 +113,26 @@ class SocketService : Service() {
+             return START_NOT_STICKY
+         }
+         
++        // Salva configuração válida para possível reinicialização
++        lastValidHost = host
++        lastValidPort = port
++        lastValidToken = token
++        
+         currentHost = host
+         currentPort = port
+         currentToken = token
+         
+-        // Inicia em foreground com notificação persistente
+         startForeground(NOTIFICATION_ID_SERVICE, criarNotificacaoService())
+         
+-        // Inicializa SocketManager se ainda não foi
+         if (!isRunning) {
+             inicializarSocket(host, port, token)
+             isRunning = true
+         }
+         
+-        // START_STICKY: reinicia service se for morto pelo sistema
+         return START_STICKY
+     }
+     
+     override fun onBind(intent: Intent?): IBinder? {
+-        // Service não é bound
+         return null
+     }
+     
+@@ -145,29 +142,21 @@ class SocketService : Service() {
+         
+         isRunning = false
+         
+-        // Remove referência compartilhada
+         ChamadaIncomingActivity.sharedSocketManager = null
+         
+-        // Desconecta socket
+         if (::socketManager.isInitialized) {
+             socketManager.desconectar()
+         }
+         
+-        // Libera WakeLock
+         if (wakeLock.isHeld) {
+             wakeLock.release()
+         }
+         
+-        // Cancela coroutines
+         scope.cancel()
+     }
+     
+-    /**
+-     * Cria canais de notificação (Android 8+)
+-     */
+     private fun criarCanaisNotificacao() {
+         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+-            // Canal do service (baixa prioridade)
+             val serviceChannel = NotificationChannel(
+                 CHANNEL_ID_SERVICE,
+                 "Serviço Conversa",
+@@ -177,7 +166,8 @@ class SocketService : Service() {
+                 setShowBadge(false)
+             }
+             
+-            // Canal de chamadas (alta prioridade)
++            val soundUri = RingtoneManager.getDefaultUri(RingtoneManager.TYPE_RINGTONE)
++            
+             val chamadasChannel = NotificationChannel(
+                 CHANNEL_ID_CHAMADAS,
+                 "Chamadas",
+@@ -187,9 +177,17 @@ class SocketService : Service() {
+                 enableVibration(true)
+                 enableLights(true)
+                 setShowBadge(true)
++                setBypassDnd(true)
++                
++                setSound(
++                    soundUri,
++                    AudioAttributes.Builder()
++                        .setUsage(AudioAttributes.USAGE_NOTIFICATION_RINGTONE)
++                        .setContentType(AudioAttributes.CONTENT_TYPE_SONIFICATION)
++                        .build()
++                )
+             }
+             
+-            // Canal de mensagens (prioridade normal)
+             val mensagensChannel = NotificationChannel(
+                 CHANNEL_ID_MENSAGENS,
+                 "Mensagens",
+@@ -206,9 +204,6 @@ class SocketService : Service() {
+         }
+     }
+     
+-    /**
+-     * Cria notificação persistente do service
+-     */
+     private fun criarNotificacaoService(): Notification {
+         val intent = Intent(this, MainActivity::class.java)
+         val pendingIntent = PendingIntent.getActivity(
+@@ -221,27 +216,25 @@ class SocketService : Service() {
+         return NotificationCompat.Builder(this, CHANNEL_ID_SERVICE)
+             .setContentTitle("Conversa")
+             .setContentText("Conectado - Recebendo notificações")
+-            .setSmallIcon(R.drawable.ic_notification) // Você precisa adicionar esse ícone
++            .setSmallIcon(R.drawable.ic_notification)
+             .setContentIntent(pendingIntent)
+-            .setOngoing(true) // Não pode ser descartada pelo usuário
++            .setOngoing(true)
+             .setPriority(NotificationCompat.PRIORITY_LOW)
+             .setCategory(NotificationCompat.CATEGORY_SERVICE)
+             .build()
+     }
+     
+-    /**
+-     * Inicializa conexão socket
+-     */
+     private fun inicializarSocket(host: String, port: Int, token: String) {
+         socketManager = SocketManager(this)
+         
+-        // Compartilha com Activities
+         ChamadaIncomingActivity.sharedSocketManager = socketManager
+         
+-        // Configura callbacks
+         socketManager.onChamadaRecebida = { chamadaId, usuarioId, usuarioNome ->
+-            Log.d(TAG, "Chamada recebida: $chamadaId de $usuarioNome")
+-            mostrarNotificacaoChamada(chamadaId, usuarioId, usuarioNome)
++            Log.d(TAG, "📞 Chamada recebida: chamadaId=$chamadaId, usuarioId=$usuarioId")
++            
++            scope.launch {
++                buscarDadosEMostrarChamada(chamadaId, usuarioId)
++            }
+         }
+         
+         socketManager.onNovaMensagem = { titulo, mensagem ->
+@@ -264,15 +257,11 @@ class SocketService : Service() {
+             atualizarNotificacaoService("Erro - Tentando reconectar...")
+         }
+         
+-        // Conecta
+         scope.launch {
+             socketManager.conectar(host, port, token)
+         }
+     }
+     
+-    /**
+-     * Atualiza notificação do service
+-     */
+     private fun atualizarNotificacaoService(status: String) {
+         val intent = Intent(this, MainActivity::class.java)
+         val pendingIntent = PendingIntent.getActivity(
+@@ -295,16 +284,65 @@ class SocketService : Service() {
+         notificationManager.notify(NOTIFICATION_ID_SERVICE, notification)
+     }
+     
+-    /**
+-     * Mostra notificação de chamada recebida
+-     */
+-    private fun mostrarNotificacaoChamada(chamadaId: Int, usuarioId: Int, usuarioNome: String) {
+-        // Intent para abrir tela de chamada
++    private suspend fun buscarDadosEMostrarChamada(chamadaId: Int, usuarioIdQueChamou: Int) {
++        try {
++            Log.d(TAG, "🔍 Buscando dados completos da chamada $chamadaId...")
++            
++            val token = currentToken ?: run {
++                Log.e(TAG, "❌ Token não disponível")
++                return
++            }
++            
++            val response = withContext(Dispatchers.IO) {
++                RetrofitClient.api.obterDadosChamada("Bearer $token", chamadaId)
++            }
++            
++            if (response.isSuccessful) {
++                val chamada = response.body()
++                if (chamada != null) {
++                    Log.d(TAG, "✅ Dados da chamada obtidos: ${chamada.usuarios.size} participantes")
++                    
++                    val usuarioQueChamou = chamada.usuarios.find { it.usuarioId == usuarioIdQueChamou }
++                    val nomeQueChamou = usuarioQueChamou?.usuarioNome ?: "Contato"
++                    
++                    val tituloNotificacao = if (chamada.tipo == 2) {
++                        "$nomeQueChamou (Grupo - ${chamada.usuarios.size} pessoas)"
++                    } else {
++                        nomeQueChamou
++                    }
++                    
++                    Log.d(TAG, "📱 Mostrando notificação: $tituloNotificacao")
++                    
++                    withContext(Dispatchers.Main) {
++                        mostrarNotificacaoChamada(chamadaId, usuarioIdQueChamou, tituloNotificacao, chamada)
++                    }
++                } else {
++                    Log.e(TAG, "❌ Response body null")
++                }
++            } else {
++                Log.e(TAG, "❌ Erro ao buscar dados da chamada: ${response.code()}")
++            }
++        } catch (e: Exception) {
++            Log.e(TAG, "❌ Exceção ao buscar dados da chamada", e)
++        }
++    }
++    
++    private fun mostrarNotificacaoChamada(
++        chamadaId: Int, 
++        usuarioId: Int, 
++        usuarioNome: String,
++        chamada: ChamadaResponse
++    ) {
++        Log.d(TAG, "📱 Criando notificação de chamada + abrindo app")
++        
+         val intent = Intent(this, ChamadaIncomingActivity::class.java).apply {
+             putExtra(ChamadaIncomingActivity.EXTRA_CHAMADA_ID, chamadaId)
+             putExtra(ChamadaIncomingActivity.EXTRA_USUARIO_ID, usuarioId)
+             putExtra(ChamadaIncomingActivity.EXTRA_USUARIO_NOME, usuarioNome)
+-            flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TOP
++            flags = Intent.FLAG_ACTIVITY_NEW_TASK or 
++                    Intent.FLAG_ACTIVITY_CLEAR_TOP or
++                    Intent.FLAG_ACTIVITY_NO_USER_ACTION or
++                    Intent.FLAG_ACTIVITY_EXCLUDE_FROM_RECENTS
+         }
+         
+         val pendingIntent = PendingIntent.getActivity(
+@@ -314,27 +352,41 @@ class SocketService : Service() {
+             PendingIntent.FLAG_IMMUTABLE or PendingIntent.FLAG_UPDATE_CURRENT
+         )
+         
++        val soundUri = RingtoneManager.getDefaultUri(RingtoneManager.TYPE_RINGTONE)
++        
++        val textoNotificacao = if (chamada.tipo == 2) {
++            "Chamada em grupo"
++        } else {
++            "Toque para atender"
++        }
++        
+         val notification = NotificationCompat.Builder(this, CHANNEL_ID_CHAMADAS)
+-            .setContentTitle("Chamada de $usuarioNome")
+-            .setContentText("Toque para atender")
++            .setContentTitle("📞 $usuarioNome")
++            .setContentText(textoNotificacao)
+             .setSmallIcon(R.drawable.ic_notification)
+             .setContentIntent(pendingIntent)
+-            .setAutoCancel(true)
+-            .setPriority(NotificationCompat.PRIORITY_HIGH)
++            .setAutoCancel(false)
++            .setPriority(NotificationCompat.PRIORITY_MAX)
+             .setCategory(NotificationCompat.CATEGORY_CALL)
+-            .setFullScreenIntent(pendingIntent, true) // Abre app automaticamente
+-            .setVibrate(longArrayOf(0, 1000, 500, 1000))
++            .setFullScreenIntent(pendingIntent, true)
++            .setVibrate(longArrayOf(0, 1000, 500, 1000, 500, 1000))
++            .setSound(soundUri)
++            .setOngoing(true)
++            .setTimeoutAfter(60000)
+             .build()
+         
+         notificationManager.notify(NOTIFICATION_ID_CHAMADA, notification)
+         
+-        // Abre automaticamente a tela de chamada
+-        startActivity(intent)
++        Log.d(TAG, "📲 Abrindo ChamadaIncomingActivity via startActivity")
++        
++        try {
++            startActivity(intent)
++            Log.d(TAG, "✅ Activity iniciada com sucesso")
++        } catch (e: Exception) {
++            Log.e(TAG, "❌ Erro ao abrir activity de chamada", e)
++        }
+     }
+     
+-    /**
+-     * Mostra notificação de nova mensagem
+-     */
+     private fun mostrarNotificacaoMensagem(titulo: String, mensagem: String) {
+         val intent = Intent(this, MainActivity::class.java).apply {
+             flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TOP
+diff --git a/app/src/main/java/com/conversa/conversa/ui/chamada/ChamadaActivity.kt b/app/src/main/java/com/conversa/conversa/ui/chamada/ChamadaActivity.kt
+index 9a16986..32789c6 100644
+--- a/app/src/main/java/com/conversa/conversa/ui/chamada/ChamadaActivity.kt
++++ b/app/src/main/java/com/conversa/conversa/ui/chamada/ChamadaActivity.kt
+@@ -1,40 +1,63 @@
+ package com.conversa.conversa.ui.chamada
+ 
+ import android.Manifest
++import android.app.KeyguardManager
++import android.content.Context
+ import android.content.pm.PackageManager
++import android.hardware.Sensor
++import android.hardware.SensorEvent
++import android.hardware.SensorEventListener
++import android.hardware.SensorManager
+ import android.media.AudioManager
++import android.os.Build
+ import android.os.Bundle
++import android.os.PowerManager
+ import android.os.SystemClock
+ import android.util.Log
+ import android.view.View
++import android.view.WindowManager
+ import android.widget.Toast
+ import androidx.appcompat.app.AppCompatActivity
+ import androidx.core.app.ActivityCompat
+ import androidx.core.content.ContextCompat
+ import androidx.lifecycle.lifecycleScope
++import androidx.recyclerview.widget.LinearLayoutManager
+ import com.conversa.conversa.R
+ import com.conversa.conversa.data.api.RetrofitClient
+ import com.conversa.conversa.data.chamada.ChamadaManager
+ import com.conversa.conversa.data.preferences.UserPreferences
+ import com.conversa.conversa.data.repository.ChamadaRepository
+ import com.conversa.conversa.databinding.ActivityChamadaBinding
++import com.conversa.conversa.data.chamada.model.EventoChamadaUI
++import com.conversa.conversa.data.chamada.model.TipoEventoChamadaUI
+ import kotlinx.coroutines.launch
++import kotlinx.coroutines.flow.collectLatest
+ 
+-class ChamadaActivity : AppCompatActivity() {
++class ChamadaActivity : AppCompatActivity(), SensorEventListener {
+ 
+     private lateinit var binding: ActivityChamadaBinding
+     private lateinit var repository: ChamadaRepository
+     private lateinit var userPreferences: UserPreferences
+     private lateinit var audioManager: AudioManager
++    private lateinit var participantesAdapter: ParticipantesAdapter
++    // NÃO criar ChamadaManager aqui - será passado via sharedRepository
++    
++    // Sensor de proximidade
++    private lateinit var sensorManager: SensorManager
++    private var proximitySensor: Sensor? = null
++    private lateinit var proximityWakeLock: PowerManager.WakeLock
+     
+     private var chamadaId: Int = 0
+     private var usuarioId: Int = 0
+     private var usuarioNome: String = ""
+-    private var isIncoming: Boolean = false // NOVO: determina se é chamada recebida
++    private var isIncoming: Boolean = false
+     private var isMuted: Boolean = false
+     private var isSpeakerOn: Boolean = false
+     private var chamadaConectada: Boolean = false
++    private var tcpConectado: Boolean = false
+     private var permissoesVerificadas: Boolean = false
++    private var isChamadaGrupo: Boolean = false
++    private val participantes = mutableListOf<ParticipanteItem>()
+ 
+     companion object {
+         private const val TAG = "ChamadaActivity"
+@@ -43,11 +66,18 @@ class ChamadaActivity : AppCompatActivity() {
+         const val EXTRA_CHAMADA_ID = "chamada_id"
+         const val EXTRA_USUARIO_ID = "usuario_id"
+         const val EXTRA_USUARIO_NOME = "usuario_nome"
+-        const val EXTRA_IS_INCOMING = "is_incoming" // NOVO
++        const val EXTRA_IS_INCOMING = "is_incoming"
++        
++        // Repository compartilhado entre Activities
++        var sharedRepository: ChamadaRepository? = null
+     }
+ 
+     override fun onCreate(savedInstanceState: Bundle?) {
+         super.onCreate(savedInstanceState)
++        
++        // CRÍTICO: Configurações para mostrar sobre tela bloqueada
++        configurarTelasBloqueadas()
++        
+         binding = ActivityChamadaBinding.inflate(layoutInflater)
+         setContentView(binding.root)
+ 
+@@ -55,7 +85,7 @@ class ChamadaActivity : AppCompatActivity() {
+         chamadaId = intent.getIntExtra(EXTRA_CHAMADA_ID, 0)
+         usuarioId = intent.getIntExtra(EXTRA_USUARIO_ID, 0)
+         usuarioNome = intent.getStringExtra(EXTRA_USUARIO_NOME) ?: "Contato"
+-        isIncoming = intent.getBooleanExtra(EXTRA_IS_INCOMING, false) // NOVO
++        isIncoming = intent.getBooleanExtra(EXTRA_IS_INCOMING, false)
+ 
+         if (chamadaId == 0) {
+             Toast.makeText(this, "Erro: chamada inválida", Toast.LENGTH_SHORT).show()
+@@ -65,16 +95,118 @@ class ChamadaActivity : AppCompatActivity() {
+ 
+         Log.d(TAG, "Chamada: id=$chamadaId, incoming=$isIncoming")
+ 
+-        // Inicializar AudioManager
+-        audioManager = getSystemService(AUDIO_SERVICE) as AudioManager
+-
+         // Inicializar componentes
++        audioManager = getSystemService(AUDIO_SERVICE) as AudioManager
+         userPreferences = UserPreferences(this)
+         
++        // Inicializar sensor de proximidade
++        inicializarSensorProximidade()
++        
+         // Verificar permissão de áudio
+         verificarPermissaoAudio()
+     }
+     
++    /**
++     * Configura Activity para mostrar sobre tela bloqueada
++     */
++    private fun configurarTelasBloqueadas() {
++        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O_MR1) {
++            setShowWhenLocked(true)
++            setTurnScreenOn(true)
++        } else {
++            @Suppress("DEPRECATION")
++            window.addFlags(
++                WindowManager.LayoutParams.FLAG_SHOW_WHEN_LOCKED or
++                WindowManager.LayoutParams.FLAG_TURN_SCREEN_ON or
++                WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON or
++                WindowManager.LayoutParams.FLAG_DISMISS_KEYGUARD
++            )
++        }
++        
++        // Desbloqueia tela
++        val keyguardManager = getSystemService(Context.KEYGUARD_SERVICE) as KeyguardManager
++        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
++            keyguardManager.requestDismissKeyguard(this, null)
++        }
++    }
++    
++    /**
++     * Inicializa sensor de proximidade para desligar tela durante chamada
++     */
++    private fun inicializarSensorProximidade() {
++        sensorManager = getSystemService(Context.SENSOR_SERVICE) as SensorManager
++        proximitySensor = sensorManager.getDefaultSensor(Sensor.TYPE_PROXIMITY)
++        
++        val powerManager = getSystemService(Context.POWER_SERVICE) as PowerManager
++        proximityWakeLock = powerManager.newWakeLock(
++            PowerManager.PROXIMITY_SCREEN_OFF_WAKE_LOCK,
++            "Conversa::ProximityWakeLock"
++        )
++        
++        if (proximitySensor != null) {
++            Log.d(TAG, "Sensor de proximidade disponível")
++        } else {
++            Log.w(TAG, "Sensor de proximidade NÃO disponível")
++        }
++    }
++    
++    /**
++     * Ativa sensor de proximidade
++     */
++    private fun ativarSensorProximidade() {
++        proximitySensor?.let {
++            sensorManager.registerListener(
++                this,
++                it,
++                SensorManager.SENSOR_DELAY_NORMAL
++            )
++            Log.d(TAG, "Sensor de proximidade ativado")
++        }
++    }
++    
++    /**
++     * Desativa sensor de proximidade
++     */
++    private fun desativarSensorProximidade() {
++        sensorManager.unregisterListener(this)
++        
++        if (proximityWakeLock.isHeld) {
++            proximityWakeLock.release()
++        }
++        
++        Log.d(TAG, "Sensor de proximidade desativado")
++    }
++    
++    override fun onSensorChanged(event: SensorEvent?) {
++        if (event?.sensor?.type == Sensor.TYPE_PROXIMITY) {
++            val distance = event.values[0]
++            val maxRange = event.sensor.maximumRange
++            
++            // Se está próximo (< 5cm ou menor que range máximo)
++            val isNear = distance < 5f && distance < maxRange
++            
++            if (chamadaConectada) {
++                if (isNear) {
++                    // Próximo: desliga tela
++                    if (!proximityWakeLock.isHeld) {
++                        proximityWakeLock.acquire(10 * 60 * 1000L) // 10 min
++                        Log.d(TAG, "Proximidade: PERTO - Tela desligada")
++                    }
++                } else {
++                    // Longe: liga tela
++                    if (proximityWakeLock.isHeld) {
++                        proximityWakeLock.release()
++                        Log.d(TAG, "Proximidade: LONGE - Tela ligada")
++                    }
++                }
++            }
++        }
++    }
++    
++    override fun onAccuracyChanged(sensor: Sensor?, accuracy: Int) {
++        // Não necessário
++    }
++    
+     private fun verificarPermissaoAudio() {
+         if (ContextCompat.checkSelfPermission(
+                 this,
+@@ -129,29 +261,23 @@ class ChamadaActivity : AppCompatActivity() {
+         
+         Log.d(TAG, "Inicializando chamada com permissões OK")
+         
+-        val socketManager = ChamadaIncomingActivity.sharedSocketManager
++        // USA O REPOSITORY COMPARTILHADO
++        val existingRepo = sharedRepository
+         
+-        if (socketManager == null) {
+-            Log.e(TAG, "SocketManager não disponível")
+-            Toast.makeText(this, "Erro: serviço não disponível", Toast.LENGTH_SHORT).show()
++        if (existingRepo != null) {
++            Log.d(TAG, "✅ Usando repository existente (mesma instância)")
++            repository = existingRepo
++        } else {
++            Log.e(TAG, "❌ Repository não foi criado antes de abrir Activity!")
++            Toast.makeText(this, "Erro: sessão inválida", Toast.LENGTH_SHORT).show()
+             finish()
+             return
+         }
+         
+-        repository = ChamadaRepository(
+-            context = this@ChamadaActivity,
+-            api = RetrofitClient.api,
+-            chamadaManager = ChamadaManager(this@ChamadaActivity),
+-            socketManager = socketManager,
+-            userPreferences = userPreferences
+-        )
+-        
+         setupCallbacks()
+         setupUI()
+         setupListeners()
+         
+-        // Se é incoming, mostra botões de aceitar/recusar
+-        // Se não, já inicia conectando
+         if (isIncoming) {
+             mostrarEstadoIncoming()
+         } else {
+@@ -163,13 +289,215 @@ class ChamadaActivity : AppCompatActivity() {
+         binding.tvNomeContato.text = usuarioNome
+         binding.tvTimer.text = if (isIncoming) getString(R.string.chamada_recebida) else getString(R.string.conectando)
+         
++        setupRecyclerView()
++        observarFlows()
+         atualizarBotaoMute()
+         atualizarBotaoSpeaker()
++        
++        isMuted = false
++        isSpeakerOn = true
++        audioManager.mode = AudioManager.MODE_IN_COMMUNICATION
++        audioManager.isSpeakerphoneOn = true
++        
++        atualizarEstadoBotoes()
++    }
++    
++    private fun setupRecyclerView() {
++        participantesAdapter = ParticipantesAdapter()
++        binding.rvParticipantes.apply {
++            layoutManager = LinearLayoutManager(this@ChamadaActivity)
++            adapter = participantesAdapter
++        }
++    }
++    
++    private fun observarFlows() {
++        Log.d(TAG, "Configurando observers de flows")
++        
++        lifecycleScope.launch {
++            Log.d(TAG, "Observer eventosUIFlow ATIVO")
++            repository.eventosUIFlow.collectLatest { evento ->
++                Log.d(TAG, ">>> eventosUIFlow coletou: ${evento.tipo} <<<")
++                processarEvento(evento)
++            }
++        }
++        
++        lifecycleScope.launch {
++            repository.chamadaAtualFlow.collectLatest { chamada ->
++                chamada?.let {
++                    isChamadaGrupo = it.usuarios.size > 2
++                    atualizarListaParticipantes(it.usuarios)
++                    
++                    if (isIncoming) {
++                        val usuarioQueChamou = it.usuarios.find { u -> u.usuarioId == usuarioId }
++                        if (usuarioQueChamou != null) {
++                            val nomeAtualizado = if (it.tipo == 2) {
++                                "${usuarioQueChamou.usuarioNome} (Grupo - ${it.usuarios.size} pessoas)"
++                            } else {
++                                usuarioQueChamou.usuarioNome
++                            }
++                            
++                            binding.tvNomeContato.text = nomeAtualizado
++                            Log.d(TAG, "✅ Nome atualizado na UI: $nomeAtualizado")
++                        }
++                    }
++                }
++            }
++        }
++    }
++    
++    private fun processarEvento(evento: EventoChamadaUI) {
++        Log.d(TAG, "Evento recebido: ${evento.tipo}")
++        Log.d(TAG, ">>> PROCESSANDO EVENTO: ${evento.tipo} <<<")
++        
++        when (evento.tipo) {
++            TipoEventoChamadaUI.PARTICIPANTE_ENTROU -> {
++                evento.participanteNome?.let { nome ->
++                    atualizarStatusChamada("$nome entrou")
++                    Toast.makeText(
++                        this,
++                        "$nome entrou na chamada",
++                        Toast.LENGTH_SHORT
++                    ).show()
++                    
++                    // Volta ao timer após 2 segundos
++                    lifecycleScope.launch {
++                        kotlinx.coroutines.delay(2000)
++                        if (chamadaConectada) {
++                            // Timer já está rodando, não precisa fazer nada
++                        }
++                    }
++                }
++            }
++            
++            TipoEventoChamadaUI.PARTICIPANTE_SAIU -> {
++                evento.participanteNome?.let { nome ->
++                    if (isChamadaGrupo) {
++                        atualizarStatusChamada("$nome saiu")
++                        Toast.makeText(
++                            this,
++                            "$nome saiu da chamada",
++                            Toast.LENGTH_SHORT
++                        ).show()
++                        
++                        // Volta ao timer após 2 segundos
++                        lifecycleScope.launch {
++                            kotlinx.coroutines.delay(2000)
++                            if (chamadaConectada) {
++                                // Timer continua rodando
++                            }
++                        }
++                    } else {
++                        exibirTelaRecusa()
++                    }
++                }
++            }
++            
++            TipoEventoChamadaUI.CHAMADA_RECUSADA -> {
++                if (!isChamadaGrupo) {
++                    exibirTelaRecusa()
++                } else {
++                    evento.participanteNome?.let { nome ->
++                        atualizarStatusChamada("$nome recusou")
++                        Toast.makeText(
++                            this,
++                            "$nome recusou a chamada",
++                            Toast.LENGTH_SHORT
++                        ).show()
++                        
++                        // Volta ao timer após 2 segundos
++                        lifecycleScope.launch {
++                            kotlinx.coroutines.delay(2000)
++                            if (chamadaConectada) {
++                                // Timer continua rodando
++                            }
++                        }
++                    }
++                }
++            }
++            
++            TipoEventoChamadaUI.CHAMADA_CONECTADA -> {
++                Log.d(TAG, "Chamada conectada (sem ação)")
++            }
++            
++            TipoEventoChamadaUI.CHAMADA_REALMENTE_INICIADA -> {
++                chamadaConectada = true
++                atualizarStatusChamada("Conectado")
++                iniciarTimer()
++                ativarSensorProximidade()
++                atualizarEstadoBotoes()
++                Toast.makeText(this, "Chamada iniciada", Toast.LENGTH_SHORT).show()
++            }
++            
++            TipoEventoChamadaUI.CHAMADA_FINALIZADA -> {
++                chamadaConectada = false
++                desativarSensorProximidade()
++                finish()
++            }
++            
++            TipoEventoChamadaUI.AUDIO_ALTERADO -> {
++                evento.participanteId?.let { id ->
++                    atualizarAudioParticipante(id, evento.audioAtivo ?: false)
++                }
++            }
++            
++            else -> Log.d(TAG, "Evento não tratado: ${evento.tipo}")
++        }
++    }
++    
++    private fun atualizarListaParticipantes(usuarios: List<com.conversa.conversa.data.model.UsuarioChamada>) {
++        participantes.clear()
++        
++        usuarios.forEach { usuario ->
++            val item = ParticipanteItem(
++                id = usuario.usuarioId,
++                nome = usuario.usuarioNome,
++                fotoUrl = null,
++                audioAtivo = true
++            )
++            participantes.add(item)
++        }
++        
++        participantesAdapter.submitList(participantes.toList())
++        
++        // Mostrar lista apenas se for grupo (>= 3 participantes)
++        binding.rvParticipantes.visibility = 
++            if (participantes.size >= 3) View.VISIBLE else View.GONE
++    }
++    
++    private fun atualizarAudioParticipante(participanteId: Int, audioAtivo: Boolean) {
++        val index = participantes.indexOfFirst { it.id == participanteId }
++        if (index != -1) {
++            participantes[index] = participantes[index].copy(audioAtivo = audioAtivo)
++            participantesAdapter.notifyItemChanged(index)
++        }
++    }
++    
++    private fun atualizarEstadoBotoes() {
++        val habilitado = chamadaConectada
++        
++        binding.btnMute.isEnabled = habilitado
++        binding.btnSpeaker.isEnabled = habilitado
++        
++        binding.btnMute.alpha = if (habilitado) 1.0f else 0.5f
++        binding.btnSpeaker.alpha = if (habilitado) 1.0f else 0.5f
++    }
++    
++    private fun atualizarStatusChamada(status: String) {
++        runOnUiThread {
++            binding.tvTimer.text = status
++        }
++    }
++    
++    private fun exibirTelaRecusa() {
++        binding.tvTimer.text = "Chamada recusada"
++        Toast.makeText(this, "Chamada recusada", Toast.LENGTH_SHORT).show()
++        
++        lifecycleScope.launch {
++            kotlinx.coroutines.delay(2000)
++            finish()
++        }
+     }
+     
+-    /**
+-     * Mostra estado INCOMING: botões aceitar/recusar
+-     */
+     private fun mostrarEstadoIncoming() {
+         binding.llBotoesIncoming.visibility = View.VISIBLE
+         binding.llControles.visibility = View.GONE
+@@ -178,19 +506,15 @@ class ChamadaActivity : AppCompatActivity() {
+         binding.tvTimer.text = getString(R.string.chamada_recebida)
+     }
+     
+-    /**
+-     * Mostra estado ATIVO: controles mute/speaker/encerrar
+-     */
+     private fun mostrarEstadoAtivo() {
+         binding.llBotoesIncoming.visibility = View.GONE
+         binding.llControles.visibility = View.VISIBLE
+         binding.llBotaoEncerrar.visibility = View.VISIBLE
+         
+-        binding.tvTimer.text = getString(R.string.conectando)
++        atualizarStatusChamada("Aguardando...")
+     }
+ 
+     private fun setupListeners() {
+-        // Botões INCOMING
+         binding.btnAceitar.setOnClickListener {
+             aceitarChamada()
+         }
+@@ -199,7 +523,6 @@ class ChamadaActivity : AppCompatActivity() {
+             recusarChamada()
+         }
+         
+-        // Botões ATIVOS
+         binding.btnMute.setOnClickListener {
+             toggleMute()
+         }
+@@ -213,15 +536,12 @@ class ChamadaActivity : AppCompatActivity() {
+         }
+     }
+     
+-    /**
+-     * Aceita a chamada recebida
+-     */
+     private fun aceitarChamada() {
+         Log.d(TAG, "Aceitando chamada $chamadaId")
+         
+         binding.btnAceitar.isEnabled = false
+         binding.btnRecusar.isEnabled = false
+-        binding.tvTimer.text = getString(R.string.conectando)
++        atualizarStatusChamada("Conectando...")
+         
+         lifecycleScope.launch {
+             try {
+@@ -253,9 +573,6 @@ class ChamadaActivity : AppCompatActivity() {
+         }
+     }
+     
+-    /**
+-     * Recusa a chamada recebida
+-     */
+     private fun recusarChamada() {
+         Log.d(TAG, "Recusando chamada $chamadaId")
+         
+@@ -276,25 +593,6 @@ class ChamadaActivity : AppCompatActivity() {
+     private fun setupCallbacks() {
+         Log.d(TAG, "Configurando callbacks do repository")
+         
+-        repository.onChamadaConectada = {
+-            Log.d(TAG, "CALLBACK: Chamada conectada!")
+-            runOnUiThread {
+-                chamadaConectada = true
+-                binding.tvTimer.text = "00:00"
+-                iniciarTimer()
+-                Toast.makeText(this@ChamadaActivity, "Chamada conectada", Toast.LENGTH_SHORT).show()
+-            }
+-        }
+-
+-        repository.onChamadaFinalizada = {
+-            Log.d(TAG, "CALLBACK: Chamada finalizada!")
+-            runOnUiThread {
+-                chamadaConectada = false
+-                Toast.makeText(this@ChamadaActivity, "Chamada finalizada", Toast.LENGTH_SHORT).show()
+-                finish()
+-            }
+-        }
+-
+         repository.onErro = { erro ->
+             Log.e(TAG, "CALLBACK: Erro na chamada: $erro")
+             runOnUiThread {
+@@ -306,6 +604,18 @@ class ChamadaActivity : AppCompatActivity() {
+                 finish()
+             }
+         }
++        
++        repository.onConexaoTcpEstabelecida = {
++            Log.d(TAG, "TCP conectado")
++            tcpConectado = true
++            runOnUiThread {
++                if (isIncoming) {
++                    // Já está em tela ativa, não faz nada
++                } else {
++                    atualizarStatusChamada("Chamando...")
++                }
++            }
++        }
+     }
+ 
+     private fun iniciarTimer() {
+@@ -330,7 +640,13 @@ class ChamadaActivity : AppCompatActivity() {
+     private fun toggleMute() {
+         isMuted = !isMuted
+         
+-        // TODO: Implementar lógica de mute no ChamadaManager
++        if (::repository.isInitialized) {
++            if (isMuted) {
++                repository.pausarCaptura()
++            } else {
++                repository.retormarCaptura()
++            }
++        }
+         
+         atualizarBotaoMute()
+         
+@@ -344,7 +660,11 @@ class ChamadaActivity : AppCompatActivity() {
+     private fun toggleSpeaker() {
+         isSpeakerOn = !isSpeakerOn
+         
++        // Configura o modo de áudio para comunicação
+         audioManager.mode = AudioManager.MODE_IN_COMMUNICATION
++        
++        // Alterna entre alto-falante e auricular
++        // A reprodução de áudio continua, apenas muda o dispositivo de saída
+         audioManager.isSpeakerphoneOn = isSpeakerOn
+         
+         atualizarBotaoSpeaker()
+@@ -380,7 +700,10 @@ class ChamadaActivity : AppCompatActivity() {
+         lifecycleScope.launch {
+             try {
+                 chamadaConectada = false
+-                binding.tvTimer.text = getString(R.string.chamada_finalizada)
++                atualizarStatusChamada("Finalizando...")
++                
++                // Desativa sensor
++                desativarSensorProximidade()
+                 
+                 repository.finalizarChamada()
+                 
+@@ -397,8 +720,16 @@ class ChamadaActivity : AppCompatActivity() {
+         Log.d(TAG, "Activity sendo destruída")
+         chamadaConectada = false
+         
++        // Desativa sensor
++        desativarSensorProximidade()
++        
+         if (::repository.isInitialized) {
+             repository.cleanup()
++            
++            // Limpa referência compartilhada se esta Activity a criou
++            if (sharedRepository == repository) {
++                sharedRepository = null
++            }
+         }
+         
+         audioManager.mode = AudioManager.MODE_NORMAL
+diff --git a/app/src/main/java/com/conversa/conversa/ui/chamada/ChamadaIncomingActivity.kt b/app/src/main/java/com/conversa/conversa/ui/chamada/ChamadaIncomingActivity.kt
+index 3ef1254..1cc1c95 100644
+--- a/app/src/main/java/com/conversa/conversa/ui/chamada/ChamadaIncomingActivity.kt
++++ b/app/src/main/java/com/conversa/conversa/ui/chamada/ChamadaIncomingActivity.kt
+@@ -2,8 +2,16 @@ package com.conversa.conversa.ui.chamada
+ 
+ import android.content.Intent
+ import android.os.Bundle
++import android.util.Log
++import android.widget.Toast
+ import androidx.appcompat.app.AppCompatActivity
++import androidx.lifecycle.lifecycleScope
++import com.conversa.conversa.data.api.RetrofitClient
++import com.conversa.conversa.data.chamada.ChamadaManager
++import com.conversa.conversa.data.preferences.UserPreferences
++import com.conversa.conversa.data.repository.ChamadaRepository
+ import com.conversa.conversa.databinding.ActivityChamadaIncomingBinding
++import kotlinx.coroutines.launch
+ 
+ /**
+  * Activity simplificada que apenas redireciona para ChamadaActivity
+@@ -33,17 +41,53 @@ class ChamadaIncomingActivity : AppCompatActivity() {
+         val chamadaId = intent.getIntExtra(EXTRA_CHAMADA_ID, 0)
+         val usuarioId = intent.getIntExtra(EXTRA_USUARIO_ID, 0)
+         val usuarioNome = intent.getStringExtra(EXTRA_USUARIO_NOME) ?: "Contato"
++        
++        Log.d(TAG, "Chamada recebida: id=$chamadaId, de=$usuarioNome")
+ 
+-        // Redireciona para ChamadaActivity com flag isIncoming=true
+-        val intentChamada = Intent(this, ChamadaActivity::class.java).apply {
+-            putExtra(ChamadaActivity.EXTRA_CHAMADA_ID, chamadaId)
+-            putExtra(ChamadaActivity.EXTRA_USUARIO_ID, usuarioId)
+-            putExtra(ChamadaActivity.EXTRA_USUARIO_NOME, usuarioNome)
+-            putExtra(ChamadaActivity.EXTRA_IS_INCOMING, true) // MARCA COMO INCOMING
++        // CRIAR repository ANTES de abrir ChamadaActivity
++        lifecycleScope.launch {
++            try {
++                val socketManager = sharedSocketManager
++                
++                if (socketManager == null) {
++                    Log.e(TAG, "SocketManager não disponível")
++                    Toast.makeText(this@ChamadaIncomingActivity, "Erro: serviço não disponível", Toast.LENGTH_SHORT).show()
++                    finish()
++                    return@launch
++                }
++                
++                val userPreferences = UserPreferences(this@ChamadaIncomingActivity)
++                
++                // Criar repository de chamada
++                val repository = ChamadaRepository(
++                    context = this@ChamadaIncomingActivity,
++                    api = RetrofitClient.api,
++                    chamadaManager = ChamadaManager(this@ChamadaIncomingActivity),
++                    socketManager = socketManager,
++                    userPreferences = userPreferences
++                )
++                
++                // COMPARTILHA o repository para a ChamadaActivity usar
++                ChamadaActivity.sharedRepository = repository
++                Log.d(TAG, "✅ Repository criado e compartilhado para chamada recebida")
++                
++                // Redireciona para ChamadaActivity com flag isIncoming=true
++                val intentChamada = Intent(this@ChamadaIncomingActivity, ChamadaActivity::class.java).apply {
++                    putExtra(ChamadaActivity.EXTRA_CHAMADA_ID, chamadaId)
++                    putExtra(ChamadaActivity.EXTRA_USUARIO_ID, usuarioId)
++                    putExtra(ChamadaActivity.EXTRA_USUARIO_NOME, usuarioNome)
++                    putExtra(ChamadaActivity.EXTRA_IS_INCOMING, true) // MARCA COMO INCOMING
++                }
++                
++                startActivity(intentChamada)
++                finish() // Fecha essa Activity imediatamente
++                
++            } catch (e: Exception) {
++                Log.e(TAG, "Erro ao preparar chamada recebida", e)
++                Toast.makeText(this@ChamadaIncomingActivity, "Erro ao abrir chamada", Toast.LENGTH_SHORT).show()
++                finish()
++            }
+         }
+-        
+-        startActivity(intentChamada)
+-        finish() // Fecha essa Activity imediatamente
+     }
+ 
+     override fun onBackPressed() {
+diff --git a/app/src/main/java/com/conversa/conversa/ui/chamada/ParticipanteItem.kt b/app/src/main/java/com/conversa/conversa/ui/chamada/ParticipanteItem.kt
+new file mode 100644
+index 0000000..7118c06
+--- /dev/null
++++ b/app/src/main/java/com/conversa/conversa/ui/chamada/ParticipanteItem.kt
+@@ -0,0 +1,8 @@
++package com.conversa.conversa.ui.chamada
++
++data class ParticipanteItem(
++    val id: Int,
++    val nome: String,
++    val fotoUrl: String?,
++    val audioAtivo: Boolean
++)
+diff --git a/app/src/main/java/com/conversa/conversa/ui/chamada/ParticipantesAdapter.kt b/app/src/main/java/com/conversa/conversa/ui/chamada/ParticipantesAdapter.kt
+new file mode 100644
+index 0000000..aa31e9a
+--- /dev/null
++++ b/app/src/main/java/com/conversa/conversa/ui/chamada/ParticipantesAdapter.kt
+@@ -0,0 +1,61 @@
++package com.conversa.conversa.ui.chamada
++
++import android.view.LayoutInflater
++import android.view.ViewGroup
++import androidx.recyclerview.widget.DiffUtil
++import androidx.recyclerview.widget.ListAdapter
++import androidx.recyclerview.widget.RecyclerView
++import com.bumptech.glide.Glide
++import com.conversa.conversa.R
++import com.conversa.conversa.databinding.ItemParticipanteChamadaBinding
++
++class ParticipantesAdapter : ListAdapter<ParticipanteItem, ParticipantesAdapter.ViewHolder>(DiffCallback()) {
++
++    override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): ViewHolder {
++        val binding = ItemParticipanteChamadaBinding.inflate(
++            LayoutInflater.from(parent.context),
++            parent,
++            false
++        )
++        return ViewHolder(binding)
++    }
++
++    override fun onBindViewHolder(holder: ViewHolder, position: Int) {
++        holder.bind(getItem(position))
++    }
++
++    class ViewHolder(
++        private val binding: ItemParticipanteChamadaBinding
++    ) : RecyclerView.ViewHolder(binding.root) {
++
++        fun bind(participante: ParticipanteItem) {
++            binding.tvNomeParticipante.text = participante.nome
++            
++            if (participante.fotoUrl != null) {
++                Glide.with(binding.root.context)
++                    .load(participante.fotoUrl)
++                    .placeholder(R.drawable.ic_person)
++                    .error(R.drawable.ic_person)
++                    .into(binding.ivAvatarParticipante)
++            } else {
++                binding.ivAvatarParticipante.setImageResource(R.drawable.ic_person)
++            }
++            
++            if (participante.audioAtivo) {
++                binding.ivStatusParticipante.setImageResource(R.drawable.ic_mic_on)
++            } else {
++                binding.ivStatusParticipante.setImageResource(R.drawable.ic_mic_off)
++            }
++        }
++    }
++
++    private class DiffCallback : DiffUtil.ItemCallback<ParticipanteItem>() {
++        override fun areItemsTheSame(oldItem: ParticipanteItem, newItem: ParticipanteItem): Boolean {
++            return oldItem.id == newItem.id
++        }
++
++        override fun areContentsTheSame(oldItem: ParticipanteItem, newItem: ParticipanteItem): Boolean {
++            return oldItem == newItem
++        }
++    }
++}
+diff --git a/app/src/main/java/com/conversa/conversa/ui/chat/ChatActivity.kt b/app/src/main/java/com/conversa/conversa/ui/chat/ChatActivity.kt
+index 51392ca..85cc6ea 100644
+--- a/app/src/main/java/com/conversa/conversa/ui/chat/ChatActivity.kt
++++ b/app/src/main/java/com/conversa/conversa/ui/chat/ChatActivity.kt
+@@ -874,6 +874,10 @@ class ChatActivity : AppCompatActivity() {
+                     userPreferences = userPreferences
+                 )
+                 
++                // COMPARTILHA o repository para a ChamadaActivity usar
++                com.conversa.conversa.ui.chamada.ChamadaActivity.sharedRepository = repository
++                android.util.Log.d(TAG, "✅ Repository compartilhado com ChamadaActivity")
++                
+                 // Iniciar chamada
+                 val result = repository.iniciarChamada(listOf(destinatarioId!!))
+                 
+diff --git a/app/src/main/res/layout/activity_chamada.xml b/app/src/main/res/layout/activity_chamada.xml
+index 840dd38..2f61d5b 100644
+--- a/app/src/main/res/layout/activity_chamada.xml
++++ b/app/src/main/res/layout/activity_chamada.xml
+@@ -51,6 +51,22 @@
+         app:layout_constraintTop_toBottomOf="@id/tvNomeContato"
+         tools:text="00:35" />
+ 
++    <!-- Lista de Participantes (visível apenas em grupos com > 2 participantes) -->
++    <androidx.recyclerview.widget.RecyclerView
++        android:id="@+id/rvParticipantes"
++        android:layout_width="0dp"
++        android:layout_height="wrap_content"
++        android:layout_marginStart="16dp"
++        android:layout_marginTop="24dp"
++        android:layout_marginEnd="16dp"
++        android:visibility="gone"
++        app:layout_constraintEnd_toEndOf="parent"
++        app:layout_constraintStart_toStartOf="parent"
++        app:layout_constraintTop_toBottomOf="@id/tvTimer"
++        tools:itemCount="3"
++        tools:listitem="@layout/item_participante_chamada"
++        tools:visibility="visible" />
++
+     <!-- BOTÕES INCOMING: Aceitar/Recusar -->
+     <LinearLayout
+         android:id="@+id/llBotoesIncoming"
+diff --git a/app/src/main/res/layout/item_participante.xml b/app/src/main/res/layout/item_participante.xml
+new file mode 100644
+index 0000000..7dee3ed
+--- /dev/null
++++ b/app/src/main/res/layout/item_participante.xml
+@@ -0,0 +1,28 @@
++<?xml version="1.0" encoding="utf-8"?>
++<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
++    xmlns:tools="http://schemas.android.com/tools"
++    android:layout_width="match_parent"
++    android:layout_height="wrap_content"
++    android:orientation="horizontal"
++    android:padding="12dp">
++
++    <TextView
++        android:id="@+id/tvNomeParticipante"
++        android:layout_width="0dp"
++        android:layout_height="wrap_content"
++        android:layout_weight="1"
++        android:textColor="@color/corPrimaria"
++        android:textSize="16sp"
++        android:textStyle="bold"
++        tools:text="João Silva" />
++
++    <TextView
++        android:id="@+id/tvStatusParticipante"
++        android:layout_width="wrap_content"
++        android:layout_height="wrap_content"
++        android:layout_marginStart="8dp"
++        android:textColor="@color/corPrimaria"
++        android:textSize="14sp"
++        tools:text="Conectado" />
++
++</LinearLayout>
+diff --git a/app/src/main/res/layout/item_participante_chamada.xml b/app/src/main/res/layout/item_participante_chamada.xml
+new file mode 100644
+index 0000000..3fb7b98
+--- /dev/null
++++ b/app/src/main/res/layout/item_participante_chamada.xml
+@@ -0,0 +1,46 @@
++<?xml version="1.0" encoding="utf-8"?>
++<androidx.constraintlayout.widget.ConstraintLayout xmlns:android="http://schemas.android.com/apk/res/android"
++    xmlns:app="http://schemas.android.com/apk/res-auto"
++    xmlns:tools="http://schemas.android.com/tools"
++    android:layout_width="match_parent"
++    android:layout_height="wrap_content"
++    android:padding="12dp">
++
++    <com.google.android.material.imageview.ShapeableImageView
++        android:id="@+id/ivAvatarParticipante"
++        android:layout_width="40dp"
++        android:layout_height="40dp"
++        android:scaleType="centerCrop"
++        app:shapeAppearanceOverlay="@style/CircularImageView"
++        app:layout_constraintStart_toStartOf="parent"
++        app:layout_constraintTop_toTopOf="parent"
++        app:layout_constraintBottom_toBottomOf="parent"
++        tools:src="@drawable/ic_person" />
++
++    <TextView
++        android:id="@+id/tvNomeParticipante"
++        android:layout_width="0dp"
++        android:layout_height="wrap_content"
++        android:layout_marginStart="12dp"
++        android:layout_marginEnd="8dp"
++        android:textSize="16sp"
++        android:textColor="@color/white"
++        android:maxLines="1"
++        android:ellipsize="end"
++        app:layout_constraintStart_toEndOf="@id/ivAvatarParticipante"
++        app:layout_constraintEnd_toStartOf="@id/ivStatusParticipante"
++        app:layout_constraintTop_toTopOf="parent"
++        app:layout_constraintBottom_toBottomOf="parent"
++        tools:text="João Silva" />
++
++    <ImageView
++        android:id="@+id/ivStatusParticipante"
++        android:layout_width="24dp"
++        android:layout_height="24dp"
++        android:src="@drawable/ic_mic"
++        android:tint="@color/white"
++        app:layout_constraintEnd_toEndOf="parent"
++        app:layout_constraintTop_toTopOf="parent"
++        app:layout_constraintBottom_toBottomOf="parent" />
++
++</androidx.constraintlayout.widget.ConstraintLayout>

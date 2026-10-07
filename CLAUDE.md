@@ -1,0 +1,72 @@
+# CLAUDE.md — conversa-android-kotlin
+
+Instruções para quem trabalha neste repositório, pessoas ou agentes de IA. Leia antes de qualquer alteração.
+
+## O projeto
+
+- Cliente **Android (Kotlin)** do Conversa. Os repositórios irmãos:
+  - `../conversa`: servidor Bun + Elysia + Postgres + MinIO + MediaMTX + coturn;
+  - `../conversa-web`: cliente web Vue, que é a **referência de comportamento**.
+- **Situação (2026-10-06):** o app atual é **legado** (escrito para o servidor Delphi). Foi decidido **recomeçar numa nova base** (`docs/adr/0001-nova-base.md`).
+- O código legado fica na branch `legado/abril-2026` / tag `legado-v1-final`.
+
+## Onde está cada coisa
+
+| O quê | Onde |
+|---|---|
+| Visão geral, decisão e índice da auditoria | `docs/auditoria-2026-10/00-LEIAME.md` |
+| **Contrato do servidor (fonte da verdade)**: rotas, WebSocket, push, anexos, chamadas, pegadinhas | `docs/auditoria-2026-10/01-contrato-servidor-atual.md` |
+| Funcionalidades do web (IDs AUT/CON/MSG/ENV/ANX/PES/CHA/SIP/NOT/PRE/ATV/CFG/GER) | `docs/auditoria-2026-10/03-inventario-web.md` |
+| Problemas do app legado (#1–#57) | `docs/auditoria-2026-10/04-auditoria-android.md` |
+| Paridade web × Android | `docs/auditoria-2026-10/05-matriz-paridade.md` |
+| Fila de correções (FC-xxx) | `docs/auditoria-2026-10/06-fila-de-correcoes.md` |
+| Arquitetura da nova base | `docs/auditoria-2026-10/07-plano-nova-base.md` |
+| Pendências do servidor (S1–S14) | `docs/auditoria-2026-10/08-pendencias-servidor.md` |
+| **Passo a passo do trabalho** | `TODO.md` |
+| **Histórico de alterações** | `docs/historico/indice.md` + `docs/historico/*.md` |
+| Decisões de arquitetura | `docs/adr/NNNN-*.md` |
+| Documentação antiga (não usar como referência) | `docs/legado/` |
+
+## Regra obrigatória: histórico de alterações
+
+**Toda alteração** gera um registro em `docs/historico/`, **no mesmo commit da alteração**. Vale para código, documentação, configuração, build, dependências e decisões.
+
+1. **Arquivo de detalhe:** `docs/historico/AAAA-MM-DD-NN-assunto-curto.md`.
+   - `NN` é a sequência do dia (01, 02, …); o assunto vai em kebab-case, sem acentos.
+   - Use o modelo `docs/historico/_modelo.md`: fluxo, tipo, itens (FC/TODO/IDs), commits, contexto, o que foi feito (com arquivos), como foi verificado, decisões e pendências.
+2. **Índice:** acrescente **uma linha** em `docs/historico/indice.md`, **na seção do fluxo** correspondente, em ordem cronológica (mais recente embaixo). Formato:
+   `- AAAA-MM-DD · [Título](AAAA-MM-DD-NN-assunto.md) — resumo de uma linha`
+   - Se a alteração toca mais de um fluxo, registre no fluxo principal e cite os outros no detalhe.
+   - Se surgir um fluxo novo, crie a seção no índice.
+3. **Commit:** depois de commitar, preencha o hash no campo **Commits** do detalhe (pode ir no commit seguinte).
+4. **Mudou o servidor ou o web?** Registre no fluxo "Sincronização com servidor e web" e atualize os docs afetados (01, 03, 05, 06, `TODO.md`), marcando o que mudou com 🆕.
+
+## Como trabalhar com o `TODO.md`
+
+- Siga a ordem das etapas. Cada linha é uma ação pequena; ao concluir, marque `[x]` e anote o commit (`✔ abc1234`).
+- Só passe de seção depois de marcar as linhas **Teste:**.
+- Ao fazer algo que não está no TODO, inclua a linha no lugar certo (e registre no histórico).
+- Itens bloqueados: deixe `[ ]` e acrescente `⛔ motivo` na mesma linha.
+- Toda semana: atualize a matriz de paridade (doc 05) e confira se o servidor/web mudaram:
+  - `git -C ../conversa fetch && git -C ../conversa log HEAD..origin/main --oneline`
+  - o mesmo para `../conversa-web`.
+
+## Build
+
+- **JDK 17+** (o `java` do PATH desta máquina é 1.8; use o do Android Studio):
+  - Git Bash: `export JAVA_HOME="/c/Program Files/Android/Android Studio/jbr"`
+  - PowerShell: `$env:JAVA_HOME = "C:\Program Files\Android\Android Studio\jbr"`
+- `./gradlew assembleDebug` (Git Bash) ou `.\gradlew.bat assembleDebug` (PowerShell).
+- O `local.properties` não é versionado; o `gradle-wrapper.jar` é.
+
+## Convenções
+
+- **Idioma:** português do Brasil em código de domínio, textos de UI, commits e documentação, como nos repositórios irmãos.
+- **Commits:** mensagem no imperativo/descritiva em português (ex.: "Corrige …", "Adiciona …"); prefixos `feat:`, `fix:`, `chore:`, `docs:` são aceitos.
+- **Contrato:** nunca deduza formatos do código legado. Consulte o doc 01 e, em caso de dúvida, o código do servidor (`../conversa/src`) e o cliente web (`../conversa-web/src`).
+- **Segurança:**
+  - nada de `TrustManager` que aceita tudo;
+  - nunca registrar em log token, senha ou conteúdo de mensagem;
+  - nunca guardar a senha do usuário.
+- **Textos de UI:** sempre em `strings.xml`. Quando existir no web, use o mesmo texto (doc 03 §6).
+- **Testes:** parsers, mapeadores e a máquina de estados de chamada sempre com teste unitário.

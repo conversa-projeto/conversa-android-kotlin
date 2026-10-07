@@ -1,0 +1,498 @@
+diff --git a/app/src/main/java/com/conversa/conversa/data/api/ConversaApi.kt b/app/src/main/java/com/conversa/conversa/data/api/ConversaApi.kt
+index b194183..148fedc 100644
+--- a/app/src/main/java/com/conversa/conversa/data/api/ConversaApi.kt
++++ b/app/src/main/java/com/conversa/conversa/data/api/ConversaApi.kt
+@@ -6,6 +6,7 @@ import com.conversa.conversa.data.model.EnviarMensagemResponse
+ import com.conversa.conversa.data.model.LoginRequest
+ import com.conversa.conversa.data.model.LoginResponse
+ import com.conversa.conversa.data.model.Mensagem
++import okhttp3.ResponseBody
+ import retrofit2.Response
+ import retrofit2.http.Body
+ import retrofit2.http.GET
+@@ -13,6 +14,7 @@ import retrofit2.http.Header
+ import retrofit2.http.POST
+ import retrofit2.http.PUT
+ import retrofit2.http.Query
++import retrofit2.http.Streaming
+ 
+ interface ConversaApi {
+     
+@@ -59,4 +61,16 @@ interface ConversaApi {
+         @Query("conversa") conversaId: Int,
+         @Query("mensagem") mensagemId: Int
+     ): Response<Unit>
++    
++    /**
++     * Download de anexo
++     * @param token JWT token
++     * @param identificador Hash SHA256 do anexo
++     */
++    @Streaming
++    @GET("anexo")
++    suspend fun downloadAnexo(
++        @Header("Authorization") token: String,
++        @Query("identificador") identificador: String
++    ): Response<ResponseBody>
+ }
+diff --git a/app/src/main/java/com/conversa/conversa/data/manager/AnexoManager.kt b/app/src/main/java/com/conversa/conversa/data/manager/AnexoManager.kt
+new file mode 100644
+index 0000000..079808a
+--- /dev/null
++++ b/app/src/main/java/com/conversa/conversa/data/manager/AnexoManager.kt
+@@ -0,0 +1,359 @@
++package com.conversa.conversa.data.manager
++
++import android.content.Context
++import android.util.Log
++import com.conversa.conversa.data.api.RetrofitClient
++import com.conversa.conversa.data.model.AnexoDownload
++import com.conversa.conversa.data.model.DownloadStatus
++import kotlinx.coroutines.Dispatchers
++import kotlinx.coroutines.flow.MutableStateFlow
++import kotlinx.coroutines.flow.StateFlow
++import kotlinx.coroutines.flow.asStateFlow
++import kotlinx.coroutines.withContext
++import okhttp3.ResponseBody
++import java.io.File
++import java.io.FileOutputStream
++import java.io.InputStream
++
++/**
++ * Gerenciador de downloads e cache de anexos
++ */
++class AnexoManager(private val context: Context) {
++    
++    companion object {
++        private const val TAG = "AnexoManager"
++        private const val CACHE_DIR_IMAGES = "images"
++        private const val CACHE_DIR_FILES = "files"
++        private const val CACHE_DIR_AUDIO = "audio"
++        private const val MAX_CACHE_SIZE_MB = 500L
++    }
++    
++    private val _downloads = MutableStateFlow<Map<String, AnexoDownload>>(emptyMap())
++    val downloads: StateFlow<Map<String, AnexoDownload>> = _downloads.asStateFlow()
++    
++    /**
++     * Obtém o diretório de cache para um tipo de anexo
++     */
++    private fun getCacheDir(tipo: Int): File {
++        val subDir = when (tipo) {
++            2 -> CACHE_DIR_IMAGES  // Imagem
++            3 -> CACHE_DIR_FILES    // Arquivo
++            4 -> CACHE_DIR_AUDIO    // Áudio
++            else -> "outros"
++        }
++        
++        val dir = File(context.cacheDir, subDir)
++        if (!dir.exists()) {
++            dir.mkdirs()
++        }
++        return dir
++    }
++    
++    /**
++     * Obtém o arquivo local de um anexo (se existe)
++     */
++    fun getLocalFile(identificador: String, tipo: Int, extensao: String?): File? {
++        val cacheDir = getCacheDir(tipo)
++        val fileName = if (extensao != null) {
++            "$identificador.$extensao"
++        } else {
++            identificador
++        }
++        
++        val file = File(cacheDir, fileName)
++        return if (file.exists()) file else null
++    }
++    
++    /**
++     * Verifica se um anexo já está em cache
++     */
++    fun isInCache(identificador: String, tipo: Int, extensao: String?): Boolean {
++        return getLocalFile(identificador, tipo, extensao) != null
++    }
++    
++    /**
++     * Baixa um anexo do servidor
++     */
++    suspend fun downloadAnexo(
++        identificador: String,
++        tipo: Int,
++        nome: String?,
++        extensao: String?,
++        token: String
++    ): Result<File> = withContext(Dispatchers.IO) {
++        try {
++            // Verifica se já está em cache
++            getLocalFile(identificador, tipo, extensao)?.let {
++                Log.d(TAG, "Anexo já em cache: $identificador")
++                return@withContext Result.success(it)
++            }
++            
++            // Atualiza status para baixando
++            updateDownloadStatus(identificador, tipo, nome, extensao, DownloadStatus.BAIXANDO)
++            
++            Log.d(TAG, "Iniciando download: $identificador")
++            
++            // Faz o download
++            val response = RetrofitClient.api.downloadAnexo(
++                token = "Bearer $token",
++                identificador = identificador
++            )
++            
++            if (response.isSuccessful && response.body() != null) {
++                val body = response.body()!!
++                
++                // Salva no cache
++                val file = saveToCache(body, identificador, tipo, extensao)
++                
++                // Atualiza status
++                updateDownloadStatus(
++                    identificador,
++                    tipo,
++                    nome,
++                    extensao,
++                    DownloadStatus.CONCLUIDO,
++                    caminhoLocal = file.absolutePath
++                )
++                
++                Log.d(TAG, "Download concluído: ${file.absolutePath}")
++                
++                // Limpa cache se necessário
++                checkCacheSize()
++                
++                Result.success(file)
++            } else {
++                val errorMsg = "Erro no download: ${response.code()}"
++                Log.e(TAG, errorMsg)
++                updateDownloadStatus(identificador, tipo, nome, extensao, DownloadStatus.ERRO)
++                Result.failure(Exception(errorMsg))
++            }
++            
++        } catch (e: Exception) {
++            Log.e(TAG, "Erro ao baixar anexo", e)
++            updateDownloadStatus(identificador, tipo, nome, extensao, DownloadStatus.ERRO)
++            Result.failure(e)
++        }
++    }
++    
++    /**
++     * Salva response body no cache
++     */
++    private fun saveToCache(
++        body: ResponseBody,
++        identificador: String,
++        tipo: Int,
++        extensao: String?
++    ): File {
++        val cacheDir = getCacheDir(tipo)
++        val fileName = if (extensao != null) {
++            "$identificador.$extensao"
++        } else {
++            identificador
++        }
++        
++        val file = File(cacheDir, fileName)
++        
++        val inputStream: InputStream = body.byteStream()
++        val outputStream = FileOutputStream(file)
++        
++        try {
++            val buffer = ByteArray(4096)
++            var bytesRead: Int
++            var totalBytes = 0L
++            val contentLength = body.contentLength()
++            
++            while (inputStream.read(buffer).also { bytesRead = it } != -1) {
++                outputStream.write(buffer, 0, bytesRead)
++                totalBytes += bytesRead
++                
++                // Atualiza progresso
++                if (contentLength > 0) {
++                    val progress = ((totalBytes * 100) / contentLength).toInt()
++                    updateDownloadProgress(identificador, progress)
++                }
++            }
++            
++            outputStream.flush()
++        } finally {
++            inputStream.close()
++            outputStream.close()
++        }
++        
++        return file
++    }
++    
++    /**
++     * Atualiza status do download
++     */
++    private fun updateDownloadStatus(
++        identificador: String,
++        tipo: Int,
++        nome: String?,
++        extensao: String?,
++        status: DownloadStatus,
++        progresso: Int = 0,
++        caminhoLocal: String? = null
++    ) {
++        _downloads.value = _downloads.value.toMutableMap().apply {
++            this[identificador] = AnexoDownload(
++                identificador = identificador,
++                tipo = tipo,
++                nome = nome,
++                extensao = extensao,
++                progresso = progresso,
++                status = status,
++                caminhoLocal = caminhoLocal
++            )
++        }
++    }
++    
++    /**
++     * Atualiza progresso do download
++     */
++    private fun updateDownloadProgress(identificador: String, progresso: Int) {
++        _downloads.value = _downloads.value.toMutableMap().apply {
++            val current = this[identificador]
++            if (current != null) {
++                this[identificador] = current.copy(progresso = progresso)
++            }
++        }
++    }
++    
++    /**
++     * Verifica e limpa cache se necessário
++     */
++    private fun checkCacheSize() {
++        try {
++            val cacheSize = getCacheSizeInMB()
++            
++            if (cacheSize > MAX_CACHE_SIZE_MB) {
++                Log.d(TAG, "Cache muito grande ($cacheSize MB), limpando...")
++                clearOldestFiles(cacheSize - (MAX_CACHE_SIZE_MB * 0.8).toLong())
++            }
++        } catch (e: Exception) {
++            Log.e(TAG, "Erro ao verificar cache", e)
++        }
++    }
++    
++    /**
++     * Calcula tamanho total do cache em MB
++     */
++    private fun getCacheSizeInMB(): Long {
++        var totalSize = 0L
++        
++        listOf(CACHE_DIR_IMAGES, CACHE_DIR_FILES, CACHE_DIR_AUDIO).forEach { dirName ->
++            val dir = File(context.cacheDir, dirName)
++            if (dir.exists()) {
++                totalSize += getFolderSize(dir)
++            }
++        }
++        
++        return totalSize / (1024 * 1024) // Bytes para MB
++    }
++    
++    /**
++     * Calcula tamanho de uma pasta
++     */
++    private fun getFolderSize(folder: File): Long {
++        var size = 0L
++        
++        folder.listFiles()?.forEach { file ->
++            size += if (file.isDirectory) {
++                getFolderSize(file)
++            } else {
++                file.length()
++            }
++        }
++        
++        return size
++    }
++    
++    /**
++     * Remove arquivos mais antigos até liberar o espaço necessário
++     */
++    private fun clearOldestFiles(targetSizeMB: Long) {
++        val allFiles = mutableListOf<File>()
++        
++        listOf(CACHE_DIR_IMAGES, CACHE_DIR_FILES, CACHE_DIR_AUDIO).forEach { dirName ->
++            val dir = File(context.cacheDir, dirName)
++            if (dir.exists()) {
++                dir.listFiles()?.forEach { file ->
++                    if (file.isFile) {
++                        allFiles.add(file)
++                    }
++                }
++            }
++        }
++        
++        // Ordena por data de modificação (mais antigos primeiro)
++        allFiles.sortBy { it.lastModified() }
++        
++        var deletedSize = 0L
++        val targetBytes = targetSizeMB * 1024 * 1024
++        
++        for (file in allFiles) {
++            if (deletedSize >= targetBytes) break
++            
++            val fileSize = file.length()
++            if (file.delete()) {
++                deletedSize += fileSize
++                Log.d(TAG, "Arquivo removido do cache: ${file.name}")
++            }
++        }
++        
++        Log.d(TAG, "Cache limpo: ${deletedSize / (1024 * 1024)} MB removidos")
++    }
++    
++    /**
++     * Limpa todo o cache
++     */
++    fun clearAllCache() {
++        listOf(CACHE_DIR_IMAGES, CACHE_DIR_FILES, CACHE_DIR_AUDIO).forEach { dirName ->
++            val dir = File(context.cacheDir, dirName)
++            if (dir.exists()) {
++                dir.deleteRecursively()
++                dir.mkdirs()
++            }
++        }
++        Log.d(TAG, "Cache completamente limpo")
++    }
++    
++    /**
++     * Obtém informações do cache
++     */
++    fun getCacheInfo(): CacheInfo {
++        val sizeMB = getCacheSizeInMB()
++        val fileCount = countCacheFiles()
++        
++        return CacheInfo(
++            sizeMB = sizeMB,
++            maxSizeMB = MAX_CACHE_SIZE_MB,
++            fileCount = fileCount
++        )
++    }
++    
++    /**
++     * Conta quantidade de arquivos no cache
++     */
++    private fun countCacheFiles(): Int {
++        var count = 0
++        
++        listOf(CACHE_DIR_IMAGES, CACHE_DIR_FILES, CACHE_DIR_AUDIO).forEach { dirName ->
++            val dir = File(context.cacheDir, dirName)
++            if (dir.exists()) {
++                count += dir.listFiles()?.size ?: 0
++            }
++        }
++        
++        return count
++    }
++}
++
++/**
++ * Informações sobre o cache
++ */
++data class CacheInfo(
++    val sizeMB: Long,
++    val maxSizeMB: Long,
++    val fileCount: Int
++)
+diff --git a/app/src/main/java/com/conversa/conversa/data/model/AnexoModels.kt b/app/src/main/java/com/conversa/conversa/data/model/AnexoModels.kt
+new file mode 100644
+index 0000000..e08e47c
+--- /dev/null
++++ b/app/src/main/java/com/conversa/conversa/data/model/AnexoModels.kt
+@@ -0,0 +1,36 @@
++package com.conversa.conversa.data.model
++
++/**
++ * Manager para downloads e cache de anexos
++ */
++data class AnexoDownload(
++    val identificador: String,
++    val tipo: Int, // 2=Imagem, 3=Arquivo, 4=Audio
++    val nome: String?,
++    val extensao: String?,
++    val tamanho: Long = 0,
++    val progresso: Int = 0, // 0-100
++    val status: DownloadStatus = DownloadStatus.PENDENTE,
++    val caminhoLocal: String? = null
++)
++
++enum class DownloadStatus {
++    PENDENTE,
++    BAIXANDO,
++    CONCLUIDO,
++    ERRO,
++    CANCELADO
++}
++
++/**
++ * Informações de um anexo na UI
++ */
++data class AnexoInfo(
++    val identificador: String,
++    val tipo: Int,
++    val nome: String,
++    val extensao: String?,
++    val tamanho: Long? = null,
++    val urlLocal: String? = null,
++    val thumbnail: String? = null
++)
+diff --git a/app/src/main/res/layout/item_conteudo_imagem.xml b/app/src/main/res/layout/item_conteudo_imagem.xml
+new file mode 100644
+index 0000000..24e0d69
+--- /dev/null
++++ b/app/src/main/res/layout/item_conteudo_imagem.xml
+@@ -0,0 +1,48 @@
++<?xml version="1.0" encoding="utf-8"?>
++<!-- Layout para exibir imagem dentro de uma mensagem -->
++<androidx.cardview.widget.CardView xmlns:android="http://schemas.android.com/apk/res/android"
++    xmlns:app="http://schemas.android.com/apk/res-auto"
++    xmlns:tools="http://schemas.android.com/tools"
++    android:layout_width="wrap_content"
++    android:layout_height="wrap_content"
++    android:layout_marginTop="4dp"
++    android:layout_marginBottom="4dp"
++    app:cardCornerRadius="8dp"
++    app:cardElevation="2dp">
++
++    <FrameLayout
++        android:layout_width="wrap_content"
++        android:layout_height="wrap_content">
++
++        <!-- Imagem -->
++        <ImageView
++            android:id="@+id/ivImagem"
++            android:layout_width="200dp"
++            android:layout_height="200dp"
++            android:scaleType="centerCrop"
++            android:contentDescription="Imagem anexada"
++            tools:src="@drawable/ic_launcher_background" />
++
++        <!-- Loading -->
++        <ProgressBar
++            android:id="@+id/progressBar"
++            android:layout_width="wrap_content"
++            android:layout_height="wrap_content"
++            android:layout_gravity="center"
++            android:visibility="gone" />
++
++        <!-- Botão de download (se não estiver em cache) -->
++        <ImageButton
++            android:id="@+id/btnDownload"
++            android:layout_width="48dp"
++            android:layout_height="48dp"
++            android:layout_gravity="center"
++            android:background="?attr/selectableItemBackgroundBorderless"
++            android:contentDescription="Baixar imagem"
++            android:src="@drawable/ic_download"
++            android:tint="@android:color/white"
++            android:visibility="gone" />
++
++    </FrameLayout>
++
++</androidx.cardview.widget.CardView>

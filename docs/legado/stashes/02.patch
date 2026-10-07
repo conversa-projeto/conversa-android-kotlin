@@ -1,0 +1,1783 @@
+diff --git a/AudioCapture.pas b/AudioCapture.pas
+new file mode 100644
+index 0000000..744c5fc
+--- /dev/null
++++ b/AudioCapture.pas
+@@ -0,0 +1,181 @@
++unit AudioCapture;
++
++interface
++
++uses
++  System.SysUtils,
++  System.Classes,
++  System.SyncObjs,
++  Winapi.Windows,
++  Winapi.MMSystem,
++  AudioTypes;
++
++type
++  TAudioCaptureThread = class(TThread)
++  private
++    FHWaveIn: HWAVEIN;
++    FWaveFormat: TWaveFormatEx;
++    FWaveHeaders: array[0..1] of TWaveHdr;
++    FBuffers: array[0..1] of array[0..2047] of Byte;
++    FBuffer: TAudioBuffer;
++    FCriticalSection: TCriticalSection;
++    FOnNewAudioData: TProc<TBytes>;
++    FFinalizado: Boolean;
++
++    procedure InitializeWaveFormat;
++    procedure PrepareHeaders;
++    procedure UnprepareHeaders;
++
++  public
++    constructor Create(Buffer: TAudioBuffer);
++    destructor Destroy; override;
++
++    procedure Execute; override;
++    procedure StartCapture;
++    procedure StopCapture;
++    procedure Finalizar;
++
++    property Finalizado: Boolean read FFinalizado;
++    property OnNewAudioData: TProc<TBytes> read FOnNewAudioData write FOnNewAudioData;
++  end;
++
++implementation
++
++procedure WaveInProc(hWaveIn: HWAVEIN; uMsg: UINT; dwInstance: DWORD_PTR; dwParam1: DWORD_PTR; dwParam2: DWORD_PTR); stdcall;
++var
++  CaptureThread: TAudioCaptureThread;
++  WaveHdr: PWaveHdr;
++  AudioData: TBytes;
++begin
++  CaptureThread := TAudioCaptureThread(dwInstance);
++
++  case uMsg of
++    WIM_DATA:
++    begin
++      WaveHdr := PWaveHdr(dwParam1);
++      if Assigned(WaveHdr) and (WaveHdr.dwBytesRecorded > 0) then
++      begin
++        SetLength(AudioData, WaveHdr.dwBytesRecorded);
++        Move(WaveHdr.lpData^, AudioData[0], WaveHdr.dwBytesRecorded);
++
++        CaptureThread.FBuffer.Write(AudioData);
++
++        if Assigned(CaptureThread.FOnNewAudioData) then
++          CaptureThread.FOnNewAudioData(AudioData);
++
++        if not CaptureThread.Finalizado then
++          waveInAddBuffer(hWaveIn, WaveHdr, SizeOf(TWaveHdr));
++      end;
++    end;
++  end;
++end;
++
++{ TAudioCaptureThread }
++
++constructor TAudioCaptureThread.Create(Buffer: TAudioBuffer);
++begin
++  inherited Create(True);
++  FreeOnTerminate := False;
++  FBuffer := Buffer;
++  FCriticalSection := TCriticalSection.Create;
++  FFinalizado := False;
++  InitializeWaveFormat;
++end;
++
++destructor TAudioCaptureThread.Destroy;
++begin
++  Finalizar;
++  StopCapture;
++  FCriticalSection.Free;
++  inherited;
++end;
++
++procedure TAudioCaptureThread.Finalizar;
++begin
++  if FFinalizado then
++    Exit;
++  FFinalizado := True;
++  Terminate;
++end;
++
++procedure TAudioCaptureThread.InitializeWaveFormat;
++begin
++  FillChar(FWaveFormat, SizeOf(FWaveFormat), 0);
++  FWaveFormat.wFormatTag := WAVE_FORMAT_PCM;
++  FWaveFormat.nChannels := 1;
++  FWaveFormat.nSamplesPerSec := 44100;
++  FWaveFormat.wBitsPerSample := 16;
++  FWaveFormat.nBlockAlign := (FWaveFormat.nChannels * FWaveFormat.wBitsPerSample) div 8;
++  FWaveFormat.nAvgBytesPerSec := FWaveFormat.nSamplesPerSec * FWaveFormat.nBlockAlign;
++  FWaveFormat.cbSize := 0;
++end;
++
++procedure TAudioCaptureThread.PrepareHeaders;
++var
++  i: Integer;
++begin
++  for i := 0 to 1 do
++  begin
++    FillChar(FWaveHeaders[i], SizeOf(TWaveHdr), 0);
++    FWaveHeaders[i].lpData := @FBuffers[i][0];
++    FWaveHeaders[i].dwBufferLength := SizeOf(FBuffers[i]);
++    waveInPrepareHeader(FHWaveIn, @FWaveHeaders[i], SizeOf(TWaveHdr));
++    waveInAddBuffer(FHWaveIn, @FWaveHeaders[i], SizeOf(TWaveHdr));
++  end;
++end;
++
++procedure TAudioCaptureThread.UnprepareHeaders;
++var
++  i: Integer;
++begin
++  for i := 0 to 1 do
++  begin
++    if FWaveHeaders[i].dwFlags and WHDR_PREPARED <> 0 then
++      waveInUnprepareHeader(FHWaveIn, @FWaveHeaders[i], SizeOf(TWaveHdr));
++  end;
++end;
++
++procedure TAudioCaptureThread.StartCapture;
++var
++  Result_Code: MMRESULT;
++begin
++  Result_Code := waveInOpen(@FHWaveIn, WAVE_MAPPER, @FWaveFormat, DWORD_PTR(@WaveInProc), DWORD_PTR(Self), CALLBACK_FUNCTION);
++
++  if Result_Code <> MMSYSERR_NOERROR then
++    raise Exception.Create('Erro ao abrir dispositivo de captura: ' + IntToStr(Result_Code));
++
++  PrepareHeaders;
++
++  Result_Code := waveInStart(FHWaveIn);
++  if Result_Code <> MMSYSERR_NOERROR then
++  begin
++    UnprepareHeaders;
++    waveInClose(FHWaveIn);
++    raise Exception.Create('Erro ao iniciar captura: ' + IntToStr(Result_Code));
++  end;
++end;
++
++procedure TAudioCaptureThread.StopCapture;
++begin
++  if FHWaveIn <> 0 then
++  begin
++    waveInStop(FHWaveIn);
++    waveInReset(FHWaveIn);
++    Sleep(100);
++    UnprepareHeaders;
++    waveInClose(FHWaveIn);
++    FHWaveIn := 0;
++  end;
++end;
++
++procedure TAudioCaptureThread.Execute;
++begin
++  StartCapture;
++
++  while not FFinalizado do
++    Sleep(50);
++
++  StopCapture;
++end;
++
++end.
+diff --git a/AudioMixer.pas b/AudioMixer.pas
+new file mode 100644
+index 0000000..9a5e694
+--- /dev/null
++++ b/AudioMixer.pas
+@@ -0,0 +1,193 @@
++unit AudioMixer;
++
++interface
++
++uses
++  System.SysUtils,
++  System.Classes,
++  System.Generics.Collections,
++  Winapi.Windows,
++  Winapi.MMSystem,
++  AudioTypes;
++
++type
++  TClientAudioStream = class
++    ClientID: Integer;
++    Buffer: TAudioBuffer;
++  end;
++
++  TAudioMixerThread = class(TThread)
++  private
++    FClientStreams: TList<TClientAudioStream>;
++    FOutputBuffer: TAudioBuffer;
++    FOnCheckActive: TFunc<Boolean>;
++    FFinalizado: Boolean;
++  public
++    constructor Create(AClientStreams: TList<TClientAudioStream>; AOutputBuffer: TAudioBuffer; AOnCheckActive: TFunc<Boolean>);
++    destructor Destroy; override;
++    procedure Execute; override;
++    procedure Finalizar;
++    property Finalizado: Boolean read FFinalizado;
++  end;
++
++implementation
++
++{ TAudioMixerThread }
++
++constructor TAudioMixerThread.Create(
++  AClientStreams: TList<TClientAudioStream>;
++  AOutputBuffer: TAudioBuffer;
++  AOnCheckActive: TFunc<Boolean>
++);
++begin
++  inherited Create(True);
++  FreeOnTerminate := False;
++  FClientStreams := AClientStreams;
++  FOutputBuffer := AOutputBuffer;
++  FOnCheckActive := AOnCheckActive;
++  FFinalizado := False;
++end;
++
++destructor TAudioMixerThread.Destroy;
++begin
++  Finalizar;
++  inherited;
++end;
++
++procedure TAudioMixerThread.Finalizar;
++begin
++  if FFinalizado then
++    Exit;
++  FFinalizado := True;
++  Terminate;
++end;
++
++procedure TAudioMixerThread.Execute;
++var
++  MixedData: TBytes;
++  ClientData: array of TBytes;
++  i, j: Integer;
++  Sample: SmallInt;
++  MixedSample: Integer;
++  ChunkSize: Integer;
++  MaxBufferThreshold: Integer;
++  ActiveClients: Integer;
++  NextProcessTime: Int64;
++  CurrentTime: Int64;
++  SleepTime: Integer;
++  ProcessInterval: Integer;
++begin
++  // Aumenta precis�o do timer para 1ms
++  timeBeginPeriod(1);
++  try
++    // Aguarda estar ativo
++    while not FFinalizado do
++    begin
++      if Assigned(FOnCheckActive) and FOnCheckActive() then
++        Break;
++      Sleep(10);
++    end;
++
++    ChunkSize := 2048; // 23ms de �udio a 44.1kHz
++    MaxBufferThreshold := ChunkSize * 10; // ~230ms
++    ProcessInterval := 23; // ms entre processamentos
++    NextProcessTime := GetTickCount64;
++
++    while not FFinalizado do
++    begin
++      CurrentTime := GetTickCount64;
++
++      // S� processa se chegou a hora
++      if CurrentTime >= NextProcessTime then
++      begin
++        SetLength(MixedData, ChunkSize);
++        SetLength(ClientData, FClientStreams.Count);
++        ActiveClients := 0;
++
++        // L� dados de clientes que t�m dados SUFICIENTES
++        for i := 0 to FClientStreams.Count - 1 do
++        begin
++          if FClientStreams[i].Buffer.Available >= ChunkSize then
++          begin
++            FClientStreams[i].Buffer.Read(ClientData[i], ChunkSize);
++            Inc(ActiveClients);
++          end
++          else if FClientStreams[i].Buffer.Available > MaxBufferThreshold then
++          begin
++            var Discard: TBytes;
++            FClientStreams[i].Buffer.Read(Discard, ChunkSize);
++            if FClientStreams[i].Buffer.Available >= ChunkSize then
++            begin
++              FClientStreams[i].Buffer.Read(ClientData[i], ChunkSize);
++              Inc(ActiveClients);
++            end;
++          end
++          else
++            SetLength(ClientData[i], 0);
++        end;
++
++        // S� processa se houver pelo menos 1 cliente ativo
++        if ActiveClients > 0 then
++        begin
++          // Mixa os samples (16-bit PCM)
++          for j := 0 to (ChunkSize div 2) - 1 do
++          begin
++            MixedSample := 0;
++            ActiveClients := 0;
++
++            for i := 0 to Length(ClientData) - 1 do
++            begin
++              if Length(ClientData[i]) >= (j + 1) * 2 then
++              begin
++                Sample := PSmallInt(@ClientData[i][j * 2])^;
++                MixedSample := MixedSample + Sample;
++                Inc(ActiveClients);
++              end;
++            end;
++
++            if ActiveClients > 0 then
++              MixedSample := MixedSample div ActiveClients;
++
++            if MixedSample > 32767 then
++              MixedSample := 32767
++            else if MixedSample < -32768 then
++              MixedSample := -32768;
++
++            PSmallInt(@MixedData[j * 2])^ := SmallInt(MixedSample);
++          end;
++
++          // Envia para o buffer de reprodu��o
++          FOutputBuffer.Write(MixedData);
++
++          // Agenda pr�ximo processamento
++          NextProcessTime := NextProcessTime + ProcessInterval;
++
++          // Se atrasou muito (>100ms), ressincroniza
++          if CurrentTime > NextProcessTime + 100 then
++            NextProcessTime := CurrentTime + ProcessInterval;
++        end
++        else
++          // Sem dados - agenda pr�ximo check
++          NextProcessTime := CurrentTime + 10;
++      end;
++
++      // Calcula quanto tempo esperar at� pr�ximo processamento
++      CurrentTime := GetTickCount64;
++      SleepTime := Integer(NextProcessTime - CurrentTime);
++
++      if SleepTime > 0 then
++      begin
++        if SleepTime > 50 then
++          SleepTime := 50; // Limita sleep m�ximo
++        Sleep(SleepTime);
++      end
++      else
++        Sleep(1); // Yield m�nimo
++    end;
++  finally
++        // Restaura precis�o normal do timer
++    timeEndPeriod(1);
++  end;
++end;
++
++end.
+diff --git a/AudioPlayer.pas b/AudioPlayer.pas
+new file mode 100644
+index 0000000..fed8b76
+--- /dev/null
++++ b/AudioPlayer.pas
+@@ -0,0 +1,211 @@
++unit AudioPlayer;
++
++interface
++
++uses
++  System.SysUtils,
++  System.Classes,
++  Winapi.Windows,
++  Winapi.MMSystem,
++  AudioTypes;
++
++type
++  TAudioPlayerThread = class(TThread)
++  private
++    FHWaveOut: HWAVEOUT;
++    FWaveFormat: TWaveFormatEx;
++    FBuffer: TAudioBuffer;
++    FIsPlaying: Boolean;
++    FWaveHeaders: array[0..7] of TWaveHdr;
++    FBuffers: array[0..7] of array[0..2047] of Byte;
++    FCurrentHeader: Integer;
++    FFinalizado: Boolean;
++
++    procedure InitializeWaveFormat;
++    procedure PrepareHeaders;
++    procedure UnprepareHeaders;
++
++  public
++    constructor Create(Buffer: TAudioBuffer);
++    destructor Destroy; override;
++
++    procedure Execute; override;
++    procedure StartPlayback;
++    procedure StopPlayback;
++    procedure Finalizar;
++
++    property Finalizado: Boolean read FFinalizado;
++    property IsPlaying: Boolean read FIsPlaying;
++  end;
++
++implementation
++
++procedure WaveOutProc(hWaveOut: HWAVEOUT; uMsg: UINT; dwInstance: DWORD_PTR; dwParam1: DWORD_PTR; dwParam2: DWORD_PTR); stdcall;
++begin
++  case uMsg of
++    WOM_DONE:
++    begin
++      // Buffer foi reproduzido, pode ser reutilizado
++    end;
++  end;
++end;
++
++{ TAudioPlayerThread }
++
++constructor TAudioPlayerThread.Create(Buffer: TAudioBuffer);
++begin
++  inherited Create(True);
++  FreeOnTerminate := False;
++  FBuffer := Buffer;
++  FIsPlaying := False;
++  FCurrentHeader := 0;
++  FFinalizado := False;
++  InitializeWaveFormat;
++end;
++
++destructor TAudioPlayerThread.Destroy;
++begin
++  Finalizar;
++  StopPlayback;
++  inherited;
++end;
++
++procedure TAudioPlayerThread.Finalizar;
++begin
++  if FFinalizado then
++    Exit;
++  FFinalizado := True;
++  Terminate;
++end;
++
++procedure TAudioPlayerThread.InitializeWaveFormat;
++begin
++  FillChar(FWaveFormat, SizeOf(FWaveFormat), 0);
++  FWaveFormat.wFormatTag := WAVE_FORMAT_PCM;
++  FWaveFormat.nChannels := 1;
++  FWaveFormat.nSamplesPerSec := 44100;
++  FWaveFormat.wBitsPerSample := 16;
++  FWaveFormat.nBlockAlign := (FWaveFormat.nChannels * FWaveFormat.wBitsPerSample) div 8;
++  FWaveFormat.nAvgBytesPerSec := FWaveFormat.nSamplesPerSec * FWaveFormat.nBlockAlign;
++  FWaveFormat.cbSize := 0;
++end;
++
++procedure TAudioPlayerThread.PrepareHeaders;
++var
++  i: Integer;
++begin
++  for i := 0 to 7 do
++  begin
++    FillChar(FWaveHeaders[i], SizeOf(TWaveHdr), 0);
++    FWaveHeaders[i].lpData := @FBuffers[i][0];
++    FWaveHeaders[i].dwBufferLength := SizeOf(FBuffers[i]);
++    waveOutPrepareHeader(FHWaveOut, @FWaveHeaders[i], SizeOf(TWaveHdr));
++  end;
++end;
++
++procedure TAudioPlayerThread.UnprepareHeaders;
++var
++  i: Integer;
++begin
++  for i := 0 to 7 do
++  begin
++    if FWaveHeaders[i].dwFlags and WHDR_PREPARED <> 0 then
++      waveOutUnprepareHeader(FHWaveOut, @FWaveHeaders[i], SizeOf(TWaveHdr));
++  end;
++end;
++
++procedure TAudioPlayerThread.StartPlayback;
++var
++  Result_Code: MMRESULT;
++begin
++  Result_Code := waveOutOpen(@FHWaveOut, WAVE_MAPPER, @FWaveFormat, DWORD_PTR(@WaveOutProc), DWORD_PTR(Self), CALLBACK_FUNCTION);
++
++  if Result_Code <> MMSYSERR_NOERROR then
++    raise Exception.Create('Erro ao abrir dispositivo de reprodução: ' + IntToStr(Result_Code));
++
++  PrepareHeaders;
++  FIsPlaying := True;
++end;
++
++procedure TAudioPlayerThread.StopPlayback;
++begin
++  if (FHWaveOut <> 0) and FIsPlaying then
++  begin
++    FIsPlaying := False;
++    waveOutReset(FHWaveOut);
++    Sleep(100);
++    UnprepareHeaders;
++    waveOutClose(FHWaveOut);
++    FHWaveOut := 0;
++  end;
++end;
++
++procedure TAudioPlayerThread.Execute;
++var
++  AudioData: TBytes;
++  BytesRead: Integer;
++  BufferedEnough: Boolean;
++  NextPlayTime: Int64;
++  CurrentTime: Int64;
++  SleepTime: Integer;
++const
++  MIN_BUFFER_START = 8192;
++  MIN_BUFFER_RUNNING = 4096;
++  PLAY_INTERVAL = 23;
++begin
++  timeBeginPeriod(1);
++  try
++    StartPlayback;
++
++    BufferedEnough := False;
++    while not FFinalizado and not BufferedEnough do
++    begin
++      if FBuffer.Available >= MIN_BUFFER_START then
++        BufferedEnough := True
++      else
++        Sleep(10);
++    end;
++
++    NextPlayTime := GetTickCount64;
++
++    while not FFinalizado and FIsPlaying do
++    begin
++      CurrentTime := GetTickCount64;
++
++      if (CurrentTime >= NextPlayTime) and (FBuffer.Available >= MIN_BUFFER_RUNNING) then
++      begin
++        BytesRead := FBuffer.Read(AudioData, SizeOf(FBuffers[FCurrentHeader]));
++
++        if BytesRead > 0 then
++        begin
++          Move(AudioData[0], FBuffers[FCurrentHeader][0], BytesRead);
++          FWaveHeaders[FCurrentHeader].dwBufferLength := BytesRead;
++          waveOutWrite(FHWaveOut, @FWaveHeaders[FCurrentHeader], SizeOf(TWaveHdr));
++          FCurrentHeader := (FCurrentHeader + 1) mod 8;
++          NextPlayTime := NextPlayTime + PLAY_INTERVAL;
++
++          if CurrentTime > NextPlayTime + 100 then
++            NextPlayTime := CurrentTime + PLAY_INTERVAL;
++        end;
++      end;
++
++      CurrentTime := GetTickCount64;
++      SleepTime := Integer(NextPlayTime - CurrentTime);
++
++      if SleepTime > 0 then
++      begin
++        if SleepTime > 50 then
++          SleepTime := 50;
++        Sleep(SleepTime);
++      end
++      else
++        Sleep(1);
++    end;
++
++    StopPlayback;
++  finally
++    timeEndPeriod(1);
++  end;
++end;
++
++end.
+diff --git a/AudioTypes.pas b/AudioTypes.pas
+new file mode 100644
+index 0000000..469bb21
+--- /dev/null
++++ b/AudioTypes.pas
+@@ -0,0 +1,123 @@
++unit AudioTypes;
++
++interface
++
++uses
++  System.SysUtils,
++  System.SyncObjs;
++
++type
++  TAudioBuffer = class
++  private
++    FBuffer: TBytes;
++    FSize: Integer;
++    FWritePos: Integer;
++    FReadPos: Integer;
++    FCount: Integer;
++    FCriticalSection: TCriticalSection;
++  public
++    constructor Create(BufferSize: Integer);
++    destructor Destroy; override;
++    function Write(const Data: TBytes): Integer;
++    function Read(var Data: TBytes; MaxSize: Integer): Integer;
++    function Available: Integer;
++    procedure Clear;
++  end;
++
++implementation
++
++{ TAudioBuffer }
++
++constructor TAudioBuffer.Create(BufferSize: Integer);
++begin
++  inherited Create;
++  FSize := BufferSize;
++  SetLength(FBuffer, FSize);
++  FWritePos := 0;
++  FReadPos := 0;
++  FCount := 0;
++  FCriticalSection := TCriticalSection.Create;
++end;
++
++destructor TAudioBuffer.Destroy;
++begin
++  FCriticalSection.Free;
++  inherited;
++end;
++
++function TAudioBuffer.Write(const Data: TBytes): Integer;
++var
++  i, WriteIndex: Integer;
++begin
++  Result := 0;
++  if Length(Data) = 0 then
++    Exit;
++
++  FCriticalSection.Enter;
++  try
++    for i := 0 to Length(Data) - 1 do
++    begin
++      if FCount >= FSize then
++        Break;  // Buffer cheio
++
++      WriteIndex := FWritePos mod FSize;
++      FBuffer[WriteIndex] := Data[i];
++      FWritePos := (FWritePos + 1) mod FSize;
++      Inc(FCount);
++      Inc(Result);
++    end;
++  finally
++    FCriticalSection.Leave;
++  end;
++end;
++
++function TAudioBuffer.Read(var Data: TBytes; MaxSize: Integer): Integer;
++var
++  i, ReadIndex: Integer;
++begin
++  Result := 0;
++  SetLength(Data, MaxSize);
++
++  FCriticalSection.Enter;
++  try
++    for i := 0 to MaxSize - 1 do
++    begin
++      if FCount <= 0 then
++        Break;  // Buffer vazio
++
++      ReadIndex := FReadPos mod FSize;
++      Data[i] := FBuffer[ReadIndex];
++      FReadPos := (FReadPos + 1) mod FSize;
++      Dec(FCount);
++      Inc(Result);
++    end;
++  finally
++    FCriticalSection.Leave;
++  end;
++
++  SetLength(Data, Result);
++end;
++
++function TAudioBuffer.Available: Integer;
++begin
++  FCriticalSection.Enter;
++  try
++    Result := FCount;
++  finally
++    FCriticalSection.Leave;
++  end;
++end;
++
++procedure TAudioBuffer.Clear;
++begin
++  FCriticalSection.Enter;
++  try
++    FWritePos := 0;
++    FReadPos := 0;
++    FCount := 0;
++  finally
++    FCriticalSection.Leave;
++  end;
++end;
++
++end.
+diff --git a/Conversa.Chamada.pas b/Conversa.Chamada.pas
+new file mode 100644
+index 0000000..0ce6eb1
+--- /dev/null
++++ b/Conversa.Chamada.pas
+@@ -0,0 +1,726 @@
++﻿unit Conversa.Chamada;
++
++{
++
++- Notificação correta
++- Status de participante
++- Mensagem correta
++
++}
++
++interface
++
++uses
++  System.JSON,
++  System.SysUtils,
++  System.Generics.Collections,
++  IdGlobal,
++  Conversa.Tipos,
++  Conversa.Proxy.Tipos,
++  Conversa.Chamada.BarraTitulo,
++  Conversa.Chamada.view,
++  tcp,
++  AudioTypes,
++  AudioPlayer,
++  AudioCapture,
++  AudioMixer,
++  System.Classes,
++  Winapi.MMSystem,
++  Winapi.Windows;
++
++type
++  TConversaChamada = class;
++
++  TConversaChamadas = class
++  private
++    class var FInstance: TConversaChamadas;
++    FChamadas: TDictionary<Integer, TConversaChamada>;
++  public
++    class constructor Create;
++    class destructor Destroy;
++    class function Instance: TConversaChamadas;
++    class function SocketType(Tipo: TSocketMessageType): Boolean;
++    function ProcessarSocket(Tipo: TSocketMessageType; jo: TJSONObject): Boolean;
++
++    constructor Create;
++    destructor Destroy; override;
++
++    function Iniciar(AParticipantes: TArrayUsuarios): TConversaChamada;
++    function GetChamada(const AID: Integer): TConversaChamada;
++
++    procedure FinalizarTodas;
++  end;
++
++  TConversaChamada = class
++  private
++    FID: Integer;
++    FTipo: TChamadaTipo;
++    FStatus: TChamadaStatus;
++    FStatusLocal: TChamadaStatusLocal;
++    FChamadaView: TConversaChamadaView;
++    FBarraTitulo: TConversaChamadaBarraTitulo;
++    FUsuarios: TArray<TChamadaDadosUsuario>;
++    FIniciada: TDateTime;
++    FFinalizada: TDateTime;
++    FTCPAudio: TTCPClient;
++    FClientStreams: TList<TClientAudioStream>;
++
++    FCaptureThread: TAudioCaptureThread;
++    FPlayerThread: TAudioPlayerThread;
++    FMixerThread: TAudioMixerThread;
++    FCaptureAudioBuffer: TAudioBuffer;
++    FPlayerAudioBuffer: TAudioBuffer;
++    FAudioThreadsStarted: Boolean;
++
++    procedure SetStatusLocal(const Value: TChamadaStatusLocal);
++    procedure AtualizarStatusUsuario(const Usuario: Integer; Status: TChamadaStatusUsuario);
++    procedure OnChamadaFinalizada;
++    procedure OnUsuarioRecusou(const Usuario: Integer);
++    procedure OnUsuarioEntrou(const Usuario: Integer);
++    procedure OnUsuarioSaiu(const Usuario: Integer);
++    procedure FinalizarLocalmente;
++    procedure ConectarTCPAudio;
++    procedure TCPAudioError(const sError: String);
++    procedure TCPAudioReceive(const Data: TBytes);
++    procedure TCPAudioConnected;
++    procedure TCPAudioDisconnected;
++  protected
++    function ProcessarSocket(Tipo: TSocketMessageType; jo: TJSONObject): Boolean;
++
++    procedure IniciarCapturaAudio;
++    procedure IniciarReproducaoAudio;
++
++    procedure NotificarChamada;
++    procedure ExibirChamada;
++
++    procedure IniciarChamada(AParticipantes: TArrayUsuarios);
++
++    property StatusLocal: TChamadaStatusLocal read FStatusLocal write SetStatusLocal;
++  public
++    constructor Create(const AID: Integer);
++    destructor Destroy; override;
++    procedure Cancelar;
++    procedure Recusar;
++    procedure Entrar;
++    procedure Sair(const AFinalizar: Boolean = False);
++    procedure Finalizar;
++    procedure AtualizarDados;
++    procedure OnChamadaRecebida;
++    function GetUsuarios: TArray<TChamadaDadosUsuario>;
++    property Iniciada: TDateTime read FIniciada;
++    function TempoDecorrido: string;
++  end;
++
++implementation
++
++uses
++  Conversa.Dados,
++  Conversa.Proxy,
++  Conversa.Tela.Inicial.view,
++  Conversa.Notificacao;
++
++function IntToBytes(const Value: Integer): TBytes;
++begin
++  SetLength(Result, SizeOf(Value));
++  Move(Value, Result[0], SizeOf(Value));
++end;
++
++function BytesToInt(const Bytes: TBytes): Integer;
++begin
++  if Length(Bytes) <> 4 then
++    raise Exception.Create('Invalid byte array size. Expected 4 bytes.');
++  Move(Bytes[0], Result, SizeOf(Result));
++end;
++
++
++{ TConversaChamadas }
++
++class function TConversaChamadas.SocketType(Tipo: TSocketMessageType): Boolean;
++begin
++  Result := Tipo in [
++    TSocketMessageType.ChamadaRecebida,
++    TSocketMessageType.ChamadaFinalizada,
++    TSocketMessageType.UsuarioRecusou,
++    TSocketMessageType.UsuarioEntrou,
++    TSocketMessageType.UsuarioSaiu
++  ];
++end;
++
++class constructor TConversaChamadas.Create;
++begin
++  FInstance := TConversaChamadas.Create;
++end;
++
++class destructor TConversaChamadas.Destroy;
++begin
++  FreeAndNil(FInstance);
++end;
++
++class function TConversaChamadas.Instance: TConversaChamadas;
++begin
++  Result := FInstance;
++end;
++
++constructor TConversaChamadas.Create;
++begin
++  FChamadas := TDictionary<Integer, TConversaChamada>.Create;
++end;
++
++destructor TConversaChamadas.Destroy;
++begin
++  FinalizarTodas;
++  FreeAndNil(FChamadas);
++  inherited;
++end;
++
++function TConversaChamadas.ProcessarSocket(Tipo: TSocketMessageType; jo: TJSONObject): Boolean;
++var
++  Chamada: TConversaChamada;
++begin
++  if not SocketType(Tipo) then
++    Exit(False);
++
++  if jo.GetValue<Integer>('chamada_id', 0) = 0 then
++    Exit(False);
++
++  Result := True;
++  Chamada := GetChamada(jo.GetValue<Integer>('chamada_id'));
++
++  if not Assigned(Chamada) then
++  begin
++    Chamada := TConversaChamada.Create(jo.GetValue<Integer>('chamada_id'));
++    FChamadas.Add(Chamada.FID, Chamada);
++  end;
++
++  Chamada.ProcessarSocket(Tipo, jo);
++end;
++
++function TConversaChamadas.Iniciar(AParticipantes: TArrayUsuarios): TConversaChamada;
++begin
++  Result := TConversaChamada.Create(0);
++  Result.IniciarChamada(AParticipantes);
++  FChamadas.Add(Result.FID, Result);
++end;
++
++procedure TConversaChamadas.FinalizarTodas;
++var
++  Chamada: TConversaChamada;
++begin
++  for Chamada in FChamadas.Values do
++  begin
++    if not Assigned(Chamada) then
++      Continue;
++
++    try
++      Chamada.Sair;
++      Chamada.Free;
++    except
++    end;
++  end;
++
++  FChamadas.Clear;
++end;
++
++function TConversaChamadas.GetChamada(const AID: Integer): TConversaChamada;
++begin
++  if not FChamadas.TryGetValue(AID, Result) then
++    Exit(nil);
++end;
++
++{ TConversaChamada }
++
++constructor TConversaChamada.Create(const AID: Integer);
++begin
++  FID := AID;
++  FStatusLocal := TChamadaStatusLocal.Desconhecido;
++  FTipo := TChamadaTipo.Simples;
++  FIniciada := 0;
++  FAudioThreadsStarted := False;
++end;
++
++destructor TConversaChamada.Destroy;
++begin
++  try
++    if Assigned(FMixerThread) then
++    begin
++      FMixerThread.Finalizar;
++      FMixerThread.WaitFor;
++      FreeAndNil(FMixerThread);
++    end;
++
++    if Assigned(FCaptureThread) then
++    begin
++      FCaptureThread.Finalizar;
++      FCaptureThread.WaitFor;
++      FreeAndNil(FCaptureThread);
++    end;
++
++    if Assigned(FPlayerThread) then
++    begin
++      FPlayerThread.Finalizar;
++      FPlayerThread.WaitFor;
++      FreeAndNil(FPlayerThread);
++    end;
++
++    if Assigned(FCaptureAudioBuffer) then
++      FreeAndNil(FCaptureAudioBuffer);
++
++    if Assigned(FPlayerAudioBuffer) then
++      FreeAndNil(FPlayerAudioBuffer);
++
++    if Assigned(FTCPAudio) then
++      FreeAndNil(FTCPAudio);
++
++    if Assigned(FClientStreams) then
++    begin
++      for var Stream in FClientStreams do
++      begin
++        if Assigned(Stream.Buffer) then
++          Stream.Buffer.Free;
++        Stream.Free;
++      end;
++      FreeAndNil(FClientStreams);
++    end;
++
++    if Assigned(FBarraTitulo) then
++      FreeAndNil(FBarraTitulo);
++
++    if Assigned(FChamadaView) then
++      FreeAndNil(FChamadaView);
++  except
++  end;
++
++  inherited;
++end;
++
++function TConversaChamada.ProcessarSocket(Tipo: TSocketMessageType; jo: TJSONObject): Boolean;
++begin
++  Result := True;
++  case Tipo of
++    TSocketMessageType.ChamadaRecebida: OnChamadaRecebida;
++    TSocketMessageType.ChamadaFinalizada: OnChamadaFinalizada;
++    TSocketMessageType.UsuarioRecusou: OnUsuarioRecusou(jo.GetValue<Integer>('usuario_id', 0));
++    TSocketMessageType.UsuarioEntrou: OnUsuarioEntrou(jo.GetValue<Integer>('usuario_id', 0));
++    TSocketMessageType.UsuarioSaiu: OnUsuarioSaiu(jo.GetValue<Integer>('usuario_id', 0));
++  end;
++end;
++
++procedure TConversaChamada.Cancelar;
++begin
++  Sair;
++end;
++
++procedure TConversaChamada.Recusar;
++begin
++  Sair;
++end;
++
++procedure TConversaChamada.Entrar;
++begin
++  Conversa.Proxy.TAPIConversa.Chamada.Entrar(FID);
++  FIniciada := Now;
++  AtualizarDados;
++  StatusLocal := TChamadaStatusLocal.ChamadaEmAndamento;
++  ConectarTCPAudio;
++end;
++
++procedure TConversaChamada.Finalizar;
++begin
++  Sair(True);
++end;
++
++procedure TConversaChamada.Sair(const AFinalizar: Boolean = False);
++begin
++  case FStatusLocal of
++    TChamadaStatusLocal.IniciandoChamada: Conversa.Proxy.TAPIConversa.Chamada.Cancelar(FID);
++    TChamadaStatusLocal.RecebentoChamada: Conversa.Proxy.TAPIConversa.Chamada.Recusar(FID);
++    TChamadaStatusLocal.ChamadaEmAndamento:
++    begin
++      if AFinalizar then
++        Conversa.Proxy.TAPIConversa.Chamada.Finalizar(FID)
++      else
++        Conversa.Proxy.TAPIConversa.Chamada.Sair(FID);
++    end;
++    TChamadaStatusLocal.ChamadaFinalizada: Exit;
++  end;
++  FinalizarLocalmente;
++end;
++
++procedure TConversaChamada.OnChamadaFinalizada;
++begin
++  AtualizarDados;
++  StatusLocal := TChamadaStatusLocal.ChamadaFinalizada;
++  FinalizarLocalmente;
++  TConversaChamadas.Instance.FChamadas.Remove(FID);
++end;
++
++procedure TConversaChamada.OnChamadaRecebida;
++begin
++  StatusLocal := TChamadaStatusLocal.RecebentoChamada;
++  AtualizarDados;
++  NotificarChamada;
++  ExibirChamada;
++end;
++
++procedure TConversaChamada.OnUsuarioRecusou(const Usuario: Integer);
++begin
++  AtualizarStatusUsuario(Usuario, TChamadaStatusUsuario.Recusou);
++
++  if StatusLocal = TChamadaStatusLocal.RecebentoChamada then
++    Exit;
++
++  if (StatusLocal = TChamadaStatusLocal.IniciandoChamada) and (FTipo = TChamadaTipo.Simples) then
++  begin
++    StatusLocal := TChamadaStatusLocal.Recusada;
++    FinalizarLocalmente;
++    TConversaChamadas.Instance.FChamadas.Remove(FID);
++    Exit;
++  end;
++end;
++
++procedure TConversaChamada.OnUsuarioEntrou(const Usuario: Integer);
++begin
++  AtualizarStatusUsuario(Usuario, TChamadaStatusUsuario.Entrou);
++  if StatusLocal = TChamadaStatusLocal.RecebentoChamada then
++    Exit;
++
++  StatusLocal := TChamadaStatusLocal.ChamadaEmAndamento;
++  AtualizarDados;
++end;
++
++procedure TConversaChamada.OnUsuarioSaiu(const Usuario: Integer);
++begin
++  AtualizarStatusUsuario(Usuario, TChamadaStatusUsuario.Saiu);
++
++  if StatusLocal = TChamadaStatusLocal.RecebentoChamada then
++    Exit;
++
++  if (StatusLocal = TChamadaStatusLocal.ChamadaEmAndamento) and (FTipo = TChamadaTipo.Simples) then
++  begin
++    StatusLocal := TChamadaStatusLocal.ChamadaFinalizada;
++    FinalizarLocalmente;
++    TConversaChamadas.Instance.FChamadas.Remove(FID);
++    Exit;
++  end;
++end;
++
++procedure TConversaChamada.AtualizarDados;
++begin
++  with Conversa.Proxy.TAPIConversa.Chamada.Dados(FID) do
++  begin
++    FTipo := Dados.tipo;
++    FStatus := Dados.status;
++    FIniciada := Dados.iniciada;
++    FFinalizada := Dados.finalizada;
++    FUsuarios := Dados.usuarios;
++  end;
++
++  if Assigned(FChamadaView) then
++    FChamadaView.AtualizarListaParticipante;
++end;
++
++function TConversaChamada.GetUsuarios: TArray<TChamadaDadosUsuario>;
++begin
++  Result := FUsuarios;
++end;
++
++procedure TConversaChamada.IniciarChamada(AParticipantes: TArrayUsuarios);
++var
++  jo: TJSONObject;
++  ja: TJSONArray;
++  P: Conversa.Tipos.TUsuario;
++  U: Conversa.Tipos.TUsuario;
++  Usu: TChamadaDadosUsuario;
++begin
++  for U in AParticipantes do
++  begin
++    Usu := Default(TChamadaDadosUsuario);
++    Usu.usuario_id := U.ID;
++    Usu.usuario_nome := U.Nome;
++    if Usu.usuario_id = Dados.FDadosApp.Usuario.ID then
++      Usu.status := TChamadaStatusUsuario.Entrou
++    else
++      Usu.status := TChamadaStatusUsuario.Pendente;
++    FUsuarios := FUsuarios + [Usu];
++  end;
++  FStatusLocal := TChamadaStatusLocal.IniciandoChamada;
++  ExibirChamada;
++
++  ja := TJSONArray.Create;
++  jo := TJSONObject.Create;
++  jo.AddPair('usuarios', ja);
++
++  for P in AParticipantes do
++    ja.Add(TJSONObject.Create.AddPair('id', P.ID));
++
++  with Conversa.Proxy.TAPIConversa.Chamada.Iniciar(jo).Dados do
++  begin
++    FID := id;
++    FTipo := tipo;
++    FStatus := status;
++  end;
++
++  ConectarTCPAudio;
++end;
++
++procedure TConversaChamada.FinalizarLocalmente;
++begin
++  TNotificacaoManager.Fechar(TTipoNotificacao.Chamada, FID);
++  StatusLocal := TChamadaStatusLocal.ChamadaFinalizada;
++  TConversaChamadas.Instance.FChamadas.Remove(FID);
++  FreeAndNil(Self);
++end;
++
++procedure TConversaChamada.IniciarCapturaAudio;
++begin
++  //
++end;
++
++procedure TConversaChamada.IniciarReproducaoAudio;
++begin
++  //
++end;
++
++procedure TConversaChamada.ExibirChamada;
++begin
++  if not Assigned(FChamadaView) then
++  begin
++    FChamadaView := TConversaChamadaView.Create(nil, Self);
++    FChamadaView.AtualizarListaParticipante;
++    FChamadaView.Show;
++    FChamadaView.CentralizarNoDisplayDoMainForm;
++  end;
++
++  FChamadaView.Status := StatusLocal;
++
++  if not Assigned(FBarraTitulo) then
++  begin
++    FBarraTitulo := TConversaChamadaBarraTitulo.Create(TelaInicial.lytTitleBarClient, Self);
++    FBarraTitulo.Exibir;
++    FBarraTitulo.txtTempoLigacao.AutoSize := True;
++    FBarraTitulo.txtTempoLigacao.AutoSize := False;
++  end;
++
++  FBarraTitulo.Status := FStatusLocal;
++end;
++
++procedure TConversaChamada.NotificarChamada;
++var
++  DadosChamada: TNotificacaoChamadaDados;
++  Usuario: TChamadaDadosUsuario;
++begin
++
++  for Usuario in FUsuarios do
++  begin
++    if Usuario.usuario_id = Dados.FDadosApp.Usuario.ID then
++      Continue;
++
++    DadosChamada.Nome := Usuario.usuario_nome;
++    Break;
++  end;
++
++  if Length(FUsuarios) = 2 then
++    DadosChamada.TipoChamada := 'Chamada de Voz'
++  else
++    DadosChamada.TipoChamada := 'Chamada de Voz em Grupo';
++
++//  DadosChamada.Descricao := 'Teste - 2';
++  DadosChamada.OnAtender :=
++    procedure(AID: Integer)
++    begin
++      TConversaChamadas.FChamadas.Items[AID].Entrar;
++    end;
++  DadosChamada.OnRecusar :=
++    procedure(AID: Integer)
++    begin
++      TConversaChamadas.FChamadas.Items[AID].Recusar;
++    end;
++
++  TNotificacaoManager.Apresentar(
++    TNotificacao.New
++      .ChamadaId(FID)
++      .Tipo(TTipoNotificacao.Chamada)
++      .ChamadaDados(DadosChamada)
++  );
++end;
++
++procedure TConversaChamada.SetStatusLocal(const Value: TChamadaStatusLocal);
++begin
++  if FStatusLocal = Value then
++    Exit;
++
++  FStatusLocal := Value;
++  case FStatusLocal of
++    TChamadaStatusLocal.Desconhecido: ;
++    TChamadaStatusLocal.IniciandoChamada: ;
++    TChamadaStatusLocal.RecebentoChamada: ;
++    TChamadaStatusLocal.ChamadaEmAndamento:
++    begin
++      TNotificacaoManager.Fechar(TTipoNotificacao.Chamada, FID);
++      FIniciada := Now;
++    end;
++    TChamadaStatusLocal.ChamadaFinalizada:
++    begin
++      if Assigned(FCaptureThread) then
++        FCaptureThread.Finalizar;
++      if Assigned(FPlayerThread) then
++        FPlayerThread.Finalizar;
++      if Assigned(FMixerThread) then
++        FMixerThread.Finalizar;
++    end;
++    TChamadaStatusLocal.ChamadaPerdida: ;
++    TChamadaStatusLocal.Recusada:
++    begin
++      TNotificacaoManager.Fechar(TTipoNotificacao.Chamada, FID);
++    end;
++  end;
++
++  if Assigned(FChamadaView) then
++    FChamadaView.Status := FStatusLocal;
++
++  if Assigned(FBarraTitulo) then
++    FBarraTitulo.Status := FStatusLocal;
++end;
++
++procedure TConversaChamada.AtualizarStatusUsuario(const Usuario: Integer; Status: TChamadaStatusUsuario);
++var
++  I: Integer;
++  Usr: TChamadaDadosUsuario;
++begin
++  for I := 0 to Pred(Length(FUsuarios)) do
++  begin
++    Usr := FUsuarios[I];
++    if Usr.usuario_id <> Usuario then
++      Continue;
++
++    Usr.status := Status;
++    FUsuarios[I] := Usr;
++  end;
++
++  if Assigned(FChamadaView) then
++    FChamadaView.AtualizarListaParticipante;
++end;
++
++function TConversaChamada.TempoDecorrido: string;
++var
++  Diferenca: TDateTime;
++  Horas, Minutos, Segundos, Milisegundos: Word;
++begin
++  // Claude Sonnet 4.5
++  // Calcula a diferença entre as datas
++  Diferenca := Now - FIniciada;
++
++  // Extrai horas, minutos, segundos e milisegundos
++  DecodeTime(Diferenca, Horas, Minutos, Segundos, Milisegundos);
++
++  // Formata a string de acordo com a regra
++  if Horas > 0 then
++    Result := Format('%2.2d:%2.2d:%2.2d.%3.3d', [Horas, Minutos, Segundos, Milisegundos])
++  else
++    Result := Format('%2.2d:%2.2d.%3.3d', [Minutos, Segundos, Milisegundos]);
++end;
++
++procedure TConversaChamada.ConectarTCPAudio;
++var
++  RegistrationData: TBytes;
++begin
++  FClientStreams := TList<TClientAudioStream>.Create;
++  FCaptureAudioBuffer := TAudioBuffer.Create(1024 * 1024);
++  FPlayerAudioBuffer := TAudioBuffer.Create(1024 * 1024);
++
++  FMixerThread := TAudioMixerThread.Create(
++    FClientStreams,
++    FPlayerAudioBuffer,
++    function: Boolean
++    begin
++      Result := FStatusLocal = TChamadaStatusLocal.ChamadaEmAndamento;
++    end
++  );
++  FMixerThread.Start;
++
++  FCaptureThread := TAudioCaptureThread.Create(FCaptureAudioBuffer);
++  FPlayerThread := TAudioPlayerThread.Create(FPlayerAudioBuffer);
++
++  FCaptureThread.OnNewAudioData :=
++    procedure(Data: TBytes)
++    begin
++      if (FStatusLocal = TChamadaStatusLocal.ChamadaEmAndamento) then
++        if Assigned(FTCPAudio) and (FTCPAudio.State = TTCPClientState.Connected) then
++          FTCPAudio.Send([1] + IntToBytes(FID) + Data);
++    end;
++
++  RegistrationData := [0] + IntToBytes(Dados.FDadosApp.Usuario.ID);
++
++  FTCPAudio := TTCPClient.Create('localhost', 9090);
++  FTCPAudio.SetRegistrationData(RegistrationData);
++  FTCPAudio.OnClientReceive := TCPAudioReceive;
++  FTCPAudio.OnError := TCPAudioError;
++  FTCPAudio.OnConnected := TCPAudioConnected;
++  FTCPAudio.OnDisconnected := TCPAudioDisconnected;
++end;
++
++procedure TConversaChamada.TCPAudioConnected;
++begin
++  if FAudioThreadsStarted then
++    Exit;
++
++  FAudioThreadsStarted := True;
++  if Assigned(FCaptureThread) then
++    FCaptureThread.Start;
++  if Assigned(FPlayerThread) then
++    FPlayerThread.Start;
++end;
++
++procedure TConversaChamada.TCPAudioDisconnected;
++begin
++  // Reconexão é automática pelo TTCPClient
++end;
++
++procedure TConversaChamada.TCPAudioError(const sError: String);
++begin
++  {TODO -oDaniel -cChamada: Melhorar exibição de erros}
++  raise Exception.Create(sError);
++end;
++
++procedure TConversaChamada.TCPAudioReceive(const Data: TBytes);
++var
++  iRemetente: Integer;
++  ClientStream: TClientAudioStream;
++  AudioData: TBytes;
++begin
++  try
++    if FStatusLocal <> TChamadaStatusLocal.ChamadaEmAndamento then
++      Exit;
++
++    // Valida tamanho mínimo: 4 (remetente) + 4 (chamada) + 1 (áudio)
++    if Length(Data) < 9 then
++      Exit;
++
++    iRemetente := BytesToInt(Copy(Data, 0, 4));
++    AudioData := Copy(Data, 8);
++
++    // Procura ou cria buffer para este cliente
++    ClientStream := nil;
++    for var Stream in FClientStreams do
++    begin
++      if Stream.ClientID = iRemetente then
++      begin
++        ClientStream := Stream;
++        Break;
++      end;
++    end;
++
++    if ClientStream = nil then
++    begin
++      ClientStream := TClientAudioStream.Create;
++      ClientStream.ClientID := iRemetente;
++      ClientStream.Buffer := TAudioBuffer.Create(512 * 1024);
++      FClientStreams.Add(ClientStream);
++    end;
++
++    ClientStream.Buffer.Write(AudioData);
++  except
++  end;
++end;
++
++end.
+diff --git a/app/src/main/java/com/conversa/conversa/data/chamada/ChamadaManager.kt b/app/src/main/java/com/conversa/conversa/data/chamada/ChamadaManager.kt
+index 8fb19d8..f09e780 100644
+--- a/app/src/main/java/com/conversa/conversa/data/chamada/ChamadaManager.kt
++++ b/app/src/main/java/com/conversa/conversa/data/chamada/ChamadaManager.kt
+@@ -186,6 +186,12 @@ class ChamadaManager(private val context: Context) {
+             Log.d(TAG, "   - audioRecord: ${if (audioRecord == null) "NULL" else "OK (estado=${audioRecord?.state})" }")
+             Log.d(TAG, "   - audioTrack: ${if (audioTrack == null) "NULL" else "OK (estado=${audioTrack?.state})" }")
+ 
++            // Configura AudioManager para usar earpiece por padrão
++            val audioManager = context.getSystemService(Context.AUDIO_SERVICE) as AudioManager
++            audioManager.mode = AudioManager.MODE_IN_COMMUNICATION
++            audioManager.isSpeakerphoneOn = false  // FALSE = earpiece (falante de ligação)
++            Log.d(TAG, "📱 AudioManager configurado: MODE_IN_COMMUNICATION, earpiece ativo")
++
+             // IMPORTANTE: Seta emChamada para true ANTES de iniciar áudio
+             Log.d(TAG, "[$instanceId] Setando emChamada = true")
+             emChamada = true
+@@ -316,13 +322,25 @@ class ChamadaManager(private val context: Context) {
+ 
+             // Cria AudioTrack com buffer maior e consistente para reduzir underruns
+             val trackBufferSize = maxOf(minBufferSizeTrack, BUFFER_SIZE * 6)
++
++            // Configuração para usar earpiece (alto-falante de ligação) por padrão
++            val audioAttributes = AudioAttributes.Builder()
++                .setUsage(AudioAttributes.USAGE_VOICE_COMMUNICATION)
++                .setContentType(AudioAttributes.CONTENT_TYPE_SPEECH)
++                .build()
++
++            val audioFormat = AudioFormat.Builder()
++                .setSampleRate(SAMPLE_RATE)
++                .setEncoding(AUDIO_FORMAT)
++                .setChannelMask(CHANNEL_OUT)
++                .build()
++
+             audioTrack = AudioTrack(
+-                AudioManager.STREAM_VOICE_CALL,
+-                SAMPLE_RATE,
+-                CHANNEL_OUT,
+-                AUDIO_FORMAT,
++                audioAttributes,
++                audioFormat,
+                 trackBufferSize,
+-                AudioTrack.MODE_STREAM
++                AudioTrack.MODE_STREAM,
++                AudioManager.AUDIO_SESSION_ID_GENERATE
+             )
+ 
+             // Verifica estado do AudioTrack
+@@ -802,21 +820,66 @@ class ChamadaManager(private val context: Context) {
+         capturaPausada = true
+         Log.d(TAG, "Captura pausada")
+     }
+-    
++
+     fun retormarCaptura() {
+         capturaPausada = false
+         Log.d(TAG, "Captura retomada")
+     }
+-    
++
+     fun pausarReproducao() {
+         reproducaoPausada = true
+         Log.d(TAG, "Reprodução pausada")
+     }
+-    
++
+     fun retormarReproducao() {
+         reproducaoPausada = false
+         Log.d(TAG, "Reprodução retomada")
+     }
++
++    /**
++     * Muta/desmuta o microfone
++     */
++    fun toggleMuteMicrofone(muted: Boolean) {
++        if (muted) {
++            pausarCaptura()
++            Log.d(TAG, "🔇 Microfone MUTADO")
++        } else {
++            retormarCaptura()
++            Log.d(TAG, "🔊 Microfone ATIVO")
++        }
++    }
++
++    /**
++     * Muta/desmuta o áudio (reprodução)
++     */
++    fun toggleMuteAudio(muted: Boolean) {
++        if (muted) {
++            pausarReproducao()
++            Log.d(TAG, "🔇 Áudio MUTADO")
++        } else {
++            retormarReproducao()
++            Log.d(TAG, "🔊 Áudio ATIVO")
++        }
++    }
++
++    /**
++     * Alterna entre earpiece (falante de ligação) e speakerphone (alto-falante)
++     */
++    fun toggleSpeaker(speakerOn: Boolean) {
++        try {
++            val audioManager = context.getSystemService(Context.AUDIO_SERVICE) as AudioManager
++            audioManager.mode = AudioManager.MODE_IN_COMMUNICATION
++            audioManager.isSpeakerphoneOn = speakerOn
++
++            if (speakerOn) {
++                Log.d(TAG, "📢 Alto-falante ATIVADO")
++            } else {
++                Log.d(TAG, "📱 Earpiece ATIVADO (falante de ligação)")
++            }
++        } catch (e: Exception) {
++            Log.e(TAG, "Erro ao alternar speaker", e)
++        }
++    }
+     
+     /**
+      * Atualiza a lista de participantes mutados localmente
+diff --git a/app/src/main/java/com/conversa/conversa/data/repository/ChamadaRepository.kt b/app/src/main/java/com/conversa/conversa/data/repository/ChamadaRepository.kt
+index 9335a11..13625fa 100644
+--- a/app/src/main/java/com/conversa/conversa/data/repository/ChamadaRepository.kt
++++ b/app/src/main/java/com/conversa/conversa/data/repository/ChamadaRepository.kt
+@@ -640,12 +640,33 @@ class ChamadaRepository(
+     fun pausarCaptura() {
+         chamadaManager.pausarCaptura()
+     }
+-    
++
+     fun retormarCaptura() {
+         chamadaManager.retormarCaptura()
+     }
+-    
++
+     fun atualizarParticipantesMutados(mutados: Set<Int>) {
+         chamadaManager.atualizarParticipantesMutados(mutados)
+     }
++
++    /**
++     * Muta/desmuta o microfone
++     */
++    fun toggleMuteMicrofone(muted: Boolean) {
++        chamadaManager.toggleMuteMicrofone(muted)
++    }
++
++    /**
++     * Muta/desmuta o áudio (reprodução)
++     */
++    fun toggleMuteAudio(muted: Boolean) {
++        chamadaManager.toggleMuteAudio(muted)
++    }
++
++    /**
++     * Alterna entre earpiece e speakerphone
++     */
++    fun toggleSpeaker(speakerOn: Boolean) {
++        chamadaManager.toggleSpeaker(speakerOn)
++    }
+ }
+diff --git a/app/src/main/java/com/conversa/conversa/ui/chamada/ChamadaActivity.kt b/app/src/main/java/com/conversa/conversa/ui/chamada/ChamadaActivity.kt
+index 94c930b..9593638 100644
+--- a/app/src/main/java/com/conversa/conversa/ui/chamada/ChamadaActivity.kt
++++ b/app/src/main/java/com/conversa/conversa/ui/chamada/ChamadaActivity.kt
+@@ -349,9 +349,9 @@ class ChamadaActivity : AppCompatActivity(),
+ 
+     private fun setupAudio() {
+         isMuted = false
+-        isSpeakerOn = true
++        isSpeakerOn = false
+         audioManager.mode = AudioManager.MODE_IN_COMMUNICATION
+-        audioManager.isSpeakerphoneOn = true
++        audioManager.isSpeakerphoneOn = false
+     }
+ 
+     private fun observarFlows() {
+@@ -572,13 +572,11 @@ class ChamadaActivity : AppCompatActivity(),
+         isMuted = !isMuted
+ 
+         if (::repository.isInitialized) {
+-            if (isMuted) {
+-                repository.pausarCaptura()
+-            } else {
+-                repository.retormarCaptura()
+-            }
++            repository.toggleMuteMicrofone(isMuted)
+         }
+ 
++        atualizarBotoes()
++
+         Toast.makeText(
+             this,
+             if (isMuted) "Microfone desligado" else "Microfone ligado",
+@@ -589,12 +587,15 @@ class ChamadaActivity : AppCompatActivity(),
+     override fun onToggleSpeaker() {
+         isSpeakerOn = !isSpeakerOn
+ 
+-        audioManager.mode = AudioManager.MODE_IN_COMMUNICATION
+-        audioManager.isSpeakerphoneOn = isSpeakerOn
++        if (::repository.isInitialized) {
++            repository.toggleSpeaker(isSpeakerOn)
++        }
++
++        atualizarBotoes()
+ 
+         Toast.makeText(
+             this,
+-            if (isSpeakerOn) "Alto-falante ligado" else "Alto-falante desligado",
++            if (isSpeakerOn) "Alto-falante ligado" else "Earpiece ligado",
+             Toast.LENGTH_SHORT
+         ).show()
+     }
+diff --git a/prompt-tela-chamada-recebida.md b/prompt-tela-chamada-recebida.md
+new file mode 100644
+index 0000000..65fe377
+--- /dev/null
++++ b/prompt-tela-chamada-recebida.md
+@@ -0,0 +1,103 @@
++# Prompt: Tela de Recebimento de Chamadas em Kotlin (Jetpack Compose)
++
++Crie uma tela de recebimento de chamadas em **Kotlin com Jetpack Compose** com as seguintes especificações:
++
++---
++
++## Estrutura da Tela
++
++Layout vertical centralizado com fundo gradiente escuro (slate-900 → slate-800 → slate-900).
++
++### 1. Seção Superior - Informações do Chamador
++
++- **Avatar**: Círculo de 112dp com gradiente violeta→fúcsia, contendo um emoji ou imagem
++  - Indicador de status online: pequeno círculo verde (24dp) posicionado no canto inferior direito, com borda e animação de pulse
++  - Animação de flutuação suave (sobe e desce 5dp) em loop infinito
++- **Nome**: Texto branco, 24sp, semi-bold, abaixo do avatar
++- **Descrição**: Texto cinza claro, 18sp, abaixo do nome (ex: "Chamada em Grupo")
++- **Indicador de chamada**: Pequeno círculo verde pulsante + texto "Chamando..."
++
++### 2. Seção Inferior - Botões de Ação
++
++Dois botões circulares lado a lado com espaçamento de 80dp entre eles:
++
++#### Botão Recusar (Esquerda)
++- Círculo de 80dp com gradiente vermelho (red-500 → red-600)
++- Ícone de telefone branco rotacionado 135°
++- Sombra vermelha
++- Label "Recusar" abaixo
++
++#### Botão Atender (Direita)
++- Círculo de 80dp com gradiente verde (green-500 → green-600)
++- Ícone de telefone branco
++- Sombra verde
++- Label "Atender" abaixo
++
++---
++
++## Efeito de Ondas Animadas (IMPORTANTE)
++
++Cada botão deve ter **4 ondas concêntricas** animadas nas bordas:
++
++- As ondas são círculos com apenas borda (sem preenchimento)
++- Animação: escala de 1.0 → 2.5 enquanto opacidade vai de 0.6 → 0.0
++- Duração: 2 segundos, loop infinito
++- Cada onda tem um delay diferente: 0s, 0.5s, 1.0s, 1.5s
++- Cor das ondas: mesma cor do botão (vermelho ou verde) com transparência
++
++---
++
++## Interação de Deslizar (Gesture)
++
++Implementar **drag gesture** horizontal em ambos os botões:
++
++### Comportamento:
++1. Ao arrastar o botão (qualquer direção, esquerda ou direita), ele deve **crescer mantendo o centro fixo**
++2. O crescimento é proporcional à distância arrastada
++3. Threshold para ação: **150dp** de distância
++4. Ao atingir o threshold:
++   - Botão Recusar → executa ação de recusar (qualquer direção)
++   - Botão Atender → executa ação de atender (qualquer direção)
++5. O botão oposto deve ficar com opacidade reduzida (0.3) durante o arraste
++6. Ao soltar antes do threshold, o botão volta ao tamanho original com animação suave
++
++### Escala do botão durante arraste:
++```
++scale = 1.0 + (distância / threshold) * 0.8
++```
++Ou seja, o botão pode crescer até 1.8x seu tamanho original.
++
++---
++
++## Telas de Estado
++
++### Estado: Chamada Aceita
++- Ícone 📞 grande verde
++- Texto "Conectando..."
++- Botão "Reiniciar Demo"
++
++### Estado: Chamada Recusada
++- Ícone 📵 grande vermelho
++- Texto "Chamada Recusada"
++- Botão "Reiniciar Demo"
++
++---
++
++## Requisitos Técnicos
++
++- Usar `Modifier.pointerInput` para gestos de drag
++- Usar `Animatable` ou `InfiniteTransition` para as ondas
++- Usar `animateFloatAsState` para transições suaves de escala/opacidade
++- Garantir que funcione bem em diferentes tamanhos de tela
++- Cores e dimensões podem usar Material Theme ou valores hardcoded
++
++---
++
++## Cores de Referência
++
++- Fundo: #0f172a → #1e293b → #0f172a
++- Violeta avatar: #8b5cf6 → #d946ef
++- Verde: #22c55e → #16a34a
++- Vermelho: #ef4444 → #dc2626
++- Texto principal: #ffffff
++- Texto secundário: #94a3b8

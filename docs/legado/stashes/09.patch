@@ -1,0 +1,751 @@
+diff --git a/app/src/main/java/com/conversa/conversa/FirstFragment.kt b/app/src/main/java/com/conversa/conversa/FirstFragment.kt
+index 3a26f18..54e8881 100644
+--- a/app/src/main/java/com/conversa/conversa/FirstFragment.kt
++++ b/app/src/main/java/com/conversa/conversa/FirstFragment.kt
+@@ -33,7 +33,7 @@ class FirstFragment : Fragment() {
+         super.onViewCreated(view, savedInstanceState)
+ 
+         binding.buttonFirst.setOnClickListener {
+-            findNavController().navigate(R.id.action_FirstFragment_to_SecondFragment)
++//            findNavController().navigate(R.id.action_FirstFragment_to_SecondFragment)
+         }
+     }
+ 
+diff --git a/app/src/main/java/com/conversa/conversa/LoginActivity.kt b/app/src/main/java/com/conversa/conversa/LoginActivity.kt
+index 4d2dfb5..1e15af7 100644
+--- a/app/src/main/java/com/conversa/conversa/LoginActivity.kt
++++ b/app/src/main/java/com/conversa/conversa/LoginActivity.kt
+@@ -121,12 +121,12 @@ class LoginActivity : AppCompatActivity() {
+                         userPreferences.clearLoginCredentials()
+                     }
+                     
+-                    // Mostra mensagem de sucesso
+-                    Toast.makeText(
+-                        this@LoginActivity,
+-                        "Login realizado com sucesso!\nBem-vindo, ${loginResponse.nome}",
+-                        Toast.LENGTH_LONG
+-                    ).show()
++//                    // Mostra mensagem de sucesso
++//                    Toast.makeText(
++//                        this@LoginActivity,
++//                        "Login realizado com sucesso!\nBem-vindo, ${loginResponse.nome}",
++//                        Toast.LENGTH_LONG
++//                    ).show()
+                     
+                     // Aguarda 1 segundo e vai para MainActivity
+                     kotlinx.coroutines.delay(1000)
+diff --git a/app/src/main/java/com/conversa/conversa/MainActivity.kt b/app/src/main/java/com/conversa/conversa/MainActivity.kt
+index 0cd498c..52368f5 100644
+--- a/app/src/main/java/com/conversa/conversa/MainActivity.kt
++++ b/app/src/main/java/com/conversa/conversa/MainActivity.kt
+@@ -110,12 +110,6 @@ class MainActivity : AppCompatActivity() {
+                     mostrarVazio()
+                 } else {
+                     mostrarConversas(conversas)
+-
+-                    Toast.makeText(
+-                        this@MainActivity,
+-                        conversas.count().toString(),
+-                        Toast.LENGTH_LONG
+-                    ).show()
+                 }
+             } else {
+                 val errorMessage = when (response.code()) {
+diff --git a/app/src/main/java/com/conversa/conversa/SecondFragment.kt b/app/src/main/java/com/conversa/conversa/SecondFragment.kt
+index c603ed2..ffa5fb5 100644
+--- a/app/src/main/java/com/conversa/conversa/SecondFragment.kt
++++ b/app/src/main/java/com/conversa/conversa/SecondFragment.kt
+@@ -33,7 +33,7 @@ class SecondFragment : Fragment() {
+         super.onViewCreated(view, savedInstanceState)
+ 
+         binding.buttonSecond.setOnClickListener {
+-            findNavController().navigate(R.id.action_SecondFragment_to_FirstFragment)
++//            findNavController().navigate(R.id.action_SecondFragment_to_FirstFragment)
+         }
+     }
+ 
+diff --git a/app/src/main/java/com/conversa/conversa/adapter/ConversasAdapter.kt b/app/src/main/java/com/conversa/conversa/adapter/ConversasAdapter.kt
+index 92cbe87..0f6c523 100644
+--- a/app/src/main/java/com/conversa/conversa/adapter/ConversasAdapter.kt
++++ b/app/src/main/java/com/conversa/conversa/adapter/ConversasAdapter.kt
+@@ -8,6 +8,7 @@ import androidx.recyclerview.widget.RecyclerView
+ import com.conversa.conversa.data.model.Conversa
+ import com.conversa.conversa.databinding.ItemConversaBinding
+ import java.text.SimpleDateFormat
++import java.time.format.DateTimeFormatter
+ import java.util.Date
+ import java.util.Locale
+ 
+@@ -41,32 +42,14 @@ class ConversasAdapter(
+                 if (conversa.ultima_mensagem != null) {
+                     val mensagem = conversa.ultima_mensagem
+                     
+-//                    // Texto da mensagem
+-//                    tvUltimaMensagem.text = if (conversa.tipo == "grupo" && mensagem.remetente != null) {
+-//                        "${mensagem.remetente.nome}: ${mensagem.texto ?: ""}"
+-//                    } else {
+-//                        mensagem.texto ?: "Sem mensagens"
+-//                    }
+-//
+-//                    // Hora da mensagem
+-//                    tvHoraMensagem.text = formatarHora(mensagem.enviado_em)
++                    // Texto da mensagem
++                    tvUltimaMensagem.text = conversa.ultima_mensagem_texto;
++                    tvHoraMensagem.text = conversa.ultima_mensagem.format(DateTimeFormatter.ofPattern("HH:mm"))
+                 } else {
+-                    tvUltimaMensagem.text = "Sem mensagens"
++                    tvUltimaMensagem.text = ""
+                     tvHoraMensagem.text = ""
+                 }
+-                
+-//                // Badge de mensagens não lidas
+-//                if (conversa.nao_lidas > 0) {
+-//                    tvBadgeNaoLidas.text = if (conversa.nao_lidas > 99) {
+-//                        "99+"
+-//                    } else {
+-//                        conversa.nao_lidas.toString()
+-//                    }
+-//                    tvBadgeNaoLidas.visibility = android.view.View.VISIBLE
+-//                } else {
+-//                    tvBadgeNaoLidas.visibility = android.view.View.GONE
+-//                }
+-                
++
+                 // Ícone baseado no tipo
+                 ivIconeTipo.setImageResource(
+                     if (conversa.tipo == 1) {
+diff --git a/app/src/main/java/com/conversa/conversa/data/api/RetrofitClient.kt b/app/src/main/java/com/conversa/conversa/data/api/RetrofitClient.kt
+index 7e3bc6b..0e13dcd 100644
+--- a/app/src/main/java/com/conversa/conversa/data/api/RetrofitClient.kt
++++ b/app/src/main/java/com/conversa/conversa/data/api/RetrofitClient.kt
+@@ -1,11 +1,14 @@
+ package com.conversa.conversa.data.api
+ 
++import UtcToLocalDateTimeDeserializer
+ import com.conversa.conversa.BuildConfig
++import com.google.gson.GsonBuilder
+ import okhttp3.OkHttpClient
+ import okhttp3.logging.HttpLoggingInterceptor
+ import retrofit2.Retrofit
+ import retrofit2.converter.gson.GsonConverterFactory
+ import java.util.concurrent.TimeUnit
++import java.time.LocalDateTime
+ 
+ object RetrofitClient {
+     
+@@ -25,10 +28,13 @@ object RetrofitClient {
+     
+     private fun getRetrofit(): Retrofit {
+         if (retrofit == null) {
++            val gson = GsonBuilder()
++                .registerTypeAdapter(LocalDateTime::class.java, UtcToLocalDateTimeDeserializer())
++                .create()
+             retrofit = Retrofit.Builder()
+                 .baseUrl(currentBaseUrl)
+                 .client(okHttpClient)
+-                .addConverterFactory(GsonConverterFactory.create())
++                .addConverterFactory(GsonConverterFactory.create(gson))
+                 .build()
+         }
+         return retrofit!!
+diff --git a/app/src/main/java/com/conversa/conversa/data/api/UtcToLocalDateTimeDeserializer.kt b/app/src/main/java/com/conversa/conversa/data/api/UtcToLocalDateTimeDeserializer.kt
+new file mode 100644
+index 0000000..9366f46
+--- /dev/null
++++ b/app/src/main/java/com/conversa/conversa/data/api/UtcToLocalDateTimeDeserializer.kt
+@@ -0,0 +1,31 @@
++import com.google.gson.JsonDeserializationContext
++import com.google.gson.JsonDeserializer
++import com.google.gson.JsonElement
++import java.lang.reflect.Type
++import java.time.LocalDateTime
++import java.time.ZoneId
++import java.time.ZonedDateTime
++import java.time.format.DateTimeFormatter
++
++class UtcToLocalDateTimeDeserializer : JsonDeserializer<LocalDateTime> {
++    override fun deserialize(
++        json: JsonElement?,
++        typeOfT: Type?,
++        context: JsonDeserializationContext?
++    ): LocalDateTime? {
++        if (json == null || json.isJsonNull) return null
++
++        val dateString = json.asString
++
++        // Parse a data como UTC
++        val utcDateTime = ZonedDateTime.parse(
++            dateString,
++            DateTimeFormatter.ISO_DATE_TIME.withZone(ZoneId.of("UTC"))
++        )
++
++        // Converte para o timezone local
++        return utcDateTime
++            .withZoneSameInstant(ZoneId.systemDefault())
++            .toLocalDateTime()
++    }
++}
+\ No newline at end of file
+diff --git a/app/src/main/java/com/conversa/conversa/data/model/Conversa.kt b/app/src/main/java/com/conversa/conversa/data/model/Conversa.kt
+index 4c29804..dbd3563 100644
+--- a/app/src/main/java/com/conversa/conversa/data/model/Conversa.kt
++++ b/app/src/main/java/com/conversa/conversa/data/model/Conversa.kt
+@@ -1,26 +1,20 @@
+ package com.conversa.conversa.data.model
+ 
++import java.time.LocalDateTime
++
+ data class Conversa(
+     val id: Int,
+     val descricao: String,
+     val tipo: Int, // 1 = individual, 2 = grupo
+-    val inserida: String?, // Pode ser null
++    val inserida: LocalDateTime?, // Pode ser null
+     val nome: String?, // ⚠️ Pode ser null (grupos sem nome específico)
+     val destinatario_id: Int?, // ⚠️ Pode ser null em grupos
+     val mensagem_id: Int, // Sempre retorna (coalesce garante 0)
+-    val ultima_mensagem: String?, // ⚠️ Timestamp, pode ser null
++    val ultima_mensagem: LocalDateTime?, // ⚠️ Timestamp, pode ser null
+     val ultima_mensagem_texto: String?, // ⚠️ Pode ser null
+     val mensagens_sem_visualizar: Int // Sempre retorna (cast garante 0)
+ )
+ 
+-data class UltimaMensagem(
+-    val id: Int,
+-    val texto: String?,
+-    val remetente: Remetente?,
+-    val enviado_em: String?,
+-    val lida: Boolean
+-)
+-
+ data class Remetente(
+     val id: Int,
+     val nome: String
+diff --git a/app/src/main/java/com/conversa/conversa/data/model/Mensagem.kt b/app/src/main/java/com/conversa/conversa/data/model/Mensagem.kt
+index 0b39aa7..c30797c 100644
+--- a/app/src/main/java/com/conversa/conversa/data/model/Mensagem.kt
++++ b/app/src/main/java/com/conversa/conversa/data/model/Mensagem.kt
+@@ -1,6 +1,7 @@
+ package com.conversa.conversa.data.model
+ 
+ import com.google.gson.annotations.SerializedName
++import java.time.LocalDateTime
+ 
+ /**
+  * Representa uma mensagem no chat
+@@ -12,8 +13,8 @@ data class Mensagem(
+     @SerializedName("remetente_id")
+     val usuarioId: Int,
+     val remetente: String,
+-    val inserida: String,
+-    val alterada: String?,
++    val inserida: LocalDateTime,
++    val alterada: LocalDateTime?,
+     val recebida: Boolean,
+     val visualizada: Boolean,
+     val reproduzida: Boolean,
+diff --git a/app/src/main/java/com/conversa/conversa/ui/chat/ChatActivity.kt b/app/src/main/java/com/conversa/conversa/ui/chat/ChatActivity.kt
+index 3291fe2..b4a82ef 100644
+--- a/app/src/main/java/com/conversa/conversa/ui/chat/ChatActivity.kt
++++ b/app/src/main/java/com/conversa/conversa/ui/chat/ChatActivity.kt
+@@ -63,6 +63,9 @@ class ChatActivity : AppCompatActivity() {
+             title = conversaNome
+             setDisplayHomeAsUpEnabled(true)
+             setDisplayShowHomeEnabled(true)
++            setDisplayShowTitleEnabled(false) // Remove título padrão
++            binding.tvNomeUsuario.text = conversaNome // ou o objeto que você usa
++            binding.tvStatusUsuario.text = "online" // ou destinatario.status
+         }
+     }
+ 
+diff --git a/app/src/main/java/com/conversa/conversa/ui/chat/MensagensAdapter.kt b/app/src/main/java/com/conversa/conversa/ui/chat/MensagensAdapter.kt
+index 76217c4..1b309a4 100644
+--- a/app/src/main/java/com/conversa/conversa/ui/chat/MensagensAdapter.kt
++++ b/app/src/main/java/com/conversa/conversa/ui/chat/MensagensAdapter.kt
+@@ -12,6 +12,8 @@ import com.conversa.conversa.data.model.Mensagem
+ import com.conversa.conversa.databinding.ItemMensagemRecebidaBinding
+ import com.conversa.conversa.databinding.ItemMensagemEnviadaBinding
+ import java.text.SimpleDateFormat
++import java.time.LocalDateTime
++import java.time.format.DateTimeFormatter
+ import java.util.Date
+ import java.util.Locale
+ 
+@@ -122,15 +124,8 @@ class MensagensAdapter(
+     /**
+      * Formata a data/hora para exibição (ex: "14:30")
+      */
+-    private fun formatarHora(dataHora: String): String {
+-        return try {
+-            val inputFormat = SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss", Locale.getDefault())
+-            val outputFormat = SimpleDateFormat("HH:mm", Locale.getDefault())
+-            val date = inputFormat.parse(dataHora)
+-            date?.let { outputFormat.format(it) } ?: ""
+-        } catch (e: Exception) {
+-            ""
+-        }
++    private fun formatarHora(dataHora: LocalDateTime?): String {
++        return dataHora?.format(DateTimeFormatter.ofPattern("HH:mm")) ?: ""
+     }
+ }
+ 
+diff --git a/app/src/main/res/drawable/badge_circle.xml b/app/src/main/res/drawable/badge_circle.xml
+index eddbfe6..fbd5234 100644
+--- a/app/src/main/res/drawable/badge_circle.xml
++++ b/app/src/main/res/drawable/badge_circle.xml
+@@ -1,7 +1,7 @@
+ <?xml version="1.0" encoding="utf-8"?>
+ <shape xmlns:android="http://schemas.android.com/apk/res/android"
+     android:shape="oval">
+-    <solid android:color="@color/design_default_color_primary" />
++    <solid android:color="@color/corPrimaria" />
+     <size
+         android:width="24dp"
+         android:height="24dp" />
+diff --git a/app/src/main/res/drawable/bg_input_mensagem.xml b/app/src/main/res/drawable/bg_input_mensagem.xml
+index bf25de7..be0c582 100644
+--- a/app/src/main/res/drawable/bg_input_mensagem.xml
++++ b/app/src/main/res/drawable/bg_input_mensagem.xml
+@@ -1,7 +1,7 @@
+ <?xml version="1.0" encoding="utf-8"?>
+ <shape xmlns:android="http://schemas.android.com/apk/res/android"
+     android:shape="rectangle">
+-    <solid android:color="#F0F0F0" />
++    <solid android:color="@color/corFundoEditor" />
+     <corners android:radius="24dp" />
+     <stroke
+         android:width="1dp"
+diff --git a/app/src/main/res/drawable/bg_mensagem_enviada.xml b/app/src/main/res/drawable/bg_mensagem_enviada.xml
+index 6e09d14..b6e9993 100644
+--- a/app/src/main/res/drawable/bg_mensagem_enviada.xml
++++ b/app/src/main/res/drawable/bg_mensagem_enviada.xml
+@@ -1,7 +1,7 @@
+ <?xml version="1.0" encoding="utf-8"?>
+ <shape xmlns:android="http://schemas.android.com/apk/res/android"
+     android:shape="rectangle">
+-    <solid android:color="#DCF8C6" />
++    <solid android:color="@color/corMensagemEnviada" />
+     <corners 
+         android:topLeftRadius="16dp"
+         android:topRightRadius="16dp"
+diff --git a/app/src/main/res/drawable/bg_mensagem_recebida.xml b/app/src/main/res/drawable/bg_mensagem_recebida.xml
+index d034023..d03d31a 100644
+--- a/app/src/main/res/drawable/bg_mensagem_recebida.xml
++++ b/app/src/main/res/drawable/bg_mensagem_recebida.xml
+@@ -1,7 +1,7 @@
+ <?xml version="1.0" encoding="utf-8"?>
+ <shape xmlns:android="http://schemas.android.com/apk/res/android"
+     android:shape="rectangle">
+-    <solid android:color="#FFFFFF" />
++    <solid android:color="@color/corMensagemRecebida" />
+     <corners 
+         android:topLeftRadius="16dp"
+         android:topRightRadius="16dp"
+diff --git a/app/src/main/res/drawable/ic_check.xml b/app/src/main/res/drawable/ic_check.xml
+index b960dff..fb8fb9b 100644
+--- a/app/src/main/res/drawable/ic_check.xml
++++ b/app/src/main/res/drawable/ic_check.xml
+@@ -4,6 +4,6 @@
+     android:viewportWidth="24"
+     android:viewportHeight="24">
+     <path
+-        android:fillColor="#FFFFFF"
++        android:fillColor="@android:color/darker_gray"
+         android:pathData="M9,16.17L4.83,12l-1.42,1.41L9,19 21,7l-1.41,-1.41z"/>
+ </vector>
+diff --git a/app/src/main/res/drawable/ic_double_check.xml b/app/src/main/res/drawable/ic_double_check.xml
+index 027a4e7..3314bb1 100644
+--- a/app/src/main/res/drawable/ic_double_check.xml
++++ b/app/src/main/res/drawable/ic_double_check.xml
+@@ -4,6 +4,6 @@
+     android:viewportWidth="24"
+     android:viewportHeight="24">
+     <path
+-        android:fillColor="#FFFFFF"
++        android:fillColor="@android:color/darker_gray"
+         android:pathData="M18,7l-1.41,-1.41 -6.34,6.34 1.41,1.41L18,7zM22.24,5.59L11.66,16.17 7.48,12l-1.41,1.41L11.66,19l12,-12 -1.42,-1.41zM0.41,13.41L6,19l1.41,-1.41L1.83,12 0.41,13.41z"/>
+ </vector>
+diff --git a/app/src/main/res/drawable/ic_double_check_blue.xml b/app/src/main/res/drawable/ic_double_check_blue.xml
+index e6abb55..9689a4a 100644
+--- a/app/src/main/res/drawable/ic_double_check_blue.xml
++++ b/app/src/main/res/drawable/ic_double_check_blue.xml
+@@ -4,6 +4,6 @@
+     android:viewportWidth="24"
+     android:viewportHeight="24">
+     <path
+-        android:fillColor="#4FC3F7"
++        android:fillColor="@color/corPrimaria"
+         android:pathData="M18,7l-1.41,-1.41 -6.34,6.34 1.41,1.41L18,7zM22.24,5.59L11.66,16.17 7.48,12l-1.41,1.41L11.66,19l12,-12 -1.42,-1.41zM0.41,13.41L6,19l1.41,-1.41L1.83,12 0.41,13.41z"/>
+ </vector>
+diff --git a/app/src/main/res/drawable/ic_more_vert.xml b/app/src/main/res/drawable/ic_more_vert.xml
+new file mode 100644
+index 0000000..857d475
+--- /dev/null
++++ b/app/src/main/res/drawable/ic_more_vert.xml
+@@ -0,0 +1,9 @@
++<vector xmlns:android="http://schemas.android.com/apk/res/android"
++    android:width="24dp"
++    android:height="24dp"
++    android:viewportWidth="24"
++    android:viewportHeight="24">
++    <path
++        android:fillColor="#FFFFFF"
++        android:pathData="M12,8c1.1,0 2,-0.9 2,-2s-0.9,-2 -2,-2 -2,0.9 -2,2 0.9,2 2,2zM12,10c-1.1,0 -2,0.9 -2,2s0.9,2 2,2 2,-0.9 2,-2 -0.9,-2 -2,-2zM12,16c-1.1,0 -2,0.9 -2,2s0.9,2 2,2 2,-0.9 2,-2 -0.9,-2 -2,-2z"/>
++</vector>
+\ No newline at end of file
+diff --git a/app/src/main/res/drawable/ic_person.xml b/app/src/main/res/drawable/ic_person.xml
+new file mode 100644
+index 0000000..a814bac
+--- /dev/null
++++ b/app/src/main/res/drawable/ic_person.xml
+@@ -0,0 +1,9 @@
++<vector xmlns:android="http://schemas.android.com/apk/res/android"
++    android:width="32dp"
++    android:height="32dp"
++    android:viewportWidth="24.0"
++    android:viewportHeight="24.0">
++    <path
++        android:fillColor="#FFFFFFFF"
++        android:pathData="M12,12c2.21,0 4,-1.79 4,-4s-1.79,-4 -4,-4 -4,1.79 -4,4 1.79,4 4,4zM12,14c-2.67,0 -8,1.34 -8,4v2h16v-2c0,-2.66 -5.33,-4 -8,-4z"/>
++</vector>
+\ No newline at end of file
+diff --git a/app/src/main/res/drawable/logo_conversa.png b/app/src/main/res/drawable/logo_conversa.png
+new file mode 100644
+index 0000000..c044eba
+Binary files /dev/null and b/app/src/main/res/drawable/logo_conversa.png differ
+diff --git a/app/src/main/res/drawable/logo_conversa_sem_fundo.png b/app/src/main/res/drawable/logo_conversa_sem_fundo.png
+new file mode 100644
+index 0000000..ba8414c
+Binary files /dev/null and b/app/src/main/res/drawable/logo_conversa_sem_fundo.png differ
+diff --git a/app/src/main/res/layout/activity_chat.xml b/app/src/main/res/layout/activity_chat.xml
+index 9443212..89fee4b 100644
+--- a/app/src/main/res/layout/activity_chat.xml
++++ b/app/src/main/res/layout/activity_chat.xml
+@@ -1,5 +1,5 @@
+ <?xml version="1.0" encoding="utf-8"?>
+-<androidx.coordinatorlayout.widget.CoordinatorLayout 
++<androidx.coordinatorlayout.widget.CoordinatorLayout
+     xmlns:android="http://schemas.android.com/apk/res/android"
+     xmlns:app="http://schemas.android.com/apk/res-auto"
+     xmlns:tools="http://schemas.android.com/tools"
+@@ -15,10 +15,76 @@
+             android:id="@+id/toolbar"
+             android:layout_width="match_parent"
+             android:layout_height="?attr/actionBarSize"
+-            android:background="?attr/colorPrimary"
++            android:background="@color/corPrimaria"
+             android:elevation="4dp"
+-            app:titleTextColor="@android:color/white"
+-            app:navigationIcon="?attr/homeAsUpIndicator" />
++            app:navigationIcon="?attr/homeAsUpIndicator">
++
++            <!-- Layout customizado da toolbar -->
++            <LinearLayout
++                android:layout_width="match_parent"
++                android:layout_height="match_parent"
++                android:orientation="horizontal"
++                android:gravity="center_vertical"
++                android:paddingEnd="8dp"
++                android:paddingRight="8dp">
++
++                <!-- Foto do usuário -->
++                <com.google.android.material.imageview.ShapeableImageView
++                    android:id="@+id/ivFotoUsuario"
++                    android:layout_width="40dp"
++                    android:layout_height="40dp"
++                    android:scaleType="centerCrop"
++                    android:src="@drawable/ic_person"
++                    app:shapeAppearanceOverlay="@style/CircularImageView"
++                    app:strokeColor="@android:color/white"
++                    app:strokeWidth="1dp" />
++
++                <!-- Nome e status -->
++                <LinearLayout
++                    android:layout_width="0dp"
++                    android:layout_height="wrap_content"
++                    android:layout_weight="1"
++                    android:layout_marginStart="12dp"
++                    android:layout_marginLeft="12dp"
++                    android:orientation="vertical">
++
++                    <TextView
++                        android:id="@+id/tvNomeUsuario"
++                        android:layout_width="wrap_content"
++                        android:layout_height="wrap_content"
++                        android:textColor="@android:color/white"
++                        android:textSize="16sp"
++                        android:textStyle="bold"
++                        android:maxLines="1"
++                        android:ellipsize="end"
++                        tools:text="Nome do Usuário" />
++
++                    <TextView
++                        android:id="@+id/tvStatusUsuario"
++                        android:layout_width="wrap_content"
++                        android:layout_height="wrap_content"
++                        android:textColor="@android:color/white"
++                        android:textSize="12sp"
++                        android:alpha="0.8"
++                        android:maxLines="1"
++                        android:ellipsize="end"
++                        tools:text="online" />
++
++                </LinearLayout>
++
++                <!-- Botão de mais opções -->
++                <ImageButton
++                    android:id="@+id/btnMaisOpcoes"
++                    android:layout_width="40dp"
++                    android:layout_height="40dp"
++                    android:background="?attr/selectableItemBackgroundBorderless"
++                    android:contentDescription="Mais opções"
++                    android:src="@drawable/ic_more_vert"
++                    android:tint="@android:color/white" />
++
++            </LinearLayout>
++
++        </com.google.android.material.appbar.MaterialToolbar>
+ 
+     </com.google.android.material.appbar.AppBarLayout>
+ 
+@@ -57,7 +123,7 @@
+         <LinearLayout
+             android:layout_width="match_parent"
+             android:layout_height="wrap_content"
+-            android:background="?attr/colorSurface"
++            android:background="@color/corFundoEditor"
+             android:elevation="8dp"
+             android:orientation="horizontal"
+             android:padding="8dp">
+@@ -69,13 +135,13 @@
+                 android:layout_weight="1"
+                 android:background="@drawable/bg_input_mensagem"
+                 android:hint="Digite uma mensagem"
+-                android:imeOptions="actionSend"
++                android:imeOptions="actionNone"
+                 android:inputType="textCapSentences|textMultiLine"
+                 android:maxLines="4"
+                 android:padding="12dp"
+-                android:textSize="16sp"
+                 android:textColor="#000000"
+-                android:textColorHint="#999999" />
++                android:textColorHint="#999999"
++                android:textSize="16sp" />
+ 
+             <ImageButton
+                 android:id="@+id/btnEnviar"
+@@ -86,10 +152,10 @@
+                 android:background="?attr/selectableItemBackgroundBorderless"
+                 android:contentDescription="Enviar"
+                 android:src="@drawable/ic_send"
+-                android:tint="?attr/colorPrimary" />
++                android:tint="@color/corPrimaria" />
+ 
+         </LinearLayout>
+ 
+     </LinearLayout>
+ 
+-</androidx.coordinatorlayout.widget.CoordinatorLayout>
++</androidx.coordinatorlayout.widget.CoordinatorLayout>
+\ No newline at end of file
+diff --git a/app/src/main/res/layout/activity_login.xml b/app/src/main/res/layout/activity_login.xml
+index 3dea0ba..7e9612d 100644
+--- a/app/src/main/res/layout/activity_login.xml
++++ b/app/src/main/res/layout/activity_login.xml
+@@ -13,7 +13,7 @@
+         android:text="Login"
+         android:textSize="32sp"
+         android:textStyle="bold"
+-        android:textColor="@color/design_default_color_primary"
++        android:textColor="@color/corPrimaria"
+         android:layout_marginBottom="48dp"
+         app:layout_constraintBottom_toTopOf="@id/cardLogin"
+         app:layout_constraintEnd_toEndOf="parent"
+@@ -25,9 +25,10 @@
+         android:id="@+id/cardLogin"
+         android:layout_width="0dp"
+         android:layout_height="wrap_content"
+-        app:cardCornerRadius="16dp"
+-        app:cardElevation="8dp"
+         android:layout_marginTop="16dp"
++        app:cardBackgroundColor="@android:color/transparent"
++        app:cardCornerRadius="16dp"
++        app:cardElevation="0dp"
+         app:layout_constraintBottom_toBottomOf="parent"
+         app:layout_constraintEnd_toEndOf="parent"
+         app:layout_constraintStart_toStartOf="parent"
+@@ -45,10 +46,10 @@
+                 android:layout_height="wrap_content"
+                 android:hint="Usuário"
+                 app:boxBackgroundMode="outline"
+-                app:boxCornerRadiusTopStart="8dp"
+-                app:boxCornerRadiusTopEnd="8dp"
++                app:boxCornerRadiusBottomEnd="8dp"
+                 app:boxCornerRadiusBottomStart="8dp"
+-                app:boxCornerRadiusBottomEnd="8dp">
++                app:boxCornerRadiusTopEnd="8dp"
++                app:boxCornerRadiusTopStart="8dp">
+ 
+                 <com.google.android.material.textfield.TextInputEditText
+                     android:id="@+id/etLogin"
+@@ -66,10 +67,10 @@
+                 android:layout_marginTop="16dp"
+                 android:hint="Senha"
+                 app:boxBackgroundMode="outline"
+-                app:boxCornerRadiusTopStart="8dp"
+-                app:boxCornerRadiusTopEnd="8dp"
+-                app:boxCornerRadiusBottomStart="8dp"
+                 app:boxCornerRadiusBottomEnd="8dp"
++                app:boxCornerRadiusBottomStart="8dp"
++                app:boxCornerRadiusTopEnd="8dp"
++                app:boxCornerRadiusTopStart="8dp"
+                 app:endIconMode="password_toggle">
+ 
+                 <com.google.android.material.textfield.TextInputEditText
+@@ -116,7 +117,7 @@
+         android:layout_height="wrap_content"
+         android:layout_marginTop="16dp"
+         android:text="⚙️ Configurar Servidor"
+-        android:textColor="@color/design_default_color_primary"
++        android:textColor="@color/corPrimaria"
+         android:textSize="14sp"
+         android:textStyle="bold"
+         android:clickable="true"
+diff --git a/app/src/main/res/layout/activity_splash.xml b/app/src/main/res/layout/activity_splash.xml
+index 36f8758..700ce60 100644
+--- a/app/src/main/res/layout/activity_splash.xml
++++ b/app/src/main/res/layout/activity_splash.xml
+@@ -1,30 +1,20 @@
+ <?xml version="1.0" encoding="utf-8"?>
+ <androidx.constraintlayout.widget.ConstraintLayout xmlns:android="http://schemas.android.com/apk/res/android"
+     xmlns:app="http://schemas.android.com/apk/res-auto"
++    xmlns:tools="http://schemas.android.com/tools"
+     android:layout_width="match_parent"
+     android:layout_height="match_parent"
+     android:background="#FFFFFF">
+ 
+-    <TextView
+-        android:id="@+id/tvAppName"
++    <ImageView
++        android:id="@+id/imageView2"
+         android:layout_width="wrap_content"
+         android:layout_height="wrap_content"
+-        android:text="Conversa"
+-        android:textSize="48sp"
+-        android:textStyle="bold"
+-        android:textColor="@color/design_default_color_primary"
+         app:layout_constraintBottom_toBottomOf="parent"
+         app:layout_constraintEnd_toEndOf="parent"
+         app:layout_constraintStart_toStartOf="parent"
+-        app:layout_constraintTop_toTopOf="parent" />
+-
+-    <ProgressBar
+-        android:id="@+id/progressBar"
+-        android:layout_width="wrap_content"
+-        android:layout_height="wrap_content"
+-        android:layout_marginTop="32dp"
+-        app:layout_constraintEnd_toEndOf="parent"
+-        app:layout_constraintStart_toStartOf="parent"
+-        app:layout_constraintTop_toBottomOf="@id/tvAppName" />
++        app:layout_constraintTop_toTopOf="parent"
++        app:layout_constraintVertical_bias="0.499"
++        app:srcCompat="@drawable/logo_conversa_sem_fundo" />
+ 
+ </androidx.constraintlayout.widget.ConstraintLayout>
+diff --git a/app/src/main/res/layout/item_conversa.xml b/app/src/main/res/layout/item_conversa.xml
+index f9c8a7a..6a7ec5c 100644
+--- a/app/src/main/res/layout/item_conversa.xml
++++ b/app/src/main/res/layout/item_conversa.xml
+@@ -4,10 +4,12 @@
+     xmlns:tools="http://schemas.android.com/tools"
+     android:layout_width="match_parent"
+     android:layout_height="wrap_content"
+-    android:layout_marginHorizontal="8dp"
+-    android:layout_marginVertical="4dp"
+-    app:cardCornerRadius="12dp"
+-    app:cardElevation="2dp"
++    android:layout_marginHorizontal="0dp"
++    android:layout_marginVertical="0dp"
++    app:cardBackgroundColor="#00FFFFFF"
++    app:cardCornerRadius="0dp"
++    app:cardElevation="0dp"
++    app:cardForegroundColor="#00FFFFFF"
+     app:strokeWidth="0dp">
+ 
+     <androidx.constraintlayout.widget.ConstraintLayout
+@@ -20,10 +22,10 @@
+             android:id="@+id/ivIconeTipo"
+             android:layout_width="48dp"
+             android:layout_height="48dp"
+-            android:padding="8dp"
+             android:background="?attr/colorPrimary"
+-            android:tint="@android:color/white"
+             android:contentDescription="Ícone do tipo de conversa"
++            android:padding="8dp"
++            android:tint="@android:color/white"
+             app:layout_constraintStart_toStartOf="parent"
+             app:layout_constraintTop_toTopOf="parent"
+             tools:src="@android:drawable/ic_menu_myplaces" />
+@@ -61,8 +63,8 @@
+             android:id="@+id/tvUltimaMensagem"
+             android:layout_width="0dp"
+             android:layout_height="wrap_content"
+-            android:layout_marginTop="4dp"
+             android:layout_marginStart="12dp"
++            android:layout_marginTop="4dp"
+             android:layout_marginEnd="8dp"
+             android:ellipsize="end"
+             android:maxLines="2"
+diff --git a/app/src/main/res/layout/item_mensagem_enviada.xml b/app/src/main/res/layout/item_mensagem_enviada.xml
+index 0f3b532..263d74d 100644
+--- a/app/src/main/res/layout/item_mensagem_enviada.xml
++++ b/app/src/main/res/layout/item_mensagem_enviada.xml
+@@ -4,7 +4,8 @@
+     android:layout_width="match_parent"
+     android:layout_height="wrap_content"
+     android:gravity="end"
+-    android:padding="4dp">
++    android:padding="4dp"
++    android:visibility="visible">
+ 
+     <LinearLayout
+         android:layout_width="wrap_content"
+@@ -46,8 +47,7 @@
+                 android:layout_height="16dp"
+                 android:layout_marginStart="4dp"
+                 android:contentDescription="Status da mensagem"
+-                android:src="@drawable/ic_check"
+-                android:tint="@android:color/darker_gray" />
++                android:src="@drawable/ic_double_check_blue"/>
+ 
+         </LinearLayout>
+ 
+diff --git a/app/src/main/res/values/colors.xml b/app/src/main/res/values/colors.xml
+index c8524cd..f2a043b 100644
+--- a/app/src/main/res/values/colors.xml
++++ b/app/src/main/res/values/colors.xml
+@@ -2,4 +2,8 @@
+ <resources>
+     <color name="black">#FF000000</color>
+     <color name="white">#FFFFFFFF</color>
++    <color name="corPrimaria">#007DFF</color>
++    <color name="corFundoEditor">#E0E0E0</color>
++    <color name="corMensagemRecebida">#EDEDED</color>
++    <color name="corMensagemEnviada">#CFE7FF</color>
+ </resources>
+\ No newline at end of file
+diff --git a/app/src/main/res/values/styles.xml b/app/src/main/res/values/styles.xml
+new file mode 100644
+index 0000000..4865135
+--- /dev/null
++++ b/app/src/main/res/values/styles.xml
+@@ -0,0 +1,8 @@
++<?xml version="1.0" encoding="utf-8"?>
++<resources>
++
++    <style name="CircularImageView">
++        <item name="cornerFamily">rounded</item>
++        <item name="cornerSize">50%</item>
++    </style>
++</resources>
+\ No newline at end of file
