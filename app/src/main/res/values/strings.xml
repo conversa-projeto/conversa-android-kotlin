@@ -1,12 +1,28 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
     <string name="app_name">Conversa</string>
-    <string name="inicio_titulo">Conversa</string>
-    <string name="inicio_servidor">Servidor: %1$s</string>
-    <string name="inicio_trocar_servidor">Trocar servidor</string>
-    <string name="inicio_em_construcao">Nova versão em construção. O login chega na próxima etapa.</string>
-    <string name="tempo_real_desconectado">Tempo real: desconectado</string>
-    <string name="tempo_real_conectando">Tempo real: conectando…</string>
-    <string name="tempo_real_conectado">Tempo real: conectado</string>
-    <string name="tempo_real_aguardando">Tempo real: tentando de novo…</string>
+
+    <!-- Barra inferior (TODO 2.5) -->
+    <string name="aba_conversas">Conversas</string>
+    <string name="aba_chamadas">Chamadas</string>
+    <string name="aba_atividades">Atividades</string>
+    <string name="aba_configuracoes">Configurações</string>
+    <plurals name="atividades_novas">
+        <item quantity="one">%d atividade nova</item>
+        <item quantity="other">%d atividades novas</item>
+    </plurals>
+
+    <!-- AUT-03: o erro do servidor vem antes; texto do web "(tentando de novo...)" -->
+    <string name="tentando_de_novo">(tentando de novo…)</string>
+
+    <string name="chamadas_em_breve">Histórico de chamadas</string>
+    <string name="atividades_em_breve">Atividades</string>
+    <string name="em_breve_descricao">Chega numa próxima versão desta reescrita.</string>
+
+    <!-- Configurações provisórias (a tela completa é da etapa 8) -->
+    <string name="config_servidor">Servidor</string>
+    <string name="config_sair">Sair</string>
+    <string name="config_saindo">Saindo…</string>
+    <string name="config_sair_confirmar">Você vai precisar entrar de novo neste aparelho. As notificações param até lá.</string>
+    <string name="config_em_breve">Perfil, senha, notificações e as demais opções chegam na etapa 8.</string>
 </resources>

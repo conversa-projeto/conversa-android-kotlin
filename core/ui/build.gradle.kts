@@ -8,6 +8,7 @@ android {
 }
 
 dependencies {
+    implementation(projects.core.model)
     api(libs.compose.material.icons.extended)
     api(libs.coil.compose)
     api(libs.androidx.lifecycle.runtime.compose)

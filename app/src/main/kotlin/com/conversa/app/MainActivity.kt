@@ -1,5 +1,6 @@
 package com.conversa.app
 
+import android.content.Intent
 import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
@@ -22,13 +23,20 @@ class MainActivity : ComponentActivity() {
         // A splash fica até saber para onde ir (servidor configurado? sessão?).
         splash.setKeepOnScreenCondition { viewModel.destinoInicial.value == null }
         enableEdgeToEdge()
+        if (savedInstanceState == null) viewModel.receberLink(intent?.data)
         setContent {
             ConversaTema {
                 AreaDeAvisos {
                     val destino = viewModel.destinoInicial.collectAsStateWithLifecycle().value
-                    if (destino != null) ConversaNavHost(destinoInicial = destino)
+                    if (destino != null) ConversaNavHost(destinoInicial = destino, principal = viewModel)
                 }
             }
         }
+    }
+
+    /** `singleTask`: links com o app aberto chegam aqui. */
+    override fun onNewIntent(intent: Intent) {
+        super.onNewIntent(intent)
+        viewModel.receberLink(intent.data)
     }
 }

@@ -4,4 +4,14 @@
     <string name="cancelar">Cancelar</string>
     <string name="tentar_de_novo">Tentar de novo</string>
     <string name="voltar">Voltar</string>
+    <string name="online">online</string>
+    <string name="digitando">Digitando…</string>
+    <!-- Texto do web: "Conexao em tempo real indisponivel — usando atualizacao periodica" -->
+    <string name="sem_tempo_real">Conexão em tempo real indisponível — usando atualização periódica</string>
+    <string name="tentar_agora">Tentar agora</string>
+    <string name="previa_sem_mensagens">Sem mensagens</string>
+    <string name="previa_imagem">Imagem</string>
+    <string name="previa_figurinha">Figurinha</string>
+    <string name="previa_sem_texto">Anexo ou chamada</string>
+    <string name="ontem">Ontem</string>
 </resources>

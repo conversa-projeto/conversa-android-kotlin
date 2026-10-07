@@ -4,7 +4,7 @@
 - **Tipo:** código / testes / documentação
 - **Itens:** `TODO.md` 1.9 (OpenAPI), base de 2.1–2.4 e 2.6–2.11 (FC-200…FC-214); AUT-01…05, CON-01…13, PRE-01, GER-02
 - **Branch:** `reescrita`
-- **Commits:** _(preencher)_
+- **Commits:** `6674a90`
 
 ## Contexto
 Primeiro bloco da etapa 2: tudo o que as telas vão usar, sem as telas ainda. O servidor de dev foi ligado pelo usuário nesta sessão, o que destravou o download do OpenAPI.

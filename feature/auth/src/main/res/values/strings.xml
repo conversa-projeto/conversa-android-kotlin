@@ -15,4 +15,34 @@
     <string name="servidor_aviso_host">Endereço não encontrado. Confira o nome ou o IP.</string>
     <string name="servidor_aviso_indisponivel">O servidor está fora do ar. Tente de novo em instantes.</string>
     <string name="servidor_aviso_sem_conexao">Não foi possível conectar. Verifique a rede e o endereço.</string>
+
+    <string name="app_nome">Conversa</string>
+
+    <!-- Login (AUT-01), textos do web -->
+    <string name="login_usuario">Usuário</string>
+    <string name="login_senha">Senha</string>
+    <string name="login_entrar">Entrar</string>
+    <string name="login_entrando">Entrando…</string>
+    <string name="login_criar_conta">Não tem conta? Criar conta</string>
+    <string name="login_preencha">Informe o usuário e a senha.</string>
+    <string name="login_resposta_invalida">Resposta de login inválida: token ausente.</string>
+    <string name="login_sessao_expirada">Sua sessão expirou. Entre novamente.</string>
+    <string name="login_servidor">Servidor: %1$s</string>
+    <string name="login_trocar_servidor">Trocar</string>
+    <string name="senha_mostrar">Mostrar senha</string>
+    <string name="senha_esconder">Esconder senha</string>
+
+    <!-- Cadastro (AUT-02), textos do web -->
+    <string name="cadastro_titulo">Crie sua conta</string>
+    <string name="cadastro_nome">Nome</string>
+    <string name="cadastro_email">E-mail</string>
+    <string name="cadastro_senha_dica">Pelo menos 4 caracteres.</string>
+    <string name="cadastro_cadastrar">Cadastrar</string>
+    <string name="cadastro_cadastrando">Cadastrando…</string>
+    <string name="cadastro_ja_tem_conta">Já tem conta? Entrar</string>
+    <string name="cadastro_sucesso">Conta criada com sucesso!</string>
+    <string name="cadastro_preencha">Preencha todos os campos.</string>
+    <string name="cadastro_email_invalido">Informe um e-mail válido.</string>
+    <string name="cadastro_senha_curta">A senha deve ter pelo menos 4 caracteres.</string>
+    <string name="cadastro_email_repetido">E-mail já cadastrado.</string>
 </resources>

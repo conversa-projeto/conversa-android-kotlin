@@ -241,38 +241,38 @@
 
 - [ ] Criar o módulo `:feature:conversas` (adiado da 1.2)
 ### 2.1 Login e entrada (FC-200, AUT-01)
-- [ ] Tela Splash/decisão: sem servidor → Servidor; sem sessão → Login; com sessão → Principal
-- [ ] Tela Login: logo, "Usuário", "Senha", botão "Entrar"/"Entrando…", link "Não tem conta? Criar conta"
-- [ ] `POST /api/login {login, senha, dispositivo_id?}` (reenviar o `dispositivo_id` salvo)
-- [ ] Salvar o token e `dispositivo.id`; `trim()` no login
-- [ ] Tratar 429/503 (limite de 10/min do nginx) → "Muitas tentativas, aguarde"
-- [ ] Tratar resposta sem token → "Resposta de login inválida"
+- [x] Tela Splash/decisão: sem servidor → Servidor; sem sessão → Login; com sessão → Principal — `MainViewModel` (splash fica até decidir)
+- [x] Tela Login: logo, "Usuário", "Senha", botão "Entrar"/"Entrando…", link "Não tem conta? Criar conta" — `LoginTela` (ícone + "Conversa", mostrar/esconder senha, autofill de usuário/senha, último login preenchido, servidor atual com "Trocar")
+- [x] `POST /api/login {login, senha, dispositivo_id?}` (reenviar o `dispositivo_id` salvo) — `AutenticacaoRepositorio.entrar`
+- [x] Salvar o token e `dispositivo.id`; `trim()` no login — token na sessão cifrada; `dispositivo.id` nas preferências (sobrevive ao logout)
+- [x] Tratar 429/503 (limite de 10/min do nginx) → "Muitas tentativas, aguarde" — `ErroApi.MuitasTentativas` → "Muitas tentativas. Aguarde um minuto e tente de novo."
+- [x] Tratar resposta sem token → "Resposta de login inválida" — "Resposta de login inválida: token ausente."
 - [ ] **Teste:** logar, matar o app, abrir → entra direto
 
 ### 2.2 Dispositivo (FC-201, AUT-04)
-- [ ] Após o login: `PATCH /dispositivo {id, nome, modelo, versao_so, plataforma:"android"}`
-- [ ] Cortar os textos nos limites (nome/modelo 50, versão 15) para não dar 500
+- [x] Após o login: `PATCH /dispositivo {id, nome, modelo, versao_so, plataforma:"android"}` — feito a cada início de sessão (`IniciadorSessao`), não só no login
+- [x] Cortar os textos nos limites (nome/modelo 50, versão 15) para não dar 500 — `AutenticacaoRepositorio.registrarDispositivo` (+ teste)
 - [ ] **Teste:** conferir a linha do dispositivo no banco
 
 ### 2.3 Sessão expirada e logout (FC-202, AUT-03, AUT-05)
-- [ ] Observar `SessaoExpirada` (401) em qualquer lugar → limpar a sessão → Login com o aviso "Sessão expirada"
-- [ ] Outros erros na inicialização mantêm a sessão e tentam de novo (como no web)
-- [ ] Logout: `PATCH /dispositivo {id, token_fcm:null}`
-- [ ] Logout: fechar o WS e encerrar a chamada ativa
-- [ ] Logout: limpar o Room, o cache de imagens e de áudio e cancelar todas as notificações
+- [x] Observar `SessaoExpirada` (401) em qualquer lugar → limpar a sessão → Login com o aviso "Sessão expirada" — `SessaoRepositorio` encerra → `MainViewModel` leva ao login com "Sua sessão expirou. Entre novamente."
+- [x] Outros erros na inicialização mantêm a sessão e tentam de novo (como no web) — `IniciadorSessao`: Snackbar "<erro> (tentando de novo…)" e nova tentativa a cada 5 s
+- [x] Logout: `PATCH /dispositivo {id, token_fcm:null}` — `AutenticacaoRepositorio.sair` (3 s de limite; sai mesmo sem rede)
+- [ ] Logout: fechar o WS e encerrar a chamada ativa — 🔄 o WS fecha na hora sem sessão (`ConexaoTempoReal`); encerrar a chamada ativa entra com o `CallManager` (etapa 6)
+- [ ] Logout: limpar o Room, o cache de imagens e de áudio e cancelar todas as notificações — 🔄 Room (`LimpezaSessao`), imagens do Coil e notificações (`ConversaApplication`); cache de áudio entra na etapa 4
 - [ ] **Teste:** depois do logout, mensagens do web não geram notificação
 
 ### 2.4 Cadastro (FC-203, AUT-02)
-- [ ] Tela "Crie sua conta": Nome, Usuário, E-mail, Senha
-- [ ] `PUT /api/usuario {nome, login, email, senha}` (rota pública)
-- [ ] Respeitar os limites (nome 100, login 50, e-mail 100)
-- [ ] E-mail duplicado (500 do Postgres hoje) → "E-mail já cadastrado"
-- [ ] Sucesso → "Conta criada com sucesso!" → voltar ao Login com o usuário preenchido
+- [x] Tela "Crie sua conta": Nome, Usuário, E-mail, Senha — `CadastroTela`
+- [x] `PUT /api/usuario {nome, login, email, senha}` (rota pública) — `AutenticacaoRepositorio.cadastrar`
+- [x] Respeitar os limites (nome 100, login 50, e-mail 100) — o campo para de aceitar texto no limite; validação de e-mail e senha ≥ 4 (como o web)
+- [x] E-mail duplicado (500 do Postgres hoje) → "E-mail já cadastrado" — `EmailJaCadastradoException` → "E-mail já cadastrado."
+- [x] Sucesso → "Conta criada com sucesso!" → voltar ao Login com o usuário preenchido — volta ao login com o usuário preenchido e o aviso no Snackbar (sem a espera de 1,5 s do web)
 
 ### 2.5 Navegação principal
-- [ ] NavHost com rotas tipadas: Servidor, Login, Cadastro, Principal, Chat(conversaId, mensagemId?), Membros, Perfil, Visualizador, Configurações…
-- [ ] Barra inferior: Conversas, Chamadas, Atividades (com badge), Configurações
-- [ ] Deep link `conversa://chat/{id}?mensagem={id}`
+- [ ] NavHost com rotas tipadas: Servidor, Login, Cadastro, Principal, Chat(conversaId, mensagemId?), Membros, Perfil, Visualizador, Configurações… — 🔄 `navegacao/Rotas.kt`: Servidor, Login, Cadastro, Principal, Chat, NovaConversa, CriarGrupo, Membros; Perfil e Visualizador entram nas etapas 4 e 8
+- [x] Barra inferior: Conversas, Chamadas, Atividades (com badge), Configurações — `PrincipalTela`; Chamadas e Atividades são provisórias (etapas 6 e 8); badge de atividades novas já funciona; Configurações provisória com Servidor e Sair
+- [x] Deep link `conversa://chat/{id}?mensagem={id}` — intent-filter + `MainViewModel.receberLink` (sem sessão, abre depois do login); `LinkConversaTest`
 
 ### 2.6 Lista de conversas (FC-204, FC-205, CON-01, CON-13)
 - [ ] Repositório: Room como fonte; `GET /conversas` para atualizar

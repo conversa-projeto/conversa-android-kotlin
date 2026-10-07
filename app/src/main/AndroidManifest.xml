@@ -27,10 +27,18 @@
             android:name=".MainActivity"
             android:exported="true"
             android:theme="@style/Theme.Conversa.Inicial"
+            android:launchMode="singleTask"
             android:windowSoftInputMode="adjustResize">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
                 <category android:name="android.intent.category.LAUNCHER" />
+            </intent-filter>
+            <!-- conversa://chat/{id}?mensagem={id} (CON-12). Só abre conversas de que o usuário já é membro. -->
+            <intent-filter>
+                <action android:name="android.intent.action.VIEW" />
+                <category android:name="android.intent.category.DEFAULT" />
+                <category android:name="android.intent.category.BROWSABLE" />
+                <data android:scheme="conversa" android:host="chat" />
             </intent-filter>
         </activity>
     </application>
