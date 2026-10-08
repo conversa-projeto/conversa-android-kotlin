@@ -4,7 +4,7 @@
 - **Tipo:** funcionalidade / correção
 - **Itens:** `TODO.md` 7.5 e a linha do link com `mensagem=` do 3.11; FC-504, FC-505; MSG-06, MSG-19
 - **Branch:** `reescrita`
-- **Commits:** _(preencher)_
+- **Commits:** `2a4cc59`
 
 ## Contexto
 O web desenha a citação com o conteúdo completo da original (`BolhaReferencia.vue`, `ReferenciaRecursiva.vue`): título com a hora, citação aninhada, imagens e áudios. Tocar leva até a original. O Android mostrava só um resumo de duas linhas, sem toque.
