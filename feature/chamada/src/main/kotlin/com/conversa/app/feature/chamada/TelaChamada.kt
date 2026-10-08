@@ -22,7 +22,6 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.heightIn
-import androidx.compose.foundation.layout.imePadding
 import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
@@ -38,7 +37,6 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.Chat
 import androidx.compose.material.icons.automirrored.filled.KeyboardArrowLeft
 import androidx.compose.material.icons.automirrored.filled.KeyboardArrowRight
-import androidx.compose.material.icons.automirrored.filled.Send
 import androidx.compose.material.icons.automirrored.filled.VolumeUp
 import androidx.compose.material.icons.filled.BluetoothAudio
 import androidx.compose.material.icons.filled.Call
@@ -66,7 +64,6 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.ModalBottomSheet
-import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
@@ -81,7 +78,6 @@ import androidx.compose.runtime.mutableLongStateOf
 import androidx.compose.runtime.mutableStateListOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
-import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
@@ -113,12 +109,10 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewModelScope
 import com.conversa.app.core.data.SessaoRepositorio
 import com.conversa.app.core.data.contatos.ContatosRepositorio
-import com.conversa.app.core.data.mensagens.EnvioMensagens
 import com.conversa.app.core.model.Contato
 import com.conversa.app.core.model.StatusParticipante
 import com.conversa.app.core.model.TipoChamada
 import com.conversa.app.core.ui.componentes.Avatar
-import com.conversa.app.core.ui.componentes.LocalAvisos
 import com.conversa.app.core.ui.tema.ConversaTema
 import com.conversa.app.core.webrtc.MidiaLocal
 import com.conversa.app.core.webrtc.MidiaWebRtc
@@ -143,7 +137,6 @@ class ChamadaViewModel @Inject constructor(
     private val telecom: TelecomChamadas,
     sessao: SessaoRepositorio,
     contatos: ContatosRepositorio,
-    private val envio: EnvioMensagens,
 ) : ViewModel() {
     val contatos = contatos.observarOutros()
     val estado = gerenciador.estado
@@ -180,11 +173,10 @@ class ChamadaViewModel @Inject constructor(
 
     fun ativarTransmissao(video: Boolean) = gerenciador.ativarTransmissao(video)
 
-    /** Primeira mensagem do chat da chamada: cria o chat (se preciso), põe na fila de envio e abre a conversa. */
-    fun enviarNoChat(texto: String, aoAbrir: (Long) -> Unit, aoFalhar: () -> Unit) {
+    /** Primeiro toque no campo do chat da chamada (6.13, web `eaa8bac`): cria o grupo e abre a conversa. */
+    fun criarChat(aoAbrir: (Long) -> Unit, aoFalhar: () -> Unit) {
         viewModelScope.launch {
             val conversa = gerenciador.garantirChat() ?: return@launch aoFalhar()
-            envio.enviarTexto(conversa, texto)
             aoAbrir(conversa)
         }
     }
@@ -199,7 +191,8 @@ fun TelaChamadaRota(
     aoPodePip: (Boolean) -> Unit = {},
     aoMinimizar: () -> Unit = aoFechar,
     aoAreaDoVideo: (Rect) -> Unit = {},
-    aoAbrirChat: (Long) -> Unit = {},
+    /** Abre a conversa do chat da chamada; `focar` = com o cursor no campo (recém-criada). */
+    aoAbrirChat: (conversaId: Long, focar: Boolean) -> Unit = { _, _ -> },
     viewModel: ChamadaViewModel = hiltViewModel(),
 ) {
     val estado by viewModel.estado.collectAsStateWithLifecycle()
@@ -281,20 +274,31 @@ fun TelaChamadaRota(
                     aoAreaDoVideo = aoAreaDoVideo,
                     aoAdicionar = { adicionando = true },
                     aoAtivarTransmissao = { video -> pedirEDepois(video) { viewModel.ativarTransmissao(video) } },
-                    // Chat já existe: a conversa completa; senão, o campo da primeira mensagem (como o web).
-                    aoChat = { estado.conversaChatId?.let(aoAbrirChat) ?: run { escrevendoNoChat = true } },
+                    // Chat já existe: a conversa completa; senão, a folha com o campo que cria o grupo (como o web).
+                    aoChat = { estado.conversaChatId?.let { aoAbrirChat(it, false) } ?: run { escrevendoNoChat = true } },
                 ),
             )
         }
     }
     if (escrevendoNoChat) {
-        val avisos = LocalAvisos.current
-        val escopo = rememberCoroutineScope()
-        val falhou = stringResource(R.string.erro_ao_enviar)
-        PrimeiraMensagemDoChat(
-            aoEnviar = { texto ->
-                escrevendoNoChat = false
-                viewModel.enviarNoChat(texto, aoAbrir = aoAbrirChat, aoFalhar = { escopo.launch { avisos.showSnackbar(falhou) } })
+        var abrindo by remember { mutableStateOf(false) }
+        var falhou by remember { mutableStateOf(false) }
+        ChatAindaSemGrupo(
+            abrindo = abrindo,
+            falhou = falhou,
+            aoTocarNoCampo = {
+                abrindo = true
+                falhou = false
+                viewModel.criarChat(
+                    aoAbrir = { conversa ->
+                        escrevendoNoChat = false
+                        aoAbrirChat(conversa, true)
+                    },
+                    aoFalhar = {
+                        abrindo = false
+                        falhou = true
+                    },
+                )
             },
             aoFechar = { escrevendoNoChat = false },
         )
@@ -1050,27 +1054,42 @@ private fun DialogoAdicionar(contatos: List<Contato>, aoConfirmar: (List<Long>) 
 }
 
 /**
- * "Chat da chamada" antes de existir o chat (texto do web): só o campo. A primeira mensagem
- * cria o chat (`PUT /chamada/chat`) e abre a conversa completa.
+ * "Chat da chamada" antes de existir o grupo (textos do web, `ChatChamada.vue`): o aviso e um
+ * campo que, no primeiro toque, cria o grupo (`PUT /chamada/chat`) e abre a conversa completa.
  */
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-private fun PrimeiraMensagemDoChat(aoEnviar: (String) -> Unit, aoFechar: () -> Unit) {
-    var texto by remember { mutableStateOf("") }
+private fun ChatAindaSemGrupo(abrindo: Boolean, falhou: Boolean, aoTocarNoCampo: () -> Unit, aoFechar: () -> Unit) {
     ModalBottomSheet(onDismissRequest = aoFechar) {
-        Column(Modifier.fillMaxWidth().padding(horizontal = 16.dp).padding(bottom = 16.dp).imePadding()) {
+        Column(Modifier.fillMaxWidth().padding(horizontal = 16.dp).padding(bottom = 16.dp)) {
             Text(stringResource(R.string.chat_da_chamada), style = MaterialTheme.typography.titleMedium)
-            Spacer(Modifier.height(12.dp))
-            Row(verticalAlignment = Alignment.CenterVertically) {
-                OutlinedTextField(
-                    value = texto,
-                    onValueChange = { texto = it },
-                    placeholder = { Text(stringResource(R.string.mensagem)) },
-                    modifier = Modifier.weight(1f),
-                    maxLines = 4,
+            Text(
+                stringResource(R.string.chat_da_chamada_aviso),
+                style = MaterialTheme.typography.bodySmall,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                textAlign = TextAlign.Center,
+                modifier = Modifier.fillMaxWidth().padding(vertical = 24.dp),
+            )
+            if (falhou) {
+                Text(
+                    stringResource(R.string.erro_ao_abrir_o_chat),
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.error,
+                    modifier = Modifier.padding(bottom = 8.dp),
                 )
-                IconButton(enabled = texto.isNotBlank(), onClick = { aoEnviar(texto.trim()) }) {
-                    Icon(Icons.AutoMirrored.Filled.Send, contentDescription = stringResource(R.string.enviar))
+            }
+            Surface(
+                onClick = aoTocarNoCampo,
+                enabled = !abrindo,
+                shape = RoundedCornerShape(24.dp),
+                color = ConversaTema.cores.campoEntrada,
+                modifier = Modifier.fillMaxWidth().heightIn(min = 48.dp),
+            ) {
+                Box(Modifier.padding(horizontal = 16.dp, vertical = 14.dp), contentAlignment = Alignment.CenterStart) {
+                    Text(
+                        stringResource(if (abrindo) R.string.abrindo_o_chat else R.string.digite_uma_mensagem),
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    )
                 }
             }
         }

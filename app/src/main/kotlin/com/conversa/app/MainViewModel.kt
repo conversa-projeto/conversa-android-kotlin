@@ -100,12 +100,12 @@ class MainViewModel @Inject constructor(
     fun consumirCompartilhamentoPendente(): Boolean = compartilhamentoPendente.also { compartilhamentoPendente = false }
 
     companion object {
-        /** `conversa://chat/{conversaId}?mensagem={mensagemId}`. */
+        /** `conversa://chat/{conversaId}?mensagem={mensagemId}&focar=1`. */
         fun rotaDoLink(uri: Uri?): RotaChat? {
             if (uri == null || uri.scheme != "conversa" || uri.host != "chat") return null
             val conversa = uri.pathSegments.firstOrNull()?.toLongOrNull()?.takeIf { it > 0 } ?: return null
             val mensagem = uri.getQueryParameter("mensagem")?.toLongOrNull()?.takeIf { it > 0 } ?: 0
-            return RotaChat(conversa, mensagem)
+            return RotaChat(conversa, mensagem, focar = uri.getQueryParameter("focar") == "1")
         }
     }
 }

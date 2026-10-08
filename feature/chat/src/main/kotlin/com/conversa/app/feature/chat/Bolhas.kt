@@ -108,6 +108,8 @@ data class AcoesBolha(
     val aoReagir: (Mensagem, String) -> Unit = { _, _ -> },
     /** Toque longo num chip: quem reagiu. */
     val aoVerReacoes: (Mensagem, String) -> Unit = { _, _ -> },
+    /** Toque no "+N": as reações que não couberam. */
+    val aoVerMaisReacoes: (Mensagem) -> Unit = {},
 )
 
 /**
@@ -146,6 +148,7 @@ fun LinhaMensagem(mensagem: Mensagem, propria: Boolean, mostrarRemetente: Boolea
                 mensagem.reacoes,
                 aoAlternar = { acoes.aoReagir(mensagem, it) },
                 aoVerQuem = { acoes.aoVerReacoes(mensagem, it) },
+                aoVerMais = { acoes.aoVerMaisReacoes(mensagem) },
                 modifier = Modifier.widthIn(max = larguraMax).padding(top = 2.dp),
             )
         }

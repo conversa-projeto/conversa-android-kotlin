@@ -93,9 +93,9 @@ class ChatViewModelTest {
 
     private val compartilhamentos = mockk<com.conversa.app.core.data.anexos.Compartilhamentos>(relaxed = true)
 
-    private fun TestScope.criar(comCompartilhamento: Boolean = false): ChatViewModel {
+    private fun TestScope.criar(comCompartilhamento: Boolean = false, focar: Boolean = false): ChatViewModel {
         val vm = ChatViewModel(
-            SavedStateHandle(mapOf("conversaId" to 42L, "comCompartilhamento" to comCompartilhamento)),
+            SavedStateHandle(mapOf("conversaId" to 42L, "comCompartilhamento" to comCompartilhamento, "focar" to focar)),
             conversas,
             contatos,
             presenca,
@@ -382,6 +382,35 @@ class ChatViewModelTest {
         advanceUntilIdle()
 
         coVerify(exactly = 1) { conversas.atualizar() }
+    }
+
+    @Test
+    fun `conversa que nao esta no aparelho e buscada antes dos membros`() = runTest {
+        val fluxo = MutableStateFlow<Conversa?>(null)
+        every { conversas.observar(42) } returns fluxo
+        coEvery { conversas.atualizar() } coAnswers {
+            fluxo.value = Conversa(42, TipoConversa.GRUPO, "Chamada: Ana, Bruno", null, 0, 0, null, null, 0, null, null, null)
+            Result.success(Unit)
+        }
+        coEvery { conversas.membros(42) } returns Result.success(emptyList())
+
+        criar()
+        advanceUntilIdle()
+
+        coVerify(exactly = 1) { conversas.atualizar() }
+        coVerify { conversas.membros(42) }
+    }
+
+    @Test
+    fun `focar o campo vale uma vez`() = runTest {
+        val vm = criar(focar = true)
+        advanceUntilIdle()
+        assertThat(vm.estado.value.focarCampo).isTrue()
+
+        vm.campoFocado()
+        advanceUntilIdle()
+
+        assertThat(vm.estado.value.focarCampo).isFalse()
     }
 
     private class PlayerFalso : PlayerAudio {

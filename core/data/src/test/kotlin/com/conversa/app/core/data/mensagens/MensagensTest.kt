@@ -376,6 +376,23 @@ class MensagensTest {
     private val backgroundScopeFalso = kotlinx.coroutines.CoroutineScope(kotlinx.coroutines.Dispatchers.Unconfined)
 
     @Test
+    fun `reacoes ficam na ordem do servidor, nao na do emoji`() = runTest {
+        val doServidor = msg(1).copy(
+            reacoes = listOf("🤩", "👍", "❤️").map { ReacaoDto(it, 1, false, listOf(UsuarioReacaoDto(8, "Bruno"))) },
+        )
+        banco.mensagemDao().salvarCompletas(listOf(doServidor.paraEntidade()))
+
+        assertThat(banco.mensagemDao().buscar(1)!!.paraModelo().reacoes.map { it.emoji }).containsExactly("🤩", "👍", "❤️").inOrder()
+
+        // A otimista entra no fim, como o servidor fará (a primeira reação do emoji é a mais nova).
+        coEvery { api.reagir(any()) } returns ReacaoResposta(1, "😂", "add")
+        coEvery { api.mensagens(42, 1, 0, 0) } throws java.io.IOException("sem rede")
+        repo().reagir(42, 1, "😂", 7, "Ana Souza")
+
+        assertThat(banco.mensagemDao().buscar(1)!!.paraModelo().reacoes.map { it.emoji }).containsExactly("🤩", "👍", "❤️", "😂").inOrder()
+    }
+
+    @Test
     fun `reagir mostra na hora e depois fica igual ao servidor`() = runTest {
         banco.mensagemDao().salvarCompletas(listOf(msg(1).paraEntidade()))
         var vistaDuranteOEnvio: List<com.conversa.app.core.model.Reacao> = emptyList()

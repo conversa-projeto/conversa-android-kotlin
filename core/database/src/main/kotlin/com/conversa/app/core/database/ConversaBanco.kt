@@ -1,6 +1,7 @@
 package com.conversa.app.core.database
 
 import android.content.Context
+import androidx.room.AutoMigration
 import androidx.room.Database
 import androidx.room.Room
 import androidx.room.RoomDatabase
@@ -50,8 +51,10 @@ class Conversores {
         EnvioPendenteEntidade::class,
         SyncEstadoEntidade::class,
     ],
-    version = 1,
+    version = 2,
     exportSchema = true,
+    // 2: ordem das reações (a do servidor), para o "+N" esconder as mesmas que o web.
+    autoMigrations = [AutoMigration(from = 1, to = 2)],
 )
 @TypeConverters(Conversores::class)
 abstract class ConversaBanco : RoomDatabase() {

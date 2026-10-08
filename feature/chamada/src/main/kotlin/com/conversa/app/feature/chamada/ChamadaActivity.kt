@@ -73,13 +73,16 @@ class ChamadaActivity : ComponentActivity() {
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S && temPip()) setPictureInPictureParams(parametrosPip(podePip))
     }
 
-    /** Chat da chamada (6.13): a conversa no app; em vídeo, a chamada vai para o picture-in-picture. */
-    private fun abrirChat(conversaId: Long) {
+    /**
+     * Chat da chamada (6.13): a conversa no app; em vídeo, a chamada vai para o picture-in-picture.
+     * [focar]: recém-criada, abre com o cursor no campo.
+     */
+    private fun abrirChat(conversaId: Long, focar: Boolean) {
         if (podePip) entrarEmPip()
         startActivity(
             Intent(
                 Intent.ACTION_VIEW,
-                "conversa://chat/$conversaId".toUri(),
+                (if (focar) "conversa://chat/$conversaId?focar=1" else "conversa://chat/$conversaId").toUri(),
             ).setPackage(packageName).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK),
         )
     }

@@ -74,7 +74,7 @@ class MensagensRepositorio @Inject constructor(
         if (!emojiAceito(emoji)) return Result.failure(IllegalArgumentException("Emoji inválido"))
         val atuais = mensagemDao.buscar(mensagemId)?.paraModelo()?.reacoes ?: emptyList()
         val novas = alternarReacao(atuais, emoji, eu, meuNome, relogio.instant())
-        mensagemDao.trocarReacoes(mensagemId, novas.map { it.paraEntidade(mensagemId) })
+        mensagemDao.trocarReacoes(mensagemId, novas.mapIndexed { ordem, reacao -> reacao.paraEntidade(mensagemId, ordem) })
         val resultado = chamarApi { api.reagir(ReacaoRequisicao(mensagemId, emoji)) }.map { }
         recarregar(conversaId, mensagemId)
         return resultado

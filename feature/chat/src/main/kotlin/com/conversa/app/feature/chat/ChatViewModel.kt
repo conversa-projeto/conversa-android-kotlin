@@ -33,6 +33,7 @@ import com.conversa.app.core.model.TipoConversa
 import com.conversa.app.core.model.atividadeDaConversa
 import com.conversa.app.core.model.local
 import com.conversa.app.core.model.montarItensChat
+import com.conversa.app.core.model.podeReagir
 import com.conversa.app.core.network.http.mensagemAmigavel
 import com.conversa.app.core.network.http.paraErroApi
 import com.conversa.app.core.ui.estado.EventosUnicos
@@ -73,6 +74,8 @@ data class ChatUiState(
     val progresso: Map<Long, Float> = emptyMap(),
     /** Texto compartilhado por outro app: o campo usa uma vez ([ChatViewModel.textoUsado]). */
     val textoParaCampo: String? = null,
+    /** O campo pega o foco uma vez ([ChatViewModel.campoFocado]). */
+    val focarCampo: Boolean = false,
 ) {
     val grupo: Boolean get() = conversa?.tipo == TipoConversa.GRUPO
 }
@@ -129,6 +132,12 @@ sealed interface EventoChat {
 
     /** O `DELETE /mensagem` falhou (7.4). */
     data object OcultarFalhou : EventoChat
+
+    /** Já há 5 emojis meus nesta mensagem (7.2). */
+    data object LimiteDeReacoes : EventoChat
+
+    /** O `PUT /mensagem/reacao` falhou: "Não foi possível reagir" com o motivo. */
+    data class ReagirFalhou(val motivo: String) : EventoChat
 }
 
 /**
@@ -211,6 +220,9 @@ class ChatViewModel @Inject constructor(
     private val fila = MutableStateFlow<List<AnexoLocal>>(emptyList())
     private val textoParaCampo = MutableStateFlow<String?>(null)
 
+    /** Chat da chamada recém-criado: abre com o cursor no campo, como o web (6.13). */
+    private val focarCampo = MutableStateFlow(salvo.get<Boolean>("focar") == true)
+
     private val base = combine(
         conversas.observar(conversaId),
         mensagens.observar(conversaId),
@@ -233,8 +245,8 @@ class ChatViewModel @Inject constructor(
         )
     }
 
-    val estado: StateFlow<ChatUiState> = combine(base, fila, envio.progresso, textoParaCampo) { b, f, p, t ->
-        b.copy(fila = f, progresso = p, textoParaCampo = t)
+    val estado: StateFlow<ChatUiState> = combine(base, fila, envio.progresso, textoParaCampo, focarCampo) { b, f, p, t, foco ->
+        b.copy(fila = f, progresso = p, textoParaCampo = t, focarCampo = foco)
     }
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), ChatUiState(eu = eu))
 
@@ -255,6 +267,9 @@ class ChatViewModel @Inject constructor(
             primeiraNaoLida.value = lista.firstOrNull { it.remetenteId != eu && !it.visualizada && it.id > 0 && !it.oculta }?.id ?: 0
         }
         viewModelScope.launch {
+            // Conversa que ainda não está no aparelho (o grupo do chat da chamada recém-criado):
+            // relê a lista, como o web, para o cabeçalho ter nome e membros.
+            if (conversas.observar(conversaId).first() == null) conversas.atualizar()
             val conversa = conversas.observar(conversaId).first()
             if (conversa?.tipo == TipoConversa.GRUPO) conversas.membros(conversaId).onSuccess { membros.value = it }
         }
@@ -386,12 +401,18 @@ class ChatViewModel @Inject constructor(
         }
     }
 
+    fun campoFocado() {
+        focarCampo.value = false
+    }
+
     /** Reação do menu, do chip ou do seletor (7.2): alterna a minha; aparece na hora. */
     fun reagir(mensagem: Mensagem, emoji: String) {
         if (mensagem.id <= 0) return
+        // Como o web: o limite é conferido antes da reação otimista (o servidor confere de novo).
+        if (!podeReagir(mensagem.reacoes, emoji)) return eventos.enviar(EventoChat.LimiteDeReacoes)
         viewModelScope.launch {
             mensagens.reagir(conversaId, mensagem.id, emoji, eu, meuNome)
-                .onFailure { eventos.enviar(EventoChat.Erro(it.paraErroApi().mensagemAmigavel())) }
+                .onFailure { eventos.enviar(EventoChat.ReagirFalhou(it.paraErroApi().mensagemAmigavel())) }
         }
     }
 

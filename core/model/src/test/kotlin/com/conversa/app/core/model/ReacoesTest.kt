@@ -9,6 +9,16 @@ class ReacoesTest {
     private val bruno = UsuarioReacao(8, "Bruno", agora, null)
 
     @Test
+    fun `limite de 5 emojis meus - tirar sempre pode, o sexto nao`() {
+        val cinco = listOf("👍", "❤️", "😂", "😮", "😢").map { Reacao(it, 1, true, emptyList()) }
+        val deOutro = Reacao("🔥", 1, false, listOf(bruno))
+
+        assertThat(podeReagir(cinco + deOutro, "🔥")).isFalse()
+        assertThat(podeReagir(cinco, "👍")).isTrue()
+        assertThat(podeReagir(cinco.drop(1) + deOutro, "🔥")).isTrue()
+    }
+
+    @Test
     fun `reagir com emoji novo cria a reacao com 1 e marcada`() {
         val lista = alternarReacao(emptyList(), "👍", 7, "Ana", agora)
 

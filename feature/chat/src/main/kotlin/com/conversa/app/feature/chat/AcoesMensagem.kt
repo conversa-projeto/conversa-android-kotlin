@@ -1,5 +1,6 @@
 package com.conversa.app.feature.chat
 
+import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
@@ -47,9 +48,11 @@ import androidx.compose.ui.hapticfeedback.HapticFeedbackType
 import androidx.compose.ui.input.pointer.PointerEventPass
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.platform.LocalHapticFeedback
+import androidx.compose.ui.res.pluralStringResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.semantics
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -57,6 +60,7 @@ import androidx.compose.ui.viewinterop.AndroidView
 import androidx.emoji2.emojipicker.EmojiPickerView
 import com.conversa.app.core.model.ItemChat
 import com.conversa.app.core.model.Mensagem
+import com.conversa.app.core.model.REACOES_A_MOSTRA
 import com.conversa.app.core.model.REACOES_RAPIDAS
 import com.conversa.app.core.model.Reacao
 import com.conversa.app.core.model.TipoConteudo
@@ -167,18 +171,28 @@ private fun ItemMenu(icone: androidx.compose.ui.graphics.vector.ImageVector, tex
 
 /**
  * Chips das reações embaixo da bolha (TODO 7.2): emoji e contagem; destacado se eu reagi.
- * Toque alterna a minha reação; toque longo mostra quem reagiu.
+ * Toque alterna a minha reação; toque longo mostra quem reagiu. Até [REACOES_A_MOSTRA]
+ * à mostra; o resto fica num "+N" (como o web), que abre a lista dos demais.
  */
 @Composable
-fun ChipsDeReacao(reacoes: List<Reacao>, aoAlternar: (String) -> Unit, aoVerQuem: (String) -> Unit, modifier: Modifier = Modifier) {
+fun ChipsDeReacao(
+    reacoes: List<Reacao>,
+    aoAlternar: (String) -> Unit,
+    aoVerQuem: (String) -> Unit,
+    modifier: Modifier = Modifier,
+    aoVerMais: () -> Unit = {},
+) {
     if (reacoes.isEmpty()) return
     val cores = ConversaTema.cores
+    val extras = reacoes.drop(REACOES_A_MOSTRA)
     FlowRow(
         modifier.padding(horizontal = 4.dp),
         horizontalArrangement = Arrangement.spacedBy(4.dp),
         verticalArrangement = Arrangement.spacedBy(4.dp),
+        // O "+N" tem a área de toque mínima (48 dp): os chips ficam centralizados com ele.
+        itemVerticalAlignment = Alignment.CenterVertically,
     ) {
-        for (reacao in reacoes) {
+        for (reacao in reacoes.take(REACOES_A_MOSTRA)) {
             val descricao = stringResource(R.string.reacao_descricao, reacao.emoji, reacao.quantidade)
             Surface(
                 shape = RoundedCornerShape(50),
@@ -196,6 +210,56 @@ fun ChipsDeReacao(reacoes: List<Reacao>, aoAlternar: (String) -> Unit, aoVerQuem
                         Text(reacao.quantidade.toString(), style = MaterialTheme.typography.labelSmall)
                     }
                 }
+            }
+        }
+        if (extras.isNotEmpty()) {
+            val reagiu = extras.any { it.reagiu }
+            val descricao = pluralStringResource(R.plurals.mais_reacoes, extras.size, extras.size)
+            Surface(
+                onClick = aoVerMais,
+                shape = RoundedCornerShape(50),
+                color = if (reagiu) MaterialTheme.colorScheme.primaryContainer else cores.campoEntrada,
+                border = if (reagiu) BorderStroke(1.dp, MaterialTheme.colorScheme.primary) else null,
+                modifier = Modifier.semantics { contentDescription = descricao },
+            ) {
+                Text(
+                    "+${extras.size}",
+                    style = MaterialTheme.typography.labelSmall,
+                    modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp),
+                )
+            }
+        }
+    }
+}
+
+/** As reações que não couberam nos chips ("+N"): emoji, quem reagiu e a contagem; toque alterna. */
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+fun MaisReacoes(reacoes: List<Reacao>, aoAlternar: (String) -> Unit, aoFechar: () -> Unit) {
+    ModalBottomSheet(onDismissRequest = aoFechar) {
+        Text(
+            stringResource(R.string.reacoes),
+            style = MaterialTheme.typography.titleMedium,
+            modifier = Modifier.padding(horizontal = 16.dp),
+        )
+        LazyColumn(Modifier.heightIn(max = 480.dp).padding(bottom = 16.dp)) {
+            items(reacoes, key = { it.emoji }) { reacao ->
+                val cor = if (reacao.reagiu) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurface
+                ListItem(
+                    leadingContent = { Text(reacao.emoji, fontSize = 22.sp) },
+                    headlineContent = {
+                        Text(
+                            reacao.usuarios.joinToString(", ") { it.nome },
+                            color = cor,
+                            fontWeight = if (reacao.reagiu) FontWeight.SemiBold else null,
+                            maxLines = 2,
+                            overflow = TextOverflow.Ellipsis,
+                        )
+                    },
+                    trailingContent = { Text(reacao.quantidade.toString(), color = cor) },
+                    colors = ListItemDefaults.colors(containerColor = androidx.compose.ui.graphics.Color.Transparent),
+                    modifier = Modifier.clickable { aoAlternar(reacao.emoji) },
+                )
             }
         }
     }
@@ -278,6 +342,9 @@ class AcoesAbertas {
 
     /** Id da mensagem e o emoji do chip tocado. */
     var quemReagiu by mutableStateOf<Pair<Long, String>?>(null)
+
+    /** Id da mensagem do "+N" tocado. */
+    var maisReacoes by mutableStateOf<Long?>(null)
     var ocultando by mutableStateOf<Mensagem?>(null)
 }
 
@@ -330,6 +397,22 @@ internal fun AcoesDaMensagem(abertas: AcoesAbertas, estado: ChatUiState, viewMod
             LaunchedEffect(Unit) { abertas.quemReagiu = null }
         } else {
             QuemReagiu(reacoes, emoji, aoFechar = { abertas.quemReagiu = null })
+        }
+    }
+    abertas.maisReacoes?.let { id ->
+        val mensagem = atual(id)
+        val extras = mensagem?.reacoes.orEmpty().drop(REACOES_A_MOSTRA)
+        if (mensagem == null || extras.isEmpty()) {
+            LaunchedEffect(Unit) { abertas.maisReacoes = null }
+        } else {
+            MaisReacoes(
+                extras,
+                aoAlternar = { emoji ->
+                    abertas.maisReacoes = null
+                    viewModel.reagir(mensagem, emoji)
+                },
+                aoFechar = { abertas.maisReacoes = null },
+            )
         }
     }
     abertas.ocultando?.let { mensagem ->

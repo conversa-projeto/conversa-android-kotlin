@@ -25,6 +25,11 @@ class LinkConversaTest {
     }
 
     @Test
+    fun `link do chat da chamada abre com o cursor no campo`() {
+        assertThat(ler("conversa://chat/42?focar=1")).isEqualTo(RotaChat(42, 0, focar = true))
+    }
+
+    @Test
     fun `links invalidos sao ignorados`() {
         assertThat(ler("conversa://chat/abc")).isNull()
         assertThat(ler("conversa://chat/0")).isNull()

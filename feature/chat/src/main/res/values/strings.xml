@@ -16,6 +16,12 @@
     <string name="cancelar_agendada_texto">Ela não será enviada.</string>
     <string name="cancelar_envio">Cancelar envio</string>
     <string name="nao_foi_possivel_ocultar">Não foi possível ocultar</string>
+    <string name="limite_de_reacoes">Você já reagiu com 5 emojis nesta mensagem.</string>
+    <string name="nao_foi_possivel_reagir">Não foi possível reagir: %1$s</string>
+    <plurals name="mais_reacoes">
+        <item quantity="one">Mais %1$d reação</item>
+        <item quantity="other">Mais %1$d reações</item>
+    </plurals>
     <string name="online">online</string>
     <string name="chamada_de_voz">Chamada de voz</string>
     <string name="chamada_de_video">Chamada de vídeo</string>
@@ -77,7 +83,7 @@
     <string name="participante_desconectou">Desconectou</string>
 
     <!-- Campo (ENV-01) -->
-    <string name="digite_uma_mensagem">Mensagem</string>
+    <string name="digite_uma_mensagem">Digite uma mensagem</string>
     <string name="enviar">Enviar</string>
 
     <!-- Anexos (ANX-01…09) -->

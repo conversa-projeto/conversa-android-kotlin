@@ -79,6 +79,8 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.focus.FocusRequester
+import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.geometry.CornerRadius
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.Size
@@ -131,9 +133,17 @@ private const val SEGURAR_MS = 300L
  * limpo depois que a mensagem foi gravada no Room: nunca se perde.
  */
 @Composable
-internal fun Campo(fila: List<AnexoLocal>, textoCompartilhado: String?, acoes: AcoesChat) {
+internal fun Campo(fila: List<AnexoLocal>, textoCompartilhado: String?, acoes: AcoesChat, focar: Boolean = false) {
     // Estado do texto local e síncrono (o cursor não pula); sobrevive a girar a tela.
     val texto = rememberTextFieldState()
+    val foco = remember { FocusRequester() }
+    // Pedido de foco (chat da chamada recém-criado): uma vez; sem o campo na tela (gravando), só descarta.
+    LaunchedEffect(focar) {
+        if (focar) {
+            runCatching { foco.requestFocus() }
+            acoes.aoCampoFocado()
+        }
+    }
     // Texto que outro app compartilhou (AND-10): entra no campo uma vez, para a pessoa revisar.
     LaunchedEffect(textoCompartilhado) {
         if (textoCompartilhado != null) {
@@ -159,7 +169,7 @@ internal fun Campo(fila: List<AnexoLocal>, textoCompartilhado: String?, acoes: A
         if (comBarra) {
             BarraGravacao(atual, acoes.gravacao)
         } else {
-            LinhaDoCampo(texto, fila.isNotEmpty(), atual as? EstadoGravacao.Gravando, acoes)
+            LinhaDoCampo(texto, fila.isNotEmpty(), atual as? EstadoGravacao.Gravando, acoes, foco)
         }
     }
 }
@@ -175,6 +185,7 @@ private fun LinhaDoCampo(
     temAnexos: Boolean,
     segurando: EstadoGravacao.Gravando?,
     acoes: AcoesChat,
+    foco: FocusRequester,
 ) {
     Row(
         Modifier.fillMaxWidth().padding(horizontal = 8.dp, vertical = 6.dp),
@@ -200,7 +211,7 @@ private fun LinhaDoCampo(
                         unfocusedIndicatorColor = Color.Transparent,
                     ),
                     keyboardOptions = KeyboardOptions(capitalization = KeyboardCapitalization.Sentences),
-                    modifier = Modifier.fillMaxWidth().contentReceiver(receptorDeImagens(acoes.aoColarAnexos)),
+                    modifier = Modifier.fillMaxWidth().focusRequester(foco).contentReceiver(receptorDeImagens(acoes.aoColarAnexos)),
                 )
             }
         }

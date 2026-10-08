@@ -1,5 +1,6 @@
 package com.conversa.app.core.database.entidades
 
+import androidx.room.ColumnInfo
 import androidx.room.Embedded
 import androidx.room.Entity
 import androidx.room.ForeignKey
@@ -89,7 +90,17 @@ data class ConteudoEntidade(
         ),
     ],
 )
-data class ReacaoEntidade(val mensagemId: Long, val emoji: String, val quantidade: Int, val reagiu: Boolean, val usuariosJson: String)
+/** [ordem]: a posição que o servidor devolve (a primeira reação de cada emoji vem antes), versão 2 do banco. */
+data class ReacaoEntidade(
+    val mensagemId: Long,
+    val emoji: String,
+    val quantidade: Int,
+    val reagiu: Boolean,
+    val usuariosJson: String,
+    @ColumnInfo(
+        defaultValue = "0",
+    ) val ordem: Int = 0,
+)
 
 data class MensagemCompleta(
     @Embedded val mensagem: MensagemEntidade,

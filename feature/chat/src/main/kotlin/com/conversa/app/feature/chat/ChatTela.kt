@@ -143,6 +143,7 @@ fun ChatRotaTela(
     AcoesDaMensagem(acoesDaMensagem, estado, viewModel)
     val copiado = stringResource(R.string.copiado)
     val naoOcultou = stringResource(R.string.nao_foi_possivel_ocultar)
+    val limiteDeReacoes = stringResource(R.string.limite_de_reacoes)
     val microfoneIndisponivel = stringResource(R.string.microfone_indisponivel)
     val gravacaoCurta = stringResource(R.string.gravacao_curta)
     val gravacaoFalhou = stringResource(R.string.gravacao_falhou)
@@ -179,6 +180,8 @@ fun ChatRotaTela(
                 if (copiar(contexto, clipe)) avisos.showSnackbar(copiado)
             }
             EventoChat.OcultarFalhou -> avisos.mostrarErro(naoOcultou)
+            EventoChat.LimiteDeReacoes -> avisos.mostrarErro(limiteDeReacoes)
+            is EventoChat.ReagirFalhou -> avisos.mostrarErro(recursos.getString(R.string.nao_foi_possivel_reagir, evento.motivo))
         }
     }
     // O áudio vai como fluxo: só as bolhas de áudio leem (ver LocalAudio).
@@ -223,12 +226,14 @@ fun ChatRotaTela(
                     aoMenu = { acoesDaMensagem.menuDe = it },
                     aoReagir = viewModel::reagir,
                     aoVerReacoes = { mensagem, emoji -> acoesDaMensagem.quemReagiu = mensagem.id to emoji },
+                    aoVerMaisReacoes = { acoesDaMensagem.maisReacoes = it.id },
                 ),
                 aoIrAoFim = { escopo.launch { lista.animateScrollToItem(0) } },
                 aoAdicionarAnexos = viewModel::adicionarAnexos,
                 aoRemoverAnexo = viewModel::removerAnexo,
                 pastaCamera = viewModel::pastaCamera,
                 aoTextoUsado = viewModel::textoUsado,
+                aoCampoFocado = viewModel::campoFocado,
                 aoColarAnexos = viewModel::colarAnexos,
                 aoVisivel = viewModel::visivel,
                 gravacao = AcoesGravacao(
@@ -314,6 +319,7 @@ class AcoesChat(
     val gravacao: AcoesGravacao = AcoesGravacao(),
     /** O campo já usou o texto compartilhado por outro app. */
     val aoTextoUsado: () -> Unit = {},
+    val aoCampoFocado: () -> Unit = {},
     /** Imagem colada no campo (teclado ou área de transferência). */
     val aoColarAnexos: (List<String>) -> Unit = {},
     /** A conversa ficou visível ou deixou de estar (notificações, NOT-01/03). */
@@ -410,7 +416,7 @@ fun ChatTela(estado: ChatUiState, lista: androidx.compose.foundation.lazy.LazyLi
 
     Scaffold(
         topBar = { Cabecalho(estado, acoes) },
-        bottomBar = { Campo(estado.fila, estado.textoParaCampo, acoes) },
+        bottomBar = { Campo(estado.fila, estado.textoParaCampo, acoes, focar = estado.focarCampo) },
     ) { margens ->
         Box(Modifier.fillMaxSize().padding(margens).background(MaterialTheme.colorScheme.background)) {
             when {
@@ -491,7 +497,16 @@ private fun Cabecalho(estado: ChatUiState, acoes: AcoesChat) {
             }
         },
         title = {
-            Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(10.dp)) {
+            // Grupo: avatar e nome abrem os dados do grupo, como o painel do web (eaa8bac).
+            Row(
+                modifier = Modifier.clickable(
+                    enabled = estado.grupo,
+                    onClickLabel = stringResource(R.string.membros_do_grupo),
+                    onClick = acoes.aoMembros,
+                ),
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.spacedBy(10.dp),
+            ) {
                 Avatar(conversa?.titulo, conversa?.avatarUrl, tamanho = 38.dp, online = estado.online)
                 Column {
                     Text(

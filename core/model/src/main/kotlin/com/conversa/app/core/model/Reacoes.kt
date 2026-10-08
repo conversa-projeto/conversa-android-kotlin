@@ -10,6 +10,18 @@ const val MAXIMO_CODE_POINTS_EMOJI = 10
 
 fun emojiAceito(emoji: String): Boolean = emoji.isNotBlank() && emoji.codePointCount(0, emoji.length) <= MAXIMO_CODE_POINTS_EMOJI
 
+/** Emojis diferentes que cada pessoa pode deixar na mesma mensagem (servidor `d4435db`). */
+const val LIMITE_REACOES_POR_PESSOA = 5
+
+/** Chips à mostra embaixo da bolha; os demais ficam no "+N" (web `eaa8bac`). */
+const val REACOES_A_MOSTRA = 5
+
+/** Tirar é sempre possível; pôr um emoji novo, só abaixo do limite (o web confere antes da otimista). */
+fun podeReagir(reacoes: List<Reacao>, emoji: String): Boolean {
+    val minhas = reacoes.filter { it.reagiu }
+    return minhas.any { it.emoji == emoji } || minhas.size < LIMITE_REACOES_POR_PESSOA
+}
+
 /**
  * Alterna a minha reação [emoji] (como o `PUT /mensagem/reacao`): se já reagi, tiro;
  * senão, ponho. Usado para mostrar na hora, antes da resposta do servidor (ENV-17).

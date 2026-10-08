@@ -86,13 +86,14 @@ internal fun MensagemDto.paraEntidade() = MensagemCompleta(
             transcricao = it.transcricao,
         )
     },
-    reacoes = reacoes.map {
+    reacoes = reacoes.mapIndexed { ordem, it ->
         ReacaoEntidade(
             mensagemId = id,
             emoji = it.emoji,
             quantidade = it.quantidade,
             reagiu = it.reagiu,
             usuariosJson = ConversaJson.encodeToString(serializadorUsuariosReacao, it.usuarios),
+            ordem = ordem,
         )
     },
 )
@@ -125,7 +126,7 @@ fun MensagemCompleta.paraModelo() = Mensagem(
             transcricao = it.transcricao,
         )
     },
-    reacoes = reacoes.map { reacao ->
+    reacoes = reacoes.sortedBy { it.ordem }.map { reacao ->
         val usuarios = runCatching {
             ConversaJson.decodeFromString(serializadorUsuariosReacao, reacao.usuariosJson)
         }.getOrDefault(emptyList())
@@ -138,9 +139,10 @@ fun MensagemCompleta.paraModelo() = Mensagem(
     },
 )
 
-/** Reação do modelo para o Room (a otimista, antes do servidor). */
-internal fun Reacao.paraEntidade(mensagemId: Long) = ReacaoEntidade(
+/** Reação do modelo para o Room (a otimista, antes do servidor), na posição [ordem]. */
+internal fun Reacao.paraEntidade(mensagemId: Long, ordem: Int) = ReacaoEntidade(
     mensagemId = mensagemId,
+    ordem = ordem,
     emoji = emoji,
     quantidade = quantidade,
     reagiu = reagiu,

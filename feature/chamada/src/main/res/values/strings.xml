@@ -33,9 +33,10 @@
     <string name="sair_da_chamada">Sair da chamada</string>
     <string name="adicionar_usuario">Adicionar usuário</string>
     <string name="chat_da_chamada">Chat da chamada</string>
-    <string name="mensagem">Mensagem</string>
-    <string name="enviar">Enviar</string>
-    <string name="erro_ao_enviar">Erro ao enviar a mensagem</string>
+    <string name="chat_da_chamada_aviso">As mensagens enviadas aqui ficam num grupo com quem está na chamada.</string>
+    <string name="digite_uma_mensagem">Digite uma mensagem</string>
+    <string name="abrindo_o_chat">Abrindo o chat…</string>
+    <string name="erro_ao_abrir_o_chat">Erro ao abrir o chat</string>
     <string name="adicionar_a_chamada">Adicionar à chamada</string>
     <string name="nenhum_contato_para_adicionar">Nenhum contato disponível para adicionar.</string>
     <string name="adicionar">Adicionar</string>
