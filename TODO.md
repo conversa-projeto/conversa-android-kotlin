@@ -481,7 +481,7 @@
 - [x] Baixar: URL assinada → `MediaStore.Downloads` (sanitizar o nome: nada de `../`) — `DownloadsRepositorio`: baixa para o cache (URL renovada, `.part`) e copia para Downloads/Conversa pelo MediaStore (pendente até terminar; erro apaga); roda no escopo do app (sair da conversa não interrompe); Android 9 usa "Salvar como" (sem permissão de armazenamento — não testado, o emulador é Android 16); aviso "salvo em Downloads/Conversa" com "Abrir" (+ testes). No emulador: PDF e foto salvos com o tamanho exato e o PDF abriu pelo aviso ✔ 45f269f
 - [x] 🆕 `nomeSeguro` nunca devolve `.` nem `..` (antes `..` passava e o arquivo baixado ou apagado podia sair da pasta) (+ teste) ✔ 399bae5
 - [x] Abrir: `ACTION_VIEW` com `FileProvider` — `ArquivosLocais.baixar` (cache, `.part` → renomeia) + `FileProvider` (`caminhos_arquivos.xml`) + `ACTION_VIEW`; no emulador o PDF enviado baixou pelo proxy e abriu no leitor de PDF do sistema ✔ 389e66d
-- [x] Notificação de download concluído — agora no canal "Sistema"; no emulador, com a permissão concedida, apareceu ao baixar o PDF. Antes: 🔄 `AvisoDownloadNotificacao` (canal "Downloads", toque abre o arquivo) só publica se notificações estiverem permitidas; a permissão `POST_NOTIFICATIONS` é pedida na etapa 5 — testar lá
+- [x] Notificação de download concluído — agora no canal "Sistema"; no emulador, com a permissão concedida, apareceu ao baixar o PDF. Antes: 🔄 `AvisoDownloadNotificacao` (canal "Downloads", toque abre o arquivo) só publica se notificações estiverem permitidas; a permissão `POST_NOTIFICATIONS` é pedida na etapa 5 — testar lá ✔ 199ce1b
 
 ### 4.8 Transcrição (FC-409, ANX-12)
 - [x] Abaixo dos áudios (tipos 4 e 5): estado inicial a partir de `transcricao_status`/`transcricao` — `TranscricaoNaBolha` lê da própria mensagem (Room); o resultado vale para todas as mensagens com o mesmo anexo (`MensagemDao.atualizarTranscricao`) ✔ f5d1501
@@ -531,34 +531,34 @@
 - [ ] No logout: `PATCH /dispositivo {id, token_fcm:null}` — ⛔ depende do FCM (5.1)
 
 ### 5.3 Canais e permissões (FC-606, FC-607)
-- [x] Criar os canais uma vez no `Application`: `mensagens_v1`, `chamadas_recebidas_v1`, `chamada_ativa_v1`, `sistema_v1` — `CanaisNotificacao` (`core/data`); o canal "downloads" da 4.7 virou o "Sistema" (é apagado). No emulador: os 4 canais criados (mensagens e chamadas com importância alta)
-- [x] Pedir `POST_NOTIFICATIONS` depois do login, com explicação — diálogo "Notificações" na tela principal, uma vez ("Agora não" também conta; guardado no `PreferenciasStore`). No emulador: explicação → diálogo do Android → concedida
+- [x] Criar os canais uma vez no `Application`: `mensagens_v1`, `chamadas_recebidas_v1`, `chamada_ativa_v1`, `sistema_v1` — `CanaisNotificacao` (`core/data`); o canal "downloads" da 4.7 virou o "Sistema" (é apagado). No emulador: os 4 canais criados (mensagens e chamadas com importância alta) ✔ 199ce1b
+- [x] Pedir `POST_NOTIFICATIONS` depois do login, com explicação — diálogo "Notificações" na tela principal, uma vez ("Agora não" também conta; guardado no `PreferenciasStore`). No emulador: explicação → diálogo do Android → concedida ✔ 199ce1b
 - [ ] Android 14+: verificar `canUseFullScreenIntent()`; se negado, explicar e levar às configurações — fica para a etapa 6 (só chamada usa tela cheia)
 - [ ] Explicar e pedir a isenção de otimização de bateria (opcional, para chamadas) — fica para a etapa 6
 
 ### 5.4 Notificação de mensagem (FC-602, FC-603, NOT-01, NOT-02)
 - [ ] Push `data {titulo, mensagem, conversa}` → sincronizar (`SyncManager`) → montar a notificação — 🔄 sincronizar → montar já funciona: o `SyncManager.novasDeOutros` avisa as conversas com mensagem nova de outra pessoa e o `NotificadorMensagens` monta a notificação (testado no emulador com o app em segundo plano, dentro dos 10 s em que o WebSocket ainda fica ligado); falta o push (⛔ 5.1)
-- [x] MessagingStyle por conversa, com id de notificação = id da conversa (sem colisão) — tag "conversa" + id; montada das não lidas do Room (até 7); grupo com título; categoria mensagem; aparece como "conversa" no Android (atalho)
+- [x] MessagingStyle por conversa, com id de notificação = id da conversa (sem colisão) — tag "conversa" + id; montada das não lidas do Room (até 7); grupo com título; categoria mensagem; aparece como "conversa" no Android (atalho) ✔ 199ce1b
 - [ ] Título = nome do remetente/grupo; avatar como ícone grande; corpo resumido ("Imagem", "Gravação de áudio", "Figurinha", "Arquivo"…) — 🔄 título e corpo prontos (`resumoDaMensagem`, a mesma regra da citação/web); falta o avatar (hoje o Android mostra a inicial)
-- [x] Com o app aberto (via WS): não notificar se a conversa está aberta na tela — `decidirAviso` (regra do web): na frente com a conversa na tela, nada; na frente em outra tela, só o som; em segundo plano, a notificação (+ teste). `ConversaEmTela` marcada pelo `ON_RESUME`/`ON_PAUSE` do chat. No emulador: com o app na lista, nenhuma notificação
-- [x] Nunca notificar conversas arquivadas — `decidirAviso` (+ teste)
-- [x] Toque → deep link para a conversa — `conversa://chat/{id}` na `MainActivity`. No emulador: o toque abriu a conversa na mensagem
+- [x] Com o app aberto (via WS): não notificar se a conversa está aberta na tela — `decidirAviso` (regra do web): na frente com a conversa na tela, nada; na frente em outra tela, só o som; em segundo plano, a notificação (+ teste). `ConversaEmTela` marcada pelo `ON_RESUME`/`ON_PAUSE` do chat. No emulador: com o app na lista, nenhuma notificação ✔ 199ce1b
+- [x] Nunca notificar conversas arquivadas — `decidirAviso` (+ teste) ✔ 199ce1b
+- [x] Toque → deep link para a conversa — `conversa://chat/{id}` na `MainActivity`. No emulador: o toque abriu a conversa na mensagem ✔ 199ce1b
 
 ### 5.5 Ações da notificação (FC-604, AND-08)
-- [x] Resposta direta (RemoteInput) → `PUT /mensagem` no `conversa_id` real → atualizar a notificação — a resposta entra na fila de envio (WorkManager) e a conversa fica lida; a notificação é atualizada com "Você: …" e sai em 2 s (no Android 15+ só cancelar não basta: o sistema segura a notificação respondida até uma atualização). No emulador: a resposta chegou ao servidor e a notificação saiu
-- [x] "Marcar como lida" → `POST /mensagem/visualizar` das mensagens da conversa — `MensagensRepositorio.marcarConversaLida` (espera cada chamada) (+ teste). No emulador: lida no servidor e a notificação saiu
-- [x] Receivers com `goAsync()` ou WorkManager expedited (#42) — `AcoesNotificacaoReceiver` com `goAsync()`; o envio da resposta vai pela fila do WorkManager
+- [x] Resposta direta (RemoteInput) → `PUT /mensagem` no `conversa_id` real → atualizar a notificação — a resposta entra na fila de envio (WorkManager) e a conversa fica lida; a notificação é atualizada com "Você: …" e sai em 2 s (no Android 15+ só cancelar não basta: o sistema segura a notificação respondida até uma atualização). No emulador: a resposta chegou ao servidor e a notificação saiu ✔ 199ce1b
+- [x] "Marcar como lida" → `POST /mensagem/visualizar` das mensagens da conversa — `MensagensRepositorio.marcarConversaLida` (espera cada chamada) (+ teste). No emulador: lida no servidor e a notificação saiu ✔ 199ce1b
+- [x] Receivers com `goAsync()` ou WorkManager expedited (#42) — `AcoesNotificacaoReceiver` com `goAsync()`; o envio da resposta vai pela fila do WorkManager ✔ 199ce1b
 
 ### 5.6 Fechar notificações (FC-605, NOT-03)
-- [x] Cancelar ao ler tudo, ao arquivar e ao abrir a conversa — o `NotificadorMensagens` observa as conversas (contador zerado ou arquivada) e a `ConversaEmTela`. No emulador: ler pela notificação e abrir a conversa tiraram a notificação
+- [x] Cancelar ao ler tudo, ao arquivar e ao abrir a conversa — o `NotificadorMensagens` observa as conversas (contador zerado ou arquivada) e a `ConversaEmTela`. No emulador: ler pela notificação e abrir a conversa tiraram a notificação ✔ 199ce1b
 
 ### 5.7 Sem serviço permanente (FC-609, AND-07)
-- [x] Confirmar que não existe nenhum foreground service fora de chamada — o manifesto não declara nenhum serviço
+- [x] Confirmar que não existe nenhum foreground service fora de chamada — o manifesto não declara nenhum serviço ✔ 199ce1b
 - [ ] Em segundo plano, depender só do FCM (as chamadas precisam de S1) — ⛔ depende do FCM (5.1); o WebSocket já desliga 10 s depois de ir para o segundo plano
 - [ ] **Teste:** app fechado + mensagem pelo web → notificação chega (com o aparelho em Doze: `adb shell dumpsys deviceidle force-idle`) — ⛔ depende do FCM (5.1)
 
 ### 5.8 Atalhos de conversa (FC-608)
-- [x] Publicar `ShortcutInfo` de longa duração para as conversas recentes (aparecem na seção "Conversas" do Android) — as 4 conversas recentes não arquivadas e cada conversa notificada; somem no logout
+- [x] Publicar `ShortcutInfo` de longa duração para as conversas recentes (aparecem na seção "Conversas" do Android) — as 4 conversas recentes não arquivadas e cada conversa notificada; somem no logout ✔ 199ce1b
 
 ---
 

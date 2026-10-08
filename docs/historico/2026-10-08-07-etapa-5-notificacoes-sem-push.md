@@ -4,7 +4,7 @@
 - **Tipo:** código / testes / manifesto (receiver)
 - **Itens:** `TODO.md` 5.3, 5.4, 5.5, 5.6, 5.7 (em parte), 5.8, e o último da 4.7; FC-602…608; NOT-01, NOT-02, NOT-03, NOT-06; problema #42 do legado
 - **Branch:** `reescrita`
-- **Commits:** (preencher)
+- **Commits:** `199ce1b`
 
 ## Contexto
 A etapa 5 começa pelo Firebase (5.1 e 5.2). Isso depende do projeto Firebase do usuário (criar o app Android e baixar o `google-services.json`), e o servidor de dev está sem FCM. Esses itens ficaram ⛔.
