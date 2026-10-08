@@ -4,7 +4,7 @@
 - **Tipo:** funcionalidade
 - **Itens:** `TODO.md` 7.11; FC-515
 - **Branch:** `reescrita`
-- **Commits:** (preencher)
+- **Commits:** `c2a31d6`
 
 ## Contexto
 O web tem três recursos no campo de mensagem:

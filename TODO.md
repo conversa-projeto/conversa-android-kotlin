@@ -769,9 +769,9 @@
 - [x] `visivel_em` em ISO UTC; selo "Agendada para hoje HH:MM / amanhã / dd/MM HH:MM"; some na hora exata ✔ f3cab38
 
 ### 7.11 Pequenos extras (FC-515)
-- [x] Atalhos `:)` → 🙂 etc. (tabela do `emojiAtalhos.ts`), só como palavra solta e fora de código
-- [x] Colar texto com mais de 10 linhas → sugerir "Enviar como código"
-- [x] Tela "Inserir código" simples (linguagem + texto monoespaçado)
+- [x] Atalhos `:)` → 🙂 etc. (tabela do `emojiAtalhos.ts`), só como palavra solta e fora de código ✔ c2a31d6
+- [x] Colar texto com mais de 10 linhas → sugerir "Enviar como código" ✔ c2a31d6
+- [x] Tela "Inserir código" simples (linguagem + texto monoespaçado) ✔ c2a31d6
 
 ### 7.12 Votação em grupo (FC-516, FC-517, FC-518, MSG-20, ENV-22)
 - [ ] Store/repositório de enquetes: cache por id; leituras simultâneas deduplicadas
