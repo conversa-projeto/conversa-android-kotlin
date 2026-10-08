@@ -7,7 +7,7 @@
   - FC-703, FC-704, FC-705, FC-706, FC-712, FC-714, FC-716; CHA-01, CHA-03, CHA-04, CHA-10, CHA-11, CHA-12;
   - problemas #7, #10, #18, #37 e #39 do legado.
 - **Branch:** `reescrita`
-- **Commits:** (preencher)
+- **Commits:** `cf43b1f`
 
 ## Contexto
 Com a máquina de estados pronta (2026-10-08 · 08), faltava a mídia de verdade e um jeito de ligar e atender. Isso é o mínimo para o teste da 6.1: o arquivo gravado aparecer no MediaMTX.
