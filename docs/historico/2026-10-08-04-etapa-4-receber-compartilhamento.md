@@ -4,7 +4,7 @@
 - **Tipo:** código / testes / manifesto (intent-filters novos) / segurança
 - **Itens:** `TODO.md` 4.9; AND-10 (só Android; o web não tem)
 - **Branch:** `reescrita`
-- **Commits:** (preencher)
+- **Commits:** `1fbfc38`
 
 ## Contexto
 O Conversa não aparecia no "Compartilhar" do Android. Pelo TODO 4.9:
