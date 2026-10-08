@@ -19,6 +19,7 @@ import com.conversa.app.core.data.tempoReal.MonitorPrimeiroPlano
 import com.conversa.app.core.network.di.EscopoAplicacao
 import com.conversa.app.core.ui.componentes.AnexoRemoto
 import com.conversa.app.imagens.FetcherAnexo
+import com.conversa.app.imagens.FetcherQuadroVideo
 import dagger.Lazy
 import dagger.hilt.android.HiltAndroidApp
 import javax.inject.Inject
@@ -100,6 +101,8 @@ class ConversaApplication :
             add(OkHttpNetworkFetcherFactory(callFactory = { okHttp.get() }))
             add(FetcherAnexo.Fabrica { anexos.get() })
             add(FetcherAnexo.Chave())
+            add(FetcherQuadroVideo.Fabrica(context) { anexos.get() })
+            add(FetcherQuadroVideo.Chave())
         }
         .build()
 }

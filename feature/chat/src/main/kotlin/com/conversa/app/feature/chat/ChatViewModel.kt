@@ -130,6 +130,7 @@ class ChatViewModel @Inject constructor(
     sessao: SessaoRepositorio,
     private val mensagens: MensagensRepositorio,
     private val envio: EnvioMensagens,
+    private val anexos: AnexosRepositorio,
     private val arquivos: ArquivosLocais,
     private val fontes: FontesArquivo,
     private val player: PlayerAudio,
@@ -266,6 +267,10 @@ class ChatViewModel @Inject constructor(
         fila.value = fila.value.filterNot { it.uri == uri }
         viewModelScope.launch { envio.desistirDoArquivo(uri) }
     }
+
+    /** Vídeo no visualizador: o arquivo local (ainda enviando) ou a URL assinada (o player lê por partes). */
+    suspend fun urlDoVideo(conteudo: com.conversa.app.core.model.Conteudo): String? =
+        if (conteudo.local) conteudo.conteudo.removePrefix(PREFIXO_LOCAL) else anexos.url(conteudo.conteudo).getOrNull()
 
     /** Baixa para o cache (uma vez) e pede para a tela abrir com outro app. */
     fun abrirArquivo(identificador: String, nome: String, mime: String?) {

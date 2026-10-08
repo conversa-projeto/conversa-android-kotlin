@@ -40,11 +40,13 @@ class AnexosTest {
             ItemChat.Bolha(mensagem(2, imagem("oculta"), oculta = true), mostrarRemetente = false),
             ItemChat.Bolha(mensagem(3, Conteudo(null, 1, TipoConteudo.ARQUIVO, "pdf", "x.pdf", "pdf")), mostrarRemetente = false),
             ItemChat.Bolha(mensagem(4, imagem("c")), mostrarRemetente = false),
+            // Vídeo é tipo 3 (arquivo) com extensão de vídeo: entra no visualizador.
+            ItemChat.Bolha(mensagem(5, Conteudo(null, 1, TipoConteudo.ARQUIVO, "v", "festa.MP4", "MP4")), mostrarRemetente = false),
         )
 
         val imagens = imagensDaConversa(itens)
 
-        assertThat(imagens.map { it.conteudo.conteudo }).containsExactly("a", "b", "c").inOrder()
+        assertThat(imagens.map { it.conteudo.conteudo }).containsExactly("a", "b", "c", "v").inOrder()
         assertThat(imagens.first().legenda).isEqualTo("legenda")
         assertThat(imagens.last().legenda).isEmpty()
     }

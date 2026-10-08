@@ -92,6 +92,7 @@ class ChatViewModelTest {
             sessao,
             mensagens,
             envio,
+            mockk(relaxed = true),
             arquivos,
             mockk(relaxed = true),
             player,

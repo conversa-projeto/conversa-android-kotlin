@@ -1,6 +1,7 @@
 package com.conversa.app.feature.chat
 
 import androidx.compose.foundation.background
+import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.gestures.detectTapGestures
 import androidx.compose.foundation.gestures.rememberTransformableState
@@ -13,11 +14,15 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.heightIn
+import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.sizeIn
 import androidx.compose.foundation.layout.statusBarsPadding
 import androidx.compose.foundation.layout.widthIn
+import androidx.compose.foundation.lazy.LazyRow
+import androidx.compose.foundation.lazy.itemsIndexed
+import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.pager.HorizontalPager
 import androidx.compose.foundation.pager.rememberPagerState
 import androidx.compose.foundation.rememberScrollState
@@ -25,6 +30,7 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.outlined.InsertDriveFile
+import androidx.compose.material.icons.filled.PlayArrow
 import androidx.compose.material.icons.outlined.AudioFile
 import androidx.compose.material.icons.outlined.BrokenImage
 import androidx.compose.material.icons.outlined.Close
@@ -39,13 +45,17 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableFloatStateOf
 import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.produceState
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Color
@@ -62,6 +72,7 @@ import androidx.core.net.toUri
 import coil3.compose.AsyncImage
 import coil3.compose.AsyncImagePainter
 import com.conversa.app.core.data.anexos.AnexoLocal
+import com.conversa.app.core.media.ReprodutorVideo
 import com.conversa.app.core.model.Conteudo
 import com.conversa.app.core.model.ItemChat
 import com.conversa.app.core.model.Mensagem
@@ -71,7 +82,9 @@ import com.conversa.app.core.model.ehVideo
 import com.conversa.app.core.model.formatarTamanho
 import com.conversa.app.core.model.local
 import com.conversa.app.core.ui.componentes.AnexoRemoto
+import com.conversa.app.core.ui.componentes.QuadroVideo
 import com.conversa.app.core.ui.tema.ConversaTema
+import kotlinx.coroutines.launch
 
 /** Ícone pela extensão/tipo (ANX-09). */
 fun iconeDoArquivo(conteudo: Conteudo): ImageVector = when {
@@ -226,36 +239,71 @@ fun imagensDaConversa(itens: List<ItemChat>): List<ImagemDaConversa> = itens.asS
     .filterIsInstance<ItemChat.Bolha>()
     .map { it.mensagem }
     .filterNot { it.oculta }
-    .flatMap { mensagem -> mensagem.conteudos.filter { it.tipo == TipoConteudo.IMAGEM }.map { ImagemDaConversa(mensagem, it) } }
+    .flatMap { mensagem ->
+        mensagem.conteudos.filter { it.tipo == TipoConteudo.IMAGEM || ehVideo(it) }.map { ImagemDaConversa(mensagem, it) }
+    }
     .toList()
 
 /**
- * Visualizador em tela cheia (ANX-05): todas as imagens da conversa (menos as ocultas),
- * deslizando para os lados; pinça e duplo toque dão zoom; legenda embaixo.
+ * Vídeo na bolha (ANX-04, como o web): o primeiro quadro com o play; o toque abre o
+ * visualizador, onde ele toca. Enviando (arquivo local), só a prévia.
+ */
+@Composable
+fun VideoNaBolha(mensagem: Mensagem, conteudo: Conteudo, acoes: AcoesBolha) {
+    Box(
+        Modifier
+            .size(width = 240.dp, height = 160.dp)
+            .clip(RoundedCornerShape(8.dp))
+            .background(Color.Black)
+            .clickable(enabled = !conteudo.local) { acoes.aoAbrirImagem(mensagem, conteudo) },
+        contentAlignment = Alignment.Center,
+    ) {
+        AsyncImage(
+            model = QuadroVideo(conteudo.conteudo),
+            contentDescription = conteudo.nome.ifBlank { stringResource(R.string.conteudo_video) },
+            contentScale = ContentScale.Fit,
+            modifier = Modifier.fillMaxSize(),
+        )
+        Box(Modifier.size(56.dp).background(Color.Black.copy(alpha = 0.6f), CircleShape), contentAlignment = Alignment.Center) {
+            Icon(Icons.Filled.PlayArrow, contentDescription = null, tint = Color.White, modifier = Modifier.size(32.dp))
+        }
+    }
+}
+
+/**
+ * Visualizador em tela cheia (ANX-05): todas as imagens e vídeos da conversa (menos os
+ * ocultos), deslizando para os lados; imagens com pinça e duplo toque; vídeo com os
+ * controles do Media3; embaixo, quem mandou, a legenda e a tira de miniaturas.
  */
 @Composable
 fun VisualizadorImagens(imagens: List<ImagemDaConversa>, inicial: Int, acoes: AcoesBolha, aoFechar: () -> Unit) {
     Dialog(onDismissRequest = aoFechar, properties = DialogProperties(usePlatformDefaultWidth = false)) {
         val paginas = rememberPagerState(initialPage = inicial.coerceIn(0, (imagens.size - 1).coerceAtLeast(0))) { imagens.size }
-        Box(Modifier.fillMaxSize().background(ConversaTema.cores.fundoVisualizadorMidia)) {
-            HorizontalPager(state = paginas, modifier = Modifier.fillMaxSize()) { pagina ->
-                ImagemComZoom(imagens[pagina].conteudo)
-            }
-            // Fundo escuro no "×": continua visível sobre imagens claras e com zoom.
-            IconButton(
-                onClick = aoFechar,
-                modifier = Modifier
-                    .align(Alignment.TopEnd)
-                    .statusBarsPadding()
-                    .padding(8.dp)
-                    .background(Color.Black.copy(alpha = 0.5f), CircleShape),
-            ) {
-                Icon(Icons.Outlined.Close, contentDescription = stringResource(R.string.fechar), tint = Color.White)
+        val escopo = rememberCoroutineScope()
+        Column(Modifier.fillMaxSize().background(ConversaTema.cores.fundoVisualizadorMidia)) {
+            Box(Modifier.weight(1f).fillMaxWidth()) {
+                HorizontalPager(state = paginas, modifier = Modifier.fillMaxSize()) { pagina ->
+                    val conteudo = imagens[pagina].conteudo
+                    if (ehVideo(conteudo)) {
+                        VideoNoVisualizador(conteudo, ativo = paginas.currentPage == pagina, acoes)
+                    } else {
+                        ImagemComZoom(conteudo)
+                    }
+                }
+                // Fundo escuro no "×": continua visível sobre imagens claras e com zoom.
+                IconButton(
+                    onClick = aoFechar,
+                    modifier = Modifier
+                        .align(Alignment.TopEnd)
+                        .statusBarsPadding()
+                        .padding(8.dp)
+                        .background(Color.Black.copy(alpha = 0.5f), CircleShape),
+                ) {
+                    Icon(Icons.Outlined.Close, contentDescription = stringResource(R.string.fechar), tint = Color.White)
+                }
             }
             val atual = imagens.getOrNull(paginas.currentPage)
-            Column(
-                Modifier.align(Alignment.BottomCenter).fillMaxWidth().background(Color.Black.copy(alpha = 0.5f)).padding(16.dp),
-            ) {
+            Column(Modifier.fillMaxWidth().background(Color.Black.copy(alpha = 0.5f)).navigationBarsPadding().padding(12.dp)) {
                 if (atual != null) {
                     Text(
                         "${atual.mensagem.remetente} · ${horaDa(atual.mensagem)}",
@@ -275,6 +323,57 @@ fun VisualizadorImagens(imagens: List<ImagemDaConversa>, inicial: Int, acoes: Ac
                             Text(stringResource(R.string.abrir_com), color = Color.White)
                         }
                     }
+                }
+                if (imagens.size > 1) {
+                    TiraMiniaturas(imagens, paginas.currentPage) { escopo.launch { paginas.animateScrollToPage(it) } }
+                }
+            }
+        }
+    }
+}
+
+/** Vídeo do visualizador: busca a URL assinada (ou o arquivo local) e toca com o Media3. */
+@Composable
+private fun VideoNoVisualizador(conteudo: Conteudo, ativo: Boolean, acoes: AcoesBolha) {
+    val uri by produceState<String?>(null, conteudo.conteudo) { value = acoes.urlDoVideo(conteudo) }
+    var falhou by remember(conteudo.conteudo) { mutableStateOf(false) }
+    Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
+        val endereco = uri
+        when {
+            falhou -> Text(stringResource(R.string.video_falhou), color = Color.White)
+            endereco == null -> CircularProgressIndicator()
+            else -> ReprodutorVideo(endereco, ativo, aoFalhar = { falhou = true }, modifier = Modifier.fillMaxSize())
+        }
+    }
+}
+
+/** Miniaturas embaixo do visualizador (como o web): a atual em destaque; o toque vai até ela. */
+@Composable
+private fun TiraMiniaturas(imagens: List<ImagemDaConversa>, atual: Int, aoEscolher: (Int) -> Unit) {
+    val lista = rememberLazyListState(initialFirstVisibleItemIndex = (atual - 2).coerceAtLeast(0))
+    LaunchedEffect(atual) { lista.animateScrollToItem((atual - 2).coerceAtLeast(0)) }
+    LazyRow(state = lista, horizontalArrangement = Arrangement.spacedBy(6.dp), modifier = Modifier.padding(top = 8.dp)) {
+        itemsIndexed(imagens, key = { _, item -> "${item.mensagem.id}:${item.conteudo.ordem}" }) { indice, item ->
+            val selecionada = indice == atual
+            Box(
+                Modifier
+                    .size(48.dp)
+                    .clip(RoundedCornerShape(6.dp))
+                    .border(if (selecionada) 2.dp else 0.dp, if (selecionada) Color.White else Color.Transparent, RoundedCornerShape(6.dp))
+                    .alpha(if (selecionada) 1f else 0.6f)
+                    .clickable { aoEscolher(indice) },
+                contentAlignment = Alignment.Center,
+            ) {
+                if (ehVideo(item.conteudo)) {
+                    AsyncImage(
+                        QuadroVideo(item.conteudo.conteudo),
+                        contentDescription = null,
+                        contentScale = ContentScale.Crop,
+                        modifier = Modifier.fillMaxSize(),
+                    )
+                    Icon(Icons.Filled.PlayArrow, contentDescription = null, tint = Color.White, modifier = Modifier.size(20.dp))
+                } else {
+                    ImagemAnexo(item.conteudo, Modifier.fillMaxSize(), contentScale = ContentScale.Crop)
                 }
             }
         }

@@ -453,10 +453,10 @@
 
 ### 4.4 Imagens e vídeos (FC-404, FC-408, ANX-04, ANX-05)
 - [x] Bolha de imagem (proporção preservada, hora sobre a imagem) — `BolhaImagem` (até 260×320 dp, hora e status por cima, barra de envio); imagem com texto vai na bolha padrão. Testado no emulador (galeria e câmera; a imagem enviada volta pelo servidor) ✔ 389e66d
-- [ ] Visualizador em tela cheia: pager com todas as imagens e vídeos da conversa (exceto ocultas) — 🔄 `VisualizadorImagens` aberto pelo toque na imagem, pager com as imagens da conversa menos as ocultas (`imagensDaConversa` + teste), "Abrir com…"; testado no emulador. Falta: vídeos (com o Media3)
-- [ ] Zoom com pinça e duplo toque; legenda = textos da mesma mensagem; tira de miniaturas — 🔄 pinça e duplo toque (sem zoom o arrasto troca de imagem); legenda = remetente, hora e textos da mensagem; testado no emulador. Falta a tira de miniaturas
-- [ ] Vídeo na bolha: primeiro quadro + ícone de play
-- [ ] Vídeo no visualizador: Media3 com controles
+- [x] Visualizador em tela cheia: pager com todas as imagens e vídeos da conversa (exceto ocultas) — `VisualizadorImagens` aberto pelo toque na imagem ou no vídeo; `imagensDaConversa` inclui vídeos (tipo 3 com extensão de vídeo) (+ teste); legenda e "Abrir com…" embaixo, fora da área da mídia. Testado no emulador
+- [x] Zoom com pinça e duplo toque; legenda = textos da mesma mensagem; tira de miniaturas — pinça e duplo toque (sem zoom o arrasto troca de imagem); legenda = remetente, hora e textos; `TiraMiniaturas` (a atual em destaque, toque vai até ela; vídeo com o play). Testado no emulador
+- [x] Vídeo na bolha: primeiro quadro + ícone de play — `VideoNaBolha` + `QuadroVideo`/`FetcherQuadroVideo` (`MediaMetadataRetriever` pela URL assinada, lê por partes; o quadro fica no cache de disco do Coil; URL vencida tenta de novo; arquivo local enquanto envia). No emulador: vídeo gravado da tela, enviado pela galeria e recebido do B
+- [x] Vídeo no visualizador: Media3 com controles — `ReprodutorVideo` (`:core:media`, `PlayerView` do `media3-ui`): toca só na página visível, solta o player ao sair, pega o foco de áudio (o áudio da conversa pausa). No emulador: o vídeo de 6 s do B tocou pela URL assinada
 - [ ] Ações do visualizador: compartilhar, baixar
 
 ### 4.5 Áudio (FC-405, ANX-10)

@@ -67,6 +67,7 @@ import com.conversa.app.core.model.TipoConteudo
 import com.conversa.app.core.model.TipoExibicao
 import com.conversa.app.core.model.TipoReferencia
 import com.conversa.app.core.model.classificarMensagem
+import com.conversa.app.core.model.ehVideo
 import com.conversa.app.core.model.formatarDuracao
 import com.conversa.app.core.model.resumoCitacao
 import com.conversa.app.core.model.separarBlocosDeCodigo
@@ -89,6 +90,8 @@ data class AcoesBolha(
     val aoMencao: (Long) -> Unit = {},
     val aoLigar: (TipoChamada) -> Unit = {},
     val aoAbrirArquivo: (Conteudo) -> Unit = {},
+    /** URL assinada do vídeo (ou o arquivo local, enviando) para o visualizador tocar. */
+    val urlDoVideo: suspend (Conteudo) -> String? = { null },
     val aoAbrirImagem: (Mensagem, Conteudo) -> Unit = { _, _ -> },
     val aoAlternarAudio: (Mensagem, Conteudo) -> Unit = { _, _ -> },
     /** Chave do áudio ([chaveDoAudio]) e fração da barra (0..1). */
@@ -192,7 +195,7 @@ private fun ConteudoNaBolha(mensagem: Mensagem, conteudo: Conteudo, propria: Boo
                 .clickable { acoes.aoAbrirImagem(mensagem, conteudo) },
         )
         TipoConteudo.AUDIO, TipoConteudo.GRAVACAO_AUDIO -> PlayerNaBolha(mensagem, conteudo, propria, cor, acoes)
-        TipoConteudo.ARQUIVO -> LinhaArquivo(conteudo, cor, acoes)
+        TipoConteudo.ARQUIVO -> if (ehVideo(conteudo)) VideoNaBolha(mensagem, conteudo, acoes) else LinhaArquivo(conteudo, cor, acoes)
         TipoConteudo.FIGURINHA -> Marcador("🏷", stringResource(R.string.conteudo_figurinha), cor)
         TipoConteudo.ENQUETE -> Column {
             Text("📊 " + stringResource(R.string.votacao), color = cor, fontWeight = FontWeight.SemiBold)

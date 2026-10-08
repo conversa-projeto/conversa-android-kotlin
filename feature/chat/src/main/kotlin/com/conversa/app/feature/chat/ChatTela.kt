@@ -148,6 +148,7 @@ fun ChatRotaTela(
                     aoMencao = viewModel::abrirDireta,
                     aoLigar = aoLigar,
                     aoAbrirArquivo = { viewModel.abrirArquivo(it.conteudo, it.nome.ifBlank { it.conteudo }, null) },
+                    urlDoVideo = viewModel::urlDoVideo,
                     aoAlternarAudio = viewModel::alternarAudio,
                     aoBuscarAudio = viewModel::buscarAudio,
                 ),

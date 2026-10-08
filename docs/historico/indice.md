@@ -37,6 +37,7 @@
 - 2026-10-07 · [Etapa 4 — seletor de anexos, visualizador e teste no emulador](2026-10-07-10-etapa-4-seletor-visualizador-e-teste-no-emulador.md) — galeria/câmera/documento no campo, visualizador, `FetcherAnexo` (URL vencida renovada no Coil), lista acompanha mensagem nova; testado nos dois sentidos e com 200 MB; 177 testes
 - 2026-10-07 · [Etapa 4 — player de áudio (Media3) e `:core:media`](2026-10-07-11-etapa-4-player-de-audio.md) — um áudio por vez, barra com seek, verde até ouvir + `POST /mensagem/reproduzir`, para ao sair da conversa; download com URL vencida tenta de novo; 185 testes
 - 2026-10-07 · [Etapa 4 — gravação de áudio no campo](2026-10-07-12-etapa-4-gravacao-de-audio.md) — microfone (segurar envia, toque trava, arrastar cancela), barra com pausa/ouvir, AAC/M4A em trechos juntados, tipo 5, "gravando" a cada 2,5 s; `nomeSeguro` sem `..`; 193 testes
+- 2026-10-08 · [Etapa 4 — vídeo na bolha e no visualizador, tira de miniaturas](2026-10-08-01-etapa-4-video.md) — primeiro quadro pela URL assinada (sem baixar tudo), Media3 com controles no visualizador, miniaturas; 193 testes
 
 ## Notificações e push (etapa 5)
 _(nada ainda)_
