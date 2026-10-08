@@ -484,11 +484,11 @@
 - [ ] Notificação de download concluído — 🔄 `AvisoDownloadNotificacao` (canal "Downloads", toque abre o arquivo) só publica se notificações estiverem permitidas; a permissão `POST_NOTIFICATIONS` é pedida na etapa 5 — testar lá
 
 ### 4.8 Transcrição (FC-409, ANX-12)
-- [x] Abaixo dos áudios (tipos 4 e 5): estado inicial a partir de `transcricao_status`/`transcricao` — `TranscricaoNaBolha` lê da própria mensagem (Room); o resultado vale para todas as mensagens com o mesmo anexo (`MensagemDao.atualizarTranscricao`)
-- [x] Botão "Transcrever" → `PUT /anexo/transcricao {identificador}` — `TranscricoesRepositorio.transcrever` (desliga o botão enquanto pede)
-- [x] "Transcrevendo…" → `GET /anexo/transcricao?identificador=` a cada 3 s — também quando a mensagem já chega "processando" (pedida por outra pessoa); no escopo do app, até 1 h (+ testes `TranscricoesRepositorioTest`). ⚠ No emulador só deu para testar o servidor sem transcritor (o de dev está com `transcritor_url` vazio); pedir, acompanhar e mostrar o texto ficaram testados por unidade
-- [x] Concluída → texto (ou "(nenhuma fala reconhecida)"); erro → "Não foi possível transcrever. Tentar de novo" — e o motivo do transcritor embaixo, como o web
-- [x] Esconder o botão se o servidor não tem transcritor (por enquanto: esconder após o primeiro erro de configuração; depois, via S10) — 400 → `desligada` até o fim da sessão; o motivo do servidor aparece no aviso. Testado no emulador ("Transcrição não configurada: defina o parâmetro transcritor_url." e os 4 botões sumiram)
+- [x] Abaixo dos áudios (tipos 4 e 5): estado inicial a partir de `transcricao_status`/`transcricao` — `TranscricaoNaBolha` lê da própria mensagem (Room); o resultado vale para todas as mensagens com o mesmo anexo (`MensagemDao.atualizarTranscricao`) ✔ f5d1501
+- [x] Botão "Transcrever" → `PUT /anexo/transcricao {identificador}` — `TranscricoesRepositorio.transcrever` (desliga o botão enquanto pede) ✔ f5d1501
+- [x] "Transcrevendo…" → `GET /anexo/transcricao?identificador=` a cada 3 s — também quando a mensagem já chega "processando" (pedida por outra pessoa); no escopo do app, até 1 h (+ testes `TranscricoesRepositorioTest`). ⚠ No emulador só deu para testar o servidor sem transcritor (o de dev está com `transcritor_url` vazio); pedir, acompanhar e mostrar o texto ficaram testados por unidade ✔ f5d1501
+- [x] Concluída → texto (ou "(nenhuma fala reconhecida)"); erro → "Não foi possível transcrever. Tentar de novo" — e o motivo do transcritor embaixo, como o web ✔ f5d1501
+- [x] Esconder o botão se o servidor não tem transcritor (por enquanto: esconder após o primeiro erro de configuração; depois, via S10) — 400 → `desligada` até o fim da sessão; o motivo do servidor aparece no aviso. Testado no emulador ("Transcrição não configurada: defina o parâmetro transcritor_url." e os 4 botões sumiram) ✔ f5d1501
 
 ### 4.9 Receber compartilhamento (FC-410, AND-10)
 - [ ] `intent-filter` `ACTION_SEND`/`ACTION_SEND_MULTIPLE` para `text/*`, `image/*`, `video/*`, `*/*`

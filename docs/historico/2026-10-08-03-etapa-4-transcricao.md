@@ -4,7 +4,7 @@
 - **Tipo:** código / testes
 - **Itens:** `TODO.md` 4.8; ANX-12; contrato §8.6; pendência S10 (servidor dizer se tem transcritor)
 - **Branch:** `reescrita`
-- **Commits:** (preencher)
+- **Commits:** `f5d1501`
 
 ## Contexto
 O web mostra, embaixo de cada áudio (tipos 4 e 5), o componente `TranscricaoAudio.vue`, que tem três estados:
