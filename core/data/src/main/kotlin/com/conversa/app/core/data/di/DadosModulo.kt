@@ -6,6 +6,8 @@ import com.conversa.app.core.data.anexos.FontesArquivo
 import com.conversa.app.core.data.anexos.FontesArquivoAndroid
 import com.conversa.app.core.data.autenticacao.InfoDispositivo
 import com.conversa.app.core.data.autenticacao.InfoDispositivoAndroid
+import com.conversa.app.core.data.chamadas.ChamadasRemotas
+import com.conversa.app.core.data.chamadas.ChamadasRepositorio
 import com.conversa.app.core.data.mensagens.AgendadorEnvio
 import com.conversa.app.core.data.mensagens.AgendadorEnvioWorkManager
 import com.conversa.app.core.network.auth.TokenProvider
@@ -34,6 +36,9 @@ abstract class DadosModulo {
 
     @Binds
     abstract fun infoDispositivo(info: InfoDispositivoAndroid): InfoDispositivo
+
+    @Binds
+    abstract fun chamadasRemotas(repositorio: ChamadasRepositorio): ChamadasRemotas
 
     companion object {
         /** Relógio injetável (testes controlam a hora). */

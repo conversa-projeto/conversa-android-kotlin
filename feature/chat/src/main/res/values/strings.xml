@@ -6,7 +6,6 @@
     <string name="chamada_de_voz">Chamada de voz</string>
     <string name="chamada_de_video">Chamada de vídeo</string>
     <string name="membros_do_grupo">Membros do grupo</string>
-    <string name="chamadas_em_breve">As chamadas chegam na etapa 6.</string>
 
     <!-- Digitando/gravando (ENV-15), textos do web -->
     <string name="digitando">Digitando…</string>

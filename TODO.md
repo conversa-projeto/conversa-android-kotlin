@@ -566,24 +566,25 @@
 
 - [x] Criar os módulos `:core:webrtc` e `:feature:chamada` (adiados da 1.2) — `:core:webrtc` com a interface `MidiaChamada` (a implementação WebRTC é a 6.1); `:feature:chamada` com o `GerenciadorChamadas` ✔ ceeec72
 ### 6.1 Infra de mídia (FC-703, FC-704)
-- [ ] Transplantar o `WhipWhepClient` para `:core:webrtc`, usando o OkHttp compartilhado
-- [ ] WHIP/WHEP: ler o header `Location` e fazer `DELETE` ao encerrar
-- [ ] `PeerConnectionFactory` e `EglBase` únicos por processo
-- [ ] `PublicadorWhip`: PC `SEND_ONLY`, áudio Opus (32/64/128 kbps conforme a configuração), vídeo opcional
-- [ ] `setCodecPreferences`: H264 → VP9 → VP8
-- [ ] Câmera: padrão 360p a 15 fps (como no web para celular); trocar frontal/traseira
-- [ ] `AssinanteWhep` por participante: PC `RECV_ONLY`; registrar o peer **antes** de `setRemoteDescription` (#10)
-- [ ] ICE: `GET /api/ice` a cada PC; `GATHER_ONCE`; esperar até 5 s; "forçar relay" → `iceTransportPolicy = RELAY`
-- [ ] Retentativas WHEP 404: vídeo 40×1 s; áudio 12×0,8 s
-- [ ] ICE `FAILED` → recriar só o PC daquele peer
-- [ ] Lock só para mudar o estado, nunca durante a rede (#18)
-- [ ] `dispose()` em tracks e PCs ao encerrar (#37)
-- [ ] **Teste:** o arquivo gravado aparece no MediaMTX
+- [x] Transplantar o `WhipWhepClient` para `:core:webrtc`, usando o OkHttp compartilhado — reescrito como `ClienteWhipWhep` (o legado aceitava qualquer certificado): OkHttp do app (o token só vai para `/api`), sem trickle ICE (+ testes com MockWebServer)
+- [x] WHIP/WHEP: ler o header `Location` e fazer `DELETE` ao encerrar — o MediaMTX responde o caminho a partir da raiz dele; atrás do nginx vira `<base>/webrtc/...` (+ teste). No emulador, contra o web (Chrome com câmera falsa): depois de sair, o stream some do MediaMTX (404)
+- [x] `PeerConnectionFactory` e `EglBase` únicos por processo — `FabricaWebRtc` (`io.github.webrtc-sdk:android` 144.7559.15)
+- [ ] `PublicadorWhip`: PC `SEND_ONLY`, áudio Opus (32/64/128 kbps conforme a configuração), vídeo opcional — 🔄 publicação só de envio com Opus a 32 kbps (o "normal" do web) e vídeo opcional; 64/128 kbps entram com a configuração de chamadas (etapa 8). No emulador, contra o web (Chrome com câmera falsa): publicado e assistido pelo web
+- [x] Câmera desligada manda quadros pretos — o MediaMTX só registra a trilha que já chega com pacote ao publicar; sem isso, "Apenas assistir" publicava só o áudio e depois não dava para ligar a câmera. A câmera fecha (some o indicador do Android). No emulador, contra o web (Chrome com câmera falsa): "Apenas assistir" → 2 trilhas (Opus, VP9); ligar a câmera → o web passou a ver o vídeo
+- [x] `setCodecPreferences`: H264 → VP9 → VP8 — `ordenarGravaveis` (+ teste). No emulador, contra o web (Chrome com câmera falsa): sem H264 por hardware no emulador, saiu VP9, e o MediaMTX gravou (`vp09` + Opus)
+- [x] Câmera: padrão 360p a 15 fps (como no web para celular); trocar frontal/traseira — `Camera2Enumerator`, frontal primeiro; "Trocar câmera" na tela. No emulador, contra o web (Chrome com câmera falsa): trocou da câmera 1 para a 10
+- [x] `AssinanteWhep` por participante: PC `RECV_ONLY`; registrar o peer **antes** de `setRemoteDescription` (#10). No emulador, contra o web (Chrome com câmera falsa): o vídeo e o áudio do web chegaram
+- [x] ICE: `GET /api/ice` a cada PC; `GATHER_ONCE`; esperar até 5 s; "forçar relay" → `iceTransportPolicy = RELAY` — a mídia passou pelo coturn (TCP 3478, `adb reverse`)
+- [x] Retentativas WHEP 404: vídeo 40×1 s; áudio 12×0,8 s — e o vídeo esperado (pela resposta do MediaMTX) que não chega em 5 s refaz a assinatura, como o web
+- [x] ICE `FAILED` → recriar só o PC daquele peer — também "desconectada" por mais de 2 s (como o web); a publicação que cai é refeita. Não forcei uma queda de rede no emulador
+- [x] Lock só para mudar o estado, nunca durante a rede (#18) — os objetos do WebRTC só são mexidos numa vez única (`limitedParallelism(1)`); a rede suspende sem segurar a vez
+- [x] `dispose()` em tracks e PCs ao encerrar (#37) — `encerrar()` troca a sessão (o que está em andamento para sem mexer em nada) e desmonta: conexões, trilhas, fontes, câmera; os `DELETE` saem fora da sessão
+- [x] **Teste:** o arquivo gravado aparece no MediaMTX — chamada do app para o web: `call-1-u-1` (Android, VP9 + Opus) e `call-1-u-2` (web), crescendo durante a chamada
 
 ### 6.2 `CallManager` (FC-700)
 - [x] `ChamadasRemotas`/`ChamadasRepositorio` (`core/data/chamadas`): as ações do §9.2 para o gerenciador (interface, para o teste usar um falso) ✔ ceeec72
 - [x] Estados: `Inativo`, `Chamando`, `Recebendo`, `Conectando`, `Ativa`, `Encerrando` — `FaseChamada`; roda num despachante de uma coisa por vez (como o JavaScript do web) e confere a "geração" na volta de cada chamada de rede; sem trava durante a rede (#18) ✔ ceeec72
-- [ ] `StateFlow<EstadoChamada>`: chamada, participantes, tracks, mute, câmera, rota de áudio, duração, modo de exibição — 🔄 fase, chamada/participantes, tipo, quem ligou, mídia local, microfone, câmera, `ativaDesde` (duração), pedido de vídeo e chat prontos; faltam as trilhas (6.1, vêm da mídia), a rota de áudio (6.8) e o modo de exibição (6.11)
+- [ ] `StateFlow<EstadoChamada>`: chamada, participantes, tracks, mute, câmera, rota de áudio, duração, modo de exibição — 🔄 fase, chamada/participantes, tipo, quem ligou, mídia local, microfone, câmera, `ativaDesde` (duração), pedido de vídeo e chat no gerenciador; as trilhas vêm da mídia (`MidiaWebRtc.trilhas`); faltam a rota de áudio (6.8) e o modo de exibição (6.11)
 - [x] Assinar o `SharedFlow` do WS para os eventos 51–57 (único consumidor de chamada) — e as `chamadasPendentes` do `SyncManager`; liga o `ConexaoTempoReal.chamadaAtiva` (WebSocket fica ligado em segundo plano durante a chamada); o logout encerra. O `iniciar()` no `Application` entra com a mídia (6.1) ✔ ceeec72
 - [ ] `encerrar()` idempotente: DELETE WHIP/WHEP → `dispose` → liberar o áudio → cancelar as notificações → Telecom disconnect → parar o serviço — 🔄 idempotente e corta a mídia (`MidiaChamada.encerrar`) antes de mudar o estado; em `Encerrando` espera o servidor até 3 s. Áudio, notificações, Telecom e serviço vão observar o estado (6.3, 6.5, 6.8)
 - [x] Testes unitários de **todas** as transições (incluindo eventos fora de ordem e duplicados) — `GerenciadorChamadasTest`, 51 testes (51 duplicado, 51 depois do 52, o meu 54 durante o atender, 52 durante o `entrar`, desligar durante o `iniciar`, 54/55 perdidos, pendente repetida…); um teste de mutação confirmou que pegam regressões ✔ ceeec72
@@ -597,23 +598,23 @@
 - [ ] **Teste:** atender pelo botão do fone Bluetooth; receber uma ligação GSM durante a chamada → coloca em espera
 
 ### 6.4 Iniciar chamada (FC-705, CHA-01)
-- [ ] Botões de voz e vídeo no cabeçalho do chat
-- [ ] Participantes: direta = [eu, outro]; grupo = `GET /conversa/usuarios?conversa=` (todos, inclusive eu)
-- [ ] Pedir as permissões (microfone; câmera se vídeo) na hora
-- [ ] `PUT /chamada/iniciar {tipo, usuarios:[{id}], conversa_id}` → já publicar via WHIP
-- [ ] Tela "Chamando…" + som de chamando em loop
-- [ ] Bloquear se já existe chamada ("Já existe uma chamada em andamento") — 🔄 o gerenciador recusa e emite `AvisoChamada.JaEmChamada` (`GerenciadorChamadas`, com teste); falta mostrar o texto (tela, 6.4)
+- [x] Botões de voz e vídeo no cabeçalho do chat — `rememberLigar` (`feature/chamada`); também o "ligar" da bolha de chamada. No emulador, contra o web (Chrome com câmera falsa): ligou para o web
+- [x] Participantes: direta = [eu, outro]; grupo = `GET /conversa/usuarios?conversa=` (todos, inclusive eu) — `LigarViewModel`; em grupo ainda não testei no emulador
+- [x] Pedir as permissões (microfone; câmera se vídeo) na hora — sem câmera liga só com áudio; sem microfone avisa "Não foi possível acessar o microfone". No emulador, contra o web (Chrome com câmera falsa): o diálogo do Android apareceu no primeiro vídeo
+- [x] `PUT /chamada/iniciar {tipo, usuarios:[{id}], conversa_id}` → já publicar via WHIP. No emulador, contra o web (Chrome com câmera falsa): o MediaMTX recebeu o stream do app antes de o web atender
+- [ ] Tela "Chamando…" + som de chamando em loop — 🔄 a tela (`ChamadaActivity`) abre ao ligar com "Chamando…"; falta o som
+- [x] Bloquear se já existe chamada ("Já existe uma chamada em andamento") — o gerenciador recusa e a tela da conversa mostra o aviso (texto testado)
 - [x] Cancelar enquanto chama: `POST /chamada/cancelar {id}` (FC-711) — `desligar()` em `Chamando` (`GerenciadorChamadas`, com teste); desligar enquanto o servidor ainda cria a chamada cancela a que nasceu ✔ ceeec72
 - [x] Timeout local (ex.: 45 s sem ninguém atender) → cancelar (`GerenciadorChamadas`, com teste) ✔ ceeec72
 
 ### 6.5 Chamada recebida (FC-706, FC-707, CHA-03, CHA-04, CHA-05)
-- [ ] WS 51 (ou push S1) → `GET /chamada/dados?id=` → `CallManager` em `Recebendo`
+- [x] WS 51 (ou push S1) → `GET /chamada/dados?id=` → `CallManager` em `Recebendo` — pelo WebSocket. No emulador, contra o web (Chrome com câmera falsa): o web ligou e o app tocou. Pelo push: ⛔ depende do FCM (5.1) e do S1
 - [ ] Telecom `addCall` (entrada) + notificação CallStyle `forIncomingCall` + full-screen intent
-- [ ] Tela de chamada recebida (`showWhenLocked`, `turnScreenOn`): nome, avatar, "Vídeo + Áudio"/"Somente áudio"
-- [ ] Botões **tocáveis**: Recusar, Atender e, em vídeo, "Atender só assistindo"
+- [x] Tela de chamada recebida (`showWhenLocked`, `turnScreenOn`): nome, avatar, "Vídeo + Áudio"/"Somente áudio" — `ChamadaActivity` com os textos do web ("Chamada recebida", "… está ligando…"); com o app na frente ela abre sozinha (`ApresentadorChamada`); em segundo plano depende da notificação de tela cheia (abaixo)
+- [x] Botões **tocáveis**: Recusar, Atender e, em vídeo, "Atender só assistindo" — botões redondos de 72 dp. No emulador, contra o web (Chrome com câmera falsa): Atender e Recusar funcionaram (o web parou ao recusar)
 - [ ] O toque **só para** ao atender, recusar, encerrar remoto ou no timeout (#7) — 🔄 a fase sai de `Recebendo` só nesses casos (`GerenciadorChamadas`, com teste); falta o toque observar a fase (6.5)
 - [x] 30 s sem resposta → `POST /chamada/recusar {id, nao_atendeu:true}` (`GerenciadorChamadas`, com teste) ✔ ceeec72
-- [ ] Atender: mídia vídeo+áudio → só áudio → só recepção (fallback) → `POST /chamada/entrar {id}` → publicar → assinar os outros — 🔄 a sequência está no gerenciador (`GerenciadorChamadas`, com teste); o fallback e a mídia de verdade são a 6.1
+- [x] Atender: mídia vídeo+áudio → só áudio → só recepção (fallback) → `POST /chamada/entrar {id}` → publicar → assinar os outros — No emulador, contra o web (Chrome com câmera falsa): atendeu e falou nos dois sentidos
 - [ ] "Atender" pela notificação usa `PendingIntent.getActivity` ou Telecom (nunca broadcast → activity, #3)
 - [x] Recusar: **um** `POST /chamada/recusar {id}` (`GerenciadorChamadas`, com teste): recusar duas vezes, ou recusar e desligar, manda um só ✔ ceeec72
 
@@ -629,8 +630,8 @@
 - [x] 55: remover o peer → `GET /chamada/dados` → se ninguém mais com status "Entrou", sair (`POST /chamada/sair`) — o servidor **não manda o 52** nesse caso (`GerenciadorChamadas`, com teste); o monitor também pega um 55 perdido ✔ ceeec72
 - [x] 53 de outro em chamada de 2 pessoas → encerrar (`GerenciadorChamadas`, com teste); em grupo, encerra quando ninguém mais está tocando nem dentro ✔ ceeec72
 - [x] 52 → encerrar (`GerenciadorChamadas`, com teste) ✔ ceeec72
-- [ ] A cada 4 s em `Ativa`: `GET /chamada/dados` e reconectar quem caiu ou está sem trilha — 🔄 o monitor de 4 s busca os dados e manda a mídia sincronizar (`GerenciadorChamadas`, com teste); reconectar quem caiu é da mídia (6.1)
-- [ ] Botão sair: `POST /chamada/sair {id}` — 🔄 `desligar()` na chamada sai (um `POST` só, mesmo com toque duplo) (`GerenciadorChamadas`, com teste); falta o botão (6.9)
+- [x] A cada 4 s em `Ativa`: `GET /chamada/dados` e reconectar quem caiu ou está sem trilha — o monitor busca os dados e a mídia refaz a assinatura que falhou
+- [x] Botão sair: `POST /chamada/sair {id}` — "Sair da chamada" (um `POST` só). No emulador, contra o web (Chrome com câmera falsa): sair no app encerrou no web; sair no web encerrou no app (55, sem 52)
 
 ### 6.8 Áudio (FC-713, AND-04, AND-05)
 - [ ] Foco de áudio durante a chamada (pausa a música)
@@ -640,12 +641,12 @@
 - [ ] Parar qualquer áudio de mensagem ao entrar em chamada
 
 ### 6.9 Tela da chamada ativa (FC-714, CHA-11)
-- [ ] Cabeçalho: "Chamando…"/"Em chamada"/"Encerrando…", duração, tipo, nº de pessoas
-- [ ] Controles: microfone, câmera (vídeo), trocar câmera, rota de áudio, adicionar pessoa, chat, sair
-- [ ] Estado de mute e câmera reativo (StateFlow), ícones corretos, `contentDescription` em tudo
-- [ ] Cores: microfone, câmera e som **vermelhos quando desligados**; tela, chat e ponteiro **azuis quando ligados**; demais neutros
-- [ ] `BackHandler`: voltar = minimizar (não encerra)
-- [ ] Tiles: nome ("Você"), iniciais sem vídeo, faixa vermelha de erro de conexão
+- [x] Cabeçalho: "Chamando…"/"Em chamada"/"Encerrando…", duração, tipo, nº de pessoas — textos do web; duração `mm:ss`/`hh:mm:ss` (+ teste)
+- [ ] Controles: microfone, câmera (vídeo), trocar câmera, rota de áudio, adicionar pessoa, chat, sair — 🔄 microfone, câmera, trocar câmera, "Ativar vídeo" e sair prontos (testados); faltam rota de áudio (6.8), adicionar pessoa e chat (6.13)
+- [x] Estado de mute e câmera reativo (StateFlow), ícones corretos, `contentDescription` em tudo — e `stateDescription` "Ligado"/"Desligado" para o TalkBack
+- [ ] Cores: microfone, câmera e som **vermelhos quando desligados**; tela, chat e ponteiro **azuis quando ligados**; demais neutros — 🔄 microfone e câmera vermelhos quando desligados (cores do FMX: `chamadaEncerrar`, `chamadaBotao`); som, tela, chat e ponteiro chegam com os botões deles
+- [ ] `BackHandler`: voltar = minimizar (não encerra) — 🔄 voltar fecha a tela e a chamada continua; falta o caminho de volta (banner, 6.12)
+- [x] Tiles: nome ("Você"), iniciais sem vídeo, faixa vermelha de erro de conexão — grade de participantes, miniatura local com "Você"; sem vídeo do outro, avatar (não um quadro preto)
 - [ ] **Teste:** atender e desligar só com o TalkBack
 
 ### 6.10 Histórico de chamadas (FC-715, CHA-22)
@@ -656,11 +657,11 @@
 - [ ] Toque → abrir a conversa; botão "Ligar novamente" (mesmo tipo e participantes)
 
 ### 6.11 Vídeo (FC-716, CHA-12, CHA-16)
-- [ ] Renderers com `key(track)` e `onRelease` (#39); PiP local com `setZOrderMediaOverlay(true)`
+- [x] Renderers com `key(track)` e `onRelease` (#39); PiP local com `setZOrderMediaOverlay(true)` — o `removeSink` é protegido (a trilha pode já ter sido descartada no fim da chamada)
 - [ ] Modos: Grade (1/2/3/4 colunas conforme o número), Destaque, Tela única com setas
 - [ ] Toque no tile → destacar; toque no destaque → voltar à grade
-- [ ] Upgrade áudio→vídeo: abrir a câmera → republicar → `POST /chamada/video {id}` (proteger contra toque duplo) — 🔄 `ligarVideo()` com a proteção (`GerenciadorChamadas`, com teste); abrir a câmera e republicar são da mídia (6.1)
-- [ ] Receber o WS 56: já em vídeo → reassinar quem republicou; senão, modal "<nome> ativou o vídeo" com "Apenas assistir" / "Transmitir também" (15 s → "Apenas assistir") — 🔄 regra e os 15 s prontos (`pedidoVideo`, `responderVideo`) (`GerenciadorChamadas`, com teste); falta o modal
+- [x] Upgrade áudio→vídeo: abrir a câmera → republicar → `POST /chamada/video {id}` (proteger contra toque duplo) — "Ativar vídeo". No emulador, contra o web (Chrome com câmera falsa): o web recebeu o 56 ("Teste Android A ativou o vídeo") e o vídeo do app
+- [x] Receber o WS 56: já em vídeo → reassinar quem republicou; senão, modal "<nome> ativou o vídeo" com "Apenas assistir" / "Transmitir também" (15 s → "Apenas assistir") — No emulador, contra o web (Chrome com câmera falsa): o modal apareceu; "Apenas assistir" mostrou o vídeo do web com a câmera do app desligada
 - [ ] FGS com o tipo `camera` adicionado quando o vídeo liga
 
 ### 6.12 Minimizar (FC-717, CHA-13, AND-06)

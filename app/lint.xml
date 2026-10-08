@@ -24,4 +24,8 @@
     <issue id="PackageManagerGetSignatures" severity="error" />
     <!-- targetSdk 36 de propósito: subir para 37 é decisão à parte (mudanças de comportamento). -->
     <issue id="OldTargetApi" severity="ignore" />
+    <!-- WebRTC na linha 144 de propósito: a 150 só tem a primeira versão (ver o histórico de 2026-10-08). -->
+    <issue id="NewerVersionAvailable">
+        <ignore regexp="io.github.webrtc-sdk" />
+    </issue>
 </lint>

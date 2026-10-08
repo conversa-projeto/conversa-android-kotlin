@@ -84,6 +84,7 @@ import com.conversa.app.core.ui.componentes.LocalAvisos
 import com.conversa.app.core.ui.componentes.mostrarErro
 import com.conversa.app.core.ui.estado.ColetarEventos
 import com.conversa.app.core.ui.tema.ConversaTema
+import com.conversa.app.feature.chamada.rememberLigar
 import java.io.File
 import java.time.Instant
 import java.time.ZoneId
@@ -110,9 +111,8 @@ fun ChatRotaTela(
     val avisos = LocalAvisos.current
     val lista = rememberLazyListState()
     val escopo = rememberCoroutineScope()
-    val avisoChamadas = stringResource(R.string.chamadas_em_breve)
-    // Chamadas entram na etapa 6; até lá, só o aviso.
-    val aoLigar: (TipoChamada) -> Unit = { escopo.launch { avisos.showSnackbar(avisoChamadas) } }
+    // Botões de voz e vídeo (e "ligar de novo" na bolha da chamada): pede as permissões e liga (6.4).
+    val aoLigar: (TipoChamada) -> Unit = rememberLigar(estado.conversa)
     val contexto = LocalContext.current
     val recursos = LocalResources.current
     val semApp = stringResource(R.string.nenhum_app_para_abrir)

@@ -2,12 +2,14 @@
 // sem instalar a CA do mkcert no aparelho. Faz o mesmo que o nginx do servidor:
 //   /storage/...  → MinIO (127.0.0.1:9000), tirando o /storage e mantendo o Host
 //                   (o MinIO valida a assinatura da URL com ele);
+//   /webrtc/...   → MediaMTX (127.0.0.1:8889), tirando o /webrtc (WHIP/WHEP das chamadas);
 //   o resto       → API (127.0.0.1:8080), com X-Forwarded-Proto: http, inclusive o WebSocket /ws/.
 // O servidor monta as URLs de anexo com o Host + X-Forwarded-Proto da requisição
 // (conversa/src/contexto.ts), então elas voltam apontando para este proxy.
 //
 // Uso:  node ferramentas/proxy-dev.mjs            (porta 8081)
 //       adb reverse tcp:8081 tcp:8081
+//       adb reverse tcp:3478 tcp:3478   (chamadas: o TURN do coturn, só TCP, é por onde a mídia passa)
 //       no app (build de debug): servidor = http://localhost:8081
 // Só para desenvolvimento: escuta apenas em 127.0.0.1. Guia: docs/desenvolvimento/emulador.md.
 //
@@ -21,11 +23,13 @@ import net from 'node:net'
 const PORTA = Number(process.env.PORTA ?? 8081)
 const API = { host: '127.0.0.1', port: Number(process.env.API_PORTA ?? 8080) }
 const MINIO = { host: '127.0.0.1', port: Number(process.env.MINIO_PORTA ?? 9000) }
+const MEDIAMTX = { host: '127.0.0.1', port: Number(process.env.MEDIAMTX_PORTA ?? 8889) }
 const URL_VENCIDA = process.env.URL_VENCIDA === '1'
 const jaRecusados = new Set()
 
 function destino(url) {
   if (url.startsWith('/storage/')) return { ...MINIO, path: url.slice('/storage'.length) }
+  if (url.startsWith('/webrtc/')) return { ...MEDIAMTX, path: url.slice('/webrtc'.length) }
   return { ...API, path: url }
 }
 
@@ -71,5 +75,5 @@ servidor.on('upgrade', (req, socket, cabeca) => {
 })
 
 servidor.listen(PORTA, '127.0.0.1', () => {
-  console.log(`proxy-dev em http://127.0.0.1:${PORTA} → API ${API.host}:${API.port}, /storage → MinIO ${MINIO.host}:${MINIO.port}`)
+  console.log(`proxy-dev em http://127.0.0.1:${PORTA} → API ${API.host}:${API.port}, /storage → MinIO ${MINIO.host}:${MINIO.port}, /webrtc → MediaMTX ${MEDIAMTX.host}:${MEDIAMTX.port}`)
 })

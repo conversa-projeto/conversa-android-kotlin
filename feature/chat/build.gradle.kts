@@ -11,4 +11,6 @@ dependencies {
     implementation(libs.androidx.activity.compose)
     // Player de áudio único (4.5).
     implementation(projects.core.media)
+    // Ligar a partir da conversa (6.4).
+    implementation(projects.feature.chamada)
 }

@@ -49,6 +49,7 @@
 
 ## Chamadas (etapa 6)
 - 2026-10-08 · [Etapa 6 — módulos de chamada e a máquina de estados](2026-10-08-08-etapa-6-maquina-de-estados-chamada.md) — `:core:webrtc` (interface `MidiaChamada`) e `:feature:chamada` (`GerenciadorChamadas`): fases, eventos 51–57, pendentes, regras do web (ocupado, 30 s, 25 s, 55 sem 52…), monitor de 4 s; 51 testes com eventos duplicados e fora de ordem
+- 2026-10-08 · [Etapa 6 — mídia WebRTC (WHIP/WHEP), tela da chamada e ligar pela conversa](2026-10-08-09-etapa-6-midia-webrtc-e-tela.md) — `MidiaWebRtc` (publicação, assinaturas, ICE só relay, VP9/H264, quadros pretos com a câmera desligada), `ChamadaActivity` (recebida e em chamada), botões de ligar; testado contra o web: gravação no MediaMTX, atender, recusar, sair dos dois lados, upgrade para vídeo; 274 testes
 
 ## Ações sobre mensagens (etapa 7)
 _(nada ainda)_

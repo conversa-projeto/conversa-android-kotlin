@@ -1,0 +1,43 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- Textos do web (IncomingCallModal, CallWindow, VideoUpgradeModal) -->
+    <string name="chamada_recebida">Chamada recebida</string>
+    <string name="esta_ligando">%1$s está ligando…</string>
+    <string name="alguem">Alguém</string>
+    <string name="video_e_audio">Vídeo + Áudio</string>
+    <string name="somente_audio">Somente Áudio</string>
+    <string name="recusar">Recusar</string>
+    <string name="atender">Atender</string>
+    <string name="atender_so_assistindo">Atender só assistindo</string>
+
+    <string name="chamando">Chamando…</string>
+    <string name="conectando">Conectando…</string>
+    <string name="em_chamada">Em chamada</string>
+    <string name="encerrando">Encerrando…</string>
+    <string name="video">Vídeo</string>
+    <string name="audio">Áudio</string>
+    <plurals name="pessoas">
+        <item quantity="one">%1$d pessoa</item>
+        <item quantity="many">%1$d pessoas</item>
+        <item quantity="other">%1$d pessoas</item>
+    </plurals>
+
+    <string name="microfone">Microfone</string>
+    <string name="camera">Câmera</string>
+    <string name="trocar_camera">Trocar câmera</string>
+    <string name="ativar_video">Ativar vídeo</string>
+    <string name="sair_da_chamada">Sair da chamada</string>
+    <string name="ligado">Ligado</string>
+    <string name="desligado">Desligado</string>
+    <string name="voce">Você</string>
+    <string name="reconectando">Reconectando…</string>
+
+    <string name="ativou_o_video">%1$s ativou o vídeo</string>
+    <string name="apenas_assistir">Apenas assistir</string>
+    <string name="transmitir_tambem">Transmitir também</string>
+
+    <string name="ja_existe_chamada">Já existe uma chamada em andamento</string>
+    <string name="sem_microfone">Não foi possível acessar o microfone</string>
+    <string name="falha_chamada">Não foi possível completar a chamada</string>
+    <string name="falha_chamada_detalhe">Não foi possível completar a chamada: %1$s</string>
+</resources>
