@@ -90,6 +90,11 @@
     <string name="ouvir_audio">Ouvir</string>
     <string name="pausar_audio">Pausar</string>
     <string name="audio_falhou">Não foi possível tocar este áudio.</string>
+    <!-- Transcrição (ANX-12), textos do web -->
+    <string name="transcrever">Transcrever</string>
+    <string name="transcrever_de_novo">Não foi possível transcrever. Tentar de novo</string>
+    <string name="transcrevendo">Transcrevendo...</string>
+    <string name="nenhuma_fala_reconhecida">(nenhuma fala reconhecida)</string>
     <string name="video_falhou">Não foi possível tocar este vídeo.</string>
 
     <!-- Gravação de áudio (ANX-11); os títulos dos botões são os do web -->

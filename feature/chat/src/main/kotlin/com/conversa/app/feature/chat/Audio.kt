@@ -1,6 +1,7 @@
 package com.conversa.app.feature.chat
 
 import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.gestures.detectHorizontalDragGestures
 import androidx.compose.foundation.gestures.detectTapGestures
 import androidx.compose.foundation.layout.Arrangement
@@ -22,6 +23,7 @@ import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -34,16 +36,20 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.ProgressBarRangeInfo
+import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.semantics.progressBarRangeInfo
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.semantics.setProgress
+import androidx.compose.ui.text.style.TextDecoration
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.conversa.app.core.model.Conteudo
 import com.conversa.app.core.model.Mensagem
+import com.conversa.app.core.model.StatusTranscricao
 import com.conversa.app.core.model.TipoConteudo
 import com.conversa.app.core.model.formatarDuracao
+import com.conversa.app.core.model.local
 import com.conversa.app.core.ui.tema.ConversaTema
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -122,6 +128,53 @@ fun PlayerNaBolha(mensagem: Mensagem, conteudo: Conteudo, propria: Boolean, cor:
             style = MaterialTheme.typography.labelSmall,
             modifier = Modifier.padding(start = 48.dp),
         )
+        if (!conteudo.local) TranscricaoNaBolha(conteudo, audio, cor, acoes)
+    }
+}
+
+/**
+ * Transcrição embaixo do áudio (ANX-12, textos do web): o texto (ou "nenhuma fala"),
+ * "Transcrevendo..." com a consulta a cada 3 s, ou o botão "Transcrever" / "Tentar de
+ * novo". Sem transcritor no servidor, o botão some.
+ */
+@Composable
+private fun TranscricaoNaBolha(conteudo: Conteudo, audio: AudioNaConversa, cor: Color, acoes: AcoesBolha) {
+    val identificador = conteudo.conteudo
+    Column(Modifier.padding(start = 12.dp, top = 2.dp).widthIn(max = 260.dp)) {
+        when (conteudo.transcricaoStatus) {
+            StatusTranscricao.CONCLUIDA -> Text(
+                conteudo.transcricao.ifBlank { stringResource(R.string.nenhuma_fala_reconhecida) },
+                color = cor.copy(alpha = 0.9f),
+                style = MaterialTheme.typography.bodySmall,
+            )
+            StatusTranscricao.PROCESSANDO -> {
+                LaunchedEffect(identificador) { acoes.aoAcompanharTranscricao(identificador) }
+                Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(6.dp)) {
+                    CircularProgressIndicator(Modifier.size(12.dp), strokeWidth = 1.5.dp, color = cor)
+                    Text(
+                        stringResource(R.string.transcrevendo),
+                        color = cor.copy(alpha = 0.8f),
+                        style = MaterialTheme.typography.labelSmall,
+                    )
+                }
+            }
+            else -> if (!audio.transcricaoDesligada) {
+                val pedindo = identificador in audio.pedindoTranscricao
+                Text(
+                    stringResource(
+                        if (conteudo.transcricaoStatus == StatusTranscricao.ERRO) R.string.transcrever_de_novo else R.string.transcrever,
+                    ),
+                    color = cor.copy(alpha = if (pedindo) 0.4f else 0.8f),
+                    style = MaterialTheme.typography.labelSmall.copy(textDecoration = TextDecoration.Underline),
+                    modifier = Modifier.clickable(enabled = !pedindo, role = Role.Button) {
+                        acoes.aoTranscrever(identificador)
+                    }.padding(vertical = 4.dp),
+                )
+            }
+        }
+        audio.errosTranscricao[identificador]?.let {
+            Text(it, color = cor.copy(alpha = 0.7f), style = MaterialTheme.typography.labelSmall)
+        }
     }
 }
 

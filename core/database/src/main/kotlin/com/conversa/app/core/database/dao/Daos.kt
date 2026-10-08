@@ -135,6 +135,10 @@ interface MensagemDao {
     @Query("UPDATE mensagem SET recebida = 1, visualizada = 1 WHERE id = :id")
     suspend fun marcarLidaPorMim(id: Long)
 
+    /** Transcrição de um áudio (tipos 4 e 5): é por anexo, vale para todas as mensagens com ele. */
+    @Query("UPDATE conteudo SET transcricaoStatus = :status, transcricao = :texto WHERE conteudo = :identificador AND tipo IN (4, 5)")
+    suspend fun atualizarTranscricao(identificador: String, status: Int, texto: String)
+
     /** Eu ouvi o áudio de outra pessoa (otimista). Não marca como lida (o servidor também não). */
     @Query("UPDATE mensagem SET reproduzida = 1 WHERE id = :id")
     suspend fun marcarReproduzidaPorMim(id: Long)

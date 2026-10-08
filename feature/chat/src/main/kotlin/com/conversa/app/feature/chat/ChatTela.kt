@@ -179,6 +179,8 @@ fun ChatRotaTela(
                     aoBaixar = viewModel::baixar,
                     aoCompartilhar = viewModel::compartilhar,
                     aoAlternarAudio = viewModel::alternarAudio,
+                    aoTranscrever = viewModel::transcrever,
+                    aoAcompanharTranscricao = viewModel::acompanharTranscricao,
                     aoBuscarAudio = viewModel::buscarAudio,
                 ),
                 aoIrAoFim = { escopo.launch { lista.animateScrollToItem(0) } },

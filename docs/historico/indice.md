@@ -39,6 +39,7 @@
 - 2026-10-07 · [Etapa 4 — gravação de áudio no campo](2026-10-07-12-etapa-4-gravacao-de-audio.md) — microfone (segurar envia, toque trava, arrastar cancela), barra com pausa/ouvir, AAC/M4A em trechos juntados, tipo 5, "gravando" a cada 2,5 s; `nomeSeguro` sem `..`; 193 testes
 - 2026-10-08 · [Etapa 4 — vídeo na bolha e no visualizador, tira de miniaturas](2026-10-08-01-etapa-4-video.md) — primeiro quadro pela URL assinada (sem baixar tudo), Media3 com controles no visualizador, miniaturas; 193 testes
 - 2026-10-08 · [Etapa 4 — baixar para Downloads e compartilhar](2026-10-08-02-etapa-4-baixar-e-compartilhar.md) — Downloads/Conversa pelo MediaStore (Android 9: "Salvar como"), aviso com "Abrir", compartilhar, notificação quando permitida; 196 testes
+- 2026-10-08 · [Etapa 4 — transcrição de áudio](2026-10-08-03-etapa-4-transcricao.md) — "Transcrever" embaixo dos áudios, consulta a cada 3 s, resultado em todas as mensagens com o anexo, botões somem sem transcritor; 199 testes
 
 ## Notificações e push (etapa 5)
 _(nada ainda)_

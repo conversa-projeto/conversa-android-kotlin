@@ -11,6 +11,7 @@ import com.conversa.app.core.data.anexos.ArquivosLocais
 import com.conversa.app.core.data.anexos.DownloadsRepositorio
 import com.conversa.app.core.data.anexos.FontesArquivo
 import com.conversa.app.core.data.anexos.ResultadoDownload
+import com.conversa.app.core.data.anexos.TranscricoesRepositorio
 import com.conversa.app.core.data.contatos.ContatosRepositorio
 import com.conversa.app.core.data.conversas.ConversasRepositorio
 import com.conversa.app.core.data.mensagens.EnvioMensagens
@@ -127,6 +128,12 @@ data class AudioNaConversa(
     val baixando: String? = null,
     /** Duração de cada áudio que já tocou (a bolha mostra "--:--" até saber). */
     val duracoes: Map<String, Long> = emptyMap(),
+    /** O servidor não tem transcritor: os botões "Transcrever" somem (ANX-12). */
+    val transcricaoDesligada: Boolean = false,
+    /** Identificador → motivo do erro do transcritor. */
+    val errosTranscricao: Map<String, String> = emptyMap(),
+    /** Pedidos de transcrição em andamento. */
+    val pedindoTranscricao: Set<String> = emptySet(),
 )
 
 /** Identifica um áudio na tela: a mesma gravação pode estar em duas mensagens (encaminhada). */
@@ -149,6 +156,7 @@ class ChatViewModel @Inject constructor(
     private val anexos: AnexosRepositorio,
     private val arquivos: ArquivosLocais,
     private val downloads: DownloadsRepositorio,
+    private val transcricoes: TranscricoesRepositorio,
     private val fontes: FontesArquivo,
     private val player: PlayerAudio,
     gravador: GravadorAudio,
@@ -338,7 +346,11 @@ class ChatViewModel @Inject constructor(
     private val duracoes = MutableStateFlow<Map<String, Long>>(emptyMap())
     private val prefixoAudio = "$conversaId:"
 
-    val audio: StateFlow<AudioNaConversa> = combine(player.estado, baixandoAudio, duracoes) { p, baixando, d ->
+    private val transcricao = combine(transcricoes.desligada, transcricoes.erros, transcricoes.pedindo) { desligada, erros, pedindo ->
+        Triple(desligada, erros, pedindo)
+    }
+
+    val audio: StateFlow<AudioNaConversa> = combine(player.estado, baixandoAudio, duracoes, transcricao) { p, baixando, d, t ->
         val daqui = p.chave?.startsWith(prefixoAudio) == true
         AudioNaConversa(
             chave = p.chave.takeIf { daqui },
@@ -346,6 +358,9 @@ class ChatViewModel @Inject constructor(
             posicaoMs = if (daqui) p.posicaoMs else 0,
             baixando = baixando,
             duracoes = d,
+            transcricaoDesligada = t.first,
+            errosTranscricao = t.second,
+            pedindoTranscricao = t.third,
         )
     }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), AudioNaConversa())
 
@@ -441,6 +456,16 @@ class ChatViewModel @Inject constructor(
                 .onFailure { eventos.enviar(EventoChat.Erro(it.paraErroApi().mensagemAmigavel())) }
         }
     }
+
+    /** "Transcrever" / "Tentar de novo" (ANX-12). Sem transcritor no servidor, avisa o motivo e os botões somem. */
+    fun transcrever(identificador: String) {
+        viewModelScope.launch {
+            transcricoes.transcrever(identificador).onFailure { eventos.enviar(EventoChat.Erro(it.paraErroApi().mensagemAmigavel())) }
+        }
+    }
+
+    /** Transcrição "processando" que veio do servidor: acompanha até terminar. */
+    fun acompanharTranscricao(identificador: String) = transcricoes.acompanhar(identificador)
 
     /** Arrastou a barra do áudio que está no player. */
     fun buscarAudio(chave: String, fracao: Float) {

@@ -97,6 +97,9 @@ data class AcoesBolha(
     val urlDoVideo: suspend (Conteudo) -> String? = { null },
     val aoAbrirImagem: (Mensagem, Conteudo) -> Unit = { _, _ -> },
     val aoAlternarAudio: (Mensagem, Conteudo) -> Unit = { _, _ -> },
+    /** Transcrição de áudio (identificador do anexo). */
+    val aoTranscrever: (String) -> Unit = {},
+    val aoAcompanharTranscricao: (String) -> Unit = {},
     /** Chave do áudio ([chaveDoAudio]) e fração da barra (0..1). */
     val aoBuscarAudio: (String, Float) -> Unit = { _, _ -> },
 )
