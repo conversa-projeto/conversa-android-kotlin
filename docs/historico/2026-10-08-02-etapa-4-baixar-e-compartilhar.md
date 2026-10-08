@@ -4,7 +4,7 @@
 - **Tipo:** código / testes / manifesto (`POST_NOTIFICATIONS` declarada)
 - **Itens:** `TODO.md` 4.4 (ações do visualizador), 4.7; ANX-09
 - **Branch:** `reescrita`
-- **Commits:** (preencher)
+- **Commits:** `45f269f`
 
 ## Contexto
 Os anexos só tinham "Abrir" (com outro app). O web tem "Download" no arquivo e "Baixar video" no vídeo. O TODO pede:
