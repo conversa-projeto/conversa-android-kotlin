@@ -4,7 +4,7 @@
 - **Tipo:** funcionalidade
 - **Itens:** `TODO.md` 7.6 (menos o "Copiar", já feito), a linha de itens do 7.1 e "Esconder Encaminhar em votação" do 7.12; FC-506, FC-512, FC-518; ENV-07, ENV-20
 - **Branch:** `reescrita`
-- **Commits:** _(preencher)_
+- **Commits:** `19add2b`
 
 ## Contexto
 O menu da mensagem passa a ter todas as ações do web (`MensagemAcoes.vue`): Responder, Responder no privado, Encaminhar, Copiar e Ocultar. No web, "Encaminhar" abre o `ForwardMessageModal.vue`. "Responder no privado" abre a conversa direta com quem escreveu, já com a mensagem pendente como encaminhada (`chat.responderNoPrivado`).
