@@ -38,6 +38,11 @@
     <string name="desligado">Desligado</string>
     <string name="voce">Você</string>
     <string name="reconectando">Reconectando…</string>
+    <string name="modo_grade">Grade</string>
+    <string name="modo_destaque">Destaque</string>
+    <string name="modo_tela_unica">Tela única</string>
+    <string name="participante_anterior">Participante anterior</string>
+    <string name="proximo_participante">Próximo participante</string>
 
     <string name="ativou_o_video">%1$s ativou o vídeo</string>
     <string name="apenas_assistir">Apenas assistir</string>

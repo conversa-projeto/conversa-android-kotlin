@@ -181,7 +181,21 @@ class GerenciadorChamadas @Inject constructor(
             if (!vivo(g)) return@launch
             val comCamera = local == MidiaLocal.AUDIO_VIDEO && !soAssistir
             if (local == MidiaLocal.AUDIO_VIDEO && soAssistir) midia.camera(false)
-            atualizar { it.copy(midiaLocal = local, microfoneLigado = local != MidiaLocal.NENHUMA, cameraLigada = comCamera) }
+            atualizar {
+                it.copy(
+                    midiaLocal = local,
+                    microfoneLigado = local != MidiaLocal.NENHUMA,
+                    cameraLigada = comCamera,
+                    // Vídeo sem mandar vídeo (só assistindo ou sem câmera): tela única em quem ligou, como o web.
+                    exibicao = if (atual.tipo == TipoChamada.VIDEO &&
+                        !comCamera
+                    ) {
+                        Exibicao(ModoExibicao.UNICA, atual.remetenteId)
+                    } else {
+                        it.exibicao
+                    },
+                )
+            }
             try {
                 remoto.entrar(id)
             } catch (e: CancellationException) {
@@ -233,6 +247,24 @@ class GerenciadorChamadas @Inject constructor(
     /** Liga o vídeo numa chamada de áudio e avisa os outros (WS 56). */
     fun ligarVideo() {
         escopo.launch { ativarVideo(notificar = true, transmitir = true) }
+    }
+
+    /** Grade, destaque ou tela única; [destaque] é quem fica grande (na grade, ignorado). */
+    fun exibir(modo: ModoExibicao, destaque: Long? = null) {
+        escopo.launch {
+            if (_estado.value.fase == FaseChamada.INATIVO) return@launch
+            atualizar {
+                it.copy(
+                    exibicao = if (modo ==
+                        ModoExibicao.GRADE
+                    ) {
+                        Exibicao()
+                    } else {
+                        Exibicao(modo, destaque ?: it.exibicao.destaque)
+                    },
+                )
+            }
+        }
     }
 
     /** Resposta ao [EstadoChamada.pedidoVideo]: "Transmitir também" ou "Apenas assistir". */
@@ -449,10 +481,15 @@ class GerenciadorChamadas @Inject constructor(
     }
 
     private suspend fun responderVideoAgora(transmitir: Boolean) {
-        if (_estado.value.pedidoVideo == null) return
+        val pedido = _estado.value.pedidoVideo ?: return
         atualizar { it.copy(pedidoVideo = null) }
         ativarVideo(notificar = false, transmitir = transmitir)
+        // "Apenas assistir": tela única em quem ligou o vídeo (como o web).
+        if (!transmitir && vivoNaChamada(pedido.usuarioId)) atualizar { it.copy(exibicao = Exibicao(ModoExibicao.UNICA, pedido.usuarioId)) }
     }
+
+    private fun vivoNaChamada(usuarioId: Long) =
+        _estado.value.chamadaId != null && _estado.value.fase != FaseChamada.INATIVO && usuarioId > 0
 
     /** Áudio → vídeo. Protegido contra toque duplo: duas câmeras seriam recusadas (406). */
     private suspend fun ativarVideo(notificar: Boolean, transmitir: Boolean) {

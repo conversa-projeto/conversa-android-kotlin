@@ -854,6 +854,75 @@ class GerenciadorChamadasTest {
         assertThat(chamadaAtiva.value).isFalse()
     }
 
+    // --- Modo de exibição (6.11) ---
+
+    @Test
+    fun `apenas assistir abre em tela unica em quem ligou o video`() = runTest {
+        val g = criar()
+        ativaRecebida(g)
+        evento(EventoSocket.VideoAtivado(RECEBIDA, OUTRO))
+
+        g.responderVideo(transmitir = false)
+        runCurrent()
+
+        assertThat(g.estado.value.exibicao).isEqualTo(Exibicao(ModoExibicao.UNICA, OUTRO))
+    }
+
+    @Test
+    fun `transmitir tambem nao muda o modo de exibicao`() = runTest {
+        val g = criar()
+        ativaRecebida(g)
+        evento(EventoSocket.VideoAtivado(RECEBIDA, OUTRO))
+
+        g.responderVideo(transmitir = true)
+        runCurrent()
+
+        assertThat(g.estado.value.exibicao).isEqualTo(Exibicao())
+    }
+
+    @Test
+    fun `atender so assistindo uma chamada de video abre em tela unica em quem ligou`() = runTest {
+        val g = criar()
+        tocando(g, TipoChamada.VIDEO)
+
+        g.atender(soAssistir = true)
+        runCurrent()
+
+        assertThat(g.estado.value.exibicao).isEqualTo(Exibicao(ModoExibicao.UNICA, OUTRO))
+    }
+
+    @Test
+    fun `atender com camera fica na grade`() = runTest {
+        val g = criar()
+        tocando(g, TipoChamada.VIDEO)
+
+        g.atender()
+        runCurrent()
+
+        assertThat(g.estado.value.exibicao).isEqualTo(Exibicao())
+    }
+
+    @Test
+    fun `exibir destaque, trocar o destacado, voltar a grade e a proxima chamada comeca na grade`() = runTest {
+        val g = criar()
+        ativaRecebida(g, listOf(p(OUTRO, ENTROU), p(TERCEIRO, ENTROU)))
+
+        g.exibir(ModoExibicao.DESTAQUE, OUTRO)
+        runCurrent()
+        assertThat(g.estado.value.exibicao).isEqualTo(Exibicao(ModoExibicao.DESTAQUE, OUTRO))
+        // Trocar só o modo mantém quem estava em destaque.
+        g.exibir(ModoExibicao.UNICA)
+        runCurrent()
+        assertThat(g.estado.value.exibicao).isEqualTo(Exibicao(ModoExibicao.UNICA, OUTRO))
+        g.exibir(ModoExibicao.GRADE, TERCEIRO)
+        runCurrent()
+        assertThat(g.estado.value.exibicao).isEqualTo(Exibicao())
+
+        g.exibir(ModoExibicao.DESTAQUE, TERCEIRO)
+        evento(EventoSocket.ChamadaFinalizada(RECEBIDA, OUTRO))
+        assertThat(g.estado.value.exibicao).isEqualTo(Exibicao())
+    }
+
     private class RemotoFalso : ChamadasRemotas {
         val chamadas = mutableListOf<String>()
         val dados = mutableMapOf<Long, Chamada>()

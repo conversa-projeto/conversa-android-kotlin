@@ -23,6 +23,12 @@ enum class FaseChamada {
     ENCERRANDO,
 }
 
+/** Como os participantes aparecem (como no web): todos lado a lado, um grande com os outros numa faixa, ou só um. */
+enum class ModoExibicao { GRADE, DESTAQUE, UNICA }
+
+/** [destaque] é o participante grande (destaque) ou o único (tela única); na grade, nulo. */
+data class Exibicao(val modo: ModoExibicao = ModoExibicao.GRADE, val destaque: Long? = null)
+
 /** Alguém ligou o vídeo numa chamada de áudio (WS 56): "Apenas assistir" ou "Transmitir também". */
 data class PedidoVideo(val usuarioId: Long, val nome: String)
 
@@ -43,6 +49,8 @@ data class EstadoChamada(
     val pedidoVideo: PedidoVideo? = null,
     /** Conversa do chat da chamada (`conversa_chat_id` ou WS 57 `{acao:"chat"}`). */
     val conversaChatId: Long? = null,
+    /** Modo de exibição (6.11). Quem escolhe "só assistir" abre em tela única em quem transmite. */
+    val exibicao: Exibicao = Exibicao(),
 ) {
     /** Liguei, atendi ou estou desligando (o "ocupado" do web, sem contar o toque). */
     val emChamada: Boolean

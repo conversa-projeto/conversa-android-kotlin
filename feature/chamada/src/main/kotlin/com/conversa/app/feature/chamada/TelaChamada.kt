@@ -6,6 +6,8 @@ import androidx.activity.compose.BackHandler
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
+import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -18,26 +20,34 @@ import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.statusBarsPadding
+import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.KeyboardArrowLeft
+import androidx.compose.material.icons.automirrored.filled.KeyboardArrowRight
 import androidx.compose.material.icons.automirrored.filled.VolumeUp
 import androidx.compose.material.icons.filled.BluetoothAudio
 import androidx.compose.material.icons.filled.Call
 import androidx.compose.material.icons.filled.CallEnd
 import androidx.compose.material.icons.filled.Cameraswitch
 import androidx.compose.material.icons.filled.Check
+import androidx.compose.material.icons.filled.Fullscreen
+import androidx.compose.material.icons.filled.GridView
 import androidx.compose.material.icons.filled.Headset
 import androidx.compose.material.icons.filled.Mic
 import androidx.compose.material.icons.filled.MicOff
 import androidx.compose.material.icons.filled.PhoneInTalk
 import androidx.compose.material.icons.filled.Videocam
 import androidx.compose.material.icons.filled.VideocamOff
+import androidx.compose.material.icons.filled.ViewAgenda
 import androidx.compose.material.icons.outlined.Visibility
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.DropdownMenu
 import androidx.compose.material3.DropdownMenuItem
+import androidx.compose.material3.FilterChip
 import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
@@ -66,6 +76,7 @@ import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.semantics.stateDescription
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
+import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.viewinterop.AndroidView
 import androidx.core.telecom.CallEndpointCompat
@@ -125,6 +136,8 @@ class ChamadaViewModel @Inject constructor(
     fun retomar() = telecom.retomar()
 
     fun mudarRota(rota: CallEndpointCompat) = telecom.mudarRota(rota)
+
+    fun exibir(modo: ModoExibicao, destaque: Long? = null) = gerenciador.exibir(modo, destaque)
 }
 
 @Composable
@@ -201,6 +214,7 @@ fun TelaChamadaRota(
                     aoSair = viewModel::desligar,
                     aoRetomar = viewModel::retomar,
                     aoMudarRota = viewModel::mudarRota,
+                    aoExibir = viewModel::exibir,
                 ),
             )
         }
@@ -283,6 +297,7 @@ private data class AcoesEmChamada(
     val aoSair: () -> Unit,
     val aoRetomar: () -> Unit,
     val aoMudarRota: (CallEndpointCompat) -> Unit,
+    val aoExibir: (ModoExibicao, Long?) -> Unit,
 )
 
 /** Rotas de áudio do Telecom: as disponíveis e a de agora. */
@@ -301,6 +316,11 @@ private fun TelaEmChamada(
     val nomes = estado.dados?.participantes.orEmpty().associate { it.usuarioId to it.nome }
     Column(Modifier.fillMaxSize().statusBarsPadding().navigationBarsPadding()) {
         Cabecalho(estado)
+        if (trilhas.remotos.size >= 2) {
+            // Trocar de modo mantém quem está em destaque; sem destaque, começa pelo primeiro (como o web).
+            val destaque = estado.exibicao.destaque?.takeIf { it in trilhas.remotos } ?: trilhas.remotos.keys.first()
+            SeletorDeExibicao(estado.exibicao.modo) { modo -> acoes.aoExibir(modo, destaque) }
+        }
         if (emEspera) {
             // Em espera por outra chamada (celular): ninguém nos ouve até retomar.
             Row(
@@ -324,7 +344,7 @@ private fun TelaEmChamada(
                     Text(nome, style = MaterialTheme.typography.titleMedium, textAlign = TextAlign.Center)
                 }
             } else {
-                GradeDeParticipantes(remotos, nomes, egl)
+                Participantes(estado.exibicao, remotos, nomes, egl, acoes.aoExibir)
             }
             val videoLocal = trilhas.videoLocal
             if (videoLocal != null && estado.cameraLigada) {
@@ -396,15 +416,71 @@ internal fun formatarDuracao(segundos: Long): String {
     return if (h > 0) "%02d:%02d:%02d".format(h, m, s) else "%02d:%02d".format(m, s)
 }
 
-/** 1 participante ocupa tudo; 2 ficam um sobre o outro; a partir de 3, duas colunas. */
+/**
+ * Os outros participantes no modo escolhido (6.11). Quem estava em destaque e saiu
+ * (ou ainda não conectou) cai na grade até voltar; o modo fica guardado.
+ */
 @Composable
-private fun GradeDeParticipantes(remotos: Map<Long, TrilhaRemota>, nomes: Map<Long, String>, egl: EglBase.Context) {
-    val linhas = remotos.entries.toList().let { lista -> if (lista.size <= 2) lista.map { listOf(it) } else lista.chunked(2) }
-    Column(Modifier.fillMaxSize().padding(8.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
-        for (linha in linhas) {
-            Row(Modifier.weight(1f).fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                for ((usuario, trilha) in linha) {
-                    key(usuario) { Participante(nomes[usuario].orEmpty(), trilha, egl, Modifier.weight(1f).fillMaxSize()) }
+private fun Participantes(
+    exibicao: Exibicao,
+    remotos: Map<Long, TrilhaRemota>,
+    nomes: Map<Long, String>,
+    egl: EglBase.Context,
+    aoExibir: (ModoExibicao, Long?) -> Unit,
+) {
+    val destaque = exibicao.destaque?.takeIf { it in remotos }
+    when {
+        exibicao.modo == ModoExibicao.GRADE || destaque == null ->
+            GradeDeParticipantes(remotos, nomes, egl, aoTocar = { aoExibir(ModoExibicao.DESTAQUE, it) })
+        exibicao.modo == ModoExibicao.DESTAQUE -> Column(
+            Modifier.fillMaxSize().padding(8.dp),
+            verticalArrangement = Arrangement.spacedBy(8.dp),
+        ) {
+            // Toque no destaque volta à grade; toque num pequeno, ele vira o destaque.
+            key(destaque) {
+                Participante(nomes[destaque].orEmpty(), remotos.getValue(destaque), egl, Modifier.weight(1f).fillMaxWidth(), aoTocar = {
+                    aoExibir(ModoExibicao.GRADE, null)
+                })
+            }
+            Row(Modifier.horizontalScroll(rememberScrollState()), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                for ((usuario, trilha) in remotos) {
+                    if (usuario == destaque) continue
+                    key(usuario) {
+                        Participante(
+                            nomes[usuario].orEmpty(),
+                            trilha,
+                            egl,
+                            Modifier.size(width = 96.dp, height = 128.dp),
+                            tamanhoAvatar = 48.dp,
+                            aoTocar = { aoExibir(ModoExibicao.DESTAQUE, usuario) },
+                        )
+                    }
+                }
+            }
+        }
+        else -> Box(Modifier.fillMaxSize().padding(8.dp)) {
+            key(destaque) {
+                Participante(nomes[destaque].orEmpty(), remotos.getValue(destaque), egl, Modifier.fillMaxSize(), aoTocar = {
+                    aoExibir(ModoExibicao.GRADE, null)
+                })
+            }
+            if (remotos.size > 1) {
+                // Setas para trocar quem aparece (como no web).
+                val lista = remotos.keys.toList()
+                val indice = lista.indexOf(destaque)
+                Seta(
+                    Icons.AutoMirrored.Filled.KeyboardArrowLeft,
+                    stringResource(R.string.participante_anterior),
+                    Modifier.align(Alignment.CenterStart),
+                ) {
+                    aoExibir(ModoExibicao.UNICA, lista[(indice - 1 + lista.size) % lista.size])
+                }
+                Seta(
+                    Icons.AutoMirrored.Filled.KeyboardArrowRight,
+                    stringResource(R.string.proximo_participante),
+                    Modifier.align(Alignment.CenterEnd),
+                ) {
+                    aoExibir(ModoExibicao.UNICA, lista[(indice + 1) % lista.size])
                 }
             }
         }
@@ -412,7 +488,65 @@ private fun GradeDeParticipantes(remotos: Map<Long, TrilhaRemota>, nomes: Map<Lo
 }
 
 @Composable
-private fun Participante(nome: String, trilha: TrilhaRemota, egl: EglBase.Context, modifier: Modifier) {
+private fun Seta(icone: ImageVector, descricao: String, modifier: Modifier, onClick: () -> Unit) {
+    IconButton(onClick = onClick, modifier = modifier.padding(4.dp).clip(CircleShape).background(Color.Black.copy(alpha = 0.5f))) {
+        Icon(icone, contentDescription = descricao, tint = Color.White)
+    }
+}
+
+/** Grade, Destaque, Tela única (rótulos do web). */
+@Composable
+private fun SeletorDeExibicao(atual: ModoExibicao, aoEscolher: (ModoExibicao) -> Unit) {
+    val opcoes = listOf(
+        Triple(ModoExibicao.GRADE, Icons.Filled.GridView, R.string.modo_grade),
+        Triple(ModoExibicao.DESTAQUE, Icons.Filled.ViewAgenda, R.string.modo_destaque),
+        Triple(ModoExibicao.UNICA, Icons.Filled.Fullscreen, R.string.modo_tela_unica),
+    )
+    Row(Modifier.fillMaxWidth().padding(horizontal = 12.dp), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+        for ((modo, icone, rotulo) in opcoes) {
+            FilterChip(
+                selected = atual == modo,
+                onClick = { aoEscolher(modo) },
+                label = { Text(stringResource(rotulo)) },
+                leadingIcon = { Icon(icone, contentDescription = null, modifier = Modifier.size(18.dp)) },
+            )
+        }
+    }
+}
+
+/** 1 participante ocupa tudo; 2 ficam um sobre o outro; a partir de 3, duas colunas. */
+@Composable
+private fun GradeDeParticipantes(
+    remotos: Map<Long, TrilhaRemota>,
+    nomes: Map<Long, String>,
+    egl: EglBase.Context,
+    aoTocar: (Long) -> Unit,
+) {
+    val linhas = remotos.entries.toList().let { lista -> if (lista.size <= 2) lista.map { listOf(it) } else lista.chunked(2) }
+    Column(Modifier.fillMaxSize().padding(8.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
+        for (linha in linhas) {
+            Row(Modifier.weight(1f).fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                for ((usuario, trilha) in linha) {
+                    key(usuario) {
+                        Participante(nomes[usuario].orEmpty(), trilha, egl, Modifier.weight(1f).fillMaxSize(), aoTocar = {
+                            aoTocar(usuario)
+                        })
+                    }
+                }
+            }
+        }
+    }
+}
+
+@Composable
+private fun Participante(
+    nome: String,
+    trilha: TrilhaRemota,
+    egl: EglBase.Context,
+    modifier: Modifier,
+    tamanhoAvatar: Dp = 80.dp,
+    aoTocar: () -> Unit = {},
+) {
     val cores = ConversaTema.cores
     Box(modifier.clip(RoundedCornerShape(12.dp)).background(cores.chamadaBarraInferior)) {
         val video = trilha.video
@@ -420,7 +554,7 @@ private fun Participante(nome: String, trilha: TrilhaRemota, egl: EglBase.Contex
             VideoDaTrilha(video, egl, modifier = Modifier.fillMaxSize())
         } else {
             Column(Modifier.align(Alignment.Center), horizontalAlignment = Alignment.CenterHorizontally) {
-                Avatar(nome, null, tamanho = 80.dp)
+                Avatar(nome, null, tamanho = tamanhoAvatar)
                 if (!trilha.conectado && !trilha.falhou) {
                     Spacer(Modifier.height(8.dp))
                     Text(stringResource(R.string.conectando), style = MaterialTheme.typography.labelMedium)
@@ -436,6 +570,8 @@ private fun Participante(nome: String, trilha: TrilhaRemota, egl: EglBase.Contex
             modifier = Modifier.align(Alignment.BottomStart).padding(8.dp)
                 .clip(RoundedCornerShape(6.dp)).background(Color.Black.copy(alpha = 0.45f)).padding(horizontal = 6.dp, vertical = 2.dp),
         )
+        // Por cima do vídeo (o SurfaceView não repassa o toque). Por cobrir o nome, leva o nome para o TalkBack.
+        Box(Modifier.matchParentSize().semantics { contentDescription = nome }.clickable(onClick = aoTocar))
         if (trilha.falhou) {
             // Faixa vermelha de erro de conexão (CHA-11).
             Text(

@@ -30,12 +30,13 @@ Atenção: `./gradlew :app:connectedDebugAndroidTest` **desinstala o app no fim*
 
 ## Contas de teste (banco `conversa_dev`, só no servidor local)
 
-Criadas pelo próprio cadastro do app em 2026-10-07:
+Criadas pelo próprio cadastro do app em 2026-10-07 (a C em 2026-10-08, para chamadas em grupo):
 
 | Usuário | Nome | E-mail | Senha |
 |---|---|---|---|
 | `teste.android.a` | Teste Android A | teste.android.a@exemplo.test | `teste-49b1fffb` |
 | `teste.android.b` | Teste Android B | teste.android.b@exemplo.test | `teste-49b1fffb` |
+| `teste.android.c` | Teste Android C | teste.android.c@exemplo.test | `teste-49b1fffb` |
 
 São contas descartáveis do banco local de desenvolvimento; não existem em nenhum outro servidor. O segundo usuário (B) é usado por scripts Node para conversar com o app (online, digitando, ler, responder).
 
@@ -50,4 +51,6 @@ Para testar chamada, o usuário B fica no cliente web, num Chrome à parte com c
    - entrar como `teste.android.b` e comandar a chamada pelo DevTools Protocol (a store `call` do Pinia: `iniciarChamada`, `aceitarChamada`, `upgradeParaVideo`, `sairDaChamada`…).
 3. Gravações: o MediaMTX grava cada participante em `call-<chamada>-u-<usuário>` no volume `conversa-gravacoes`. O contêiner não tem shell; para listar, um contêiner temporário com o volume só de leitura (`docker run --rm -v conversa-gravacoes:/g:ro alpine ls /g`).
 
-Limitação conhecida: a câmera falsa do Chrome não abre de novo na mesma sessão ("Could not start video source"). Para testar o vídeo do web outra vez, feche e abra o Chrome de teste.
+Chamada em grupo: um segundo Chrome de teste (outro perfil temporário, `--remote-debugging-port=9334`) com a conta `teste.android.c`; o B liga para [A, B, C] e cada web atende pela store `call`.
+
+Limitação conhecida: a câmera falsa do Chrome não abre de novo dentro da mesma chamada ("Could not start video source"). Para testar o vídeo do web outra vez, feche e abra o Chrome de teste.
