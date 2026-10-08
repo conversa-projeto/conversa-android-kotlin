@@ -4,7 +4,7 @@
 - **Tipo:** código
 - **Itens:** `TODO.md` 4.10 (PDF); FC-411
 - **Branch:** `reescrita`
-- **Commits:** (preencher)
+- **Commits:** `9724037`
 
 ## Contexto
 No web, "Abrir" num PDF abre o `VisualizadorPdf.vue` (pdf.js): zoom, Baixar e Fechar. No Android o PDF abria em outro app.
