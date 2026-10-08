@@ -564,7 +564,7 @@
 
 ## Etapa 6 — Chamadas
 
-- [x] Criar os módulos `:core:webrtc` e `:feature:chamada` (adiados da 1.2) — `:core:webrtc` com a interface `MidiaChamada` (a implementação WebRTC é a 6.1); `:feature:chamada` com o `GerenciadorChamadas`
+- [x] Criar os módulos `:core:webrtc` e `:feature:chamada` (adiados da 1.2) — `:core:webrtc` com a interface `MidiaChamada` (a implementação WebRTC é a 6.1); `:feature:chamada` com o `GerenciadorChamadas` ✔ ceeec72
 ### 6.1 Infra de mídia (FC-703, FC-704)
 - [ ] Transplantar o `WhipWhepClient` para `:core:webrtc`, usando o OkHttp compartilhado
 - [ ] WHIP/WHEP: ler o header `Location` e fazer `DELETE` ao encerrar
@@ -581,12 +581,12 @@
 - [ ] **Teste:** o arquivo gravado aparece no MediaMTX
 
 ### 6.2 `CallManager` (FC-700)
-- [x] `ChamadasRemotas`/`ChamadasRepositorio` (`core/data/chamadas`): as ações do §9.2 para o gerenciador (interface, para o teste usar um falso)
-- [x] Estados: `Inativo`, `Chamando`, `Recebendo`, `Conectando`, `Ativa`, `Encerrando` — `FaseChamada`; roda num despachante de uma coisa por vez (como o JavaScript do web) e confere a "geração" na volta de cada chamada de rede; sem trava durante a rede (#18)
+- [x] `ChamadasRemotas`/`ChamadasRepositorio` (`core/data/chamadas`): as ações do §9.2 para o gerenciador (interface, para o teste usar um falso) ✔ ceeec72
+- [x] Estados: `Inativo`, `Chamando`, `Recebendo`, `Conectando`, `Ativa`, `Encerrando` — `FaseChamada`; roda num despachante de uma coisa por vez (como o JavaScript do web) e confere a "geração" na volta de cada chamada de rede; sem trava durante a rede (#18) ✔ ceeec72
 - [ ] `StateFlow<EstadoChamada>`: chamada, participantes, tracks, mute, câmera, rota de áudio, duração, modo de exibição — 🔄 fase, chamada/participantes, tipo, quem ligou, mídia local, microfone, câmera, `ativaDesde` (duração), pedido de vídeo e chat prontos; faltam as trilhas (6.1, vêm da mídia), a rota de áudio (6.8) e o modo de exibição (6.11)
-- [x] Assinar o `SharedFlow` do WS para os eventos 51–57 (único consumidor de chamada) — e as `chamadasPendentes` do `SyncManager`; liga o `ConexaoTempoReal.chamadaAtiva` (WebSocket fica ligado em segundo plano durante a chamada); o logout encerra. O `iniciar()` no `Application` entra com a mídia (6.1)
+- [x] Assinar o `SharedFlow` do WS para os eventos 51–57 (único consumidor de chamada) — e as `chamadasPendentes` do `SyncManager`; liga o `ConexaoTempoReal.chamadaAtiva` (WebSocket fica ligado em segundo plano durante a chamada); o logout encerra. O `iniciar()` no `Application` entra com a mídia (6.1) ✔ ceeec72
 - [ ] `encerrar()` idempotente: DELETE WHIP/WHEP → `dispose` → liberar o áudio → cancelar as notificações → Telecom disconnect → parar o serviço — 🔄 idempotente e corta a mídia (`MidiaChamada.encerrar`) antes de mudar o estado; em `Encerrando` espera o servidor até 3 s. Áudio, notificações, Telecom e serviço vão observar o estado (6.3, 6.5, 6.8)
-- [x] Testes unitários de **todas** as transições (incluindo eventos fora de ordem e duplicados) — `GerenciadorChamadasTest`, 51 testes (51 duplicado, 51 depois do 52, o meu 54 durante o atender, 52 durante o `entrar`, desligar durante o `iniciar`, 54/55 perdidos, pendente repetida…); um teste de mutação confirmou que pegam regressões
+- [x] Testes unitários de **todas** as transições (incluindo eventos fora de ordem e duplicados) — `GerenciadorChamadasTest`, 51 testes (51 duplicado, 51 depois do 52, o meu 54 durante o atender, 52 durante o `entrar`, desligar durante o `iniciar`, 54/55 perdidos, pendente repetida…); um teste de mutação confirmou que pegam regressões ✔ ceeec72
 
 ### 6.3 Core-Telecom (FC-701, AND-03)
 - [ ] Adicionar `androidx.core:core-telecom`
@@ -603,8 +603,8 @@
 - [ ] `PUT /chamada/iniciar {tipo, usuarios:[{id}], conversa_id}` → já publicar via WHIP
 - [ ] Tela "Chamando…" + som de chamando em loop
 - [ ] Bloquear se já existe chamada ("Já existe uma chamada em andamento") — 🔄 o gerenciador recusa e emite `AvisoChamada.JaEmChamada` (`GerenciadorChamadas`, com teste); falta mostrar o texto (tela, 6.4)
-- [x] Cancelar enquanto chama: `POST /chamada/cancelar {id}` (FC-711) — `desligar()` em `Chamando` (`GerenciadorChamadas`, com teste); desligar enquanto o servidor ainda cria a chamada cancela a que nasceu
-- [x] Timeout local (ex.: 45 s sem ninguém atender) → cancelar (`GerenciadorChamadas`, com teste)
+- [x] Cancelar enquanto chama: `POST /chamada/cancelar {id}` (FC-711) — `desligar()` em `Chamando` (`GerenciadorChamadas`, com teste); desligar enquanto o servidor ainda cria a chamada cancela a que nasceu ✔ ceeec72
+- [x] Timeout local (ex.: 45 s sem ninguém atender) → cancelar (`GerenciadorChamadas`, com teste) ✔ ceeec72
 
 ### 6.5 Chamada recebida (FC-706, FC-707, CHA-03, CHA-04, CHA-05)
 - [ ] WS 51 (ou push S1) → `GET /chamada/dados?id=` → `CallManager` em `Recebendo`
@@ -612,23 +612,23 @@
 - [ ] Tela de chamada recebida (`showWhenLocked`, `turnScreenOn`): nome, avatar, "Vídeo + Áudio"/"Somente áudio"
 - [ ] Botões **tocáveis**: Recusar, Atender e, em vídeo, "Atender só assistindo"
 - [ ] O toque **só para** ao atender, recusar, encerrar remoto ou no timeout (#7) — 🔄 a fase sai de `Recebendo` só nesses casos (`GerenciadorChamadas`, com teste); falta o toque observar a fase (6.5)
-- [x] 30 s sem resposta → `POST /chamada/recusar {id, nao_atendeu:true}` (`GerenciadorChamadas`, com teste)
+- [x] 30 s sem resposta → `POST /chamada/recusar {id, nao_atendeu:true}` (`GerenciadorChamadas`, com teste) ✔ ceeec72
 - [ ] Atender: mídia vídeo+áudio → só áudio → só recepção (fallback) → `POST /chamada/entrar {id}` → publicar → assinar os outros — 🔄 a sequência está no gerenciador (`GerenciadorChamadas`, com teste); o fallback e a mídia de verdade são a 6.1
 - [ ] "Atender" pela notificação usa `PendingIntent.getActivity` ou Telecom (nunca broadcast → activity, #3)
-- [x] Recusar: **um** `POST /chamada/recusar {id}` (`GerenciadorChamadas`, com teste): recusar duas vezes, ou recusar e desligar, manda um só
+- [x] Recusar: **um** `POST /chamada/recusar {id}` (`GerenciadorChamadas`, com teste): recusar duas vezes, ou recusar e desligar, manda um só ✔ ceeec72
 
 ### 6.6 Regras automáticas (FC-708, FC-709, FC-710, ATV-03)
-- [x] 51 durante outra chamada ou toque → `recusar {nao_atendeu:true}` sem tocar (`GerenciadorChamadas`, com teste)
-- [x] 51 da minha própria chamada → ignorar (`GerenciadorChamadas`, com teste); também o 51 duplicado e o que chega depois do 52 da mesma chamada
-- [x] 53/54 com o **meu** `usuario_id` enquanto toca (atendi/recusei em outro aparelho) → parar o toque, voltar a `Inativo` (`GerenciadorChamadas`, com teste); o toque em si para quando observar a fase (6.5)
-- [x] Ao conectar o WS / abrir pelo push: `GET /chamadas/pendentes` (**sem `usuarios`**) — o `SyncManager` busca ao (re)conectar e a cada 8 s sem WebSocket; o gerenciador avalia. Pelo push: ⛔ depende do FCM (5.1)
-- [x] Pendente criada há mais de 25 s → `recusar {nao_atendeu:true}`; senão, tocar (`GerenciadorChamadas`, com teste); a pendente que chega depois de recusar não toca de novo
+- [x] 51 durante outra chamada ou toque → `recusar {nao_atendeu:true}` sem tocar (`GerenciadorChamadas`, com teste) ✔ ceeec72
+- [x] 51 da minha própria chamada → ignorar (`GerenciadorChamadas`, com teste); também o 51 duplicado e o que chega depois do 52 da mesma chamada ✔ ceeec72
+- [x] 53/54 com o **meu** `usuario_id` enquanto toca (atendi/recusei em outro aparelho) → parar o toque, voltar a `Inativo` (`GerenciadorChamadas`, com teste); o toque em si para quando observar a fase (6.5) ✔ ceeec72
+- [x] Ao conectar o WS / abrir pelo push: `GET /chamadas/pendentes` (**sem `usuarios`**) — o `SyncManager` busca ao (re)conectar e a cada 8 s sem WebSocket; o gerenciador avalia. Pelo push: ⛔ depende do FCM (5.1) ✔ ceeec72
+- [x] Pendente criada há mais de 25 s → `recusar {nao_atendeu:true}`; senão, tocar (`GerenciadorChamadas`, com teste); a pendente que chega depois de recusar não toca de novo ✔ ceeec72
 
 ### 6.7 Durante a chamada (FC-712, CHA-10)
-- [x] 54 de outro: se eu estava `Chamando` → `Ativa` + cronômetro; assinar quem entrou (`GerenciadorChamadas`, com teste); o monitor também pega um 54 perdido
-- [x] 55: remover o peer → `GET /chamada/dados` → se ninguém mais com status "Entrou", sair (`POST /chamada/sair`) — o servidor **não manda o 52** nesse caso (`GerenciadorChamadas`, com teste); o monitor também pega um 55 perdido
-- [x] 53 de outro em chamada de 2 pessoas → encerrar (`GerenciadorChamadas`, com teste); em grupo, encerra quando ninguém mais está tocando nem dentro
-- [x] 52 → encerrar (`GerenciadorChamadas`, com teste)
+- [x] 54 de outro: se eu estava `Chamando` → `Ativa` + cronômetro; assinar quem entrou (`GerenciadorChamadas`, com teste); o monitor também pega um 54 perdido ✔ ceeec72
+- [x] 55: remover o peer → `GET /chamada/dados` → se ninguém mais com status "Entrou", sair (`POST /chamada/sair`) — o servidor **não manda o 52** nesse caso (`GerenciadorChamadas`, com teste); o monitor também pega um 55 perdido ✔ ceeec72
+- [x] 53 de outro em chamada de 2 pessoas → encerrar (`GerenciadorChamadas`, com teste); em grupo, encerra quando ninguém mais está tocando nem dentro ✔ ceeec72
+- [x] 52 → encerrar (`GerenciadorChamadas`, com teste) ✔ ceeec72
 - [ ] A cada 4 s em `Ativa`: `GET /chamada/dados` e reconectar quem caiu ou está sem trilha — 🔄 o monitor de 4 s busca os dados e manda a mídia sincronizar (`GerenciadorChamadas`, com teste); reconectar quem caiu é da mídia (6.1)
 - [ ] Botão sair: `POST /chamada/sair {id}` — 🔄 `desligar()` na chamada sai (um `POST` só, mesmo com toque duplo) (`GerenciadorChamadas`, com teste); falta o botão (6.9)
 

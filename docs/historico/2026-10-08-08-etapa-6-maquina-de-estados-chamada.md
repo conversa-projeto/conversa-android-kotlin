@@ -7,7 +7,7 @@
   - FC-700, FC-708, FC-709, FC-710, FC-711, FC-712; CHA-03, CHA-04, CHA-10; ATV-03;
   - problemas #7 e #18 do legado.
 - **Branch:** `reescrita`
-- **Commits:** (preencher)
+- **Commits:** `ceeec72`
 
 ## Contexto
 A etapa 6 começa pela máquina de estados da chamada: todo o resto depende dela (mídia, Telecom, toque, notificação, telas), e as regras do projeto exigem teste unitário dela.
