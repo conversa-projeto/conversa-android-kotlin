@@ -4,7 +4,7 @@
 - **Tipo:** código / testes
 - **Itens:** `TODO.md` 6.13 (indicador de fala, somente recepção); FC-720, FC-721
 - **Branch:** `reescrita`
-- **Commits:** (preencher)
+- **Commits:** `068e10b`
 
 ## Contexto
 Mais dois recursos de chamada do web:
