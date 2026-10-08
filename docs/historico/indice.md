@@ -57,6 +57,7 @@
 - 2026-10-08 · [Etapa 6 — minimizar a chamada: picture-in-picture e a faixa "voltar à chamada"](2026-10-08-14-etapa-6-minimizar.md) — PiP automático em vídeo (tarefa própria, só o vídeo principal), "voltar" minimiza, faixa verde "Toque para voltar à chamada" no topo do app; testado no emulador; 283 testes
 - 2026-10-08 · [Etapa 6 — adicionar à chamada e chat da chamada](2026-10-08-15-etapa-6-adicionar-e-chat.md) — "Adicionar à chamada" (um `PUT` por pessoa) e "Chat da chamada" (a primeira mensagem cria o chat e abre a conversa; a chamada vai para o PiP); testado com B e C no web; 287 testes
 - 2026-10-08 · [Etapa 6 — indicador de fala e somente recepção](2026-10-08-16-etapa-6-fala-e-recepcao.md) — anel verde de quem fala (nível do WebRTC, 0,02 e 400 ms como o web) e "Ativar microfone/câmera" para quem entrou só recebendo; 292 testes
+- 2026-10-08 · [Etapa 6 — tela e ponteiro remotos](2026-10-08-17-etapa-6-tela-e-ponteiro.md) — a tela compartilhada entra em destaque, inteira; ponteiros dos outros com nome e cor; "Sair da chamada" fixo na barra; testado com o B compartilhando a tela e o C apontando; 295 testes
 
 ## Ações sobre mensagens (etapa 7)
 _(nada ainda)_

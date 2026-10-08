@@ -29,6 +29,9 @@ enum class ModoExibicao { GRADE, DESTAQUE, UNICA }
 /** [destaque] é o participante grande (destaque) ou o único (tela única); na grade, nulo. */
 data class Exibicao(val modo: ModoExibicao = ModoExibicao.GRADE, val destaque: Long? = null)
 
+/** Ponteiro de [usuarioId] sobre a tela compartilhada por [alvo]; [x] e [y] de 0 a 1 na imagem (WS 57). */
+data class PonteiroRemoto(val usuarioId: Long, val nome: String, val alvo: Long, val x: Float, val y: Float, val em: Instant)
+
 /** Alguém ligou o vídeo numa chamada de áudio (WS 56): "Apenas assistir" ou "Transmitir também". */
 data class PedidoVideo(val usuarioId: Long, val nome: String)
 
@@ -51,6 +54,10 @@ data class EstadoChamada(
     val conversaChatId: Long? = null,
     /** Modo de exibição (6.11). Quem escolhe "só assistir" abre em tela única em quem transmite. */
     val exibicao: Exibicao = Exibicao(),
+    /** Quem está compartilhando a tela (WS 57 `{acao:"tela"}`): a imagem dele é uma tela. */
+    val telas: Set<Long> = emptySet(),
+    /** Ponteiros dos outros sobre as telas compartilhadas (somem em 5 s sem atualizar). */
+    val ponteiros: Map<Long, PonteiroRemoto> = emptyMap(),
 ) {
     /** Liguei, atendi ou estou desligando (o "ocupado" do web, sem contar o toque). */
     val emChamada: Boolean

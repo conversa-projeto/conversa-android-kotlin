@@ -27,4 +27,14 @@ class TelaChamadaTest {
             .isEqualTo("Não foi possível completar a chamada: Chamada não encontrada!")
         assertThat(textoDoAviso(AvisoChamada.Falhou(null), texto)).isEqualTo("Não foi possível completar a chamada")
     }
+
+    @Test
+    fun `area da imagem ajustada - faixas nas laterais ou em cima e embaixo`() {
+        // Tela 16:9 num quadro em pé: faixas em cima e embaixo.
+        assertThat(areaDaImagem(1000, 1600, 1920, 1080).toList()).containsExactly(0, 518, 1000, 563).inOrder()
+        // Imagem em pé num quadro deitado: faixas nas laterais.
+        assertThat(areaDaImagem(1600, 900, 1080, 1920).toList()).containsExactly(547, 0, 506, 900).inOrder()
+        // Sem saber a resolução: o quadro todo.
+        assertThat(areaDaImagem(800, 600, 0, 0).toList()).containsExactly(0, 0, 800, 600).inOrder()
+    }
 }

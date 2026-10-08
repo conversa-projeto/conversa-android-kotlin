@@ -881,6 +881,85 @@ class GerenciadorChamadasTest {
         assertThat(remoto.chamadas.filter { it.startsWith("adicionar") }).isEmpty()
     }
 
+    // --- Tela e ponteiro remotos (6.13) ---
+
+    @Test
+    fun `tela compartilhada vai para o destaque e ao parar volta a grade sem os ponteiros dela`() = runTest {
+        val g = criar()
+        ativaRecebida(g, listOf(p(OUTRO, ENTROU), p(TERCEIRO, ENTROU)))
+
+        evento(
+            EventoSocket.SinalChamada(
+                RECEBIDA,
+                OUTRO,
+                buildJsonObject {
+                    put("acao", "tela")
+                    put("ativa", true)
+                },
+            ),
+        )
+        assertThat(g.estado.value.telas).containsExactly(OUTRO)
+        assertThat(g.estado.value.exibicao).isEqualTo(Exibicao(ModoExibicao.DESTAQUE, OUTRO))
+
+        evento(
+            EventoSocket.SinalChamada(
+                RECEBIDA,
+                TERCEIRO,
+                buildJsonObject {
+                    put("acao", "ponteiro")
+                    put("alvo", OUTRO)
+                    put("x", 0.25)
+                    put("y", 0.5)
+                },
+            ),
+        )
+        assertThat(
+            g.estado.value.ponteiros.getValue(TERCEIRO).let {
+                Triple(it.alvo, it.x, it.nome)
+            },
+        ).isEqualTo(Triple(OUTRO, 0.25f, "Usuário 9"))
+
+        evento(
+            EventoSocket.SinalChamada(
+                RECEBIDA,
+                OUTRO,
+                buildJsonObject {
+                    put("acao", "tela")
+                    put("ativa", false)
+                },
+            ),
+        )
+        assertThat(g.estado.value.telas).isEmpty()
+        assertThat(g.estado.value.ponteiros).isEmpty()
+        assertThat(g.estado.value.exibicao).isEqualTo(Exibicao())
+    }
+
+    @Test
+    fun `ponteiro com x nulo sai e sem atualizar some em 5 s`() = runTest {
+        val g = criar()
+        ativaRecebida(g, listOf(p(OUTRO, ENTROU), p(TERCEIRO, ENTROU)))
+        val ponteiro = { x: Double? ->
+            buildJsonObject {
+                put("acao", "ponteiro")
+                put("alvo", OUTRO)
+                put("x", x)
+                put("y", 0.5)
+            }
+        }
+
+        evento(EventoSocket.SinalChamada(RECEBIDA, TERCEIRO, ponteiro(0.1)))
+        evento(EventoSocket.SinalChamada(RECEBIDA, TERCEIRO, ponteiro(null)))
+        assertThat(g.estado.value.ponteiros).isEmpty()
+
+        evento(EventoSocket.SinalChamada(RECEBIDA, TERCEIRO, ponteiro(0.2)))
+        advanceTimeBy(3_000)
+        runCurrent()
+        assertThat(g.estado.value.ponteiros).hasSize(1)
+        advanceTimeBy(GerenciadorChamadas.PONTEIRO_SOME_MS)
+        runCurrent()
+        assertThat(g.estado.value.ponteiros).isEmpty()
+    }
+
     // --- Somente recepção (6.13) ---
 
     @Test

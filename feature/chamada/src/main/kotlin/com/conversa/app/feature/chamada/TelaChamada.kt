@@ -2,6 +2,8 @@ package com.conversa.app.feature.chamada
 
 import android.Manifest
 import android.graphics.Rect
+import android.os.Handler
+import android.os.Looper
 import android.os.PowerManager
 import androidx.activity.compose.BackHandler
 import androidx.activity.compose.rememberLauncherForActivityResult
@@ -12,6 +14,7 @@ import androidx.compose.foundation.clickable
 import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
@@ -21,9 +24,11 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.imePadding
 import androidx.compose.foundation.layout.navigationBarsPadding
+import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.statusBarsPadding
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.rememberScrollState
@@ -66,8 +71,10 @@ import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.compositionLocalOf
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.key
 import androidx.compose.runtime.mutableLongStateOf
@@ -75,6 +82,7 @@ import androidx.compose.runtime.mutableStateListOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -94,6 +102,8 @@ import androidx.compose.ui.semantics.stateDescription
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.Dp
+import androidx.compose.ui.unit.IntOffset
+import androidx.compose.ui.unit.IntSize
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.viewinterop.AndroidView
 import androidx.core.telecom.CallEndpointCompat
@@ -118,6 +128,7 @@ import dagger.hilt.android.lifecycle.HiltViewModel
 import java.time.Duration
 import java.time.Instant
 import javax.inject.Inject
+import kotlin.math.roundToInt
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import org.webrtc.EglBase
@@ -436,7 +447,9 @@ private fun TelaEmChamada(
                     Text(nome, style = MaterialTheme.typography.titleMedium, textAlign = TextAlign.Center)
                 }
             } else {
-                Participantes(estado.exibicao, remotos, nomes, egl, acoes.aoExibir)
+                CompositionLocalProvider(LocalTelasDaChamada provides TelasDaChamada(estado.telas, estado.ponteiros.values)) {
+                    Participantes(estado.exibicao, remotos, nomes, egl, acoes.aoExibir)
+                }
             }
             val videoLocal = trilhas.videoLocal
             if (videoLocal != null && estado.cameraLigada) {
@@ -533,15 +546,25 @@ private fun Participantes(
         ) {
             // Toque no destaque volta à grade; toque num pequeno, ele vira o destaque.
             key(destaque) {
-                Participante(nomes[destaque].orEmpty(), remotos.getValue(destaque), egl, Modifier.weight(1f).fillMaxWidth(), aoTocar = {
-                    aoExibir(ModoExibicao.GRADE, null)
-                })
+                Participante(
+                    destaque,
+                    nomes[destaque].orEmpty(),
+                    remotos.getValue(
+                        destaque,
+                    ),
+                    egl,
+                    Modifier.weight(1f).fillMaxWidth(),
+                    aoTocar = {
+                        aoExibir(ModoExibicao.GRADE, null)
+                    },
+                )
             }
             Row(Modifier.horizontalScroll(rememberScrollState()), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                 for ((usuario, trilha) in remotos) {
                     if (usuario == destaque) continue
                     key(usuario) {
                         Participante(
+                            usuario,
                             nomes[usuario].orEmpty(),
                             trilha,
                             egl,
@@ -555,7 +578,7 @@ private fun Participantes(
         }
         else -> Box(Modifier.fillMaxSize().padding(8.dp)) {
             key(destaque) {
-                Participante(nomes[destaque].orEmpty(), remotos.getValue(destaque), egl, Modifier.fillMaxSize(), aoTocar = {
+                Participante(destaque, nomes[destaque].orEmpty(), remotos.getValue(destaque), egl, Modifier.fillMaxSize(), aoTocar = {
                     aoExibir(ModoExibicao.GRADE, null)
                 })
             }
@@ -623,7 +646,7 @@ private fun GradeDeParticipantes(
             Row(Modifier.weight(1f).fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                 for ((usuario, trilha) in linha) {
                     key(usuario) {
-                        Participante(nomes[usuario].orEmpty(), trilha, egl, Modifier.weight(1f).fillMaxSize(), aoTocar = {
+                        Participante(usuario, nomes[usuario].orEmpty(), trilha, egl, Modifier.weight(1f).fillMaxSize(), aoTocar = {
                             aoTocar(usuario)
                         })
                     }
@@ -635,6 +658,7 @@ private fun GradeDeParticipantes(
 
 @Composable
 private fun Participante(
+    usuario: Long,
     nome: String,
     trilha: TrilhaRemota,
     egl: EglBase.Context,
@@ -643,11 +667,16 @@ private fun Participante(
     aoTocar: () -> Unit = {},
 ) {
     val cores = ConversaTema.cores
+    val telas = LocalTelasDaChamada.current
+    // Tela compartilhada (6.13): a imagem inteira, sem cortar, com os ponteiros dos outros por cima.
+    val ehTela = usuario in telas.telas
+    var resolucao by remember { mutableStateOf<IntSize?>(null) }
     // Anel verde enquanto fala (6.13); por cima do vídeo.
     Box(modifier.clip(RoundedCornerShape(12.dp)).background(cores.chamadaBarraInferior).anelDeFala(trilha.falando)) {
         val video = trilha.video
         if (video != null) {
-            VideoDaTrilha(video, egl, modifier = Modifier.fillMaxSize())
+            VideoDaTrilha(video, egl, modifier = Modifier.fillMaxSize(), ajustar = ehTela, aoResolucao = { resolucao = it })
+            if (ehTela) PonteirosSobreATela(telas.ponteiros.filter { it.alvo == usuario }, resolucao)
         } else {
             Column(Modifier.align(Alignment.Center), horizontalAlignment = Alignment.CenterHorizontally) {
                 Avatar(nome, null, tamanho = tamanhoAvatar)
@@ -693,12 +722,27 @@ private fun VideoDaTrilha(
     modifier: Modifier = Modifier,
     espelhar: Boolean = false,
     sobreposto: Boolean = false,
+    /** Mostrar a imagem inteira (tela compartilhada) em vez de preencher cortando. */
+    ajustar: Boolean = false,
+    aoResolucao: ((IntSize) -> Unit)? = null,
 ) {
+    val avisarResolucao by rememberUpdatedState(aoResolucao)
     key(trilha) {
         AndroidView(
             factory = { contexto ->
                 SurfaceViewRenderer(contexto).apply {
-                    init(egl, null)
+                    val principal = Handler(Looper.getMainLooper())
+                    init(
+                        egl,
+                        object : RendererCommon.RendererEvents {
+                            override fun onFirstFrameRendered() = Unit
+
+                            override fun onFrameResolutionChanged(largura: Int, altura: Int, rotacao: Int) {
+                                val tamanho = if (rotacao % 180 == 0) IntSize(largura, altura) else IntSize(altura, largura)
+                                principal.post { avisarResolucao?.invoke(tamanho) }
+                            }
+                        },
+                    )
                     setScalingType(RendererCommon.ScalingType.SCALE_ASPECT_FILL)
                     setEnableHardwareScaler(true)
                     setMirror(espelhar)
@@ -709,6 +753,11 @@ private fun VideoDaTrilha(
                     } catch (_: IllegalStateException) {
                     }
                 }
+            },
+            update = { renderer ->
+                renderer.setScalingType(
+                    if (ajustar) RendererCommon.ScalingType.SCALE_ASPECT_FIT else RendererCommon.ScalingType.SCALE_ASPECT_FILL,
+                )
             },
             onRelease = { renderer ->
                 try {
@@ -725,16 +774,38 @@ private fun VideoDaTrilha(
 @Composable
 private fun BarraDeControles(estado: EstadoChamada, rotas: Rotas, acoes: AcoesEmChamada) {
     val cores = ConversaTema.cores
-    val ligado = stringResource(R.string.ligado)
-    val desligado = stringResource(R.string.desligado)
-    // Rola na horizontal quando os botões não cabem (tela estreita, chamada de vídeo).
+    val emAndamento = estado.fase != FaseChamada.ENCERRANDO
     Row(
-        Modifier.fillMaxWidth().background(cores.chamadaBarraInferior).horizontalScroll(rememberScrollState())
-            .padding(horizontal = 12.dp, vertical = 16.dp),
-        horizontalArrangement = Arrangement.spacedBy(12.dp, Alignment.CenterHorizontally),
+        Modifier.fillMaxWidth().background(cores.chamadaBarraInferior).padding(vertical = 16.dp),
         verticalAlignment = Alignment.CenterVertically,
     ) {
-        val emAndamento = estado.fase != FaseChamada.ENCERRANDO
+        // Os controles rolam na horizontal quando não cabem (tela estreita, vídeo); "Sair da chamada" fica sempre à vista.
+        Row(
+            Modifier.weight(1f).horizontalScroll(rememberScrollState()).padding(start = 12.dp),
+            horizontalArrangement = Arrangement.spacedBy(12.dp, Alignment.CenterHorizontally),
+            verticalAlignment = Alignment.CenterVertically,
+        ) {
+            ControlesDaChamada(estado, rotas, acoes)
+        }
+        Spacer(Modifier.width(12.dp))
+        BotaoRedondo(
+            Icons.Filled.CallEnd,
+            stringResource(R.string.sair_da_chamada),
+            cores.chamadaEncerrar,
+            Color.White,
+            enabled = emAndamento,
+            onClick = acoes.aoSair,
+        )
+        Spacer(Modifier.width(12.dp))
+    }
+}
+
+@Composable
+private fun ControlesDaChamada(estado: EstadoChamada, rotas: Rotas, acoes: AcoesEmChamada) {
+    val cores = ConversaTema.cores
+    val ligado = stringResource(R.string.ligado)
+    val desligado = stringResource(R.string.desligado)
+    run {
         if (estado.midiaLocal == MidiaLocal.NENHUMA && estado.fase == FaseChamada.ATIVA) {
             // Entrou só recebendo (sem microfone nem câmera): pode começar a transmitir (6.13).
             BotaoRedondo(Icons.Filled.Mic, stringResource(R.string.ativar_microfone), cores.chamadaBotao, cores.chamadaIconeBotao) {
@@ -799,14 +870,6 @@ private fun BarraDeControles(estado: EstadoChamada, rotas: Rotas, acoes: AcoesEm
                 onClick = acoes.aoChat,
             )
         }
-        BotaoRedondo(
-            Icons.Filled.CallEnd,
-            stringResource(R.string.sair_da_chamada),
-            cores.chamadaEncerrar,
-            Color.White,
-            enabled = emAndamento,
-            onClick = acoes.aoSair,
-        )
     }
 }
 
@@ -1018,3 +1081,48 @@ private fun PrimeiraMensagemDoChat(aoEnviar: (String) -> Unit, aoFechar: () -> U
 @Composable
 private fun Modifier.anelDeFala(falando: Boolean): Modifier =
     if (falando) border(3.dp, ConversaTema.cores.chamadaEmAndamento, RoundedCornerShape(12.dp)) else this
+
+/** Telas compartilhadas e ponteiros, para os quadros dos participantes (6.13). */
+private data class TelasDaChamada(val telas: Set<Long> = emptySet(), val ponteiros: Collection<PonteiroRemoto> = emptyList())
+
+private val LocalTelasDaChamada = compositionLocalOf { TelasDaChamada() }
+
+/** Retângulo (x, y, largura, altura) ocupado pela imagem "ajustada" (sem cortar) dentro do quadro. */
+internal fun areaDaImagem(larguraQuadro: Int, alturaQuadro: Int, larguraImagem: Int, alturaImagem: Int): IntArray {
+    if (larguraImagem <= 0 || alturaImagem <= 0) return intArrayOf(0, 0, larguraQuadro, alturaQuadro)
+    val escala = minOf(larguraQuadro.toFloat() / larguraImagem, alturaQuadro.toFloat() / alturaImagem)
+    val largura = (larguraImagem * escala).roundToInt()
+    val altura = (alturaImagem * escala).roundToInt()
+    return intArrayOf((larguraQuadro - largura) / 2, (alturaQuadro - altura) / 2, largura, altura)
+}
+
+/** Os ponteiros dos outros sobre a tela: bolinha e nome, na cor de cada pessoa (`id % 5`, como o web). */
+@Composable
+private fun PonteirosSobreATela(ponteiros: List<PonteiroRemoto>, resolucao: IntSize?) {
+    if (ponteiros.isEmpty()) return
+    val cores = ConversaTema.cores
+    val paleta = listOf(cores.chamadaPerdida, MaterialTheme.colorScheme.primary, cores.chamadaRecebida, cores.avisoConexao, cores.link)
+    BoxWithConstraints(Modifier.fillMaxSize()) {
+        val (x0, y0, largura, altura) = areaDaImagem(
+            constraints.maxWidth,
+            constraints.maxHeight,
+            resolucao?.width ?: 0,
+            resolucao?.height ?: 0,
+        )
+        for (ponteiro in ponteiros) {
+            val cor = paleta[(ponteiro.usuarioId % paleta.size).toInt()]
+            Row(
+                Modifier.offset { IntOffset(x0 + (ponteiro.x * largura).roundToInt(), y0 + (ponteiro.y * altura).roundToInt()) },
+                verticalAlignment = Alignment.CenterVertically,
+            ) {
+                Box(Modifier.size(16.dp).clip(CircleShape).background(Color.White).padding(2.dp).clip(CircleShape).background(cor))
+                Text(
+                    ponteiro.nome,
+                    style = MaterialTheme.typography.labelSmall,
+                    color = Color.White,
+                    modifier = Modifier.padding(start = 4.dp).clip(RoundedCornerShape(4.dp)).background(cor).padding(horizontal = 4.dp),
+                )
+            }
+        }
+    }
+}

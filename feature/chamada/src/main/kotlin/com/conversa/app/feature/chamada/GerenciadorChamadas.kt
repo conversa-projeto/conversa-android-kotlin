@@ -43,7 +43,9 @@ import kotlinx.coroutines.launch
 import kotlinx.coroutines.withTimeoutOrNull
 import kotlinx.serialization.json.JsonObject
 import kotlinx.serialization.json.JsonPrimitive
+import kotlinx.serialization.json.booleanOrNull
 import kotlinx.serialization.json.contentOrNull
+import kotlinx.serialization.json.floatOrNull
 import kotlinx.serialization.json.longOrNull
 import timber.log.Timber
 
@@ -438,12 +440,57 @@ class GerenciadorChamadas @Inject constructor(
         }
     }
 
+    /** WS 57 (contrato §9.11): chat da chamada, tela compartilhada e ponteiro remoto. */
     private fun sinal(id: Long, quem: Long, dados: JsonObject, eu: Long) {
         if (_estado.value.chamadaId != id || quem == eu) return
         when ((dados["acao"] as? JsonPrimitive)?.contentOrNull) {
             "chat" -> {
                 val conversa = (dados["conversa_id"] as? JsonPrimitive)?.longOrNull?.takeIf { it > 0 } ?: return
                 atualizar { it.copy(conversaChatId = conversa) }
+            }
+            "tela" -> {
+                val ativa = (dados["ativa"] as? JsonPrimitive)?.booleanOrNull == true
+                atualizar { e ->
+                    if (ativa) {
+                        // Tela nova: em destaque (TODO 6.13).
+                        e.copy(telas = e.telas + quem, exibicao = Exibicao(ModoExibicao.DESTAQUE, quem))
+                    } else {
+                        e.copy(
+                            telas = e.telas - quem,
+                            ponteiros = e.ponteiros.filterValues { it.alvo != quem },
+                            exibicao = if (e.exibicao.destaque == quem) Exibicao() else e.exibicao,
+                        )
+                    }
+                }
+            }
+            "ponteiro" -> {
+                val alvo = (dados["alvo"] as? JsonPrimitive)?.longOrNull
+                val x = (dados["x"] as? JsonPrimitive)?.floatOrNull
+                val y = (dados["y"] as? JsonPrimitive)?.floatOrNull
+                if (alvo == null || x == null || y == null) {
+                    // x/y nulos: o ponteiro saiu da tela.
+                    atualizar { it.copy(ponteiros = it.ponteiros - quem) }
+                    return
+                }
+                val nome = _estado.value.dados?.participantes?.firstOrNull { it.usuarioId == quem }?.nome?.takeIf { it.isNotBlank() }
+                    ?: NOME_PADRAO_PONTEIRO
+                val ponteiro = PonteiroRemoto(quem, nome, alvo, x.coerceIn(0f, 1f), y.coerceIn(0f, 1f), relogio.instant())
+                atualizar { it.copy(ponteiros = it.ponteiros + (quem to ponteiro)) }
+                garantirLimpezaDePonteiros()
+            }
+        }
+    }
+
+    private var limpezaPonteiros: Job? = null
+
+    /** Ponteiro sem atualizar há [PONTEIRO_SOME_MS] some (como o web). */
+    private fun garantirLimpezaDePonteiros() {
+        if (limpezaPonteiros?.isActive == true) return
+        limpezaPonteiros = noTrabalho {
+            while (_estado.value.ponteiros.isNotEmpty()) {
+                delay(VERIFICAR_PONTEIROS_MS)
+                val limite = relogio.instant().minusMillis(PONTEIRO_SOME_MS)
+                atualizar { e -> e.copy(ponteiros = e.ponteiros.filterValues { it.em.isAfter(limite) }) }
             }
         }
     }
@@ -708,6 +755,11 @@ class GerenciadorChamadas @Inject constructor(
         const val INTERVALO_MONITOR_MS = 4_000L
         const val TEMPO_PEDIDO_VIDEO_MS = 15_000L
         const val ESPERA_ENCERRAR_MS = 3_000L
+        const val PONTEIRO_SOME_MS = 5_000L
+        private const val VERIFICAR_PONTEIROS_MS = 1_000L
+
+        /** O web usa "Participante" quando não acha o nome. */
+        private const val NOME_PADRAO_PONTEIRO = "Participante"
         private const val TENTATIVAS_SINCRONIZAR = 3
         private const val MAX_ENCERRADAS = 32
     }
