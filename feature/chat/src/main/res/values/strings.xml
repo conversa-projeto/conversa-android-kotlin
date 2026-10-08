@@ -186,4 +186,10 @@
     <string name="agendada_hoje">Agendada para hoje %1$s</string>
     <string name="agendada_amanha">Agendada para amanhã %1$s</string>
     <string name="agendada_outro_dia">Agendada para %1$s</string>
+
+    <!-- Código (7.11), textos do web -->
+    <string name="codigo">Código</string>
+    <string name="inserir_codigo">Inserir código</string>
+    <string name="linguagem">Linguagem</string>
+    <string name="codigo_placeholder">Cole ou escreva seu código aqui…</string>
 </resources>

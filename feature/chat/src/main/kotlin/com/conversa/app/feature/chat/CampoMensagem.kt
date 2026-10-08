@@ -45,6 +45,7 @@ import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.KeyboardOptions
+import androidx.compose.foundation.text.input.InputTransformation
 import androidx.compose.foundation.text.input.OutputTransformation
 import androidx.compose.foundation.text.input.TextFieldLineLimits
 import androidx.compose.foundation.text.input.TextFieldState
@@ -60,6 +61,7 @@ import androidx.compose.material.icons.filled.Pause
 import androidx.compose.material.icons.filled.PlayArrow
 import androidx.compose.material.icons.filled.Stop
 import androidx.compose.material.icons.outlined.AttachFile
+import androidx.compose.material.icons.outlined.Code
 import androidx.compose.material.icons.outlined.Delete
 import androidx.compose.material.icons.outlined.EmojiEmotions
 import androidx.compose.material.icons.outlined.Image
@@ -125,6 +127,7 @@ import com.conversa.app.core.model.dividirMencoes
 import com.conversa.app.core.model.extrairMencoesCruas
 import com.conversa.app.core.model.mencaoDigitada
 import com.conversa.app.core.model.resumoDaMensagem
+import com.conversa.app.core.model.substituirAtalhoNoFim
 import com.conversa.app.core.model.sugestoesDeMencao
 import com.conversa.app.core.model.textoParaEnvio
 import com.conversa.app.core.ui.componentes.Avatar
@@ -173,6 +176,37 @@ internal fun Campo(
     val foco = remember { FocusRequester() }
     // Menções inseridas pela lista (7.7): o campo mostra "@Nome"; no envio vira "@[Nome](id)".
     val mencoes = remember { mutableStateListOf<MencaoInserida>() }
+    // "Inserir código" (7.11): pelo "+" (vazio) ou por um texto longo colado (preenchido).
+    var codigoAberto by rememberSaveable { mutableStateOf(false) }
+    var codigoColado by rememberSaveable { mutableStateOf<String?>(null) }
+    val transformacao = remember {
+        transformacaoDoCampo { colado ->
+            codigoColado = colado
+            codigoAberto = true
+        }
+    }
+    if (codigoAberto) {
+        InserirCodigo(
+            codigoInicial = codigoColado.orEmpty(),
+            aoEnviar = { bloco ->
+                codigoAberto = false
+                codigoColado = null
+                acoes.aoEnviar(bloco) {}
+            },
+            aoCancelar = {
+                codigoAberto = false
+                // Cancelar cola o texto como estava: a janela era só uma sugestão.
+                codigoColado?.let { colado ->
+                    texto.edit {
+                        val inicio = selection.min
+                        replace(inicio, selection.max, colado)
+                        selection = TextRange(inicio + colado.length)
+                    }
+                }
+                codigoColado = null
+            },
+        )
+    }
     // Pedido de foco (chat da chamada recém-criado): uma vez; sem o campo na tela (gravando), só descarta.
     LaunchedEffect(focar) {
         if (focar) {
@@ -212,7 +246,10 @@ internal fun Campo(
         } else {
             // A encaminhada pendente pode ir sem texto (os conteúdos dela vão junto): o Enviar aparece.
             val encaminhando = respondendo?.tipo == TipoReferencia.ENCAMINHAMENTO
-            LinhaDoCampo(texto, fila.isNotEmpty() || encaminhando, atual as? EstadoGravacao.Gravando, acoes, foco, mencoes)
+            LinhaDoCampo(texto, fila.isNotEmpty() || encaminhando, atual as? EstadoGravacao.Gravando, acoes, foco, mencoes, transformacao) {
+                codigoAberto =
+                    true
+            }
         }
     }
 }
@@ -326,6 +363,8 @@ private fun LinhaDoCampo(
     acoes: AcoesChat,
     foco: FocusRequester,
     mencoes: SnapshotStateList<MencaoInserida>,
+    transformacao: InputTransformation,
+    aoInserirCodigo: () -> Unit,
 ) {
     Row(
         Modifier.fillMaxWidth().padding(horizontal = 8.dp, vertical = 6.dp),
@@ -333,7 +372,7 @@ private fun LinhaDoCampo(
         horizontalArrangement = Arrangement.spacedBy(4.dp),
     ) {
         Box(Modifier.heightIn(min = 48.dp), contentAlignment = Alignment.Center) {
-            if (segurando == null) BotaoAnexar(acoes) else Spacer(Modifier.width(8.dp))
+            if (segurando == null) BotaoAnexar(acoes, aoInserirCodigo) else Spacer(Modifier.width(8.dp))
         }
         Box(Modifier.weight(1f).heightIn(min = 48.dp), contentAlignment = Alignment.CenterStart) {
             if (segurando != null) {
@@ -352,6 +391,7 @@ private fun LinhaDoCampo(
                     ),
                     keyboardOptions = KeyboardOptions(capitalization = KeyboardCapitalization.Sentences),
                     outputTransformation = destaqueDasMencoes(mencoes, MaterialTheme.colorScheme.primary),
+                    inputTransformation = transformacao,
                     modifier = Modifier.fillMaxWidth().focusRequester(foco).contentReceiver(receptorDeImagens(acoes.aoColarAnexos)),
                 )
             }
@@ -367,7 +407,7 @@ private fun LinhaDoCampo(
                     mencoes.clear()
                 }
             }
-            val corpo = textoParaEnvio(enviado, mencoes)
+            val corpo = textoParaEnvio(substituirAtalhoNoFim(enviado.trimEnd()), mencoes)
             if (quando == null) acoes.aoEnviar(corpo, aoGravar) else acoes.aoAgendar(corpo, quando, aoGravar)
         }
         // Com texto ou anexo: Enviar (toque longo: "Agendar mensagem"). Vazio: microfone (como o web).
@@ -663,7 +703,7 @@ private fun tempoGravacao(ms: Long): String {
  * acontecer depois, pelo WorkManager, com o app já fechado.
  */
 @Composable
-private fun BotaoAnexar(acoes: AcoesChat) {
+private fun BotaoAnexar(acoes: AcoesChat, aoInserirCodigo: () -> Unit) {
     val contexto = LocalContext.current
     val avisos = LocalAvisos.current
     val escopo = rememberCoroutineScope()
@@ -742,6 +782,14 @@ private fun BotaoAnexar(acoes: AcoesChat) {
                 onClick = {
                     menu = false
                     figurinhas = true
+                },
+            )
+            DropdownMenuItem(
+                text = { Text(stringResource(R.string.codigo)) },
+                leadingIcon = { Icon(Icons.Outlined.Code, contentDescription = null) },
+                onClick = {
+                    menu = false
+                    aoInserirCodigo()
                 },
             )
         }
