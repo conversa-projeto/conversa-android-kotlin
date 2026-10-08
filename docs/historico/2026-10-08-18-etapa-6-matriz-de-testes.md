@@ -38,3 +38,17 @@ Boa parte já foi testada no emulador, nos blocos anteriores. O resto depende de
   - somente recepção;
   - grupo de 4 (com mais uma conta de teste).
 - **App fechado:** ⛔ depende do FCM (5.1) e do S1 no servidor.
+
+## Fechamento da etapa 6 (commit seguinte)
+- **"Gravação conferida no servidor"** marcada: os arquivos de cada lado da chamada aparecem no volume `conversa-gravacoes` (bloco 2026-10-08 · 09).
+- **"Cores"** marcada:
+  - microfone e câmera ficam vermelhos quando desligados;
+  - no Android não há "som desligado": no lugar, o seletor de rota "Áudio saída";
+  - os botões de tela e ponteiro só existem com o compartilhamento de tela (etapa 9);
+  - o chat abre a conversa, sem estado ligado/desligado.
+- **Fica aberto** na etapa 6 só o que depende de aparelho de verdade ou do FCM:
+  - Bluetooth e TalkBack;
+  - redes móveis;
+  - app fechado;
+  - grupo de 4;
+  - 64/128 kbps de áudio (configuração da etapa 8).

@@ -645,7 +645,7 @@
 - [x] Cabeçalho: "Chamando…"/"Em chamada"/"Encerrando…", duração, tipo, nº de pessoas — textos do web; duração `mm:ss`/`hh:mm:ss` (+ teste) ✔ cf43b1f
 - [x] Controles: microfone, câmera (vídeo), trocar câmera, rota de áudio, adicionar pessoa, chat, sair — todos; a barra rola na horizontal quando não cabem (tela estreita, vídeo) ✔ 0cf178b
 - [x] Estado de mute e câmera reativo (StateFlow), ícones corretos, `contentDescription` em tudo — e `stateDescription` "Ligado"/"Desligado" para o TalkBack ✔ cf43b1f
-- [ ] Cores: microfone, câmera e som **vermelhos quando desligados**; tela, chat e ponteiro **azuis quando ligados**; demais neutros — 🔄 microfone e câmera vermelhos quando desligados (cores do FMX: `chamadaEncerrar`, `chamadaBotao`); som, tela, chat e ponteiro chegam com os botões deles
+- [x] Cores: microfone, câmera e som **vermelhos quando desligados**; tela, chat e ponteiro **azuis quando ligados**; demais neutros — microfone e câmera vermelhos quando desligados (cores do FMX); no Android não há "som desligado" (no lugar, o seletor de rota "Áudio saída"); tela e ponteiro chegam com o compartilhamento de tela (etapa 9); o chat abre a conversa, sem estado ligado/desligado ✔ cf43b1f
 - [x] `BackHandler`: voltar = minimizar (não encerra) — em vídeo vira picture-in-picture; em áudio a tela fecha e a faixa "Toque para voltar à chamada" leva de volta (6.12) ✔ add5196
 - [x] Tiles: nome ("Você"), iniciais sem vídeo, faixa vermelha de erro de conexão — grade de participantes, miniatura local com "Você"; sem vídeo do outro, avatar (não um quadro preto) ✔ cf43b1f
 - [ ] **Teste:** atender e desligar só com o TalkBack
@@ -686,7 +686,7 @@
 - [ ] Bluetooth; fone com fio; chamada GSM concorrente — 🔄 GSM concorrente passou (simulada pelo emulador); Bluetooth e fone com fio só em aparelho
 - [ ] 1:1 áudio; 1:1 vídeo; grupo de 4; upgrade para vídeo; adicionar participante — 🔄 1:1 áudio e vídeo, grupo de 3, upgrade e adicionar passaram no emulador; grupo de 4 precisa de mais uma conta de teste
 - [x] Atender no web com o celular tocando (o celular para de tocar) — no emulador, com o A também logado num Chrome de teste: o A atendeu no web e o celular parou de tocar (a tela fechou e a chamada saiu do Telecom) ✔ 610bbe1
-- [ ] Gravação conferida no servidor
+- [x] Gravação conferida no servidor — no volume `conversa-gravacoes` do MediaMTX: `call-1-u-1` (app, VP9 + Opus) e `call-1-u-2` (web), crescendo durante a chamada (2026-10-08 · 09); e cada chamada de teste seguinte gravou os dois lados ✔ cf43b1f
 
 ---
 
