@@ -23,6 +23,7 @@ import com.conversa.app.core.network.dto.CriarConversaRequisicao
 import com.conversa.app.core.network.dto.CriarEnqueteRequisicao
 import com.conversa.app.core.network.dto.DadosChamadaDto
 import com.conversa.app.core.network.dto.DispositivoDto
+import com.conversa.app.core.network.dto.EncerrarEnqueteRequisicao
 import com.conversa.app.core.network.dto.EnqueteCriadaDto
 import com.conversa.app.core.network.dto.EnqueteDto
 import com.conversa.app.core.network.dto.EnviarMensagemRequisicao
@@ -45,6 +46,7 @@ import com.conversa.app.core.network.dto.NovaMensagemDto
 import com.conversa.app.core.network.dto.ParametrosDto
 import com.conversa.app.core.network.dto.PermissaoUsuarioDto
 import com.conversa.app.core.network.dto.PermissoesDto
+import com.conversa.app.core.network.dto.PrazoEnqueteRequisicao
 import com.conversa.app.core.network.dto.QuantidadeDto
 import com.conversa.app.core.network.dto.ReacaoRequisicao
 import com.conversa.app.core.network.dto.ReacaoResposta
@@ -322,4 +324,12 @@ interface ConversaApi {
     /** Substitui o voto do usuário pelas opções enviadas (lista vazia tira o voto). */
     @POST("enquete/votar")
     suspend fun votarEnquete(@Body corpo: VotarEnqueteRequisicao): EnqueteDto
+
+    /** Encerrar antes do prazo (🆕 5cad911): quem criou a votação ou o grupo. */
+    @POST("enquete/encerrar")
+    suspend fun encerrarEnquete(@Body corpo: EncerrarEnqueteRequisicao): EnqueteDto
+
+    /** Definir, adiar ou tirar a data final (🆕 5cad911): só quem criou a votação. */
+    @PATCH("enquete")
+    suspend fun alterarPrazoEnquete(@Body corpo: PrazoEnqueteRequisicao): EnqueteDto
 }

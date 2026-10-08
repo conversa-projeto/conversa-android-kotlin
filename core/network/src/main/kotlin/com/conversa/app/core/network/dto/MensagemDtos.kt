@@ -7,6 +7,7 @@ import java.time.Instant
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.UseSerializers
+import kotlinx.serialization.json.JsonElement
 
 // Mensagens, status, reações, pesquisa e enquetes (contrato §10).
 
@@ -160,6 +161,8 @@ data class CriarEnqueteRequisicao(
     val pergunta: String,
     val opcoes: List<String>,
     val multipla: Boolean,
+    /** 🆕 785bdef: data final em ISO (sem = sem data final). */
+    @SerialName("encerra_em") val encerraEm: String? = null,
 )
 
 @Serializable
@@ -182,7 +185,21 @@ data class EnqueteDto(
     val opcoes: List<OpcaoEnqueteDto> = emptyList(),
     @SerialName("total_votantes") val totalVotantes: Int = 0,
     @SerialName("meus_votos") val meusVotos: List<Long> = emptyList(),
+    // 🆕 5cad911: data final e encerramento.
+    @SerialName("encerra_em") val encerraEm: Instant? = null,
+    @SerialName("encerrada_em") val encerradaEm: Instant? = null,
+    val encerrada: Boolean = false,
+    @SerialName("pode_encerrar") val podeEncerrar: Boolean = false,
+    @SerialName("pode_alterar_prazo") val podeAlterarPrazo: Boolean = false,
 )
 
 @Serializable
 data class VotarEnqueteRequisicao(@SerialName("enquete_id") val enqueteId: Long, val opcoes: List<Long>)
+
+/** `POST /enquete/encerrar` (🆕 5cad911). */
+@Serializable
+data class EncerrarEnqueteRequisicao(@SerialName("enquete_id") val enqueteId: Long)
+
+/** `PATCH /enquete` (🆕 5cad911): `encerra_em` em ISO, ou [com.conversa.app.core.network.json.nuloExplicito] para tirar a data. */
+@Serializable
+data class PrazoEnqueteRequisicao(@SerialName("enquete_id") val enqueteId: Long, @SerialName("encerra_em") val encerraEm: JsonElement)

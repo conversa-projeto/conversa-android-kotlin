@@ -46,6 +46,7 @@ class SyncManagerTest {
     private val mensagemDao = mockk<MensagemDao>(relaxed = true)
     private val syncEstadoDao = mockk<SyncEstadoDao>(relaxed = true)
     private val presenca = mockk<PresencaRepositorio>(relaxed = true)
+    private val enquetes = mockk<com.conversa.app.core.data.enquetes.EnquetesRepositorio>(relaxed = true)
     private val sessao = mockk<SessaoRepositorio> { every { sessao } returns MutableStateFlow(Sessao("t", 7, "Ana")) }
 
     private fun prepararApi() {
@@ -66,7 +67,7 @@ class SyncManagerTest {
     @Test
     fun `ressincronizar busca tudo e avanca o cursor`() = runTest {
         prepararApi()
-        val sync = SyncManager(api, tempoReal, conversaDao, mensagemDao, syncEstadoDao, presenca, sessao, escopoDoTeste())
+        val sync = SyncManager(api, tempoReal, conversaDao, mensagemDao, syncEstadoDao, presenca, sessao, enquetes, escopoDoTeste())
 
         sync.ressincronizar()
 
@@ -86,7 +87,7 @@ class SyncManagerTest {
     fun `falha de rede numa parte nao derruba as outras`() = runTest {
         prepararApi()
         coEvery { api.mensagensNovas(any()) } throws IOException("sem rede")
-        val sync = SyncManager(api, tempoReal, conversaDao, mensagemDao, syncEstadoDao, presenca, sessao, escopoDoTeste())
+        val sync = SyncManager(api, tempoReal, conversaDao, mensagemDao, syncEstadoDao, presenca, sessao, enquetes, escopoDoTeste())
 
         sync.ressincronizar()
 
@@ -97,7 +98,7 @@ class SyncManagerTest {
     @Test
     fun `conectar dispara a sincronizacao e eventos atualizam o contador`() = runTest {
         prepararApi()
-        val sync = SyncManager(api, tempoReal, conversaDao, mensagemDao, syncEstadoDao, presenca, sessao, escopoDoTeste())
+        val sync = SyncManager(api, tempoReal, conversaDao, mensagemDao, syncEstadoDao, presenca, sessao, enquetes, escopoDoTeste())
         sync.iniciar()
         advanceUntilIdle()
 
@@ -115,7 +116,7 @@ class SyncManagerTest {
     @Test
     fun `varias mensagens novas seguidas viram uma sincronizacao so`() = runTest {
         prepararApi()
-        val sync = SyncManager(api, tempoReal, conversaDao, mensagemDao, syncEstadoDao, presenca, sessao, escopoDoTeste())
+        val sync = SyncManager(api, tempoReal, conversaDao, mensagemDao, syncEstadoDao, presenca, sessao, enquetes, escopoDoTeste())
         sync.iniciar()
         advanceUntilIdle()
 
@@ -139,7 +140,7 @@ class SyncManagerTest {
                 excluidaEm = Instant.parse("2026-10-06T12:00:00Z"),
             ),
         )
-        val sync = SyncManager(api, tempoReal, conversaDao, mensagemDao, syncEstadoDao, presenca, sessao, escopoDoTeste())
+        val sync = SyncManager(api, tempoReal, conversaDao, mensagemDao, syncEstadoDao, presenca, sessao, enquetes, escopoDoTeste())
         sync.iniciar()
         advanceUntilIdle()
 
@@ -157,7 +158,7 @@ class SyncManagerTest {
         coEvery { api.statusMensagens(any(), any()) } returns emptyList()
         coEvery { mensagemDao.buscar(105) } returns null
         coEvery { mensagemDao.ultimaSalva(42) } returns 100L
-        val sync = SyncManager(api, tempoReal, conversaDao, mensagemDao, syncEstadoDao, presenca, sessao, escopoDoTeste())
+        val sync = SyncManager(api, tempoReal, conversaDao, mensagemDao, syncEstadoDao, presenca, sessao, enquetes, escopoDoTeste())
         sync.iniciar()
         advanceUntilIdle()
 
@@ -183,7 +184,7 @@ class SyncManagerTest {
         // 42: uma minha (7) e uma do Bruno (8) depois da última salva (100). 50: só uma já lida.
         coEvery { api.mensagens(42, 100, 0, 100) } returns listOf(msg(100, 8, 42), msg(101, 7, 42), msg(102, 8, 42))
         coEvery { api.mensagens(50, 0, 80, 0) } returns listOf(msg(200, 8, 50, lida = true))
-        val sync = SyncManager(api, tempoReal, conversaDao, mensagemDao, syncEstadoDao, presenca, sessao, escopoDoTeste())
+        val sync = SyncManager(api, tempoReal, conversaDao, mensagemDao, syncEstadoDao, presenca, sessao, enquetes, escopoDoTeste())
         val avisos = mutableListOf<Set<Long>>()
         backgroundScope.launch { sync.novasDeOutros.collect { avisos += it } }
         runCurrent()

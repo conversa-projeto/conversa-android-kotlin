@@ -181,6 +181,11 @@ fun EnqueteDto.paraModelo() = Enquete(
     opcoes = opcoes.map { opcao -> OpcaoEnquete(opcao.id, opcao.texto, opcao.votantes.map { Votante(it.id, it.nome) }) },
     totalVotantes = totalVotantes,
     meusVotos = meusVotos,
+    encerraEm = encerraEm,
+    encerradaEm = encerradaEm,
+    encerrada = encerrada,
+    podeEncerrar = podeEncerrar,
+    podeAlterarPrazo = podeAlterarPrazo,
 )
 
 /** Lê o JSON do conteúdo tipo 6 (bolha de chamada, MSG-13). JSON inválido → `null` (a bolha mostra o padrão). */

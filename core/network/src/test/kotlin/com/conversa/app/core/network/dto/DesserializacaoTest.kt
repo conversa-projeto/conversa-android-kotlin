@@ -107,6 +107,31 @@ class DesserializacaoTest {
         assertThat(enquete.opcoes).hasSize(2)
         assertThat(enquete.meusVotos).containsExactly(1L)
         assertThat(enquete.totalVotantes).isEqualTo(1)
+        // 🆕 5cad911: data final e permissões; sem os campos (servidor antigo), aberta e sem permissões.
+        val prazo = java.time.Instant.parse("2026-10-09T18:00:00Z")
+        assertThat(enquete.encerraEm).isEqualTo(prazo)
+        assertThat(enquete.encerradaEm).isNull()
+        assertThat(enquete.podeEncerrar).isTrue()
+        assertThat(enquete.podeAlterarPrazo).isTrue()
+        assertThat(enquete.fechada(prazo.minusSeconds(1))).isFalse()
+        assertThat(enquete.fechada(prazo)).isTrue()
+        val antiga = ConversaJson.decodeFromString<EnqueteDto>("""{"id":1,"conversa_id":2,"pergunta":"?"}""").paraModelo()
+        assertThat(antiga.fechada(prazo)).isFalse()
+        assertThat(antiga.podeEncerrar).isFalse()
+    }
+
+    @Test
+    fun `prazo da enquete - null explicito para tirar a data`() {
+        val tirar = ConversaJson.encodeToString(
+            PrazoEnqueteRequisicao.serializer(),
+            PrazoEnqueteRequisicao(42, com.conversa.app.core.network.json.nuloExplicito),
+        )
+        assertThat(tirar).isEqualTo("""{"enquete_id":42,"encerra_em":null}""")
+        val definir = ConversaJson.encodeToString(
+            PrazoEnqueteRequisicao.serializer(),
+            PrazoEnqueteRequisicao(42, kotlinx.serialization.json.JsonPrimitive("2026-10-09T18:00:00Z")),
+        )
+        assertThat(definir).isEqualTo("""{"enquete_id":42,"encerra_em":"2026-10-09T18:00:00Z"}""")
     }
 
     @Test

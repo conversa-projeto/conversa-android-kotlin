@@ -1,6 +1,7 @@
 package com.conversa.app.core.data.sincronizacao
 
 import com.conversa.app.core.data.SessaoRepositorio
+import com.conversa.app.core.data.enquetes.EnquetesRepositorio
 import com.conversa.app.core.data.paraEntidade
 import com.conversa.app.core.data.presenca.PresencaRepositorio
 import com.conversa.app.core.database.dao.ConversaDao
@@ -64,6 +65,7 @@ class SyncManager @Inject constructor(
     private val syncEstadoDao: SyncEstadoDao,
     private val presenca: PresencaRepositorio,
     private val sessao: SessaoRepositorio,
+    private val enquetes: EnquetesRepositorio,
     @EscopoAplicacao private val escopo: CoroutineScope,
 ) {
     private val trava = Mutex()
@@ -207,6 +209,8 @@ class SyncManager @Inject constructor(
             is EventoSocket.ConversaAtualizada -> escopo.launch { sincronizarConversas() }
             is EventoSocket.StatusMensagens -> escopo.launch { atualizarStatus(evento) }
             is EventoSocket.Reacao -> escopo.launch { atualizarReacoes(evento) }
+            // 62: relê a enquete só se alguma bolha já a carregou (7.12).
+            is EventoSocket.EnqueteAtualizada -> escopo.launch { enquetes.aoAtualizar(evento.enqueteId) }
             else -> Unit
         }
     }
