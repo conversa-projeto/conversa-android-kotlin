@@ -28,6 +28,7 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -35,6 +36,7 @@ import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.drawBehind
 import androidx.compose.ui.geometry.Size
@@ -124,6 +126,8 @@ data class AcoesBolha(
     val aoIrParaMensagem: (mensagemId: Long, conversaId: Long) -> Unit = { _, _ -> },
     /** Participo da conversa? (a citação de uma encaminhada só abre a original se sim). */
     val participaDe: (conversaId: Long) -> Boolean = { false },
+    /** Toque no status de uma minha: o detalhe (7.10). */
+    val aoVerStatus: (Mensagem) -> Unit = {},
 )
 
 /**
@@ -161,10 +165,15 @@ fun LinhaMensagem(
         val comAcoes = podeAbrirMenu(mensagem)
         val rotuloAcoes = stringResource(R.string.acoes_da_mensagem)
         val rotuloResponder = stringResource(R.string.responder)
+        // Agendada (7.10): selo acima e a bolha esmaecida até a hora exata (só o autor a vê antes).
+        val agendada by agendadaNaTela(mensagem.visivelEm.takeIf { propria })
+        if (agendada) mensagem.visivelEm?.let { SeloAgendada(it) }
+        val aoVerStatus = if (propria && mensagem.id > 0 && !mensagem.enviando) ({ acoes.aoVerStatus(mensagem) }) else null
         DeslizarParaResponder(habilitado = comAcoes, aoResponder = { acoes.aoResponder(mensagem) }) {
             Box(
                 Modifier
                     .widthIn(max = larguraMax)
+                    .alpha(if (agendada) 0.7f else 1f)
                     .toqueLongo(comAcoes) { acoes.aoMenu(mensagem) }
                     // O toque longo e o deslizar são gestos: o TalkBack chega neles por estas ações.
                     .then(
@@ -186,15 +195,17 @@ fun LinhaMensagem(
                         },
                     ),
             ) {
-                when (classificarMensagem(mensagem)) {
-                    TipoExibicao.EMOJI -> BolhaEmoji(mensagem, propria)
-                    TipoExibicao.FIGURINHA -> BolhaFigurinha(mensagem, propria)
-                    TipoExibicao.CHAMADA -> BolhaChamada(mensagem, propria, acoes)
-                    TipoExibicao.OCULTA -> BolhaOculta(mensagem, propria)
-                    TipoExibicao.TEXTO_CURTO -> Fundo(propria) { TextoCurto(mensagem, propria, acoes) }
-                    TipoExibicao.CODIGO -> Fundo(propria) { CorpoPadrao(mensagem, propria, acoes) }
-                    TipoExibicao.IMAGEM -> BolhaImagem(mensagem, propria, progresso, acoes)
-                    else -> Fundo(propria) { CorpoPadrao(mensagem, propria, acoes, progresso) }
+                CompositionLocalProvider(LocalAoVerStatus provides aoVerStatus) {
+                    when (classificarMensagem(mensagem)) {
+                        TipoExibicao.EMOJI -> BolhaEmoji(mensagem, propria)
+                        TipoExibicao.FIGURINHA -> BolhaFigurinha(mensagem, propria)
+                        TipoExibicao.CHAMADA -> BolhaChamada(mensagem, propria, acoes)
+                        TipoExibicao.OCULTA -> BolhaOculta(mensagem, propria)
+                        TipoExibicao.TEXTO_CURTO -> Fundo(propria) { TextoCurto(mensagem, propria, acoes) }
+                        TipoExibicao.CODIGO -> Fundo(propria) { CorpoPadrao(mensagem, propria, acoes) }
+                        TipoExibicao.IMAGEM -> BolhaImagem(mensagem, propria, progresso, acoes)
+                        else -> Fundo(propria) { CorpoPadrao(mensagem, propria, acoes, progresso) }
+                    }
                 }
             }
         }
@@ -387,10 +398,21 @@ fun TextoRico(texto: String, cor: Color, acoes: AcoesBolha, modifier: Modifier =
 /** Hora e, nas minhas, o status de entrega (MSG-08). */
 @Composable
 private fun Rodape(mensagem: Mensagem, propria: Boolean, modifier: Modifier = Modifier) {
-    Row(modifier, verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(3.dp)) {
+    Row(
+        modifier.tocarParaVerStatus(),
+        verticalAlignment = Alignment.CenterVertically,
+        horizontalArrangement = Arrangement.spacedBy(3.dp),
+    ) {
         Text(horaDa(mensagem), style = MaterialTheme.typography.labelSmall, color = ConversaTema.cores.horaBolha)
         if (propria) IconeStatus(statusEntrega(mensagem))
     }
+}
+
+/** Hora + status de uma minha: o toque abre o detalhe do status (7.10). */
+@Composable
+internal fun Modifier.tocarParaVerStatus(): Modifier {
+    val aoVerStatus = LocalAoVerStatus.current ?: return this
+    return clickable(onClickLabel = stringResource(R.string.ver_status), onClick = aoVerStatus)
 }
 
 @Composable

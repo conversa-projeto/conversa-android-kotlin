@@ -761,12 +761,12 @@
 - [ ] ` ```mermaid ` → WebView offline com mermaid.js embutido (P2)
 
 ### 7.10 Detalhe de status e agendamento (FC-513, FC-514)
-- [ ] Toque no ✓ → bottom sheet: `GET /mensagem/status/detalhe?id=` (aqui os campos são **datas**)
-- [ ] Direta: Enviada / Recebida / Visualizada / Ouvida (áudio) / Oculta; sem data → "Aguardando"
-- [ ] Grupo: "Visualizada por (N)", "Recebida por (N)", "Aguardando (N)"
-- [ ] Toque longo no Enviar → "Agendar": data e hora (padrão amanhã 08:00)
-- [ ] Validações: ≥ 5 min no futuro; ≤ 1 ano
-- [ ] `visivel_em` em ISO UTC; selo "Agendada para hoje HH:MM / amanhã / dd/MM HH:MM"; some na hora exata
+- [x] Toque no ✓ → bottom sheet: `GET /mensagem/status/detalhe?id=` (aqui os campos são **datas**)
+- [x] Direta: Enviada / Recebida / Visualizada / Ouvida (áudio) / Oculta; sem data → "Aguardando"
+- [x] Grupo: "Visualizada por (N)", "Recebida por (N)", "Aguardando (N)"
+- [x] Toque longo no Enviar → "Agendar": data e hora (padrão amanhã 08:00)
+- [x] Validações: ≥ 5 min no futuro; ≤ 1 ano
+- [x] `visivel_em` em ISO UTC; selo "Agendada para hoje HH:MM / amanhã / dd/MM HH:MM"; some na hora exata
 
 ### 7.11 Pequenos extras (FC-515)
 - [ ] Atalhos `:)` → 🙂 etc. (tabela do `emojiAtalhos.ts`), só como palavra solta e fora de código

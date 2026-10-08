@@ -435,6 +435,9 @@ class AcoesAbertas {
     /** Id da mensagem sendo encaminhada (a folha de destinos). */
     var encaminhando by mutableStateOf<Long?>(null)
     var ocultando by mutableStateOf<Mensagem?>(null)
+
+    /** Mensagem minha com o detalhe do status aberto (7.10). */
+    var statusDe by mutableStateOf<Mensagem?>(null)
 }
 
 /**
@@ -533,6 +536,9 @@ internal fun AcoesDaMensagem(abertas: AcoesAbertas, estado: ChatUiState, viewMod
                 aoFechar = { abertas.maisReacoes = null },
             )
         }
+    }
+    abertas.statusDe?.let { inicial ->
+        DetalheStatus(atual(inicial.id) ?: inicial, estado.grupo, viewModel::statusDetalhe, aoFechar = { abertas.statusDe = null })
     }
     abertas.ocultando?.let { mensagem ->
         ConfirmarOcultar(

@@ -235,6 +235,24 @@ class MensagensTest {
     }
 
     @Test
+    fun `agendada vai com visivel_em em ISO UTC e a otimista ordena pela data agendada`() = runTest {
+        val envio = envio()
+        val quando = java.time.Instant.parse("2027-01-02T11:00:00Z")
+
+        val id = envio.enviar(42, "depois", emptyList(), visivelEm = quando)
+
+        val otimista = banco.mensagemDao().buscar(id)!!.paraModelo()
+        assertThat(otimista.visivelEm).isEqualTo(quando)
+        assertThat(otimista.dataEfetiva).isEqualTo(quando)
+        coEvery { api.enviarMensagem(any()) } returns MensagemCriadaDto(id = 701, conversaId = 42)
+        coEvery { api.mensagens(42, any(), 0, 0) } throws java.io.IOException("sem rede")
+        envio.processarPendentes()
+        coVerify {
+            api.enviarMensagem(EnviarMensagemRequisicao(42, listOf(ConteudoEnvioDto(1, 1, "depois")), visivelEm = "2027-01-02T11:00:00Z"))
+        }
+    }
+
+    @Test
     fun `encaminhada leva os conteudos da original antes do texto e pode ir sem texto`() = runTest {
         val envio = envio()
         val original = msg(300, "olha isto", remetente = 8).copy(

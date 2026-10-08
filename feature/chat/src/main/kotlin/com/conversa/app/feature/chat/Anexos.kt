@@ -181,6 +181,7 @@ fun BolhaImagem(mensagem: Mensagem, propria: Boolean, progresso: Float?, acoes: 
                 .align(Alignment.BottomEnd)
                 .padding(6.dp)
                 .background(Color.Black.copy(alpha = 0.45f), RoundedCornerShape(8.dp))
+                .tocarParaVerStatus()
                 .padding(horizontal = 6.dp, vertical = 2.dp),
         ) {
             Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(3.dp)) {

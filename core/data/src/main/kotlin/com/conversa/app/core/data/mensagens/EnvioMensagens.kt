@@ -42,6 +42,7 @@ import dagger.assisted.Assisted
 import dagger.assisted.AssistedInject
 import dagger.hilt.android.qualifiers.ApplicationContext
 import java.time.Clock
+import java.time.Instant
 import java.util.concurrent.TimeUnit
 import javax.inject.Inject
 import javax.inject.Singleton
@@ -133,7 +134,8 @@ class EnvioMensagens @Inject constructor(
      * texto primeiro, depois os anexos na ordem em que foram escolhidos. Com [referencia],
      * vai `mensagem_referencia {tipo, origem_mensagem_id}` e a otimista já mostra a citação;
      * encaminhada (7.6) leva antes os conteúdos da original (os identificadores, sem subir de
-     * novo; votação não vai: o servidor recusa) e pode ir sem texto.
+     * novo; votação não vai: o servidor recusa) e pode ir sem texto. Com [visivelEm] (7.10),
+     * agendada: vai `visivel_em` em ISO UTC e a otimista já fica no fim, com o selo.
      * Devolve o id local.
      */
     suspend fun enviar(
@@ -142,6 +144,7 @@ class EnvioMensagens @Inject constructor(
         anexosLocais: List<AnexoLocal>,
         referencia: ReferenciaPendente? = null,
         figurinha: String? = null,
+        visivelEm: Instant? = null,
     ): Long {
         val atual = sessao.sessao.value ?: error("Sem sessão")
         val agora = relogio.instant()
@@ -174,6 +177,7 @@ class EnvioMensagens @Inject constructor(
             val corpo = EnviarMensagemRequisicao(
                 conversaId,
                 comFigurinha,
+                visivelEm = visivelEm?.toString(),
                 mensagemReferencia = referencia?.let { ReferenciaEnvioDto(it.tipo.codigo, it.mensagem.id) },
             )
             val pacote = PacoteEnvio(corpo, pendentes)
@@ -187,9 +191,9 @@ class EnvioMensagens @Inject constructor(
                             // O servidor manda só o primeiro nome do remetente.
                             remetente = atual.nome.trim().substringBefore(' '),
                             inserida = agora,
-                            visivelEm = null,
+                            visivelEm = visivelEm,
                             excluidaEm = null,
-                            dataEfetiva = agora,
+                            dataEfetiva = visivelEm ?: agora,
                             referenciaJson = referencia?.let {
                                 ConversaJson.encodeToString(
                                     ReferenciaDto.serializer(),

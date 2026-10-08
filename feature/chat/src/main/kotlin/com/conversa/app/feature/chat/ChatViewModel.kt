@@ -29,6 +29,7 @@ import com.conversa.app.core.model.ItemChat
 import com.conversa.app.core.model.MembroConversa
 import com.conversa.app.core.model.Mensagem
 import com.conversa.app.core.model.PREFIXO_LOCAL
+import com.conversa.app.core.model.StatusDestinatario
 import com.conversa.app.core.model.TipoConteudo
 import com.conversa.app.core.model.TipoConversa
 import com.conversa.app.core.model.TipoReferencia
@@ -41,6 +42,7 @@ import com.conversa.app.core.network.http.paraErroApi
 import com.conversa.app.core.ui.estado.EventosUnicos
 import dagger.hilt.android.lifecycle.HiltViewModel
 import java.time.Clock
+import java.time.Instant
 import javax.inject.Inject
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
@@ -363,7 +365,15 @@ class ChatViewModel @Inject constructor(
     }
 
     /** Envia e avisa a tela para limpar o campo só depois de gravado no Room. */
-    fun enviar(texto: String, aoGravar: () -> Unit) {
+    fun enviar(texto: String, aoGravar: () -> Unit) = enviar(texto, null, aoGravar)
+
+    /** "Agendar" (7.10): a mesma mensagem, com `visivel_em` (o diálogo já validou 5 min..1 ano). */
+    fun agendar(texto: String, quando: Instant, aoGravar: () -> Unit) = enviar(texto, quando, aoGravar)
+
+    /** Detalhe do status (7.10): a folha pede quando abre. */
+    suspend fun statusDetalhe(mensagemId: Long): Result<List<StatusDestinatario>> = mensagens.statusDetalhe(mensagemId)
+
+    private fun enviar(texto: String, visivelEm: Instant?, aoGravar: () -> Unit) {
         val limpo = texto.trim()
         val anexosNaFila = fila.value
         val resposta = respondendo.value
@@ -371,7 +381,7 @@ class ChatViewModel @Inject constructor(
         val encaminhando = resposta?.tipo == TipoReferencia.ENCAMINHAMENTO
         if (limpo.isEmpty() && anexosNaFila.isEmpty() && !encaminhando) return
         viewModelScope.launch {
-            envio.enviar(conversaId, limpo, anexosNaFila, resposta)
+            envio.enviar(conversaId, limpo, anexosNaFila, resposta, visivelEm = visivelEm)
             fila.value = fila.value - anexosNaFila.toSet()
             if (respondendo.value == resposta) respondendo.value = null
             aoGravar()

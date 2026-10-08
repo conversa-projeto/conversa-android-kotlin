@@ -18,6 +18,7 @@ import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.combinedClickable
 import androidx.compose.foundation.content.MediaType
 import androidx.compose.foundation.content.ReceiveContentListener
 import androidx.compose.foundation.content.consume
@@ -63,6 +64,7 @@ import androidx.compose.material.icons.outlined.Delete
 import androidx.compose.material.icons.outlined.EmojiEmotions
 import androidx.compose.material.icons.outlined.Image
 import androidx.compose.material.icons.outlined.PhotoCamera
+import androidx.compose.material.icons.outlined.Schedule
 import androidx.compose.material3.DropdownMenu
 import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.FilledIconButton
@@ -130,6 +132,7 @@ import com.conversa.app.core.ui.componentes.LocalAvisos
 import com.conversa.app.core.ui.componentes.mostrarErro
 import com.conversa.app.core.ui.tema.ConversaTema
 import java.io.File
+import java.time.Instant
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.drop
@@ -353,25 +356,65 @@ private fun LinhaDoCampo(
                 )
             }
         }
-        // Com texto ou anexo: Enviar. Vazio: microfone (como o web).
+        var menuAgendar by remember { mutableStateOf(false) }
+        var agendando by rememberSaveable { mutableStateOf(false) }
+        // Agora (nulo) ou agendada (7.10). Só limpa se a pessoa não mudou o texto enquanto a mensagem era gravada no Room.
+        val enviar: (Instant?) -> Unit = { quando ->
+            val enviado = texto.text.toString()
+            val aoGravar = {
+                if (texto.text.toString() == enviado) {
+                    texto.clearText()
+                    mencoes.clear()
+                }
+            }
+            val corpo = textoParaEnvio(enviado, mencoes)
+            if (quando == null) acoes.aoEnviar(corpo, aoGravar) else acoes.aoAgendar(corpo, quando, aoGravar)
+        }
+        // Com texto ou anexo: Enviar (toque longo: "Agendar mensagem"). Vazio: microfone (como o web).
         if (texto.text.isNotBlank() || temAnexos) {
-            FilledIconButton(
-                onClick = {
-                    val enviado = texto.text.toString()
-                    // Só limpa se a pessoa não mudou o texto enquanto a mensagem era gravada no Room.
-                    acoes.aoEnviar(textoParaEnvio(enviado, mencoes)) {
-                        if (texto.text.toString() == enviado) {
-                            texto.clearText()
-                            mencoes.clear()
-                        }
-                    }
-                },
-                modifier = Modifier.size(48.dp),
-            ) {
-                Icon(Icons.AutoMirrored.Filled.Send, contentDescription = stringResource(R.string.enviar))
+            Box {
+                Box(
+                    Modifier
+                        .size(48.dp)
+                        .clip(CircleShape)
+                        .background(MaterialTheme.colorScheme.primary)
+                        .combinedClickable(
+                            role = Role.Button,
+                            onClickLabel = stringResource(R.string.enviar),
+                            onLongClickLabel = stringResource(R.string.agendar_mensagem),
+                            onLongClick = { menuAgendar = true },
+                            onClick = { enviar(null) },
+                        ),
+                    contentAlignment = Alignment.Center,
+                ) {
+                    Icon(
+                        Icons.AutoMirrored.Filled.Send,
+                        contentDescription = stringResource(R.string.enviar),
+                        tint = MaterialTheme.colorScheme.onPrimary,
+                    )
+                }
+                DropdownMenu(expanded = menuAgendar, onDismissRequest = { menuAgendar = false }) {
+                    DropdownMenuItem(
+                        text = { Text(stringResource(R.string.agendar_mensagem)) },
+                        leadingIcon = { Icon(Icons.Outlined.Schedule, contentDescription = null) },
+                        onClick = {
+                            menuAgendar = false
+                            agendando = true
+                        },
+                    )
+                }
             }
         } else {
             BotaoMicrofone(segurando != null, acoes.gravacao)
+        }
+        if (agendando) {
+            AgendarMensagem(
+                aoConfirmar = { quando ->
+                    agendando = false
+                    enviar(quando)
+                },
+                aoFechar = { agendando = false },
+            )
         }
     }
 }

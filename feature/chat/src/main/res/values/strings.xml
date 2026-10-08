@@ -163,4 +163,27 @@
     <string name="microfone_indisponivel">Não foi possível iniciar a gravação</string>
     <string name="gravacao_curta">Áudio muito curto. Segure o microfone para gravar.</string>
     <string name="gravacao_falhou">Não foi possível salvar o áudio.</string>
+
+    <!-- Detalhe do status e agendamento (7.10), textos do web -->
+    <string name="ver_status">Ver status</string>
+    <string name="status_carregando">Carregando…</string>
+    <string name="status_erro">Não foi possível carregar o status.</string>
+    <string name="etapa_enviada">Enviada</string>
+    <string name="etapa_recebida">Recebida</string>
+    <string name="etapa_visualizada">Visualizada</string>
+    <string name="etapa_ouvida">Ouvida</string>
+    <string name="etapa_oculta">Oculta</string>
+    <string name="etapa_aguardando">Aguardando</string>
+    <string name="secao_visualizada_por">Visualizada por (%1$d)</string>
+    <string name="secao_recebida_por">Recebida por (%1$d)</string>
+    <string name="secao_aguardando">Aguardando (%1$d)</string>
+    <string name="agendar_mensagem">Agendar mensagem</string>
+    <string name="agendar_data">Data</string>
+    <string name="agendar_hora">Hora</string>
+    <string name="agendar">Agendar</string>
+    <string name="agendar_muito_cedo">O envio deve ser no mínimo 5 minutos no futuro</string>
+    <string name="agendar_muito_longe">O envio não pode ser mais de 1 ano no futuro</string>
+    <string name="agendada_hoje">Agendada para hoje %1$s</string>
+    <string name="agendada_amanha">Agendada para amanhã %1$s</string>
+    <string name="agendada_outro_dia">Agendada para %1$s</string>
 </resources>

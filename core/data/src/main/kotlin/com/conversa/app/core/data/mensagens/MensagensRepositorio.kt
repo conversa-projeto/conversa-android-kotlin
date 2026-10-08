@@ -5,6 +5,7 @@ import com.conversa.app.core.data.paraModelo
 import com.conversa.app.core.database.dao.ConversaDao
 import com.conversa.app.core.database.dao.MensagemDao
 import com.conversa.app.core.model.Mensagem
+import com.conversa.app.core.model.StatusDestinatario
 import com.conversa.app.core.model.alternarReacao
 import com.conversa.app.core.model.emojiAceito
 import com.conversa.app.core.network.api.ConversaApi
@@ -114,6 +115,12 @@ class MensagensRepositorio @Inject constructor(
         val excluidaEm = resposta.excluidaEm
         if (excluidaEm != null) mensagemDao.atualizarOculta(mensagemId, excluidaEm.toEpochMilli()) else mensagemDao.remover(mensagemId)
     }
+
+    /** Detalhe do status (7.10, FC-513): `GET /mensagem/status/detalhe`, uma linha por destinatário, com datas. */
+    suspend fun statusDetalhe(mensagemId: Long): Result<List<StatusDestinatario>> =
+        chamarApi { api.statusDetalhe(mensagemId) }.map { lista ->
+            lista.map { StatusDestinatario(it.usuarioId, it.nome, it.recebida, it.visualizada, it.reproduzida) }
+        }
 
     private suspend fun salvar(lista: List<com.conversa.app.core.network.dto.MensagemDto>): Int {
         mensagemDao.salvarCompletas(lista.map { it.paraEntidade() })

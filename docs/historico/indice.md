@@ -70,6 +70,7 @@
 - 2026-10-08 · [Etapa 7 — menções no campo](2026-10-08-25-etapa-7-mencoes.md) — "@" abre até 6 contatos; "@Nome" destacado no campo vira `@[Nome](id)` no envio; porte do `mencoesTexto.ts` com testes
 - 2026-10-08 · [Etapa 7 — figurinhas animadas](2026-10-08-26-etapa-7-figurinhas.md) — as 24 animações Lottie do web nos assets; seletor por pacote no "+"; bolha de 160 dp que para com "remover animações"; envio tipo 7 pela fila
 - 2026-10-08 · [Etapa 7 — blocos de código](2026-10-08-27-etapa-7-blocos-de-codigo.md) — cabeçalho com "Copiar"/"Copiado!", destaque de sintaxe próprio (linguagens do web, sem regex), recolher acima de 240 dp; cores do destaque reaproveitam tokens (cores.md §6.4)
+- 2026-10-08 · [Etapa 7 — detalhe do status e agendar](2026-10-08-28-etapa-7-status-e-agendamento.md) — toque no ✓ abre o detalhe (etapas na direta, seções no grupo); toque longo no Enviar agenda (≥ 5 min, ≤ 1 ano), selo "Agendada para …" que some na hora exata
 
 ## Atividades, pesquisa, perfil e configurações (etapa 8)
 _(nada ainda)_

@@ -195,6 +195,21 @@ class ChatViewModelTest {
     }
 
     @Test
+    fun `agendar manda o mesmo envio com visivel_em e limpa o campo`() = runTest {
+        val quando = java.time.Instant.parse("2027-01-02T11:00:00Z")
+        coEvery { envio.enviar(42, "depois", any(), any(), any(), any()) } returns -1
+        val vm = criar()
+        advanceUntilIdle()
+
+        var limpou = false
+        vm.agendar("depois", quando) { limpou = true }
+        advanceUntilIdle()
+
+        coVerify { envio.enviar(42, "depois", emptyList(), null, visivelEm = quando) }
+        assertThat(limpou).isTrue()
+    }
+
+    @Test
     fun `enviar grava, avisa para limpar o campo, rola ao fim e zera o digitando`() = runTest {
         coEvery { envio.enviar(42, "olá", any()) } returns -1
         val vm = criar()
