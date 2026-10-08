@@ -4,7 +4,7 @@
 - **Tipo:** funcionalidade
 - **Itens:** `TODO.md` 7.8; FC-509; ENV-04
 - **Branch:** `reescrita`
-- **Commits:** _(preencher)_
+- **Commits:** `61d6a2c`
 
 ## Contexto
 O web tem 24 figurinhas animadas (Lottie) em três pacotes (`utils/figurinhas.ts`, `FigurinhaLottie.vue`, `BolhaFigurinha.vue`). A mensagem leva só o identificador "pacote/nome" (conteúdo tipo 7). No Android elas apareciam como o marcador "🏷 Figurinha".
