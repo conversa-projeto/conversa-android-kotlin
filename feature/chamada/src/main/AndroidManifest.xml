@@ -20,14 +20,18 @@
     <uses-feature android:name="android.hardware.camera.front" android:required="false" />
 
     <application>
-        <!-- Tela da chamada: aparece por cima da tela bloqueada e acende a tela (CHA-03). -->
+        <!-- Tela da chamada: aparece por cima da tela bloqueada e acende a tela (CHA-03). Tarefa
+             própria: o picture-in-picture (6.12) leva só a chamada, e o app continua usável. -->
         <activity
             android:name=".ChamadaActivity"
             android:configChanges="orientation|screenSize|screenLayout|smallestScreenSize|keyboardHidden"
             android:excludeFromRecents="true"
             android:exported="false"
-            android:launchMode="singleTop"
+            android:autoRemoveFromRecents="true"
+            android:launchMode="singleTask"
             android:showWhenLocked="true"
+            android:supportsPictureInPicture="true"
+            android:taskAffinity="com.conversa.app.chamada"
             android:turnScreenOn="true" />
 
         <service

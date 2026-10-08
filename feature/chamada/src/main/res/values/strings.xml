@@ -38,6 +38,7 @@
     <string name="desligado">Desligado</string>
     <string name="voce">Você</string>
     <string name="reconectando">Reconectando…</string>
+    <string name="toque_para_voltar">Toque para voltar à chamada</string>
     <string name="modo_grade">Grade</string>
     <string name="modo_destaque">Destaque</string>
     <string name="modo_tela_unica">Tela única</string>

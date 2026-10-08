@@ -1,6 +1,7 @@
 package com.conversa.app.feature.chamada
 
 import android.Manifest
+import android.graphics.Rect
 import android.os.PowerManager
 import androidx.activity.compose.BackHandler
 import androidx.activity.compose.rememberLauncherForActivityResult
@@ -66,6 +67,8 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.layout.boundsInWindow
+import androidx.compose.ui.layout.onGloballyPositioned
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.pluralStringResource
 import androidx.compose.ui.res.stringResource
@@ -145,6 +148,10 @@ fun TelaChamadaRota(
     aoFechar: () -> Unit,
     atenderAoAbrir: Boolean = false,
     aoAtenderAoAbrir: () -> Unit = {},
+    emPip: Boolean = false,
+    aoPodePip: (Boolean) -> Unit = {},
+    aoMinimizar: () -> Unit = aoFechar,
+    aoAreaDoVideo: (Rect) -> Unit = {},
     viewModel: ChamadaViewModel = hiltViewModel(),
 ) {
     val estado by viewModel.estado.collectAsStateWithLifecycle()
@@ -160,7 +167,10 @@ fun TelaChamadaRota(
     val contexto = LocalContext.current
     LaunchedEffect(estado.fase) { if (estado.fase == FaseChamada.INATIVO) aoFechar() }
     // Voltar minimiza: a chamada continua (TODO 6.9).
-    BackHandler(onBack = aoFechar)
+    BackHandler(onBack = aoMinimizar)
+    // Vídeo em andamento: sair do app vira picture-in-picture (6.12).
+    val podePip = estado.fase == FaseChamada.ATIVA && estado.tipo == TipoChamada.VIDEO
+    LaunchedEffect(podePip) { aoPodePip(podePip) }
 
     // Permissões na hora de atender ou de ligar a câmera; sem elas segue como der.
     var depoisDasPermissoes by remember { mutableStateOf<(() -> Unit)?>(null) }
@@ -190,7 +200,9 @@ fun TelaChamadaRota(
     }
 
     Surface(Modifier.fillMaxSize(), color = ConversaTema.cores.chamadaFundo) {
-        if (estado.fase == FaseChamada.RECEBENDO) {
+        if (emPip) {
+            TelaPip(estado, trilhas, viewModel.egl)
+        } else if (estado.fase == FaseChamada.RECEBENDO) {
             TelaRecebendo(
                 estado = estado,
                 aoAtender = { soAssistir ->
@@ -215,6 +227,7 @@ fun TelaChamadaRota(
                     aoRetomar = viewModel::retomar,
                     aoMudarRota = viewModel::mudarRota,
                     aoExibir = viewModel::exibir,
+                    aoAreaDoVideo = aoAreaDoVideo,
                 ),
             )
         }
@@ -298,6 +311,8 @@ private data class AcoesEmChamada(
     val aoRetomar: () -> Unit,
     val aoMudarRota: (CallEndpointCompat) -> Unit,
     val aoExibir: (ModoExibicao, Long?) -> Unit,
+    /** Onde o vídeo está na tela: o picture-in-picture "encolhe" a partir daí. */
+    val aoAreaDoVideo: (Rect) -> Unit,
 )
 
 /** Rotas de áudio do Telecom: as disponíveis e a de agora. */
@@ -331,7 +346,12 @@ private fun TelaEmChamada(
                 TextButton(onClick = acoes.aoRetomar) { Text(stringResource(R.string.retomar)) }
             }
         }
-        Box(Modifier.weight(1f).fillMaxWidth()) {
+        Box(
+            Modifier.weight(1f).fillMaxWidth().onGloballyPositioned { area ->
+                val r = area.boundsInWindow()
+                acoes.aoAreaDoVideo(Rect(r.left.toInt(), r.top.toInt(), r.right.toInt(), r.bottom.toInt()))
+            },
+        ) {
             val remotos = trilhas.remotos
             if (remotos.isEmpty()) {
                 // Chamando (ou ninguém transmitindo ainda): quem foi chamado.
@@ -396,7 +416,7 @@ private fun Cabecalho(estado: EstadoChamada) {
 }
 
 @Composable
-private fun Duracao(desde: Instant) {
+internal fun Duracao(desde: Instant, cor: Color = MaterialTheme.colorScheme.primary) {
     var agora by remember { mutableLongStateOf(System.currentTimeMillis()) }
     LaunchedEffect(desde) {
         while (true) {
@@ -405,7 +425,7 @@ private fun Duracao(desde: Instant) {
         }
     }
     val segundos = Duration.between(desde, Instant.ofEpochMilli(agora)).seconds.coerceAtLeast(0)
-    Text(formatarDuracao(segundos), style = MaterialTheme.typography.labelLarge, color = MaterialTheme.colorScheme.primary)
+    Text(formatarDuracao(segundos), style = MaterialTheme.typography.labelLarge, color = cor)
 }
 
 /** Como o web: `mm:ss`, ou `hh:mm:ss` passando de uma hora. */
@@ -804,3 +824,24 @@ private fun SensorDeProximidade(ativo: Boolean) {
 
 /** Teto de segurança da trava (o onDispose solta antes). */
 private const val DURACAO_MAXIMA_PROXIMIDADE_MS = 4 * 60 * 60 * 1000L
+
+/** Picture-in-picture: só quem está em destaque (ou o primeiro), sem cabeçalho nem controles. */
+@Composable
+private fun TelaPip(estado: EstadoChamada, trilhas: TrilhasChamada, egl: EglBase.Context) {
+    val remotos = trilhas.remotos
+    val principal =
+        estado.exibicao.destaque?.takeIf { it in remotos } ?: remotos.entries.firstOrNull { it.value.video != null }?.key
+            ?: remotos.keys.firstOrNull()
+    val nome = estado.dados?.participantes?.firstOrNull { it.usuarioId == principal }?.nome.orEmpty()
+    val trilha = principal?.let { remotos[it] }
+    Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
+        val video = trilha?.video
+        if (video !=
+            null
+        ) {
+            VideoDaTrilha(video, egl, modifier = Modifier.fillMaxSize())
+        } else {
+            Avatar(nome.ifBlank { null }, null, tamanho = 56.dp)
+        }
+    }
+}

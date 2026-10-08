@@ -1,8 +1,13 @@
 package com.conversa.app.feature.chamada
 
+import android.app.PictureInPictureParams
 import android.content.Context
 import android.content.Intent
+import android.content.pm.PackageManager
+import android.graphics.Rect
+import android.os.Build
 import android.os.Bundle
+import android.util.Rational
 import android.view.WindowManager
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
@@ -30,6 +35,11 @@ import kotlinx.coroutines.launch
 class ChamadaActivity : ComponentActivity() {
     /** "Atender" da notificação: atende assim que a tela abre. */
     private val pedidoAtender = mutableStateOf(false)
+    private val emPip = mutableStateOf(false)
+
+    /** Chamada de vídeo em andamento: sair do app (ou voltar) vira picture-in-picture (6.12). */
+    private var podePip = false
+    private var areaDoVideo: Rect? = null
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -37,6 +47,7 @@ class ChamadaActivity : ComponentActivity() {
         enableEdgeToEdge()
         // Tela acesa durante a chamada (o sensor de proximidade é a 6.8).
         window.addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON)
+        addOnPictureInPictureModeChangedListener { emPip.value = it.isInPictureInPictureMode }
         setContent {
             ConversaTema {
                 AreaDeAvisos {
@@ -44,11 +55,57 @@ class ChamadaActivity : ComponentActivity() {
                         aoFechar = ::finish,
                         atenderAoAbrir = pedidoAtender.value,
                         aoAtenderAoAbrir = { pedidoAtender.value = false },
+                        emPip = emPip.value,
+                        aoPodePip = ::atualizarPip,
+                        aoMinimizar = ::minimizar,
+                        aoAreaDoVideo = ::novaAreaDoVideo,
                     )
                 }
             }
         }
     }
+
+    /** Android 12+: entra sozinho ao sair do app; antes disso, pelo [onUserLeaveHint]. */
+    private fun atualizarPip(pode: Boolean) {
+        podePip = pode && temPip()
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S && temPip()) setPictureInPictureParams(parametrosPip(podePip))
+    }
+
+    private fun novaAreaDoVideo(area: Rect) {
+        if (area == areaDoVideo) return
+        areaDoVideo = area
+        if (podePip && Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) setPictureInPictureParams(parametrosPip(true))
+    }
+
+    override fun onUserLeaveHint() {
+        super.onUserLeaveHint()
+        if (podePip && Build.VERSION.SDK_INT < Build.VERSION_CODES.S) entrarEmPip()
+    }
+
+    /** Voltar minimiza: em vídeo vira picture-in-picture; senão a tela fecha e a chamada segue (faixa no topo do app). */
+    private fun minimizar() {
+        if (podePip) entrarEmPip() else finish()
+    }
+
+    private fun entrarEmPip() {
+        try {
+            enterPictureInPictureMode(parametrosPip(true))
+        } catch (_: IllegalStateException) {
+            finish()
+        }
+    }
+
+    private fun parametrosPip(automatico: Boolean): PictureInPictureParams = PictureInPictureParams.Builder()
+        .setAspectRatio(Rational(9, 16))
+        .apply { areaDoVideo?.let { setSourceRectHint(it) } }
+        .apply {
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
+                if (automatico) setAutoEnterEnabled(true) else setAutoEnterEnabled(false)
+            }
+        }
+        .build()
+
+    private fun temPip() = packageManager.hasSystemFeature(PackageManager.FEATURE_PICTURE_IN_PICTURE)
 
     override fun onNewIntent(intent: Intent) {
         super.onNewIntent(intent)

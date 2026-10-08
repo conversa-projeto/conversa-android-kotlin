@@ -10,6 +10,7 @@ import androidx.core.splashscreen.SplashScreen.Companion.installSplashScreen
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.conversa.app.core.ui.componentes.AreaDeAvisos
 import com.conversa.app.core.ui.tema.ConversaTema
+import com.conversa.app.feature.chamada.ComBannerDaChamada
 import com.conversa.app.navegacao.ConversaNavHost
 import dagger.hilt.android.AndroidEntryPoint
 
@@ -31,7 +32,8 @@ class MainActivity : ComponentActivity() {
             ConversaTema {
                 AreaDeAvisos {
                     val destino = viewModel.destinoInicial.collectAsStateWithLifecycle().value
-                    if (destino != null) ConversaNavHost(destinoInicial = destino, principal = viewModel)
+                    // Em chamada, a faixa "Toque para voltar à chamada" fica no topo de todas as telas (6.12).
+                    if (destino != null) ComBannerDaChamada { ConversaNavHost(destinoInicial = destino, principal = viewModel) }
                 }
             }
         }
