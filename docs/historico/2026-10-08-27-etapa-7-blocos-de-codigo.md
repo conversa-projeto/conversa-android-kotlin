@@ -4,7 +4,7 @@
 - **Tipo:** funcionalidade / documentação (cores)
 - **Itens:** `TODO.md` 7.9 (menos o Markdown renderizado e o mermaid); FC-510; MSG-15
 - **Branch:** `reescrita`
-- **Commits:** _(preencher)_
+- **Commits:** `74ce225`
 
 ## Contexto
 No web, o bloco de código (`MessageContent.vue`, `useCodeHighlight.ts`) tem:
