@@ -56,6 +56,7 @@ class ChatViewModelTest {
     }
     private val envio = mockk<EnvioMensagens>(relaxed = true) { every { progresso } returns MutableStateFlow(emptyMap()) }
     private val conversas = mockk<ConversasRepositorio>(relaxed = true) {
+        every { observarTodas() } returns MutableStateFlow(emptyList())
         every { observar(42) } returns MutableStateFlow(
             Conversa(42, TipoConversa.DIRETA, null, "Bruno", 8, 0, null, null, 0, null, null, null),
         )
@@ -95,9 +96,16 @@ class ChatViewModelTest {
 
     private val compartilhamentos = mockk<com.conversa.app.core.data.anexos.Compartilhamentos>(relaxed = true)
 
-    private fun TestScope.criar(comCompartilhamento: Boolean = false, focar: Boolean = false): ChatViewModel {
+    private fun TestScope.criar(comCompartilhamento: Boolean = false, focar: Boolean = false, mensagemId: Long = 0): ChatViewModel {
         val vm = ChatViewModel(
-            SavedStateHandle(mapOf("conversaId" to 42L, "comCompartilhamento" to comCompartilhamento, "focar" to focar)),
+            SavedStateHandle(
+                mapOf(
+                    "conversaId" to 42L,
+                    "comCompartilhamento" to comCompartilhamento,
+                    "focar" to focar,
+                    "mensagemId" to mensagemId,
+                ),
+            ),
             conversas,
             contatos,
             presenca,
@@ -429,6 +437,66 @@ class ChatViewModelTest {
         vm.enviar("outra") { }
         advanceUntilIdle()
         coVerify { envio.enviar(42, "outra", emptyList(), null) }
+    }
+
+    @Test
+    fun `ir para a mensagem desta conversa rola, destaca 1,2 s e some`() = runTest {
+        coEvery { mensagens.trazerAte(42, 7) } returns Result.success(true)
+        val vm = criar()
+        advanceUntilIdle()
+
+        vm.irParaMensagem(7, 42)
+        advanceUntilIdle()
+        assertThat(vm.estado.value.irPara).isEqualTo(7)
+        assertThat(vm.estado.value.destaque).isEqualTo(7)
+
+        vm.chegouNaMensagem()
+        runCurrent()
+        assertThat(vm.estado.value.irPara).isNull()
+        advanceTimeBy(1_100)
+        assertThat(vm.estado.value.destaque).isEqualTo(7)
+        advanceTimeBy(200)
+        assertThat(vm.estado.value.destaque).isNull()
+    }
+
+    @Test
+    fun `ir para a mensagem que nao achou avisa`() = runTest {
+        coEvery { mensagens.trazerAte(42, 7) } returns Result.success(false)
+        val vm = criar()
+        advanceUntilIdle()
+
+        vm.irParaMensagem(7, 42)
+        advanceUntilIdle()
+
+        assertThat(vm.eventos.fluxo.first()).isEqualTo(EventoChat.MensagemNaoLocalizada)
+        assertThat(vm.estado.value.irPara).isNull()
+    }
+
+    @Test
+    fun `encaminhada de outra conversa abre aquela so se participo`() = runTest {
+        every { conversas.observar(50) } returns MutableStateFlow(
+            Conversa(50, TipoConversa.GRUPO, "Outro grupo", null, 0, 0, null, null, 0, null, null, null),
+        )
+        every { conversas.observar(60) } returns MutableStateFlow(null)
+        val vm = criar()
+        advanceUntilIdle()
+
+        vm.irParaMensagem(70, 50)
+        advanceUntilIdle()
+        assertThat(vm.eventos.fluxo.first()).isEqualTo(EventoChat.AbrirConversa(50, 70))
+
+        vm.irParaMensagem(80, 60)
+        advanceUntilIdle()
+        assertThat(vm.eventos.fluxo.first()).isEqualTo(EventoChat.MensagemNaoLocalizada)
+    }
+
+    @Test
+    fun `aberta com a mensagem do link vai ate ela`() = runTest {
+        coEvery { mensagens.trazerAte(42, 7) } returns Result.success(true)
+        val vm = criar(mensagemId = 7)
+        advanceUntilIdle()
+
+        assertThat(vm.estado.value.irPara).isEqualTo(7)
     }
 
     @Test

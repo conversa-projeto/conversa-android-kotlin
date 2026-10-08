@@ -1,5 +1,6 @@
 package com.conversa.app.feature.chat
 
+import androidx.compose.animation.animateColorAsState
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.horizontalScroll
@@ -31,11 +32,14 @@ import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.draw.drawBehind
+import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.platform.LocalWindowInfo
@@ -54,13 +58,16 @@ import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextDecoration
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.text.withLink
 import androidx.compose.ui.text.withStyle
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.conversa.app.core.model.ChamadaNaMensagem
 import com.conversa.app.core.model.Conteudo
+import com.conversa.app.core.model.MAXIMO_NIVEIS_CITACAO
 import com.conversa.app.core.model.Mensagem
+import com.conversa.app.core.model.ReferenciaMensagem
 import com.conversa.app.core.model.ResumoCitacao
 import com.conversa.app.core.model.SegmentoCodigo
 import com.conversa.app.core.model.SegmentoTexto
@@ -70,10 +77,11 @@ import com.conversa.app.core.model.TipoConteudo
 import com.conversa.app.core.model.TipoExibicao
 import com.conversa.app.core.model.TipoReferencia
 import com.conversa.app.core.model.classificarMensagem
+import com.conversa.app.core.model.comoMensagem
 import com.conversa.app.core.model.ehVideo
 import com.conversa.app.core.model.formatarDuracao
-import com.conversa.app.core.model.resumoCitacao
 import com.conversa.app.core.model.separarBlocosDeCodigo
+import com.conversa.app.core.model.separarConteudosDaCitacao
 import com.conversa.app.core.model.separarTexto
 import com.conversa.app.core.model.statusEntrega
 import com.conversa.app.core.network.dto.lerChamadaDaMensagem
@@ -115,6 +123,10 @@ data class AcoesBolha(
     val aoVerMaisReacoes: (Mensagem) -> Unit = {},
     /** Deslizar a bolha para a direita ou a ação de acessibilidade: responder (7.3). */
     val aoResponder: (Mensagem) -> Unit = {},
+    /** Toque na citação: ir até a original (7.5). */
+    val aoIrParaMensagem: (mensagemId: Long, conversaId: Long) -> Unit = { _, _ -> },
+    /** Participo da conversa? (a citação de uma encaminhada só abre a original se sim). */
+    val participaDe: (conversaId: Long) -> Boolean = { false },
 )
 
 /**
@@ -122,11 +134,23 @@ data class AcoesBolha(
  * Minhas à direita (cor `bolhaPropria`), dos outros à esquerda (`bolhaOutro`), cores do FMX.
  */
 @Composable
-fun LinhaMensagem(mensagem: Mensagem, propria: Boolean, mostrarRemetente: Boolean, acoes: AcoesBolha, progresso: Float? = null) {
+fun LinhaMensagem(
+    mensagem: Mensagem,
+    propria: Boolean,
+    mostrarRemetente: Boolean,
+    acoes: AcoesBolha,
+    progresso: Float? = null,
+    destacada: Boolean = false,
+) {
     // Bolha ocupa no máximo 80% da largura da janela.
     val larguraMax = with(LocalDensity.current) { (LocalWindowInfo.current.containerSize.width * 0.8f).toDp() }
+    // Destaque depois do "ir para a mensagem" (7.5): a linha toda, por 1,2 s.
+    val corDestaque by animateColorAsState(
+        if (destacada) MaterialTheme.colorScheme.primary.copy(alpha = 0.18f) else Color.Transparent,
+        label = "destaque",
+    )
     Column(
-        modifier = Modifier.fillMaxWidth().padding(horizontal = 8.dp, vertical = 2.dp),
+        modifier = Modifier.fillMaxWidth().background(corDestaque).padding(horizontal = 8.dp, vertical = 2.dp),
         horizontalAlignment = if (propria) Alignment.End else Alignment.Start,
     ) {
         if (mostrarRemetente) {
@@ -225,10 +249,9 @@ private fun TextoCurto(mensagem: Mensagem, propria: Boolean, acoes: AcoesBolha) 
 private fun CorpoPadrao(mensagem: Mensagem, propria: Boolean, acoes: AcoesBolha, progresso: Float? = null) {
     val cor = corTexto(propria)()
     Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
-        mensagem.referencia?.let { referencia ->
-            referencia.mensagem?.let { citada -> Citacao(referencia.tipo, citada.remetente, resumoCitacao(citada)) }
-        }
-        mensagem.conteudos.forEach { ConteudoNaBolha(mensagem, it, propria, cor, acoes) }
+        val separados = separarConteudosDaCitacao(mensagem)
+        mensagem.referencia?.let { BlocoCitacao(it, separados.daCitacao, propria, cor, acoes) }
+        separados.proprios.forEach { ConteudoNaBolha(mensagem, it, propria, cor, acoes) }
         progresso?.let { androidx.compose.material3.LinearProgressIndicator(progress = { it }, modifier = Modifier.fillMaxWidth()) }
         Rodape(mensagem, propria, Modifier.align(Alignment.End))
     }
@@ -290,24 +313,72 @@ private fun BlocoCodigo(codigo: SegmentoCodigo.Codigo) {
 }
 
 /** Citação de resposta ou encaminhada (MSG-06). Toque para ir à original entra na etapa 7. */
+/**
+ * Citação na bolha (MSG-19, 7.5), como o web: "Remetente · HH:mm" (ou "Encaminhado de …"),
+ * a citação aninhada (até [MAXIMO_NIVEIS_CITACAO] níveis) e os conteúdos da citada, com as
+ * mesmas bolhas (imagem, áudio, arquivo). Tocar vai até a original: resposta sempre;
+ * encaminhada, só se participo da conversa dela.
+ */
 @Composable
-private fun Citacao(tipo: TipoReferencia, remetente: String, resumo: ResumoCitacao) {
-    val titulo = if (tipo == TipoReferencia.ENCAMINHAMENTO) stringResource(R.string.encaminhada_de, remetente) else remetente
-    val texto = textoDoResumo(resumo)
-    Row(
+private fun BlocoCitacao(
+    referencia: ReferenciaMensagem,
+    conteudos: List<Conteudo>,
+    propria: Boolean,
+    cor: Color,
+    acoes: AcoesBolha,
+    nivel: Int = 1,
+) {
+    val citada = referencia.mensagem ?: return
+    val encaminhada = referencia.tipo == TipoReferencia.ENCAMINHAMENTO
+    val navegavel = !encaminhada || acoes.participaDe(citada.conversaId)
+    val titulo = when {
+        encaminhada && citada.remetente.isBlank() -> stringResource(R.string.encaminhado)
+        encaminhada -> stringResource(R.string.encaminhada_de, citada.remetente)
+        else -> citada.remetente.ifBlank { stringResource(R.string.resposta) }
+    }
+    val hora = citada.inserida?.let { FORMATO_HORA.format(it.atZone(ZoneId.systemDefault())) }
+    val comoMensagem = remember(citada) { citada.comoMensagem() }
+    val corBorda = MaterialTheme.colorScheme.primary
+    val rotuloIr = stringResource(R.string.ir_para_a_mensagem)
+    Column(
         Modifier
-            .background(Color.Black.copy(alpha = 0.06f), RoundedCornerShape(8.dp))
-            .padding(end = 8.dp),
-    ) {
-        Box(Modifier.width(3.dp).size(width = 3.dp, height = 40.dp).background(MaterialTheme.colorScheme.primary))
-        Column(Modifier.padding(start = 8.dp, top = 4.dp, bottom = 4.dp)) {
-            Text(titulo, style = MaterialTheme.typography.labelMedium, color = MaterialTheme.colorScheme.primary, maxLines = 1)
-            Text(
-                texto,
-                style = MaterialTheme.typography.bodySmall,
-                maxLines = 2,
-                fontStyle = if (resumo is ResumoCitacao.Oculta) FontStyle.Italic else FontStyle.Normal,
+            .clip(RoundedCornerShape(8.dp))
+            .background(Color.Black.copy(alpha = 0.06f))
+            // Borda à esquerda desenhada atrás (sem medida intrínseca: há imagem e vídeo dentro).
+            .drawBehind { drawRect(corBorda, size = Size(3.dp.toPx(), size.height)) }
+            .then(
+                if (navegavel) {
+                    Modifier.clickable(onClickLabel = rotuloIr) {
+                        acoes.aoIrParaMensagem(citada.id, citada.conversaId)
+                    }
+                } else {
+                    Modifier
+                },
             )
+            .padding(start = 11.dp, end = 8.dp, top = 4.dp, bottom = 4.dp),
+        verticalArrangement = Arrangement.spacedBy(4.dp),
+    ) {
+        Text(
+            if (hora == null) titulo else "$titulo · $hora",
+            style = MaterialTheme.typography.labelMedium,
+            color = MaterialTheme.colorScheme.primary,
+            maxLines = 1,
+            overflow = TextOverflow.Ellipsis,
+        )
+        if (citada.oculta) {
+            Text(
+                stringResource(R.string.mensagem_oculta),
+                style = MaterialTheme.typography.bodySmall,
+                fontStyle = FontStyle.Italic,
+                color = cor,
+            )
+        } else {
+            val aninhada = citada.referencia
+            val conteudosAninhada = aninhada?.mensagem?.conteudos
+            if (aninhada != null && conteudosAninhada != null && nivel < MAXIMO_NIVEIS_CITACAO) {
+                BlocoCitacao(aninhada, conteudosAninhada, propria, cor, acoes, nivel + 1)
+            }
+            conteudos.forEach { ConteudoNaBolha(comoMensagem, it, propria, cor, acoes) }
         }
     }
 }

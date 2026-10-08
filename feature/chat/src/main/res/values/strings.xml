@@ -4,6 +4,10 @@
     <string name="voltar">Voltar</string>
     <!-- Ações sobre a mensagem (etapa 7; textos do web: MensagemAcoes.vue, MessageList.vue) -->
     <string name="responder">Responder</string>
+    <string name="resposta">Resposta</string>
+    <string name="encaminhado">Encaminhado</string>
+    <string name="ir_para_a_mensagem">Ir para a mensagem</string>
+    <string name="mensagem_nao_localizada">Não foi possível localizar esta mensagem no contexto da conversa.</string>
     <string name="cancelar_resposta">Cancelar resposta</string>
     <string name="acoes_da_mensagem">Ações da mensagem</string>
     <string name="mais_emojis">Mais emojis</string>

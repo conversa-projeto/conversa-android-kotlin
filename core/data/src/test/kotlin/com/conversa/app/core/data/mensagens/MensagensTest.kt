@@ -389,6 +389,35 @@ class MensagensTest {
         coVerify(exactly = 0) { api.enviarMensagem(any()) }
     }
 
+    // --- Ir para a mensagem (7.5) ---
+
+    @Test
+    fun `trazer ate a mensagem volta de 99 em 99 sem deixar buraco`() = runTest {
+        val repo = repo()
+        banco.mensagemDao().salvarCompletas((300L..309L).map { msg(it).paraEntidade() })
+        coEvery { api.mensagens(42, 300, 99, 0) } returns (201L..300L).map { msg(it) }
+        coEvery { api.mensagens(42, 201, 99, 0) } returns (102L..201L).map { msg(it) }
+
+        assertThat(repo.trazerAte(42, 305).getOrThrow()).isTrue()
+        assertThat(repo.trazerAte(42, 150).getOrThrow()).isTrue()
+
+        // Já estava: nem pede. Depois de duas páginas, tudo de 102 a 309 está no aparelho.
+        coVerify(exactly = 1) { api.mensagens(42, 300, 99, 0) }
+        assertThat((102L..309L).all { banco.mensagemDao().buscar(it) != null }).isTrue()
+    }
+
+    @Test
+    fun `trazer ate a mensagem que nao existe para no comeco da conversa e falha sem rede`() = runTest {
+        val repo = repo()
+        banco.mensagemDao().salvarCompletas(listOf(msg(300).paraEntidade()))
+        coEvery { api.mensagens(42, 300, 99, 0) } returns listOf(msg(300))
+
+        assertThat(repo.trazerAte(42, 7).getOrThrow()).isFalse()
+
+        coEvery { api.mensagens(42, 300, 99, 0) } throws java.io.IOException("sem rede")
+        assertThat(repo.trazerAte(42, 7).isFailure).isTrue()
+    }
+
     // --- Reagir e ocultar (etapa 7) ---
 
     private fun repo() = MensagensRepositorio(

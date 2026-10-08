@@ -419,7 +419,7 @@
 
 ### 3.11 Deep link (FC-314, CON-12)
 - [x] Abrir `chat/{id}` pela notificação → **recarregar as mensagens** antes de mostrar — o chat sempre recarrega as recentes ao abrir (`carregarRecentes`), venha de onde vier
-- [ ] Com `mensagem={id}` → ir para a mensagem (usa a 6.3) — ⛔ o salto para uma mensagem é da etapa 7 (ações sobre mensagens); hoje abre no lugar padrão
+- [x] Com `mensagem={id}` → ir para a mensagem (usa a 6.3) — com o "ir para a mensagem" do 7.5. Achado junto: com um chat aberto, o link (ou a notificação) de outra conversa não trocava a tela (o `launchSingleTop` reaproveitava a entrada do topo); agora o chat do topo é trocado. No emulador: com o "Grupo de teste 2" aberto, `conversa://chat/3?mensagem=104` abriu o outro grupo já na mensagem, e o voltar levou à lista
 
 ---
 
@@ -723,13 +723,13 @@
 - [x] Erro → "Não foi possível ocultar" ✔ 52d6d03
 
 ### 7.5 Citação e ir para a mensagem (FC-504, FC-505, MSG-19, MSG-06)
-- [ ] Bloco de citação na bolha: remetente (resposta) ou "Encaminhado de <remetente>"; conteúdos da original
-- [ ] Citação aninhada recursiva até 5 níveis
-- [ ] Encaminhada: não repetir os conteúdos iguais aos da referência
-- [ ] Toque na citação → ir para a original
-- [ ] Ir para a mensagem: se não carregada, `GET /mensagens?…&mensagemreferencia=<id>&mensagensprevias=30&mensagensseguintes=30` (se não vier, 120/120) → substituir a lista → centralizar + destacar por 1,2 s
-- [ ] Original em outra conversa → abrir aquela conversa (se participo)
-- [ ] Erro → "Não foi possível localizar esta mensagem no contexto da conversa."
+- [x] Bloco de citação na bolha: remetente (resposta) ou "Encaminhado de <remetente>"; conteúdos da original — `BlocoCitacao`: "Remetente · HH:mm" (ou "Encaminhado"/"Resposta" sem nome, como o web) e os conteúdos com as mesmas bolhas (imagem, áudio, arquivo); imagem de citada que não está na lista abre sozinha no visualizador
+- [x] Citação aninhada recursiva até 5 níveis — `MAXIMO_NIVEIS_CITACAO`
+- [x] Encaminhada: não repetir os conteúdos iguais aos da referência — `separarConteudosDaCitacao` (citada sem conteúdo usa os próprios na citação) (+ testes)
+- [x] Toque na citação → ir para a original — o bloco todo é tocável ("Ir para a mensagem" para o TalkBack)
+- [x] Ir para a mensagem: se não carregada, `GET /mensagens?…&mensagemreferencia=<id>&mensagensprevias=30&mensagensseguintes=30` (se não vier, 120/120) → substituir a lista → centralizar + destacar por 1,2 s — no Android a lista é o Room, então em vez de substituir: `trazerAte` volta de 99 em 99 a partir da mais antiga salva até a mensagem aparecer (até 20 páginas), sem deixar buraco; barra de progresso enquanto busca; centraliza (longe: salta sem animar) e destaca 1,2 s. O link `?mensagem=` também usa isso
+- [x] Original em outra conversa → abrir aquela conversa (se participo) — `RotaChat(conversa, mensagem)`; de quem não participo a citação não é tocável
+- [x] Erro → "Não foi possível localizar esta mensagem no contexto da conversa." — não achou, falhou a rede ou a conversa de origem não é minha (+ testes)
 
 ### 7.6 Encaminhar, copiar e responder no privado (FC-506, FC-507, FC-512)
 - [ ] Encaminhar: tela de destino (conversas exceto a de origem + contatos sem direta), com busca

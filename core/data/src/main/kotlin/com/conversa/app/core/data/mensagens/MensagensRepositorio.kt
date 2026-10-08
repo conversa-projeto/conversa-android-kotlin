@@ -60,6 +60,29 @@ class MensagensRepositorio @Inject constructor(
             .map { lista -> salvar(lista.filter { it.id != ultima }) }
     }
 
+    /**
+     * Ir para a mensagem (MSG-06, TODO 7.5): garante que [mensagemId] está no aparelho sem
+     * deixar buraco na conversa. Volta de [PAGINA_SALTO] em [PAGINA_SALTO] a partir da mais
+     * antiga salva até ela aparecer, no máximo [MAXIMO_PAGINAS_SALTO] vezes. `true` = está.
+     */
+    suspend fun trazerAte(conversaId: Long, mensagemId: Long): Result<Boolean> {
+        repeat(MAXIMO_PAGINAS_SALTO + 1) { tentativa ->
+            if (mensagemDao.buscar(mensagemId)?.mensagem?.conversaId == conversaId) return Result.success(true)
+            if (tentativa == MAXIMO_PAGINAS_SALTO) return Result.success(false)
+            val primeira = mensagemDao.primeiraSalva(conversaId)
+            val novas = chamarApi {
+                if (primeira == null) {
+                    api.mensagens(conversaId, mensagensPrevias = PAGINA_SALTO)
+                } else {
+                    api.mensagens(conversaId, mensagemReferencia = primeira, mensagensPrevias = PAGINA_SALTO)
+                }
+            }.map { lista -> salvar(lista.filter { it.id != primeira }) }
+                .getOrElse { return Result.failure(it) }
+            if (novas == 0) return Result.success(mensagemDao.buscar(mensagemId)?.mensagem?.conversaId == conversaId)
+        }
+        return Result.success(false)
+    }
+
     /** Relê uma mensagem do servidor (reações com nomes, marca de oculta). */
     suspend fun recarregar(conversaId: Long, mensagemId: Long): Result<Unit> =
         chamarApi {
@@ -187,5 +210,11 @@ class MensagensRepositorio @Inject constructor(
         /** Igual ao web: 80 ao abrir, 60 por página. */
         const val RECENTES = 80
         const val PAGINA = 60
+
+        /** O servidor devolve no máximo 100 por chamada: 99 antes + a de referência. */
+        const val PAGINA_SALTO = 99
+
+        /** Até ~2.000 mensagens para trás; além disso, "não foi possível localizar". */
+        const val MAXIMO_PAGINAS_SALTO = 20
     }
 }

@@ -48,6 +48,54 @@ class ChatTest {
         MensagemResumida(9, 42, "Ana", agora, if (oculta) agora else null, conteudos.toList(), null),
     )
 
+    // --- Citação: conteúdos da citada e os próprios (como o BolhaReferencia.vue) ---
+
+    private fun encaminhando(vararg conteudos: Conteudo) = ReferenciaMensagem(
+        TipoReferencia.ENCAMINHAMENTO,
+        MensagemResumida(9, 7, "Ana", agora, null, conteudos.toList(), null),
+    )
+
+    @Test
+    fun `resposta - a citacao mostra a citada e embaixo vai tudo o que e meu`() {
+        val m = mensagem(texto("sim"), referencia = citando(texto("vamos?")))
+
+        val separados = separarConteudosDaCitacao(m)
+
+        assertThat(separados.daCitacao.map { it.conteudo }).containsExactly("vamos?")
+        assertThat(separados.proprios.map { it.conteudo }).containsExactly("sim")
+    }
+
+    @Test
+    fun `encaminhada nao repete embaixo o que ja esta na citacao, so o acrescentado`() {
+        val foto = conteudo(TipoConteudo.IMAGEM, "img-1", ordem = 1)
+        val legenda = conteudo(TipoConteudo.TEXTO, "olha", ordem = 2)
+        val comentario = conteudo(TipoConteudo.TEXTO, "que tal?", ordem = 3)
+        val m = mensagem(foto, legenda, comentario, referencia = encaminhando(foto, legenda))
+
+        val separados = separarConteudosDaCitacao(m)
+
+        assertThat(separados.daCitacao.map { it.conteudo }).containsExactly("img-1", "olha").inOrder()
+        assertThat(separados.proprios.map { it.conteudo }).containsExactly("que tal?")
+    }
+
+    @Test
+    fun `encaminhada com a citada sem conteudo usa os proprios na citacao`() {
+        val m = mensagem(texto("repasse"), referencia = encaminhando())
+
+        val separados = separarConteudosDaCitacao(m)
+
+        assertThat(separados.daCitacao.map { it.conteudo }).containsExactly("repasse")
+        assertThat(separados.proprios).isEmpty()
+    }
+
+    @Test
+    fun `sem citacao tudo e proprio`() {
+        val separados = separarConteudosDaCitacao(mensagem(texto("oi")))
+
+        assertThat(separados.daCitacao).isEmpty()
+        assertThat(separados.proprios.map { it.conteudo }).containsExactly("oi")
+    }
+
     // --- classificarMensagem (mesmos casos do web) ---
 
     @Test

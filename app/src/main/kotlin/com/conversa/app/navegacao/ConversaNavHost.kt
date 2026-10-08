@@ -1,6 +1,7 @@
 package com.conversa.app.navegacao
 
 import androidx.compose.runtime.Composable
+import androidx.navigation.NavDestination.Companion.hasRoute
 import androidx.navigation.NavHostController
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
@@ -30,7 +31,7 @@ fun ConversaNavHost(destinoInicial: Any, principal: MainViewModel) {
     ColetarEventos(principal.navegacao.fluxo) { evento ->
         when (evento) {
             is NavegacaoGlobal.IrParaLogin -> nav.irParaRaiz(RotaLogin(aviso = evento.aviso))
-            is NavegacaoGlobal.AbrirConversa -> nav.navigate(evento.rota) { launchSingleTop = true }
+            is NavegacaoGlobal.AbrirConversa -> nav.abrirConversa(evento.rota)
             NavegacaoGlobal.EnviarPara -> nav.navigate(RotaEnviarPara) { launchSingleTop = true }
         }
     }
@@ -91,7 +92,7 @@ fun ConversaNavHost(destinoInicial: Any, principal: MainViewModel) {
             ChatRotaTela(
                 aoVoltar = { nav.popBackStack() },
                 aoMembros = { nav.navigate(RotaMembros(it)) },
-                aoAbrirConversa = { nav.navigate(RotaChat(it)) },
+                aoAbrirConversa = { conversa, mensagem -> nav.navigate(RotaChat(conversa, mensagem)) },
             )
         }
         composable<RotaEnviarPara> {
@@ -138,4 +139,15 @@ private fun NavHostController.irParaRaiz(rota: Any) {
         popUpTo(graph.id) { inclusive = true }
         launchSingleTop = true
     }
+}
+
+/**
+ * Link ou notificação de uma conversa. Com um chat aberto, ele é trocado pelo pedido (o
+ * `launchSingleTop` reaproveitava a entrada do topo, com o ViewModel da conversa antiga, e a
+ * tela não mudava); a mesma conversa sem mensagem para mostrar fica como está.
+ */
+private fun NavHostController.abrirConversa(rota: RotaChat) {
+    val topo = currentBackStackEntry?.takeIf { it.destination.hasRoute<RotaChat>() }?.toRoute<RotaChat>()
+    if (topo != null && topo.conversaId == rota.conversaId && rota.mensagemId == 0L) return
+    navigate(rota) { if (topo != null) popUpTo<RotaChat> { inclusive = true } }
 }

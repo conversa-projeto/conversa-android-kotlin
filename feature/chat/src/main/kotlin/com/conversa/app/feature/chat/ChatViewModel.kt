@@ -50,6 +50,7 @@ import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
@@ -80,6 +81,14 @@ data class ChatUiState(
     val focarCampo: Boolean = false,
     /** Mensagem sendo respondida (7.3): a barra acima do campo; vai no próximo envio. */
     val respondendo: Mensagem? = null,
+    /** "Ir para a mensagem" (7.5): a tela rola até ela e avisa ([ChatViewModel.chegouNaMensagem]). */
+    val irPara: Long? = null,
+    /** Mensagem destacada por 1,2 s depois do salto. */
+    val destaque: Long? = null,
+    /** Trazendo as mensagens até a original (pode levar algumas páginas): a barra de progresso. */
+    val buscandoMensagem: Boolean = false,
+    /** As conversas de que participo: a citação de uma encaminhada só abre a original se for uma delas. */
+    val minhasConversas: Set<Long> = emptySet(),
 ) {
     val grupo: Boolean get() = conversa?.tipo == TipoConversa.GRUPO
 }
@@ -90,8 +99,11 @@ sealed interface EventoChat {
     /** Depois de enviar: descer até a última mensagem. */
     data object RolarAoFim : EventoChat
 
-    /** Tocou numa menção: abrir a conversa direta com a pessoa (CON-06). */
-    data class AbrirConversa(val conversaId: Long) : EventoChat
+    /** Abrir outra conversa: a direta de uma menção (CON-06) ou a de uma encaminhada (7.5, com a mensagem). */
+    data class AbrirConversa(val conversaId: Long, val mensagemId: Long = 0) : EventoChat
+
+    /** "Ir para a mensagem" não achou a original (7.5). */
+    data object MensagemNaoLocalizada : EventoChat
 
     /** Arquivo acima de 1 GiB: nem entra na fila. */
     data class ArquivoGrande(val nome: String) : EventoChat
@@ -145,7 +157,13 @@ sealed interface EventoChat {
 }
 
 /** O que o campo recebe além do texto digitado (junto, para o [ChatViewModel.estado] caber num `combine`). */
-private data class ExtrasDoCampo(val texto: String?, val foco: Boolean, val respondendo: Mensagem?)
+/** Quanto tempo a mensagem fica destacada depois do "ir para a mensagem" (como o web). */
+private const val DESTAQUE_MS = 1_200L
+
+/** "Ir para a mensagem": aonde a tela deve rolar e o que fica destacado. */
+private data class Salto(val irPara: Long? = null, val destaque: Long? = null, val buscando: Boolean = false)
+
+private data class ExtrasDoCampo(val texto: String?, val foco: Boolean, val respondendo: Mensagem?, val salto: Salto, val minhas: Set<Long>)
 
 /**
  * Áudio na conversa (ANX-10), lido só pelas bolhas de áudio: a posição muda várias
@@ -230,9 +248,13 @@ class ChatViewModel @Inject constructor(
     /** Chat da chamada recém-criado: abre com o cursor no campo, como o web (6.13). */
     private val focarCampo = MutableStateFlow(salvo.get<Boolean>("focar") == true)
     private val respondendo = MutableStateFlow<Mensagem?>(null)
+    private val salto = MutableStateFlow(Salto())
+    private val minhasConversas = conversas.observarTodas().map { lista -> lista.mapTo(mutableSetOf()) { it.id } }
 
     private val extrasDoCampo =
-        combine(textoParaCampo, focarCampo, respondendo) { texto, foco, resposta -> ExtrasDoCampo(texto, foco, resposta) }
+        combine(textoParaCampo, focarCampo, respondendo, salto, minhasConversas) { texto, foco, resposta, s, minhas ->
+            ExtrasDoCampo(texto, foco, resposta, s, minhas)
+        }
 
     private val base = combine(
         conversas.observar(conversaId),
@@ -257,7 +279,17 @@ class ChatViewModel @Inject constructor(
     }
 
     val estado: StateFlow<ChatUiState> = combine(base, fila, envio.progresso, extrasDoCampo) { b, f, p, campo ->
-        b.copy(fila = f, progresso = p, textoParaCampo = campo.texto, focarCampo = campo.foco, respondendo = campo.respondendo)
+        b.copy(
+            fila = f,
+            progresso = p,
+            textoParaCampo = campo.texto,
+            focarCampo = campo.foco,
+            respondendo = campo.respondendo,
+            irPara = campo.salto.irPara,
+            destaque = campo.salto.destaque,
+            buscandoMensagem = campo.salto.buscando,
+            minhasConversas = campo.minhas,
+        )
     }
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), ChatUiState(eu = eu))
 
@@ -273,6 +305,8 @@ class ChatViewModel @Inject constructor(
             val resultado = mensagens.carregarRecentes(conversaId)
             carga.value = carga.value.copy(carregou = true)
             resultado.onFailure { eventos.enviar(EventoChat.Erro(it.paraErroApi().mensagemAmigavel())) }
+            // Veio de um link ou de uma encaminhada com a mensagem (`?mensagem=`): vai até ela.
+            salvo.get<Long>("mensagemId")?.takeIf { it > 0 }?.let { irParaMensagem(it, conversaId) }
             // "Últimas": a primeira de outra pessoa ainda não lida, decidida uma vez só.
             val lista = mensagens.observar(conversaId).first()
             primeiraNaoLida.value = lista.firstOrNull { it.remetenteId != eu && !it.visualizada && it.id > 0 && !it.oculta }?.id ?: 0
@@ -427,6 +461,48 @@ class ChatViewModel @Inject constructor(
 
     fun cancelarResposta() {
         respondendo.value = null
+    }
+
+    /**
+     * Toque na citação (7.5, MSG-06): nesta conversa, traz a original (sem deixar buraco), rola
+     * e destaca; de outra conversa (encaminhada), abre aquela, se participo dela.
+     */
+    fun irParaMensagem(mensagemId: Long, conversaDaMensagem: Long) {
+        if (mensagemId <= 0) return
+        viewModelScope.launch {
+            if (conversaDaMensagem > 0 && conversaDaMensagem != conversaId) {
+                val participo = conversas.observar(conversaDaMensagem).first() != null
+                eventos.enviar(
+                    if (participo) EventoChat.AbrirConversa(conversaDaMensagem, mensagemId) else EventoChat.MensagemNaoLocalizada,
+                )
+                return@launch
+            }
+            salto.value = salto.value.copy(buscando = true)
+            val resultado = mensagens.trazerAte(conversaId, mensagemId)
+            salto.value = salto.value.copy(buscando = false)
+            resultado
+                .onSuccess { achou ->
+                    if (achou) {
+                        salto.value = Salto(
+                            irPara = mensagemId,
+                            destaque = mensagemId,
+                        )
+                    } else {
+                        eventos.enviar(EventoChat.MensagemNaoLocalizada)
+                    }
+                }
+                .onFailure { eventos.enviar(EventoChat.MensagemNaoLocalizada) }
+        }
+    }
+
+    /** A tela chegou na mensagem do salto: o destaque fica [DESTAQUE_MS] e some. */
+    fun chegouNaMensagem() {
+        val destacada = salto.value.destaque
+        salto.value = salto.value.copy(irPara = null)
+        viewModelScope.launch {
+            delay(DESTAQUE_MS)
+            if (salto.value.destaque == destacada) salto.value = salto.value.copy(destaque = null)
+        }
     }
 
     /** Reação do menu, do chip ou do seletor (7.2): alterna a minha; aparece na hora. */

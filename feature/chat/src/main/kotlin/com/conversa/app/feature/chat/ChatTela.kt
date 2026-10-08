@@ -38,6 +38,7 @@ import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
+import androidx.compose.material3.LinearProgressIndicator
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.SmallFloatingActionButton
@@ -93,12 +94,19 @@ import java.time.Instant
 import java.time.ZoneId
 import java.time.format.DateTimeFormatter
 import java.util.Locale
+import kotlin.math.abs
 import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.filter
 import kotlinx.coroutines.launch
 
 /** Quantos itens do topo faltam para pedir a página anterior. */
 private const val MARGEM_PAGINA = 15
+
+/** Metade da altura de uma bolha comum, para o "ir para a mensagem" deixá-la no meio da tela. */
+private const val CENTRO_DA_BOLHA = 60
+
+/** Até quantos itens de distância o "ir para a mensagem" rola animado. */
+private const val SALTO_ANIMADO = 30
 
 /** Longe do fim = mais de tantos itens acima do mais novo (mostra o botão "ir para o final"). */
 private const val LONGE_DO_FIM = 6
@@ -107,7 +115,7 @@ private const val LONGE_DO_FIM = 6
 fun ChatRotaTela(
     aoVoltar: () -> Unit,
     aoMembros: (Long) -> Unit,
-    aoAbrirConversa: (conversaId: Long) -> Unit,
+    aoAbrirConversa: (conversaId: Long, mensagemId: Long) -> Unit,
     viewModel: ChatViewModel = hiltViewModel(),
 ) {
     val estado by viewModel.estado.collectAsStateWithLifecycle()
@@ -144,6 +152,7 @@ fun ChatRotaTela(
     val copiado = stringResource(R.string.copiado)
     val naoOcultou = stringResource(R.string.nao_foi_possivel_ocultar)
     val limiteDeReacoes = stringResource(R.string.limite_de_reacoes)
+    val naoLocalizada = stringResource(R.string.mensagem_nao_localizada)
     val microfoneIndisponivel = stringResource(R.string.microfone_indisponivel)
     val gravacaoCurta = stringResource(R.string.gravacao_curta)
     val gravacaoFalhou = stringResource(R.string.gravacao_falhou)
@@ -154,7 +163,8 @@ fun ChatRotaTela(
             EventoChat.GravacaoFalhou -> avisos.mostrarErro(gravacaoFalhou)
             is EventoChat.Erro -> avisos.mostrarErro(evento.mensagem)
             EventoChat.RolarAoFim -> lista.animateScrollToItem(0)
-            is EventoChat.AbrirConversa -> aoAbrirConversa(evento.conversaId)
+            is EventoChat.AbrirConversa -> aoAbrirConversa(evento.conversaId, evento.mensagemId)
+            EventoChat.MensagemNaoLocalizada -> avisos.mostrarErro(naoLocalizada)
             is EventoChat.ArquivoGrande -> avisos.mostrarErro(recursos.getString(R.string.arquivo_grande, evento.nome))
             is EventoChat.AbrirArquivo -> if (!abrirComOutroApp(contexto, evento.arquivo, evento.mime)) avisos.mostrarErro(semApp)
             is EventoChat.Baixando -> avisos.showSnackbar(recursos.getString(R.string.baixando, evento.nome))
@@ -228,6 +238,7 @@ fun ChatRotaTela(
                     aoVerReacoes = { mensagem, emoji -> acoesDaMensagem.quemReagiu = mensagem.id to emoji },
                     aoVerMaisReacoes = { acoesDaMensagem.maisReacoes = it.id },
                     aoResponder = viewModel::responder,
+                    aoIrParaMensagem = viewModel::irParaMensagem,
                 ),
                 aoIrAoFim = { escopo.launch { lista.animateScrollToItem(0) } },
                 aoAdicionarAnexos = viewModel::adicionarAnexos,
@@ -236,6 +247,7 @@ fun ChatRotaTela(
                 aoTextoUsado = viewModel::textoUsado,
                 aoCampoFocado = viewModel::campoFocado,
                 aoCancelarResposta = viewModel::cancelarResposta,
+                aoChegouNaMensagem = viewModel::chegouNaMensagem,
                 aoColarAnexos = viewModel::colarAnexos,
                 aoVisivel = viewModel::visivel,
                 gravacao = AcoesGravacao(
@@ -323,6 +335,7 @@ class AcoesChat(
     val aoTextoUsado: () -> Unit = {},
     val aoCampoFocado: () -> Unit = {},
     val aoCancelarResposta: () -> Unit = {},
+    val aoChegouNaMensagem: () -> Unit = {},
     /** Imagem colada no campo (teclado ou área de transferência). */
     val aoColarAnexos: (List<String>) -> Unit = {},
     /** A conversa ficou visível ou deixou de estar (notificações, NOT-01/03). */
@@ -382,6 +395,22 @@ fun ChatTela(estado: ChatUiState, lista: androidx.compose.foundation.lazy.LazyLi
         posicionou = true
     }
 
+    // "Ir para a mensagem" (7.5): quando ela estiver na lista, rola até ela, um pouco acima do meio.
+    LaunchedEffect(estado.irPara, itens) {
+        val alvo = estado.irPara ?: return@LaunchedEffect
+        val linha = itens.indexOfFirst { (it as? ItemChat.Bolha)?.mensagem?.id == alvo }
+        if (linha < 0) return@LaunchedEffect
+        // Lista de baixo para cima: o deslocamento negativo sobe a mensagem até perto do meio.
+        val deslocamento = -(lista.layoutInfo.viewportSize.height / 2) + CENTRO_DA_BOLHA
+        // Longe: salta direto (animar centenas de itens demora); perto: anima.
+        if (abs(linha - lista.firstVisibleItemIndex) > SALTO_ANIMADO) {
+            lista.scrollToItem(linha, deslocamento)
+        } else {
+            lista.animateScrollToItem(linha, deslocamento)
+        }
+        acoes.aoChegouNaMensagem()
+    }
+
     val longeDoFim by remember { derivedStateOf { lista.firstVisibleItemIndex > LONGE_DO_FIM } }
     // Chegou mensagem nova. Perto do fim: acompanha (o LazyColumn mantém na tela o item que
     // estava visível, pela chave, e a nova ficaria escondida embaixo). Longe do fim e de outra
@@ -400,15 +429,25 @@ fun ChatTela(estado: ChatUiState, lista: androidx.compose.foundation.lazy.LazyLi
     // Visualizador de imagens (ANX-05): guarda qual imagem foi tocada (mensagem + identificador).
     var abertaMensagem by rememberSaveable { mutableStateOf<Long?>(null) }
     var abertaConteudo by rememberSaveable { mutableStateOf<String?>(null) }
+    // Imagem de uma citação cuja original não está na lista: abre sozinha.
+    var imagemAvulsa by remember { mutableStateOf<ImagemDaConversa?>(null) }
+    val minhas by rememberUpdatedState(estado.minhasConversas)
     val acoesBolha = remember(acoes.bolha) {
-        acoes.bolha.copy(aoAbrirImagem = { mensagem, conteudo ->
-            abertaMensagem = mensagem.id
-            abertaConteudo = conteudo.conteudo
-        })
+        acoes.bolha.copy(
+            aoAbrirImagem = { mensagem, conteudo ->
+                abertaMensagem = mensagem.id
+                abertaConteudo = conteudo.conteudo
+                imagemAvulsa = ImagemDaConversa(mensagem, conteudo)
+            },
+            participaDe = { it in minhas },
+        )
     }
     if (abertaMensagem != null) {
-        val imagens = remember(estado.itens) { imagensDaConversa(estado.itens) }
-        val inicial = imagens.indexOfFirst { it.mensagem.id == abertaMensagem && it.conteudo.conteudo == abertaConteudo }
+        val daConversa = remember(estado.itens) { imagensDaConversa(estado.itens) }
+        val achada = daConversa.indexOfFirst { it.mensagem.id == abertaMensagem && it.conteudo.conteudo == abertaConteudo }
+        val avulsa = imagemAvulsa?.takeIf { achada < 0 && it.mensagem.id == abertaMensagem && it.conteudo.conteudo == abertaConteudo }
+        val imagens = if (avulsa != null) listOf(avulsa) else daConversa
+        val inicial = if (avulsa != null) 0 else achada
         val fechar = {
             abertaMensagem = null
             abertaConteudo = null
@@ -444,6 +483,7 @@ fun ChatTela(estado: ChatUiState, lista: androidx.compose.foundation.lazy.LazyLi
                                 mostrarRemetente = item.mostrarRemetente,
                                 acoes = acoesBolha,
                                 progresso = estado.progresso[item.mensagem.id],
+                                destacada = item.mensagem.id == estado.destaque,
                             )
                         }
                     }
@@ -461,6 +501,8 @@ fun ChatTela(estado: ChatUiState, lista: androidx.compose.foundation.lazy.LazyLi
                     }
                 }
             }
+            // "Ir para a mensagem" trazendo páginas antigas (7.5).
+            if (estado.buscandoMensagem) LinearProgressIndicator(Modifier.fillMaxWidth().align(Alignment.TopCenter))
             Column(Modifier.align(Alignment.BottomEnd).padding(16.dp), horizontalAlignment = Alignment.End) {
                 AnimatedVisibility(visible = haNovas, enter = fadeIn(), exit = fadeOut()) {
                     Surface(

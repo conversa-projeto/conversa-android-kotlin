@@ -291,6 +291,43 @@ private fun resumoDosConteudos(conteudos: List<Conteudo>, oculta: Boolean): Resu
     return ResumoCitacao.Tipo(tipo)
 }
 
+/** Até onde a citação aninhada é desenhada (o servidor manda a cadeia até 5 níveis). */
+const val MAXIMO_NIVEIS_CITACAO = 5
+
+/** O que vai no bloco da citação e o que fica embaixo, como mensagem própria (MSG-19). */
+data class ConteudosComCitacao(val daCitacao: List<Conteudo>, val proprios: List<Conteudo>)
+
+/**
+ * Como o web (`BolhaReferencia.vue`): a citação mostra os conteúdos da citada. Na encaminhada,
+ * se a citada veio sem conteúdo, os próprios vão para a citação; e cada conteúdo próprio igual
+ * (tipo + conteúdo) a um da citação não se repete embaixo, só o que foi acrescentado.
+ */
+fun separarConteudosDaCitacao(mensagem: Mensagem): ConteudosComCitacao {
+    val referencia = mensagem.referencia
+    val citada = referencia?.mensagem ?: return ConteudosComCitacao(emptyList(), mensagem.conteudos)
+    if (referencia.tipo != TipoReferencia.ENCAMINHAMENTO) return ConteudosComCitacao(citada.conteudos, mensagem.conteudos)
+    val daCitacao = citada.conteudos.ifEmpty { mensagem.conteudos }
+    val jaExibidos = daCitacao.map { it.tipo to it.conteudo }.toMutableList()
+    val proprios = mensagem.conteudos.filter { conteudo -> !jaExibidos.remove(conteudo.tipo to conteudo.conteudo) }
+    return ConteudosComCitacao(daCitacao, proprios)
+}
+
+/** A citada como mensagem, para desenhar os conteúdos dela com as mesmas bolhas (imagem, áudio, arquivo). */
+fun MensagemResumida.comoMensagem(): Mensagem = Mensagem(
+    id = id,
+    remetenteId = 0,
+    remetente = remetente,
+    conversaId = conversaId,
+    inserida = inserida ?: java.time.Instant.EPOCH,
+    visivelEm = null,
+    excluidaEm = excluidaEm,
+    referencia = null,
+    recebida = true,
+    visualizada = true,
+    reproduzida = true,
+    conteudos = conteudos,
+)
+
 /** Duração `mm:ss` (minutos podem passar de 59, como no web). Nulo → `--:--`. */
 fun formatarDuracao(segundos: Long?): String {
     if (segundos == null) return "--:--"
