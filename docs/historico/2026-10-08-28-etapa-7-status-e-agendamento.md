@@ -4,7 +4,7 @@
 - **Tipo:** funcionalidade
 - **Itens:** `TODO.md` 7.10; FC-513, FC-514
 - **Branch:** `reescrita`
-- **Commits:** (preencher)
+- **Commits:** `f3cab38`
 
 ## Contexto
 O web tem:
@@ -38,7 +38,12 @@ No Android, a rota `GET /mensagem/status/detalhe` e o campo `visivel_em` do envi
 
 ## Como foi verificado
 - `./gradlew :app:assembleDebug testDebugUnitTest :core:model:test :core:testing:test :app:lintDebug ktlintCheck` passou. O lint só aponta versões novas de dependências.
-- Emulador: ver a seção abaixo, preenchida no teste.
+- **Emulador (A no "Grupo criado pelo B" e na direta com o C):**
+  - Toque longo no Enviar mostrou "Agendar mensagem"; o diálogo veio com amanhã 08:00.
+  - "Agendar" limpou o campo; a bolha foi para o fim, depois do separador do dia seguinte, esmaecida e com "Agendada para amanhã 08:00".
+  - O servidor gravou `visivel_em` = `2026-10-09T08:00:00.000Z`.
+  - O toque no status abriu, no grupo, "Aguardando (1) · Teste Android B" e, na direta, "Enviada 16:20 / Recebida Aguardando / Visualizada Aguardando".
+  - "Ocultar" na agendada mostrou "Cancelar mensagem agendada" e "Cancelar envio" a apagou do app e do servidor.
 
 ## Decisões
 - **Cores do selo:** o FMX não tem cor de aviso; o selo usa `campoEntrada` (fundo) e `iconeAcao` (texto e ícone), sem cor nova.
