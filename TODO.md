@@ -503,7 +503,7 @@
 - [x] Economia de dados: com rede limitada, "Toque para carregar" em imagens e vídeos — `EconomiaDados` (`core/data/rede`): conexão lenta (< 150 kbps, como o web bloqueia em 2g) ou Economia de dados do Android numa rede medida; `CarregarSobToque` nas bolhas de imagem e vídeo (o visualizador não bloqueia) (+ testes da regra). ⚠ Não testado no emulador: exigiria mudar a rede ou a Economia de dados do aparelho ✔ d9d03f1
 
 ### 4.11 Campo de mensagem rico (FC-415, FC-416, ENV-21)
-- [ ] Escrever o ADR com a decisão: campo **simplificado** (faixa de anexos + texto, enviado como [anexos…, texto]) agora × **completo** (blocos intercalados, igual ao web)
+- [ ] Escrever o ADR com a decisão: campo **simplificado** (faixa de anexos + texto, enviado como [anexos…, texto]) agora × **completo** (blocos intercalados, igual ao web) — ⛔ aguardando a decisão FC-416 (é do usuário). Hoje o campo já está no formato "simplificado" (faixa de anexos + texto), mas manda o texto **primeiro** (ordem do web antes do campo rico), e o FC-416 descreve o simplificado como [anexos…, texto]
 - [ ] Simplificado: faixa horizontal de peças acima do campo (miniatura, nome, "×"), na ordem de inserção
 - [ ] Simplificado: envio = peças na ordem + o texto por último
 - [ ] Completo: modelo `List<BlocoComposicao>` (`Texto(String)` / `Peca(anexo ou figurinha)`) no ViewModel
