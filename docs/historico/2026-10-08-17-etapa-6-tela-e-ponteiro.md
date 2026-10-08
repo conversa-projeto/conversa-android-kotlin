@@ -4,7 +4,7 @@
 - **Tipo:** código / testes
 - **Itens:** `TODO.md` 6.13 (tela remota compartilhada, ponteiro remoto); FC-722
 - **Branch:** `reescrita`
-- **Commits:** (preencher)
+- **Commits:** `3a9f39d`
 
 ## Contexto
 No web, um participante pode compartilhar a tela, e os outros podem apontar sobre ela. Os dois chegam pelo sinal da chamada (WS 57, contrato §9.11):
