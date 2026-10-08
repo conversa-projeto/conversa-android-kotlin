@@ -4,7 +4,7 @@
 - **Tipo:** código / manifesto
 - **Itens:** `TODO.md` 6.8 (seletor de rota, sensor de proximidade), 6.3 (endpoints de áudio), 6.9 (controles); FC-713; AND-04, AND-05
 - **Branch:** `reescrita`
-- **Commits:** (preencher)
+- **Commits:** `cc52aa4`
 
 ## Contexto
 Com o Core-Telecom no lugar (2026-10-08 · 10), as rotas de áudio já vinham do sistema, mas não havia como escolher.
