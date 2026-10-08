@@ -73,8 +73,9 @@ Instruções para quem trabalha neste repositório, pessoas ou agentes de IA. Le
 - `:core:data` — repositórios, `ConexaoTempoReal`, `SyncManager`.
 - `:core:ui` — tema (cores do FMX: `docs/design/cores.md`), componentes, `UiState`.
 - `:core:media` — mídia: `PlayerAudio` (Media3, um áudio por vez) e `GravadorAudio` (microfone em AAC/M4A, trechos juntados por `juntarTrechos`).
+- `:core:webrtc` — mídia da chamada: a interface `MidiaChamada` (publicar por WHIP, assinar por WHEP no MediaMTX).
 - `:core:testing` — regras de teste e fixtures JSON do contrato.
-- `:feature:*` — uma por área (hoje: `auth` — servidor, login, cadastro; `conversas` — lista, nova conversa, grupos, membros; `chat` — a conversa aberta).
+- `:feature:*` — uma por área (hoje: `auth` — servidor, login, cadastro; `conversas` — lista, nova conversa, grupos, membros; `chat` — a conversa aberta; `chamada` — o `GerenciadorChamadas`, dono da chamada).
 - Convention plugins em `build-logic/`. O app antigo está em `app-legado/`, fora do build.
 - **Cores:** só as de `docs/design/cores.md` (vêm do `conversa-windows-fmx`), nunca as do web.
 

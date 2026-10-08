@@ -85,7 +85,7 @@
     <string name="download_falhou">Não foi possível baixar %1$s.</string>
 
     <!-- Visualizador de PDF (FC-411), textos do web -->
-    <string name="carregando_pdf">Carregando PDF...</string>
+    <string name="carregando_pdf">Carregando PDF…</string>
     <string name="pdf_falhou">Não foi possível abrir o PDF. Tente baixar o arquivo.</string>
     <string name="pagina_de">Página %1$d de %2$d</string>
     <string name="fechar">Fechar</string>
@@ -99,7 +99,7 @@
     <!-- Transcrição (ANX-12), textos do web -->
     <string name="transcrever">Transcrever</string>
     <string name="transcrever_de_novo">Não foi possível transcrever. Tentar de novo</string>
-    <string name="transcrevendo">Transcrevendo...</string>
+    <string name="transcrevendo">Transcrevendo…</string>
     <string name="nenhuma_fala_reconhecida">(nenhuma fala reconhecida)</string>
     <string name="video_falhou">Não foi possível tocar este vídeo.</string>
 

@@ -48,7 +48,7 @@
 - 2026-10-08 · [Etapa 5 — notificação de mensagem, canais, permissão e atalhos (sem o push)](2026-10-08-07-etapa-5-notificacoes-sem-push.md) — MessagingStyle por conversa com Responder/Marcar como lida, regra do web (som na frente, notificação em segundo plano), some ao ler/arquivar/abrir, atalhos; Firebase ⛔ (precisa do usuário); 214 testes
 
 ## Chamadas (etapa 6)
-_(nada ainda)_
+- 2026-10-08 · [Etapa 6 — módulos de chamada e a máquina de estados](2026-10-08-08-etapa-6-maquina-de-estados-chamada.md) — `:core:webrtc` (interface `MidiaChamada`) e `:feature:chamada` (`GerenciadorChamadas`): fases, eventos 51–57, pendentes, regras do web (ocupado, 30 s, 25 s, 55 sem 52…), monitor de 4 s; 51 testes com eventos duplicados e fora de ordem
 
 ## Ações sobre mensagens (etapa 7)
 _(nada ainda)_

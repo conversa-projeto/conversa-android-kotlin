@@ -55,6 +55,7 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.Dialog
 import androidx.compose.ui.window.DialogProperties
+import androidx.core.graphics.createBitmap
 import com.conversa.app.core.ui.tema.ConversaTema
 import java.io.File
 import kotlinx.coroutines.Dispatchers
@@ -88,7 +89,7 @@ private class LeitorPdf(arquivo: File) : AutoCloseable {
         withContext(Dispatchers.IO) {
             cache.get(indice) ?: renderizador.openPage(indice).use { pagina ->
                 val altura = (largura * pagina.height.toFloat() / pagina.width).toInt().coerceAtLeast(1)
-                Bitmap.createBitmap(largura, altura, Bitmap.Config.ARGB_8888).also {
+                createBitmap(largura, altura).also {
                     it.eraseColor(CorAndroid.WHITE)
                     pagina.render(it, null, null, PdfRenderer.Page.RENDER_MODE_FOR_DISPLAY)
                     cache.put(indice, it)
