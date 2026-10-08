@@ -4,7 +4,7 @@
 - **Tipo:** código / testes
 - **Itens:** `TODO.md` 6.13 (adicionar participante, chat da chamada, chat completo) e 6.9 (controles); FC-718, FC-719
 - **Branch:** `reescrita`
-- **Commits:** (preencher)
+- **Commits:** `0cf178b`
 
 ## Contexto
 Dois recursos do web que faltavam na chamada:
