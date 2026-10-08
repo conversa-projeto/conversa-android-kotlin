@@ -27,6 +27,14 @@ class TextoTest {
     }
 
     @Test
+    fun `cerca maior permite crases triplas dentro (caso do web)`() {
+        val bloco = separarBlocosDeCodigo("````md\n```js\nx\n```\n````").single() as SegmentoCodigo.Codigo
+
+        assertThat(bloco.conteudo).isEqualTo("```js\nx\n```")
+        assertThat(bloco.linguagem).isEqualTo("md")
+    }
+
+    @Test
     fun `crases sem quebra de linha nao abrem bloco`() {
         assertThat(resumirTexto("use ```assim``` mesmo")).isEqualTo("use ```assim``` mesmo")
     }

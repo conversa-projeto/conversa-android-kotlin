@@ -5,6 +5,8 @@
     <!-- Ações sobre a mensagem (etapa 7; textos do web: MensagemAcoes.vue, MessageList.vue) -->
     <string name="responder">Responder</string>
     <string name="figurinha">Figurinha</string>
+    <string name="expandir_codigo">Expandir código</string>
+    <string name="recolher_codigo">Recolher código</string>
     <string name="figurinhas">Figurinhas</string>
     <string name="responder_no_privado">Responder no privado</string>
     <string name="encaminhar">Encaminhar</string>

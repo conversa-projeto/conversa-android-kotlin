@@ -753,10 +753,10 @@
 - [x] Bolha de 160 dp; toca só quando visível; com "remover animações" fica parada; falha → "Figurinha" — `BolhaFigurinha`/`FigurinhaAnimada` (Lottie dos assets; só identificador do catálogo, nada de caminho vindo de fora); dentro de outra bolha, 120 dp. No emulador: a do B ("Legal") animou e a desconhecida mostrou "Figurinha". "Remover animações" não foi ligado no emulador (configuração do sistema) ✔ 61d6a2c
 
 ### 7.9 Código e Markdown (FC-510, FC-511, MSG-15)
-- [ ] Portar `codeBlocks.ts` (abertura/fechamento, aninhamento, markdown) com testes
-- [ ] Bloco de código: cabeçalho com a linguagem, "Copiar" → "Copiado!"
-- [ ] Destaque de sintaxe (lib leve) para as linguagens do web
-- [ ] Recolher acima de ~240 dp: "Expandir código"/"Recolher código"
+- [x] Portar `codeBlocks.ts` (abertura/fechamento, aninhamento, markdown) com testes — já feito na etapa 3 (`Texto.kt`, `separarBlocosDeCodigo`, ✔ d3f51e6); a última mudança do web nesse arquivo só mexeu nas sugestões ao colar; entrou o caso "cerca maior permite crases triplas dentro" que faltava
+- [x] Bloco de código: cabeçalho com a linguagem, "Copiar" → "Copiado!" — `BlocoCodigo.kt`; "code" sem linguagem; "Copiado!" por 2 s, como o web
+- [x] Destaque de sintaxe (lib leve) para as linguagens do web — tokenizador próprio, sem biblioteca e sem regex (`DestaqueCodigo.kt`, + 7 testes): js/ts, python, sql, json, xml/html, css, bash/sh, csharp/cs, pascal/delphi (a lib leve disponível não cobria sql, json, xml, css nem pascal); cores reaproveitam tokens da paleta (`docs/design/cores.md` §6.4, pergunta 12)
+- [x] Recolher acima de ~240 dp: "Expandir código"/"Recolher código" — com o degradê no fim, como o web
 - [ ] ` ```md `/` ```markdown ` → Markdown renderizado (Markwon ou compose-markdown), alternância "Visualizar"/"Código"
 - [ ] ` ```mermaid ` → WebView offline com mermaid.js embutido (P2)
 

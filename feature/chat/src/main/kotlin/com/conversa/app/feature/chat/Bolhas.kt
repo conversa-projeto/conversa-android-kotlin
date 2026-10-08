@@ -3,7 +3,6 @@ package com.conversa.app.feature.chat
 import androidx.compose.animation.animateColorAsState
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
-import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -14,7 +13,6 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.sizeIn
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.widthIn
-import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
@@ -54,7 +52,6 @@ import androidx.compose.ui.text.LinkAnnotation
 import androidx.compose.ui.text.SpanStyle
 import androidx.compose.ui.text.TextLinkStyles
 import androidx.compose.ui.text.buildAnnotatedString
-import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextDecoration
@@ -293,27 +290,6 @@ private fun Marcador(icone: String, texto: String, cor: Color) {
     Text("$icone $texto", color = cor, style = MaterialTheme.typography.bodyMedium, fontStyle = FontStyle.Italic)
 }
 
-@Composable
-private fun BlocoCodigo(codigo: SegmentoCodigo.Codigo) {
-    Column(
-        Modifier
-            .background(MaterialTheme.colorScheme.surface, RoundedCornerShape(8.dp))
-            .padding(8.dp),
-    ) {
-        codigo.linguagem?.let {
-            Text(it, style = MaterialTheme.typography.labelSmall, color = ConversaTema.cores.textoTerciario)
-        }
-        Text(
-            codigo.conteudo,
-            fontFamily = FontFamily.Monospace,
-            fontSize = 13.sp,
-            color = MaterialTheme.colorScheme.onSurface,
-            modifier = Modifier.horizontalScroll(rememberScrollState()),
-        )
-    }
-}
-
-/** Citação de resposta ou encaminhada (MSG-06). Toque para ir à original entra na etapa 7. */
 /**
  * Citação na bolha (MSG-19, 7.5), como o web: "Remetente · HH:mm" (ou "Encaminhado de …"),
  * a citação aninhada (até [MAXIMO_NIVEIS_CITACAO] níveis) e os conteúdos da citada, com as

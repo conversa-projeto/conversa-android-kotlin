@@ -288,6 +288,21 @@ Derivado de `bin/tema/escuro.pss` (`fundo #323232`, `fundo_claro_1 #3C3C3C`, `fu
 | `fundoVisualizadorMidia` | `#C8000000` | `#C8000000` | `Visualizador.Midia.fmx:5` |
 | `online` | **indefinido** | **indefinido** | não existe no FMX (pergunta 1) |
 
+### 6.4 Destaque de código (papel novo, sem cor nova) — 2026-10-08
+
+O FMX não tem destaque de sintaxe. Para os blocos de código (TODO 7.9), os papéis novos **reaproveitam tokens desta paleta**; nenhum hexadecimal novo entrou:
+
+| Papel | Token reaproveitado | Claro | Escuro (proposta) |
+|---|---|---|---|
+| Palavra-chave, tag de XML/HTML | `primary` (`AzulConversa`) | `#007DFF` | `#4DA3FF` |
+| Texto entre aspas | `chamadaAtender` | `#008000` | `#43A047` |
+| Comentário (itálico) | `textoTerciario` | `#9E9E9E` | `#8C8C8C` |
+| Número | `chamadaEncerrar` | `#D44242` | `#D44242` |
+| Atributo de XML/HTML | `link` | `#0000EE` | `#8AB4F8` |
+| Cabeçalho do bloco ("js", "Copiar") | `campoEntrada` (fundo), `textoTerciario`, `iconeAcao` | — | — |
+
+Ver a pergunta 12 da §9.
+
 ## 7. Snippet Kotlin (Compose)
 
 ```kotlin
@@ -547,3 +562,4 @@ fun ConversaTheme(
 9. **Modo escuro:** tudo em §6.2 e a coluna "Escuro" de §6.3 é proposta; só `#323232/#3C3C3C/#282828/#007FFF` vêm de `escuro.pss` (inativo).
 10. **Tela de chamada no Android:** o FMX é claro; apps móveis costumam usar chamada escura. Se desejado, `chamadaFundo` escuro é decisão nova (não está no FMX).
 11. **Cabeçalho:** `Conversa.Chat.fmx` usa `#F0F0F0`, mas `Conversa.Conteudo.fmx:13` usa `#FFFFFF`. Proposta: top bar = `#F0F0F0` (`surfaceContainer`).
+12. **Destaque de código (§6.4):** como o FMX não tem, o Android reaproveita tokens da paleta (azul, verde de atender, cinza terciário, vermelho de encerrar, link). Confirmar se está bom ou se prefere outro esquema.
