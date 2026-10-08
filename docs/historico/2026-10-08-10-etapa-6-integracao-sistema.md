@@ -7,7 +7,7 @@
   - FC-701, FC-706, FC-707, FC-713, FC-717; CHA-03, CHA-04, CHA-13; AND-03, AND-04, AND-06;
   - problemas #3 e #7 do legado.
 - **Branch:** `reescrita`
-- **Commits:** (preencher)
+- **Commits:** `5837aec`
 
 ## Contexto
 Depois do bloco da mídia (2026-10-08 · 09), a chamada só abria sozinha com o app na frente. Faltavam:
