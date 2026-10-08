@@ -651,11 +651,11 @@
 - [ ] **Teste:** atender e desligar só com o TalkBack
 
 ### 6.10 Histórico de chamadas (FC-715, CHA-22)
-- [ ] `GET /chamadas?participante=0&de=YYYY-MM-DD&ate=YYYY-MM-DD` → `ChamadaHistoricoItem`
-- [ ] Abas Todas / Perdidas (status 5); busca por contato; filtro de período
-- [ ] Agrupar: Hoje / Ontem / `dd/MM/aaaa` (portar a lógica do adapter antigo)
-- [ ] Item: avatar (grupo: "Grupo (N)"), seta efetuada/recebida (`criado_por == eu`), hora, "Vídeo"/"Áudio" · duração ou status, cor
-- [ ] Toque → abrir a conversa; botão "Ligar novamente" (mesmo tipo e participantes)
+- [x] `GET /chamadas?participante=0&de=YYYY-MM-DD&ate=YYYY-MM-DD` → `ChamadaHistoricoItem` — `ChamadasRepositorio.historico(de, ate)` → `ChamadaHistorico` (`core:model`); sem filtro vêm 25, com período até 250 (como o web). Recarrega ao abrir a aba e quando uma chamada termina
+- [x] Abas Todas / Perdidas (status 5); busca por contato; filtro de período — "Todas"/"Perdidas", "Buscar contato" (qualquer outro participante) e "Período" (seletor de datas). **Perdida** aqui é a recebida em que eu não entrei: o web filtra pelo status 5, que o servidor nunca grava (contrato §9.1), e a aba dele fica sempre vazia (+ teste). No emulador: "Perdidas" mostrou 5; "xyz" deu "Nenhuma chamada"
+- [x] Agrupar: Hoje / Ontem / `dd/MM/aaaa` (portar a lógica do adapter antigo) — `agruparHistorico` pelo dia local, como o web (+ teste, inclusive a virada de dia pelo fuso)
+- [x] Item: avatar (grupo: "Grupo (N)"), seta efetuada/recebida (`criado_por == eu`), hora, "Vídeo"/"Áudio" · duração ou status, cor — seta e nome em vermelho na perdida; cores do FMX (`chamadaRealizada`, `chamadaRecebida`, `chamadaPerdida`)
+- [x] Toque → abrir a conversa; botão "Ligar novamente" (mesmo tipo e participantes) — a linha sem conversa (chamada que não veio de uma conversa) não abre nada, como no web. No emulador: a linha abriu a conversa com o B; "Ligar novamente" ligou e o web tocou
 
 ### 6.11 Vídeo (FC-716, CHA-12, CHA-16)
 - [x] Renderers com `key(track)` e `onRelease` (#39); PiP local com `setZOrderMediaOverlay(true)` — o `removeSink` é protegido (a trilha pode já ter sido descartada no fim da chamada) ✔ cf43b1f

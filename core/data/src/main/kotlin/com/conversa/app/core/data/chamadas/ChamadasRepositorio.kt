@@ -1,6 +1,7 @@
 package com.conversa.app.core.data.chamadas
 
 import com.conversa.app.core.model.Chamada
+import com.conversa.app.core.model.ChamadaHistorico
 import com.conversa.app.core.model.ServidoresIce
 import com.conversa.app.core.model.TipoChamada
 import com.conversa.app.core.network.api.ConversaApi
@@ -9,6 +10,7 @@ import com.conversa.app.core.network.dto.IniciarChamadaRequisicao
 import com.conversa.app.core.network.dto.RecusarChamadaRequisicao
 import com.conversa.app.core.network.dto.paraModelo
 import com.conversa.app.core.network.http.chamarApi
+import java.time.LocalDate
 import javax.inject.Inject
 import javax.inject.Singleton
 
@@ -66,4 +68,13 @@ class ChamadasRepositorio @Inject constructor(private val api: ConversaApi) : Ch
     }
 
     override suspend fun ice(): ServidoresIce = chamarApi { api.ice() }.getOrThrow().paraModelo()
+
+    /**
+     * Histórico (`GET /chamadas`, contrato §9.7): só as finalizadas em que participei,
+     * a mais recente primeiro. Sem filtro vêm 25; com período, até 250. `de` vale do
+     * começo do dia; `ate` é inclusivo.
+     */
+    suspend fun historico(de: LocalDate? = null, ate: LocalDate? = null): Result<List<ChamadaHistorico>> = chamarApi {
+        api.historicoChamadas(de = de?.toString().orEmpty(), ate = ate?.toString().orEmpty())
+    }.map { lista -> lista.map { it.paraModelo() } }
 }

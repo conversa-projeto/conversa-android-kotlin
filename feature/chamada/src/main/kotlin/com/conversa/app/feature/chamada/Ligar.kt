@@ -21,6 +21,7 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.conversa.app.core.data.SessaoRepositorio
 import com.conversa.app.core.data.conversas.ConversasRepositorio
+import com.conversa.app.core.model.ChamadaHistorico
 import com.conversa.app.core.model.Conversa
 import com.conversa.app.core.model.TipoChamada
 import com.conversa.app.core.model.TipoConversa
@@ -59,26 +60,49 @@ class LigarViewModel @Inject constructor(
             gerenciador.ligar(tipo, (outros + eu).distinct(), conversa.id)
         }
     }
+
+    /** Participantes já conhecidos (ex.: do histórico); eu entro sozinho na lista. */
+    fun ligarPara(tipo: TipoChamada, participantes: List<Long>, conversaId: Long?) {
+        gerenciador.ligar(tipo, participantes, conversaId)
+    }
 }
 
 /**
- * Ação dos botões de voz e vídeo: pede o microfone (e a câmera, no vídeo) na hora
- * e liga. Sem a câmera, liga só com áudio; sem o microfone, não liga.
+ * Ação dos botões de voz e vídeo da conversa: pede o microfone (e a câmera, no vídeo)
+ * na hora e liga. Sem a câmera, liga só com áudio; sem o microfone, não liga.
  */
 @Composable
 fun rememberLigar(conversa: Conversa?, viewModel: LigarViewModel = hiltViewModel()): (TipoChamada) -> Unit {
+    val conversaAtual by rememberUpdatedState(conversa)
+    val comPermissao = rememberComPermissaoDeLigar(viewModel)
+    return { tipo -> conversaAtual?.let { alvo -> comPermissao(tipo) { viewModel.ligar(alvo, tipo) } } }
+}
+
+/** "Ligar novamente" do histórico (6.10): mesmo tipo e mesmos participantes. */
+@Composable
+fun rememberLigarNovamente(viewModel: LigarViewModel = hiltViewModel()): (ChamadaHistorico) -> Unit {
+    val comPermissao = rememberComPermissaoDeLigar(viewModel)
+    return { chamada ->
+        comPermissao(chamada.tipo) { viewModel.ligarPara(chamada.tipo, chamada.participantes.map { it.usuarioId }, chamada.conversaId) }
+    }
+}
+
+/**
+ * Pede o que falta (microfone; câmera no vídeo) e só então liga. Mostra os avisos do
+ * gerenciador ("Já existe uma chamada em andamento"…) no Snackbar da tela.
+ */
+@Composable
+private fun rememberComPermissaoDeLigar(viewModel: LigarViewModel): (TipoChamada, () -> Unit) -> Unit {
     val contexto = LocalContext.current
     val recursos = LocalResources.current
     val avisos = LocalAvisos.current
     val escopo = rememberCoroutineScope()
-    val conversaAtual by rememberUpdatedState(conversa)
-    var pendente by remember { mutableStateOf<TipoChamada?>(null) }
+    var pendente by remember { mutableStateOf<(() -> Unit)?>(null) }
     val permissoes = rememberLauncherForActivityResult(ActivityResultContracts.RequestMultiplePermissions()) {
-        val tipo = pendente ?: return@rememberLauncherForActivityResult
+        val acao = pendente ?: return@rememberLauncherForActivityResult
         pendente = null
-        val alvo = conversaAtual ?: return@rememberLauncherForActivityResult
         if (contexto.tem(Manifest.permission.RECORD_AUDIO)) {
-            viewModel.ligar(alvo, tipo)
+            acao()
         } else {
             escopo.launch { avisos.showSnackbar(recursos.getString(R.string.sem_microfone)) }
         }
@@ -86,18 +110,16 @@ fun rememberLigar(conversa: Conversa?, viewModel: LigarViewModel = hiltViewModel
     LaunchedEffect(viewModel) {
         viewModel.avisos.collect { aviso -> avisos.showSnackbar(textoDoAviso(aviso, recursos::getString)) }
     }
-    return { tipo ->
-        conversaAtual?.let { alvo ->
-            val faltam = listOfNotNull(
-                Manifest.permission.RECORD_AUDIO.takeUnless { contexto.tem(it) },
-                Manifest.permission.CAMERA.takeIf { tipo == TipoChamada.VIDEO && !contexto.tem(it) },
-            )
-            if (faltam.isEmpty()) {
-                viewModel.ligar(alvo, tipo)
-            } else {
-                pendente = tipo
-                permissoes.launch(faltam.toTypedArray())
-            }
+    return { tipo, acao ->
+        val faltam = listOfNotNull(
+            Manifest.permission.RECORD_AUDIO.takeUnless { contexto.tem(it) },
+            Manifest.permission.CAMERA.takeIf { tipo == TipoChamada.VIDEO && !contexto.tem(it) },
+        )
+        if (faltam.isEmpty()) {
+            acao()
+        } else {
+            pendente = acao
+            permissoes.launch(faltam.toTypedArray())
         }
     }
 }

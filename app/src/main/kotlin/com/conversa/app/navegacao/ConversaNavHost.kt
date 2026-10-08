@@ -13,6 +13,7 @@ import com.conversa.app.feature.auth.cadastro.CadastroRotaTela
 import com.conversa.app.feature.auth.login.AvisoLogin
 import com.conversa.app.feature.auth.login.LoginRotaTela
 import com.conversa.app.feature.auth.servidor.ServidorRotaTela
+import com.conversa.app.feature.chamada.HistoricoChamadasRota
 import com.conversa.app.feature.chat.ChatRotaTela
 import com.conversa.app.feature.conversas.enviarpara.EnviarParaRotaTela
 import com.conversa.app.feature.conversas.grupo.CriarGrupoRotaTela
@@ -74,6 +75,9 @@ fun ConversaNavHost(destinoInicial: Any, principal: MainViewModel) {
                         aoMembros = { nav.navigate(RotaMembros(it)) },
                         modifier = modificador,
                     )
+                },
+                chamadas = { modificador ->
+                    HistoricoChamadasRota(aoAbrirConversa = { nav.navigate(RotaChat(it)) }, modifier = modificador)
                 },
                 configuracoes = { modificador ->
                     ConfiguracoesProvisorias(

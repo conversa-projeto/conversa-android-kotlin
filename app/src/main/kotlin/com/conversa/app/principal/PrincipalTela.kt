@@ -106,6 +106,7 @@ enum class Aba(@StringRes val rotulo: Int, val icone: ImageVector) {
 @Composable
 fun PrincipalTela(
     conversas: @Composable (Modifier) -> Unit,
+    chamadas: @Composable (Modifier) -> Unit,
     configuracoes: @Composable (Modifier) -> Unit,
     viewModel: PrincipalViewModel = hiltViewModel(),
 ) {
@@ -168,12 +169,7 @@ fun PrincipalTela(
             val conteudo = Modifier.weight(1f)
             when (aba) {
                 Aba.CONVERSAS -> conversas(conteudo)
-                Aba.CHAMADAS -> EstadoVazio(
-                    titulo = stringResource(R.string.chamadas_em_breve),
-                    descricao = stringResource(R.string.em_breve_descricao),
-                    icone = Icons.Outlined.Call,
-                    modifier = conteudo.statusBarsPadding(),
-                )
+                Aba.CHAMADAS -> chamadas(conteudo)
                 Aba.ATIVIDADES -> EstadoVazio(
                     titulo = stringResource(R.string.atividades_em_breve),
                     descricao = stringResource(R.string.em_breve_descricao),

@@ -43,6 +43,30 @@
     <string name="apenas_assistir">Apenas assistir</string>
     <string name="transmitir_tambem">Transmitir também</string>
 
+    <!-- Histórico (textos do web: ChamadaHistorico.vue) -->
+    <string name="chamadas">Chamadas</string>
+    <string name="todas">Todas</string>
+    <string name="perdidas">Perdidas</string>
+    <string name="buscar_contato">Buscar contato</string>
+    <string name="periodo">Período</string>
+    <string name="limpar_periodo">Limpar período</string>
+    <string name="de_ate">%1$s – %2$s</string>
+    <string name="desde">Desde %1$s</string>
+    <string name="ate">Até %1$s</string>
+    <string name="nenhuma_chamada">Nenhuma chamada</string>
+    <string name="nenhuma_chamada_perdida">Nenhuma chamada perdida</string>
+    <string name="hoje">Hoje</string>
+    <string name="ontem">Ontem</string>
+    <string name="ligar_novamente">Ligar novamente</string>
+    <string name="grupo_n">Grupo (%1$d)</string>
+    <string name="desconhecido">Desconhecido</string>
+    <string name="status_perdida">Perdida</string>
+    <string name="status_recusada">Recusada</string>
+    <string name="status_cancelada">Cancelada</string>
+    <string name="efetuada">Efetuada</string>
+    <string name="recebida">Recebida</string>
+    <string name="tipo_e_detalhe">%1$s · %2$s</string>
+
     <string name="ja_existe_chamada">Já existe uma chamada em andamento</string>
     <string name="sem_microfone">Não foi possível acessar o microfone</string>
     <string name="falha_chamada">Não foi possível completar a chamada</string>

@@ -2,6 +2,7 @@ package com.conversa.app.core.network.dto
 
 import com.conversa.app.core.model.Atividade
 import com.conversa.app.core.model.Chamada
+import com.conversa.app.core.model.ChamadaHistorico
 import com.conversa.app.core.model.ChamadaNaMensagem
 import com.conversa.app.core.model.ChamadaPendente
 import com.conversa.app.core.model.Contato
@@ -13,6 +14,7 @@ import com.conversa.app.core.model.Mensagem
 import com.conversa.app.core.model.MensagemResumida
 import com.conversa.app.core.model.OpcaoEnquete
 import com.conversa.app.core.model.ParticipanteChamada
+import com.conversa.app.core.model.ParticipanteHistorico
 import com.conversa.app.core.model.ParticipanteNaMensagem
 import com.conversa.app.core.model.Reacao
 import com.conversa.app.core.model.ReferenciaMensagem
@@ -116,6 +118,17 @@ fun DadosChamadaDto.paraModelo() = Chamada(
     participantes = usuarios.map {
         ParticipanteChamada(it.usuarioId, it.usuarioNome, StatusParticipante.de(it.status), it.entrouEm, it.saiuEm)
     },
+)
+
+fun ChamadaHistoricoDto.paraModelo() = ChamadaHistorico(
+    id = id,
+    tipo = TipoChamada.de(tipo),
+    status = StatusChamada.de(status),
+    criadoEm = criadoEm,
+    criadoPor = criadoPor,
+    conversaId = conversaId?.takeIf { it > 0 },
+    duracao = duracao,
+    participantes = participantes.map { ParticipanteHistorico(it.usuarioId, it.nome, StatusParticipante.de(it.status), it.avatarUrl) },
 )
 
 fun ChamadaPendenteDto.paraModelo() = ChamadaPendente(

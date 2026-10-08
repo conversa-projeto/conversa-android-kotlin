@@ -52,6 +52,7 @@
 - 2026-10-08 · [Etapa 6 — mídia WebRTC (WHIP/WHEP), tela da chamada e ligar pela conversa](2026-10-08-09-etapa-6-midia-webrtc-e-tela.md) — `MidiaWebRtc` (publicação, assinaturas, ICE só relay, VP9/H264, quadros pretos com a câmera desligada), `ChamadaActivity` (recebida e em chamada), botões de ligar; testado contra o web: gravação no MediaMTX, atender, recusar, sair dos dois lados, upgrade para vídeo; 274 testes
 - 2026-10-08 · [Etapa 6 — chamada no sistema: toque, notificação, tela cheia, serviço e Core-Telecom](2026-10-08-10-etapa-6-integracao-sistema.md) — toque próprio, CallStyle recebida (tela cheia) e em andamento, serviço `phoneCall|microphone`, Core-Telecom (só registra a chamada do app; nada de rede de telefonia), "em espera" com "Retomar"; testado no emulador; 274 testes
 - 2026-10-08 · [Etapa 6 — rota de áudio da chamada e sensor de proximidade](2026-10-08-11-etapa-6-rota-de-audio.md) — botão "Áudio saída" com as rotas do Telecom (fone do aparelho, alto-falante, Bluetooth, fone com fio), vídeo no alto-falante, proximidade só no fone do aparelho; no emulador só há alto-falante; 274 testes
+- 2026-10-08 · [Etapa 6 — histórico de chamadas](2026-10-08-12-etapa-6-historico-de-chamadas.md) — aba "Chamadas": Todas/Perdidas, busca, período, Hoje/Ontem/data, seta e cores, abrir a conversa, "Ligar novamente"; "perdida" corrigida em relação ao web (status 5 nunca é gravado); 278 testes
 
 ## Ações sobre mensagens (etapa 7)
 _(nada ainda)_
