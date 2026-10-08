@@ -14,6 +14,7 @@ import com.conversa.app.core.database.ConversaBanco
 import com.conversa.app.core.database.entidades.ConversaEntidade
 import com.conversa.app.core.model.Sessao
 import com.conversa.app.core.model.TipoConteudo
+import com.conversa.app.core.model.TipoReferencia
 import com.conversa.app.core.network.api.ConversaApi
 import com.conversa.app.core.network.dto.ConteudoDto
 import com.conversa.app.core.network.dto.ConteudoEnvioDto
@@ -25,8 +26,10 @@ import com.conversa.app.core.network.dto.MensagemExcluidaDto
 import com.conversa.app.core.network.dto.ReacaoDto
 import com.conversa.app.core.network.dto.ReacaoRequisicao
 import com.conversa.app.core.network.dto.ReacaoResposta
+import com.conversa.app.core.network.dto.ReferenciaEnvioDto
 import com.conversa.app.core.network.dto.SucessoDto
 import com.conversa.app.core.network.dto.UsuarioReacaoDto
+import com.conversa.app.core.network.dto.paraModelo
 import com.conversa.app.core.network.http.ErroApi
 import com.conversa.app.core.testing.escopoDoTeste
 import com.google.common.truth.Truth.assertThat
@@ -212,6 +215,29 @@ class MensagensTest {
         assertThat(banco.mensagemDao().buscar(500)!!.conteudos.single().conteudo).isEqualTo("olá")
         assertThat(banco.envioPendenteDao().todos()).isEmpty()
         coVerify { conversas.atualizar() }
+    }
+
+    @Test
+    fun `resposta manda a referencia e a otimista ja mostra a citacao`() = runTest {
+        val envio = envio()
+        val respondida = msg(300, "pergunta", remetente = 8).paraModelo()
+
+        val idLocal = envio.enviar(42, "resposta", emptyList(), ReferenciaPendente(TipoReferencia.RESPOSTA, respondida))
+
+        val citacao = banco.mensagemDao().buscar(idLocal)!!.paraModelo().referencia!!
+        assertThat(citacao.tipo).isEqualTo(TipoReferencia.RESPOSTA)
+        assertThat(citacao.mensagem!!.id).isEqualTo(300)
+        assertThat(citacao.mensagem!!.conteudos.single().conteudo).isEqualTo("pergunta")
+
+        coEvery { api.enviarMensagem(any()) } returns MensagemCriadaDto(id = 501, conversaId = 42)
+        coEvery { api.mensagens(42, 501, 0, 0) } throws java.io.IOException("sem rede")
+        envio.processarPendentes()
+
+        coVerify {
+            api.enviarMensagem(
+                EnviarMensagemRequisicao(42, listOf(ConteudoEnvioDto(1, 1, "resposta")), mensagemReferencia = ReferenciaEnvioDto(1, 300)),
+            )
+        }
     }
 
     @Test

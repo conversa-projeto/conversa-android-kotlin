@@ -227,6 +227,7 @@ fun ChatRotaTela(
                     aoReagir = viewModel::reagir,
                     aoVerReacoes = { mensagem, emoji -> acoesDaMensagem.quemReagiu = mensagem.id to emoji },
                     aoVerMaisReacoes = { acoesDaMensagem.maisReacoes = it.id },
+                    aoResponder = viewModel::responder,
                 ),
                 aoIrAoFim = { escopo.launch { lista.animateScrollToItem(0) } },
                 aoAdicionarAnexos = viewModel::adicionarAnexos,
@@ -234,6 +235,7 @@ fun ChatRotaTela(
                 pastaCamera = viewModel::pastaCamera,
                 aoTextoUsado = viewModel::textoUsado,
                 aoCampoFocado = viewModel::campoFocado,
+                aoCancelarResposta = viewModel::cancelarResposta,
                 aoColarAnexos = viewModel::colarAnexos,
                 aoVisivel = viewModel::visivel,
                 gravacao = AcoesGravacao(
@@ -320,6 +322,7 @@ class AcoesChat(
     /** O campo já usou o texto compartilhado por outro app. */
     val aoTextoUsado: () -> Unit = {},
     val aoCampoFocado: () -> Unit = {},
+    val aoCancelarResposta: () -> Unit = {},
     /** Imagem colada no campo (teclado ou área de transferência). */
     val aoColarAnexos: (List<String>) -> Unit = {},
     /** A conversa ficou visível ou deixou de estar (notificações, NOT-01/03). */
@@ -416,7 +419,7 @@ fun ChatTela(estado: ChatUiState, lista: androidx.compose.foundation.lazy.LazyLi
 
     Scaffold(
         topBar = { Cabecalho(estado, acoes) },
-        bottomBar = { Campo(estado.fila, estado.textoParaCampo, acoes, focar = estado.focarCampo) },
+        bottomBar = { Campo(estado.fila, estado.textoParaCampo, acoes, focar = estado.focarCampo, respondendo = estado.respondendo) },
     ) { margens ->
         Box(Modifier.fillMaxSize().padding(margens).background(MaterialTheme.colorScheme.background)) {
             when {

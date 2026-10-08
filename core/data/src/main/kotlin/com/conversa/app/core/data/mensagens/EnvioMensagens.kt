@@ -18,17 +18,22 @@ import com.conversa.app.core.data.anexos.FontesArquivo
 import com.conversa.app.core.data.anexos.extensaoDe
 import com.conversa.app.core.data.conversas.ConversasRepositorio
 import com.conversa.app.core.data.paraEntidade
+import com.conversa.app.core.data.paraResumidaDto
 import com.conversa.app.core.database.dao.EnvioPendenteDao
 import com.conversa.app.core.database.dao.MensagemDao
 import com.conversa.app.core.database.entidades.ConteudoEntidade
 import com.conversa.app.core.database.entidades.EnvioPendenteEntidade
 import com.conversa.app.core.database.entidades.MensagemCompleta
 import com.conversa.app.core.database.entidades.MensagemEntidade
+import com.conversa.app.core.model.Mensagem
 import com.conversa.app.core.model.PREFIXO_LOCAL
 import com.conversa.app.core.model.TipoConteudo
+import com.conversa.app.core.model.TipoReferencia
 import com.conversa.app.core.network.api.ConversaApi
 import com.conversa.app.core.network.dto.ConteudoEnvioDto
 import com.conversa.app.core.network.dto.EnviarMensagemRequisicao
+import com.conversa.app.core.network.dto.ReferenciaDto
+import com.conversa.app.core.network.dto.ReferenciaEnvioDto
 import com.conversa.app.core.network.http.ErroApi
 import com.conversa.app.core.network.http.chamarApi
 import com.conversa.app.core.network.json.ConversaJson
@@ -84,6 +89,9 @@ data class PacoteEnvio(val corpo: EnviarMensagemRequisicao, val anexos: List<Ane
         (corpo.conteudos + anexos.map { ConteudoEnvioDto(it.ordem, it.tipo, it.identificador) }).sortedBy { it.ordem }
 }
 
+/** Mensagem citada no envio: resposta (7.3) ou encaminhada (tipo 2, 7.6). */
+data class ReferenciaPendente(val tipo: TipoReferencia, val mensagem: Mensagem)
+
 /** O envio de um anexo não tem volta (sem acesso ao arquivo, grande demais, recusado). */
 private class FalhaDefinitiva : Exception()
 
@@ -121,9 +129,11 @@ class EnvioMensagens @Inject constructor(
 
     /**
      * Cria a mensagem otimista e agenda o envio. Ordem dos conteúdos (como o web):
-     * texto primeiro, depois os anexos na ordem em que foram escolhidos. Devolve o id local.
+     * texto primeiro, depois os anexos na ordem em que foram escolhidos. Com [referencia],
+     * vai `mensagem_referencia {tipo, origem_mensagem_id}` e a otimista já mostra a citação.
+     * Devolve o id local.
      */
-    suspend fun enviar(conversaId: Long, texto: String, anexosLocais: List<AnexoLocal>): Long {
+    suspend fun enviar(conversaId: Long, texto: String, anexosLocais: List<AnexoLocal>, referencia: ReferenciaPendente? = null): Long {
         val atual = sessao.sessao.value ?: error("Sem sessão")
         val agora = relogio.instant()
         val textoLimpo = texto.trim()
@@ -140,7 +150,12 @@ class EnvioMensagens @Inject constructor(
             val pendentes = anexosLocais.mapIndexed { i, anexo ->
                 AnexoPendente(conteudosTexto.size + i + 1, anexo.uri, anexo.nome, anexo.tamanho, anexo.mime, anexo.tipo.codigo)
             }
-            val pacote = PacoteEnvio(EnviarMensagemRequisicao(conversaId, conteudosTexto), pendentes)
+            val corpo = EnviarMensagemRequisicao(
+                conversaId,
+                conteudosTexto,
+                mensagemReferencia = referencia?.let { ReferenciaEnvioDto(it.tipo.codigo, it.mensagem.id) },
+            )
+            val pacote = PacoteEnvio(corpo, pendentes)
             mensagemDao.salvarCompletas(
                 listOf(
                     MensagemCompleta(
@@ -154,7 +169,12 @@ class EnvioMensagens @Inject constructor(
                             visivelEm = null,
                             excluidaEm = null,
                             dataEfetiva = agora,
-                            referenciaJson = null,
+                            referenciaJson = referencia?.let {
+                                ConversaJson.encodeToString(
+                                    ReferenciaDto.serializer(),
+                                    ReferenciaDto(it.tipo.codigo, it.mensagem.paraResumidaDto()),
+                                )
+                            },
                             recebida = false,
                             visualizada = false,
                             reproduzida = false,

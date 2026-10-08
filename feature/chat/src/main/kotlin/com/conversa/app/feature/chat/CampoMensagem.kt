@@ -27,8 +27,10 @@ import androidx.compose.foundation.gestures.awaitFirstDown
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.IntrinsicSize
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.heightIn
@@ -48,6 +50,7 @@ import androidx.compose.foundation.text.input.setTextAndPlaceCursorAtEnd
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.Send
 import androidx.compose.material.icons.automirrored.outlined.InsertDriveFile
+import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.Mic
 import androidx.compose.material.icons.filled.Pause
 import androidx.compose.material.icons.filled.PlayArrow
@@ -95,12 +98,15 @@ import androidx.compose.ui.semantics.onClick
 import androidx.compose.ui.semantics.role
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.input.KeyboardCapitalization
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.core.content.ContextCompat
 import androidx.core.content.FileProvider
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.conversa.app.core.data.anexos.AnexoLocal
+import com.conversa.app.core.model.Mensagem
 import com.conversa.app.core.model.TipoConteudo
+import com.conversa.app.core.model.resumoDaMensagem
 import com.conversa.app.core.ui.componentes.LocalAvisos
 import com.conversa.app.core.ui.componentes.mostrarErro
 import com.conversa.app.core.ui.tema.ConversaTema
@@ -133,7 +139,13 @@ private const val SEGURAR_MS = 300L
  * limpo depois que a mensagem foi gravada no Room: nunca se perde.
  */
 @Composable
-internal fun Campo(fila: List<AnexoLocal>, textoCompartilhado: String?, acoes: AcoesChat, focar: Boolean = false) {
+internal fun Campo(
+    fila: List<AnexoLocal>,
+    textoCompartilhado: String?,
+    acoes: AcoesChat,
+    focar: Boolean = false,
+    respondendo: Mensagem? = null,
+) {
     // Estado do texto local e síncrono (o cursor não pula); sobrevive a girar a tela.
     val texto = rememberTextFieldState()
     val foco = remember { FocusRequester() }
@@ -165,11 +177,40 @@ internal fun Campo(fila: List<AnexoLocal>, textoCompartilhado: String?, acoes: A
     ) {
         val atual = gravacao
         val comBarra = atual is EstadoGravacao.Pausada || (atual as? EstadoGravacao.Gravando)?.travada == true
+        if (respondendo != null) BarraResposta(respondendo, acoes.aoCancelarResposta)
         if (fila.isNotEmpty() && atual == EstadoGravacao.Parada) FilaAnexos(fila, acoes.aoRemoverAnexo)
         if (comBarra) {
             BarraGravacao(atual, acoes.gravacao)
         } else {
             LinhaDoCampo(texto, fila.isNotEmpty(), atual as? EstadoGravacao.Gravando, acoes, foco)
+        }
+    }
+}
+
+/** Respondendo (7.3): quem escreveu e o resumo, com borda azul à esquerda e o "×" (como o web). */
+@Composable
+private fun BarraResposta(mensagem: Mensagem, aoCancelar: () -> Unit) {
+    Row(
+        Modifier
+            .fillMaxWidth()
+            .padding(start = 12.dp, end = 4.dp, top = 6.dp)
+            .background(ConversaTema.cores.campoEntrada, RoundedCornerShape(8.dp))
+            .height(IntrinsicSize.Min),
+        verticalAlignment = Alignment.CenterVertically,
+    ) {
+        Box(Modifier.width(3.dp).fillMaxHeight().background(MaterialTheme.colorScheme.primary))
+        Column(Modifier.weight(1f).padding(horizontal = 8.dp, vertical = 6.dp)) {
+            Text(mensagem.remetente, style = MaterialTheme.typography.labelMedium, color = MaterialTheme.colorScheme.primary, maxLines = 1)
+            Text(
+                textoDoResumo(resumoDaMensagem(mensagem)),
+                style = MaterialTheme.typography.bodySmall,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                maxLines = 1,
+                overflow = TextOverflow.Ellipsis,
+            )
+        }
+        IconButton(onClick = aoCancelar) {
+            Icon(Icons.Filled.Close, contentDescription = stringResource(R.string.cancelar_resposta))
         }
     }
 }

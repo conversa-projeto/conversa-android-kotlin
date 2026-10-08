@@ -10,14 +10,18 @@ import com.conversa.app.core.model.Contato
 import com.conversa.app.core.model.Conteudo
 import com.conversa.app.core.model.Conversa
 import com.conversa.app.core.model.Mensagem
+import com.conversa.app.core.model.MensagemResumida
 import com.conversa.app.core.model.Reacao
+import com.conversa.app.core.model.ReferenciaMensagem
 import com.conversa.app.core.model.StatusTranscricao
 import com.conversa.app.core.model.TipoConteudo
 import com.conversa.app.core.model.TipoConversa
 import com.conversa.app.core.model.UsuarioReacao
 import com.conversa.app.core.network.dto.ContatoDto
+import com.conversa.app.core.network.dto.ConteudoDto
 import com.conversa.app.core.network.dto.ConversaDto
 import com.conversa.app.core.network.dto.MensagemDto
+import com.conversa.app.core.network.dto.MensagemResumidaDto
 import com.conversa.app.core.network.dto.ReferenciaDto
 import com.conversa.app.core.network.dto.UsuarioReacaoDto
 import com.conversa.app.core.network.dto.paraModelo
@@ -162,3 +166,31 @@ internal fun ContatoDto.paraEntidade() = ContatoEntidade(
 )
 
 fun ContatoEntidade.paraModelo() = Contato(id = id, nome = nome, login = login, email = email, telefone = telefone, avatarUrl = avatarUrl)
+
+/**
+ * Mensagem do modelo no formato da citação que o servidor devolve: a otimista de uma
+ * resposta (7.3) já mostra a citação, com a cadeia que a respondida tinha.
+ */
+internal fun Mensagem.paraResumidaDto(): MensagemResumidaDto = MensagemResumidaDto(
+    id = id,
+    conversaId = conversaId,
+    remetente = remetente,
+    inserida = inserida,
+    excluidaEm = excluidaEm,
+    conteudos = conteudos.map { it.paraDto() },
+    mensagemReferencia = referencia?.paraDto(),
+)
+
+private fun ReferenciaMensagem.paraDto(): ReferenciaDto = ReferenciaDto(tipo.codigo, mensagem?.paraDto())
+
+private fun MensagemResumida.paraDto(): MensagemResumidaDto = MensagemResumidaDto(
+    id = id,
+    conversaId = conversaId,
+    remetente = remetente,
+    inserida = inserida,
+    excluidaEm = excluidaEm,
+    conteudos = conteudos.map { it.paraDto() },
+    mensagemReferencia = referencia?.paraDto(),
+)
+
+private fun Conteudo.paraDto() = ConteudoDto(id, ordem, tipo.codigo, conteudo, nome, extensao, transcricaoStatus.codigo, transcricao)

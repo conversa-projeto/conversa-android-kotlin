@@ -4,6 +4,7 @@ import com.conversa.app.core.data.anexos.AnexoLocal
 import com.conversa.app.core.data.anexos.ArquivosLocais
 import com.conversa.app.core.data.mensagens.EnvioMensagens
 import com.conversa.app.core.data.mensagens.MensagensRepositorio
+import com.conversa.app.core.data.mensagens.ReferenciaPendente
 import com.conversa.app.core.media.GravadorAudio
 import com.conversa.app.core.media.PlayerAudio
 import com.conversa.app.core.media.juntarTrechos
@@ -53,6 +54,8 @@ class ControleGravacao(
     private val es: CoroutineDispatcher,
     private val avisar: suspend (EventoChat) -> Unit,
     private val juntar: (List<File>, File) -> Boolean = ::juntarTrechos,
+    /** A resposta pendente (7.3): a gravação vai como resposta, como no web. */
+    private val pegarResposta: () -> ReferenciaPendente? = { null },
 ) {
     private val _estado = MutableStateFlow<EstadoGravacao>(EstadoGravacao.Parada)
     val estado: StateFlow<EstadoGravacao> = _estado.asStateFlow()
@@ -151,7 +154,7 @@ class ControleGravacao(
             }
             withContext(es) { lista.forEach { it.delete() } }
             val anexo = AnexoLocal(arquivos.uriCompartilhado(final), final.name, final.length(), MIME, TipoConteudo.GRAVACAO_AUDIO)
-            envio.enviar(conversaId, "", listOf(anexo))
+            envio.enviar(conversaId, "", listOf(anexo), pegarResposta())
             avisar(EventoChat.RolarAoFim)
         }
     }

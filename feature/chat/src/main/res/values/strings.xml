@@ -3,6 +3,9 @@
     <!-- Cabeçalho (CON-09) -->
     <string name="voltar">Voltar</string>
     <!-- Ações sobre a mensagem (etapa 7; textos do web: MensagemAcoes.vue, MessageList.vue) -->
+    <string name="responder">Responder</string>
+    <string name="cancelar_resposta">Cancelar resposta</string>
+    <string name="acoes_da_mensagem">Ações da mensagem</string>
     <string name="mais_emojis">Mais emojis</string>
     <string name="copiar">Copiar</string>
     <string name="copiado">Copiado!</string>

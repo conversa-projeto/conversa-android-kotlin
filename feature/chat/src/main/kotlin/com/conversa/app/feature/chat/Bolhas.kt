@@ -40,7 +40,10 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.platform.LocalWindowInfo
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.semantics.CustomAccessibilityAction
 import androidx.compose.ui.semantics.contentDescription
+import androidx.compose.ui.semantics.customActions
+import androidx.compose.ui.semantics.onLongClick
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.AnnotatedString
 import androidx.compose.ui.text.LinkAnnotation
@@ -110,6 +113,8 @@ data class AcoesBolha(
     val aoVerReacoes: (Mensagem, String) -> Unit = { _, _ -> },
     /** Toque no "+N": as reações que não couberam. */
     val aoVerMaisReacoes: (Mensagem) -> Unit = {},
+    /** Deslizar a bolha para a direita ou a ação de acessibilidade: responder (7.3). */
+    val aoResponder: (Mensagem) -> Unit = {},
 )
 
 /**
@@ -132,15 +137,43 @@ fun LinhaMensagem(mensagem: Mensagem, propria: Boolean, mostrarRemetente: Boolea
                 modifier = Modifier.padding(start = 12.dp, top = 6.dp, bottom = 2.dp),
             )
         }
-        Box(Modifier.widthIn(max = larguraMax).toqueLongo(podeAbrirMenu(mensagem)) { acoes.aoMenu(mensagem) }) {
-            when (classificarMensagem(mensagem)) {
-                TipoExibicao.EMOJI -> BolhaEmoji(mensagem, propria)
-                TipoExibicao.CHAMADA -> BolhaChamada(mensagem, propria, acoes)
-                TipoExibicao.OCULTA -> BolhaOculta(mensagem, propria)
-                TipoExibicao.TEXTO_CURTO -> Fundo(propria) { TextoCurto(mensagem, propria, acoes) }
-                TipoExibicao.CODIGO -> Fundo(propria) { CorpoPadrao(mensagem, propria, acoes) }
-                TipoExibicao.IMAGEM -> BolhaImagem(mensagem, propria, progresso, acoes)
-                else -> Fundo(propria) { CorpoPadrao(mensagem, propria, acoes, progresso) }
+        val comAcoes = podeAbrirMenu(mensagem)
+        val rotuloAcoes = stringResource(R.string.acoes_da_mensagem)
+        val rotuloResponder = stringResource(R.string.responder)
+        DeslizarParaResponder(habilitado = comAcoes, aoResponder = { acoes.aoResponder(mensagem) }) {
+            Box(
+                Modifier
+                    .widthIn(max = larguraMax)
+                    .toqueLongo(comAcoes) { acoes.aoMenu(mensagem) }
+                    // O toque longo e o deslizar são gestos: o TalkBack chega neles por estas ações.
+                    .then(
+                        if (comAcoes) {
+                            Modifier.semantics {
+                                onLongClick(label = rotuloAcoes) {
+                                    acoes.aoMenu(mensagem)
+                                    true
+                                }
+                                customActions = listOf(
+                                    CustomAccessibilityAction(rotuloResponder) {
+                                        acoes.aoResponder(mensagem)
+                                        true
+                                    },
+                                )
+                            }
+                        } else {
+                            Modifier
+                        },
+                    ),
+            ) {
+                when (classificarMensagem(mensagem)) {
+                    TipoExibicao.EMOJI -> BolhaEmoji(mensagem, propria)
+                    TipoExibicao.CHAMADA -> BolhaChamada(mensagem, propria, acoes)
+                    TipoExibicao.OCULTA -> BolhaOculta(mensagem, propria)
+                    TipoExibicao.TEXTO_CURTO -> Fundo(propria) { TextoCurto(mensagem, propria, acoes) }
+                    TipoExibicao.CODIGO -> Fundo(propria) { CorpoPadrao(mensagem, propria, acoes) }
+                    TipoExibicao.IMAGEM -> BolhaImagem(mensagem, propria, progresso, acoes)
+                    else -> Fundo(propria) { CorpoPadrao(mensagem, propria, acoes, progresso) }
+                }
             }
         }
         if (!mensagem.oculta) {
@@ -260,17 +293,7 @@ private fun BlocoCodigo(codigo: SegmentoCodigo.Codigo) {
 @Composable
 private fun Citacao(tipo: TipoReferencia, remetente: String, resumo: ResumoCitacao) {
     val titulo = if (tipo == TipoReferencia.ENCAMINHAMENTO) stringResource(R.string.encaminhada_de, remetente) else remetente
-    val texto = when (resumo) {
-        ResumoCitacao.Oculta -> stringResource(R.string.mensagem_oculta)
-        is ResumoCitacao.Texto -> resumo.texto
-        is ResumoCitacao.Tipo -> when (resumo.tipo) {
-            TipoConteudo.IMAGEM -> stringResource(R.string.conteudo_imagem)
-            TipoConteudo.GRAVACAO_AUDIO, TipoConteudo.AUDIO -> stringResource(R.string.conteudo_audio)
-            TipoConteudo.FIGURINHA -> stringResource(R.string.conteudo_figurinha)
-            TipoConteudo.ENQUETE -> stringResource(R.string.votacao)
-            else -> stringResource(R.string.conteudo_arquivo)
-        }
-    }
+    val texto = textoDoResumo(resumo)
     Row(
         Modifier
             .background(Color.Black.copy(alpha = 0.06f), RoundedCornerShape(8.dp))
@@ -449,4 +472,18 @@ private fun statusParticipante(status: Int): String = when (status) {
     2 -> stringResource(R.string.participante_recusou)
     5 -> stringResource(R.string.participante_desconectou)
     else -> ""
+}
+
+/** O resumo de uma mensagem em texto (citação, barra de resposta): o texto ou o tipo do conteúdo. */
+@Composable
+internal fun textoDoResumo(resumo: ResumoCitacao): String = when (resumo) {
+    ResumoCitacao.Oculta -> stringResource(R.string.mensagem_oculta)
+    is ResumoCitacao.Texto -> resumo.texto
+    is ResumoCitacao.Tipo -> when (resumo.tipo) {
+        TipoConteudo.IMAGEM -> stringResource(R.string.conteudo_imagem)
+        TipoConteudo.GRAVACAO_AUDIO, TipoConteudo.AUDIO -> stringResource(R.string.conteudo_audio)
+        TipoConteudo.FIGURINHA -> stringResource(R.string.conteudo_figurinha)
+        TipoConteudo.ENQUETE -> stringResource(R.string.votacao)
+        else -> stringResource(R.string.conteudo_arquivo)
+    }
 }

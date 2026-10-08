@@ -11,6 +11,7 @@ import com.conversa.app.core.data.contatos.ContatosRepositorio
 import com.conversa.app.core.data.conversas.ConversasRepositorio
 import com.conversa.app.core.data.mensagens.EnvioMensagens
 import com.conversa.app.core.data.mensagens.MensagensRepositorio
+import com.conversa.app.core.data.mensagens.ReferenciaPendente
 import com.conversa.app.core.data.presenca.PresencaRepositorio
 import com.conversa.app.core.media.EstadoAudio
 import com.conversa.app.core.media.PlayerAudio
@@ -21,6 +22,7 @@ import com.conversa.app.core.model.Mensagem
 import com.conversa.app.core.model.Sessao
 import com.conversa.app.core.model.TipoConteudo
 import com.conversa.app.core.model.TipoConversa
+import com.conversa.app.core.model.TipoReferencia
 import com.conversa.app.core.testing.RegraDispatcherPrincipal
 import com.google.common.truth.Truth.assertThat
 import io.mockk.coEvery
@@ -399,6 +401,34 @@ class ChatViewModelTest {
 
         coVerify(exactly = 1) { conversas.atualizar() }
         coVerify { conversas.membros(42) }
+    }
+
+    @Test
+    fun `responder mostra a barra, foca o campo e vai no proximo envio`() = runTest {
+        val vm = criar()
+        advanceUntilIdle()
+        val pergunta = mensagem(9, 8, lida = true)
+
+        vm.responder(mensagem(-3, 7, lida = true))
+        advanceUntilIdle()
+        assertThat(vm.estado.value.respondendo).isNull()
+
+        vm.responder(pergunta)
+        advanceUntilIdle()
+        assertThat(vm.estado.value.respondendo).isEqualTo(pergunta)
+        assertThat(vm.estado.value.focarCampo).isTrue()
+
+        vm.enviar("sim") { }
+        advanceUntilIdle()
+
+        coVerify { envio.enviar(42, "sim", emptyList(), ReferenciaPendente(TipoReferencia.RESPOSTA, pergunta)) }
+        assertThat(vm.estado.value.respondendo).isNull()
+
+        vm.responder(pergunta)
+        vm.cancelarResposta()
+        vm.enviar("outra") { }
+        advanceUntilIdle()
+        coVerify { envio.enviar(42, "outra", emptyList(), null) }
     }
 
     @Test

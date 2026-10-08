@@ -64,6 +64,7 @@
 ## Ações sobre mensagens (etapa 7)
 - 2026-10-08 · [Etapa 7 — menu da mensagem, reações, ocultar e copiar](2026-10-08-19-etapa-7-menu-reacoes-ocultar.md) — toque longo com reações rápidas, seletor de emoji, chips e "quem reagiu", WS 7, Ocultar com a confirmação do web e Copiar (texto ou imagem)
 - 2026-10-08 · [Itens 🆕 da sincronização: limite e "+N" nas reações, chat da chamada e cabeçalho do grupo](2026-10-08-21-pendencias-da-sincronizacao.md) — 5 emojis por pessoa, chips na ordem do servidor (banco v2), "+N"; grupo do chat da chamada criado no primeiro toque, com foco no campo; cabeçalho do grupo abre os membros; placeholder do web
+- 2026-10-08 · [Etapa 7 — responder](2026-10-08-22-etapa-7-responder.md) — deslizar a bolha ou "Responder" no menu; barra acima do campo; `mensagem_referencia` tipo 1 com a citação já na otimista; gravação também responde; ações de acessibilidade na bolha
 
 ## Atividades, pesquisa, perfil e configurações (etapa 8)
 _(nada ainda)_

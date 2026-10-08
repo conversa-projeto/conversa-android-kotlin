@@ -17,6 +17,7 @@ import com.conversa.app.core.data.contatos.ContatosRepositorio
 import com.conversa.app.core.data.conversas.ConversasRepositorio
 import com.conversa.app.core.data.mensagens.EnvioMensagens
 import com.conversa.app.core.data.mensagens.MensagensRepositorio
+import com.conversa.app.core.data.mensagens.ReferenciaPendente
 import com.conversa.app.core.data.notificacoes.ConversaEmTela
 import com.conversa.app.core.data.presenca.PresencaRepositorio
 import com.conversa.app.core.data.rede.EconomiaDados
@@ -30,6 +31,7 @@ import com.conversa.app.core.model.Mensagem
 import com.conversa.app.core.model.PREFIXO_LOCAL
 import com.conversa.app.core.model.TipoConteudo
 import com.conversa.app.core.model.TipoConversa
+import com.conversa.app.core.model.TipoReferencia
 import com.conversa.app.core.model.atividadeDaConversa
 import com.conversa.app.core.model.local
 import com.conversa.app.core.model.montarItensChat
@@ -76,6 +78,8 @@ data class ChatUiState(
     val textoParaCampo: String? = null,
     /** O campo pega o foco uma vez ([ChatViewModel.campoFocado]). */
     val focarCampo: Boolean = false,
+    /** Mensagem sendo respondida (7.3): a barra acima do campo; vai no próximo envio. */
+    val respondendo: Mensagem? = null,
 ) {
     val grupo: Boolean get() = conversa?.tipo == TipoConversa.GRUPO
 }
@@ -139,6 +143,9 @@ sealed interface EventoChat {
     /** O `PUT /mensagem/reacao` falhou: "Não foi possível reagir" com o motivo. */
     data class ReagirFalhou(val motivo: String) : EventoChat
 }
+
+/** O que o campo recebe além do texto digitado (junto, para o [ChatViewModel.estado] caber num `combine`). */
+private data class ExtrasDoCampo(val texto: String?, val foco: Boolean, val respondendo: Mensagem?)
 
 /**
  * Áudio na conversa (ANX-10), lido só pelas bolhas de áudio: a posição muda várias
@@ -222,6 +229,10 @@ class ChatViewModel @Inject constructor(
 
     /** Chat da chamada recém-criado: abre com o cursor no campo, como o web (6.13). */
     private val focarCampo = MutableStateFlow(salvo.get<Boolean>("focar") == true)
+    private val respondendo = MutableStateFlow<Mensagem?>(null)
+
+    private val extrasDoCampo =
+        combine(textoParaCampo, focarCampo, respondendo) { texto, foco, resposta -> ExtrasDoCampo(texto, foco, resposta) }
 
     private val base = combine(
         conversas.observar(conversaId),
@@ -245,8 +256,8 @@ class ChatViewModel @Inject constructor(
         )
     }
 
-    val estado: StateFlow<ChatUiState> = combine(base, fila, envio.progresso, textoParaCampo, focarCampo) { b, f, p, t, foco ->
-        b.copy(fila = f, progresso = p, textoParaCampo = t, focarCampo = foco)
+    val estado: StateFlow<ChatUiState> = combine(base, fila, envio.progresso, extrasDoCampo) { b, f, p, campo ->
+        b.copy(fila = f, progresso = p, textoParaCampo = campo.texto, focarCampo = campo.foco, respondendo = campo.respondendo)
     }
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), ChatUiState(eu = eu))
 
@@ -303,8 +314,10 @@ class ChatViewModel @Inject constructor(
         val anexosNaFila = fila.value
         if (limpo.isEmpty() && anexosNaFila.isEmpty()) return
         viewModelScope.launch {
-            envio.enviar(conversaId, limpo, anexosNaFila)
+            val resposta = respondendo.value
+            envio.enviar(conversaId, limpo, anexosNaFila, resposta?.let { ReferenciaPendente(TipoReferencia.RESPOSTA, it) })
             fila.value = fila.value - anexosNaFila.toSet()
+            if (respondendo.value == resposta) respondendo.value = null
             aoGravar()
             reiniciarDigitando()
             eventos.enviar(EventoChat.RolarAoFim)
@@ -403,6 +416,17 @@ class ChatViewModel @Inject constructor(
 
     fun campoFocado() {
         focarCampo.value = false
+    }
+
+    /** "Responder" no menu ou deslizando a bolha (7.3): a barra aparece e o campo pega o foco. */
+    fun responder(mensagem: Mensagem) {
+        if (!podeAbrirMenu(mensagem)) return
+        respondendo.value = mensagem
+        focarCampo.value = true
+    }
+
+    fun cancelarResposta() {
+        respondendo.value = null
     }
 
     /** Reação do menu, do chip ou do seletor (7.2): alterna a minha; aparece na hora. */
@@ -525,6 +549,7 @@ class ChatViewModel @Inject constructor(
         relogio = relogio,
         es = Dispatchers.IO,
         avisar = { eventos.enviar(it) },
+        pegarResposta = { respondendo.value?.let { ReferenciaPendente(TipoReferencia.RESPOSTA, it) }.also { respondendo.value = null } },
     )
 
     /** Separado do [estado]: o tempo e o nível mudam 10 vezes por segundo e só o campo lê. */

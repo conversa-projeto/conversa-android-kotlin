@@ -1,26 +1,34 @@
 package com.conversa.app.feature.chat
 
+import androidx.compose.animation.core.Animatable
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.combinedClickable
+import androidx.compose.foundation.gestures.Orientation
 import androidx.compose.foundation.gestures.awaitEachGesture
 import androidx.compose.foundation.gestures.awaitFirstDown
+import androidx.compose.foundation.gestures.draggable
+import androidx.compose.foundation.gestures.rememberDraggableState
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.heightIn
+import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.outlined.Reply
 import androidx.compose.material.icons.outlined.AddReaction
 import androidx.compose.material.icons.outlined.ContentCopy
 import androidx.compose.material.icons.outlined.VisibilityOff
@@ -40,13 +48,17 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.Stable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.hapticfeedback.HapticFeedbackType
 import androidx.compose.ui.input.pointer.PointerEventPass
 import androidx.compose.ui.input.pointer.pointerInput
+import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.platform.LocalHapticFeedback
 import androidx.compose.ui.res.pluralStringResource
 import androidx.compose.ui.res.stringResource
@@ -54,6 +66,7 @@ import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
+import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.viewinterop.AndroidView
@@ -72,6 +85,8 @@ import java.time.Instant
 import java.time.LocalDate
 import java.time.ZoneId
 import java.time.format.DateTimeFormatter
+import kotlin.math.roundToInt
+import kotlinx.coroutines.launch
 
 /** Menu só para mensagem de verdade (com id do servidor), que não é chamada nem oculta (TODO 7.1). */
 fun podeAbrirMenu(mensagem: Mensagem): Boolean =
@@ -112,8 +127,66 @@ fun Modifier.toqueLongo(habilitado: Boolean, aoTocarLongo: () -> Unit): Modifier
     }
 }
 
+/** Quanto arrastar a bolha para a direita para responder. */
+private val LIMIAR_RESPOSTA = 64.dp
+
+/**
+ * Arrastar a bolha para a direita além de [LIMIAR_RESPOSTA] responde (7.3, como o WhatsApp):
+ * a bolha acompanha o dedo, o ícone de resposta aparece atrás e vibra ao passar do limite.
+ */
+@Composable
+fun DeslizarParaResponder(habilitado: Boolean, aoResponder: () -> Unit, conteudo: @Composable () -> Unit) {
+    if (!habilitado) {
+        conteudo()
+        return
+    }
+    val limiar = with(LocalDensity.current) { LIMIAR_RESPOSTA.toPx() }
+    val deslocamento = remember { Animatable(0f) }
+    val escopo = rememberCoroutineScope()
+    val haptico = LocalHapticFeedback.current
+    var passou by remember { mutableStateOf(false) }
+    Box(
+        contentAlignment = Alignment.CenterStart,
+        modifier = Modifier.draggable(
+            orientation = Orientation.Horizontal,
+            state = rememberDraggableState { delta ->
+                escopo.launch {
+                    val novo = (deslocamento.value + delta).coerceIn(0f, limiar * 1.4f)
+                    deslocamento.snapTo(novo)
+                    if (!passou && novo >= limiar) haptico.performHapticFeedback(HapticFeedbackType.LongPress)
+                    passou = novo >= limiar
+                }
+            },
+            onDragStopped = {
+                if (deslocamento.value >= limiar) aoResponder()
+                passou = false
+                deslocamento.animateTo(0f)
+            },
+        ),
+    ) {
+        Icon(
+            Icons.AutoMirrored.Outlined.Reply,
+            contentDescription = null,
+            tint = MaterialTheme.colorScheme.primary,
+            modifier = Modifier.padding(start = 4.dp).size(24.dp).graphicsLayer {
+                val fracao = (deslocamento.value / limiar).coerceIn(0f, 1f)
+                alpha = fracao
+                scaleX = 0.6f + 0.4f * fracao
+                scaleY = 0.6f + 0.4f * fracao
+            },
+        )
+        Box(Modifier.offset { IntOffset(deslocamento.value.roundToInt(), 0) }) { conteudo() }
+    }
+}
+
 /** Ações do menu da mensagem. */
-data class AcoesMenu(val aoReagir: (String) -> Unit, val aoMaisEmojis: () -> Unit, val aoCopiar: () -> Unit, val aoOcultar: () -> Unit)
+data class AcoesMenu(
+    val aoResponder: () -> Unit,
+    val aoReagir: (String) -> Unit,
+    val aoMaisEmojis: () -> Unit,
+    val aoCopiar: () -> Unit,
+    val aoOcultar: () -> Unit,
+)
 
 /** Toque longo na bolha (TODO 7.1): reações rápidas + "mais" e as ações (textos do web). */
 @OptIn(ExperimentalMaterial3Api::class)
@@ -147,6 +220,7 @@ fun MenuMensagem(mensagem: Mensagem, propria: Boolean, acoes: AcoesMenu, aoFecha
             )
         }
         HorizontalDivider(Modifier.padding(vertical = 4.dp))
+        ItemMenu(Icons.AutoMirrored.Outlined.Reply, stringResource(R.string.responder), onClick = acoes.aoResponder)
         val temTexto = mensagem.conteudos.any { it.tipo == TipoConteudo.TEXTO || it.tipo == TipoConteudo.IMAGEM }
         if (temTexto) {
             ItemMenu(Icons.Outlined.ContentCopy, stringResource(R.string.copiar), onClick = acoes.aoCopiar)
@@ -361,6 +435,10 @@ internal fun AcoesDaMensagem(abertas: AcoesAbertas, estado: ChatUiState, viewMod
             mensagem,
             propria = mensagem.remetenteId == estado.eu,
             acoes = AcoesMenu(
+                aoResponder = {
+                    abertas.menuDe = null
+                    viewModel.responder(mensagem)
+                },
                 aoReagir = { emoji ->
                     abertas.menuDe = null
                     viewModel.reagir(mensagem, emoji)
