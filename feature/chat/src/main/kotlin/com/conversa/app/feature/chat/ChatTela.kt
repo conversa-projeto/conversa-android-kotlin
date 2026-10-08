@@ -213,6 +213,7 @@ fun ChatRotaTela(
                 pastaCamera = viewModel::pastaCamera,
                 aoTextoUsado = viewModel::textoUsado,
                 aoColarAnexos = viewModel::colarAnexos,
+                aoVisivel = viewModel::visivel,
                 gravacao = AcoesGravacao(
                     estado = viewModel.gravacao,
                     aoIniciar = viewModel::iniciarGravacao,
@@ -289,6 +290,8 @@ class AcoesChat(
     val aoTextoUsado: () -> Unit = {},
     /** Imagem colada no campo (teclado ou área de transferência). */
     val aoColarAnexos: (List<String>) -> Unit = {},
+    /** A conversa ficou visível ou deixou de estar (notificações, NOT-01/03). */
+    val aoVisivel: (Boolean) -> Unit = {},
 )
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -307,10 +310,21 @@ fun ChatTela(estado: ChatUiState, lista: androidx.compose.foundation.lazy.LazyLi
     }
     // App em segundo plano com a gravação aberta: pausa (o Android corta o microfone de app em segundo plano).
     val pausarGravacao by rememberUpdatedState(acoes.gravacao.aoPausar)
+    val visivel by rememberUpdatedState(acoes.aoVisivel)
     DisposableEffect(dono) {
-        val observador = LifecycleEventObserver { _, evento -> if (evento == Lifecycle.Event.ON_STOP) pausarGravacao() }
+        val observador = LifecycleEventObserver { _, evento ->
+            when (evento) {
+                Lifecycle.Event.ON_RESUME -> visivel(true)
+                Lifecycle.Event.ON_PAUSE -> visivel(false)
+                Lifecycle.Event.ON_STOP -> pausarGravacao()
+                else -> Unit
+            }
+        }
         dono.lifecycle.addObserver(observador)
-        onDispose { dono.lifecycle.removeObserver(observador) }
+        onDispose {
+            dono.lifecycle.removeObserver(observador)
+            visivel(false)
+        }
     }
     // Marca como lidas as mensagens que aparecem na tela, só com o app visível (MSG-04).
     LaunchedEffect(lista, itens) {

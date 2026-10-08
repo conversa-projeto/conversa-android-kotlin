@@ -108,6 +108,22 @@ class MensagensRepositorio @Inject constructor(
         }
     }
 
+    /**
+     * "Marcar como lida" da notificação (FC-604): todas as de outras pessoas ainda não lidas.
+     * Diferente de [marcarLida], espera cada `POST`: quem chama é uma ação de notificação,
+     * que tem pouco tempo de vida.
+     */
+    suspend fun marcarConversaLida(conversaId: Long, eu: Long) {
+        for (completa in mensagemDao.naoLidasDeOutros(conversaId, eu, Int.MAX_VALUE)) {
+            val id = completa.mensagem.id
+            if (!synchronized(jaPedidas) { jaPedidas.add(id) }) continue
+            mensagemDao.marcarLidaPorMim(id)
+            conversaDao.descontarNaoLida(conversaId)
+            chamarApi { api.visualizar(MarcarStatusRequisicao(conversaId, id)) }
+                .onFailure { synchronized(jaPedidas) { jaPedidas.remove(id) } }
+        }
+    }
+
     // --- Reproduzida (ANX-10) ---
 
     private val jaReproduzidas = mutableSetOf<Long>()

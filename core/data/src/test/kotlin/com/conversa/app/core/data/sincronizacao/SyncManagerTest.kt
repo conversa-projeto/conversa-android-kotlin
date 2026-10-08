@@ -10,6 +10,7 @@ import com.conversa.app.core.model.Sessao
 import com.conversa.app.core.network.api.ConversaApi
 import com.conversa.app.core.network.dto.ChamadaPendenteDto
 import com.conversa.app.core.network.dto.ConversaDto
+import com.conversa.app.core.network.dto.MensagemDto
 import com.conversa.app.core.network.dto.NovaMensagemDto
 import com.conversa.app.core.network.dto.QuantidadeDto
 import com.conversa.app.core.network.dto.StatusMensagemDto
@@ -27,7 +28,9 @@ import java.time.Instant
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.launch
 import kotlinx.coroutines.test.advanceUntilIdle
+import kotlinx.coroutines.test.runCurrent
 import kotlinx.coroutines.test.runTest
 import org.junit.Test
 
@@ -163,5 +166,31 @@ class SyncManagerTest {
         advanceUntilIdle()
 
         coVerify { api.mensagens(42, mensagemReferencia = 100, mensagensPrevias = 0, mensagensSeguintes = 100) }
+    }
+
+    @Test
+    fun `avisa as conversas com mensagem nova de outra pessoa, nao as minhas nem as ja lidas`() = runTest {
+        prepararApi()
+        fun msg(id: Long, remetente: Long, conversa: Long, lida: Boolean = false) =
+            MensagemDto(
+                id = id,
+                remetenteId = remetente,
+                remetente = "x",
+                conversaId = conversa,
+                inserida = java.time.Instant.EPOCH,
+                visualizada = lida,
+            )
+        // 42: uma minha (7) e uma do Bruno (8) depois da última salva (100). 50: só uma já lida.
+        coEvery { api.mensagens(42, 100, 0, 100) } returns listOf(msg(100, 8, 42), msg(101, 7, 42), msg(102, 8, 42))
+        coEvery { api.mensagens(50, 0, 80, 0) } returns listOf(msg(200, 8, 50, lida = true))
+        val sync = SyncManager(api, tempoReal, conversaDao, mensagemDao, syncEstadoDao, presenca, sessao, escopoDoTeste())
+        val avisos = mutableListOf<Set<Long>>()
+        backgroundScope.launch { sync.novasDeOutros.collect { avisos += it } }
+        runCurrent()
+
+        sync.ressincronizar()
+        runCurrent()
+
+        assertThat(avisos).containsExactly(setOf(42L))
     }
 }

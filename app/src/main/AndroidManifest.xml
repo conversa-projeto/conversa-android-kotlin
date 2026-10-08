@@ -57,6 +57,11 @@
             </intent-filter>
         </activity>
 
+        <!-- Ações da notificação de mensagem: Responder e Marcar como lida (só o próprio app dispara). -->
+        <receiver
+            android:name=".notificacoes.AcoesNotificacaoReceiver"
+            android:exported="false" />
+
         <!-- Anexos baixados e fotos da câmera, compartilhados com outros apps só por URI com permissão temporária. -->
         <provider
             android:name="androidx.core.content.FileProvider"

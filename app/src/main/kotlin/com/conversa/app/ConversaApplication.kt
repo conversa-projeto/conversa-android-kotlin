@@ -1,7 +1,6 @@
 package com.conversa.app
 
 import android.app.Application
-import androidx.core.app.NotificationManagerCompat
 import androidx.hilt.work.HiltWorkerFactory
 import androidx.work.Configuration
 import coil3.ImageLoader
@@ -10,6 +9,7 @@ import coil3.SingletonImageLoader
 import coil3.network.okhttp.OkHttpNetworkFetcherFactory
 import com.conversa.app.core.data.SessaoRepositorio
 import com.conversa.app.core.data.anexos.AnexosRepositorio
+import com.conversa.app.core.data.notificacoes.CanaisNotificacao
 import com.conversa.app.core.data.presenca.PresencaRepositorio
 import com.conversa.app.core.data.sessao.IniciadorSessao
 import com.conversa.app.core.data.sessao.LimpezaSessao
@@ -20,6 +20,7 @@ import com.conversa.app.core.network.di.EscopoAplicacao
 import com.conversa.app.core.ui.componentes.AnexoRemoto
 import com.conversa.app.imagens.FetcherAnexo
 import com.conversa.app.imagens.FetcherQuadroVideo
+import com.conversa.app.notificacoes.NotificadorMensagens
 import dagger.Lazy
 import dagger.hilt.android.HiltAndroidApp
 import javax.inject.Inject
@@ -55,6 +56,8 @@ class ConversaApplication :
 
     @Inject lateinit var sessao: SessaoRepositorio
 
+    @Inject lateinit var notificador: NotificadorMensagens
+
     @Inject @EscopoAplicacao
     lateinit var escopo: CoroutineScope
 
@@ -63,24 +66,26 @@ class ConversaApplication :
         // Log só no debug; no release nada vai para o logcat (problema #4 do legado).
         if (BuildConfig.DEBUG) Timber.plant(Timber.DebugTree())
 
+        CanaisNotificacao.criar(this)
         primeiroPlano.iniciar()
         limpezaSessao.iniciar()
         presenca.iniciar()
         sincronizacao.iniciar()
         iniciadorSessao.iniciar()
         conexaoTempoReal.iniciar()
+        notificador.iniciar()
         limparAoSair()
     }
 
     /**
      * Fim da sessão (logout ou 401): além do banco (LimpezaSessao), some com as
-     * notificações e com as imagens em cache (fotos de outra conta não ficam no aparelho).
+     * notificações, os atalhos de conversa e as imagens em cache (fotos de outra conta não ficam no aparelho).
      */
     @OptIn(coil3.annotation.ExperimentalCoilApi::class)
     private fun limparAoSair() {
         escopo.launch {
             sessao.fim.collect {
-                NotificationManagerCompat.from(this@ConversaApplication).cancelAll()
+                notificador.limpar()
                 val imagens = SingletonImageLoader.get(this@ConversaApplication)
                 imagens.memoryCache?.clear()
                 withContext(Dispatchers.IO) { imagens.diskCache?.clear() }

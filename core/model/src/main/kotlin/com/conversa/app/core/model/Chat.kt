@@ -277,12 +277,17 @@ sealed interface ResumoCitacao {
 }
 
 /** Mesma escolha do web (`resumoConteudos`): texto, senão imagem, gravação, áudio, figurinha, votação, arquivo. */
-fun resumoCitacao(citada: MensagemResumida): ResumoCitacao {
-    if (citada.oculta) return ResumoCitacao.Oculta
-    citada.conteudos.firstOrNull { it.tipo == TipoConteudo.TEXTO && it.conteudo.isNotEmpty() }
+fun resumoCitacao(citada: MensagemResumida): ResumoCitacao = resumoDosConteudos(citada.conteudos, citada.oculta)
+
+/** Corpo da notificação de uma mensagem (NOT-02): a mesma escolha da citação. */
+fun resumoDaMensagem(mensagem: Mensagem): ResumoCitacao = resumoDosConteudos(mensagem.conteudos, mensagem.oculta)
+
+private fun resumoDosConteudos(conteudos: List<Conteudo>, oculta: Boolean): ResumoCitacao {
+    if (oculta) return ResumoCitacao.Oculta
+    conteudos.firstOrNull { it.tipo == TipoConteudo.TEXTO && it.conteudo.isNotEmpty() }
         ?.let { return ResumoCitacao.Texto(resumirTexto(it.conteudo)) }
     val ordem = listOf(TipoConteudo.IMAGEM, TipoConteudo.GRAVACAO_AUDIO, TipoConteudo.AUDIO, TipoConteudo.FIGURINHA, TipoConteudo.ENQUETE)
-    val tipo = ordem.firstOrNull { t -> citada.conteudos.any { it.tipo == t } } ?: TipoConteudo.ARQUIVO
+    val tipo = ordem.firstOrNull { t -> conteudos.any { it.tipo == t } } ?: TipoConteudo.ARQUIVO
     return ResumoCitacao.Tipo(tipo)
 }
 

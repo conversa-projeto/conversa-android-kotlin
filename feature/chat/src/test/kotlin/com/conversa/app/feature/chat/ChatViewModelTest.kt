@@ -108,6 +108,7 @@ class ChatViewModelTest {
             transcricoes,
             compartilhamentos,
             mockk<com.conversa.app.core.data.rede.EconomiaDados> { every { ativa } returns MutableStateFlow(false) },
+            com.conversa.app.core.data.notificacoes.ConversaEmTela(),
             mockk(relaxed = true),
             player,
             mockk(relaxed = true),

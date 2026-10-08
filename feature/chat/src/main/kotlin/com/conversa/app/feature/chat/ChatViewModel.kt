@@ -17,6 +17,7 @@ import com.conversa.app.core.data.contatos.ContatosRepositorio
 import com.conversa.app.core.data.conversas.ConversasRepositorio
 import com.conversa.app.core.data.mensagens.EnvioMensagens
 import com.conversa.app.core.data.mensagens.MensagensRepositorio
+import com.conversa.app.core.data.notificacoes.ConversaEmTela
 import com.conversa.app.core.data.presenca.PresencaRepositorio
 import com.conversa.app.core.data.rede.EconomiaDados
 import com.conversa.app.core.media.GravadorAudio
@@ -166,6 +167,7 @@ class ChatViewModel @Inject constructor(
     private val transcricoes: TranscricoesRepositorio,
     private val compartilhamentos: Compartilhamentos,
     economia: EconomiaDados,
+    private val emTela: ConversaEmTela,
     private val fontes: FontesArquivo,
     private val player: PlayerAudio,
     gravador: GravadorAudio,
@@ -282,6 +284,11 @@ class ChatViewModel @Inject constructor(
             reiniciarDigitando()
             eventos.enviar(EventoChat.RolarAoFim)
         }
+    }
+
+    /** A conversa está visível (RESUMED): sem notificação nem som para ela, e a dela some (NOT-01/03). */
+    fun visivel(sim: Boolean) {
+        if (sim) emTela.apareceu(conversaId) else emTela.sumiu(conversaId)
     }
 
     /** Menção tocada: obtém ou cria a direta e abre. */

@@ -156,6 +156,14 @@ interface MensagemDao {
     @Query("SELECT MAX(id) FROM mensagem WHERE conversaId = :conversaId AND id > 0")
     suspend fun ultimaSalva(conversaId: Long): Long?
 
+    /** As últimas [limite] mensagens de outras pessoas ainda não lidas (notificação, NOT-02), da mais nova para a mais antiga. */
+    @Transaction
+    @Query(
+        "SELECT * FROM mensagem WHERE conversaId = :conversaId AND remetenteId != :eu AND visualizada = 0 " +
+            "AND excluidaEm IS NULL AND id > 0 ORDER BY dataEfetiva DESC, id DESC LIMIT :limite",
+    )
+    suspend fun naoLidasDeOutros(conversaId: Long, eu: Long, limite: Int): List<MensagemCompleta>
+
     @Query("SELECT MIN(id) FROM mensagem")
     suspend fun menorId(): Long?
 }

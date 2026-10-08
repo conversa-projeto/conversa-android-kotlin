@@ -1,6 +1,15 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
     <!-- Notificação de download concluído (TODO 4.7) -->
-    <string name="canal_downloads">Downloads</string>
     <string name="download_concluido">Download concluído</string>
+
+    <!-- Canais de notificação (TODO 5.3) -->
+    <string name="canal_mensagens">Mensagens</string>
+    <string name="canal_mensagens_descricao">Mensagens novas das conversas</string>
+    <string name="canal_chamadas_recebidas">Chamadas recebidas</string>
+    <string name="canal_chamadas_recebidas_descricao">Toque de chamada de voz e de vídeo</string>
+    <string name="canal_chamada_ativa">Chamada em andamento</string>
+    <string name="canal_chamada_ativa_descricao">Aviso fixo enquanto uma chamada está ativa</string>
+    <string name="canal_sistema">Sistema</string>
+    <string name="canal_sistema_descricao">Downloads concluídos e outros avisos do app</string>
 </resources>

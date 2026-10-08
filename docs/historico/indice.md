@@ -45,7 +45,7 @@
 - 2026-10-08 · [Etapa 4 — colar imagem, HTML e economia de dados](2026-10-08-06-etapa-4-colar-html-economia.md) — campo em `TextFieldState` com `contentReceiver`, HTML com outro app, "Toque para carregar" com conexão lenta/economia; 211 testes
 
 ## Notificações e push (etapa 5)
-_(nada ainda)_
+- 2026-10-08 · [Etapa 5 — notificação de mensagem, canais, permissão e atalhos (sem o push)](2026-10-08-07-etapa-5-notificacoes-sem-push.md) — MessagingStyle por conversa com Responder/Marcar como lida, regra do web (som na frente, notificação em segundo plano), some ao ler/arquivar/abrir, atalhos; Firebase ⛔ (precisa do usuário); 214 testes
 
 ## Chamadas (etapa 6)
 _(nada ainda)_

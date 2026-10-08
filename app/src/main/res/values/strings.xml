@@ -24,6 +24,25 @@
     <string name="config_sair">Sair</string>
     <string name="config_saindo">Saindo…</string>
     <string name="config_sair_confirmar">Você vai precisar entrar de novo neste aparelho. As notificações param até lá.</string>
+    <!-- Notificação de mensagem (NOT-02; corpo como o web) -->
+    <string name="notificacao_voce">Você</string>
+    <string name="notificacao_oculta">Mensagem oculta</string>
+    <string name="notificacao_imagem">Imagem</string>
+    <string name="notificacao_gravacao">Gravação de áudio</string>
+    <string name="notificacao_audio">Áudio</string>
+    <string name="notificacao_figurinha">Figurinha</string>
+    <string name="notificacao_votacao">Votação</string>
+    <string name="notificacao_arquivo">Arquivo</string>
+    <string name="notificacao_responder">Responder</string>
+    <string name="notificacao_responder_dica">Mensagem</string>
+    <string name="notificacao_marcar_lida">Marcar como lida</string>
+
+    <!-- Pedido de permissão de notificações depois do login (FC-607, NOT-06) -->
+    <string name="permissao_notificacoes_titulo">Notificações</string>
+    <string name="permissao_notificacoes_texto">Para avisar quando chegar mensagem nova, o Conversa precisa da sua permissão para mostrar notificações.</string>
+    <string name="permissao_notificacoes_permitir">Permitir</string>
+    <string name="permissao_notificacoes_agora_nao">Agora não</string>
+
     <string name="config_em_breve">Perfil, senha, notificações e as demais opções chegam na etapa 8.</string>
 
 

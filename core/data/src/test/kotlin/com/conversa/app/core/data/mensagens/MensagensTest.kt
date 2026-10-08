@@ -145,6 +145,26 @@ class MensagensTest {
     }
 
     @Test
+    fun `marcar a conversa como lida pela notificacao marca todas as de outros e espera o servidor`() = runTest {
+        val escopo = escopoDoTeste()
+        val repo = MensagensRepositorio(api, banco.mensagemDao(), banco.conversaDao(), escopo)
+        banco.conversaDao().salvar(listOf(ConversaEntidade(42, 1, null, "Bruno", 8, 106, agora, "oi", 3, null, null, null)))
+        coEvery { api.mensagens(42, 0, 80, 0) } returns listOf(msg(104), msg(105, remetente = 7), msg(106))
+        coEvery { api.visualizar(any()) } returns SucessoDto(true)
+        repo.carregarRecentes(42)
+
+        repo.marcarConversaLida(42, eu = 7)
+
+        // Sem avançar a fila: as chamadas já foram feitas.
+        coVerify(exactly = 1) { api.visualizar(MarcarStatusRequisicao(42, 104)) }
+        coVerify(exactly = 1) { api.visualizar(MarcarStatusRequisicao(42, 106)) }
+        coVerify(exactly = 0) { api.visualizar(MarcarStatusRequisicao(42, 105)) }
+        assertThat(banco.mensagemDao().naoLidasDeOutros(42, 7, 10)).isEmpty()
+        assertThat(banco.conversaDao().observar(42).first()!!.naoLidas).isEqualTo(1)
+        escopo.cancel()
+    }
+
+    @Test
     fun `primeiro play marca reproduzida no Room e no servidor uma vez so`() = runTest {
         val escopo = escopoDoTeste()
         val repo = MensagensRepositorio(api, banco.mensagemDao(), banco.conversaDao(), escopo)

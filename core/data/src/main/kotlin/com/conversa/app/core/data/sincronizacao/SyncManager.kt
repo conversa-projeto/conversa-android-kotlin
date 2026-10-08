@@ -77,6 +77,14 @@ class SyncManager @Inject constructor(
     val chamadasPendentes: SharedFlow<List<ChamadaPendente>> = _chamadasPendentes.asSharedFlow()
 
     private val gatilhoMensagens = MutableSharedFlow<Unit>(extraBufferCapacity = 1)
+
+    private val _novasDeOutros = MutableSharedFlow<Set<Long>>(extraBufferCapacity = 8)
+
+    /**
+     * Conversas que acabaram de receber mensagens de outras pessoas ainda não lidas
+     * (NOT-01/NOT-02). Avisa depois de atualizar a lista, para o contador já estar certo.
+     */
+    val novasDeOutros: SharedFlow<Set<Long>> = _novasDeOutros.asSharedFlow()
     private var iniciado = false
 
     fun iniciar() {
@@ -128,8 +136,9 @@ class SyncManager @Inject constructor(
         }
         if (novas.isEmpty()) return
 
+        val comNovasDeOutros = mutableSetOf<Long>()
         for (nova in novas) {
-            buscarSeguintes(nova.conversaId)
+            if (buscarSeguintes(nova.conversaId)) comNovasDeOutros += nova.conversaId
             // Mensagem nova na conversa: quem estava digitando terminou (como no web).
             presenca.limparDigitando(nova.conversaId)
         }
@@ -137,18 +146,26 @@ class SyncManager @Inject constructor(
         val maior = novas.maxByOrNull { lerInstant(it.ate) ?: java.time.Instant.EPOCH }?.ate
         if (maior != null) syncEstadoDao.gravar(SyncEstadoEntidade(CURSOR_MENSAGENS, maior))
         sincronizarConversas()
+        if (comNovasDeOutros.isNotEmpty()) _novasDeOutros.tryEmit(comNovasDeOutros)
     }
 
-    /** Mensagens depois da última salva da conversa (ou as [LOTE_INICIAL] últimas, se não há nenhuma). */
-    private suspend fun buscarSeguintes(conversaId: Long) {
+    /**
+     * Mensagens depois da última salva da conversa (ou as [LOTE_INICIAL] últimas, se não há
+     * nenhuma). `true` se chegou alguma de outra pessoa ainda não lida.
+     */
+    private suspend fun buscarSeguintes(conversaId: Long): Boolean {
         val ultima = mensagemDao.ultimaSalva(conversaId)
-        chamarApi {
+        val eu = sessao.sessao.value?.usuarioId
+        return chamarApi {
             if (ultima != null) {
                 api.mensagens(conversaId, mensagemReferencia = ultima, mensagensSeguintes = LOTE)
             } else {
                 api.mensagens(conversaId, mensagensPrevias = LOTE_INICIAL)
             }
-        }.onSuccess { mensagens -> mensagemDao.salvarCompletas(mensagens.map { it.paraEntidade() }) }
+        }.map { mensagens ->
+            mensagemDao.salvarCompletas(mensagens.map { it.paraEntidade() })
+            mensagens.any { it.remetenteId != eu && !it.visualizada && (ultima == null || it.id > ultima) }
+        }.getOrDefault(false)
     }
 
     /**
