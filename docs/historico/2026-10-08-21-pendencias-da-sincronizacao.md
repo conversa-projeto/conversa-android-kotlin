@@ -4,7 +4,7 @@
 - **Tipo:** funcionalidade / correção
 - **Itens:** `TODO.md` 2.10, 3.7, 6.13 e 7.2 (linhas 🆕); FC-212, FC-501, FC-719, FC-723; ENV-17, CON-08, CHA-18, CHA-24
 - **Branch:** `reescrita`
-- **Commits:** _(preencher)_
+- **Commits:** `fffcc10`
 
 ## Contexto
 A sincronização de 2026-10-08 (registro 20) trouxe itens pequenos para seções já fechadas. Pela ordem do TODO, eles vêm antes do 7.3:
