@@ -739,11 +739,11 @@
 - [x] Responder no privado: abrir/criar a direta com o remetente e deixar a mensagem pendente como encaminhada (`tipo:2`, conteúdos antes do texto) — só em grupo e em mensagem de outra pessoa; abre `RotaChat(direta, encaminharDe)`, com a barra "Encaminhando de …" e o "Enviar" mesmo sem texto. No emulador: saiu na direta com o B com o conteúdo da original antes do comentário e a referência tipo 2 ✔ 19add2b
 
 ### 7.7 Menções (FC-508, ENV-05, MSG-12)
-- [ ] Ao digitar `@` + texto → popup com até 6 contatos/membros (nome/login)
-- [ ] Escolher → inserir `@Nome` destacado no campo; guardar o id
-- [ ] No envio: converter para `@[Nome](id)`; "@Ana" não casa com "@Anabela"
-- [ ] Renderizar `@[Nome](id)` como `@Nome` clicável → abrir a conversa direta
-- [ ] Testes do parser (portar `mencoesTexto.ts`)
+- [x] Ao digitar `@` + texto → popup com até 6 contatos/membros (nome/login) — `SugestoesDeMencao` acima do campo, com os contatos (como o web); `mencaoDigitada` faz o papel do regex do web (`@` + letras, números, "_" e espaços até o cursor) sem regex
+- [x] Escolher → inserir `@Nome` destacado no campo; guardar o id — o "@termo" vira "@Nome "; destaque por `OutputTransformation` (azul, seminegrito); texto compartilhado com "@[Nome](id)" volta a "@Nome" com o id
+- [x] No envio: converter para `@[Nome](id)`; "@Ana" não casa com "@Anabela" — `textoParaEnvio`. No emulador: "O @[Teste Android B](2) td" no servidor
+- [x] Renderizar `@[Nome](id)` como `@Nome` clicável → abrir a conversa direta — já existia desde a etapa 3 (`SegmentoTexto.Mencao`); no emulador o toque abriu a direta com o B
+- [x] Testes do parser (portar `mencoesTexto.ts`) — `Mencoes.kt` + `MencoesTest` (7 testes)
 
 ### 7.8 Figurinhas (FC-509, ENV-04)
 - [ ] Copiar `conversa-web/public/figurinhas/**` (basico 8, rostos 7, coisas 9) para `app/src/main/assets/figurinhas/`

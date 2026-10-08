@@ -481,6 +481,10 @@ class ChatViewModel @Inject constructor(
         focarCampo.value = true
     }
 
+    /** Contatos para a lista de menção do campo (7.7), como o web (todos os contatos). */
+    val contatosMencao: StateFlow<List<com.conversa.app.core.model.Contato>> =
+        contatos.observarOutros().stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), emptyList())
+
     /** Destinos do "Encaminhar" (7.6): as conversas, menos esta, e os contatos sem direta. */
     val destinosEncaminhar: StateFlow<List<DestinoEncaminhar>> = combine(conversas.observarTodas(), contatos.observarOutros()) {
             lista,

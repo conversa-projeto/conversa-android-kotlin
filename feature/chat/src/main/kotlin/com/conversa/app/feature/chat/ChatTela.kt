@@ -95,6 +95,8 @@ import java.time.ZoneId
 import java.time.format.DateTimeFormatter
 import java.util.Locale
 import kotlin.math.abs
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.filter
 import kotlinx.coroutines.launch
@@ -249,6 +251,7 @@ fun ChatRotaTela(
                 aoTextoUsado = viewModel::textoUsado,
                 aoCampoFocado = viewModel::campoFocado,
                 aoCancelarResposta = viewModel::cancelarResposta,
+                contatosMencao = viewModel.contatosMencao,
                 aoChegouNaMensagem = viewModel::chegouNaMensagem,
                 aoColarAnexos = viewModel::colarAnexos,
                 aoVisivel = viewModel::visivel,
@@ -333,6 +336,8 @@ class AcoesChat(
     /** Pasta (no cache do app) onde a câmera grava a foto antes de enviar. */
     val pastaCamera: () -> java.io.File? = { null },
     val gravacao: AcoesGravacao = AcoesGravacao(),
+    /** Contatos para a lista de menção (7.7); só o campo lê. */
+    val contatosMencao: StateFlow<List<com.conversa.app.core.model.Contato>> = MutableStateFlow(emptyList()),
     /** O campo já usou o texto compartilhado por outro app. */
     val aoTextoUsado: () -> Unit = {},
     val aoCampoFocado: () -> Unit = {},

@@ -67,6 +67,7 @@
 - 2026-10-08 · [Etapa 7 — responder](2026-10-08-22-etapa-7-responder.md) — deslizar a bolha ou "Responder" no menu; barra acima do campo; `mensagem_referencia` tipo 1 com a citação já na otimista; gravação também responde; ações de acessibilidade na bolha
 - 2026-10-08 · [Etapa 7 — citação completa e "ir para a mensagem"](2026-10-08-23-etapa-7-citacao-e-ir-para-a-mensagem.md) — citação com hora, conteúdos e aninhada (5 níveis); tocar leva à original sem deixar buraco no Room, com destaque; encaminhada abre a conversa de origem; link/notificação troca o chat aberto
 - 2026-10-08 · [Etapa 7 — encaminhar e responder no privado](2026-10-08-24-etapa-7-encaminhar-e-responder-no-privado.md) — folha de destinos com busca (conversas e contatos sem direta), encaminhada pela fila com os conteúdos da original; "Responder no privado" abre a direta com a mensagem pendente; "Encaminhar" escondido em votação
+- 2026-10-08 · [Etapa 7 — menções no campo](2026-10-08-25-etapa-7-mencoes.md) — "@" abre até 6 contatos; "@Nome" destacado no campo vira `@[Nome](id)` no envio; porte do `mencoesTexto.ts` com testes
 
 ## Atividades, pesquisa, perfil e configurações (etapa 8)
 _(nada ainda)_

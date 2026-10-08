@@ -17,6 +17,7 @@ import androidx.compose.animation.core.tween
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.content.MediaType
 import androidx.compose.foundation.content.ReceiveContentListener
 import androidx.compose.foundation.content.consume
@@ -39,9 +40,11 @@ import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.KeyboardOptions
+import androidx.compose.foundation.text.input.OutputTransformation
 import androidx.compose.foundation.text.input.TextFieldLineLimits
 import androidx.compose.foundation.text.input.TextFieldState
 import androidx.compose.foundation.text.input.clearText
@@ -65,12 +68,14 @@ import androidx.compose.material3.FilledIconButton
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextField
 import androidx.compose.material3.TextFieldDefaults
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateListOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
@@ -78,6 +83,7 @@ import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.runtime.snapshotFlow
+import androidx.compose.runtime.snapshots.SnapshotStateList
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.alpha
@@ -97,6 +103,9 @@ import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.onClick
 import androidx.compose.ui.semantics.role
 import androidx.compose.ui.semantics.semantics
+import androidx.compose.ui.text.SpanStyle
+import androidx.compose.ui.text.TextRange
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardCapitalization
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
@@ -105,9 +114,17 @@ import androidx.core.content.FileProvider
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.conversa.app.core.data.anexos.AnexoLocal
 import com.conversa.app.core.data.mensagens.ReferenciaPendente
+import com.conversa.app.core.model.Contato
+import com.conversa.app.core.model.MencaoInserida
 import com.conversa.app.core.model.TipoConteudo
 import com.conversa.app.core.model.TipoReferencia
+import com.conversa.app.core.model.dividirMencoes
+import com.conversa.app.core.model.extrairMencoesCruas
+import com.conversa.app.core.model.mencaoDigitada
 import com.conversa.app.core.model.resumoDaMensagem
+import com.conversa.app.core.model.sugestoesDeMencao
+import com.conversa.app.core.model.textoParaEnvio
+import com.conversa.app.core.ui.componentes.Avatar
 import com.conversa.app.core.ui.componentes.LocalAvisos
 import com.conversa.app.core.ui.componentes.mostrarErro
 import com.conversa.app.core.ui.tema.ConversaTema
@@ -150,6 +167,8 @@ internal fun Campo(
     // Estado do texto local e síncrono (o cursor não pula); sobrevive a girar a tela.
     val texto = rememberTextFieldState()
     val foco = remember { FocusRequester() }
+    // Menções inseridas pela lista (7.7): o campo mostra "@Nome"; no envio vira "@[Nome](id)".
+    val mencoes = remember { mutableStateListOf<MencaoInserida>() }
     // Pedido de foco (chat da chamada recém-criado): uma vez; sem o campo na tela (gravando), só descarta.
     LaunchedEffect(focar) {
         if (focar) {
@@ -160,7 +179,10 @@ internal fun Campo(
     // Texto que outro app compartilhou (AND-10): entra no campo uma vez, para a pessoa revisar.
     LaunchedEffect(textoCompartilhado) {
         if (textoCompartilhado != null) {
-            texto.setTextAndPlaceCursorAtEnd(textoCompartilhado)
+            // Texto com "@[Nome](id)" volta a mostrar "@Nome", com as menções guardadas.
+            val (limpo, cruas) = extrairMencoesCruas(textoCompartilhado)
+            texto.setTextAndPlaceCursorAtEnd(limpo)
+            mencoes.addAll(cruas)
             acoes.aoTextoUsado()
         }
     }
@@ -179,13 +201,14 @@ internal fun Campo(
         val atual = gravacao
         val comBarra = atual is EstadoGravacao.Pausada || (atual as? EstadoGravacao.Gravando)?.travada == true
         if (respondendo != null) BarraResposta(respondendo, acoes.aoCancelarResposta)
+        if (atual == EstadoGravacao.Parada) SugestoesDeMencao(texto, mencoes, acoes.contatosMencao)
         if (fila.isNotEmpty() && atual == EstadoGravacao.Parada) FilaAnexos(fila, acoes.aoRemoverAnexo)
         if (comBarra) {
             BarraGravacao(atual, acoes.gravacao)
         } else {
             // A encaminhada pendente pode ir sem texto (os conteúdos dela vão junto): o Enviar aparece.
             val encaminhando = respondendo?.tipo == TipoReferencia.ENCAMINHAMENTO
-            LinhaDoCampo(texto, fila.isNotEmpty() || encaminhando, atual as? EstadoGravacao.Gravando, acoes, foco)
+            LinhaDoCampo(texto, fila.isNotEmpty() || encaminhando, atual as? EstadoGravacao.Gravando, acoes, foco, mencoes)
         }
     }
 }
@@ -230,6 +253,63 @@ private fun BarraResposta(referencia: ReferenciaPendente, aoCancelar: () -> Unit
 }
 
 /**
+ * Lista de menção (7.7, `MencaoDropdown.vue`): com "@termo" antes do cursor, até 6 contatos
+ * pelo nome ou login. Escolher troca o "@termo" por "@Nome " e guarda o id.
+ */
+@Composable
+private fun SugestoesDeMencao(texto: TextFieldState, mencoes: SnapshotStateList<MencaoInserida>, contatos: StateFlow<List<Contato>>) {
+    val selecao = texto.selection
+    val digitada = if (selecao.collapsed) mencaoDigitada(texto.text.toString(), selecao.end) else null
+    if (digitada == null) return
+    val todos by contatos.collectAsStateWithLifecycle()
+    val sugestoes = remember(todos, digitada.termo) { sugestoesDeMencao(todos, digitada.termo) }
+    if (sugestoes.isEmpty()) return
+    Surface(
+        shape = RoundedCornerShape(12.dp),
+        tonalElevation = 2.dp,
+        shadowElevation = 4.dp,
+        modifier = Modifier.padding(start = 12.dp, end = 12.dp, top = 6.dp).widthIn(max = 280.dp),
+    ) {
+        Column {
+            for (contato in sugestoes) {
+                Row(
+                    Modifier
+                        .fillMaxWidth()
+                        .clickable {
+                            val nome = contato.nome
+                            texto.edit {
+                                replace(digitada.inicio, selecao.end, "@$nome ")
+                                selection = TextRange(digitada.inicio + nome.length + 2)
+                            }
+                            mencoes += MencaoInserida(nome, contato.id)
+                        }
+                        .padding(horizontal = 12.dp, vertical = 8.dp),
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.spacedBy(8.dp),
+                ) {
+                    Avatar(contato.nome, contato.avatarUrl, tamanho = 28.dp)
+                    Text(contato.nome, maxLines = 1, overflow = TextOverflow.Ellipsis)
+                }
+            }
+        }
+    }
+}
+
+/** As menções inseridas aparecem destacadas no campo (só a aparência: o texto continua "@Nome"). */
+private fun destaqueDasMencoes(mencoes: List<MencaoInserida>, cor: Color) = OutputTransformation {
+    if (mencoes.isEmpty()) return@OutputTransformation
+    var posicao = 0
+    for (trecho in dividirMencoes(asCharSequence().toString(), mencoes)) {
+        if (trecho.mencao !=
+            null
+        ) {
+            addStyle(SpanStyle(color = cor, fontWeight = FontWeight.SemiBold), posicao, posicao + trecho.texto.length)
+        }
+        posicao += trecho.texto.length
+    }
+}
+
+/**
  * Linha do campo. Segurando o microfone ([segurando]), o texto dá lugar ao tempo e ao
  * "deslize para cancelar"; o botão do microfone continua no mesmo lugar (o gesto não se perde).
  */
@@ -241,6 +321,7 @@ private fun LinhaDoCampo(
     segurando: EstadoGravacao.Gravando?,
     acoes: AcoesChat,
     foco: FocusRequester,
+    mencoes: SnapshotStateList<MencaoInserida>,
 ) {
     Row(
         Modifier.fillMaxWidth().padding(horizontal = 8.dp, vertical = 6.dp),
@@ -266,6 +347,7 @@ private fun LinhaDoCampo(
                         unfocusedIndicatorColor = Color.Transparent,
                     ),
                     keyboardOptions = KeyboardOptions(capitalization = KeyboardCapitalization.Sentences),
+                    outputTransformation = destaqueDasMencoes(mencoes, MaterialTheme.colorScheme.primary),
                     modifier = Modifier.fillMaxWidth().focusRequester(foco).contentReceiver(receptorDeImagens(acoes.aoColarAnexos)),
                 )
             }
@@ -276,7 +358,12 @@ private fun LinhaDoCampo(
                 onClick = {
                     val enviado = texto.text.toString()
                     // Só limpa se a pessoa não mudou o texto enquanto a mensagem era gravada no Room.
-                    acoes.aoEnviar(enviado) { if (texto.text.toString() == enviado) texto.clearText() }
+                    acoes.aoEnviar(textoParaEnvio(enviado, mencoes)) {
+                        if (texto.text.toString() == enviado) {
+                            texto.clearText()
+                            mencoes.clear()
+                        }
+                    }
                 },
                 modifier = Modifier.size(48.dp),
             ) {
