@@ -4,7 +4,7 @@
 - **Tipo:** código / manifesto
 - **Itens:** `TODO.md` 6.12 (PiP, faixa) e 6.9 (voltar = minimizar); FC-717; CHA-13; AND-06
 - **Branch:** `reescrita`
-- **Commits:** (preencher)
+- **Commits:** `add5196`
 
 ## Contexto
 Antes, "voltar" fechava a tela da chamada e não havia como voltar a ela, a não ser pela notificação. Numa chamada de vídeo, sair do app também perdia a imagem.

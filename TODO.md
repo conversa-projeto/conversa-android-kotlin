@@ -646,7 +646,7 @@
 - [ ] Controles: microfone, câmera (vídeo), trocar câmera, rota de áudio, adicionar pessoa, chat, sair — 🔄 microfone, câmera, trocar câmera, "Ativar vídeo", "Áudio saída" (rota) e sair prontos; faltam adicionar pessoa e chat (6.13)
 - [x] Estado de mute e câmera reativo (StateFlow), ícones corretos, `contentDescription` em tudo — e `stateDescription` "Ligado"/"Desligado" para o TalkBack ✔ cf43b1f
 - [ ] Cores: microfone, câmera e som **vermelhos quando desligados**; tela, chat e ponteiro **azuis quando ligados**; demais neutros — 🔄 microfone e câmera vermelhos quando desligados (cores do FMX: `chamadaEncerrar`, `chamadaBotao`); som, tela, chat e ponteiro chegam com os botões deles
-- [x] `BackHandler`: voltar = minimizar (não encerra) — em vídeo vira picture-in-picture; em áudio a tela fecha e a faixa "Toque para voltar à chamada" leva de volta (6.12)
+- [x] `BackHandler`: voltar = minimizar (não encerra) — em vídeo vira picture-in-picture; em áudio a tela fecha e a faixa "Toque para voltar à chamada" leva de volta (6.12) ✔ add5196
 - [x] Tiles: nome ("Você"), iniciais sem vídeo, faixa vermelha de erro de conexão — grade de participantes, miniatura local com "Você"; sem vídeo do outro, avatar (não um quadro preto) ✔ cf43b1f
 - [ ] **Teste:** atender e desligar só com o TalkBack
 
@@ -666,8 +666,8 @@
 - [x] FGS com o tipo `camera` adicionado quando o vídeo liga — o `ServicoChamada` refaz o `startForeground` quando a câmera liga ou desliga. No emulador, numa chamada de vídeo em grupo (app + B e C no web): `phoneCall|microphone|camera` (0xC4) ✔ 482037d
 
 ### 6.12 Minimizar (FC-717, CHA-13, AND-06)
-- [x] Picture-in-Picture em chamada de vídeo (`setAutoEnterEnabled` no Android 12+) — só o vídeo principal na janela; antes do 12, pelo `onUserLeaveHint`; com `setSourceRectHint` (a área do vídeo). A `ChamadaActivity` tem tarefa própria: o PiP leva só a chamada e o app continua usável. No emulador: "início" e "voltar" numa chamada de vídeo → janela flutuante (`pinned`) com o vídeo do B; a chamada seguiu; ao encerrar, o PiP fechou
-- [x] Banner "Toque para voltar à chamada" no topo das outras telas — `ComBannerDaChamada` envolve todas as telas do app: faixa verde (cor do FMX) com a duração; ocupa a barra de status e as telas embaixo não a descontam de novo. No emulador: "voltar" numa chamada de áudio → a lista de conversas com a faixa; o toque voltou à chamada
+- [x] Picture-in-Picture em chamada de vídeo (`setAutoEnterEnabled` no Android 12+) — só o vídeo principal na janela; antes do 12, pelo `onUserLeaveHint`; com `setSourceRectHint` (a área do vídeo). A `ChamadaActivity` tem tarefa própria: o PiP leva só a chamada e o app continua usável. No emulador: "início" e "voltar" numa chamada de vídeo → janela flutuante (`pinned`) com o vídeo do B; a chamada seguiu; ao encerrar, o PiP fechou ✔ add5196
+- [x] Banner "Toque para voltar à chamada" no topo das outras telas — `ComBannerDaChamada` envolve todas as telas do app: faixa verde (cor do FMX) com a duração; ocupa a barra de status e as telas embaixo não a descontam de novo. No emulador: "voltar" numa chamada de áudio → a lista de conversas com a faixa; o toque voltou à chamada ✔ add5196
 - [x] Notificação em andamento CallStyle `forOngoingCall` com cronômetro nativo e "Desligar" — do `ServicoChamada`. No emulador: "Conversa · 00:07 / Teste Android B / Em chamada" com "Hang Up" ✔ 5837aec
 
 ### 6.13 Recursos extras de chamada (FC-718…722)
