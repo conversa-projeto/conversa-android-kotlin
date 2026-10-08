@@ -4,7 +4,7 @@
 - **Tipo:** documentação / teste manual
 - **Itens:** `TODO.md` 6.14; FC-955
 - **Branch:** `reescrita`
-- **Commits:** (preencher)
+- **Commits:** `610bbe1`
 
 ## Contexto
 O TODO 6.14 pede uma matriz de testes manuais de chamada:
