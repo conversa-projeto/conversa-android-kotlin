@@ -4,7 +4,7 @@
 - **Tipo:** funcionalidade
 - **Itens:** `TODO.md` 7.1, 7.2, 7.4 e a linha "Copiar" do 7.6; FC-500, FC-501, FC-503, FC-507; ENV-17, ENV-18, ENV-20
 - **Branch:** `reescrita`
-- **Commits:** _(preencher)_
+- **Commits:** `52d6d03`
 
 ## Contexto
 Primeiro bloco da etapa 7. O toque longo na bolha abre o menu da mensagem, como o web (`MensagemAcoes.vue`): reações rápidas, "mais emojis", Copiar e Ocultar. As outras ações do menu (Responder, Encaminhar, Responder no privado) entram com 7.3 e 7.6.
