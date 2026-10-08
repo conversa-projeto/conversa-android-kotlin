@@ -380,6 +380,16 @@ class ChatViewModel @Inject constructor(
         }
     }
 
+    /** Figurinha (7.8): vai na hora, sozinha (como o web com o campo vazio) e como resposta, se houver uma pendente. */
+    fun enviarFigurinha(id: String) {
+        viewModelScope.launch {
+            val resposta = respondendo.value
+            envio.enviar(conversaId, "", emptyList(), resposta, figurinha = id)
+            if (respondendo.value == resposta) respondendo.value = null
+            eventos.enviar(EventoChat.RolarAoFim)
+        }
+    }
+
     /** A conversa está visível (RESUMED): sem notificação nem som para ela, e a dela some (NOT-01/03). */
     fun visivel(sim: Boolean) {
         if (sim) emTela.apareceu(conversaId) else emTela.sumiu(conversaId)

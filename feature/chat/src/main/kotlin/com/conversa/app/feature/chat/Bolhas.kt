@@ -191,6 +191,7 @@ fun LinhaMensagem(
             ) {
                 when (classificarMensagem(mensagem)) {
                     TipoExibicao.EMOJI -> BolhaEmoji(mensagem, propria)
+                    TipoExibicao.FIGURINHA -> BolhaFigurinha(mensagem, propria)
                     TipoExibicao.CHAMADA -> BolhaChamada(mensagem, propria, acoes)
                     TipoExibicao.OCULTA -> BolhaOculta(mensagem, propria)
                     TipoExibicao.TEXTO_CURTO -> Fundo(propria) { TextoCurto(mensagem, propria, acoes) }
@@ -277,7 +278,7 @@ private fun ConteudoNaBolha(mensagem: Mensagem, conteudo: Conteudo, propria: Boo
         }
         TipoConteudo.AUDIO, TipoConteudo.GRAVACAO_AUDIO -> PlayerNaBolha(mensagem, conteudo, propria, cor, acoes)
         TipoConteudo.ARQUIVO -> if (ehVideo(conteudo)) VideoNaBolha(mensagem, conteudo, acoes) else LinhaArquivo(conteudo, cor, acoes)
-        TipoConteudo.FIGURINHA -> Marcador("🏷", stringResource(R.string.conteudo_figurinha), cor)
+        TipoConteudo.FIGURINHA -> FigurinhaAnimada(conteudo.conteudo, 120.dp)
         TipoConteudo.ENQUETE -> Column {
             Text("📊 " + stringResource(R.string.votacao), color = cor, fontWeight = FontWeight.SemiBold)
             Text(stringResource(R.string.votacao_no_computador), color = cor, style = MaterialTheme.typography.bodySmall)
@@ -435,6 +436,15 @@ fun IconeStatus(status: StatusEntrega) {
 private fun BolhaEmoji(mensagem: Mensagem, propria: Boolean) {
     Column(horizontalAlignment = if (propria) Alignment.End else Alignment.Start) {
         Text(mensagem.conteudos.first().conteudo, fontSize = 40.sp, lineHeight = 48.sp)
+        Rodape(mensagem, propria)
+    }
+}
+
+/** Figurinha sozinha (7.8, `BolhaFigurinha.vue`): 160 dp, sem fundo de bolha, com a hora embaixo. */
+@Composable
+private fun BolhaFigurinha(mensagem: Mensagem, propria: Boolean) {
+    Column(horizontalAlignment = if (propria) Alignment.End else Alignment.Start) {
+        FigurinhaAnimada(mensagem.conteudos.first().conteudo, 160.dp)
         Rodape(mensagem, propria)
     }
 }

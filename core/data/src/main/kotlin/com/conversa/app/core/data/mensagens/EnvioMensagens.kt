@@ -136,7 +136,13 @@ class EnvioMensagens @Inject constructor(
      * novo; votação não vai: o servidor recusa) e pode ir sem texto.
      * Devolve o id local.
      */
-    suspend fun enviar(conversaId: Long, texto: String, anexosLocais: List<AnexoLocal>, referencia: ReferenciaPendente? = null): Long {
+    suspend fun enviar(
+        conversaId: Long,
+        texto: String,
+        anexosLocais: List<AnexoLocal>,
+        referencia: ReferenciaPendente? = null,
+        figurinha: String? = null,
+    ): Long {
         val atual = sessao.sessao.value ?: error("Sem sessão")
         val agora = relogio.instant()
         val textoLimpo = texto.trim()
@@ -145,7 +151,7 @@ class EnvioMensagens @Inject constructor(
         } else {
             emptyList()
         }
-        require(textoLimpo.isNotEmpty() || anexosLocais.isNotEmpty() || encaminhados.isNotEmpty()) { "Mensagem vazia" }
+        require(textoLimpo.isNotEmpty() || anexosLocais.isNotEmpty() || encaminhados.isNotEmpty() || figurinha != null) { "Mensagem vazia" }
         val idLocal = trava.withLock {
             val id = minOf(mensagemDao.menorId() ?: 0, 0) - 1
             val conteudosEncaminhados = encaminhados.mapIndexed { i, conteudo ->
@@ -158,12 +164,16 @@ class EnvioMensagens @Inject constructor(
                     ConteudoEnvioDto(encaminhados.size + 1, TipoConteudo.TEXTO.codigo, textoLimpo),
                 )
             }
+            // Figurinha (7.8) vai depois do texto, como no web: "pacote/nome", tipo 7.
+            val comFigurinha = conteudosTexto + listOfNotNull(
+                figurinha?.let { ConteudoEnvioDto(conteudosTexto.size + 1, TipoConteudo.FIGURINHA.codigo, it) },
+            )
             val pendentes = anexosLocais.mapIndexed { i, anexo ->
-                AnexoPendente(conteudosTexto.size + i + 1, anexo.uri, anexo.nome, anexo.tamanho, anexo.mime, anexo.tipo.codigo)
+                AnexoPendente(comFigurinha.size + i + 1, anexo.uri, anexo.nome, anexo.tamanho, anexo.mime, anexo.tipo.codigo)
             }
             val corpo = EnviarMensagemRequisicao(
                 conversaId,
-                conteudosTexto,
+                comFigurinha,
                 mensagemReferencia = referencia?.let { ReferenciaEnvioDto(it.tipo.codigo, it.mensagem.id) },
             )
             val pacote = PacoteEnvio(corpo, pendentes)
@@ -195,7 +205,7 @@ class EnvioMensagens @Inject constructor(
                         encaminhados.mapIndexed { i, it ->
                             ConteudoEntidade(id, i + 1, null, it.tipo.codigo, it.conteudo, it.nome, it.extensao, 0, "")
                         } +
-                            conteudosTexto.drop(encaminhados.size).map {
+                            comFigurinha.drop(encaminhados.size).map {
                                 ConteudoEntidade(id, it.ordem, null, it.tipo, it.conteudo.orEmpty(), "", "", 0, "")
                             } +
                             pendentes.map {

@@ -568,6 +568,21 @@ class ChatViewModelTest {
     }
 
     @Test
+    fun `figurinha vai na hora e leva a resposta pendente`() = runTest {
+        val vm = criar()
+        advanceUntilIdle()
+        val pergunta = mensagem(9, 8, lida = true)
+
+        vm.responder(pergunta)
+        vm.enviarFigurinha("basico/coracao")
+        advanceUntilIdle()
+
+        coVerify { envio.enviar(42, "", emptyList(), ReferenciaPendente(TipoReferencia.RESPOSTA, pergunta), figurinha = "basico/coracao") }
+        assertThat(vm.estado.value.respondendo).isNull()
+        assertThat(vm.eventos.fluxo.first()).isEqualTo(EventoChat.RolarAoFim)
+    }
+
+    @Test
     fun `focar o campo vale uma vez`() = runTest {
         val vm = criar(focar = true)
         advanceUntilIdle()

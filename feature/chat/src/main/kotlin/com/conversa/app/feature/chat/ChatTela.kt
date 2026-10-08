@@ -251,6 +251,7 @@ fun ChatRotaTela(
                 aoTextoUsado = viewModel::textoUsado,
                 aoCampoFocado = viewModel::campoFocado,
                 aoCancelarResposta = viewModel::cancelarResposta,
+                aoEnviarFigurinha = viewModel::enviarFigurinha,
                 contatosMencao = viewModel.contatosMencao,
                 aoChegouNaMensagem = viewModel::chegouNaMensagem,
                 aoColarAnexos = viewModel::colarAnexos,
@@ -342,6 +343,8 @@ class AcoesChat(
     val aoTextoUsado: () -> Unit = {},
     val aoCampoFocado: () -> Unit = {},
     val aoCancelarResposta: () -> Unit = {},
+    /** Figurinha escolhida (7.8): vai na hora. */
+    val aoEnviarFigurinha: (String) -> Unit = {},
     val aoChegouNaMensagem: () -> Unit = {},
     /** Imagem colada no campo (teclado ou área de transferência). */
     val aoColarAnexos: (List<String>) -> Unit = {},

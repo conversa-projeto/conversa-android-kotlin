@@ -68,6 +68,7 @@
 - 2026-10-08 · [Etapa 7 — citação completa e "ir para a mensagem"](2026-10-08-23-etapa-7-citacao-e-ir-para-a-mensagem.md) — citação com hora, conteúdos e aninhada (5 níveis); tocar leva à original sem deixar buraco no Room, com destaque; encaminhada abre a conversa de origem; link/notificação troca o chat aberto
 - 2026-10-08 · [Etapa 7 — encaminhar e responder no privado](2026-10-08-24-etapa-7-encaminhar-e-responder-no-privado.md) — folha de destinos com busca (conversas e contatos sem direta), encaminhada pela fila com os conteúdos da original; "Responder no privado" abre a direta com a mensagem pendente; "Encaminhar" escondido em votação
 - 2026-10-08 · [Etapa 7 — menções no campo](2026-10-08-25-etapa-7-mencoes.md) — "@" abre até 6 contatos; "@Nome" destacado no campo vira `@[Nome](id)` no envio; porte do `mencoesTexto.ts` com testes
+- 2026-10-08 · [Etapa 7 — figurinhas animadas](2026-10-08-26-etapa-7-figurinhas.md) — as 24 animações Lottie do web nos assets; seletor por pacote no "+"; bolha de 160 dp que para com "remover animações"; envio tipo 7 pela fila
 
 ## Atividades, pesquisa, perfil e configurações (etapa 8)
 _(nada ainda)_

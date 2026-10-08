@@ -4,6 +4,8 @@
     <string name="voltar">Voltar</string>
     <!-- Ações sobre a mensagem (etapa 7; textos do web: MensagemAcoes.vue, MessageList.vue) -->
     <string name="responder">Responder</string>
+    <string name="figurinha">Figurinha</string>
+    <string name="figurinhas">Figurinhas</string>
     <string name="responder_no_privado">Responder no privado</string>
     <string name="encaminhar">Encaminhar</string>
     <string name="encaminhando_de">Encaminhando de %1$s</string>

@@ -218,6 +218,23 @@ class MensagensTest {
     }
 
     @Test
+    fun `figurinha vai sozinha como tipo 7, ou depois do texto`() = runTest {
+        val envio = envio()
+
+        val sozinha = envio.enviar(42, "", emptyList(), figurinha = "basico/coracao")
+        val comTexto = envio.enviar(42, "oi", emptyList(), figurinha = "coisas/bolo")
+
+        assertThat(banco.mensagemDao().buscar(sozinha)!!.paraModelo().conteudos.map { it.tipo to it.conteudo })
+            .containsExactly(TipoConteudo.FIGURINHA to "basico/coracao")
+        assertThat(banco.mensagemDao().buscar(comTexto)!!.paraModelo().conteudos.map { it.ordem to it.conteudo })
+            .containsExactly(1 to "oi", 2 to "coisas/bolo").inOrder()
+        coEvery { api.enviarMensagem(any()) } returns MensagemCriadaDto(id = 700, conversaId = 42)
+        coEvery { api.mensagens(42, any(), 0, 0) } throws java.io.IOException("sem rede")
+        envio.processarPendentes()
+        coVerify { api.enviarMensagem(EnviarMensagemRequisicao(42, listOf(ConteudoEnvioDto(1, 7, "basico/coracao")))) }
+    }
+
+    @Test
     fun `encaminhada leva os conteudos da original antes do texto e pode ir sem texto`() = runTest {
         val envio = envio()
         val original = msg(300, "olha isto", remetente = 8).copy(

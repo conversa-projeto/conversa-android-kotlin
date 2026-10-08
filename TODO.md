@@ -746,11 +746,11 @@
 - [x] Testes do parser (portar `mencoesTexto.ts`) — `Mencoes.kt` + `MencoesTest` (7 testes) ✔ 76a7357
 
 ### 7.8 Figurinhas (FC-509, ENV-04)
-- [ ] Copiar `conversa-web/public/figurinhas/**` (basico 8, rostos 7, coisas 9) para `app/src/main/assets/figurinhas/`
-- [ ] Adicionar `lottie-compose`
-- [ ] Aba "Figurinhas" no seletor do campo, por pacote
-- [ ] Toque → enviar na hora como tipo 7 `pacote/nome` (como resposta, se houver uma pendente)
-- [ ] Bolha de 160 dp; toca só quando visível; com "remover animações" fica parada; falha → "Figurinha"
+- [x] Copiar `conversa-web/public/figurinhas/**` (basico 8, rostos 7, coisas 9) para `app/src/main/assets/figurinhas/` — em `feature/chat/src/main/assets/figurinhas/` (só o chat usa; entra no app do mesmo jeito); catálogo em `core:model` (`Figurinhas.kt`), com teste que confere que toda figurinha tem a animação
+- [x] Adicionar `lottie-compose` — 6.7.1
+- [x] Aba "Figurinhas" no seletor do campo, por pacote — "Figurinha" no "+" abre `SeletorDeFigurinhas` (uma aba por pacote, grade animada)
+- [x] Toque → enviar na hora como tipo 7 `pacote/nome` (como resposta, se houver uma pendente) — pela fila (`EnvioMensagens.enviar(figurinha =)`, depois do texto como no web) (+ testes). No emulador: `7:basico/coracao` no servidor
+- [x] Bolha de 160 dp; toca só quando visível; com "remover animações" fica parada; falha → "Figurinha" — `BolhaFigurinha`/`FigurinhaAnimada` (Lottie dos assets; só identificador do catálogo, nada de caminho vindo de fora); dentro de outra bolha, 120 dp. No emulador: a do B ("Legal") animou e a desconhecida mostrou "Figurinha". "Remover animações" não foi ligado no emulador (configuração do sistema)
 
 ### 7.9 Código e Markdown (FC-510, FC-511, MSG-15)
 - [ ] Portar `codeBlocks.ts` (abertura/fechamento, aninhamento, markdown) com testes

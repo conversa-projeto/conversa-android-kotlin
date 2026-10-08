@@ -60,6 +60,7 @@ import androidx.compose.material.icons.filled.PlayArrow
 import androidx.compose.material.icons.filled.Stop
 import androidx.compose.material.icons.outlined.AttachFile
 import androidx.compose.material.icons.outlined.Delete
+import androidx.compose.material.icons.outlined.EmojiEmotions
 import androidx.compose.material.icons.outlined.Image
 import androidx.compose.material.icons.outlined.PhotoCamera
 import androidx.compose.material3.DropdownMenu
@@ -625,6 +626,16 @@ private fun BotaoAnexar(acoes: AcoesChat) {
     val escopo = rememberCoroutineScope()
     val semCamera = stringResource(R.string.sem_app_de_camera)
     var menu by remember { mutableStateOf(false) }
+    var figurinhas by remember { mutableStateOf(false) }
+    if (figurinhas) {
+        SeletorDeFigurinhas(
+            aoEscolher = {
+                figurinhas = false
+                acoes.aoEnviarFigurinha(it)
+            },
+            aoFechar = { figurinhas = false },
+        )
+    }
     // Arquivo da foto: sobrevive à recriação da Activity enquanto a câmera está aberta.
     var fotoPendente by rememberSaveable { mutableStateOf<String?>(null) }
 
@@ -680,6 +691,14 @@ private fun BotaoAnexar(acoes: AcoesChat) {
                 onClick = {
                     menu = false
                     documentos.launch(arrayOf("*/*"))
+                },
+            )
+            DropdownMenuItem(
+                text = { Text(stringResource(R.string.figurinha)) },
+                leadingIcon = { Icon(Icons.Outlined.EmojiEmotions, contentDescription = null) },
+                onClick = {
+                    menu = false
+                    figurinhas = true
                 },
             )
         }
