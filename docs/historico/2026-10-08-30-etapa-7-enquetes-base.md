@@ -4,7 +4,7 @@
 - **Tipo:** funcionalidade (camada de dados)
 - **Itens:** `TODO.md` 7.12, 3 linhas (repositório, WS 62 e o DTO 🆕 `5cad911`); FC-516
 - **Branch:** `reescrita`
-- **Commits:** (preencher)
+- **Commits:** `c182ddc`
 
 ## Contexto
 O 7.12 (votação em grupo) é o maior bloco da etapa 7. Esta é a primeira parte: a base que a bolha e o "Nova votação" vão usar.
