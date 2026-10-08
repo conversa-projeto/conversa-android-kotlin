@@ -697,7 +697,7 @@
 
 ### 7.1 Menu de ações (FC-500, ENV-20)
 - [x] Toque longo na bolha → barra de reações 👍 ❤️ 😂 😮 😢 👏 🔥 + "mais" ✔ 52d6d03
-- [ ] Itens: Responder; Responder no privado (grupo e mensagem de outro); Encaminhar; Copiar; Ocultar (minha e não oculta) — Copiar e Ocultar prontos ✔ 52d6d03; Responder pronto (7.3); Encaminhar e Responder no privado entram com 7.6
+- [ ] Itens: Responder; Responder no privado (grupo e mensagem de outro); Encaminhar; Copiar; Ocultar (minha e não oculta) — Copiar e Ocultar prontos ✔ 52d6d03; Responder pronto ✔ cdfb8cf; Encaminhar e Responder no privado entram com 7.6
 - [x] Não abrir para chamada, oculta ou mensagem ainda sem id real ✔ 52d6d03
 
 ### 7.2 Reações (FC-501, ENV-17)
@@ -710,10 +710,10 @@
 - [x] 🆕 `eaa8bac` Na bolha, 5 chips à mostra e o resto num "+N" (destacado se eu reagi em algum); toque no "+N" → lista dos demais (emoji, contagem, nomes), e tocar num deles alterna — `MaisReacoes`; os chips seguem a ordem do servidor (a primeira reação de cada emoji), guardada na coluna nova `ordem` (banco versão 2, AutoMigration 1→2, testada instalando por cima no emulador); "Mais 1 reação"/"Mais N reações" para o TalkBack ✔ fffcc10
 
 ### 7.3 Responder (FC-502, ENV-06)
-- [x] Deslizar a bolha para a direita → responder — `DeslizarParaResponder`: a bolha acompanha o dedo, o ícone aparece atrás e vibra ao passar de 64 dp; também no menu ("Responder") e como ação de acessibilidade (o toque longo vira "Ações da mensagem" para o TalkBack)
-- [x] Barra acima do campo: nome + resumo + × — `BarraResposta` (borda azul, primeiro nome como o web, "Cancelar resposta"); o campo pega o foco
-- [x] Envio: `mensagem_referencia:{tipo:1, origem_mensagem_id:<id respondida>}` — `ReferenciaPendente` no `EnvioMensagens` (fica no pacote: reenviar mantém); a gravação de áudio também vai como resposta, como no web (+ testes)
-- [x] A mensagem otimista já mostra a citação — a respondida vira `MensagemResumidaDto` (com a cadeia que ela tinha) no `referenciaJson`. No emulador: deslizar a 1049 → barra → enviar: a citação apareceu na hora e o servidor gravou a referência; "Responder" do menu e "×" funcionam; uma gravação respondendo à 1048 saiu com a referência
+- [x] Deslizar a bolha para a direita → responder — `DeslizarParaResponder`: a bolha acompanha o dedo, o ícone aparece atrás e vibra ao passar de 64 dp; também no menu ("Responder") e como ação de acessibilidade (o toque longo vira "Ações da mensagem" para o TalkBack) ✔ cdfb8cf
+- [x] Barra acima do campo: nome + resumo + × — `BarraResposta` (borda azul, primeiro nome como o web, "Cancelar resposta"); o campo pega o foco ✔ cdfb8cf
+- [x] Envio: `mensagem_referencia:{tipo:1, origem_mensagem_id:<id respondida>}` — `ReferenciaPendente` no `EnvioMensagens` (fica no pacote: reenviar mantém); a gravação de áudio também vai como resposta, como no web (+ testes) ✔ cdfb8cf
+- [x] A mensagem otimista já mostra a citação — a respondida vira `MensagemResumidaDto` (com a cadeia que ela tinha) no `referenciaJson`. No emulador: deslizar a 1049 → barra → enviar: a citação apareceu na hora e o servidor gravou a referência; "Responder" do menu e "×" funcionam; uma gravação respondendo à 1048 saiu com a referência ✔ cdfb8cf
 
 ### 7.4 Ocultar (FC-503, ENV-18, ENV-14)
 - [x] Confirmação: "Ocultar mensagem" / "Ela continua na conversa, marcada como oculta." / "Ocultar" (perigo) / "Cancelar" ✔ 52d6d03

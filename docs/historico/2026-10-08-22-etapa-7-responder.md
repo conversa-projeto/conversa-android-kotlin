@@ -4,7 +4,7 @@
 - **Tipo:** funcionalidade
 - **Itens:** `TODO.md` 7.3 e o "Responder" do 7.1; FC-502; ENV-06, ENV-20
 - **Branch:** `reescrita`
-- **Commits:** _(preencher)_
+- **Commits:** `cdfb8cf`
 
 ## Contexto
 Responder a uma mensagem, como o web (`chat.responderMensagem`, a barra do `MessageInput.vue`) e o WhatsApp no celular:
