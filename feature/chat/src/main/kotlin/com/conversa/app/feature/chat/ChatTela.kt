@@ -187,6 +187,7 @@ fun ChatRotaTela(
                 aoAdicionarAnexos = viewModel::adicionarAnexos,
                 aoRemoverAnexo = viewModel::removerAnexo,
                 pastaCamera = viewModel::pastaCamera,
+                aoTextoUsado = viewModel::textoUsado,
                 gravacao = AcoesGravacao(
                     estado = viewModel.gravacao,
                     aoIniciar = viewModel::iniciarGravacao,
@@ -255,6 +256,8 @@ class AcoesChat(
     /** Pasta (no cache do app) onde a câmera grava a foto antes de enviar. */
     val pastaCamera: () -> java.io.File? = { null },
     val gravacao: AcoesGravacao = AcoesGravacao(),
+    /** O campo já usou o texto compartilhado por outro app. */
+    val aoTextoUsado: () -> Unit = {},
 )
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -336,7 +339,7 @@ fun ChatTela(estado: ChatUiState, lista: androidx.compose.foundation.lazy.LazyLi
 
     Scaffold(
         topBar = { Cabecalho(estado, acoes) },
-        bottomBar = { Campo(estado.fila, acoes) },
+        bottomBar = { Campo(estado.fila, estado.textoParaCampo, acoes) },
     ) { margens ->
         Box(Modifier.fillMaxSize().padding(margens).background(MaterialTheme.colorScheme.background)) {
             when {

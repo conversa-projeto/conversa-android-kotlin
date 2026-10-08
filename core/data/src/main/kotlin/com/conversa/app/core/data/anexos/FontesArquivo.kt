@@ -67,7 +67,7 @@ class FontesArquivoAndroid @Inject constructor(@ApplicationContext private val c
 
     override fun liberar(uri: String) {
         val alvo = uri.toUri()
-        // Foto da câmera ou gravação: arquivo do próprio app (FileProvider, pastas "camera" e "gravacoes" do cache).
+        // Foto da câmera, gravação ou compartilhado: arquivo do próprio app (FileProvider, pastas do cache).
         if (alvo.authority == contexto.packageName + ".arquivos") {
             val segmentos = alvo.pathSegments.map(::nomeSeguro)
             when {
@@ -75,6 +75,12 @@ class FontesArquivoAndroid @Inject constructor(@ApplicationContext private val c
                 // gravacoes/<n>/audio-....m4a: apaga a pasta da gravação inteira (trechos que sobraram).
                 segmentos.size == 3 && segmentos[0] == "gravacoes" ->
                     File(File(contexto.cacheDir, "gravacoes"), segmentos[1]).deleteRecursively()
+                // compartilhados/<n>/<arquivo>: outros arquivos do mesmo compartilhamento podem estar na fila.
+                segmentos.size == 3 && segmentos[0] == "compartilhados" -> {
+                    val pasta = File(File(contexto.cacheDir, "compartilhados"), segmentos[1])
+                    File(pasta, segmentos[2]).delete()
+                    if (pasta.list().isNullOrEmpty()) pasta.delete()
+                }
             }
             return
         }

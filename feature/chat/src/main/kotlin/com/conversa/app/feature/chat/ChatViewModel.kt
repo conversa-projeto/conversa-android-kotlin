@@ -8,6 +8,7 @@ import com.conversa.app.core.data.SessaoRepositorio
 import com.conversa.app.core.data.anexos.AnexoLocal
 import com.conversa.app.core.data.anexos.AnexosRepositorio
 import com.conversa.app.core.data.anexos.ArquivosLocais
+import com.conversa.app.core.data.anexos.Compartilhamentos
 import com.conversa.app.core.data.anexos.DownloadsRepositorio
 import com.conversa.app.core.data.anexos.FontesArquivo
 import com.conversa.app.core.data.anexos.ResultadoDownload
@@ -68,6 +69,8 @@ data class ChatUiState(
     val fila: List<AnexoLocal> = emptyList(),
     /** Mensagem otimista → fração enviada dos anexos. */
     val progresso: Map<Long, Float> = emptyMap(),
+    /** Texto compartilhado por outro app: o campo usa uma vez ([ChatViewModel.textoUsado]). */
+    val textoParaCampo: String? = null,
 ) {
     val grupo: Boolean get() = conversa?.tipo == TipoConversa.GRUPO
 }
@@ -157,6 +160,7 @@ class ChatViewModel @Inject constructor(
     private val arquivos: ArquivosLocais,
     private val downloads: DownloadsRepositorio,
     private val transcricoes: TranscricoesRepositorio,
+    private val compartilhamentos: Compartilhamentos,
     private val fontes: FontesArquivo,
     private val player: PlayerAudio,
     gravador: GravadorAudio,
@@ -185,6 +189,7 @@ class ChatViewModel @Inject constructor(
     }
 
     private val fila = MutableStateFlow<List<AnexoLocal>>(emptyList())
+    private val textoParaCampo = MutableStateFlow<String?>(null)
 
     private val base = combine(
         conversas.observar(conversaId),
@@ -208,10 +213,19 @@ class ChatViewModel @Inject constructor(
         )
     }
 
-    val estado: StateFlow<ChatUiState> = combine(base, fila, envio.progresso) { b, f, p -> b.copy(fila = f, progresso = p) }
+    val estado: StateFlow<ChatUiState> = combine(base, fila, envio.progresso, textoParaCampo) { b, f, p, t ->
+        b.copy(fila = f, progresso = p, textoParaCampo = t)
+    }
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), ChatUiState(eu = eu))
 
     init {
+        // Veio do "Enviar para…" (AND-10): os arquivos entram na fila e o texto vai para o campo.
+        if (salvo.get<Boolean>("comCompartilhamento") == true) {
+            compartilhamentos.retirar()?.let { itens ->
+                fila.value = itens.anexos
+                textoParaCampo.value = itens.texto.ifBlank { null }
+            }
+        }
         viewModelScope.launch {
             val resultado = mensagens.carregarRecentes(conversaId)
             carga.value = carga.value.copy(carregou = true)
@@ -287,6 +301,11 @@ class ChatViewModel @Inject constructor(
 
     /** Pasta do cache onde a câmera grava a foto (compartilhada pelo FileProvider). */
     fun pastaCamera(): java.io.File = arquivos.pastaCamera
+
+    /** O campo já recebeu o texto compartilhado. */
+    fun textoUsado() {
+        textoParaCampo.value = null
+    }
 
     fun removerAnexo(uri: String) {
         fila.value = fila.value.filterNot { it.uri == uri }

@@ -23,7 +23,10 @@ class MainActivity : ComponentActivity() {
         // A splash fica até saber para onde ir (servidor configurado? sessão?).
         splash.setKeepOnScreenCondition { viewModel.destinoInicial.value == null }
         enableEdgeToEdge()
-        if (savedInstanceState == null) viewModel.receberLink(intent?.data)
+        if (savedInstanceState == null) {
+            viewModel.receberLink(intent?.data)
+            viewModel.receberCompartilhamento(intent?.let(::lerCompartilhamento))
+        }
         setContent {
             ConversaTema {
                 AreaDeAvisos {
@@ -38,5 +41,6 @@ class MainActivity : ComponentActivity() {
     override fun onNewIntent(intent: Intent) {
         super.onNewIntent(intent)
         viewModel.receberLink(intent.data)
+        viewModel.receberCompartilhamento(lerCompartilhamento(intent))
     }
 }

@@ -1,11 +1,12 @@
 <?xml version="1.0" encoding="utf-8"?>
 <!--
     Pastas que o app compartilha pelo FileProvider (ArquivosLocais):
-    anexos baixados para abrir em outro app, fotos tiradas pela câmera e áudios gravados antes de enviar.
+    anexos baixados para abrir em outro app, fotos tiradas pela câmera, áudios gravados e arquivos recebidos de outros apps antes de enviar.
     Só o cache do app; nada de armazenamento externo.
 -->
 <paths>
     <cache-path name="anexos" path="anexos/" />
     <cache-path name="camera" path="camera/" />
     <cache-path name="gravacoes" path="gravacoes/" />
+    <cache-path name="compartilhados" path="compartilhados/" />
 </paths>

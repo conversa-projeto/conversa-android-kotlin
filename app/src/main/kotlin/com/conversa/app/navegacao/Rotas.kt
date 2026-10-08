@@ -20,9 +20,16 @@ data object RotaCadastro
 @Serializable
 data object RotaPrincipal
 
-/** Conversa aberta. [mensagemId] = 0 quando não há mensagem para destacar. */
+/**
+ * Conversa aberta. [mensagemId] = 0 quando não há mensagem para destacar.
+ * [comCompartilhamento]: veio do "Enviar para…" (os itens compartilhados entram na fila do campo).
+ */
 @Serializable
-data class RotaChat(val conversaId: Long, val mensagemId: Long = 0)
+data class RotaChat(val conversaId: Long, val mensagemId: Long = 0, val comCompartilhamento: Boolean = false)
+
+/** "Enviar para…": o que outro app compartilhou (AND-10). */
+@Serializable
+data object RotaEnviarPara
 
 /** Contatos para começar uma conversa (e o atalho para criar grupo). */
 @Serializable

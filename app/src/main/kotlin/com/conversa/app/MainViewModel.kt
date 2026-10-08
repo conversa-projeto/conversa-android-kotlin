@@ -6,6 +6,7 @@ import androidx.lifecycle.viewModelScope
 import com.conversa.app.core.data.MotivoFimSessao
 import com.conversa.app.core.data.ServidorRepositorio
 import com.conversa.app.core.data.SessaoRepositorio
+import com.conversa.app.core.data.anexos.Compartilhamentos
 import com.conversa.app.core.ui.estado.EventosUnicos
 import com.conversa.app.feature.auth.login.AvisoLogin
 import com.conversa.app.navegacao.RotaChat
@@ -25,6 +26,9 @@ sealed interface NavegacaoGlobal {
     data class IrParaLogin(val aviso: AvisoLogin) : NavegacaoGlobal
 
     data class AbrirConversa(val rota: RotaChat) : NavegacaoGlobal
+
+    /** Outro app compartilhou algo: "Enviar para…". */
+    data object EnviarPara : NavegacaoGlobal
 }
 
 /**
@@ -33,7 +37,11 @@ sealed interface NavegacaoGlobal {
  * 401, AUT-03) e abre conversas vindas de link (`conversa://chat/{id}?mensagem={id}`).
  */
 @HiltViewModel
-class MainViewModel @Inject constructor(servidor: ServidorRepositorio, private val sessao: SessaoRepositorio) : ViewModel() {
+class MainViewModel @Inject constructor(
+    servidor: ServidorRepositorio,
+    private val sessao: SessaoRepositorio,
+    private val compartilhamentos: Compartilhamentos,
+) : ViewModel() {
     private val _destinoInicial = MutableStateFlow<Any?>(null)
     val destinoInicial: StateFlow<Any?> = _destinoInicial.asStateFlow()
 
@@ -41,6 +49,9 @@ class MainViewModel @Inject constructor(servidor: ServidorRepositorio, private v
 
     /** Link recebido antes de haver sessão: abre depois do login. */
     private var linkPendente: RotaChat? = null
+
+    /** Compartilhamento recebido antes de haver sessão: "Enviar para…" depois do login. */
+    private var compartilhamentoPendente = false
 
     init {
         viewModelScope.launch {
@@ -71,6 +82,22 @@ class MainViewModel @Inject constructor(servidor: ServidorRepositorio, private v
 
     /** Depois do login: abre o link que chegou antes. */
     fun consumirLinkPendente(): RotaChat? = linkPendente.also { linkPendente = null }
+
+    /**
+     * Intent "Compartilhar" de outro app (AND-10): copia os itens (a permissão de leitura é
+     * temporária) e leva ao "Enviar para…" (ou depois do login).
+     */
+    fun receberCompartilhamento(recebido: CompartilhamentoRecebido?) {
+        if (recebido == null) return
+        viewModelScope.launch {
+            if (!compartilhamentos.receber(recebido.texto, recebido.uris)) return@launch
+            sessao.carregada.first { it }
+            if (sessao.sessao.value == null) compartilhamentoPendente = true else navegacao.enviar(NavegacaoGlobal.EnviarPara)
+        }
+    }
+
+    /** Depois do login: `true` se havia um compartilhamento esperando. */
+    fun consumirCompartilhamentoPendente(): Boolean = compartilhamentoPendente.also { compartilhamentoPendente = false }
 
     companion object {
         /** `conversa://chat/{conversaId}?mensagem={mensagemId}`. */

@@ -80,6 +80,7 @@ class ArquivosLocais @Inject constructor(
         File(contexto.cacheDir, "anexos").deleteRecursively()
         File(contexto.cacheDir, "camera").deleteRecursively()
         File(contexto.cacheDir, "gravacoes").deleteRecursively()
+        File(contexto.cacheDir, "compartilhados").deleteRecursively()
     }
 
     private fun identificadorSeguro(identificador: String) = identificador.filter { it.isLetterOrDigit() }.take(64).ifBlank { "x" }

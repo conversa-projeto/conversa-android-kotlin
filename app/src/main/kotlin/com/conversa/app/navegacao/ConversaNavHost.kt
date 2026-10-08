@@ -14,6 +14,7 @@ import com.conversa.app.feature.auth.login.AvisoLogin
 import com.conversa.app.feature.auth.login.LoginRotaTela
 import com.conversa.app.feature.auth.servidor.ServidorRotaTela
 import com.conversa.app.feature.chat.ChatRotaTela
+import com.conversa.app.feature.conversas.enviarpara.EnviarParaRotaTela
 import com.conversa.app.feature.conversas.grupo.CriarGrupoRotaTela
 import com.conversa.app.feature.conversas.lista.ConversasRotaTela
 import com.conversa.app.feature.conversas.membros.MembrosRotaTela
@@ -29,6 +30,7 @@ fun ConversaNavHost(destinoInicial: Any, principal: MainViewModel) {
         when (evento) {
             is NavegacaoGlobal.IrParaLogin -> nav.irParaRaiz(RotaLogin(aviso = evento.aviso))
             is NavegacaoGlobal.AbrirConversa -> nav.navigate(evento.rota) { launchSingleTop = true }
+            NavegacaoGlobal.EnviarPara -> nav.navigate(RotaEnviarPara) { launchSingleTop = true }
         }
     }
 
@@ -51,6 +53,7 @@ fun ConversaNavHost(destinoInicial: Any, principal: MainViewModel) {
                 aoEntrar = {
                     nav.irParaRaiz(RotaPrincipal)
                     principal.consumirLinkPendente()?.let { nav.navigate(it) }
+                    if (principal.consumirCompartilhamentoPendente()) nav.navigate(RotaEnviarPara)
                 },
                 aoCriarConta = { nav.navigate(RotaCadastro) },
                 aoTrocarServidor = { nav.navigate(RotaServidor(podeVoltar = true)) },
@@ -85,6 +88,20 @@ fun ConversaNavHost(destinoInicial: Any, principal: MainViewModel) {
                 aoVoltar = { nav.popBackStack() },
                 aoMembros = { nav.navigate(RotaMembros(it)) },
                 aoAbrirConversa = { nav.navigate(RotaChat(it)) },
+            )
+        }
+        composable<RotaEnviarPara> {
+            EnviarParaRotaTela(
+                // A conversa abre no lugar desta tela (voltar leva a onde a pessoa estava).
+                aoAbrirConversa = { id ->
+                    nav.navigate(RotaChat(id, comCompartilhamento = true)) {
+                        popUpTo<RotaEnviarPara> {
+                            inclusive =
+                                true
+                        }
+                    }
+                },
+                aoVoltar = { nav.popBackStack() },
             )
         }
         composable<RotaNovaConversa> {

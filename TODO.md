@@ -491,9 +491,10 @@
 - [x] Esconder o botão se o servidor não tem transcritor (por enquanto: esconder após o primeiro erro de configuração; depois, via S10) — 400 → `desligada` até o fim da sessão; o motivo do servidor aparece no aviso. Testado no emulador ("Transcrição não configurada: defina o parâmetro transcritor_url." e os 4 botões sumiram) ✔ f5d1501
 
 ### 4.9 Receber compartilhamento (FC-410, AND-10)
-- [ ] `intent-filter` `ACTION_SEND`/`ACTION_SEND_MULTIPLE` para `text/*`, `image/*`, `video/*`, `*/*`
-- [ ] Tela "Enviar para…" com conversas e contatos
-- [ ] Abrir o chat escolhido com os itens já na fila
+- [x] `intent-filter` `ACTION_SEND`/`ACTION_SEND_MULTIPLE` para `text/*`, `image/*`, `video/*`, `*/*` — na `MainActivity` (`*/*` cobre todos); `lerCompartilhamento` (+ teste); sem sessão, o "Enviar para…" abre depois do login
+- [x] Tela "Enviar para…" com conversas e contatos — `EnviarParaRotaTela` (`feature/conversas`): conversas na ordem da lista e contatos sem conversa direta (cria ao escolher), busca, resumo do que vai ("1 arquivo", o texto, os ignorados); voltar descarta. No emulador: compartilhado pelo app Arquivos do Android ("Conversa" aparece no compartilhar)
+- [x] Abrir o chat escolhido com os itens já na fila — `RotaChat(comCompartilhamento = true)`: os arquivos entram na fila e o texto no campo (para revisar antes de enviar). No emulador: texto (via `am start`) e PDF (via app Arquivos) chegaram; o PDF foi enviado e a cópia saiu do cache
+- [x] 🆕 Segurança do compartilhamento: só `content://` de outro app; `file://` e URIs do próprio app são recusados (senão outro app poderia fazer o Conversa mandar os próprios arquivos privados, como a sessão, para uma conversa); os arquivos são copiados para `cache/compartilhados` na hora (a permissão do compartilhar é temporária e o envio pode ser depois); acima de 1 GiB não entra (+ testes `CompartilhamentosTest`)
 
 ### 4.10 Extras de mídia (FC-411…414)
 - [ ] PDF: visualizador com `PdfRenderer` (páginas sob demanda, zoom, "página X de Y")

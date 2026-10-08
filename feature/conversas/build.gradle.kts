@@ -5,3 +5,8 @@ plugins {
 android {
     namespace = "com.conversa.app.feature.conversas"
 }
+
+dependencies {
+    // BackHandler do "Enviar para…" (voltar descarta o compartilhamento).
+    implementation(libs.androidx.activity.compose)
+}

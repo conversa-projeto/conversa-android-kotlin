@@ -105,6 +105,7 @@ class ChatViewModelTest {
             downloads,
             transcricoes,
             mockk(relaxed = true),
+            mockk(relaxed = true),
             player,
             mockk(relaxed = true),
             Clock.fixed(agora, ZoneOffset.UTC),

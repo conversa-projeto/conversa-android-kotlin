@@ -55,6 +55,7 @@ import androidx.compose.material3.Text
 import androidx.compose.material3.TextField
 import androidx.compose.material3.TextFieldDefaults
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -117,8 +118,15 @@ private const val SEGURAR_MS = 300L
  * limpo depois que a mensagem foi gravada no Room: nunca se perde.
  */
 @Composable
-internal fun Campo(fila: List<AnexoLocal>, acoes: AcoesChat) {
+internal fun Campo(fila: List<AnexoLocal>, textoCompartilhado: String?, acoes: AcoesChat) {
     var texto by rememberSaveable { mutableStateOf("") }
+    // Texto que outro app compartilhou (AND-10): entra no campo uma vez, para a pessoa revisar.
+    LaunchedEffect(textoCompartilhado) {
+        if (textoCompartilhado != null) {
+            texto = textoCompartilhado
+            acoes.aoTextoUsado()
+        }
+    }
     val gravacao by acoes.gravacao.estado.collectAsStateWithLifecycle()
     Column(
         Modifier

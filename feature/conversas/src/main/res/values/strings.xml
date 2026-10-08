@@ -59,4 +59,16 @@
     <string name="membros_remover_aviso">Hoje o servidor só permite que cada pessoa saia por conta própria; não é possível remover outros participantes.</string>
     <string name="membros_todos">Todos os contatos já estão no grupo.</string>
     <string name="voltar">Voltar</string>
+
+    <!-- Enviar para… (compartilhamento recebido de outro app, AND-10) -->
+    <string name="enviar_para">Enviar para…</string>
+    <string name="nenhum_resultado">Nenhuma conversa ou contato encontrado</string>
+    <plurals name="arquivos_compartilhados">
+        <item quantity="one">%d arquivo</item>
+        <item quantity="other">%d arquivos</item>
+    </plurals>
+    <plurals name="arquivos_ignorados">
+        <item quantity="one">%d não pôde ser enviado</item>
+        <item quantity="other">%d não puderam ser enviados</item>
+    </plurals>
 </resources>
