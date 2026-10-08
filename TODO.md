@@ -497,7 +497,7 @@
 - [x] 🆕 Segurança do compartilhamento: só `content://` de outro app; `file://` e URIs do próprio app são recusados (senão outro app poderia fazer o Conversa mandar os próprios arquivos privados, como a sessão, para uma conversa); os arquivos são copiados para `cache/compartilhados` na hora (a permissão do compartilhar é temporária e o envio pode ser depois); acima de 1 GiB não entra (+ testes `CompartilhamentosTest`) ✔ 1fbfc38
 
 ### 4.10 Extras de mídia (FC-411…414)
-- [ ] PDF: visualizador com `PdfRenderer` (páginas sob demanda, zoom, "página X de Y")
+- [x] PDF: visualizador com `PdfRenderer` (páginas sob demanda, zoom, "página X de Y") — `VisualizadorPdf` (como o `VisualizadorPdf.vue` do web): "Abrir" num PDF baixa para o cache e abre no app; páginas desenhadas ao rolar (uma por vez no `PdfRenderer`, cache de 48 MB), pinça até 4× e duplo toque 1×↔2×, "Página X de Y", Baixar, Abrir com… e Fechar; PDF protegido/inválido: "Não foi possível abrir o PDF. Tente baixar o arquivo." + Abrir com…. No emulador: PDF de 5 páginas do B, rolagem até a 4 e zoom
 - [ ] Colar imagem do teclado/área de transferência (`contentReceiver`)
 - [ ] HTML anexado: abrir externamente (ou WebView sem acesso a arquivos/cookies)
 - [ ] Economia de dados: com rede limitada, "Toque para carregar" em imagens e vídeos

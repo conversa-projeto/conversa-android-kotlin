@@ -118,6 +118,16 @@ fun ChatRotaTela(
     val semApp = stringResource(R.string.nenhum_app_para_abrir)
     val audioFalhou = stringResource(R.string.audio_falhou)
     val abrirRotulo = stringResource(R.string.abrir)
+    var pdfAberto by remember { mutableStateOf<EventoChat.AbrirPdf?>(null) }
+    pdfAberto?.let { pdf ->
+        VisualizadorPdf(
+            arquivo = pdf.arquivo,
+            nome = pdf.conteudo.nome.ifBlank { pdf.arquivo.name },
+            aoBaixar = { viewModel.baixar(pdf.conteudo) },
+            aoAbrirCom = { if (!abrirComOutroApp(contexto, pdf.arquivo, "application/pdf")) escopo.launch { avisos.mostrarErro(semApp) } },
+            aoFechar = { pdfAberto = null },
+        )
+    }
     // Android 9: "Salvar como" (sem permissão de armazenamento); o anexo pedido fica guardado até voltar.
     var salvarComo by remember { mutableStateOf<com.conversa.app.core.model.Conteudo?>(null) }
     val escolherOndeSalvar = rememberLauncherForActivityResult(ActivityResultContracts.CreateDocument("*/*")) { uri ->
@@ -153,6 +163,7 @@ fun ChatRotaTela(
                 escolherOndeSalvar.launch(evento.conteudo.nome.ifBlank { evento.conteudo.conteudo })
             }
             is EventoChat.Compartilhar -> compartilharArquivo(contexto, evento.arquivo, evento.mime)
+            is EventoChat.AbrirPdf -> pdfAberto = evento
             EventoChat.AudioFalhou -> avisos.mostrarErro(audioFalhou)
         }
     }
@@ -174,7 +185,19 @@ fun ChatRotaTela(
                     aoDescartar = viewModel::descartar,
                     aoMencao = viewModel::abrirDireta,
                     aoLigar = aoLigar,
-                    aoAbrirArquivo = { viewModel.abrirArquivo(it.conteudo, it.nome.ifBlank { it.conteudo }, null) },
+                    aoAbrirArquivo = {
+                        if (ehPdf(it)) {
+                            viewModel.abrirPdf(it)
+                        } else {
+                            viewModel.abrirArquivo(
+                                it.conteudo,
+                                it.nome.ifBlank {
+                                    it.conteudo
+                                },
+                                null,
+                            )
+                        }
+                    },
                     urlDoVideo = viewModel::urlDoVideo,
                     aoBaixar = viewModel::baixar,
                     aoCompartilhar = viewModel::compartilhar,
@@ -203,6 +226,10 @@ fun ChatRotaTela(
         )
     }
 }
+
+/** PDF abre no visualizador do app (FC-411); os outros arquivos, com outro app. */
+private fun ehPdf(conteudo: com.conversa.app.core.model.Conteudo): Boolean =
+    conteudo.extensao.equals("pdf", ignoreCase = true) || conteudo.nome.endsWith(".pdf", ignoreCase = true)
 
 /** Abre um arquivo salvo em Downloads (URI do MediaStore) com outro app. */
 private fun abrirUri(contexto: Context, uri: String, mime: String): Boolean {

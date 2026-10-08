@@ -82,6 +82,11 @@
     <string name="baixando">Baixando %1$s…</string>
     <string name="salvo_em_downloads">%1$s salvo em Downloads/Conversa</string>
     <string name="download_falhou">Não foi possível baixar %1$s.</string>
+
+    <!-- Visualizador de PDF (FC-411), textos do web -->
+    <string name="carregando_pdf">Carregando PDF...</string>
+    <string name="pdf_falhou">Não foi possível abrir o PDF. Tente baixar o arquivo.</string>
+    <string name="pagina_de">Página %1$d de %2$d</string>
     <string name="fechar">Fechar</string>
     <string name="nenhum_app_para_abrir">Nenhum app instalado abre este tipo de arquivo.</string>
     <string name="arquivo_grande">%1$s passa de 1 GB e não pode ser enviado.</string>

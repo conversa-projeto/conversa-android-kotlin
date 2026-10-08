@@ -113,6 +113,9 @@ sealed interface EventoChat {
     /** Android 9: a tela abre o "Salvar como" e devolve o URI em [ChatViewModel.salvarEm]. */
     data class EscolherOndeSalvar(val conteudo: com.conversa.app.core.model.Conteudo) : EventoChat
 
+    /** PDF baixado para o cache: a tela abre o visualizador (4.10). */
+    data class AbrirPdf(val arquivo: java.io.File, val conteudo: com.conversa.app.core.model.Conteudo) : EventoChat
+
     /** Anexo baixado para o cache: a tela abre o "Compartilhar" do Android. */
     data class Compartilhar(val arquivo: java.io.File, val mime: String?) : EventoChat
 }
@@ -346,6 +349,16 @@ class ChatViewModel @Inject constructor(
         viewModelScope.launch {
             arquivos.baixar(conteudo.conteudo, conteudo.nome.ifBlank { conteudo.conteudo })
                 .onSuccess { eventos.enviar(EventoChat.Compartilhar(it, null)) }
+                .onFailure { eventos.enviar(EventoChat.Erro(it.paraErroApi().mensagemAmigavel())) }
+        }
+    }
+
+    /** "Abrir" num PDF (FC-411): baixa para o cache e abre no visualizador do app, como o web. */
+    fun abrirPdf(conteudo: com.conversa.app.core.model.Conteudo) {
+        if (conteudo.local) return
+        viewModelScope.launch {
+            arquivos.baixar(conteudo.conteudo, conteudo.nome.ifBlank { conteudo.conteudo })
+                .onSuccess { eventos.enviar(EventoChat.AbrirPdf(it, conteudo)) }
                 .onFailure { eventos.enviar(EventoChat.Erro(it.paraErroApi().mensagemAmigavel())) }
         }
     }

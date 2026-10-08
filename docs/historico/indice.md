@@ -41,6 +41,7 @@
 - 2026-10-08 · [Etapa 4 — baixar para Downloads e compartilhar](2026-10-08-02-etapa-4-baixar-e-compartilhar.md) — Downloads/Conversa pelo MediaStore (Android 9: "Salvar como"), aviso com "Abrir", compartilhar, notificação quando permitida; 196 testes
 - 2026-10-08 · [Etapa 4 — transcrição de áudio](2026-10-08-03-etapa-4-transcricao.md) — "Transcrever" embaixo dos áudios, consulta a cada 3 s, resultado em todas as mensagens com o anexo, botões somem sem transcritor; 199 testes
 - 2026-10-08 · [Etapa 4 — receber compartilhamento de outros apps](2026-10-08-04-etapa-4-receber-compartilhamento.md) — "Conversa" no compartilhar do Android, "Enviar para…", itens copiados para o cache, só `content://` de outro app; 205 testes
+- 2026-10-08 · [Etapa 4 — visualizador de PDF](2026-10-08-05-etapa-4-visualizador-pdf.md) — `PdfRenderer` sob demanda, zoom, "Página X de Y", Baixar/Abrir com…; 205 testes
 
 ## Notificações e push (etapa 5)
 _(nada ainda)_
