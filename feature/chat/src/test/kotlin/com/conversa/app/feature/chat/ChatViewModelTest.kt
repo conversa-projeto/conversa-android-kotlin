@@ -91,9 +91,11 @@ class ChatViewModelTest {
         conteudos = listOf(Conteudo(id, 1, TipoConteudo.TEXTO, "m$id")),
     )
 
-    private fun TestScope.criar(): ChatViewModel {
+    private val compartilhamentos = mockk<com.conversa.app.core.data.anexos.Compartilhamentos>(relaxed = true)
+
+    private fun TestScope.criar(comCompartilhamento: Boolean = false): ChatViewModel {
         val vm = ChatViewModel(
-            SavedStateHandle(mapOf("conversaId" to 42L)),
+            SavedStateHandle(mapOf("conversaId" to 42L, "comCompartilhamento" to comCompartilhamento)),
             conversas,
             contatos,
             presenca,
@@ -104,7 +106,8 @@ class ChatViewModelTest {
             arquivos,
             downloads,
             transcricoes,
-            mockk(relaxed = true),
+            compartilhamentos,
+            mockk<com.conversa.app.core.data.rede.EconomiaDados> { every { ativa } returns MutableStateFlow(false) },
             mockk(relaxed = true),
             player,
             mockk(relaxed = true),
@@ -272,6 +275,50 @@ class ChatViewModelTest {
         ViewModelProvider.create(loja, viewModelFactory { initializer { vm } })[ChatViewModel::class]
         loja.clear()
         assertThat(player.estado.value.chave).isEqualTo("99:5:1")
+    }
+
+    // --- Compartilhar e colar (4.9, 4.10) ---
+
+    private fun anexoLocal(nome: String) = com.conversa.app.core.data.anexos.AnexoLocal(
+        "content://app.arquivos/compartilhados/$nome",
+        nome,
+        10,
+        "image/png",
+        TipoConteudo.IMAGEM,
+    )
+
+    @Test
+    fun `vindo do Enviar para, os arquivos entram na fila e o texto vai uma vez para o campo`() = runTest {
+        every { compartilhamentos.retirar() } returns
+            com.conversa.app.core.data.anexos.ItensCompartilhados("veja", listOf(anexoLocal("a.png")))
+        val vm = criar(comCompartilhamento = true)
+        advanceUntilIdle()
+
+        assertThat(vm.estado.value.fila.map { it.nome }).containsExactly("a.png")
+        assertThat(vm.estado.value.textoParaCampo).isEqualTo("veja")
+        vm.textoUsado()
+        advanceUntilIdle()
+        assertThat(vm.estado.value.textoParaCampo).isNull()
+    }
+
+    @Test
+    fun `conversa aberta normalmente nao pega o compartilhamento pendente`() = runTest {
+        criar()
+        advanceUntilIdle()
+        io.mockk.verify(exactly = 0) { compartilhamentos.retirar() }
+    }
+
+    @Test
+    fun `imagem colada e copiada e entra na fila sem repetir`() = runTest {
+        coEvery { compartilhamentos.copiarColados(listOf("content://teclado/1")) } returns listOf(anexoLocal("colada.png"))
+        val vm = criar()
+        advanceUntilIdle()
+
+        vm.colarAnexos(listOf("content://teclado/1"))
+        vm.colarAnexos(listOf("content://teclado/1"))
+        advanceUntilIdle()
+
+        assertThat(vm.estado.value.fila.map { it.nome }).containsExactly("colada.png")
     }
 
     private class PlayerFalso : PlayerAudio {

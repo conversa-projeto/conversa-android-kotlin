@@ -498,9 +498,9 @@
 
 ### 4.10 Extras de mídia (FC-411…414)
 - [x] PDF: visualizador com `PdfRenderer` (páginas sob demanda, zoom, "página X de Y") — `VisualizadorPdf` (como o `VisualizadorPdf.vue` do web): "Abrir" num PDF baixa para o cache e abre no app; páginas desenhadas ao rolar (uma por vez no `PdfRenderer`, cache de 48 MB), pinça até 4× e duplo toque 1×↔2×, "Página X de Y", Baixar, Abrir com… e Fechar; PDF protegido/inválido: "Não foi possível abrir o PDF. Tente baixar o arquivo." + Abrir com…. No emulador: PDF de 5 páginas do B, rolagem até a 4 e zoom ✔ 9724037
-- [ ] Colar imagem do teclado/área de transferência (`contentReceiver`)
-- [ ] HTML anexado: abrir externamente (ou WebView sem acesso a arquivos/cookies)
-- [ ] Economia de dados: com rede limitada, "Toque para carregar" em imagens e vídeos
+- [x] Colar imagem do teclado/área de transferência (`contentReceiver`) — o campo passou para `TextFieldState` (o `contentReceiver` só funciona nele; o estado continua local e síncrono); imagem colada é copiada para o cache (mesmas regras do compartilhar) e entra na fila (+ teste). No emulador: digitar, apagar, enviar e o "digitando" continuaram funcionando. ⚠ Colar de verdade não foi testado: o teclado do emulador não tem imagens sem internet, e copiar imagem pelo Chrome pediria aceitar os termos dele
+- [x] HTML anexado: abrir externamente (ou WebView sem acesso a arquivos/cookies) — "Abrir" abre com outro app pelo `FileProvider` (sem WebView no Conversa). No emulador: o Android ofereceu Chrome e HTML Viewer, e a página abriu
+- [x] Economia de dados: com rede limitada, "Toque para carregar" em imagens e vídeos — `EconomiaDados` (`core/data/rede`): conexão lenta (< 150 kbps, como o web bloqueia em 2g) ou Economia de dados do Android numa rede medida; `CarregarSobToque` nas bolhas de imagem e vídeo (o visualizador não bloqueia) (+ testes da regra). ⚠ Não testado no emulador: exigiria mudar a rede ou a Economia de dados do aparelho
 
 ### 4.11 Campo de mensagem rico (FC-415, FC-416, ENV-21)
 - [ ] Escrever o ADR com a decisão: campo **simplificado** (faixa de anexos + texto, enviado como [anexos…, texto]) agora × **completo** (blocos intercalados, igual ao web)

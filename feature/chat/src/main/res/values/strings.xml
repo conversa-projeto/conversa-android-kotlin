@@ -78,6 +78,7 @@
     <string name="abrir_com">Abrir com…</string>
     <string name="baixar">Baixar</string>
     <string name="baixar_video">Baixar vídeo</string>
+    <string name="toque_para_carregar">Toque para carregar</string>
     <string name="compartilhar">Compartilhar</string>
     <string name="baixando">Baixando %1$s…</string>
     <string name="salvo_em_downloads">%1$s salvo em Downloads/Conversa</string>

@@ -193,13 +193,15 @@ private fun ConteudoNaBolha(mensagem: Mensagem, conteudo: Conteudo, propria: Boo
                 is SegmentoCodigo.Codigo -> BlocoCodigo(parte)
             }
         }
-        TipoConteudo.IMAGEM -> ImagemAnexo(
-            conteudo,
-            Modifier
-                .sizeIn(minWidth = 120.dp, minHeight = 90.dp, maxWidth = 240.dp, maxHeight = 280.dp)
-                .clip(RoundedCornerShape(8.dp))
-                .clickable { acoes.aoAbrirImagem(mensagem, conteudo) },
-        )
+        TipoConteudo.IMAGEM -> CarregarSobToque(conteudo, video = false) {
+            ImagemAnexo(
+                conteudo,
+                Modifier
+                    .sizeIn(minWidth = 120.dp, minHeight = 90.dp, maxWidth = 240.dp, maxHeight = 280.dp)
+                    .clip(RoundedCornerShape(8.dp))
+                    .clickable { acoes.aoAbrirImagem(mensagem, conteudo) },
+            )
+        }
         TipoConteudo.AUDIO, TipoConteudo.GRAVACAO_AUDIO -> PlayerNaBolha(mensagem, conteudo, propria, cor, acoes)
         TipoConteudo.ARQUIVO -> if (ehVideo(conteudo)) VideoNaBolha(mensagem, conteudo, acoes) else LinhaArquivo(conteudo, cor, acoes)
         TipoConteudo.FIGURINHA -> Marcador("🏷", stringResource(R.string.conteudo_figurinha), cor)

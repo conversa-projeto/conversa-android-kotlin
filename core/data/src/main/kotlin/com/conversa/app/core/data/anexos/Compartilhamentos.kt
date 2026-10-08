@@ -60,6 +60,12 @@ class Compartilhamentos @Inject constructor(
         true
     }
 
+    /** Imagem colada no campo (teclado ou área de transferência): mesma cópia e mesmas regras. */
+    suspend fun copiarColados(uris: List<String>): List<AnexoLocal> = withContext(es) {
+        val pasta = File(contexto.cacheDir, "compartilhados/${System.nanoTime()}").apply { mkdirs() }
+        uris.distinct().mapNotNull { copiar(it, pasta) }.also { if (it.isEmpty()) pasta.deleteRecursively() }
+    }
+
     /** A conversa foi escolhida: entrega os itens (uma vez só). */
     fun retirar(): ItensCompartilhados? = _pendente.value.also {
         _pendente.value = null

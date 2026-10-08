@@ -18,6 +18,7 @@ import com.conversa.app.core.data.conversas.ConversasRepositorio
 import com.conversa.app.core.data.mensagens.EnvioMensagens
 import com.conversa.app.core.data.mensagens.MensagensRepositorio
 import com.conversa.app.core.data.presenca.PresencaRepositorio
+import com.conversa.app.core.data.rede.EconomiaDados
 import com.conversa.app.core.media.GravadorAudio
 import com.conversa.app.core.media.PlayerAudio
 import com.conversa.app.core.model.AtividadeConversa
@@ -164,6 +165,7 @@ class ChatViewModel @Inject constructor(
     private val downloads: DownloadsRepositorio,
     private val transcricoes: TranscricoesRepositorio,
     private val compartilhamentos: Compartilhamentos,
+    economia: EconomiaDados,
     private val fontes: FontesArquivo,
     private val player: PlayerAudio,
     gravador: GravadorAudio,
@@ -182,6 +184,9 @@ class ChatViewModel @Inject constructor(
     private val primeiraNaoLida = MutableStateFlow<Long?>(null)
 
     val eventos = EventosUnicos<EventoChat>()
+
+    /** Conexão lenta ou economia de dados do Android: imagens e vídeos esperam o toque (FC-414). */
+    val economizarDados: StateFlow<Boolean> = economia.ativa
 
     private val nomes = combine(contatos.observarOutros(), membros) { pessoas, lista ->
         pessoas.associate { it.id to it.nome } + lista.associate { it.usuarioId to it.nome }
@@ -299,6 +304,17 @@ class ChatViewModel @Inject constructor(
             val grandes = novos.filter { it.tamanho > AnexosRepositorio.LIMITE_BYTES }
             if (grandes.isNotEmpty()) eventos.enviar(EventoChat.ArquivoGrande(grandes.first().nome))
             fila.value = (fila.value + (novos - grandes.toSet())).distinctBy { it.uri }
+        }
+    }
+
+    /**
+     * Imagem colada no campo (FC-412): a permissão de leitura do teclado ou da área de
+     * transferência é temporária, então copia para o cache (mesmas regras do compartilhar).
+     */
+    fun colarAnexos(uris: List<String>) {
+        viewModelScope.launch {
+            val copiados = compartilhamentos.copiarColados(uris)
+            fila.value = (fila.value + copiados).distinctBy { it.uri }
         }
     }
 

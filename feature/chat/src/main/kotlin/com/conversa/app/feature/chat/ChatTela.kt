@@ -168,7 +168,8 @@ fun ChatRotaTela(
         }
     }
     // O áudio vai como fluxo: só as bolhas de áudio leem (ver LocalAudio).
-    CompositionLocalProvider(LocalAudio provides viewModel.audio) {
+    val economizar by viewModel.economizarDados.collectAsStateWithLifecycle()
+    CompositionLocalProvider(LocalAudio provides viewModel.audio, LocalEconomiaDados provides economizar) {
         ChatTela(
             estado = estado,
             lista = lista,
@@ -211,6 +212,7 @@ fun ChatRotaTela(
                 aoRemoverAnexo = viewModel::removerAnexo,
                 pastaCamera = viewModel::pastaCamera,
                 aoTextoUsado = viewModel::textoUsado,
+                aoColarAnexos = viewModel::colarAnexos,
                 gravacao = AcoesGravacao(
                     estado = viewModel.gravacao,
                     aoIniciar = viewModel::iniciarGravacao,
@@ -285,6 +287,8 @@ class AcoesChat(
     val gravacao: AcoesGravacao = AcoesGravacao(),
     /** O campo já usou o texto compartilhado por outro app. */
     val aoTextoUsado: () -> Unit = {},
+    /** Imagem colada no campo (teclado ou área de transferência). */
+    val aoColarAnexos: (List<String>) -> Unit = {},
 )
 
 @OptIn(ExperimentalMaterial3Api::class)

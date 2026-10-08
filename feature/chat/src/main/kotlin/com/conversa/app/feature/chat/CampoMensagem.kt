@@ -15,7 +15,13 @@ import androidx.compose.animation.core.infiniteRepeatable
 import androidx.compose.animation.core.rememberInfiniteTransition
 import androidx.compose.animation.core.tween
 import androidx.compose.foundation.Canvas
+import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.background
+import androidx.compose.foundation.content.MediaType
+import androidx.compose.foundation.content.ReceiveContentListener
+import androidx.compose.foundation.content.consume
+import androidx.compose.foundation.content.contentReceiver
+import androidx.compose.foundation.content.hasMediaType
 import androidx.compose.foundation.gestures.awaitEachGesture
 import androidx.compose.foundation.gestures.awaitFirstDown
 import androidx.compose.foundation.layout.Arrangement
@@ -34,6 +40,11 @@ import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.KeyboardOptions
+import androidx.compose.foundation.text.input.TextFieldLineLimits
+import androidx.compose.foundation.text.input.TextFieldState
+import androidx.compose.foundation.text.input.clearText
+import androidx.compose.foundation.text.input.rememberTextFieldState
+import androidx.compose.foundation.text.input.setTextAndPlaceCursorAtEnd
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.Send
 import androidx.compose.material.icons.automirrored.outlined.InsertDriveFile
@@ -63,6 +74,7 @@ import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
+import androidx.compose.runtime.snapshotFlow
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.alpha
@@ -93,6 +105,7 @@ import com.conversa.app.core.ui.tema.ConversaTema
 import java.io.File
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.drop
 import kotlinx.coroutines.launch
 
 /** O que o microfone e a barra de gravação pedem (ANX-11). [estado] é lido só pelo campo. */
@@ -119,13 +132,18 @@ private const val SEGURAR_MS = 300L
  */
 @Composable
 internal fun Campo(fila: List<AnexoLocal>, textoCompartilhado: String?, acoes: AcoesChat) {
-    var texto by rememberSaveable { mutableStateOf("") }
+    // Estado do texto local e síncrono (o cursor não pula); sobrevive a girar a tela.
+    val texto = rememberTextFieldState()
     // Texto que outro app compartilhou (AND-10): entra no campo uma vez, para a pessoa revisar.
     LaunchedEffect(textoCompartilhado) {
         if (textoCompartilhado != null) {
-            texto = textoCompartilhado
+            texto.setTextAndPlaceCursorAtEnd(textoCompartilhado)
             acoes.aoTextoUsado()
         }
+    }
+    // "Digitando" (ENV-15): cada mudança do texto (o ViewModel limita a um aviso a cada 2,5 s).
+    LaunchedEffect(texto) {
+        snapshotFlow { texto.text.toString() }.drop(1).collect { acoes.aoDigitar(it) }
     }
     val gravacao by acoes.gravacao.estado.collectAsStateWithLifecycle()
     Column(
@@ -141,7 +159,7 @@ internal fun Campo(fila: List<AnexoLocal>, textoCompartilhado: String?, acoes: A
         if (comBarra) {
             BarraGravacao(atual, acoes.gravacao)
         } else {
-            LinhaDoCampo(texto, { texto = it }, fila.isNotEmpty(), atual as? EstadoGravacao.Gravando, acoes)
+            LinhaDoCampo(texto, fila.isNotEmpty(), atual as? EstadoGravacao.Gravando, acoes)
         }
     }
 }
@@ -150,10 +168,10 @@ internal fun Campo(fila: List<AnexoLocal>, textoCompartilhado: String?, acoes: A
  * Linha do campo. Segurando o microfone ([segurando]), o texto dá lugar ao tempo e ao
  * "deslize para cancelar"; o botão do microfone continua no mesmo lugar (o gesto não se perde).
  */
+@OptIn(ExperimentalFoundationApi::class)
 @Composable
 private fun LinhaDoCampo(
-    texto: String,
-    aoMudar: (String) -> Unit,
+    texto: TextFieldState,
     temAnexos: Boolean,
     segurando: EstadoGravacao.Gravando?,
     acoes: AcoesChat,
@@ -171,13 +189,9 @@ private fun LinhaDoCampo(
                 IndicadorSegurando(segurando)
             } else {
                 TextField(
-                    value = texto,
-                    onValueChange = {
-                        aoMudar(it)
-                        acoes.aoDigitar(it)
-                    },
+                    state = texto,
                     placeholder = { Text(stringResource(R.string.digite_uma_mensagem)) },
-                    maxLines = 6,
+                    lineLimits = TextFieldLineLimits.MultiLine(maxHeightInLines = 6),
                     shape = RoundedCornerShape(24.dp),
                     colors = TextFieldDefaults.colors(
                         focusedContainerColor = ConversaTema.cores.campoEntrada,
@@ -186,18 +200,17 @@ private fun LinhaDoCampo(
                         unfocusedIndicatorColor = Color.Transparent,
                     ),
                     keyboardOptions = KeyboardOptions(capitalization = KeyboardCapitalization.Sentences),
-                    modifier = Modifier.fillMaxWidth(),
+                    modifier = Modifier.fillMaxWidth().contentReceiver(receptorDeImagens(acoes.aoColarAnexos)),
                 )
             }
         }
         // Com texto ou anexo: Enviar. Vazio: microfone (como o web).
-        if (texto.isNotBlank() || temAnexos) {
-            // O texto atual é lido na hora do retorno (pode ter mudado enquanto gravava no Room).
-            val atual by rememberUpdatedState(texto)
+        if (texto.text.isNotBlank() || temAnexos) {
             FilledIconButton(
                 onClick = {
-                    val enviado = texto
-                    acoes.aoEnviar(enviado) { if (atual == enviado) aoMudar("") }
+                    val enviado = texto.text.toString()
+                    // Só limpa se a pessoa não mudou o texto enquanto a mensagem era gravada no Room.
+                    acoes.aoEnviar(enviado) { if (texto.text.toString() == enviado) texto.clearText() }
                 },
                 modifier = Modifier.size(48.dp),
             ) {
@@ -207,6 +220,23 @@ private fun LinhaDoCampo(
             BotaoMicrofone(segurando != null, acoes.gravacao)
         }
     }
+}
+
+/**
+ * Colar imagem (FC-412): imagem do teclado (figurinhas, GIFs) ou da área de transferência
+ * entra na fila de anexos; o resto (texto) segue para o campo.
+ */
+@OptIn(ExperimentalFoundationApi::class)
+private fun receptorDeImagens(aoColar: (List<String>) -> Unit) = ReceiveContentListener { recebido ->
+    if (!recebido.hasMediaType(MediaType.Image)) return@ReceiveContentListener recebido
+    val uris = mutableListOf<String>()
+    val resto = recebido.consume { item ->
+        val uri = item.uri ?: return@consume false
+        uris += uri.toString()
+        true
+    }
+    if (uris.isNotEmpty()) aoColar(uris)
+    resto
 }
 
 /**

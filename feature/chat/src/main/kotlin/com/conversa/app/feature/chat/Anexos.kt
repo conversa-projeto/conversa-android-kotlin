@@ -38,6 +38,7 @@ import androidx.compose.material.icons.outlined.Download
 import androidx.compose.material.icons.outlined.Image
 import androidx.compose.material.icons.outlined.PictureAsPdf
 import androidx.compose.material.icons.outlined.PlayCircle
+import androidx.compose.material.icons.outlined.Videocam
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
@@ -47,12 +48,14 @@ import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.compositionLocalOf
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableFloatStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.produceState
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -122,6 +125,44 @@ fun ImagemAnexo(conteudo: Conteudo, modifier: Modifier = Modifier, contentScale:
     }
 }
 
+/** Economizar dados (FC-414): imagens e vídeos das bolhas esperam o toque. */
+val LocalEconomiaDados = compositionLocalOf { false }
+
+/**
+ * "Toque para carregar" (como o web): com a economia de dados ligada, a mídia da bolha só
+ * carrega depois do toque. Enviando (arquivo local) carrega sempre; o visualizador também.
+ */
+@Composable
+fun CarregarSobToque(conteudo: Conteudo, video: Boolean, modifier: Modifier = Modifier, carregado: @Composable () -> Unit) {
+    var liberado by rememberSaveable(conteudo.conteudo) { mutableStateOf(false) }
+    if (!LocalEconomiaDados.current || conteudo.local || liberado) {
+        carregado()
+        return
+    }
+    Box(
+        modifier
+            .size(width = 240.dp, height = 160.dp)
+            .clip(RoundedCornerShape(8.dp))
+            .background(Color.Black.copy(alpha = 0.8f))
+            .clickable { liberado = true },
+        contentAlignment = Alignment.Center,
+    ) {
+        Column(horizontalAlignment = Alignment.CenterHorizontally, verticalArrangement = Arrangement.spacedBy(6.dp)) {
+            Icon(
+                if (video) Icons.Outlined.Videocam else Icons.Outlined.Image,
+                contentDescription = null,
+                tint = Color.White.copy(alpha = 0.6f),
+                modifier = Modifier.size(40.dp),
+            )
+            Text(
+                stringResource(R.string.toque_para_carregar),
+                color = Color.White.copy(alpha = 0.7f),
+                style = MaterialTheme.typography.labelSmall,
+            )
+        }
+    }
+}
+
 /** Bolha só de imagem (ANX-04): proporção preservada, hora por cima, toque abre o visualizador. */
 @Composable
 fun BolhaImagem(mensagem: Mensagem, propria: Boolean, progresso: Float?, acoes: AcoesBolha) {
@@ -132,7 +173,9 @@ fun BolhaImagem(mensagem: Mensagem, propria: Boolean, progresso: Float?, acoes: 
             .background(if (propria) ConversaTema.cores.bolhaPropria else ConversaTema.cores.bolhaOutro)
             .clickable { acoes.aoAbrirImagem(mensagem, conteudo) },
     ) {
-        ImagemAnexo(conteudo, Modifier.sizeIn(minWidth = 120.dp, minHeight = 90.dp, maxWidth = 260.dp, maxHeight = 320.dp))
+        CarregarSobToque(conteudo, video = false) {
+            ImagemAnexo(conteudo, Modifier.sizeIn(minWidth = 120.dp, minHeight = 90.dp, maxWidth = 260.dp, maxHeight = 320.dp))
+        }
         Box(
             Modifier
                 .align(Alignment.BottomEnd)
@@ -260,7 +303,7 @@ fun imagensDaConversa(itens: List<ItemChat>): List<ImagemDaConversa> = itens.asS
 @Composable
 fun VideoNaBolha(mensagem: Mensagem, conteudo: Conteudo, acoes: AcoesBolha) {
     Column {
-        QuadroDaBolha(mensagem, conteudo, acoes)
+        CarregarSobToque(conteudo, video = true) { QuadroDaBolha(mensagem, conteudo, acoes) }
         if (!conteudo.local) {
             TextButton(onClick = { acoes.aoBaixar(conteudo) }) {
                 Icon(Icons.Outlined.Download, contentDescription = null, modifier = Modifier.size(16.dp))
