@@ -4,7 +4,7 @@
 - **Tipo:** código / testes / documentação (conta de teste nova)
 - **Itens:** `TODO.md` 6.11 (modos, toque para destacar, serviço com câmera) e 6.2 (estado completo); FC-716; CHA-12, CHA-16
 - **Branch:** `reescrita`
-- **Commits:** (preencher)
+- **Commits:** `482037d`
 
 ## Contexto
 Numa chamada com várias pessoas, o web deixa escolher como elas aparecem:
