@@ -697,7 +697,7 @@
 
 ### 7.1 Menu de ações (FC-500, ENV-20)
 - [x] Toque longo na bolha → barra de reações 👍 ❤️ 😂 😮 😢 👏 🔥 + "mais" ✔ 52d6d03
-- [x] Itens: Responder; Responder no privado (grupo e mensagem de outro); Encaminhar; Copiar; Ocultar (minha e não oculta) — Copiar e Ocultar prontos ✔ 52d6d03; Responder pronto ✔ cdfb8cf; Encaminhar e Responder no privado entram com 7.6 — Responder no privado e Encaminhar no bloco do 7.6
+- [x] Itens: Responder; Responder no privado (grupo e mensagem de outro); Encaminhar; Copiar; Ocultar (minha e não oculta) — Copiar e Ocultar prontos ✔ 52d6d03; Responder pronto ✔ cdfb8cf; Encaminhar e Responder no privado entram com 7.6 — Responder no privado e Encaminhar no bloco do 7.6 ✔ 19add2b
 - [x] Não abrir para chamada, oculta ou mensagem ainda sem id real ✔ 52d6d03
 
 ### 7.2 Reações (FC-501, ENV-17)
