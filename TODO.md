@@ -593,7 +593,7 @@
 - [x] Adicionar `androidx.core:core-telecom` — 1.0.1 (estável). Só registra a chamada do app no sistema; a chamada continua pela internet (sem chip, operadora ou número) ✔ 5837aec
 - [x] Registrar o `CallsManager` com as capacidades (vídeo) — `TelecomChamadas.iniciar()` no `Application` ✔ 5837aec
 - [x] Recebida e efetuada via `addCall(...)` com os callbacks answer/disconnect/setActive/setInactive — `TelecomChamadas`; o atender/desligar do sistema chama o gerenciador. No emulador: recebida `RINGING` → `ACTIVE`; efetuada `DIALING` → `ACTIVE`; ao encerrar, some do Telecom. Achado: os coletores das rotas seguravam o escopo da chamada e a segunda chamada não era registrada — corrigido (duas chamadas seguidas ok) ✔ 5837aec
-- [ ] Usar os endpoints de áudio do Telecom para rotear (fone, alto-falante, Bluetooth, fone com fio) — 🔄 `TelecomChamadas.rotas`, `rotaAtual` e `mudarRota` prontos; o seletor na tela é a 6.8. O Telecom já põe o áudio em `MODE_IN_COMMUNICATION` durante a chamada (conferido no emulador)
+- [x] Usar os endpoints de áudio do Telecom para rotear (fone, alto-falante, Bluetooth, fone com fio) — `TelecomChamadas.rotas`/`rotaAtual`/`mudarRota` e o botão "Áudio saída" da tela (6.8); vídeo começa no alto-falante e passar para vídeo sai do fone do aparelho. O Telecom põe o áudio em `MODE_IN_COMMUNICATION` durante a chamada (conferido no emulador)
 - [x] Manifest: `FOREGROUND_SERVICE_PHONE_CALL`, `FOREGROUND_SERVICE_MICROPHONE`, `FOREGROUND_SERVICE_CAMERA`, `MANAGE_OWN_CALLS` — o `MANAGE_OWN_CALLS` vem do Core-Telecom; `ServicoChamada` com `phoneCall|microphone|camera`. No emulador: o serviço rodou como `phoneCall|microphone` (0x84) ✔ 5837aec
 - [ ] **Teste:** atender pelo botão do fone Bluetooth; receber uma ligação GSM durante a chamada → coloca em espera — 🔄 GSM ok (ligação de celular **simulada pelo emulador**, atendida pelo discador): a do app ficou `ON_HOLD`, com o microfone desligado; depois "Retomar" voltou a `ACTIVE`. Bluetooth: ⛔ o emulador não tem fone Bluetooth; testar num aparelho
 - [x] Em espera pelo sistema: faixa "Chamada em espera" com "Retomar" — o Telecom não retoma sozinho a chamada do app quando a de celular acaba; sem isso a pessoa ficaria muda sem saber ✔ 5837aec
@@ -636,14 +636,14 @@
 
 ### 6.8 Áudio (FC-713, AND-04, AND-05)
 - [x] Foco de áudio durante a chamada (pausa a música) — pelo Telecom (no emulador, o foco "AudioFocus_For_Phone_Ring_And_Calls" apareceu no toque) ✔ 5837aec
-- [ ] Seletor de rota: Fone do aparelho / Alto-falante / Bluetooth / Fone com fio (via Telecom)
-- [ ] Sensor de proximidade só quando a rota é o fone do aparelho
+- [x] Seletor de rota: Fone do aparelho / Alto-falante / Bluetooth / Fone com fio (via Telecom) — botão "Áudio saída" (título do web): com duas rotas alterna direto; com mais, abre a lista (Bluetooth com o nome do aparelho); `stateDescription` com a rota atual. No emulador só existe o alto-falante: trocar de rota fica para o teste num aparelho
+- [x] Sensor de proximidade só quando a rota é o fone do aparelho — `PROXIMITY_SCREEN_OFF_WAKE_LOCK` enquanto a chamada está em curso com o áudio no fone do aparelho; solta ao mudar de rota ou encerrar. Sem fone do aparelho no emulador; testar num aparelho
 - [x] Ao encerrar: devolver o modo normal e limpar o dispositivo de comunicação — pelo Telecom. No emulador: `MODE_NORMAL` depois de cada chamada ✔ 5837aec
 - [x] Parar qualquer áudio de mensagem ao entrar em chamada — `PlayerAudio.parar()` quando a chamada começa (não testado no emulador) ✔ 5837aec
 
 ### 6.9 Tela da chamada ativa (FC-714, CHA-11)
 - [x] Cabeçalho: "Chamando…"/"Em chamada"/"Encerrando…", duração, tipo, nº de pessoas — textos do web; duração `mm:ss`/`hh:mm:ss` (+ teste) ✔ cf43b1f
-- [ ] Controles: microfone, câmera (vídeo), trocar câmera, rota de áudio, adicionar pessoa, chat, sair — 🔄 microfone, câmera, trocar câmera, "Ativar vídeo" e sair prontos (testados); faltam rota de áudio (6.8), adicionar pessoa e chat (6.13)
+- [ ] Controles: microfone, câmera (vídeo), trocar câmera, rota de áudio, adicionar pessoa, chat, sair — 🔄 microfone, câmera, trocar câmera, "Ativar vídeo", "Áudio saída" (rota) e sair prontos; faltam adicionar pessoa e chat (6.13)
 - [x] Estado de mute e câmera reativo (StateFlow), ícones corretos, `contentDescription` em tudo — e `stateDescription` "Ligado"/"Desligado" para o TalkBack ✔ cf43b1f
 - [ ] Cores: microfone, câmera e som **vermelhos quando desligados**; tela, chat e ponteiro **azuis quando ligados**; demais neutros — 🔄 microfone e câmera vermelhos quando desligados (cores do FMX: `chamadaEncerrar`, `chamadaBotao`); som, tela, chat e ponteiro chegam com os botões deles
 - [ ] `BackHandler`: voltar = minimizar (não encerra) — 🔄 voltar fecha a tela e a chamada continua; falta o caminho de volta (banner, 6.12)

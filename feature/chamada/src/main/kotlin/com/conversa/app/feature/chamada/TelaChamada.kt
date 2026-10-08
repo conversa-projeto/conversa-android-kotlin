@@ -1,6 +1,7 @@
 package com.conversa.app.feature.chamada
 
 import android.Manifest
+import android.os.PowerManager
 import androidx.activity.compose.BackHandler
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
@@ -20,21 +21,29 @@ import androidx.compose.foundation.layout.statusBarsPadding
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.VolumeUp
+import androidx.compose.material.icons.filled.BluetoothAudio
 import androidx.compose.material.icons.filled.Call
 import androidx.compose.material.icons.filled.CallEnd
 import androidx.compose.material.icons.filled.Cameraswitch
+import androidx.compose.material.icons.filled.Check
+import androidx.compose.material.icons.filled.Headset
 import androidx.compose.material.icons.filled.Mic
 import androidx.compose.material.icons.filled.MicOff
+import androidx.compose.material.icons.filled.PhoneInTalk
 import androidx.compose.material.icons.filled.Videocam
 import androidx.compose.material.icons.filled.VideocamOff
 import androidx.compose.material.icons.outlined.Visibility
 import androidx.compose.material3.AlertDialog
+import androidx.compose.material3.DropdownMenu
+import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.key
@@ -59,6 +68,7 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.viewinterop.AndroidView
+import androidx.core.telecom.CallEndpointCompat
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
@@ -91,6 +101,8 @@ class ChamadaViewModel @Inject constructor(
     val estado = gerenciador.estado
     val trilhas = midia.trilhas
     val emEspera = telecom.emEspera
+    val rotas = telecom.rotas
+    val rotaAtual = telecom.rotaAtual
     val eu: Long = sessao.sessao.value?.usuarioId ?: 0
     val egl: EglBase.Context get() = midia.contextoEgl
 
@@ -111,6 +123,8 @@ class ChamadaViewModel @Inject constructor(
     fun responderVideo(transmitir: Boolean) = gerenciador.responderVideo(transmitir)
 
     fun retomar() = telecom.retomar()
+
+    fun mudarRota(rota: CallEndpointCompat) = telecom.mudarRota(rota)
 }
 
 @Composable
@@ -123,6 +137,13 @@ fun TelaChamadaRota(
     val estado by viewModel.estado.collectAsStateWithLifecycle()
     val trilhas by viewModel.trilhas.collectAsStateWithLifecycle()
     val emEspera by viewModel.emEspera.collectAsStateWithLifecycle()
+    val rotas by viewModel.rotas.collectAsStateWithLifecycle()
+    val rotaAtual by viewModel.rotaAtual.collectAsStateWithLifecycle()
+    // Celular no ouvido: a tela apaga (só com o áudio no fone do aparelho, 6.8).
+    SensorDeProximidade(
+        ativo = rotaAtual?.type == CallEndpointCompat.TYPE_EARPIECE &&
+            estado.fase in setOf(FaseChamada.CHAMANDO, FaseChamada.CONECTANDO, FaseChamada.ATIVA),
+    )
     val contexto = LocalContext.current
     LaunchedEffect(estado.fase) { if (estado.fase == FaseChamada.INATIVO) aoFechar() }
     // Voltar minimiza: a chamada continua (TODO 6.9).
@@ -168,6 +189,7 @@ fun TelaChamadaRota(
             TelaEmChamada(
                 estado = estado,
                 emEspera = emEspera,
+                rotas = Rotas(rotas, rotaAtual),
                 trilhas = trilhas,
                 eu = viewModel.eu,
                 egl = viewModel.egl,
@@ -178,6 +200,7 @@ fun TelaChamadaRota(
                     aoAtivarVideo = { pedirEDepois(true) { viewModel.ligarVideo() } },
                     aoSair = viewModel::desligar,
                     aoRetomar = viewModel::retomar,
+                    aoMudarRota = viewModel::mudarRota,
                 ),
             )
         }
@@ -259,12 +282,17 @@ private data class AcoesEmChamada(
     val aoAtivarVideo: () -> Unit,
     val aoSair: () -> Unit,
     val aoRetomar: () -> Unit,
+    val aoMudarRota: (CallEndpointCompat) -> Unit,
 )
+
+/** Rotas de áudio do Telecom: as disponíveis e a de agora. */
+private data class Rotas(val disponiveis: List<CallEndpointCompat>, val atual: CallEndpointCompat?)
 
 @Composable
 private fun TelaEmChamada(
     estado: EstadoChamada,
     emEspera: Boolean,
+    rotas: Rotas,
     trilhas: TrilhasChamada,
     eu: Long,
     egl: EglBase.Context,
@@ -313,7 +341,7 @@ private fun TelaEmChamada(
                 }
             }
         }
-        BarraDeControles(estado, acoes)
+        BarraDeControles(estado, rotas, acoes)
     }
 }
 
@@ -463,7 +491,7 @@ private fun VideoDaTrilha(
 }
 
 @Composable
-private fun BarraDeControles(estado: EstadoChamada, acoes: AcoesEmChamada) {
+private fun BarraDeControles(estado: EstadoChamada, rotas: Rotas, acoes: AcoesEmChamada) {
     val cores = ConversaTema.cores
     val ligado = stringResource(R.string.ligado)
     val desligado = stringResource(R.string.desligado)
@@ -509,6 +537,7 @@ private fun BarraDeControles(estado: EstadoChamada, acoes: AcoesEmChamada) {
                 onClick = acoes.aoAtivarVideo,
             )
         }
+        BotaoRota(rotas, acoes.aoMudarRota)
         BotaoRedondo(
             Icons.Filled.CallEnd,
             stringResource(R.string.sair_da_chamada),
@@ -560,3 +589,82 @@ private fun BotaoRedondo(
         }
     }
 }
+
+/**
+ * "Áudio saída" (título do web): com duas rotas (fone do aparelho e alto-falante) alterna
+ * direto; com mais (Bluetooth, fone com fio), abre a lista. Sem Telecom não há rotas e o
+ * botão não aparece.
+ */
+@Composable
+private fun BotaoRota(rotas: Rotas, aoMudar: (CallEndpointCompat) -> Unit) {
+    val atual = rotas.atual ?: return
+    val cores = ConversaTema.cores
+    var lista by remember { mutableStateOf(false) }
+    val textoAtual = rotuloDaRota(atual)
+    Box {
+        BotaoRedondo(
+            iconeDaRota(atual.type),
+            stringResource(R.string.audio_saida),
+            cores.chamadaBotao,
+            cores.chamadaIconeBotao,
+            estadoTexto = textoAtual,
+            onClick = {
+                val outras = rotas.disponiveis.filter { it.identifier != atual.identifier }
+                when {
+                    outras.size == 1 -> aoMudar(outras.single())
+                    outras.size > 1 -> lista = true
+                }
+            },
+        )
+        DropdownMenu(expanded = lista, onDismissRequest = { lista = false }) {
+            for (rota in rotas.disponiveis) {
+                DropdownMenuItem(
+                    text = { Text(rotuloDaRota(rota)) },
+                    leadingIcon = { Icon(iconeDaRota(rota.type), contentDescription = null) },
+                    trailingIcon = { if (rota.identifier == atual.identifier) Icon(Icons.Filled.Check, contentDescription = null) },
+                    onClick = {
+                        lista = false
+                        aoMudar(rota)
+                    },
+                )
+            }
+        }
+    }
+}
+
+@Composable
+private fun rotuloDaRota(rota: CallEndpointCompat): String = when (rota.type) {
+    CallEndpointCompat.TYPE_EARPIECE -> stringResource(R.string.rota_fone_do_aparelho)
+    CallEndpointCompat.TYPE_SPEAKER -> stringResource(R.string.rota_alto_falante)
+    CallEndpointCompat.TYPE_WIRED_HEADSET -> stringResource(R.string.rota_fone_com_fio)
+    // Bluetooth: o nome do aparelho (ex.: "Fone JBL").
+    else -> rota.name.toString().ifBlank { stringResource(R.string.rota_bluetooth) }
+}
+
+private fun iconeDaRota(tipo: Int): ImageVector = when (tipo) {
+    CallEndpointCompat.TYPE_EARPIECE -> Icons.Filled.PhoneInTalk
+    CallEndpointCompat.TYPE_BLUETOOTH -> Icons.Filled.BluetoothAudio
+    CallEndpointCompat.TYPE_WIRED_HEADSET -> Icons.Filled.Headset
+    else -> Icons.AutoMirrored.Filled.VolumeUp
+}
+
+/** Apaga a tela quando o celular encosta no rosto (PROXIMITY_SCREEN_OFF_WAKE_LOCK). */
+@Composable
+private fun SensorDeProximidade(ativo: Boolean) {
+    val contexto = LocalContext.current
+    DisposableEffect(ativo) {
+        val energia = contexto.getSystemService(PowerManager::class.java)
+        val trava = if (ativo && energia?.isWakeLockLevelSupported(PowerManager.PROXIMITY_SCREEN_OFF_WAKE_LOCK) == true) {
+            energia.newWakeLock(PowerManager.PROXIMITY_SCREEN_OFF_WAKE_LOCK, "conversa:proximidade").apply {
+                setReferenceCounted(false)
+                acquire(DURACAO_MAXIMA_PROXIMIDADE_MS)
+            }
+        } else {
+            null
+        }
+        onDispose { if (trava?.isHeld == true) trava.release(PowerManager.RELEASE_FLAG_WAIT_FOR_NO_PROXIMITY) }
+    }
+}
+
+/** Teto de segurança da trava (o onDispose solta antes). */
+private const val DURACAO_MAXIMA_PROXIMIDADE_MS = 4 * 60 * 60 * 1000L

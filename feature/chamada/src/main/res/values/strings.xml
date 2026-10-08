@@ -29,6 +29,11 @@
     <string name="trocar_camera">Trocar câmera</string>
     <string name="ativar_video">Ativar vídeo</string>
     <string name="sair_da_chamada">Sair da chamada</string>
+    <string name="audio_saida">Áudio saída</string>
+    <string name="rota_fone_do_aparelho">Fone do aparelho</string>
+    <string name="rota_alto_falante">Alto-falante</string>
+    <string name="rota_fone_com_fio">Fone com fio</string>
+    <string name="rota_bluetooth">Bluetooth</string>
     <string name="ligado">Ligado</string>
     <string name="desligado">Desligado</string>
     <string name="voce">Você</string>

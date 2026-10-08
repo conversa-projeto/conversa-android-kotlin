@@ -30,6 +30,7 @@ import androidx.core.app.ServiceCompat
 import androidx.core.content.ContextCompat
 import androidx.core.telecom.CallAttributesCompat
 import androidx.core.telecom.CallControlResult
+import androidx.core.telecom.CallControlScope
 import androidx.core.telecom.CallEndpointCompat
 import androidx.core.telecom.CallsManager
 import com.conversa.app.core.data.SessaoRepositorio
@@ -53,6 +54,7 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.distinctUntilChanged
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.launch
 import timber.log.Timber
@@ -112,6 +114,12 @@ class IntegracaoChamada @Inject constructor(
         }
         if (agora.fase == FaseChamada.CONECTANDO && antes.fase == FaseChamada.RECEBENDO) telecom.atender(agora.tipo == TipoChamada.VIDEO)
         if (agora.fase == FaseChamada.ATIVA && antes.fase != FaseChamada.ATIVA) telecom.ativar()
+        if (agora.tipo == TipoChamada.VIDEO &&
+            antes.tipo == TipoChamada.AUDIO &&
+            agora.fase == FaseChamada.ATIVA
+        ) {
+            telecom.preferirAltoFalante()
+        }
         if (agora.fase == FaseChamada.INATIVO && antes.fase != FaseChamada.INATIVO) telecom.encerrar()
     }
 }
@@ -317,6 +325,8 @@ class TelecomChamadas @Inject constructor(
 
         data object Encerrar : Comando
 
+        data object AltoFalante : Comando
+
         data class Rota(val rota: CallEndpointCompat) : Comando
     }
 
@@ -375,6 +385,8 @@ class TelecomChamadas @Inject constructor(
                     val escopoDaChamada = this
                     launch { currentCallEndpoint.collect { _rotaAtual.value = it } }
                     launch { availableEndpoints.collect { _rotas.value = it } }
+                    // Vídeo começa no alto-falante (ninguém fala com o celular no ouvido olhando a tela).
+                    if (video) launch { irParaAltoFalante(availableEndpoints.first { it.isNotEmpty() }, currentCallEndpoint.first()) }
                     launch {
                         for (comando in fila) {
                             when (comando) {
@@ -383,6 +395,7 @@ class TelecomChamadas @Inject constructor(
                                 )
                                 Comando.Ativar -> if (setActive() is CallControlResult.Success) sairDaEspera()
                                 is Comando.Rota -> requestEndpointChange(comando.rota)
+                                Comando.AltoFalante -> _rotaAtual.value?.let { irParaAltoFalante(_rotas.value, it) }
                                 Comando.Encerrar -> {
                                     disconnect(DisconnectCause(DisconnectCause.LOCAL))
                                     break
@@ -423,6 +436,16 @@ class TelecomChamadas @Inject constructor(
 
     fun mudarRota(rota: CallEndpointCompat) {
         comandos?.trySend(Comando.Rota(rota))
+    }
+
+    /** Passou para vídeo: sai do fone do aparelho para o alto-falante (Bluetooth e fone com fio ficam). */
+    fun preferirAltoFalante() {
+        comandos?.trySend(Comando.AltoFalante)
+    }
+
+    private suspend fun CallControlScope.irParaAltoFalante(disponiveis: List<CallEndpointCompat>, atual: CallEndpointCompat) {
+        if (atual.type != CallEndpointCompat.TYPE_EARPIECE) return
+        disponiveis.firstOrNull { it.type == CallEndpointCompat.TYPE_SPEAKER }?.let { requestEndpointChange(it) }
     }
 
     fun encerrar() {

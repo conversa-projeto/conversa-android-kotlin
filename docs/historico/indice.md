@@ -51,6 +51,7 @@
 - 2026-10-08 · [Etapa 6 — módulos de chamada e a máquina de estados](2026-10-08-08-etapa-6-maquina-de-estados-chamada.md) — `:core:webrtc` (interface `MidiaChamada`) e `:feature:chamada` (`GerenciadorChamadas`): fases, eventos 51–57, pendentes, regras do web (ocupado, 30 s, 25 s, 55 sem 52…), monitor de 4 s; 51 testes com eventos duplicados e fora de ordem
 - 2026-10-08 · [Etapa 6 — mídia WebRTC (WHIP/WHEP), tela da chamada e ligar pela conversa](2026-10-08-09-etapa-6-midia-webrtc-e-tela.md) — `MidiaWebRtc` (publicação, assinaturas, ICE só relay, VP9/H264, quadros pretos com a câmera desligada), `ChamadaActivity` (recebida e em chamada), botões de ligar; testado contra o web: gravação no MediaMTX, atender, recusar, sair dos dois lados, upgrade para vídeo; 274 testes
 - 2026-10-08 · [Etapa 6 — chamada no sistema: toque, notificação, tela cheia, serviço e Core-Telecom](2026-10-08-10-etapa-6-integracao-sistema.md) — toque próprio, CallStyle recebida (tela cheia) e em andamento, serviço `phoneCall|microphone`, Core-Telecom (só registra a chamada do app; nada de rede de telefonia), "em espera" com "Retomar"; testado no emulador; 274 testes
+- 2026-10-08 · [Etapa 6 — rota de áudio da chamada e sensor de proximidade](2026-10-08-11-etapa-6-rota-de-audio.md) — botão "Áudio saída" com as rotas do Telecom (fone do aparelho, alto-falante, Bluetooth, fone com fio), vídeo no alto-falante, proximidade só no fone do aparelho; no emulador só há alto-falante; 274 testes
 
 ## Ações sobre mensagens (etapa 7)
 _(nada ainda)_
