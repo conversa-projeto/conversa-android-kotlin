@@ -4,7 +4,7 @@
 - **Tipo:** código / testes
 - **Itens:** `TODO.md` 4.10 (colar, HTML, economia); FC-412, FC-413, FC-414
 - **Branch:** `reescrita`
-- **Commits:** (preencher)
+- **Commits:** `d9d03f1`
 
 ## Contexto
 Os últimos itens da 4.10:
