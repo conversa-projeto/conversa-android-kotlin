@@ -680,12 +680,12 @@
 - [x] Ponteiro remoto: WS 57 `{acao:"ponteiro", alvo, x, y}` → desenhar com nome e cor (`id % 5`); some em 5 s — `EstadoChamada.ponteiros` (+ teste: x/y nulos tiram; 5 s sem atualizar some); bolinha e nome sobre a área real da imagem (o renderizador informa a resolução; `areaDaImagem`, + teste); 5 cores do tema no lugar das do web. No emulador: o C apontou no meio da tela do B e o ponteiro "Teste Android C" apareceu no meio; sumiu em 5 s ✔ 3a9f39d
 
 ### 6.14 Matriz de testes manuais (FC-955)
-- [ ] Criar `docs/testes/chamadas.md` com a matriz
-- [ ] Wi-Fi ↔ 4G; 4G ↔ 4G
-- [ ] App aberto / em segundo plano / fechado (precisa de S1) / tela bloqueada
-- [ ] Bluetooth; fone com fio; chamada GSM concorrente
-- [ ] 1:1 áudio; 1:1 vídeo; grupo de 4; upgrade para vídeo; adicionar participante
-- [ ] Atender no web com o celular tocando (o celular para de tocar)
+- [x] Criar `docs/testes/chamadas.md` com a matriz — rede, estado do app, áudio/sistema e tipos de chamada, com o que já passou no emulador e o que falta em aparelho
+- [ ] Wi-Fi ↔ 4G; 4G ↔ 4G — ⏳ precisa de aparelhos e do servidor acessível pela internet (no emulador, Wi-Fi ↔ Wi-Fi passou)
+- [ ] App aberto / em segundo plano / fechado (precisa de S1) / tela bloqueada — 🔄 aberto, segundo plano (até 10 s) e tela apagada passaram no emulador; fechado ⛔ FCM (5.1) e S1; bloqueada com PIN só em aparelho
+- [ ] Bluetooth; fone com fio; chamada GSM concorrente — 🔄 GSM concorrente passou (simulada pelo emulador); Bluetooth e fone com fio só em aparelho
+- [ ] 1:1 áudio; 1:1 vídeo; grupo de 4; upgrade para vídeo; adicionar participante — 🔄 1:1 áudio e vídeo, grupo de 3, upgrade e adicionar passaram no emulador; grupo de 4 precisa de mais uma conta de teste
+- [x] Atender no web com o celular tocando (o celular para de tocar) — no emulador, com o A também logado num Chrome de teste: o A atendeu no web e o celular parou de tocar (a tela fechou e a chamada saiu do Telecom)
 - [ ] Gravação conferida no servidor
 
 ---

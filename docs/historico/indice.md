@@ -58,6 +58,7 @@
 - 2026-10-08 · [Etapa 6 — adicionar à chamada e chat da chamada](2026-10-08-15-etapa-6-adicionar-e-chat.md) — "Adicionar à chamada" (um `PUT` por pessoa) e "Chat da chamada" (a primeira mensagem cria o chat e abre a conversa; a chamada vai para o PiP); testado com B e C no web; 287 testes
 - 2026-10-08 · [Etapa 6 — indicador de fala e somente recepção](2026-10-08-16-etapa-6-fala-e-recepcao.md) — anel verde de quem fala (nível do WebRTC, 0,02 e 400 ms como o web) e "Ativar microfone/câmera" para quem entrou só recebendo; 292 testes
 - 2026-10-08 · [Etapa 6 — tela e ponteiro remotos](2026-10-08-17-etapa-6-tela-e-ponteiro.md) — a tela compartilhada entra em destaque, inteira; ponteiros dos outros com nome e cor; "Sair da chamada" fixo na barra; testado com o B compartilhando a tela e o C apontando; 295 testes
+- 2026-10-08 · [Etapa 6 — matriz de testes manuais de chamada](2026-10-08-18-etapa-6-matriz-de-testes.md) — `docs/testes/chamadas.md` com o que passou no emulador e o que falta em aparelho; "atender no web com o celular tocando" testado
 
 ## Ações sobre mensagens (etapa 7)
 _(nada ainda)_

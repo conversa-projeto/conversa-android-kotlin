@@ -26,6 +26,7 @@ Instruções para quem trabalha neste repositório, pessoas ou agentes de IA. Le
 | **Histórico de alterações** | `docs/historico/indice.md` + `docs/historico/*.md` |
 | Decisões de arquitetura | `docs/adr/NNNN-*.md` |
 | Testar no emulador contra o servidor de dev (e as contas de teste) | `docs/desenvolvimento/emulador.md` |
+| Matriz de testes manuais de chamada (emulador e aparelho) | `docs/testes/chamadas.md` |
 | Contrato publicado pelo servidor (OpenAPI) | `docs/contrato/openapi.json` |
 | Documentação antiga (não usar como referência) | `docs/legado/` |
 
