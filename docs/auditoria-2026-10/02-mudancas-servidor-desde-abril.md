@@ -27,7 +27,7 @@ Achado transversal importante para priorizar: **vários repositórios do Android
 
 ## 1. Linha do tempo dos commits do servidor desde 2026-04-26
 
-> Atualizado em 2026-10-06 (noite) com o commit `8031fa5` (linha 23, marcada com 🆕).
+> Atualizado em 2026-10-06 (noite) com o commit `8031fa5` (linha 23) e em 2026-10-08 com `d4435db` e `5cad911` (linhas 24 e 25), marcados com 🆕.
 
 Base: **`56e7cc0`** (2026-04-19) — Delphi + Horse na porta 8080, WebSocket próprio (Bird Socket) na porta **9090** (`dpr@56e7cc0:571`), nginx nativo no Windows escutando **4430** em DEV (`bin/nginx/conf/nginx.conf@56e7cc0:28`) e repassando `/ws/` → 9090, `/webrtc/` → MediaMTX nativo em 127.0.0.1:8889, `/storage/` → MinIO. Push FCM com bloco `notification` (sem `data`).
 
@@ -56,6 +56,8 @@ Base: **`56e7cc0`** (2026-04-19) — Delphi + Horse na porta 8080, WebSocket pr�
 | 21 | `8283616` | 2026-10-05 | Atividades: reações, respostas, menções e chamadas perdidas | **Novos `GET /atividades`, `GET /atividades/novas`, `POST /atividades/vistas`**; **novo evento WS 61 (`NovaAtividade`)**; `POST /chamada/recusar` aceita `nao_atendeu: boolean` (evento de chamada 8). Migração 033. |
 | 22 | `7f670c3` | 2026-10-06 | Permissões do sistema e parâmetros alterados pela API | **Novos `GET /usuario/permissoes`, `GET /permissoes`, `PUT`/`DELETE /permissao/usuario`, `GET`/`PATCH /parametros`** (403 sem permissão). Migração 034. Nenhuma rota usada pelo Android passou a exigir permissão (só `parametros.ts:12,58` e `permissoes.ts:57,82,98` chamam `validarPermissao`). |
 | 23 🆕 | `8031fa5` | 2026-10-06 (noite) | Votação em grupo: enquete com escolha única ou múltipla | **Novos `PUT /enquete`, `GET /enquete?id=`, `POST /enquete/votar`**; **novo evento WS 62 (`EnqueteAtualizada`)** `{enquete_id, conversa_id}`; **conteúdo tipo 8** = id da enquete, que só o servidor grava (`PUT /mensagem` com tipo 8 → 400, então enquete não pode ser encaminhada); prévia/push `enquete`. Migração 035. Não altera nenhuma rota que o Android antigo usa; o app antigo mostra a bolha vazia (tipo desconhecido) e ignora o WS 62. Detalhes: doc 01 §10.13 |
+| 24 🆕 | `d4435db` | 2026-10-07 (noite) | Reações: no máximo 5 emojis diferentes por pessoa na mesma mensagem | `PUT /mensagem/reacao` recusa o 6º emoji diferente da mesma pessoa na mesma mensagem: 400 `Você já reagiu com 5 emojis nesta mensagem.` Tirar continua livre. O app antigo não reage (não afeta). Detalhes: doc 01 §10.12 |
+| 25 🆕 | `5cad911` | 2026-10-07 (noite) | Votação com data final e encerramento antes do prazo | **Novos `POST /enquete/encerrar` e `PATCH /enquete`**; `PUT /enquete` aceita `encerra_em`; o `Enquete` ganha `encerra_em`, `encerrada_em`, `encerrada`, `pode_encerrar`, `pode_alterar_prazo`; votar encerrada → 400; WS 62 também ao encerrar e ao mudar a data. Migração 036. O app antigo não tem votação (não afeta). Detalhes: doc 01 §10.13 |
 
 ---
 
@@ -249,6 +251,8 @@ Diferenças com abril (`api.pas@56e7cc0:1683-1810`): `excluida_em` novo; `transc
 | `GET /api/docs`, `GET /api/docs/json` | `95430ba` | Documentação OpenAPI gerada a partir dos esquemas — útil como contrato de referência para o Android |
 | 🆕 `PUT /api/enquete` `{conversa_id, pergunta, opcoes[], multipla}` | `8031fa5` | Cria enquete + a mensagem tipo 8 (só em grupo) → mensagem + `enquete_id` |
 | 🆕 `GET /api/enquete?id=` | `8031fa5` | `{id, conversa_id, mensagem_id, pergunta, multipla, criado_por, opcoes:[{id, texto, votantes:[{id,nome}]}], total_votantes, meus_votos}` |
+| 🆕 `POST /api/enquete/encerrar` `{enquete_id}` | `5cad911` | Encerra antes do prazo (quem criou a votação ou o grupo); devolve a enquete; WS 62 |
+| 🆕 `PATCH /api/enquete` `{enquete_id, encerra_em\|null}` | `5cad911` | Define, adia ou tira a data final (quem criou); devolve a enquete; WS 62 |
 | 🆕 `POST /api/enquete/votar` `{enquete_id, opcoes:int[]}` | `8031fa5` | Substitui o voto (vazio tira); devolve a enquete; WS 62 a todos os membros |
 
 ---

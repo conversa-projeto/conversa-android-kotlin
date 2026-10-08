@@ -1,6 +1,6 @@
 # 03 — Inventário de funcionalidades e comportamento do cliente web (conversa-web)
 
-> Auditoria de 2026-10-06. Fonte: `C:\Users\danie\Desktop\GIT\conversa-projeto\conversa-web` no commit `bfb79d8` (2026-10-06, "Abas Sistema e Acessos nas configurações; Equipes sai da barra"), **atualizado com `39d06f9`** (2026-10-06 21:22, "Campo de mensagem rico, votação em grupo e chat completo na chamada"). Itens novos ou alterados por esse commit estão marcados com 🆕; o resumo está na §10. Foram lidos `CLAUDE.md`, `README.md`, todo o `src/`, `chat-popup.html`, `public/firebase-messaging-sw.js`, `package.json`, `vite.config.ts`, os nomes dos testes em `tests/unit/` (589 casos) e o `git show --stat` de todos os commits desde 2026-09-12.
+> Auditoria de 2026-10-06. Fonte: `C:\Users\danie\Desktop\GIT\conversa-projeto\conversa-web` no commit `bfb79d8` (2026-10-06, "Abas Sistema e Acessos nas configurações; Equipes sai da barra"), **atualizado com `39d06f9`** (2026-10-06 21:22, "Campo de mensagem rico, votação em grupo e chat completo na chamada"). Itens novos ou alterados por esse commit estão marcados com 🆕; o resumo está na §10. **Atualizado de novo em 2026-10-08** com `eaa8bac` e `785bdef` (2026-10-07 20:30 e 20:41): as marcações citam o commit (🆕 `eaa8bac`) e o resumo está na §11. Foram lidos `CLAUDE.md`, `README.md`, todo o `src/`, `chat-popup.html`, `public/firebase-messaging-sw.js`, `package.json`, `vite.config.ts`, os nomes dos testes em `tests/unit/` (589 casos) e o `git show --stat` de todos os commits desde 2026-09-12.
 >
 > Objetivo: servir de **checklist de paridade** para o app Android (`conversa-android-kotlin`). Cada funcionalidade tem um ID (ex.: `MSG-07`) para ser marcada como "feito / parcial / falta" na comparação com o Android.
 >
@@ -311,7 +311,7 @@ Legenda dos campos: **Comportamento** (o que o usuário vê/faz), **API/WS** (ro
 - Validações: "Informe o nome do grupo." / "Selecione ao menos um usuário.".
 - API: `PUT /conversa {descricao, tipo:2}` → `PUT /conversa/usuario` para cada membro **incluindo o criador** (em paralelo, sem duplicar) → recarrega e abre o grupo.
 
-**CON-08 Gerenciar membros do grupo** (`GroupMembersModal.vue`)
+**CON-08 Gerenciar membros do grupo** (`GroupMembersModal.vue`) — 🆕 `eaa8bac`: o modal virou o painel **"Dados do grupo"** (`PainelGrupo.vue`), aberto pelo avatar do grupo no cabeçalho ou pelo botão "Participantes e anexos", com os anexos da conversa embaixo (§11)
 - "Membros do grupo": campo "Nome do grupo" + "Renomear" (habilitado só se mudou; "Salvando..."); lista de membros com "Remover" (não aparece para si mesmo; "Removendo..."); "Adicionar participante" com select "Selecionar usuario" (contatos fora do grupo) + "Adicionar" ("Adicionando..."). Mensagens: "Grupo renomeado com sucesso.", "Participante adicionado com sucesso.", "Participante removido com sucesso.".
 - API: `GET /conversa/usuarios?conversa=` → `[{id (conversa_usuario_id), usuario_id, nome, avatar_url}]`; `PATCH /conversa {id, descricao}`; `PUT /conversa/usuario {conversa_id, usuario_id}`; `DELETE /conversa/usuario?id=<conversa_usuario_id>`.
 - Não há regra de administrador no cliente: qualquer membro pode renomear/adicionar/remover (o servidor pode recusar).
@@ -420,6 +420,7 @@ Hora (`HH:MM`) dentro da bolha (`MensagemStatus.vue`), posição conforme varian
 **MSG-16 Mensagem oculta** (antigo "excluída") — `BolhaExcluida.vue`
 - Mostra "Mensagem oculta" + hora/status. Clique alterna revelar/ocultar o conteúdo original ("Mensagem oculta" continua no topo); clicar em controles do conteúdo (botões, links, áudio, vídeo, imagem) não alterna. Tooltip "Clique para ver o conteúdo" / "Clique para ocultar o conteúdo".
 - Sem menu de ações e sem reações. Não entra na galeria do visualizador. Citações de mensagem oculta mostram "Mensagem oculta" sem o conteúdo.
+- 🆕 `eaa8bac` Votação oculta: ao revelar, mostra o resumo só de leitura (`EnqueteResumo.vue`): "📊 <pergunta>" e cada opção com a contagem (tooltip com os nomes ou "Ninguém votou"); "Carregando votação..." / erro.
 
 **MSG-17 Selo de mensagem agendada** (só o autor vê antes da hora)
 - Acima da bolha: "Agendada para hoje HH:MM" / "amanhã HH:MM" / "dd/MM HH:MM". Some exatamente na hora (timer agendado, não espera o ciclo de 30 s — `useAgora.ts`).
@@ -508,6 +509,7 @@ Hora (`HH:MM`) dentro da bolha (`MensagemStatus.vue`), posição conforme varian
 - Toggle: reagir de novo com o mesmo emoji remove. Atualização otimista; erro recarrega a conversa.
 - Abaixo da bolha: chips `emoji contagem` (destacado se eu reagi; clicar alterna); tooltip lista quem reagiu com foto e hora (hoje `HH:MM`, senão `dd/MM HH:MM`).
 - API: `PUT /mensagem/reacao {mensagem_id, emoji}` → `{mensagem_id, emoji, acao}`.
+- 🆕 `eaa8bac` **Limite:** até **5 emojis diferentes por pessoa** na mesma mensagem. O web confere antes da reação otimista e mostra o diálogo "Não foi possível reagir" / "Você já reagiu com 5 emojis nesta mensagem." (o servidor confere de novo). Na bolha, **5 chips à mostra** e o resto num chip **"+N"** (destacado se eu reagi em algum); passar o mouse lista os demais (emoji, contagem, nomes) e clicar num deles alterna.
 - WS tipo 7 `{conversa_id, mensagem_id, emoji, acao, usuario_id}` — `acao === 'remove'` remove; outro valor adiciona.
 - Mensagem oculta não mostra reações.
 
@@ -551,6 +553,7 @@ Hora (`HH:MM`) dentro da bolha (`MensagemStatus.vue`), posição conforme varian
 
 **ANX-07 Visualizador de HTML isolado** (`VisualizadorHtml.vue`)
 - Botão "Abrir" em `.html/.htm` (chat e página de Anexos). Baixa o HTML e mostra em `iframe srcdoc` com `sandbox="allow-scripts"` **sem** `allow-same-origin` e `referrerpolicy=no-referrer` (sem acesso ao token/cookies). "Carregando HTML..." / "Não foi possível abrir o HTML. Tente baixar o arquivo.".
+- 🆕 `eaa8bac` Links `#...` rolam dentro do próprio documento (um script injetado logo depois do `<head>`); antes, no `srcdoc`, eles abriam o Conversa dentro do quadro.
 
 **ANX-08 Markdown e Mermaid** — dentro de blocos de código (MSG-15). Não há visualizador de **arquivo** `.md` anexado (só para blocos no texto).
 
@@ -573,7 +576,7 @@ Hora (`HH:MM`) dentro da bolha (`MensagemStatus.vue`), posição conforme varian
 - Estado inicial vem nos próprios conteúdos da mensagem (`transcricao_status`, `transcricao`).
 - API: `PUT /anexo/transcricao {identificador}` e `GET /anexo/transcricao?identificador=` → `{status, texto, erro}`. Se o servidor não tem transcritor configurado (parâmetro `transcritor_url` vazio), o botão não funciona (ver CFG-07).
 
-**ANX-13 Página de Anexos** (`AnexosPage.vue`, `AnexosLista.vue`)
+**ANX-13 Página de Anexos** (`AnexosPage.vue`, `AnexosLista.vue`) — 🆕 `eaa8bac`: a mesma `AnexosLista` aparece no painel "Dados do grupo" (CON-08), já com a conversa do grupo
 - Sem conversa selecionada: campo "Buscar contato ou grupo..." e "Selecione um contato ou grupo para ver os anexos"; resultados com avatar, etiqueta "Grupo", prévia; "Nenhum resultado".
 - Com conversa: chip da conversa com "Limpar selecao"; filtros de direção **Todos / Enviados / Recebidos** e de tipo **Todos / Imagens / Arquivos / Audios / Gravacoes**.
 - Imagens em grade (lazy, "Erro" se falhar) com ações "Abrir mensagem" e "Baixar"; demais em lista: ícone/miniatura, nome ("Sem nome"), tamanho · data (hoje `HH:MM`, senão `dd/MM/aa`) · (sem conversa: nome da conversa), autor; ações "Abrir mensagem", "Baixar" e player nativo para áudios.
@@ -640,7 +643,7 @@ Arquivos centrais: `stores/call.ts`, `CallWindow.vue`, `components/CallBar.vue`,
 - Sair: `POST /chamada/sair {id}`. Existe também `POST /chamada/finalizar {id}` (encerra para todos) na store, **sem botão na UI**.
 - A cada 4 s em chamada ativa, sincroniza peers com `GET /chamada/dados` (reconecta quem caiu ou está sem trilhas).
 
-**CHA-11 Controles da chamada** — 🆕 cores: microfone, câmera e som ficam **vermelhos quando desligados**; tela, chat e ponteiro ficam **azuis quando ligados**; os demais ficam neutros (`CallWindow.vue`, `CallControlButton.vue`)
+**CHA-11 Controles da chamada** — 🆕 `eaa8bac`: os liga/desliga (microfone, câmera, som, tela, chat, ponteiro) viraram **pílulas com ícone + chave** (verde ligada, cinza desligada; `role="switch"`, `aria-checked`), e a cor do botão não muda mais com o estado. Antes, 🆕 cores: microfone, câmera e som ficam **vermelhos quando desligados**; tela, chat e ponteiro ficam **azuis quando ligados**; os demais ficam neutros (`CallWindow.vue`, `CallControlButton.vue`)
 - Microfone (liga/desliga a trilha), Câmera (só vídeo), Compartilhar tela (só vídeo), Chat da chamada (com contador de não lidas), Ponteiro (só quando alguém compartilha a tela), Áudio de saída (silencia os outros), Adicionar usuário (só `ativa`), Voltar ao grid (em destaque), Minimizar/Expandir, Sair (vermelho).
 - Cabeçalho: indicador, "Chamando..." / "Em chamada" / "Encerrando...", duração `mm:ss` ou `hh:mm:ss`, "Vídeo"/"Áudio", "N pessoa(s)".
 - Tiles: nome ("<eu> (você)"); sem vídeo → iniciais; erro de conexão em faixa vermelha (`erroMsg`, ex.: "Erro ao conectar com <nome>: …"; 404 de WHEP não vira erro, tenta de novo).
@@ -669,7 +672,8 @@ Arquivos centrais: `stores/call.ts`, `CallWindow.vue`, `components/CallBar.vue`,
 
 **CHA-18 Chat da chamada** — 🆕 na janela principal o painel virou o **chat completo** (CHA-24) (commit `20d5b73`)
 - Painel "Chat da chamada" ao lado do vídeo (celular: por cima). Vazio: "As mensagens enviadas aqui ficam num grupo com quem está na chamada.". Só texto: anexos aparecem como "[Imagem]", "[Áudio]", "[Figurinha]", "[Arquivo]"; mensagens ocultas não aparecem. Campo "Mensagem", Enter envia.
-- O grupo só é criado na **primeira mensagem**: `PUT /chamada/chat {id}` → `{conversa_id}` (idempotente; guardado em `chamada.conversa_chat_id`). Se outro criou, chega WS 57 `{acao:'chat', conversa_id}`. Quem entra depois passa a fazer parte (servidor).
+- 🆕 `eaa8bac` Agora o grupo é criado no **primeiro clique no campo** (não mais na primeira mensagem): sem grupo, o painel mostra o aviso e um campo-botão "Digite uma mensagem" ("Abrindo o chat..."); o clique chama `PUT /chamada/chat`, abre o chat completo (CHA-24) e põe o cursor no campo. Erro aparece numa faixa vermelha.
+- (Antes de `eaa8bac`) O grupo só é criado na **primeira mensagem**: `PUT /chamada/chat {id}` → `{conversa_id}` (idempotente; guardado em `chamada.conversa_chat_id`). Se outro criou, chega WS 57 `{acao:'chat', conversa_id}`. Quem entra depois passa a fazer parte (servidor).
 - Envio: `PUT /mensagem` no grupo; recarrega `GET /mensagens?conversa=<grupo>&…80`. Painel aberto marca as recebidas como visualizadas. Botão do chat mostra o número de não lidas do grupo quando fechado.
 
 **CHA-19 Indicador de fala** (`useFalaChamada.ts`)
@@ -1162,6 +1166,7 @@ Commit **`39d06f9`** — "Campo de mensagem rico, votação em grupo e chat comp
 - **Textos da tela:** título "Nova votação"; campo "Pergunta" (placeholder "Ex.: Onde vamos almoçar?", máx. 300); "Opções" com 2 campos iniciais ("Opção 1", "Opção 2", máx. 200 cada), "+ Adicionar opção" até **12** e "×" para remover (só com mais de 2); checkbox "Permitir várias escolhas" / "Cada pessoa pode marcar mais de uma opção."
 - **Botões:** "Cancelar" / "Criar votação" ("Criando..."). Fica habilitado com pergunta preenchida e ≥ 2 opções preenchidas.
 - **API:** `PUT /enquete {conversa_id, pergunta, opcoes (só as preenchidas, trim), multipla}`.
+- 🆕 `785bdef` **Data final (opcional):** checkbox "Definir data final" / "Depois dela ninguém vota mais. Dá para mudar ou encerrar antes pela votação." → campo de data e hora (sugestão: amanhã, na próxima hora cheia). Erros: "Informe a data e a hora", "A data final precisa estar no futuro", "A data final não pode passar de 1 ano"; com erro, "Criar votação" fica desabilitado. Vai como `encerra_em` (ISO).
   - Depois de criar, o web recarrega as mensagens e as conversas.
   - Erros do servidor aparecem na caixa vermelha: só grupo, opções repetidas etc.
 
@@ -1187,6 +1192,12 @@ Commit **`39d06f9`** — "Campo de mensagem rico, votação em grupo e chat comp
   - Envia sempre a lista completa: `POST /enquete/votar {enquete_id, opcoes}` → substitui a enquete no cache.
   - Os botões ficam desabilitados enquanto vota; em erro, mostra "Não foi possível votar".
 - **Tempo real:** WS 62 `{enquete_id}` → relê `GET /enquete` **só se a enquete está no cache**, ou seja, na tela.
+- 🆕 `785bdef` **Data final e encerramento:**
+  - aberta com data: o subtítulo ganha "· encerra hoje 18:00" / "amanhã 08:30" / "12/10 18:00" (com o ano, se for outro);
+  - quem criou vê "Definir data final" / "Alterar data final": um editor na bolha com "Data final", "Tirar data" (se tem), "Cancelar" e "Salvar" (`PATCH /enquete`; erro "Não foi possível mudar a data final");
+  - quem criou a votação ou o grupo vê "Encerrar votação": confirmação de perigo "Encerrar votação" / "Depois de encerrada, ninguém vota mais e o resultado fica como está." / "Encerrar" (`POST /enquete/encerrar`; erro "Não foi possível encerrar a votação");
+  - encerrada (pelo servidor, ou o prazo passou com a bolha aberta, na hora exata): "🔒 Votação encerrada <quando>", opções desabilitadas, a mais votada (ou as empatadas, com votos) em negrito com 🏆; os botões somem;
+  - o resumo (`EnqueteResumo`) mostra "Votação encerrada".
 - **Resumos:** "Votação" em prévias, notificações, atividades (`AtividadesPage`), citações (`messageReferences.ts`) e chat da chamada ("[Votação]").
 - **Encaminhar:** o servidor recusa tipo 8 em `PUT /mensagem` (400). O web não esconde "Encaminhar" para enquete, então encaminhar dá erro. **No Android: esconder "Encaminhar" para enquete.**
 
@@ -1202,3 +1213,31 @@ Commit **`39d06f9`** — "Campo de mensagem rico, votação em grupo e chat comp
 - **Bolhas com vários conteúdos:** saiu o divisor entre conteúdos, e as imagens dentro da bolha padrão ou de referência ficam **sem moldura** (`imagemSemMoldura`).
 - **Modais:** o encaminhamento passou a ficar por cima da janela da chamada (`z-50`).
 - **Testes:** `tests/unit/enquetes.test.ts`, `blocosEditor.test.ts`, `entradaEAvatar.test.ts` (reescrito), `CallWindow.test.ts`.
+
+## 11. Atualização de 2026-10-08 — commits `eaa8bac` e `785bdef`
+
+Os dois commits são de 2026-10-07 (noite) e acompanham os do servidor `d4435db` (limite de reações) e `5cad911` (votação com data final), descritos no doc 01 §10.12, §10.13 e §20. Não há IDs novos: são mudanças em funcionalidades que já existiam (o total segue 136).
+
+### `eaa8bac` — "Painel do grupo, limite de reações, votação oculta e chave na chamada"
+- **CON-08 / ANX-13 — painel "Dados do grupo"** (`PainelGrupo.vue`, substitui o `GroupMembersModal.vue`):
+  - abre à direita do chat (por cima, em tela pequena) pelo **avatar do grupo** no cabeçalho ("Dados do grupo") ou pelo botão "Participantes e anexos";
+  - em cima: "Nome do grupo" + "Renomear" ("Salvando..."); "N participantes"; "Adicionar pessoas" abre uma busca ("Buscar contato...") entre os contatos fora do grupo ("Adicionando...", "Nenhum contato encontrado", "Todos os contatos já estão no grupo");
+  - cada participante com foto, bolinha de online, "(você)" e "Remover" ("Removendo..."; o servidor só aceita remover o próprio vínculo, pendência S15);
+  - embaixo: "Anexos" com a mesma lista e filtros da página de Anexos (ANX-13), abrindo a galeria ou a mensagem.
+- **ENV-17 — limite de reações:** 5 emojis diferentes por pessoa (conferido antes da reação otimista); erro em diálogo "Não foi possível reagir"; 5 chips à mostra e o resto num "+N".
+- **MSG-16 — votação oculta:** revelar mostra o resumo só de leitura (pergunta + contagem por opção).
+- **ANX-07 — HTML:** links `#...` rolam dentro do documento.
+- **CHA-11 — chave nos liga/desliga** da chamada (pílula com ícone + chave).
+- **CHA-18 / CHA-24 — chat da chamada:** o grupo é criado no primeiro clique no campo, que já abre o chat completo.
+
+### `785bdef` — "Votação com data final e opção de encerrar"
+- **ENV-22:** data final opcional ao criar.
+- **MSG-20:** "encerra …" no subtítulo; "Definir/Alterar data final" (quem criou); "Encerrar votação" (quem criou a votação ou o grupo), com confirmação; encerrada mostra "🔒 Votação encerrada …", destaca a mais votada com 🏆 e não aceita votos; o prazo que vence com a bolha aberta encerra na hora.
+
+### Para o Android
+- Reações (7.2, já feita): falta o limite de 5 antes da otimista e o chip "+N" (no celular, um toque abre a lista dos demais).
+- Votação (7.12): data final na criação, editar/tirar a data, encerrar, estado encerrado e prazo vencendo na tela; resumo da votação oculta.
+- Grupo (2.10 / 8.6): abrir os dados do grupo pelo avatar do cabeçalho do chat e mostrar os anexos do grupo na mesma tela.
+- Chat da chamada (6.x): criar o grupo ao tocar no campo, não na primeira mensagem.
+- Chave nos controles da chamada: adaptação visual; no Android os botões de liga/desliga já mostram o estado pelo ícone e pela cor.
+- HTML (ANX-07): o Android abre o HTML com outro app (4.x), então não se aplica.

@@ -3401,6 +3401,13 @@
                   },
                   "multipla": {
                     "type": "boolean"
+                  },
+                  "encerra_em": {
+                    "nullable": true,
+                    "type": [
+                      "string",
+                      "null"
+                    ]
                   }
                 }
               }
@@ -3442,6 +3449,13 @@
                   },
                   "multipla": {
                     "type": "boolean"
+                  },
+                  "encerra_em": {
+                    "nullable": true,
+                    "type": [
+                      "string",
+                      "null"
+                    ]
                   }
                 }
               }
@@ -3483,6 +3497,13 @@
                   },
                   "multipla": {
                     "type": "boolean"
+                  },
+                  "encerra_em": {
+                    "nullable": true,
+                    "type": [
+                      "string",
+                      "null"
+                    ]
                   }
                 }
               }
@@ -3512,6 +3533,104 @@
           }
         ],
         "operationId": "getApiEnquete"
+      },
+      "patch": {
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": [
+                  "enquete_id",
+                  "encerra_em"
+                ],
+                "properties": {
+                  "enquete_id": {
+                    "anyOf": [
+                      {
+                        "format": "integer",
+                        "default": 0,
+                        "type": "string"
+                      },
+                      {
+                        "type": "integer"
+                      }
+                    ]
+                  },
+                  "encerra_em": {
+                    "nullable": true,
+                    "type": [
+                      "string",
+                      "null"
+                    ]
+                  }
+                }
+              }
+            },
+            "application/x-www-form-urlencoded": {
+              "schema": {
+                "type": "object",
+                "required": [
+                  "enquete_id",
+                  "encerra_em"
+                ],
+                "properties": {
+                  "enquete_id": {
+                    "anyOf": [
+                      {
+                        "format": "integer",
+                        "default": 0,
+                        "type": "string"
+                      },
+                      {
+                        "type": "integer"
+                      }
+                    ]
+                  },
+                  "encerra_em": {
+                    "nullable": true,
+                    "type": [
+                      "string",
+                      "null"
+                    ]
+                  }
+                }
+              }
+            },
+            "multipart/form-data": {
+              "schema": {
+                "type": "object",
+                "required": [
+                  "enquete_id",
+                  "encerra_em"
+                ],
+                "properties": {
+                  "enquete_id": {
+                    "anyOf": [
+                      {
+                        "format": "integer",
+                        "default": 0,
+                        "type": "string"
+                      },
+                      {
+                        "type": "integer"
+                      }
+                    ]
+                  },
+                  "encerra_em": {
+                    "nullable": true,
+                    "type": [
+                      "string",
+                      "null"
+                    ]
+                  }
+                }
+              }
+            }
+          }
+        },
+        "operationId": "patchApiEnquete"
       }
     },
     "/api/enquete/votar": {
@@ -3639,6 +3758,82 @@
           }
         },
         "operationId": "postApiEnqueteVotar"
+      }
+    },
+    "/api/enquete/encerrar": {
+      "post": {
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": [
+                  "enquete_id"
+                ],
+                "properties": {
+                  "enquete_id": {
+                    "anyOf": [
+                      {
+                        "format": "integer",
+                        "default": 0,
+                        "type": "string"
+                      },
+                      {
+                        "type": "integer"
+                      }
+                    ]
+                  }
+                }
+              }
+            },
+            "application/x-www-form-urlencoded": {
+              "schema": {
+                "type": "object",
+                "required": [
+                  "enquete_id"
+                ],
+                "properties": {
+                  "enquete_id": {
+                    "anyOf": [
+                      {
+                        "format": "integer",
+                        "default": 0,
+                        "type": "string"
+                      },
+                      {
+                        "type": "integer"
+                      }
+                    ]
+                  }
+                }
+              }
+            },
+            "multipart/form-data": {
+              "schema": {
+                "type": "object",
+                "required": [
+                  "enquete_id"
+                ],
+                "properties": {
+                  "enquete_id": {
+                    "anyOf": [
+                      {
+                        "format": "integer",
+                        "default": 0,
+                        "type": "string"
+                      },
+                      {
+                        "type": "integer"
+                      }
+                    ]
+                  }
+                }
+              }
+            }
+          }
+        },
+        "operationId": "postApiEnqueteEncerrar"
       }
     },
     "/api/usuario/permissoes": {

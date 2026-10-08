@@ -1,6 +1,6 @@
 # Contrato atual do servidor Conversa (referência para o cliente Android Kotlin)
 
-> Auditoria de 2026-10-06. Fonte: repositório `conversa` (servidor Bun + Elysia), último commit lido **`8031fa5`** ("Votação em grupo: enquete com escolha única ou múltipla", 2026-10-06 21:22), atualizado a partir de `7f670c3`. Migrações aplicadas até a versão **35** (`migracoes/000.sql` … `035.sql`). Mudanças do commit `8031fa5` estão marcadas com 🆕 e resumidas na §20.
+> Auditoria de 2026-10-06. Fonte: repositório `conversa` (servidor Bun + Elysia), último commit lido **`5cad911`** ("Votação com data final e encerramento antes do prazo", 2026-10-07 20:41), atualizado a partir de `7f670c3`. Migrações aplicadas até a versão **36** (`migracoes/000.sql` … `036.sql`). Mudanças desde `7f670c3` estão marcadas com 🆕 (quando não é o `8031fa5`, o commit vem junto) e resumidas na §20.
 >
 > Todas as referências `arquivo:linha` são relativas à raiz do repositório do servidor (`C:\Users\danie\Desktop\GIT\conversa-projeto\conversa`). Quando algo vem do cliente web de referência (`conversa-web`), isso é dito explicitamente: o servidor não define, a página é que usa assim.
 >
@@ -179,7 +179,7 @@ Validação (`src/esquemas.ts:1-14`):
 
 ## 4. Tabela de TODAS as rotas REST
 
-Prefixo `/api` em todas (`src/rotas.ts:28`). "Token" = exige `Authorization: Bearer`. Total: **67 rotas** em `src/rotas.ts` (2 públicas + 65 autenticadas; as 3 de enquete 🆕 estão no fim da tabela como 65–67), mais a documentação `/api/docs` e `/api/docs/json` (públicas, do plugin OpenAPI) e o WebSocket `/ws/`.
+Prefixo `/api` em todas (`src/rotas.ts:28`). "Token" = exige `Authorization: Bearer`. Total: **69 rotas** em `src/rotas.ts` (2 públicas + 67 autenticadas; as 5 de enquete 🆕 estão no fim da tabela como 65–69), mais a documentação `/api/docs` e `/api/docs/json` (públicas, do plugin OpenAPI) e o WebSocket `/ws/`.
 
 Legenda de efeitos: **WS n** = evento WebSocket tipo n (§6.4); **FCM** = push.
 
@@ -252,6 +252,8 @@ Legenda de efeitos: **WS n** = evento WebSocket tipo n (§6.4); **FCM** = push.
 | 65 🆕 | PUT | `/enquete` | token | – | `conversa_id`, `pergunta` (≤ 300), `opcoes: string[]` (2–12, cada ≤ 200), `multipla: bool` | mensagem criada + `enquete_id` | membro; **só grupo** (400) | cria a mensagem tipo 8 (WS 2, push, WS 3 como uma mensagem normal) | `rotas.ts` (`8031fa5`), `enquetes.ts:12-45` |
 | 66 🆕 | GET | `/enquete` | token | `id` | – | `Enquete` (§10.13) | membro da conversa (403); 404 | – | `enquetes.ts:54-78` |
 | 67 🆕 | POST | `/enquete/votar` | token | – | `enquete_id`, `opcoes: int[]` (≤ 12; vazio tira o voto) | `Enquete` (§10.13) | membro; escolha única aceita 1 (400) | **WS 62** a **todos** os membros (inclusive quem votou) | `enquetes.ts:82-116` |
+| 68 🆕 `5cad911` | POST | `/enquete/encerrar` | token | – | `enquete_id` | `Enquete` (§10.13) | quem criou a votação **ou** quem criou o grupo (403); já encerrada (400) | **WS 62** a todos os membros | `enquetes.ts` (`encerrarEnquete`) |
+| 69 🆕 `5cad911` | PATCH | `/enquete` | token | – | `enquete_id`, `encerra_em: string \| null` | `Enquete` (§10.13) | só quem criou a votação (403); já encerrada (400); data inválida (400) | **WS 62** a todos os membros | `enquetes.ts` (`alterarPrazoEnquete`) |
 
 Todas as rotas de `src/rotas.ts` estão na tabela acima; nenhuma foi omitida.
 
@@ -379,7 +381,7 @@ Todos são enviados a **todas as conexões abertas** do usuário destinatário (
 | 57 | `{"tipo":57,"chamada_id":int,"usuario_id":int,"dados":{...}}` | Repasse de sinal (§9.11) ou aviso do servidor `{acao:"chat",conversa_id}` | `websocket.ts:156-158,213-215` |
 | 60 | `{"tipo":60,"usuario_id":int,"online":bool}` | Usuário abriu a **primeira** conexão / fechou a **última**; vai a quem tem conversa direta (tipo 1) com ele | `websocket.ts:224-237` |
 | 61 | `{"tipo":61}` | Atividade nova ou removida para o usuário; recarregar `/atividades/novas` | `websocket.ts:151-153`, `atividades.ts` |
-| 62 🆕 | `{"tipo":62,"enquete_id":int,"conversa_id":int}` | Alguém votou (ou tirou o voto) numa enquete; vai a todos os membros da conversa, inclusive outras abas/aparelhos de quem votou. O cliente relê `GET /enquete?id=` só se a bolha está carregada | `websocket.ts` (`notificarEnquete`), `enquetes.ts:110-114` |
+| 62 🆕 | `{"tipo":62,"enquete_id":int,"conversa_id":int}` | Alguém votou (ou tirou o voto) numa enquete — ou, 🆕 `5cad911`, a votação foi encerrada ou teve a data final mudada; vai a todos os membros da conversa, inclusive outras abas/aparelhos de quem votou. O cliente relê `GET /enquete?id=` só se a bolha está carregada | `websocket.ts` (`notificarEnquete`), `enquetes.ts:110-114` |
 | 9 | `{"tipo":9,"message":string}` | Mensagem do cliente ilegível | `websocket.ts:61-66` |
 
 ### 6.7 Keepalive e reconexão
@@ -844,7 +846,7 @@ Resposta: uma linha por conversa que tenha mensagem **de outra pessoa**, já vis
 
 ### 10.12 Reações — `PUT /api/mensagem/reacao`
 
-`src/mensagens.ts:722-755`. Corpo `{ "mensagem_id": int, "emoji": string }`. Alterna: se o usuário já reagiu com esse emoji, remove; senão adiciona. Um usuário pode ter vários emojis na mesma mensagem. Resposta `{ "mensagem_id", "emoji", "acao": "add"|"remove" }`. 404 `Mensagem não encontrada!`; 403 se não é membro. `emoji` > 10 caracteres (code points) → 500. Efeitos: WS 7 aos outros membros; atividade de reação para o autor da mensagem (se não for ele mesmo) com WS 61.
+`src/mensagens.ts:722-755`. Corpo `{ "mensagem_id": int, "emoji": string }`. Alterna: se o usuário já reagiu com esse emoji, remove; senão adiciona. Um usuário pode ter vários emojis na mesma mensagem — 🆕 `d4435db`: **no máximo 5 emojis diferentes por pessoa** na mesma mensagem; o 6º → 400 `Você já reagiu com 5 emojis nesta mensagem.` (tirar um emoji continua livre). Resposta `{ "mensagem_id", "emoji", "acao": "add"|"remove" }`. 404 `Mensagem não encontrada!`; 403 se não é membro. `emoji` > 10 caracteres (code points) → 500. Efeitos: WS 7 aos outros membros; atividade de reação para o autor da mensagem (se não for ele mesmo) com WS 61.
 
 ---
 
@@ -854,13 +856,14 @@ Resposta: uma linha por conversa que tenha mensagem **de outra pessoa**, já vis
 - **Criar** — `PUT /api/enquete`:
 
   ```json
-  { "conversa_id": 10, "pergunta": "Onde vamos almoçar?", "opcoes": ["Centro", "Shopping"], "multipla": false }
+  { "conversa_id": 10, "pergunta": "Onde vamos almoçar?", "opcoes": ["Centro", "Shopping"], "multipla": false, "encerra_em": "2026-10-09T18:00:00.000Z" }
   ```
 
   - Validações (`src/enquetes.ts:12-30`, `esquemas.ts`):
     - `pergunta` ≤ 300 caracteres e não vazia após `trim()` (400 `Informe a pergunta da votação.`);
     - `opcoes` com 2 a 12 itens, cada ≤ 200; as vazias são descartadas e precisam sobrar ≥ 2 (400 `A votação precisa de pelo menos duas opções.`);
     - opções repetidas, sem diferenciar maiúsculas → 400 `As opções da votação não podem se repetir.`
+    - 🆕 `5cad911` `encerra_em` (opcional, ISO ou `null`): a data final. O servidor corta os segundos e exige **pelo menos 1 minuto no futuro** e **no máximo 1 ano**: 400 `Data final inválida.` / `A data final precisa estar no futuro.` / `A data final não pode passar de 1 ano.`
   - O servidor cria a enquete e as opções numa transação e depois **cria a mensagem** com um único conteúdo `{ordem:1, tipo:8, conteudo:"<id da enquete>"}`. Essa mensagem passa pelo mesmo caminho de `PUT /mensagem` (WS 2, push com texto `enquete`, WS 3, atividades). O `mensagem_id` é gravado na enquete.
   - **Resposta:** os campos da mensagem incluída (`id`, `conversa_id`, `usuario_id`, …) + `enquete_id`. O web, depois de criar, recarrega as mensagens da conversa e a lista de conversas.
 - **Ler** — `GET /api/enquete?id=<enquete_id>` → objeto `Enquete`:
@@ -869,6 +872,8 @@ Resposta: uma linha por conversa que tenha mensagem **de outra pessoa**, já vis
   {
     "id": 42, "conversa_id": 10, "mensagem_id": 900, "pergunta": "Onde vamos almoçar?",
     "multipla": false, "criado_por": 7,
+    "encerra_em": "2026-10-09T18:00:00.000Z", "encerrada_em": null, "encerrada": false,
+    "pode_encerrar": true, "pode_alterar_prazo": true,
     "opcoes": [ { "id": 1, "texto": "Centro", "votantes": [ { "id": 7, "nome": "Ana Souza" } ] },
                 { "id": 2, "texto": "Shopping", "votantes": [] } ],
     "total_votantes": 1,
@@ -879,19 +884,39 @@ Resposta: uma linha por conversa que tenha mensagem **de outra pessoa**, já vis
   - As `opcoes` vêm em `ordem`; os `votantes` vêm na ordem do voto e com o **nome completo**.
   - `total_votantes` conta pessoas distintas: na múltipla escolha, cada pessoa conta uma vez, então as porcentagens podem somar mais de 100% (o web calcula `votos_da_opcao / total_votantes`).
   - `meus_votos` são os ids das opções em que **o usuário do token** votou.
+  - 🆕 `5cad911`:
+    - `encerra_em`: a data final (ou `null`);
+    - `encerrada_em`: quando foi encerrada **à mão**, antes do prazo (ou `null`);
+    - `encerrada`: `encerrada_em` preenchido **ou** `encerra_em` já passou, calculado na hora da leitura;
+    - `pode_encerrar`: aberta e o usuário do token criou a votação **ou o grupo**;
+    - `pode_alterar_prazo`: aberta e o usuário do token criou a votação.
   - 404 `Votação não encontrada!`; 403 se não é membro.
 - **Votar** — `POST /api/enquete/votar {enquete_id, opcoes:[ids]}`:
   - **Substitui** o voto do usuário pelas opções enviadas: lista vazia **tira** o voto.
   - Escolha única com mais de uma opção → 400 `Esta votação aceita uma opção só.`; opção de outra enquete → 400 `Opção que não é desta votação.`
   - Resposta: o `Enquete` atualizado. Efeito: **WS 62** `{enquete_id, conversa_id}` a todos os membros, inclusive quem votou.
+  - 🆕 `5cad911` Votação encerrada → 400 `Esta votação já foi encerrada.`
+- 🆕 `5cad911` **Encerrar antes do prazo** — `POST /api/enquete/encerrar {enquete_id}`:
+  - Só quem criou a votação ou quem criou o grupo: 403 `Só quem criou a votação ou o grupo pode encerrá-la.`; já encerrada → 400.
+  - Grava `encerrada_em` e `encerrada_por`; resposta: o `Enquete`; WS 62 a todos os membros.
+- 🆕 `5cad911` **Definir, adiar ou tirar a data final** — `PATCH /api/enquete {enquete_id, encerra_em}` (`null` tira):
+  - Só quem criou a votação: 403 `Só quem criou a votação pode mudar a data final.`; encerrada → 400; mesmas validações de data da criação.
+  - Resposta: o `Enquete`; WS 62 a todos os membros.
+- 🆕 `5cad911` **Prazo vencido:** o servidor **não avisa** quando a data final passa (não há WS nem tarefa). O cliente trata `encerra_em <= agora` como encerrada, inclusive com a bolha aberta (o web encerra na hora).
 - **Comportamento do cliente web** (`conversa-web` `39d06f9`):
   - Escolha única: tocar em outra opção troca o voto; tocar na marcada tira.
   - Múltipla: marca e desmarca.
   - Bolha com "📊 pergunta", "Escolha uma opção"/"Escolha uma ou mais opções", barra de porcentagem, nomes de quem votou e "N pessoas votaram"/"1 pessoa votou".
   - Prévia/resumo: "Votação".
+  - 🆕 `785bdef`:
+    - ao criar, "Definir data final" (sugestão: amanhã, na próxima hora cheia);
+    - na bolha, "· encerra hoje 18:00" / "amanhã 08:30" / "12/10 18:00";
+    - quem pode vê "Definir/Alterar data final" (com "Tirar data") e "Encerrar votação" (confirmação "Depois de encerrada, ninguém vota mais e o resultado fica como está.");
+    - encerrada: "🔒 Votação encerrada <quando>", opções desabilitadas e a mais votada com 🏆.
+  - 🆕 `eaa8bac` Mensagem oculta de votação: ao revelar, mostra a pergunta e a contagem por opção (só leitura).
 - **Prévias e push:** `ultima_mensagem_texto` em `/conversas` e o texto do push/WS 2 dizem `enquete` (minúsculo); o web exibe "Votação".
 - **Limitações:**
-  - Não há rota para encerrar a enquete, editar, listar enquetes ou ver quando cada um votou.
+  - Não há rota para editar a pergunta ou as opções, listar enquetes ou ver quando cada um votou. (🆕 `5cad911`: encerrar e mudar a data final agora existem.)
   - Mensagem com enquete pode ser ocultada (`DELETE /mensagem`), mas os votos continuam acessíveis por `GET /enquete`.
   - A enquete não pode ser encaminhada (400).
   - Responder a uma mensagem de enquete é possível (a referência aponta para a mensagem).
@@ -1101,7 +1126,7 @@ Resumo das tabelas do schema `public` (migrações 000–035):
 | `permissao`, `permissao_usuario` | §13.1 | |
 | `sip` | §14 | |
 | `parametros` | `id`, `nome`(50, único), `valor`(5000) | |
-| `enquete` 🆕 | `id`, `conversa_id`, `mensagem_id`, `pergunta`(300), `multipla`, `criado_em`, `criado_por` | `035.sql` |
+| `enquete` 🆕 | `id`, `conversa_id`, `mensagem_id`, `pergunta`(300), `multipla`, `criado_em`, `criado_por`; 🆕 `036.sql`: `encerra_em`, `encerrada_em`, `encerrada_por` | `035.sql`, `036.sql` |
 | `enquete_opcao` 🆕 | `id`, `enquete_id`, `ordem`, `texto`(200) | |
 | `enquete_voto` 🆕 | `id`, `enquete_id`, `opcao_id`, `usuario_id`, `criado_em`; único (`opcao_id`,`usuario_id`) | |
 | `auditoria.alteracao`, `auditoria.exclusao` | log de alterações/exclusões via gatilhos | interno |
@@ -1141,7 +1166,7 @@ Atraso máximo para uma agendada "sair": ~60 s após `visivel_em`.
 14. **Perfil**: alterar nome/e-mail/telefone/avatar, senha; exclusão de conta (409).
 15. **Configurações administrativas** (opcional no Android): permissões e parâmetros conforme `/usuario/permissoes`.
 16. **SIP** (se usado): ler `/sip` e registrar no PBX.
-17. 🆕 **Enquetes**: criar em grupos (`PUT /enquete`), bolha tipo 8 lendo `GET /enquete?id=`, votar (`POST /enquete/votar`, a lista substitui o voto), reler ao receber WS 62; não permitir encaminhar enquete.
+17. 🆕 **Enquetes**: criar em grupos (`PUT /enquete`, com data final opcional), bolha tipo 8 lendo `GET /enquete?id=`, votar (`POST /enquete/votar`, a lista substitui o voto), reler ao receber WS 62; não permitir encaminhar enquete; 🆕 `5cad911` encerrar (`POST /enquete/encerrar`), mudar a data final (`PATCH /enquete`) e tratar o prazo vencido como encerrada.
 
 ---
 
@@ -1202,6 +1227,8 @@ Atraso máximo para uma agendada "sair": ~60 s após `visivel_em`.
 46. Não existe: refresh de token, logout, edição de mensagem, listagem de agendadas, avatar de grupo, administradores de grupo, miniaturas, status "ausente"/"visto por último", evento de saída de membro, evento de fim de transcrição.
 47. 🆕 Enquete (tipo 8) não pode ser enviada por `PUT /mensagem` nem encaminhada (400); a criação é só por `PUT /enquete`, e só em grupo.
 48. 🆕 `POST /enquete/votar` **substitui** o voto (não é toggle de uma opção): mande sempre a lista completa das opções marcadas.
+49. 🆕 `d4435db` Reações: no máximo **5 emojis diferentes por pessoa** na mesma mensagem (o 6º → 400). Confira antes da reação otimista, como o web.
+50. 🆕 `5cad911` Data final da votação: o servidor não manda nada quando ela passa. `encerrada` só muda na próxima leitura; o cliente compara `encerra_em` com a hora atual.
 
 ---
 
@@ -1211,3 +1238,5 @@ Atraso máximo para uma agendada "sair": ~60 s após `visivel_em`.
 |---|---|---|
 | 2026-10-06 (manhã) | `7f670c3` | Versão inicial da auditoria |
 | 2026-10-06 (noite) | `8031fa5` — "Votação em grupo: enquete com escolha única ou múltipla" | **3 rotas novas** (`PUT /enquete`, `GET /enquete`, `POST /enquete/votar`), **evento WS 62** `EnqueteAtualizada`, **conteúdo tipo 8** (só o servidor grava; não pode ser encaminhado), prévia/push `enquete`, migração `035.sql` (tabelas `enquete`, `enquete_opcao`, `enquete_voto`). Detalhes em §10.13 |
+| 2026-10-07 (noite) | `d4435db` — "Reações: no máximo 5 emojis diferentes por pessoa na mesma mensagem" | `PUT /mensagem/reacao` recusa o 6º emoji da mesma pessoa (400). Detalhes em §10.12 |
+| 2026-10-07 (noite) | `5cad911` — "Votação com data final e encerramento antes do prazo" | **2 rotas novas** (`POST /enquete/encerrar`, `PATCH /enquete`; total 69); `encerra_em` na criação; campos `encerra_em`, `encerrada_em`, `encerrada`, `pode_encerrar`, `pode_alterar_prazo` no `Enquete`; votar encerrada → 400; WS 62 também ao encerrar e ao mudar a data; migração `036.sql`. Detalhes em §10.13 |

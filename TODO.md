@@ -324,6 +324,7 @@
 - [x] Adicionar: seletor de contatos fora do grupo → `PUT /conversa/usuario` — seletor em bottom sheet com quem está fora do grupo
 - [ ] Remover (não para mim mesmo): `DELETE /conversa/usuario?id=<conversa_usuario_id>` — ⛔ o servidor só aceita remover o próprio vínculo (403 para os outros; o botão do web sempre falha). Não oferecido; a tela explica. Pendência S15
 - [x] Sair do grupo: `DELETE /conversa/usuario?id=<meu conversa_usuario_id>` — com confirmação de perigo; volta à lista
+- [ ] 🆕 `eaa8bac` Tocar no avatar/nome do grupo no cabeçalho do chat abre os dados do grupo (no web, o painel "Dados do grupo"; no Android, a tela "Membros do grupo"); os anexos do grupo entram nessa tela com o 8.6
 
 ### 2.11 Presença e conexão (FC-213, FC-214, PRE-01, GER-02)
 - [x] `PresencaRepository`: conjunto de ids online a partir de `GET /contatos/online` + WS 60 `{usuario_id, online}` — `PresencaRepositorio` (+ teste)
@@ -674,6 +675,7 @@
 - [x] Adicionar participante: contatos fora da chamada → `PUT /chamada/usuario {chamada_id, usuario_id}` (um por vez) → `GET /chamada/dados` — botão "Adicionar usuário" e diálogo "Adicionar à chamada" com caixas de seleção (textos do web) (+ teste). No emulador: numa chamada com o B, o app adicionou o C; o C recebeu, atendeu e o app passou a "3 pessoas" ✔ 0cf178b
 - [x] Chat da chamada: `PUT /chamada/chat {id}` → `{conversa_id}` na primeira mensagem; WS 57 `{acao:"chat", conversa_id}`; painel com só texto — botão "Chat da chamada": sem chat, o painel com o campo "Mensagem"; a primeira mensagem cria o chat (`GerenciadorChamadas.garantirChat`, + teste), entra na fila de envio e abre a conversa. O WS 57 de quem criou guarda a conversa. No emulador: a primeira mensagem criou o grupo "Chamada: Teste Android A, Teste Android B"; o web recebeu o mesmo chat ✔ 0cf178b
 - [x] Chat **completo** da chamada: quando o grupo existe, abrir a própria tela de chat (lista + campo completos) num painel/bottom sheet com a conversa do grupo; antes da primeira mensagem, o painel simples — no celular, a própria tela de chat do app (em vez de um painel por cima): a chamada vai para o picture-in-picture (vídeo) e a faixa "Toque para voltar à chamada" leva de volta. No emulador: o chat abriu com a mensagem, a chamada ficou em PiP; a faixa voltou à chamada; o segundo toque em "Chat da chamada" abriu a conversa direto ✔ 0cf178b
+- [ ] 🆕 `eaa8bac` O grupo do chat da chamada é criado no **primeiro toque no campo** (não mais na primeira mensagem) e já abre o chat completo com o cursor no campo; enquanto cria, "Abrindo o chat..."; erro numa faixa
 - [x] Indicador de fala: nível de áudio local e remoto (> 0,02, segura 400 ms) → anel verde no avatar — `DetectorDeFala` (+ teste) com o `audioLevel` das estatísticas do WebRTC a cada 150 ms (recebido de cada participante; o meu, do microfone); contorno verde (`chamadaEmAndamento`) no participante e na miniatura "Você". No emulador: com o microfone do B ligado, o anel verde; com ele desligado no web, o anel sumiu e voltou ao religar ✔ 068e10b
 - [x] Somente recepção: entrar sem microfone/câmera; botões "Ativar microfone"/"Ativar câmera" — `GerenciadorChamadas.ativarTransmissao(video)` abre a mídia e publica (+ 3 testes); os botões aparecem com a chamada ativa e sem mídia ("Ativar câmera" só em vídeo), pedindo a permissão na hora. Não testado no emulador: as permissões já estão concedidas lá (não revogo pelo adb) ✔ 068e10b
 - [x] Tela remota compartilhada: WS 57 `{acao:"tela", ativa}` → destacar a tela — `EstadoChamada.telas` (+ teste); a tela entra em destaque e aparece inteira (sem cortar); ao parar, volta à grade e somem os ponteiros sobre ela. No emulador: o B compartilhou a tela pelo web e o app passou sozinho ao destaque com ela ✔ 3a9f39d
@@ -703,6 +705,8 @@
 - [x] Toque longo no chip → quem reagiu (foto, nome, hora) ✔ 52d6d03
 - [x] Receber o WS 7 `{conversa_id, mensagem_id, emoji, acao, usuario_id}` (o evento não traz o nome: relê a mensagem, se ela está no aparelho) ✔ 52d6d03
 - [x] "Mais" → seletor de emoji do sistema (emoji com no máximo 10 code points) (`androidx.emoji2:emoji2-emojipicker`) ✔ 52d6d03
+- [ ] 🆕 `d4435db` No máximo 5 emojis diferentes por pessoa na mesma mensagem: conferir antes da reação otimista e avisar "Você já reagiu com 5 emojis nesta mensagem."; erro do servidor → "Não foi possível reagir" com o motivo
+- [ ] 🆕 `eaa8bac` Na bolha, 5 chips à mostra e o resto num "+N" (destacado se eu reagi em algum); toque no "+N" → lista dos demais (emoji, contagem, nomes), e tocar num deles alterna
 
 ### 7.3 Responder (FC-502, ENV-06)
 - [ ] Deslizar a bolha para a direita → responder
@@ -784,6 +788,13 @@
 - [ ] Criar: "Cancelar" / "Criar votação" ("Criando..."), habilitado com pergunta e ≥ 2 opções
 - [ ] `PUT /enquete {conversa_id, pergunta, opcoes (preenchidas, trim), multipla}` → atualizar a conversa; mostrar os erros do servidor
 - [ ] Esconder "Encaminhar" no menu de uma mensagem de votação (o servidor recusa com 400)
+- [ ] 🆕 `5cad911` DTO `Enquete` com `encerra_em`, `encerrada_em`, `encerrada`, `pode_encerrar`, `pode_alterar_prazo`; rotas `POST /enquete/encerrar {enquete_id}` e `PATCH /enquete {enquete_id, encerra_em|null}` (as duas devolvem a enquete e mandam o WS 62)
+- [ ] 🆕 `785bdef` Criar: "Definir data final" / "Depois dela ninguém vota mais. Dá para mudar ou encerrar antes pela votação." + data e hora (sugestão: amanhã, na próxima hora cheia); erros "Informe a data e a hora", "A data final precisa estar no futuro", "A data final não pode passar de 1 ano" (com erro, "Criar votação" desabilitado); vai como `encerra_em`
+- [ ] 🆕 `785bdef` Bolha aberta com data final: "Escolha uma opção · encerra hoje 18:00" ("amanhã 08:30", "12/10 18:00"; com o ano se for outro)
+- [ ] 🆕 `785bdef` Quem criou (`pode_alterar_prazo`): "Definir data final" / "Alterar data final" → "Data final" com "Tirar data" (se tem), "Cancelar" e "Salvar"; erro "Não foi possível mudar a data final"
+- [ ] 🆕 `785bdef` Quem criou a votação ou o grupo (`pode_encerrar`): "Encerrar votação" → confirmação de perigo "Encerrar votação" / "Depois de encerrada, ninguém vota mais e o resultado fica como está." / "Encerrar"; erro "Não foi possível encerrar a votação"
+- [ ] 🆕 `785bdef` Encerrada (`encerrada`, ou `encerra_em` vencido com a bolha na tela, na hora exata): "🔒 Votação encerrada <quando>", opções desabilitadas, botões somem, a mais votada (empates com votos) em negrito com 🏆
+- [ ] 🆕 `eaa8bac` Votação oculta revelada (3.4): resumo só de leitura "📊 <pergunta>" + contagem por opção ("Votação encerrada" se for o caso); "Carregando votação..." / erro
 - [ ] **Teste:** criar no celular, votar no web → a barra atualiza no celular sem recarregar
 
 ---
@@ -831,7 +842,7 @@
 - [ ] Acessos: `GET /permissoes` → tabela usuário × permissão com busca; `PUT /permissao/usuario {usuario_id, codigo}`; `DELETE /permissao/usuario?usuario_id=&codigo=`; aviso de "modo aberto"
 
 ### 8.6 Anexos da conversa (FC-809, ANX-13)
-- [ ] A partir do perfil ou do grupo: "Ver anexos"
+- [ ] A partir do perfil ou do grupo: "Ver anexos" (🆕 `eaa8bac`: no web, os anexos ficam dentro do painel do grupo)
 - [ ] `GET /anexos?conversa=&direcao=(enviados|recebidos|)&tipos=2,3,4,5&antes=<anexo_id>&limite=60`
 - [ ] Filtros: Todos / Enviados / Recebidos e Todos / Imagens / Arquivos / Áudios / Gravações
 - [ ] Imagens em grade; demais em lista (nome, tamanho, data, autor); ações "Abrir mensagem" e "Baixar"

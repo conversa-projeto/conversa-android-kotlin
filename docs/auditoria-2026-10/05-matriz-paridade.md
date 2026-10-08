@@ -54,6 +54,8 @@ A coluna **Fase** indica em que fase do plano da nova base (doc 07) a funcionali
 >
 > 🆕 **Atualizado em 2026-10-06 (noite)** com os commits `8031fa5` (servidor) e `39d06f9` (web): +4 funcionalidades (ENV-21, ENV-22, MSG-20, CHA-24), todas ⬜ no Android.
 >
+> 🆕 **Atualizado em 2026-10-08** com os commits `d4435db` e `5cad911` (servidor) e `eaa8bac` e `785bdef` (web): nenhuma funcionalidade nova; mudam CON-08, MSG-16, MSG-20, ENV-17, ENV-22, ANX-13, CHA-11, CHA-18 e CHA-24 (coluna "Adaptação"). A coluna "Android" continua sendo a do app **legado**; o andamento da nova base está no `TODO.md`.
+>
 > **Leitura:** só 2 de 136 funcionalidades estão íntegras. 42 existem de alguma forma (🟡+🔴), mas 16 delas quebram contra o servidor atual. 78 nunca existiram no Android.
 
 ---
@@ -84,7 +86,7 @@ A coluna **Fase** indica em que fase do plano da nova base (doc 07) a funcionali
 | CON-05 | Menu de contexto da conversa | ⬜ | — | Toque longo → bottom sheet | F1 | P1 |
 | CON-06 | Obter/criar conversa direta | 🟡 | Existe, mas não é atômico e não checa retornos (#46) | Caso de uso único; tratar falha parcial | F1 | P0 |
 | CON-07 | Criar grupo | 🟡 | Existe em 2 telas; **descarta a descrição** (`detalhes_grupo_activity.kt:64`); não inclui o criador de forma garantida | Tela única: nome + seleção | F1 | P1 |
-| CON-08 | Gerenciar membros (renomear, adicionar, remover) | ⬜ | Endpoints mortos | Tela "Membros do grupo" | F1 | P1 |
+| CON-08 | Gerenciar membros (renomear, adicionar, remover) | ⬜ | Endpoints mortos | Tela "Membros do grupo" — 🆕 `eaa8bac`: o web juntou nome, participantes e anexos num painel "Dados do grupo" aberto pelo avatar do grupo; no Android, abrir pelo cabeçalho do chat e mostrar os anexos do grupo na mesma tela | F1 | P1 |
 | CON-09 | Cabeçalho (avatar, online real, membros, digitando, botões) | 🟡 | Mostra **"online" fixo, que é falso** (`ChatActivity.kt:137,1144`) | TopAppBar com presença real e subtítulo de membros/digitando | F2 | P0 |
 | CON-10 | Abrir em nova janela (popup) | ➖ | — | Avaliar *Bubbles* (Android 11+) e suporte a multi-janela | F8 | P3 |
 | CON-11 | Contatos | ✅ | `GET /usuario/contatos` funciona | Reescrever em Compose; usar `avatar_url` | F1 | P0 |
@@ -110,11 +112,11 @@ A coluna **Fase** indica em que fase do plano da nova base (doc 07) a funcionali
 | MSG-13 | Mensagem de chamada (tipo 6, JSON) | ⬜ | Aparece vazia | Bolha "Chamada de áudio/vídeo" com duração e status | F2 | P0 |
 | MSG-14 | Mensagem só de emojis (fonte grande) | ⬜ | — | Detectar com `BreakIterator`/regex de emoji | F2 | P2 |
 | MSG-15 | Blocos de código (destaque, copiar, recolher, Markdown, Mermaid) | ⬜ | Aparecem os ``` crus | Parser idêntico ao web (`codeBlocks.ts`). Destaque: lib leve ou WebView com highlight.js. Markdown: Markwon/compose-markdown. Mermaid: WebView offline | F4 | P1 (código/markdown), P2 (mermaid) |
-| MSG-16 | Mensagem oculta ("Mensagem oculta", toque para revelar) | 🔴 | **Mostra o conteúdo original** (doc 02 Q6) | Ler `excluida_em`; bolha própria | F2 | **P0** |
+| MSG-16 | Mensagem oculta ("Mensagem oculta", toque para revelar) | 🔴 | **Mostra o conteúdo original** (doc 02 Q6) | Ler `excluida_em`; bolha própria — 🆕 `eaa8bac`: votação oculta revelada mostra o resumo (pergunta + votos) | F2 | **P0** |
 | MSG-17 | Selo de mensagem agendada | ⬜ | — | "Agendada para hoje HH:MM / amanhã / dd/MM" | F4 | P2 |
 | MSG-18 | Modo conexão lenta | ➖ | — | Usar `ConnectivityManager` (rede limitada/economia de dados) → "Toque para carregar" | F3 | P3 |
 | MSG-19 | Citação de resposta/encaminhada (recursiva até 5) | ⬜ | — | Componente recursivo | F4 | P1 |
-| MSG-20 🆕 | Bolha de votação (tipo 8): pergunta, opções com barra, votantes, votar/trocar/tirar voto, tempo real (WS 62) | ⬜ | O app antigo mostra a bolha **vazia** | `GET /enquete?id=` com cache por id; `POST /enquete/votar` com a lista completa; reler no WS 62 se estiver na tela. **No F2, pelo menos um placeholder "📊 Votação"** | F4 (placeholder F2) | P1 (placeholder P0) |
+| MSG-20 🆕 | Bolha de votação (tipo 8): pergunta, opções com barra, votantes, votar/trocar/tirar voto, tempo real (WS 62) | ⬜ | O app antigo mostra a bolha **vazia** | `GET /enquete?id=` com cache por id; `POST /enquete/votar` com a lista completa; reler no WS 62 se estiver na tela. **No F2, pelo menos um placeholder "📊 Votação"** — 🆕 `5cad911`/`785bdef`: data final, encerrar (`POST /enquete/encerrar`), mudar a data (`PATCH /enquete`), estado encerrado com 🏆 e prazo vencendo na tela | F4 (placeholder F2) | P1 (placeholder P0) |
 
 ## ENV — Composição e ações
 
@@ -136,12 +138,12 @@ A coluna **Fase** indica em que fase do plano da nova base (doc 07) a funcionali
 | ENV-14 | Cancelar agendada | ⬜ | — | "Ocultar" vira "Cancelar envio" | F4 | P2 |
 | ENV-15 | Digitando (enviar e receber) | 🟡 | **Não commitado**; throttle de 2,5 s; recebimento sem expirar corretamente; textos de grupo ausentes | Throttle de 2,5 s; expira em 4 s; textos exatos do web | F2 | P1 |
 | ENV-16 | Gravando áudio (indicador) | ⬜ | `broadcastGravando` não é usado; WS 5 sem efeito | `POST /conversa/gravando` a cada 2,5 s durante a gravação | F3 | P1 |
-| ENV-17 | Reações (toggle, chips, quem reagiu) | ⬜ | Só no repositório morto | Barra de reações no menu de toque longo; WS 7 | F4 | P0 |
+| ENV-17 | Reações (toggle, chips, quem reagiu) | ⬜ | Só no repositório morto | Barra de reações no menu de toque longo; WS 7 — 🆕 `d4435db`/`eaa8bac`: até 5 emojis diferentes por pessoa (conferir antes da otimista); 5 chips à mostra e "+N" | F4 | P0 |
 | ENV-18 | Ocultar mensagem (com confirmação) | ⬜ | `DELETE /mensagem` está só no repositório morto | Ação "Ocultar" com o texto exato do web | F4 | P0 |
 | ENV-19 | Copiar (texto/imagem) | ⬜ | — | `ClipboardManager` (texto) e `ClipData` com URI de conteúdo (imagem) | F4 | P1 |
 | ENV-20 | Menu de ações da mensagem | ⬜ | — | Toque longo → reações + Responder, Responder no privado, Encaminhar, Copiar, Ocultar | F4 | P0 |
 | ENV-21 🆕 | Campo de mensagem rico (texto e anexos/figurinhas/menções intercalados, enviados na ordem) | ⬜ | — | Editor por blocos (texto ↔ peça) acima do teclado; figurinha/gravação com o campo vazio vão na hora. Ver a decisão FC-416 | F3 | P1 |
-| ENV-22 🆕 | Criar votação (só grupo): pergunta ≤ 300, 2–12 opções ≤ 200, "Permitir várias escolhas" | ⬜ | — | Bottom sheet "Nova votação" a partir do "+"; `PUT /enquete` | F4 | P1 |
+| ENV-22 🆕 | Criar votação (só grupo): pergunta ≤ 300, 2–12 opções ≤ 200, "Permitir várias escolhas" | ⬜ | — | Bottom sheet "Nova votação" a partir do "+"; `PUT /enquete` — 🆕 `785bdef`: "Definir data final" opcional (`encerra_em`) | F4 | P1 |
 
 ## ANX — Anexos e mídia
 
@@ -159,7 +161,7 @@ A coluna **Fase** indica em que fase do plano da nova base (doc 07) a funcionali
 | ANX-10 | Player de áudio (um por vez, seek, "não ouvido" verde, `POST /mensagem/reproduzir`) | 🔴 | Download quebrado (Q3); vazamentos (#31); não chama `reproduzir` | Media3 único + estado por mensagem | F3 | P0 |
 | ANX-11 | Gravação de áudio (segurar para enviar, travar, pausar, ouvir antes) | 🟡 | Grava M4A e funciona localmente; o envio quebra (Q2); tipo errado (4) | Reaproveitar `AudioRecorderHelper` (#48); UI de segurar/travar | F3 | P0 |
 | ANX-12 | Transcrição de áudio | ⬜ | — | `PUT/GET /anexo/transcricao`; polling de 3 s enquanto "Processando" | F3 | P1 |
-| ANX-13 | Página de Anexos (filtros, grade, paginação) | ⬜ | — | Tela "Anexos" por conversa (acessada pelo perfil/grupo) | F7 | P2 |
+| ANX-13 | Página de Anexos (filtros, grade, paginação) | ⬜ | — | Tela "Anexos" por conversa (acessada pelo perfil/grupo) — 🆕 `eaa8bac`: no web, a lista também fica no painel do grupo | F7 | P2 |
 | ANX-14 | URLs assinadas e renovação | ⬜ | — | URL expira (600 s em `/anexos`, 300 s no upload): renovar ao falhar; Coil com chave = identificador | F3 | P0 |
 | ANX-15 | Pré-visualização de imagem antes de enviar | ➖ | No web é código sem gatilho | A fila (ANX-01) já mostra a prévia | — | P3 |
 
@@ -184,20 +186,20 @@ A coluna **Fase** indica em que fase do plano da nova base (doc 07) a funcionali
 | CHA-08 | Chamadas pendentes ao conectar (> 25 s → perdida) | 🔴 | NPE porque `usuarios` não vem (Q9) | Modelo correto + regra dos 25 s | F6 | P0 |
 | CHA-09 | Cancelar enquanto chama | 🔴 | Usa `/chamada/sair` em vez de `/chamada/cancelar` | `POST /chamada/cancelar` | F6 | P0 |
 | CHA-10 | Entrada/saída dos outros, fim, sincronização a cada 4 s | 🔴 | #1/#2: eventos se perdem; a próxima chamada não toca | `SharedFlow` multi-assinante + `CallManager` de escopo de app + sync periódico | F6 | P0 |
-| CHA-11 | Controles (mic, câmera, alto-falante, sair…) | 🟡 | Ícones semanticamente errados; mute não reativo (#25, #40) | Controles Compose acessíveis + seletor de rota de áudio (Bluetooth/fone/alto-falante) — 🆕 cores como no web: mic/câmera/som **vermelhos quando desligados**; tela/chat/ponteiro **azuis quando ligados** | F6 | P0 |
+| CHA-11 | Controles (mic, câmera, alto-falante, sair…) | 🟡 | Ícones semanticamente errados; mute não reativo (#25, #40) | Controles Compose acessíveis + seletor de rota de áudio (Bluetooth/fone/alto-falante) — 🆕 cores como no web: mic/câmera/som **vermelhos quando desligados**; tela/chat/ponteiro **azuis quando ligados**; 🆕 `eaa8bac`: o web trocou as cores por uma chave liga/desliga em cada botão (adaptação: no Android, ícone + cor + estado lido pelo TalkBack) | F6 | P0 |
 | CHA-12 | Modos de exibição (grade, destaque, tela única) | 🟡 | Grade/PiP só no código **staged**; vídeo remoto nunca chega (#10) | Grade adaptativa + destaque | F6 | P1 |
 | CHA-13 | Janela flutuante / barra de chamada | 🟡 | `CallBanner` existe | **Picture-in-Picture** + banner "voltar para a chamada" | F6 | P1 |
 | CHA-14 | Adicionar participante | ⬜ | Botão sempre desabilitado | `PUT /chamada/usuario` | F6 | P1 |
 | CHA-15 | Compartilhar tela com áudio do sistema | ⬜ | — | `MediaProjection` + `AudioPlaybackCapture` (API 29+) | F8 | P3 |
 | CHA-16 | Troca áudio → vídeo (WS 56 + modal "Apenas assistir / Transmitir também", 15 s) | 🟡 | Envia o upgrade; não trata o 56 recebido (flow sem coletor) | Igual ao web | F6 | P1 |
 | CHA-17 | Ponteiro remoto (WS 57 `ponteiro`) | ⬜ | — | Desenhar o ponteiro sobre a tela compartilhada recebida (enviar é opcional no celular) | F8 | P2 |
-| CHA-18 | Chat da chamada (`PUT /chamada/chat`, WS 57 `chat`) | ⬜ | — | Painel lateral/inferior | F6 | P2 |
+| CHA-18 | Chat da chamada (`PUT /chamada/chat`, WS 57 `chat`) | ⬜ | — | Painel lateral/inferior — 🆕 `eaa8bac`: o grupo é criado no primeiro toque no campo (não mais na primeira mensagem) | F6 | P2 |
 | CHA-19 | Indicador de fala | ⬜ | — | `AudioTrackSink` (RMS > 0,02; segura 400 ms) ou estatísticas `audioLevel` do WebRTC | F6 | P2 |
 | CHA-20 | Qualidade da chamada (ruído, eco, ganho, bitrate, resolução, fps) | ⬜ | — | Tela de configurações de chamada | F7 | P2 |
 | CHA-21 | Somente recepção | ⬜ | — | Permitir entrar sem permissão de mic/câmera | F6 | P2 |
 | CHA-22 | Histórico de chamadas (abas, filtros, "ligar de novo") | 🔴 | Modelo não bate com `GET /chamadas` (Q10) | Reescrever com o modelo `ChamadaHistoricoItem` (doc 01 §9.7); portar a lógica "Hoje/Ontem" | F6 | P0 |
 | CHA-23 | Áudio remoto estável | ➖ | WebRTC nativo toca os tracks remotos por padrão | Garantir que o áudio sobreviva a PiP/troca de tela | F6 | P0 |
-| CHA-24 🆕 | Chat **completo** da chamada (o mesmo chat, com anexos, respostas, reações), conversa do grupo da chamada como ativa | ⬜ | — | Reusar a `ChatScreen` num painel/bottom sheet durante a chamada | F6 | P2 |
+| CHA-24 🆕 | Chat **completo** da chamada (o mesmo chat, com anexos, respostas, reações), conversa do grupo da chamada como ativa | ⬜ | — | Reusar a `ChatScreen` num painel/bottom sheet durante a chamada — 🆕 `eaa8bac`: abre já no primeiro toque no campo | F6 | P2 |
 | **Gravação** | Publicar vídeo em **H264/VP9** (VP8 não é gravado) | 🔴 | Preferência de codec não é configurada (Q12) | `setCodecPreferences` H264 → VP9 → VP8 | F6 | P0 |
 
 ## SIP — Telefonia (ramal)

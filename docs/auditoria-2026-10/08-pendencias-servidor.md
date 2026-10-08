@@ -106,6 +106,7 @@
 - `DELETE /api/conversa/usuario?id=` só aceita o **próprio** vínculo (`validarRemocaoConversaUsuario`, `src/autorizacao.ts`: "Regra atual: só auto-remoção. Admin de grupo via conversa.criado_por fica para depois"). O web mostra "Remover" para os outros membros, e o clique sempre dá 403.
 - No Android a opção não é oferecida; a tela de membros explica que cada pessoa só pode sair por conta própria.
 - **Proposta:** administrador de grupo (ao menos `conversa.criado_por`) pode remover; ou o web esconde o botão até lá.
+- 🆕 2026-10-08: o painel novo do web ("Dados do grupo", `eaa8bac`) continua mostrando "Remover", e o servidor continua recusando. O servidor já usa "quem criou o grupo" para encerrar votação (`5cad911`); a mesma regra serviria aqui.
 
 ### S16 · Prévia da conversa sem o tipo do conteúdo 🆕 (2026-10-07)
 

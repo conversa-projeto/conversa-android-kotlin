@@ -1,6 +1,6 @@
 # 06 — Fila de correções e implementação (FC)
 
-**Data:** 2026-10-06 (🆕 atualizado à noite com os commits `8031fa5` e `39d06f9`: FC-315, 415–416, 516–518, 723 e ajustes em FC-108, 112, 303, 714) · **Premissa:** decisão do doc 00. Construir **nova base**; o app atual só recebe higiene e, opcionalmente, hotfixes de segurança.
+**Data:** 2026-10-06 (🆕 atualizado à noite com os commits `8031fa5` e `39d06f9`: FC-315, 415–416, 516–518, 723 e ajustes em FC-108, 112, 303, 714; 🆕 de novo em 2026-10-08 com `d4435db`, `5cad911`, `eaa8bac` e `785bdef`: ajustes em FC-212, 501, 516, 517, 719 e 723) · **Premissa:** decisão do doc 00. Construir **nova base**; o app atual só recebe higiene e, opcionalmente, hotfixes de segurança.
 
 ## Como ler
 
@@ -210,6 +210,7 @@
 - [ ] **FC-212 · P1 · Membros do grupo** (CON-08).
   - `GET /conversa/usuarios?conversa=` → `[{id: conversa_usuario_id, usuario_id, nome, avatar_url}]`.
   - Renomear com `PATCH /conversa {id, descricao}`.
+  - 🆕 `eaa8bac`: o web abre os "Dados do grupo" pelo avatar do grupo no cabeçalho do chat, com os anexos do grupo (FC-809) na mesma tela.
   - Adicionar e remover; o remover usa `DELETE /conversa/usuario?id=<conversa_usuario_id>`, **não** o `usuario_id`.
 - [ ] **FC-213 · P0 · Presença** (PRE-01).
   - `GET /contatos/online` ao conectar + WS 60 `{usuario_id, online}`.
@@ -318,6 +319,7 @@
 - [ ] **FC-501 · P0 · Reações** (ENV-17).
   - `PUT /mensagem/reacao {mensagem_id, emoji}` → `{mensagem_id, emoji, acao:"add"|"remove"}`.
   - WS 7. Chips com contagem e "quem reagiu". Emoji com no máximo 10 code points (senão dá 500).
+  - 🆕 `d4435db`/`eaa8bac`: no máximo **5 emojis diferentes por pessoa** na mesma mensagem (o 6º → 400); conferir antes da reação otimista e avisar "Você já reagiu com 5 emojis nesta mensagem.". Na bolha, 5 chips à mostra e o resto num "+N".
 - [ ] **FC-502 · P0 · Responder** (ENV-06).
   - `mensagem_referencia:{tipo:1, origem_mensagem_id}`. **O nome é invertido em relação ao banco**: `origem_mensagem_id` = a mensagem respondida (§10.3).
   - Deslizar para responder.
@@ -351,10 +353,17 @@
   - Desabilitar durante o voto; em erro, "Não foi possível votar".
   - WS 62 → reler só se a enquete estiver em cache/visível.
   - Resumo "Votação" em prévias, notificações, citações e atividades.
+  - 🆕 `5cad911`/`785bdef` **Data final e encerramento:**
+    - "· encerra hoje 18:00" no subtítulo;
+    - "Definir/Alterar data final" e "Tirar data" para quem criou (`PATCH /enquete {enquete_id, encerra_em|null}`, `pode_alterar_prazo`);
+    - "Encerrar votação" com confirmação para quem criou a votação ou o grupo (`POST /enquete/encerrar`, `pode_encerrar`);
+    - encerrada (`encerrada` ou `encerra_em` vencido, inclusive com a bolha na tela): "🔒 Votação encerrada <quando>", sem votar, 🏆 na mais votada.
+  - 🆕 `eaa8bac` Votação oculta revelada: resumo só de leitura (pergunta + votos por opção).
 - [ ] **FC-517 · P1 · 🆕 Criar votação** (ENV-22).
   - "+" → "Votação" (só em grupo).
   - Bottom sheet "Nova votação": Pergunta (≤ 300); Opções 2–12 (≤ 200), "+ Adicionar opção", remover acima de 2; "Permitir várias escolhas".
   - `PUT /enquete {conversa_id, pergunta, opcoes (preenchidas, trim), multipla}`; mostrar o erro do servidor (repetidas, só grupo).
+  - 🆕 `785bdef`: "Definir data final" opcional (`encerra_em`; no futuro, até 1 ano; sugestão amanhã na próxima hora cheia).
   - Depois, atualizar a conversa.
 - [ ] **FC-518 · P1 · 🆕 Esconder "Encaminhar" para mensagem de votação.** O servidor recusa tipo 8 em `PUT /mensagem` (400); no web o botão aparece e falha.
 
@@ -445,13 +454,13 @@
   - Trocar câmera.
 - [ ] **FC-717 · P1 · PiP + banner "voltar para a chamada"** (CHA-13, AND-06).
 - [ ] **FC-718 · P1 · Adicionar participante** (CHA-14): `PUT /chamada/usuario {chamada_id, usuario_id}`.
-- [ ] **FC-719 · P2 · Chat da chamada** (CHA-18): `PUT /chamada/chat {id}` → `{conversa_id}`; WS 57 `{acao:"chat"}`.
+- [ ] **FC-719 · P2 · Chat da chamada** (CHA-18): `PUT /chamada/chat {id}` → `{conversa_id}`; WS 57 `{acao:"chat"}`. 🆕 `eaa8bac`: o web cria o grupo no **primeiro toque no campo** e já abre o chat completo (antes: na primeira mensagem).
 - [ ] **FC-720 · P2 · Indicador de fala** (CHA-19).
 - [ ] **FC-721 · P2 · Somente recepção** (CHA-21).
 - [ ] **FC-722 · P2 · Receber tela compartilhada + ponteiro remoto** (CHA-17).
   - Exibir o ponteiro (WS 57 `{acao:"ponteiro", alvo, x, y}`).
   - Enviar ponteiro tocando na tela compartilhada.
-- [ ] **FC-723 · P2 · 🆕 Chat completo da chamada** (CHA-24): quando o grupo da chamada existe, o painel usa a própria tela de chat (lista + campo completos) com a conversa do grupo; antes da primeira mensagem, o painel simples (FC-719).
+- [ ] **FC-723 · P2 · 🆕 Chat completo da chamada** (CHA-24): quando o grupo da chamada existe, o painel usa a própria tela de chat (lista + campo completos) com a conversa do grupo; antes da primeira mensagem, o painel simples (FC-719). 🆕 `eaa8bac`: sem grupo, o toque no campo cria o grupo e abre o chat completo.
 
 ## Bloco J — Atividades, pesquisa, perfil, configurações (F7)
 
