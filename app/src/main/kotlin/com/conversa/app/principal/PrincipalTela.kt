@@ -1,7 +1,11 @@
 package com.conversa.app.principal
 
 import android.Manifest
+import android.app.NotificationManager
+import android.content.ActivityNotFoundException
+import android.content.Intent
 import android.content.pm.PackageManager
+import android.net.Uri
 import android.os.Build
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
@@ -78,6 +82,12 @@ class PrincipalViewModel @Inject constructor(
     fun notificacoesPedidas() {
         viewModelScope.launch { preferencias.marcarPediuNotificacoes() }
     }
+
+    val pediuTelaCheia: StateFlow<Boolean?> = preferencias.pediuTelaCheia.stateIn(viewModelScope, SharingStarted.Eagerly, null)
+
+    fun telaCheiaPedida() {
+        viewModelScope.launch { preferencias.marcarPediuTelaCheia() }
+    }
 }
 
 /** Abas da barra inferior (TODO 2.5). */
@@ -105,6 +115,11 @@ fun PrincipalTela(
     val falha by viewModel.falhaInicio.collectAsStateWithLifecycle()
     val pediuNotificacoes by viewModel.pediuNotificacoes.collectAsStateWithLifecycle()
     PedidoNotificacoes(pediuNotificacoes, viewModel::notificacoesPedidas)
+    // Depois do pedido de notificações, para não abrir dois diálogos juntos.
+    if (pediuNotificacoes == true) {
+        val pediuTelaCheia by viewModel.pediuTelaCheia.collectAsStateWithLifecycle()
+        PedidoTelaCheia(pediuTelaCheia, viewModel::telaCheiaPedida)
+    }
     val avisos = LocalAvisos.current
     val tentando = stringResource(R.string.tentando_de_novo)
     val textoFalha = falha?.mensagemAmigavel()
@@ -205,5 +220,46 @@ private fun PedidoNotificacoes(jaPediu: Boolean?, aoPedir: () -> Unit) {
                 aoPedir()
             }) { Text(stringResource(R.string.permissao_notificacoes_agora_nao)) }
         },
+    )
+}
+
+/**
+ * Android 14+ (TODO 6.5): a chamada recebida só aparece em tela cheia (inclusive na tela
+ * bloqueada) com a permissão "tela cheia". Se estiver negada, explica uma vez e leva às
+ * configurações; a pessoa decide lá.
+ */
+@Composable
+private fun PedidoTelaCheia(jaPediu: Boolean?, aoPedir: () -> Unit) {
+    if (Build.VERSION.SDK_INT < Build.VERSION_CODES.UPSIDE_DOWN_CAKE || jaPediu != false) return
+    val contexto = LocalContext.current
+    if (contexto.getSystemService(NotificationManager::class.java)?.canUseFullScreenIntent() != false) {
+        LaunchedEffect(Unit) { aoPedir() }
+        return
+    }
+    var mostrar by rememberSaveable { mutableStateOf(true) }
+    if (!mostrar) return
+    val fechar = {
+        mostrar = false
+        aoPedir()
+    }
+    AlertDialog(
+        onDismissRequest = fechar,
+        title = { Text(stringResource(R.string.permissao_tela_cheia_titulo)) },
+        text = { Text(stringResource(R.string.permissao_tela_cheia_texto)) },
+        confirmButton = {
+            TextButton(onClick = {
+                fechar()
+                val configuracoes =
+                    Intent(
+                        android.provider.Settings.ACTION_MANAGE_APP_USE_FULL_SCREEN_INTENT,
+                        Uri.fromParts("package", contexto.packageName, null),
+                    )
+                try {
+                    contexto.startActivity(configuracoes)
+                } catch (_: ActivityNotFoundException) {
+                }
+            }) { Text(stringResource(R.string.permissao_tela_cheia_abrir)) }
+        },
+        dismissButton = { TextButton(onClick = fechar) { Text(stringResource(R.string.permissao_notificacoes_agora_nao)) } },
     )
 }

@@ -14,6 +14,8 @@
     <string name="conectando">Conectando…</string>
     <string name="em_chamada">Em chamada</string>
     <string name="encerrando">Encerrando…</string>
+    <string name="em_espera">Chamada em espera</string>
+    <string name="retomar">Retomar</string>
     <string name="video">Vídeo</string>
     <string name="audio">Áudio</string>
     <plurals name="pessoas">

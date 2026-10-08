@@ -533,8 +533,8 @@
 ### 5.3 Canais e permissões (FC-606, FC-607)
 - [x] Criar os canais uma vez no `Application`: `mensagens_v1`, `chamadas_recebidas_v1`, `chamada_ativa_v1`, `sistema_v1` — `CanaisNotificacao` (`core/data`); o canal "downloads" da 4.7 virou o "Sistema" (é apagado). No emulador: os 4 canais criados (mensagens e chamadas com importância alta) ✔ 199ce1b
 - [x] Pedir `POST_NOTIFICATIONS` depois do login, com explicação — diálogo "Notificações" na tela principal, uma vez ("Agora não" também conta; guardado no `PreferenciasStore`). No emulador: explicação → diálogo do Android → concedida ✔ 199ce1b
-- [ ] Android 14+: verificar `canUseFullScreenIntent()`; se negado, explicar e levar às configurações — fica para a etapa 6 (só chamada usa tela cheia)
-- [ ] Explicar e pedir a isenção de otimização de bateria (opcional, para chamadas) — fica para a etapa 6
+- [x] Android 14+: verificar `canUseFullScreenIntent()`; se negado, explicar e levar às configurações — diálogo "Chamadas em tela cheia" na tela principal, uma vez, depois do pedido de notificações (`PreferenciasStore.pediuTelaCheia`); "Abrir configurações" leva à tela do Android, onde a pessoa decide. No emulador: a permissão já vem concedida, então o diálogo não aparece (o caminho "permitida" foi o testado)
+- [ ] Explicar e pedir a isenção de otimização de bateria (opcional, para chamadas) — decidir junto com o FCM (5.1): com push de alta prioridade não deve ser preciso, e sem push não adianta
 
 ### 5.4 Notificação de mensagem (FC-602, FC-603, NOT-01, NOT-02)
 - [ ] Push `data {titulo, mensagem, conversa}` → sincronizar (`SyncManager`) → montar a notificação — 🔄 sincronizar → montar já funciona: o `SyncManager.novasDeOutros` avisa as conversas com mensagem nova de outra pessoa e o `NotificadorMensagens` monta a notificação (testado no emulador com o app em segundo plano, dentro dos 10 s em que o WebSocket ainda fica ligado); falta o push (⛔ 5.1)
@@ -586,36 +586,37 @@
 - [x] Estados: `Inativo`, `Chamando`, `Recebendo`, `Conectando`, `Ativa`, `Encerrando` — `FaseChamada`; roda num despachante de uma coisa por vez (como o JavaScript do web) e confere a "geração" na volta de cada chamada de rede; sem trava durante a rede (#18) ✔ ceeec72
 - [ ] `StateFlow<EstadoChamada>`: chamada, participantes, tracks, mute, câmera, rota de áudio, duração, modo de exibição — 🔄 fase, chamada/participantes, tipo, quem ligou, mídia local, microfone, câmera, `ativaDesde` (duração), pedido de vídeo e chat no gerenciador; as trilhas vêm da mídia (`MidiaWebRtc.trilhas`); faltam a rota de áudio (6.8) e o modo de exibição (6.11)
 - [x] Assinar o `SharedFlow` do WS para os eventos 51–57 (único consumidor de chamada) — e as `chamadasPendentes` do `SyncManager`; liga o `ConexaoTempoReal.chamadaAtiva` (WebSocket fica ligado em segundo plano durante a chamada); o logout encerra. O `iniciar()` no `Application` entra com a mídia (6.1) ✔ ceeec72
-- [ ] `encerrar()` idempotente: DELETE WHIP/WHEP → `dispose` → liberar o áudio → cancelar as notificações → Telecom disconnect → parar o serviço — 🔄 idempotente e corta a mídia (`MidiaChamada.encerrar`) antes de mudar o estado; em `Encerrando` espera o servidor até 3 s. Áudio, notificações, Telecom e serviço vão observar o estado (6.3, 6.5, 6.8)
+- [x] `encerrar()` idempotente: DELETE WHIP/WHEP → `dispose` → liberar o áudio → cancelar as notificações → Telecom disconnect → parar o serviço — a mídia é cortada antes de o estado mudar; a `IntegracaoChamada` (observando o estado) para o toque, cancela as notificações, desconecta no Telecom e o serviço se encerra. No emulador: depois de cada chamada, nenhuma chamada no Telecom, serviço parado e áudio de volta ao `MODE_NORMAL`
 - [x] Testes unitários de **todas** as transições (incluindo eventos fora de ordem e duplicados) — `GerenciadorChamadasTest`, 51 testes (51 duplicado, 51 depois do 52, o meu 54 durante o atender, 52 durante o `entrar`, desligar durante o `iniciar`, 54/55 perdidos, pendente repetida…); um teste de mutação confirmou que pegam regressões ✔ ceeec72
 
 ### 6.3 Core-Telecom (FC-701, AND-03)
-- [ ] Adicionar `androidx.core:core-telecom`
-- [ ] Registrar o `CallsManager` com as capacidades (vídeo)
-- [ ] Recebida e efetuada via `addCall(...)` com os callbacks answer/disconnect/setActive/setInactive
-- [ ] Usar os endpoints de áudio do Telecom para rotear (fone, alto-falante, Bluetooth, fone com fio)
-- [ ] Manifest: `FOREGROUND_SERVICE_PHONE_CALL`, `FOREGROUND_SERVICE_MICROPHONE`, `FOREGROUND_SERVICE_CAMERA`, `MANAGE_OWN_CALLS`
-- [ ] **Teste:** atender pelo botão do fone Bluetooth; receber uma ligação GSM durante a chamada → coloca em espera
+- [x] Adicionar `androidx.core:core-telecom` — 1.0.1 (estável). Só registra a chamada do app no sistema; a chamada continua pela internet (sem chip, operadora ou número)
+- [x] Registrar o `CallsManager` com as capacidades (vídeo) — `TelecomChamadas.iniciar()` no `Application`
+- [x] Recebida e efetuada via `addCall(...)` com os callbacks answer/disconnect/setActive/setInactive — `TelecomChamadas`; o atender/desligar do sistema chama o gerenciador. No emulador: recebida `RINGING` → `ACTIVE`; efetuada `DIALING` → `ACTIVE`; ao encerrar, some do Telecom. Achado: os coletores das rotas seguravam o escopo da chamada e a segunda chamada não era registrada — corrigido (duas chamadas seguidas ok)
+- [ ] Usar os endpoints de áudio do Telecom para rotear (fone, alto-falante, Bluetooth, fone com fio) — 🔄 `TelecomChamadas.rotas`, `rotaAtual` e `mudarRota` prontos; o seletor na tela é a 6.8. O Telecom já põe o áudio em `MODE_IN_COMMUNICATION` durante a chamada (conferido no emulador)
+- [x] Manifest: `FOREGROUND_SERVICE_PHONE_CALL`, `FOREGROUND_SERVICE_MICROPHONE`, `FOREGROUND_SERVICE_CAMERA`, `MANAGE_OWN_CALLS` — o `MANAGE_OWN_CALLS` vem do Core-Telecom; `ServicoChamada` com `phoneCall|microphone|camera`. No emulador: o serviço rodou como `phoneCall|microphone` (0x84)
+- [ ] **Teste:** atender pelo botão do fone Bluetooth; receber uma ligação GSM durante a chamada → coloca em espera — 🔄 GSM ok (ligação de celular **simulada pelo emulador**, atendida pelo discador): a do app ficou `ON_HOLD`, com o microfone desligado; depois "Retomar" voltou a `ACTIVE`. Bluetooth: ⛔ o emulador não tem fone Bluetooth; testar num aparelho
+- [x] Em espera pelo sistema: faixa "Chamada em espera" com "Retomar" — o Telecom não retoma sozinho a chamada do app quando a de celular acaba; sem isso a pessoa ficaria muda sem saber
 
 ### 6.4 Iniciar chamada (FC-705, CHA-01)
 - [x] Botões de voz e vídeo no cabeçalho do chat — `rememberLigar` (`feature/chamada`); também o "ligar" da bolha de chamada. No emulador, contra o web (Chrome com câmera falsa): ligou para o web ✔ cf43b1f
 - [x] Participantes: direta = [eu, outro]; grupo = `GET /conversa/usuarios?conversa=` (todos, inclusive eu) — `LigarViewModel`; em grupo ainda não testei no emulador ✔ cf43b1f
 - [x] Pedir as permissões (microfone; câmera se vídeo) na hora — sem câmera liga só com áudio; sem microfone avisa "Não foi possível acessar o microfone". No emulador, contra o web (Chrome com câmera falsa): o diálogo do Android apareceu no primeiro vídeo ✔ cf43b1f
 - [x] `PUT /chamada/iniciar {tipo, usuarios:[{id}], conversa_id}` → já publicar via WHIP. No emulador, contra o web (Chrome com câmera falsa): o MediaMTX recebeu o stream do app antes de o web atender ✔ cf43b1f
-- [ ] Tela "Chamando…" + som de chamando em loop — 🔄 a tela (`ChamadaActivity`) abre ao ligar com "Chamando…"; falta o som
+- [x] Tela "Chamando…" + som de chamando em loop — `TomDeChamada.tocarChamando` (tom de chamando do Android, para quando alguém atende ou ao desligar). O som em si não dá para ouvir no emulador por aqui
 - [x] Bloquear se já existe chamada ("Já existe uma chamada em andamento") — o gerenciador recusa e a tela da conversa mostra o aviso (texto testado) ✔ cf43b1f
 - [x] Cancelar enquanto chama: `POST /chamada/cancelar {id}` (FC-711) — `desligar()` em `Chamando` (`GerenciadorChamadas`, com teste); desligar enquanto o servidor ainda cria a chamada cancela a que nasceu ✔ ceeec72
 - [x] Timeout local (ex.: 45 s sem ninguém atender) → cancelar (`GerenciadorChamadas`, com teste) ✔ ceeec72
 
 ### 6.5 Chamada recebida (FC-706, FC-707, CHA-03, CHA-04, CHA-05)
 - [x] WS 51 (ou push S1) → `GET /chamada/dados?id=` → `CallManager` em `Recebendo` — pelo WebSocket. No emulador, contra o web (Chrome com câmera falsa): o web ligou e o app tocou. Pelo push: ⛔ depende do FCM (5.1) e do S1 ✔ cf43b1f
-- [ ] Telecom `addCall` (entrada) + notificação CallStyle `forIncomingCall` + full-screen intent
+- [x] Telecom `addCall` (entrada) + notificação CallStyle `forIncomingCall` + full-screen intent — só com o app fora da frente (na frente a tela já abre sozinha). No emulador: app em segundo plano → notificação "Teste Android B · Somente Áudio" com Recusar/Atender; tela apagada → a tela acendeu já na "Chamada recebida"
 - [x] Tela de chamada recebida (`showWhenLocked`, `turnScreenOn`): nome, avatar, "Vídeo + Áudio"/"Somente áudio" — `ChamadaActivity` com os textos do web ("Chamada recebida", "… está ligando…"); com o app na frente ela abre sozinha (`ApresentadorChamada`); em segundo plano depende da notificação de tela cheia (abaixo) ✔ cf43b1f
 - [x] Botões **tocáveis**: Recusar, Atender e, em vídeo, "Atender só assistindo" — botões redondos de 72 dp. No emulador, contra o web (Chrome com câmera falsa): Atender e Recusar funcionaram (o web parou ao recusar) ✔ cf43b1f
-- [ ] O toque **só para** ao atender, recusar, encerrar remoto ou no timeout (#7) — 🔄 a fase sai de `Recebendo` só nesses casos (`GerenciadorChamadas`, com teste); falta o toque observar a fase (6.5)
+- [x] O toque **só para** ao atender, recusar, encerrar remoto ou no timeout (#7) — toque próprio em loop (`Ringtone` + vibração, conforme o modo da campainha) e canal `chamadas_recebidas_v2` sem som; tudo para quando a fase sai de "tocando". No emulador: o tocador de toque aparece a cada chamada; no tempo de 30 s a notificação some e o áudio volta ao normal
 - [x] 30 s sem resposta → `POST /chamada/recusar {id, nao_atendeu:true}` (`GerenciadorChamadas`, com teste) ✔ ceeec72
 - [x] Atender: mídia vídeo+áudio → só áudio → só recepção (fallback) → `POST /chamada/entrar {id}` → publicar → assinar os outros — No emulador, contra o web (Chrome com câmera falsa): atendeu e falou nos dois sentidos ✔ cf43b1f
-- [ ] "Atender" pela notificação usa `PendingIntent.getActivity` ou Telecom (nunca broadcast → activity, #3)
+- [x] "Atender" pela notificação usa `PendingIntent.getActivity` ou Telecom (nunca broadcast → activity, #3) — abre a `ChamadaActivity` com `ACAO_ATENDER`; "Recusar" e "Desligar" vão por um receiver (sem abrir tela). No emulador: "Answer" na notificação abriu a tela já atendendo; o web ficou "ativa"
 - [x] Recusar: **um** `POST /chamada/recusar {id}` (`GerenciadorChamadas`, com teste): recusar duas vezes, ou recusar e desligar, manda um só ✔ ceeec72
 
 ### 6.6 Regras automáticas (FC-708, FC-709, FC-710, ATV-03)
@@ -634,11 +635,11 @@
 - [x] Botão sair: `POST /chamada/sair {id}` — "Sair da chamada" (um `POST` só). No emulador, contra o web (Chrome com câmera falsa): sair no app encerrou no web; sair no web encerrou no app (55, sem 52) ✔ cf43b1f
 
 ### 6.8 Áudio (FC-713, AND-04, AND-05)
-- [ ] Foco de áudio durante a chamada (pausa a música)
+- [x] Foco de áudio durante a chamada (pausa a música) — pelo Telecom (no emulador, o foco "AudioFocus_For_Phone_Ring_And_Calls" apareceu no toque)
 - [ ] Seletor de rota: Fone do aparelho / Alto-falante / Bluetooth / Fone com fio (via Telecom)
 - [ ] Sensor de proximidade só quando a rota é o fone do aparelho
-- [ ] Ao encerrar: devolver o modo normal e limpar o dispositivo de comunicação
-- [ ] Parar qualquer áudio de mensagem ao entrar em chamada
+- [x] Ao encerrar: devolver o modo normal e limpar o dispositivo de comunicação — pelo Telecom. No emulador: `MODE_NORMAL` depois de cada chamada
+- [x] Parar qualquer áudio de mensagem ao entrar em chamada — `PlayerAudio.parar()` quando a chamada começa (não testado no emulador)
 
 ### 6.9 Tela da chamada ativa (FC-714, CHA-11)
 - [x] Cabeçalho: "Chamando…"/"Em chamada"/"Encerrando…", duração, tipo, nº de pessoas — textos do web; duração `mm:ss`/`hh:mm:ss` (+ teste) ✔ cf43b1f
@@ -667,7 +668,7 @@
 ### 6.12 Minimizar (FC-717, CHA-13, AND-06)
 - [ ] Picture-in-Picture em chamada de vídeo (`setAutoEnterEnabled` no Android 12+)
 - [ ] Banner "Toque para voltar à chamada" no topo das outras telas
-- [ ] Notificação em andamento CallStyle `forOngoingCall` com cronômetro nativo e "Desligar"
+- [x] Notificação em andamento CallStyle `forOngoingCall` com cronômetro nativo e "Desligar" — do `ServicoChamada`. No emulador: "Conversa · 00:07 / Teste Android B / Em chamada" com "Hang Up"
 
 ### 6.13 Recursos extras de chamada (FC-718…722)
 - [ ] Adicionar participante: contatos fora da chamada → `PUT /chamada/usuario {chamada_id, usuario_id}` (um por vez) → `GET /chamada/dados`

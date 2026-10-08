@@ -42,6 +42,9 @@
     <string name="permissao_notificacoes_texto">Para avisar quando chegar mensagem nova, o Conversa precisa da sua permissão para mostrar notificações.</string>
     <string name="permissao_notificacoes_permitir">Permitir</string>
     <string name="permissao_notificacoes_agora_nao">Agora não</string>
+    <string name="permissao_tela_cheia_titulo">Chamadas em tela cheia</string>
+    <string name="permissao_tela_cheia_texto">Para a chamada recebida aparecer na tela, mesmo com o celular bloqueado, permita que o Conversa use a tela cheia.</string>
+    <string name="permissao_tela_cheia_abrir">Abrir configurações</string>
 
     <string name="config_em_breve">Perfil, senha, notificações e as demais opções chegam na etapa 8.</string>
 

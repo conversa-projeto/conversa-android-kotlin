@@ -20,6 +20,7 @@ import com.conversa.app.core.network.di.EscopoAplicacao
 import com.conversa.app.core.ui.componentes.AnexoRemoto
 import com.conversa.app.feature.chamada.ApresentadorChamada
 import com.conversa.app.feature.chamada.GerenciadorChamadas
+import com.conversa.app.feature.chamada.IntegracaoChamada
 import com.conversa.app.imagens.FetcherAnexo
 import com.conversa.app.imagens.FetcherQuadroVideo
 import com.conversa.app.notificacoes.NotificadorMensagens
@@ -64,6 +65,8 @@ class ConversaApplication :
 
     @Inject lateinit var apresentadorChamada: ApresentadorChamada
 
+    @Inject lateinit var integracaoChamada: IntegracaoChamada
+
     @Inject @EscopoAplicacao
     lateinit var escopo: CoroutineScope
 
@@ -82,6 +85,7 @@ class ConversaApplication :
         notificador.iniciar()
         chamadas.iniciar()
         apresentadorChamada.iniciar()
+        integracaoChamada.iniciar()
         limparAoSair()
     }
 

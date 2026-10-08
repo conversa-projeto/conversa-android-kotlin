@@ -11,7 +11,9 @@ import com.conversa.app.core.data.R
  */
 object CanaisNotificacao {
     const val MENSAGENS = "mensagens_v1"
-    const val CHAMADAS_RECEBIDAS = "chamadas_recebidas_v1"
+
+    /** v2: sem som nem vibração do canal; o app toca o toque em loop e para na hora certa (TODO 6.5, #7). */
+    const val CHAMADAS_RECEBIDAS = "chamadas_recebidas_v2"
     const val CHAMADA_ATIVA = "chamada_ativa_v1"
     const val SISTEMA = "sistema_v1"
 
@@ -30,6 +32,7 @@ object CanaisNotificacao {
                 NotificationManagerCompat.IMPORTANCE_HIGH,
                 R.string.canal_chamadas_recebidas,
                 R.string.canal_chamadas_recebidas_descricao,
+                silencioso = true,
             ),
             canal(
                 contexto,
@@ -42,14 +45,21 @@ object CanaisNotificacao {
         )
         NotificationManagerCompat.from(contexto).apply {
             createNotificationChannelsCompat(canais)
-            // O canal só de downloads da 4.7 virou o "Sistema".
+            // O canal só de downloads da 4.7 virou o "Sistema"; o v1 das chamadas tocava o som de notificação.
             deleteNotificationChannel("downloads")
+            deleteNotificationChannel("chamadas_recebidas_v1")
         }
     }
 
-    private fun canal(contexto: Context, id: String, importancia: Int, nome: Int, descricao: Int) =
+    private fun canal(contexto: Context, id: String, importancia: Int, nome: Int, descricao: Int, silencioso: Boolean = false) =
         NotificationChannelCompat.Builder(id, importancia)
             .setName(contexto.getString(nome))
             .setDescription(contexto.getString(descricao))
+            .apply {
+                if (silencioso) {
+                    setSound(null, null)
+                    setVibrationEnabled(false)
+                }
+            }
             .build()
 }

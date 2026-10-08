@@ -7,6 +7,7 @@ import android.view.WindowManager
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
+import androidx.compose.runtime.mutableStateOf
 import com.conversa.app.core.data.tempoReal.MonitorPrimeiroPlano
 import com.conversa.app.core.network.di.EscopoAplicacao
 import com.conversa.app.core.ui.componentes.AreaDeAvisos
@@ -27,21 +28,36 @@ import kotlinx.coroutines.launch
  */
 @AndroidEntryPoint
 class ChamadaActivity : ComponentActivity() {
+    /** "Atender" da notificação: atende assim que a tela abre. */
+    private val pedidoAtender = mutableStateOf(false)
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+        if (savedInstanceState == null) pedidoAtender.value = intent?.action == ACAO_ATENDER
         enableEdgeToEdge()
         // Tela acesa durante a chamada (o sensor de proximidade é a 6.8).
         window.addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON)
         setContent {
             ConversaTema {
                 AreaDeAvisos {
-                    TelaChamadaRota(aoFechar = ::finish)
+                    TelaChamadaRota(
+                        aoFechar = ::finish,
+                        atenderAoAbrir = pedidoAtender.value,
+                        aoAtenderAoAbrir = { pedidoAtender.value = false },
+                    )
                 }
             }
         }
     }
 
+    override fun onNewIntent(intent: Intent) {
+        super.onNewIntent(intent)
+        if (intent.action == ACAO_ATENDER) pedidoAtender.value = true
+    }
+
     companion object {
+        const val ACAO_ATENDER = "com.conversa.app.chamada.ATENDER"
+
         fun intencao(contexto: Context): Intent =
             Intent(contexto, ChamadaActivity::class.java).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_SINGLE_TOP)
     }

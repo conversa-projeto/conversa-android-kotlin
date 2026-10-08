@@ -4,6 +4,14 @@
     <uses-permission android:name="android.permission.RECORD_AUDIO" />
     <uses-permission android:name="android.permission.CAMERA" />
     <uses-permission android:name="android.permission.MODIFY_AUDIO_SETTINGS" />
+    <uses-permission android:name="android.permission.VIBRATE" />
+    <!-- Chamada recebida em tela cheia (TODO 6.5; no Android 14+ a pessoa pode negar). -->
+    <uses-permission android:name="android.permission.USE_FULL_SCREEN_INTENT" />
+    <!-- Serviço só durante a chamada (TODO 6.3). O MANAGE_OWN_CALLS vem do Core-Telecom. -->
+    <uses-permission android:name="android.permission.FOREGROUND_SERVICE" />
+    <uses-permission android:name="android.permission.FOREGROUND_SERVICE_PHONE_CALL" />
+    <uses-permission android:name="android.permission.FOREGROUND_SERVICE_MICROPHONE" />
+    <uses-permission android:name="android.permission.FOREGROUND_SERVICE_CAMERA" />
 
     <!-- Chamada de vídeo é opcional: o app instala em aparelho sem câmera (entra só com áudio). -->
     <uses-feature android:name="android.hardware.camera" android:required="false" />
@@ -19,5 +27,14 @@
             android:launchMode="singleTop"
             android:showWhenLocked="true"
             android:turnScreenOn="true" />
+
+        <service
+            android:name=".ServicoChamada"
+            android:exported="false"
+            android:foregroundServiceType="phoneCall|microphone|camera" />
+
+        <receiver
+            android:name=".AcoesChamadaReceiver"
+            android:exported="false" />
     </application>
 </manifest>

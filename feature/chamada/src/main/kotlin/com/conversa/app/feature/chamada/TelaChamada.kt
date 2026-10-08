@@ -85,10 +85,12 @@ import org.webrtc.VideoTrack
 class ChamadaViewModel @Inject constructor(
     private val gerenciador: GerenciadorChamadas,
     private val midia: MidiaWebRtc,
+    private val telecom: TelecomChamadas,
     sessao: SessaoRepositorio,
 ) : ViewModel() {
     val estado = gerenciador.estado
     val trilhas = midia.trilhas
+    val emEspera = telecom.emEspera
     val eu: Long = sessao.sessao.value?.usuarioId ?: 0
     val egl: EglBase.Context get() = midia.contextoEgl
 
@@ -107,12 +109,20 @@ class ChamadaViewModel @Inject constructor(
     fun ligarVideo() = gerenciador.ligarVideo()
 
     fun responderVideo(transmitir: Boolean) = gerenciador.responderVideo(transmitir)
+
+    fun retomar() = telecom.retomar()
 }
 
 @Composable
-fun TelaChamadaRota(aoFechar: () -> Unit, viewModel: ChamadaViewModel = hiltViewModel()) {
+fun TelaChamadaRota(
+    aoFechar: () -> Unit,
+    atenderAoAbrir: Boolean = false,
+    aoAtenderAoAbrir: () -> Unit = {},
+    viewModel: ChamadaViewModel = hiltViewModel(),
+) {
     val estado by viewModel.estado.collectAsStateWithLifecycle()
     val trilhas by viewModel.trilhas.collectAsStateWithLifecycle()
+    val emEspera by viewModel.emEspera.collectAsStateWithLifecycle()
     val contexto = LocalContext.current
     LaunchedEffect(estado.fase) { if (estado.fase == FaseChamada.INATIVO) aoFechar() }
     // Voltar minimiza: a chamada continua (TODO 6.9).
@@ -137,6 +147,14 @@ fun TelaChamadaRota(aoFechar: () -> Unit, viewModel: ChamadaViewModel = hiltView
         }
     }
 
+    // "Atender" da notificação: atende quando a chamada já está tocando aqui.
+    LaunchedEffect(atenderAoAbrir, estado.tocando) {
+        if (atenderAoAbrir && estado.tocando) {
+            aoAtenderAoAbrir()
+            pedirEDepois(estado.tipo == TipoChamada.VIDEO) { viewModel.atender(false) }
+        }
+    }
+
     Surface(Modifier.fillMaxSize(), color = ConversaTema.cores.chamadaFundo) {
         if (estado.fase == FaseChamada.RECEBENDO) {
             TelaRecebendo(
@@ -149,6 +167,7 @@ fun TelaChamadaRota(aoFechar: () -> Unit, viewModel: ChamadaViewModel = hiltView
         } else {
             TelaEmChamada(
                 estado = estado,
+                emEspera = emEspera,
                 trilhas = trilhas,
                 eu = viewModel.eu,
                 egl = viewModel.egl,
@@ -158,6 +177,7 @@ fun TelaChamadaRota(aoFechar: () -> Unit, viewModel: ChamadaViewModel = hiltView
                     aoTrocarCamera = viewModel::trocarCamera,
                     aoAtivarVideo = { pedirEDepois(true) { viewModel.ligarVideo() } },
                     aoSair = viewModel::desligar,
+                    aoRetomar = viewModel::retomar,
                 ),
             )
         }
@@ -238,13 +258,31 @@ private data class AcoesEmChamada(
     val aoTrocarCamera: () -> Unit,
     val aoAtivarVideo: () -> Unit,
     val aoSair: () -> Unit,
+    val aoRetomar: () -> Unit,
 )
 
 @Composable
-private fun TelaEmChamada(estado: EstadoChamada, trilhas: TrilhasChamada, eu: Long, egl: EglBase.Context, acoes: AcoesEmChamada) {
+private fun TelaEmChamada(
+    estado: EstadoChamada,
+    emEspera: Boolean,
+    trilhas: TrilhasChamada,
+    eu: Long,
+    egl: EglBase.Context,
+    acoes: AcoesEmChamada,
+) {
     val nomes = estado.dados?.participantes.orEmpty().associate { it.usuarioId to it.nome }
     Column(Modifier.fillMaxSize().statusBarsPadding().navigationBarsPadding()) {
         Cabecalho(estado)
+        if (emEspera) {
+            // Em espera por outra chamada (celular): ninguém nos ouve até retomar.
+            Row(
+                Modifier.fillMaxWidth().background(ConversaTema.cores.avisoConexao).padding(horizontal = 16.dp, vertical = 8.dp),
+                verticalAlignment = Alignment.CenterVertically,
+            ) {
+                Text(stringResource(R.string.em_espera), style = MaterialTheme.typography.labelLarge, modifier = Modifier.weight(1f))
+                TextButton(onClick = acoes.aoRetomar) { Text(stringResource(R.string.retomar)) }
+            }
+        }
         Box(Modifier.weight(1f).fillMaxWidth()) {
             val remotos = trilhas.remotos
             if (remotos.isEmpty()) {

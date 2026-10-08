@@ -26,6 +26,9 @@ class PreferenciasStore(private val dataStore: DataStore<Preferences>) {
     /** Já explicou e pediu a permissão de notificações depois do login (FC-607): não insiste a cada abertura. */
     val pediuNotificacoes: Flow<Boolean> = dataStore.data.map { it[PEDIU_NOTIFICACOES] == true }
 
+    /** Já explicou a tela cheia das chamadas (Android 14+, TODO 6.5): uma vez só. */
+    val pediuTelaCheia: Flow<Boolean> = dataStore.data.map { it[PEDIU_TELA_CHEIA] == true }
+
     suspend fun salvarEnderecoServidor(endereco: String) {
         dataStore.edit { it[ENDERECO_SERVIDOR] = endereco }
     }
@@ -38,6 +41,10 @@ class PreferenciasStore(private val dataStore: DataStore<Preferences>) {
         dataStore.edit { it[PEDIU_NOTIFICACOES] = true }
     }
 
+    suspend fun marcarPediuTelaCheia() {
+        dataStore.edit { it[PEDIU_TELA_CHEIA] = true }
+    }
+
     suspend fun salvarUltimoLogin(login: String) {
         dataStore.edit { it[ULTIMO_LOGIN] = login }
     }
@@ -47,5 +54,6 @@ class PreferenciasStore(private val dataStore: DataStore<Preferences>) {
         val DISPOSITIVO_ID = longPreferencesKey("dispositivo_id")
         val ULTIMO_LOGIN = stringPreferencesKey("ultimo_login")
         val PEDIU_NOTIFICACOES = booleanPreferencesKey("pediu_notificacoes")
+        val PEDIU_TELA_CHEIA = booleanPreferencesKey("pediu_tela_cheia")
     }
 }
