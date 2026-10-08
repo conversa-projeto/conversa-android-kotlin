@@ -4,7 +4,7 @@
 - **Tipo:** documentação
 - **Itens:** `TODO.md` 2.10, 6.13, 7.2, 7.12, 8.6 (linhas 🆕); FC-212, FC-501, FC-516, FC-517, FC-719, FC-723
 - **Branch:** `reescrita`
-- **Commits:** _(preencher)_
+- **Commits:** `cda97f2`
 - **Commits de origem** (pull feito em 2026-10-08; as cópias locais estavam 2 commits atrás):
   - servidor `d4435db` (2026-10-07 20:30): "Reações: no máximo 5 emojis diferentes por pessoa na mesma mensagem";
   - servidor `5cad911` (2026-10-07 20:41): "Votação com data final e encerramento antes do prazo";
