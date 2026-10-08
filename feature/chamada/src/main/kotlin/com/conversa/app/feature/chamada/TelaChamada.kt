@@ -7,6 +7,7 @@ import androidx.activity.compose.BackHandler
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.background
+import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.layout.Arrangement
@@ -166,6 +167,8 @@ class ChamadaViewModel @Inject constructor(
 
     fun adicionar(usuarios: List<Long>) = gerenciador.adicionar(usuarios)
 
+    fun ativarTransmissao(video: Boolean) = gerenciador.ativarTransmissao(video)
+
     /** Primeira mensagem do chat da chamada: cria o chat (se preciso), põe na fila de envio e abre a conversa. */
     fun enviarNoChat(texto: String, aoAbrir: (Long) -> Unit, aoFalhar: () -> Unit) {
         viewModelScope.launch {
@@ -266,6 +269,7 @@ fun TelaChamadaRota(
                     aoExibir = viewModel::exibir,
                     aoAreaDoVideo = aoAreaDoVideo,
                     aoAdicionar = { adicionando = true },
+                    aoAtivarTransmissao = { video -> pedirEDepois(video) { viewModel.ativarTransmissao(video) } },
                     // Chat já existe: a conversa completa; senão, o campo da primeira mensagem (como o web).
                     aoChat = { estado.conversaChatId?.let(aoAbrirChat) ?: run { escrevendoNoChat = true } },
                 ),
@@ -378,6 +382,8 @@ private data class AcoesEmChamada(
     /** Onde o vídeo está na tela: o picture-in-picture "encolhe" a partir daí. */
     val aoAreaDoVideo: (Rect) -> Unit,
     val aoAdicionar: () -> Unit,
+    /** Somente recepção: "Ativar microfone" (false) / "Ativar câmera" (true). */
+    val aoAtivarTransmissao: (Boolean) -> Unit,
     val aoChat: () -> Unit,
 )
 
@@ -435,7 +441,10 @@ private fun TelaEmChamada(
             val videoLocal = trilhas.videoLocal
             if (videoLocal != null && estado.cameraLigada) {
                 // Miniatura local, com o nome "Você" (TODO 6.9).
-                Box(Modifier.align(Alignment.TopEnd).padding(12.dp).size(width = 104.dp, height = 144.dp).clip(RoundedCornerShape(12.dp))) {
+                Box(
+                    Modifier.align(Alignment.TopEnd).padding(12.dp).size(width = 104.dp, height = 144.dp).clip(RoundedCornerShape(12.dp))
+                        .anelDeFala(trilhas.falandoLocal),
+                ) {
                     VideoDaTrilha(videoLocal, egl, espelhar = true, sobreposto = true, modifier = Modifier.fillMaxSize())
                     Text(
                         stringResource(R.string.voce),
@@ -634,7 +643,8 @@ private fun Participante(
     aoTocar: () -> Unit = {},
 ) {
     val cores = ConversaTema.cores
-    Box(modifier.clip(RoundedCornerShape(12.dp)).background(cores.chamadaBarraInferior)) {
+    // Anel verde enquanto fala (6.13); por cima do vídeo.
+    Box(modifier.clip(RoundedCornerShape(12.dp)).background(cores.chamadaBarraInferior).anelDeFala(trilha.falando)) {
         val video = trilha.video
         if (video != null) {
             VideoDaTrilha(video, egl, modifier = Modifier.fillMaxSize())
@@ -725,6 +735,17 @@ private fun BarraDeControles(estado: EstadoChamada, rotas: Rotas, acoes: AcoesEm
         verticalAlignment = Alignment.CenterVertically,
     ) {
         val emAndamento = estado.fase != FaseChamada.ENCERRANDO
+        if (estado.midiaLocal == MidiaLocal.NENHUMA && estado.fase == FaseChamada.ATIVA) {
+            // Entrou só recebendo (sem microfone nem câmera): pode começar a transmitir (6.13).
+            BotaoRedondo(Icons.Filled.Mic, stringResource(R.string.ativar_microfone), cores.chamadaBotao, cores.chamadaIconeBotao) {
+                acoes.aoAtivarTransmissao(false)
+            }
+            if (estado.tipo == TipoChamada.VIDEO) {
+                BotaoRedondo(Icons.Filled.Videocam, stringResource(R.string.ativar_camera), cores.chamadaBotao, cores.chamadaIconeBotao) {
+                    acoes.aoAtivarTransmissao(true)
+                }
+            }
+        }
         if (estado.midiaLocal != MidiaLocal.NENHUMA) {
             // Microfone e câmera ficam vermelhos quando desligados (TODO 6.9).
             BotaoAlternar(
@@ -992,3 +1013,8 @@ private fun PrimeiraMensagemDoChat(aoEnviar: (String) -> Unit, aoFechar: () -> U
         }
     }
 }
+
+/** Contorno verde de quem está falando (o "anel" do web). */
+@Composable
+private fun Modifier.anelDeFala(falando: Boolean): Modifier =
+    if (falando) border(3.dp, ConversaTema.cores.chamadaEmAndamento, RoundedCornerShape(12.dp)) else this

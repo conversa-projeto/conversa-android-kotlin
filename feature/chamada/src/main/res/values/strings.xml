@@ -28,6 +28,8 @@
     <string name="camera">Câmera</string>
     <string name="trocar_camera">Trocar câmera</string>
     <string name="ativar_video">Ativar vídeo</string>
+    <string name="ativar_microfone">Ativar microfone</string>
+    <string name="ativar_camera">Ativar câmera</string>
     <string name="sair_da_chamada">Sair da chamada</string>
     <string name="adicionar_usuario">Adicionar usuário</string>
     <string name="chat_da_chamada">Chat da chamada</string>

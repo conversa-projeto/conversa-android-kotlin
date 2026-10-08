@@ -3,6 +3,7 @@ package com.conversa.app.core.webrtc
 import android.Manifest
 import android.content.Context
 import android.content.pm.PackageManager
+import android.os.SystemClock
 import androidx.core.content.ContextCompat
 import com.conversa.app.core.model.ServidoresIce
 import com.conversa.app.core.network.api.ConversaApi
@@ -17,6 +18,7 @@ import dagger.hilt.components.SingletonComponent
 import java.io.IOException
 import javax.inject.Inject
 import javax.inject.Singleton
+import kotlin.coroutines.resume
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.CoroutineExceptionHandler
 import kotlinx.coroutines.CoroutineScope
@@ -29,6 +31,8 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.suspendCancellableCoroutine
+import kotlinx.coroutines.withTimeoutOrNull
 import okhttp3.HttpUrl
 import org.webrtc.AudioSource
 import org.webrtc.AudioTrack
@@ -50,13 +54,20 @@ import org.webrtc.VideoTrack
 import timber.log.Timber
 
 /** O que a tela da chamada desenha: o vídeo local (PiP) e o de cada participante. */
-data class TrilhasChamada(val videoLocal: VideoTrack? = null, val remotos: Map<Long, TrilhaRemota> = emptyMap())
+data class TrilhasChamada(
+    val videoLocal: VideoTrack? = null,
+    val remotos: Map<Long, TrilhaRemota> = emptyMap(),
+    /** Eu falando agora (anel verde, 6.13). */
+    val falandoLocal: Boolean = false,
+)
 
 data class TrilhaRemota(
     val video: VideoTrack? = null,
     val conectado: Boolean = false,
     /** A conexão caiu ou o WHEP não respondeu: faixa vermelha no tile (CHA-11). */
     val falhou: Boolean = false,
+    /** Falando agora: anel verde (6.13). */
+    val falando: Boolean = false,
 )
 
 /**
@@ -99,6 +110,9 @@ class MidiaWebRtc @Inject constructor(
     private var local: Local? = null
     private var publicacao: Publicacao? = null
     private var republicando = false
+    private var medidor: Job? = null
+    private var falaLocal = DetectorDeFala()
+    private var falandoLocal = false
     private val assinaturas = mutableMapOf<Long, Assinatura>()
     private var chamadaId = 0L
     private var eu = 0L
@@ -139,6 +153,8 @@ class MidiaWebRtc @Inject constructor(
         /** A resposta do MediaMTX diz que vem vídeo: sem trilha depois de conectar, refazer. */
         var esperaVideo = false
         var tarefa: Job? = null
+        val fala = DetectorDeFala()
+        var falando = false
     }
 
     // --- MidiaChamada ---
@@ -341,6 +357,7 @@ class MidiaWebRtc @Inject constructor(
         pc.definirRemota(SessionDescription(SessionDescription.Type.ANSWER, resposta.resposta))
         checar(s, pub)
         aplicarLimites(pc)
+        garantirMedidor(s)
     }
 
     private fun aoMudarPublicacao(pub: Publicacao, estado: PeerConnection.PeerConnectionState, s: Long) {
@@ -456,7 +473,52 @@ class MidiaWebRtc @Inject constructor(
         a.recurso = resposta.recurso
         a.esperaVideo = a.comVideo && sdpEnviaVideo(resposta.resposta)
         pc.definirRemota(SessionDescription(SessionDescription.Type.ANSWER, resposta.resposta))
+        garantirMedidor(s)
     }
+
+    // --- Quem está falando (6.13) ---
+
+    private fun garantirMedidor(s: Long) {
+        if (medidor?.isActive == true) return
+        medidor = noTrabalho(s) {
+            while (true) {
+                delay(INTERVALO_FALA_MS)
+                medirFala()
+            }
+        }
+    }
+
+    /** Volume de cada um pelas estatísticas do WebRTC (`audioLevel`); só republica quando alguém começa ou para. */
+    private suspend fun medirFala() {
+        var mudou = false
+        for (a in assinaturas.values.toList()) {
+            val pc = a.pc ?: continue
+            val falando = a.fala.medir(nivelDeAudio(pc, "inbound-rtp"), SystemClock.elapsedRealtime())
+            if (falando != a.falando && assinaturas[a.usuario] === a) {
+                a.falando = falando
+                mudou = true
+            }
+        }
+        val pub = publicacao
+        val eu = if (pub != null) falaLocal.medir(nivelDeAudio(pub.pc, "media-source"), SystemClock.elapsedRealtime()) else false
+        if (eu != falandoLocal) {
+            falandoLocal = eu
+            mudou = true
+        }
+        if (mudou) publicarTrilhas()
+    }
+
+    /** Maior `audioLevel` (0 a 1) das estatísticas de áudio do tipo pedido; 0 se não vier em 1 s. */
+    private suspend fun nivelDeAudio(pc: PeerConnection, tipo: String): Double = withTimeoutOrNull(ESPERA_ESTATISTICAS_MS) {
+        suspendCancellableCoroutine { continuacao ->
+            pc.getStats { relatorio ->
+                val nivel = relatorio.statsMap.values
+                    .filter { it.type == tipo && it.members["kind"] == "audio" }
+                    .maxOfOrNull { (it.members["audioLevel"] as? Number)?.toDouble() ?: 0.0 } ?: 0.0
+                continuacao.resume(nivel)
+            }
+        }
+    } ?: 0.0
 
     private fun aoMudarAssinatura(a: Assinatura, estado: PeerConnection.PeerConnectionState, s: Long) {
         if (s != sessaoAtual() || assinaturas[a.usuario] !== a) return
@@ -517,6 +579,9 @@ class MidiaWebRtc @Inject constructor(
         local = null
         comVideo = false
         republicando = false
+        medidor = null
+        falaLocal = DetectorDeFala()
+        falandoLocal = false
     }
 
     private fun descartarAssinatura(a: Assinatura) {
@@ -576,8 +641,9 @@ class MidiaWebRtc @Inject constructor(
         _trilhas.value = TrilhasChamada(
             videoLocal = local?.video,
             remotos = assinaturas.mapValues { (_, a) ->
-                TrilhaRemota(a.video, a.estado == PeerConnection.PeerConnectionState.CONNECTED, a.falhou)
+                TrilhaRemota(a.video, a.estado == PeerConnection.PeerConnectionState.CONNECTED, a.falhou, a.falando)
             },
+            falandoLocal = falandoLocal,
         )
     }
 
@@ -639,6 +705,10 @@ class MidiaWebRtc @Inject constructor(
         const val INTERVALO_AUDIO_MS = 800L
         const val ESPERA_RECONEXAO_MS = 2_000L
         const val ESPERA_VIDEO_MS = 5_000L
+
+        // O web mede a cada 100 ms; aqui as estatísticas custam mais, e 150 ms com a espera de 400 ms não pisca.
+        const val INTERVALO_FALA_MS = 150L
+        const val ESPERA_ESTATISTICAS_MS = 1_000L
     }
 }
 

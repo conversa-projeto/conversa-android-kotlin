@@ -881,6 +881,60 @@ class GerenciadorChamadasTest {
         assertThat(remoto.chamadas.filter { it.startsWith("adicionar") }).isEmpty()
     }
 
+    // --- Somente recepção (6.13) ---
+
+    @Test
+    fun `quem entrou so recebendo ativa o microfone e passa a publicar`() = runTest {
+        midia.local = MidiaLocal.NENHUMA
+        val g = criar()
+        tocando(g, TipoChamada.VIDEO)
+        g.atender()
+        runCurrent()
+        assertThat(g.estado.value.midiaLocal).isEqualTo(MidiaLocal.NENHUMA)
+
+        midia.local = MidiaLocal.AUDIO_VIDEO
+        g.ativarTransmissao(video = false)
+        runCurrent()
+
+        assertThat(g.estado.value.midiaLocal).isEqualTo(MidiaLocal.AUDIO)
+        assertThat(g.estado.value.microfoneLigado).isTrue()
+        assertThat(midia.acoes).containsAtLeast("abrir video=false", "publicar $RECEBIDA").inOrder()
+    }
+
+    @Test
+    fun `ativar a camera de quem so recebia publica com video`() = runTest {
+        midia.local = MidiaLocal.NENHUMA
+        val g = criar()
+        tocando(g, TipoChamada.VIDEO)
+        g.atender()
+        runCurrent()
+
+        midia.local = MidiaLocal.AUDIO_VIDEO
+        g.ativarTransmissao(video = true)
+        runCurrent()
+
+        assertThat(g.estado.value.midiaLocal).isEqualTo(MidiaLocal.AUDIO_VIDEO)
+        assertThat(g.estado.value.cameraLigada).isTrue()
+    }
+
+    @Test
+    fun `ativar sem conseguir o microfone avisa e continua so recebendo`() = runTest {
+        midia.local = MidiaLocal.NENHUMA
+        val g = criar()
+        tocando(g)
+        g.atender()
+        runCurrent()
+        val avisos = mutableListOf<AvisoChamada>()
+        backgroundScope.launch { g.avisos.collect { avisos += it } }
+        runCurrent()
+
+        g.ativarTransmissao(video = false)
+        runCurrent()
+
+        assertThat(avisos).containsExactly(AvisoChamada.MicrofoneIndisponivel)
+        assertThat(g.estado.value.midiaLocal).isEqualTo(MidiaLocal.NENHUMA)
+    }
+
     // --- Chat da chamada (6.13) ---
 
     @Test

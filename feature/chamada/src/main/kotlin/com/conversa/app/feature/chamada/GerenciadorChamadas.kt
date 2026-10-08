@@ -283,6 +283,28 @@ class GerenciadorChamadas @Inject constructor(
         conversa
     }.await()
 
+    /**
+     * Somente recepção (6.13): quem entrou sem microfone nem câmera passa a transmitir
+     * ("Ativar microfone" / "Ativar câmera", como o web). Sem microfone, avisa.
+     */
+    fun ativarTransmissao(video: Boolean) {
+        escopo.launch {
+            val atual = _estado.value
+            val id = atual.chamadaId ?: return@launch
+            if (atual.fase != FaseChamada.ATIVA || atual.midiaLocal != MidiaLocal.NENHUMA) return@launch
+            val eu = eu() ?: return@launch
+            val g = geracao
+            val local = midia.abrirLocal(video)
+            if (!vivo(g)) return@launch
+            if (local == MidiaLocal.NENHUMA) {
+                _avisos.tryEmit(AvisoChamada.MicrofoneIndisponivel)
+                return@launch
+            }
+            atualizar { it.copy(midiaLocal = local, microfoneLigado = true, cameraLigada = local == MidiaLocal.AUDIO_VIDEO) }
+            tentar { midia.publicar(id, eu) }
+        }
+    }
+
     /** Liga o vídeo numa chamada de áudio e avisa os outros (WS 56). */
     fun ligarVideo() {
         escopo.launch { ativarVideo(notificar = true, transmitir = true) }
