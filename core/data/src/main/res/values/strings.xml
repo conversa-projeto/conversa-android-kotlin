@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- Notificação de download concluído (TODO 4.7) -->
+    <string name="canal_downloads">Downloads</string>
+    <string name="download_concluido">Download concluído</string>
+</resources>

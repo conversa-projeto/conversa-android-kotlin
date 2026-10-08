@@ -4,6 +4,8 @@ import android.content.ActivityNotFoundException
 import android.content.Context
 import android.content.Intent
 import android.webkit.MimeTypeMap
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
@@ -36,6 +38,7 @@ import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.SmallFloatingActionButton
+import androidx.compose.material3.SnackbarResult
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
@@ -60,6 +63,7 @@ import androidx.compose.ui.res.pluralStringResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
+import androidx.core.net.toUri
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.LifecycleEventObserver
@@ -113,6 +117,14 @@ fun ChatRotaTela(
     val recursos = LocalResources.current
     val semApp = stringResource(R.string.nenhum_app_para_abrir)
     val audioFalhou = stringResource(R.string.audio_falhou)
+    val abrirRotulo = stringResource(R.string.abrir)
+    // Android 9: "Salvar como" (sem permissão de armazenamento); o anexo pedido fica guardado até voltar.
+    var salvarComo by remember { mutableStateOf<com.conversa.app.core.model.Conteudo?>(null) }
+    val escolherOndeSalvar = rememberLauncherForActivityResult(ActivityResultContracts.CreateDocument("*/*")) { uri ->
+        val conteudo = salvarComo
+        salvarComo = null
+        if (uri != null && conteudo != null) viewModel.salvarEm(uri.toString(), conteudo)
+    }
     val microfoneIndisponivel = stringResource(R.string.microfone_indisponivel)
     val gravacaoCurta = stringResource(R.string.gravacao_curta)
     val gravacaoFalhou = stringResource(R.string.gravacao_falhou)
@@ -126,6 +138,21 @@ fun ChatRotaTela(
             is EventoChat.AbrirConversa -> aoAbrirConversa(evento.conversaId)
             is EventoChat.ArquivoGrande -> avisos.mostrarErro(recursos.getString(R.string.arquivo_grande, evento.nome))
             is EventoChat.AbrirArquivo -> if (!abrirComOutroApp(contexto, evento.arquivo, evento.mime)) avisos.mostrarErro(semApp)
+            is EventoChat.Baixando -> avisos.showSnackbar(recursos.getString(R.string.baixando, evento.nome))
+            is EventoChat.Salvo -> {
+                val acao = avisos.showSnackbar(
+                    recursos.getString(R.string.salvo_em_downloads, evento.nome),
+                    actionLabel = abrirRotulo,
+                    withDismissAction = true,
+                )
+                if (acao == SnackbarResult.ActionPerformed && !abrirUri(contexto, evento.uri, evento.mime)) avisos.mostrarErro(semApp)
+            }
+            is EventoChat.DownloadFalhou -> avisos.mostrarErro(recursos.getString(R.string.download_falhou, evento.nome))
+            is EventoChat.EscolherOndeSalvar -> {
+                salvarComo = evento.conteudo
+                escolherOndeSalvar.launch(evento.conteudo.nome.ifBlank { evento.conteudo.conteudo })
+            }
+            is EventoChat.Compartilhar -> compartilharArquivo(contexto, evento.arquivo, evento.mime)
             EventoChat.AudioFalhou -> avisos.mostrarErro(audioFalhou)
         }
     }
@@ -149,6 +176,8 @@ fun ChatRotaTela(
                     aoLigar = aoLigar,
                     aoAbrirArquivo = { viewModel.abrirArquivo(it.conteudo, it.nome.ifBlank { it.conteudo }, null) },
                     urlDoVideo = viewModel::urlDoVideo,
+                    aoBaixar = viewModel::baixar,
+                    aoCompartilhar = viewModel::compartilhar,
                     aoAlternarAudio = viewModel::alternarAudio,
                     aoBuscarAudio = viewModel::buscarAudio,
                 ),
@@ -170,6 +199,29 @@ fun ChatRotaTela(
             ),
         )
     }
+}
+
+/** Abre um arquivo salvo em Downloads (URI do MediaStore) com outro app. */
+private fun abrirUri(contexto: Context, uri: String, mime: String): Boolean {
+    val intencao = Intent(Intent.ACTION_VIEW)
+        .setDataAndType(uri.toUri(), mime)
+        .addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION or Intent.FLAG_ACTIVITY_NEW_TASK)
+    return try {
+        contexto.startActivity(Intent.createChooser(intencao, null).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK))
+        true
+    } catch (_: ActivityNotFoundException) {
+        false
+    }
+}
+
+/** "Compartilhar" do Android com o anexo baixado (permissão de leitura temporária pelo `FileProvider`). */
+private fun compartilharArquivo(contexto: Context, arquivo: File, mime: String?) {
+    val tipo = mime ?: MimeTypeMap.getSingleton().getMimeTypeFromExtension(arquivo.extension.lowercase()) ?: "application/octet-stream"
+    val intencao = Intent(Intent.ACTION_SEND)
+        .setType(tipo)
+        .putExtra(Intent.EXTRA_STREAM, uriCompartilhado(contexto, arquivo))
+        .addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
+    contexto.startActivity(Intent.createChooser(intencao, null).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK))
 }
 
 /** Abre o arquivo baixado com outro app, pelo `FileProvider` (permissão só de leitura e temporária). */

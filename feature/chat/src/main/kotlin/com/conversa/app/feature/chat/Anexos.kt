@@ -34,6 +34,7 @@ import androidx.compose.material.icons.filled.PlayArrow
 import androidx.compose.material.icons.outlined.AudioFile
 import androidx.compose.material.icons.outlined.BrokenImage
 import androidx.compose.material.icons.outlined.Close
+import androidx.compose.material.icons.outlined.Download
 import androidx.compose.material.icons.outlined.Image
 import androidx.compose.material.icons.outlined.PictureAsPdf
 import androidx.compose.material.icons.outlined.PlayCircle
@@ -173,6 +174,14 @@ fun LinhaArquivo(conteudo: Conteudo, cor: Color, acoes: AcoesBolha) {
         )
         if (!conteudo.local) {
             Text(stringResource(R.string.abrir), color = MaterialTheme.colorScheme.primary, style = MaterialTheme.typography.labelLarge)
+            // "Download" do web: salva em Downloads/Conversa.
+            IconButton(onClick = { acoes.aoBaixar(conteudo) }, modifier = Modifier.size(32.dp)) {
+                Icon(
+                    Icons.Outlined.Download,
+                    contentDescription = stringResource(R.string.baixar),
+                    tint = MaterialTheme.colorScheme.primary,
+                )
+            }
         }
     }
 }
@@ -250,6 +259,23 @@ fun imagensDaConversa(itens: List<ItemChat>): List<ImagemDaConversa> = itens.asS
  */
 @Composable
 fun VideoNaBolha(mensagem: Mensagem, conteudo: Conteudo, acoes: AcoesBolha) {
+    Column {
+        QuadroDaBolha(mensagem, conteudo, acoes)
+        if (!conteudo.local) {
+            TextButton(onClick = { acoes.aoBaixar(conteudo) }) {
+                Icon(Icons.Outlined.Download, contentDescription = null, modifier = Modifier.size(16.dp))
+                Text(
+                    stringResource(R.string.baixar_video),
+                    style = MaterialTheme.typography.labelMedium,
+                    modifier = Modifier.padding(start = 4.dp),
+                )
+            }
+        }
+    }
+}
+
+@Composable
+private fun QuadroDaBolha(mensagem: Mensagem, conteudo: Conteudo, acoes: AcoesBolha) {
     Box(
         Modifier
             .size(width = 240.dp, height = 160.dp)
@@ -319,8 +345,16 @@ fun VisualizadorImagens(imagens: List<ImagemDaConversa>, inicial: Int, acoes: Ac
                         )
                     }
                     if (!atual.conteudo.local) {
-                        TextButton(onClick = { acoes.aoAbrirArquivo(atual.conteudo) }) {
-                            Text(stringResource(R.string.abrir_com), color = Color.White)
+                        Row {
+                            TextButton(onClick = { acoes.aoAbrirArquivo(atual.conteudo) }) {
+                                Text(stringResource(R.string.abrir_com), color = Color.White)
+                            }
+                            TextButton(onClick = { acoes.aoCompartilhar(atual.conteudo) }) {
+                                Text(stringResource(R.string.compartilhar), color = Color.White)
+                            }
+                            TextButton(onClick = { acoes.aoBaixar(atual.conteudo) }) {
+                                Text(stringResource(R.string.baixar), color = Color.White)
+                            }
                         }
                     }
                 }

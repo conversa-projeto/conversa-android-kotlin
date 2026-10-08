@@ -8,7 +8,9 @@ import com.conversa.app.core.data.SessaoRepositorio
 import com.conversa.app.core.data.anexos.AnexoLocal
 import com.conversa.app.core.data.anexos.AnexosRepositorio
 import com.conversa.app.core.data.anexos.ArquivosLocais
+import com.conversa.app.core.data.anexos.DownloadsRepositorio
 import com.conversa.app.core.data.anexos.FontesArquivo
+import com.conversa.app.core.data.anexos.ResultadoDownload
 import com.conversa.app.core.data.contatos.ContatosRepositorio
 import com.conversa.app.core.data.conversas.ConversasRepositorio
 import com.conversa.app.core.data.mensagens.EnvioMensagens
@@ -95,6 +97,20 @@ sealed interface EventoChat {
 
     /** Não deu para montar o arquivo da gravação. */
     data object GravacaoFalhou : EventoChat
+
+    /** "Baixar" começou (ANX-09); o fim chega como [Salvo] ou [DownloadFalhou]. */
+    data class Baixando(val nome: String) : EventoChat
+
+    /** Salvo em Downloads/Conversa: a tela oferece "Abrir". */
+    data class Salvo(val nome: String, val uri: String, val mime: String) : EventoChat
+
+    data class DownloadFalhou(val nome: String) : EventoChat
+
+    /** Android 9: a tela abre o "Salvar como" e devolve o URI em [ChatViewModel.salvarEm]. */
+    data class EscolherOndeSalvar(val conteudo: com.conversa.app.core.model.Conteudo) : EventoChat
+
+    /** Anexo baixado para o cache: a tela abre o "Compartilhar" do Android. */
+    data class Compartilhar(val arquivo: java.io.File, val mime: String?) : EventoChat
 }
 
 /**
@@ -132,6 +148,7 @@ class ChatViewModel @Inject constructor(
     private val envio: EnvioMensagens,
     private val anexos: AnexosRepositorio,
     private val arquivos: ArquivosLocais,
+    private val downloads: DownloadsRepositorio,
     private val fontes: FontesArquivo,
     private val player: PlayerAudio,
     gravador: GravadorAudio,
@@ -272,6 +289,40 @@ class ChatViewModel @Inject constructor(
     suspend fun urlDoVideo(conteudo: com.conversa.app.core.model.Conteudo): String? =
         if (conteudo.local) conteudo.conteudo.removePrefix(PREFIXO_LOCAL) else anexos.url(conteudo.conteudo).getOrNull()
 
+    /**
+     * "Baixar" (ANX-09): Android 10+ salva direto em Downloads/Conversa (continua mesmo
+     * saindo da conversa); Android 9 pergunta onde salvar.
+     */
+    fun baixar(conteudo: com.conversa.app.core.model.Conteudo) {
+        if (conteudo.local) return
+        val nome = conteudo.nome.ifBlank { conteudo.conteudo }
+        viewModelScope.launch {
+            if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.Q) {
+                downloads.salvarEmDownloads(conteudo.conteudo, nome, null)
+                eventos.enviar(EventoChat.Baixando(nome))
+            } else {
+                eventos.enviar(EventoChat.EscolherOndeSalvar(conteudo))
+            }
+        }
+    }
+
+    /** Android 9: o URI escolhido no "Salvar como". */
+    fun salvarEm(uri: String, conteudo: com.conversa.app.core.model.Conteudo) {
+        val nome = conteudo.nome.ifBlank { conteudo.conteudo }
+        downloads.salvarEm(uri, conteudo.conteudo, nome, null)
+        viewModelScope.launch { eventos.enviar(EventoChat.Baixando(nome)) }
+    }
+
+    /** Baixa para o cache (uma vez) e pede para a tela abrir o "Compartilhar". */
+    fun compartilhar(conteudo: com.conversa.app.core.model.Conteudo) {
+        if (conteudo.local) return
+        viewModelScope.launch {
+            arquivos.baixar(conteudo.conteudo, conteudo.nome.ifBlank { conteudo.conteudo })
+                .onSuccess { eventos.enviar(EventoChat.Compartilhar(it, null)) }
+                .onFailure { eventos.enviar(EventoChat.Erro(it.paraErroApi().mensagemAmigavel())) }
+        }
+    }
+
     /** Baixa para o cache (uma vez) e pede para a tela abrir com outro app. */
     fun abrirArquivo(identificador: String, nome: String, mime: String?) {
         viewModelScope.launch {
@@ -299,6 +350,17 @@ class ChatViewModel @Inject constructor(
     }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), AudioNaConversa())
 
     init {
+        // Fim dos downloads pedidos (a notificação, se permitida, avisa mesmo fora da conversa).
+        viewModelScope.launch {
+            downloads.resultados.collect {
+                eventos.enviar(
+                    when (it) {
+                        is ResultadoDownload.Salvo -> EventoChat.Salvo(it.nome, it.uri, it.mime)
+                        is ResultadoDownload.Falhou -> EventoChat.DownloadFalhou(it.nome)
+                    },
+                )
+            }
+        }
         // Guarda a duração de cada áudio que tocou (a bolha continua mostrando depois de trocar de áudio).
         viewModelScope.launch {
             player.estado.collect { p ->

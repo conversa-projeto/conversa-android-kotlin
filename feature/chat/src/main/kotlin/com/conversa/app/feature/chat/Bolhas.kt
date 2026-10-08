@@ -90,6 +90,9 @@ data class AcoesBolha(
     val aoMencao: (Long) -> Unit = {},
     val aoLigar: (TipoChamada) -> Unit = {},
     val aoAbrirArquivo: (Conteudo) -> Unit = {},
+    /** Salvar em Downloads (ANX-09). */
+    val aoBaixar: (Conteudo) -> Unit = {},
+    val aoCompartilhar: (Conteudo) -> Unit = {},
     /** URL assinada do vídeo (ou o arquivo local, enviando) para o visualizador tocar. */
     val urlDoVideo: suspend (Conteudo) -> String? = { null },
     val aoAbrirImagem: (Mensagem, Conteudo) -> Unit = { _, _ -> },

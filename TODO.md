@@ -457,7 +457,7 @@
 - [x] Zoom com pinça e duplo toque; legenda = textos da mesma mensagem; tira de miniaturas — pinça e duplo toque (sem zoom o arrasto troca de imagem); legenda = remetente, hora e textos; `TiraMiniaturas` (a atual em destaque, toque vai até ela; vídeo com o play). Testado no emulador ✔ 0168bd6
 - [x] Vídeo na bolha: primeiro quadro + ícone de play — `VideoNaBolha` + `QuadroVideo`/`FetcherQuadroVideo` (`MediaMetadataRetriever` pela URL assinada, lê por partes; o quadro fica no cache de disco do Coil; URL vencida tenta de novo; arquivo local enquanto envia). No emulador: vídeo gravado da tela, enviado pela galeria e recebido do B ✔ 0168bd6
 - [x] Vídeo no visualizador: Media3 com controles — `ReprodutorVideo` (`:core:media`, `PlayerView` do `media3-ui`): toca só na página visível, solta o player ao sair, pega o foco de áudio (o áudio da conversa pausa). No emulador: o vídeo de 6 s do B tocou pela URL assinada ✔ 0168bd6
-- [ ] Ações do visualizador: compartilhar, baixar
+- [x] Ações do visualizador: compartilhar, baixar — "Abrir com…", "Compartilhar" (baixa para o cache e abre o compartilhar do Android) e "Baixar" (Downloads/Conversa). Testado no emulador
 
 ### 4.5 Áudio (FC-405, ANX-10)
 - [x] `PlayerUnico` (Media3): só um áudio toca por vez — `PlayerAudio`/`PlayerMedia3` (singleton, foco de áudio, pausa ao desconectar o fone, posição a cada 200 ms); a chave é conversa:mensagem:ordem. No emulador: tocar o segundo para o primeiro ✔ 1ceaad0
@@ -477,11 +477,11 @@
 - [x] Permissão de microfone pedida na hora, com um launcher só para isso (#32) — `RECORD_AUDIO` no manifesto, pedida ao apertar o microfone; negada: "Sem permissão para usar o microfone…" ✔ 399bae5
 
 ### 4.7 Arquivos e download (FC-407, ANX-09)
-- [ ] Bolha de arquivo: ícone pela extensão, nome, tamanho, "Baixar"/"Abrir" — 🔄 `LinhaArquivo` (ícone pela extensão, nome, "Abrir"); tamanho não vem na mensagem; falta testar no emulador
-- [ ] Baixar: URL assinada → `MediaStore.Downloads` (sanitizar o nome: nada de `../`)
+- [x] Bolha de arquivo: ícone pela extensão, nome, tamanho, "Baixar"/"Abrir" — `LinhaArquivo`: ícone, nome, "Abrir" e o botão "Baixar"; vídeo com "Baixar vídeo" embaixo (como o web). O tamanho não vem na mensagem (só no anexo): fica sem, para não fazer uma chamada por arquivo
+- [x] Baixar: URL assinada → `MediaStore.Downloads` (sanitizar o nome: nada de `../`) — `DownloadsRepositorio`: baixa para o cache (URL renovada, `.part`) e copia para Downloads/Conversa pelo MediaStore (pendente até terminar; erro apaga); roda no escopo do app (sair da conversa não interrompe); Android 9 usa "Salvar como" (sem permissão de armazenamento — não testado, o emulador é Android 16); aviso "salvo em Downloads/Conversa" com "Abrir" (+ testes). No emulador: PDF e foto salvos com o tamanho exato e o PDF abriu pelo aviso
 - [x] 🆕 `nomeSeguro` nunca devolve `.` nem `..` (antes `..` passava e o arquivo baixado ou apagado podia sair da pasta) (+ teste) ✔ 399bae5
 - [x] Abrir: `ACTION_VIEW` com `FileProvider` — `ArquivosLocais.baixar` (cache, `.part` → renomeia) + `FileProvider` (`caminhos_arquivos.xml`) + `ACTION_VIEW`; no emulador o PDF enviado baixou pelo proxy e abriu no leitor de PDF do sistema ✔ 389e66d
-- [ ] Notificação de download concluído
+- [ ] Notificação de download concluído — 🔄 `AvisoDownloadNotificacao` (canal "Downloads", toque abre o arquivo) só publica se notificações estiverem permitidas; a permissão `POST_NOTIFICATIONS` é pedida na etapa 5 — testar lá
 
 ### 4.8 Transcrição (FC-409, ANX-12)
 - [ ] Abaixo dos áudios (tipos 4 e 5): estado inicial a partir de `transcricao_status`/`transcricao`

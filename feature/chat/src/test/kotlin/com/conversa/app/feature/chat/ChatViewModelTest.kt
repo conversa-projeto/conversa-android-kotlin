@@ -66,6 +66,9 @@ class ChatViewModelTest {
     }
     private val sessao = mockk<SessaoRepositorio> { every { sessao } returns MutableStateFlow(Sessao("t", 7, "Ana")) }
     private val arquivos = mockk<ArquivosLocais>(relaxed = true)
+    private val downloads = mockk<com.conversa.app.core.data.anexos.DownloadsRepositorio>(relaxed = true) {
+        every { resultados } returns kotlinx.coroutines.flow.MutableSharedFlow()
+    }
     private val player = PlayerFalso()
 
     private fun mensagem(id: Long, remetente: Long, lida: Boolean) = Mensagem(
@@ -94,6 +97,7 @@ class ChatViewModelTest {
             envio,
             mockk(relaxed = true),
             arquivos,
+            downloads,
             mockk(relaxed = true),
             player,
             mockk(relaxed = true),

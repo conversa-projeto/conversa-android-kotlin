@@ -76,6 +76,12 @@
     <string name="remover_anexo">Remover %1$s</string>
     <string name="abrir">Abrir</string>
     <string name="abrir_com">Abrir com…</string>
+    <string name="baixar">Baixar</string>
+    <string name="baixar_video">Baixar vídeo</string>
+    <string name="compartilhar">Compartilhar</string>
+    <string name="baixando">Baixando %1$s…</string>
+    <string name="salvo_em_downloads">%1$s salvo em Downloads/Conversa</string>
+    <string name="download_falhou">Não foi possível baixar %1$s.</string>
     <string name="fechar">Fechar</string>
     <string name="nenhum_app_para_abrir">Nenhum app instalado abre este tipo de arquivo.</string>
     <string name="arquivo_grande">%1$s passa de 1 GB e não pode ser enviado.</string>
