@@ -4,7 +4,7 @@
 - **Tipo:** código / testes
 - **Itens:** `TODO.md` 6.10; FC-715; CHA-22
 - **Branch:** `reescrita`
-- **Commits:** (preencher)
+- **Commits:** `b952923`
 
 ## Contexto
 A aba "Chamadas" da tela principal só dizia "em breve". A referência é o `ChamadaHistorico.vue` do web.
