@@ -8,6 +8,8 @@ import com.conversa.app.core.data.anexos.AnexoLocal
 import com.conversa.app.core.data.anexos.AnexosRepositorio
 import com.conversa.app.core.data.anexos.FontesArquivo
 import com.conversa.app.core.data.conversas.ConversasRepositorio
+import com.conversa.app.core.data.paraEntidade
+import com.conversa.app.core.data.paraModelo
 import com.conversa.app.core.database.ConversaBanco
 import com.conversa.app.core.database.entidades.ConversaEntidade
 import com.conversa.app.core.model.Sessao
@@ -19,7 +21,12 @@ import com.conversa.app.core.network.dto.EnviarMensagemRequisicao
 import com.conversa.app.core.network.dto.MarcarStatusRequisicao
 import com.conversa.app.core.network.dto.MensagemCriadaDto
 import com.conversa.app.core.network.dto.MensagemDto
+import com.conversa.app.core.network.dto.MensagemExcluidaDto
+import com.conversa.app.core.network.dto.ReacaoDto
+import com.conversa.app.core.network.dto.ReacaoRequisicao
+import com.conversa.app.core.network.dto.ReacaoResposta
 import com.conversa.app.core.network.dto.SucessoDto
+import com.conversa.app.core.network.dto.UsuarioReacaoDto
 import com.conversa.app.core.network.http.ErroApi
 import com.conversa.app.core.testing.escopoDoTeste
 import com.google.common.truth.Truth.assertThat
@@ -109,7 +116,7 @@ class MensagensTest {
     @Test
     fun `abrir traz as 80 recentes e rolar para cima pede 60 antes da mais antiga, sem repetir`() = runTest {
         val escopo = escopoDoTeste()
-        val repo = MensagensRepositorio(api, banco.mensagemDao(), banco.conversaDao(), escopo)
+        val repo = MensagensRepositorio(api, banco.mensagemDao(), banco.conversaDao(), escopo, java.time.Clock.systemUTC())
         coEvery { api.mensagens(42, 0, 80, 0) } returns (100L..179L).map { msg(it) }
         assertThat(repo.carregarRecentes(42).getOrThrow()).isEqualTo(80)
 
@@ -128,7 +135,7 @@ class MensagensTest {
     @Test
     fun `marcar como lida e otimista, desconta o contador e manda uma vez so`() = runTest {
         val escopo = escopoDoTeste()
-        val repo = MensagensRepositorio(api, banco.mensagemDao(), banco.conversaDao(), escopo)
+        val repo = MensagensRepositorio(api, banco.mensagemDao(), banco.conversaDao(), escopo, java.time.Clock.systemUTC())
         banco.conversaDao().salvar(listOf(ConversaEntidade(42, 1, null, "Bruno", 8, 105, agora, "oi", 2, null, null, null)))
         coEvery { api.mensagens(42, 0, 80, 0) } returns listOf(msg(104), msg(105))
         coEvery { api.visualizar(any()) } returns SucessoDto(true)
@@ -147,7 +154,7 @@ class MensagensTest {
     @Test
     fun `marcar a conversa como lida pela notificacao marca todas as de outros e espera o servidor`() = runTest {
         val escopo = escopoDoTeste()
-        val repo = MensagensRepositorio(api, banco.mensagemDao(), banco.conversaDao(), escopo)
+        val repo = MensagensRepositorio(api, banco.mensagemDao(), banco.conversaDao(), escopo, java.time.Clock.systemUTC())
         banco.conversaDao().salvar(listOf(ConversaEntidade(42, 1, null, "Bruno", 8, 106, agora, "oi", 3, null, null, null)))
         coEvery { api.mensagens(42, 0, 80, 0) } returns listOf(msg(104), msg(105, remetente = 7), msg(106))
         coEvery { api.visualizar(any()) } returns SucessoDto(true)
@@ -167,7 +174,7 @@ class MensagensTest {
     @Test
     fun `primeiro play marca reproduzida no Room e no servidor uma vez so`() = runTest {
         val escopo = escopoDoTeste()
-        val repo = MensagensRepositorio(api, banco.mensagemDao(), banco.conversaDao(), escopo)
+        val repo = MensagensRepositorio(api, banco.mensagemDao(), banco.conversaDao(), escopo, java.time.Clock.systemUTC())
         coEvery { api.mensagens(42, 0, 80, 0) } returns listOf(msg(104))
         coEvery { api.reproduzir(any()) } returns SucessoDto(true)
         repo.carregarRecentes(42)
@@ -354,5 +361,66 @@ class MensagensTest {
         assertThat(envio.processarPendentes()).isEqualTo(ResultadoEnvio.CONCLUIDO)
         assertThat(banco.mensagemDao().buscar(id)!!.mensagem.falhou).isTrue()
         coVerify(exactly = 0) { api.enviarMensagem(any()) }
+    }
+
+    // --- Reagir e ocultar (etapa 7) ---
+
+    private fun repo() = MensagensRepositorio(
+        api,
+        banco.mensagemDao(),
+        banco.conversaDao(),
+        backgroundScopeFalso,
+        Clock.fixed(agora, ZoneOffset.UTC),
+    )
+
+    private val backgroundScopeFalso = kotlinx.coroutines.CoroutineScope(kotlinx.coroutines.Dispatchers.Unconfined)
+
+    @Test
+    fun `reagir mostra na hora e depois fica igual ao servidor`() = runTest {
+        banco.mensagemDao().salvarCompletas(listOf(msg(1).paraEntidade()))
+        var vistaDuranteOEnvio: List<com.conversa.app.core.model.Reacao> = emptyList()
+        coEvery { api.reagir(any()) } coAnswers {
+            vistaDuranteOEnvio = banco.mensagemDao().buscar(1)!!.paraModelo().reacoes
+            ReacaoResposta(1, "👍", "add")
+        }
+        val doServidor = msg(1).copy(
+            reacoes = listOf(ReacaoDto("👍", 2, true, listOf(UsuarioReacaoDto(8, "Bruno"), UsuarioReacaoDto(7, "Ana Souza")))),
+        )
+        coEvery { api.mensagens(42, 1, 0, 0) } returns listOf(msg(0), doServidor)
+
+        val resultado = repo().reagir(42, 1, "👍", 7, "Ana Souza")
+
+        assertThat(resultado.isSuccess).isTrue()
+        assertThat(vistaDuranteOEnvio.single().let { it.emoji to it.reagiu }).isEqualTo("👍" to true)
+        val reacao = banco.mensagemDao().buscar(1)!!.paraModelo().reacoes.single()
+        assertThat(reacao.quantidade).isEqualTo(2)
+        assertThat(reacao.usuarios.map { it.nome }).containsExactly("Bruno", "Ana Souza")
+        coVerify { api.reagir(ReacaoRequisicao(1, "👍")) }
+    }
+
+    @Test
+    fun `reagir que falha volta ao que o servidor tem`() = runTest {
+        banco.mensagemDao().salvarCompletas(listOf(msg(1).paraEntidade()))
+        coEvery { api.reagir(any()) } throws java.io.IOException("sem rede")
+        coEvery { api.mensagens(42, 1, 0, 0) } throws java.io.IOException("sem rede")
+
+        val resultado = repo().reagir(42, 1, "👍", 7, "Ana Souza")
+
+        assertThat(resultado.isFailure).isTrue()
+        // Sem rede nem para reler: fica a otimista; a próxima carga corrige.
+        assertThat(banco.mensagemDao().buscar(1)!!.paraModelo().reacoes.single().reagiu).isTrue()
+    }
+
+    @Test
+    fun `ocultar marca como oculta e a agendada que nao saiu some`() = runTest {
+        banco.mensagemDao().salvarCompletas(listOf(msg(1).paraEntidade(), msg(2).paraEntidade()))
+        coEvery { api.ocultarMensagem(1) } returns MensagemExcluidaDto(1, 42, agora)
+        coEvery { api.ocultarMensagem(2) } returns MensagemExcluidaDto(2, 42, null)
+
+        assertThat(repo().ocultar(1).isSuccess).isTrue()
+        assertThat(repo().ocultar(2).isSuccess).isTrue()
+
+        assertThat(banco.mensagemDao().buscar(1)!!.paraModelo().oculta).isTrue()
+        assertThat(banco.mensagemDao().buscar(2)).isNull()
     }
 }

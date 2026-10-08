@@ -183,6 +183,16 @@ class SyncManager @Inject constructor(
         _chamadasPendentes.resetReplayCache()
     }
 
+    /**
+     * WS 7 (reação de alguém): o evento não traz o nome de quem reagiu, então a mensagem
+     * é relida do servidor — só se ela está no aparelho.
+     */
+    private suspend fun atualizarReacoes(evento: EventoSocket.Reacao) {
+        if (mensagemDao.buscar(evento.mensagemId) == null) return
+        chamarApi { api.mensagens(evento.conversaId, mensagemReferencia = evento.mensagemId) }
+            .onSuccess { lista -> mensagemDao.salvarCompletas(lista.filter { it.id == evento.mensagemId }.map { it.paraEntidade() }) }
+    }
+
     private suspend fun sincronizarAtividades() {
         chamarApi { api.atividadesNovas() }.onSuccess { _atividadesNovas.value = it.quantidade }
     }
@@ -196,6 +206,7 @@ class SyncManager @Inject constructor(
             is EventoSocket.NovaAtividade -> escopo.launch { sincronizarAtividades() }
             is EventoSocket.ConversaAtualizada -> escopo.launch { sincronizarConversas() }
             is EventoSocket.StatusMensagens -> escopo.launch { atualizarStatus(evento) }
+            is EventoSocket.Reacao -> escopo.launch { atualizarReacoes(evento) }
             else -> Unit
         }
     }

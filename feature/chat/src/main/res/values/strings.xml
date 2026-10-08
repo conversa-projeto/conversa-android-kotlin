@@ -2,6 +2,20 @@
 <resources>
     <!-- Cabeçalho (CON-09) -->
     <string name="voltar">Voltar</string>
+    <!-- Ações sobre a mensagem (etapa 7; textos do web: MensagemAcoes.vue, MessageList.vue) -->
+    <string name="mais_emojis">Mais emojis</string>
+    <string name="copiar">Copiar</string>
+    <string name="copiado">Copiado!</string>
+    <string name="ocultar">Ocultar</string>
+    <string name="cancelar">Cancelar</string>
+    <string name="reacoes">Reações</string>
+    <string name="reacao_descricao">%1$s, %2$d</string>
+    <string name="ocultar_titulo">Ocultar mensagem</string>
+    <string name="ocultar_texto">Ela continua na conversa, marcada como oculta.</string>
+    <string name="cancelar_agendada_titulo">Cancelar mensagem agendada</string>
+    <string name="cancelar_agendada_texto">Ela não será enviada.</string>
+    <string name="cancelar_envio">Cancelar envio</string>
+    <string name="nao_foi_possivel_ocultar">Não foi possível ocultar</string>
     <string name="online">online</string>
     <string name="chamada_de_voz">Chamada de voz</string>
     <string name="chamada_de_video">Chamada de vídeo</string>

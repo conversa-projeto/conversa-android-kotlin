@@ -13,4 +13,6 @@ dependencies {
     implementation(projects.core.media)
     // Ligar a partir da conversa (6.4).
     implementation(projects.feature.chamada)
+    // "Mais emojis" no menu da mensagem (7.2).
+    implementation(libs.androidx.emoji2.emojipicker)
 }

@@ -102,6 +102,12 @@ data class AcoesBolha(
     val aoAcompanharTranscricao: (String) -> Unit = {},
     /** Chave do áudio ([chaveDoAudio]) e fração da barra (0..1). */
     val aoBuscarAudio: (String, Float) -> Unit = { _, _ -> },
+    /** Toque longo na bolha: o menu da mensagem (7.1). */
+    val aoMenu: (Mensagem) -> Unit = {},
+    /** Toque num chip de reação: alterna a minha (7.2). */
+    val aoReagir: (Mensagem, String) -> Unit = { _, _ -> },
+    /** Toque longo num chip: quem reagiu. */
+    val aoVerReacoes: (Mensagem, String) -> Unit = { _, _ -> },
 )
 
 /**
@@ -124,7 +130,7 @@ fun LinhaMensagem(mensagem: Mensagem, propria: Boolean, mostrarRemetente: Boolea
                 modifier = Modifier.padding(start = 12.dp, top = 6.dp, bottom = 2.dp),
             )
         }
-        Box(Modifier.widthIn(max = larguraMax)) {
+        Box(Modifier.widthIn(max = larguraMax).toqueLongo(podeAbrirMenu(mensagem)) { acoes.aoMenu(mensagem) }) {
             when (classificarMensagem(mensagem)) {
                 TipoExibicao.EMOJI -> BolhaEmoji(mensagem, propria)
                 TipoExibicao.CHAMADA -> BolhaChamada(mensagem, propria, acoes)
@@ -134,6 +140,14 @@ fun LinhaMensagem(mensagem: Mensagem, propria: Boolean, mostrarRemetente: Boolea
                 TipoExibicao.IMAGEM -> BolhaImagem(mensagem, propria, progresso, acoes)
                 else -> Fundo(propria) { CorpoPadrao(mensagem, propria, acoes, progresso) }
             }
+        }
+        if (!mensagem.oculta) {
+            ChipsDeReacao(
+                mensagem.reacoes,
+                aoAlternar = { acoes.aoReagir(mensagem, it) },
+                aoVerQuem = { acoes.aoVerReacoes(mensagem, it) },
+                modifier = Modifier.widthIn(max = larguraMax).padding(top = 2.dp),
+            )
         }
         if (mensagem.falhou) {
             Row(horizontalArrangement = Arrangement.spacedBy(4.dp)) {

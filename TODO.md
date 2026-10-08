@@ -693,16 +693,16 @@
 ## Etapa 7 — Ações sobre mensagens
 
 ### 7.1 Menu de ações (FC-500, ENV-20)
-- [ ] Toque longo na bolha → barra de reações 👍 ❤️ 😂 😮 😢 👏 🔥 + "mais"
-- [ ] Itens: Responder; Responder no privado (grupo e mensagem de outro); Encaminhar; Copiar; Ocultar (minha e não oculta)
-- [ ] Não abrir para chamada, oculta ou mensagem ainda sem id real
+- [x] Toque longo na bolha → barra de reações 👍 ❤️ 😂 😮 😢 👏 🔥 + "mais"
+- [ ] Itens: Responder; Responder no privado (grupo e mensagem de outro); Encaminhar; Copiar; Ocultar (minha e não oculta) — Copiar e Ocultar prontos (2026-10-08 · 19); Responder, Encaminhar e Responder no privado entram com 7.3 e 7.6
+- [x] Não abrir para chamada, oculta ou mensagem ainda sem id real
 
 ### 7.2 Reações (FC-501, ENV-17)
-- [ ] `PUT /mensagem/reacao {mensagem_id, emoji}` → `{mensagem_id, emoji, acao:"add"|"remove"}` (toggle), otimista
-- [ ] Chips abaixo da bolha: emoji + contagem; destacado se eu reagi; toque alterna
-- [ ] Toque longo no chip → quem reagiu (foto, nome, hora)
-- [ ] Receber o WS 7 `{conversa_id, mensagem_id, emoji, acao, usuario_id}`
-- [ ] "Mais" → seletor de emoji do sistema (emoji com no máximo 10 code points)
+- [x] `PUT /mensagem/reacao {mensagem_id, emoji}` → `{mensagem_id, emoji, acao:"add"|"remove"}` (toggle), otimista
+- [x] Chips abaixo da bolha: emoji + contagem; destacado se eu reagi; toque alterna
+- [x] Toque longo no chip → quem reagiu (foto, nome, hora)
+- [x] Receber o WS 7 `{conversa_id, mensagem_id, emoji, acao, usuario_id}` (o evento não traz o nome: relê a mensagem, se ela está no aparelho)
+- [x] "Mais" → seletor de emoji do sistema (emoji com no máximo 10 code points) (`androidx.emoji2:emoji2-emojipicker`)
 
 ### 7.3 Responder (FC-502, ENV-06)
 - [ ] Deslizar a bolha para a direita → responder
@@ -711,11 +711,11 @@
 - [ ] A mensagem otimista já mostra a citação
 
 ### 7.4 Ocultar (FC-503, ENV-18, ENV-14)
-- [ ] Confirmação: "Ocultar mensagem" / "Ela continua na conversa, marcada como oculta." / "Ocultar" (perigo) / "Cancelar"
-- [ ] `DELETE /mensagem?id=` → com `excluida_em`: marcar como oculta; sem: remover (era agendada)
-- [ ] Atualizar a prévia da lista ("Mensagem oculta")
-- [ ] Agendada futura: o texto vira "Cancelar mensagem agendada" / "Ela não será enviada." / "Cancelar envio" / "Voltar"
-- [ ] Erro → "Não foi possível ocultar"
+- [x] Confirmação: "Ocultar mensagem" / "Ela continua na conversa, marcada como oculta." / "Ocultar" (perigo) / "Cancelar"
+- [x] `DELETE /mensagem?id=` → com `excluida_em`: marcar como oculta; sem: remover (era agendada)
+- [x] Atualizar a prévia da lista ("Mensagem oculta")
+- [x] Agendada futura: o texto vira "Cancelar mensagem agendada" / "Ela não será enviada." / "Cancelar envio" / "Voltar" (testado no unitário; agendar pelo app chega no 7.10)
+- [x] Erro → "Não foi possível ocultar"
 
 ### 7.5 Citação e ir para a mensagem (FC-504, FC-505, MSG-19, MSG-06)
 - [ ] Bloco de citação na bolha: remetente (resposta) ou "Encaminhado de <remetente>"; conteúdos da original
@@ -730,7 +730,7 @@
 - [ ] Encaminhar: tela de destino (conversas exceto a de origem + contatos sem direta), com busca
 - [ ] `PUT /mensagem` no destino com os conteúdos copiados (ordem 1..n) e `mensagem_referencia:{tipo:2, origem_mensagem_id}`
 - [ ] Contato sem conversa → criar a direta antes; depois abrir o destino
-- [ ] Copiar: texto → área de transferência; imagem → `ClipData` com URI
+- [x] Copiar: texto → área de transferência; imagem → `ClipData` com URI
 - [ ] Responder no privado: abrir/criar a direta com o remetente e deixar a mensagem pendente como encaminhada (`tipo:2`, conteúdos antes do texto)
 
 ### 7.7 Menções (FC-508, ENV-05, MSG-12)

@@ -322,6 +322,68 @@ class ChatViewModelTest {
         assertThat(vm.estado.value.fila.map { it.nome }).containsExactly("colada.png")
     }
 
+    // --- Menu da mensagem (etapa 7) ---
+
+    @Test
+    fun `copiar junta os textos da mensagem, um por linha`() = runTest {
+        val vm = criar()
+        advanceUntilIdle()
+        val duas = mensagem(5, 8, lida = true).copy(
+            conteudos = listOf(Conteudo(5, 1, TipoConteudo.TEXTO, "oi"), Conteudo(5, 2, TipoConteudo.TEXTO, "tudo bem?")),
+        )
+
+        vm.copiar(duas)
+
+        assertThat(vm.eventos.fluxo.first()).isEqualTo(EventoChat.CopiarTexto("oi\ntudo bem?"))
+    }
+
+    @Test
+    fun `copiar imagem baixa e manda o arquivo, nao o texto`() = runTest {
+        val arquivo = java.io.File("foto.jpg")
+        coEvery { arquivos.baixar("img-1", "foto.jpg") } returns Result.success(arquivo)
+        val vm = criar()
+        advanceUntilIdle()
+        val comImagem = mensagem(6, 8, lida = true).copy(
+            conteudos = listOf(
+                Conteudo(6, 1, TipoConteudo.IMAGEM, "img-1", nome = "foto.jpg"),
+                Conteudo(6, 2, TipoConteudo.TEXTO, "legenda"),
+            ),
+        )
+
+        vm.copiar(comImagem)
+        advanceUntilIdle()
+
+        assertThat(vm.eventos.fluxo.first()).isEqualTo(EventoChat.CopiarImagem(arquivo))
+    }
+
+    @Test
+    fun `reagir usa o meu nome e ocultar que falha avisa a tela`() = runTest {
+        coEvery { mensagens.reagir(any(), any(), any(), any(), any()) } returns Result.success(Unit)
+        coEvery { mensagens.ocultar(5) } returns Result.failure(java.io.IOException("sem rede"))
+        val vm = criar()
+        advanceUntilIdle()
+
+        vm.reagir(mensagem(5, 8, lida = true), "👍")
+        vm.ocultar(mensagem(5, 7, lida = true))
+        advanceUntilIdle()
+
+        coVerify { mensagens.reagir(42, 5, "👍", 7, "Ana") }
+        assertThat(vm.eventos.fluxo.first()).isEqualTo(EventoChat.OcultarFalhou)
+        coVerify(exactly = 0) { conversas.atualizar() }
+    }
+
+    @Test
+    fun `ocultar que deu certo atualiza a lista de conversas`() = runTest {
+        coEvery { mensagens.ocultar(5) } returns Result.success(Unit)
+        val vm = criar()
+        advanceUntilIdle()
+
+        vm.ocultar(mensagem(5, 7, lida = true))
+        advanceUntilIdle()
+
+        coVerify(exactly = 1) { conversas.atualizar() }
+    }
+
     private class PlayerFalso : PlayerAudio {
         override val estado = MutableStateFlow(EstadoAudio())
         override val falhas = MutableSharedFlow<String>()

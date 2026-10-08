@@ -138,6 +138,18 @@ fun MensagemCompleta.paraModelo() = Mensagem(
     },
 )
 
+/** Reação do modelo para o Room (a otimista, antes do servidor). */
+internal fun Reacao.paraEntidade(mensagemId: Long) = ReacaoEntidade(
+    mensagemId = mensagemId,
+    emoji = emoji,
+    quantidade = quantidade,
+    reagiu = reagiu,
+    usuariosJson = ConversaJson.encodeToString(
+        serializadorUsuariosReacao,
+        usuarios.map { UsuarioReacaoDto(it.usuarioId, it.nome, it.reagidoEm, it.avatarUrl) },
+    ),
+)
+
 internal fun ContatoDto.paraEntidade() = ContatoEntidade(
     id = id,
     nome = nome,

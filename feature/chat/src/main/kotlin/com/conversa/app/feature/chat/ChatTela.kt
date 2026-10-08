@@ -1,8 +1,11 @@
 package com.conversa.app.feature.chat
 
 import android.content.ActivityNotFoundException
+import android.content.ClipData
+import android.content.ClipboardManager
 import android.content.Context
 import android.content.Intent
+import android.os.Build
 import android.webkit.MimeTypeMap
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
@@ -135,6 +138,11 @@ fun ChatRotaTela(
         salvarComo = null
         if (uri != null && conteudo != null) viewModel.salvarEm(uri.toString(), conteudo)
     }
+    // Toque longo na bolha: menu, seletor de emoji, quem reagiu e ocultar (etapa 7).
+    val acoesDaMensagem = remember { AcoesAbertas() }
+    AcoesDaMensagem(acoesDaMensagem, estado, viewModel)
+    val copiado = stringResource(R.string.copiado)
+    val naoOcultou = stringResource(R.string.nao_foi_possivel_ocultar)
     val microfoneIndisponivel = stringResource(R.string.microfone_indisponivel)
     val gravacaoCurta = stringResource(R.string.gravacao_curta)
     val gravacaoFalhou = stringResource(R.string.gravacao_falhou)
@@ -165,6 +173,12 @@ fun ChatRotaTela(
             is EventoChat.Compartilhar -> compartilharArquivo(contexto, evento.arquivo, evento.mime)
             is EventoChat.AbrirPdf -> pdfAberto = evento
             EventoChat.AudioFalhou -> avisos.mostrarErro(audioFalhou)
+            is EventoChat.CopiarTexto -> if (copiar(contexto, ClipData.newPlainText(null, evento.texto))) avisos.showSnackbar(copiado)
+            is EventoChat.CopiarImagem -> {
+                val clipe = ClipData.newUri(contexto.contentResolver, null, uriCompartilhado(contexto, evento.arquivo))
+                if (copiar(contexto, clipe)) avisos.showSnackbar(copiado)
+            }
+            EventoChat.OcultarFalhou -> avisos.mostrarErro(naoOcultou)
         }
     }
     // O áudio vai como fluxo: só as bolhas de áudio leem (ver LocalAudio).
@@ -206,6 +220,9 @@ fun ChatRotaTela(
                     aoTranscrever = viewModel::transcrever,
                     aoAcompanharTranscricao = viewModel::acompanharTranscricao,
                     aoBuscarAudio = viewModel::buscarAudio,
+                    aoMenu = { acoesDaMensagem.menuDe = it },
+                    aoReagir = viewModel::reagir,
+                    aoVerReacoes = { mensagem, emoji -> acoesDaMensagem.quemReagiu = mensagem.id to emoji },
                 ),
                 aoIrAoFim = { escopo.launch { lista.animateScrollToItem(0) } },
                 aoAdicionarAnexos = viewModel::adicionarAnexos,
@@ -228,6 +245,15 @@ fun ChatRotaTela(
             ),
         )
     }
+}
+
+/**
+ * Põe na área de transferência. Devolve se a tela deve avisar "Copiado!": do Android 13
+ * em diante o próprio sistema mostra a confirmação.
+ */
+private fun copiar(contexto: Context, clipe: ClipData): Boolean {
+    contexto.getSystemService(ClipboardManager::class.java)?.setPrimaryClip(clipe) ?: return false
+    return Build.VERSION.SDK_INT < Build.VERSION_CODES.TIRAMISU
 }
 
 /** PDF abre no visualizador do app (FC-411); os outros arquivos, com outro app. */

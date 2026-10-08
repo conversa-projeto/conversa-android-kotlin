@@ -5,11 +5,15 @@ import com.conversa.app.core.data.paraModelo
 import com.conversa.app.core.database.dao.ConversaDao
 import com.conversa.app.core.database.dao.MensagemDao
 import com.conversa.app.core.model.Mensagem
+import com.conversa.app.core.model.alternarReacao
+import com.conversa.app.core.model.emojiAceito
 import com.conversa.app.core.network.api.ConversaApi
 import com.conversa.app.core.network.di.EscopoAplicacao
 import com.conversa.app.core.network.dto.IdDto
 import com.conversa.app.core.network.dto.MarcarStatusRequisicao
+import com.conversa.app.core.network.dto.ReacaoRequisicao
 import com.conversa.app.core.network.http.chamarApi
+import java.time.Clock
 import javax.inject.Inject
 import javax.inject.Singleton
 import kotlinx.coroutines.CoroutineScope
@@ -30,6 +34,7 @@ class MensagensRepositorio @Inject constructor(
     private val mensagemDao: MensagemDao,
     private val conversaDao: ConversaDao,
     @EscopoAplicacao private val escopo: CoroutineScope,
+    private val relogio: Clock,
 ) {
     fun observar(conversaId: Long): Flow<List<Mensagem>> =
         mensagemDao.observarDaConversa(conversaId).map { lista -> lista.map { it.paraModelo() } }
@@ -53,6 +58,35 @@ class MensagensRepositorio @Inject constructor(
         val ultima = mensagemDao.ultimaSalva(conversaId) ?: return carregarRecentes(conversaId)
         return chamarApi { api.mensagens(conversaId, mensagemReferencia = ultima, mensagensSeguintes = PAGINA) }
             .map { lista -> salvar(lista.filter { it.id != ultima }) }
+    }
+
+    /** Relê uma mensagem do servidor (reações com nomes, marca de oculta). */
+    suspend fun recarregar(conversaId: Long, mensagemId: Long): Result<Unit> =
+        chamarApi {
+            api.mensagens(conversaId, mensagemReferencia = mensagemId)
+        }.map { lista -> salvar(lista.filter { it.id == mensagemId }) }
+
+    /**
+     * Reagir (ENV-17, FC-501): mostra na hora (otimista), manda o `PUT /mensagem/reacao`
+     * (que alterna) e relê a mensagem para ficar igual ao servidor — inclusive se falhar.
+     */
+    suspend fun reagir(conversaId: Long, mensagemId: Long, emoji: String, eu: Long, meuNome: String): Result<Unit> {
+        if (!emojiAceito(emoji)) return Result.failure(IllegalArgumentException("Emoji inválido"))
+        val atuais = mensagemDao.buscar(mensagemId)?.paraModelo()?.reacoes ?: emptyList()
+        val novas = alternarReacao(atuais, emoji, eu, meuNome, relogio.instant())
+        mensagemDao.trocarReacoes(mensagemId, novas.map { it.paraEntidade(mensagemId) })
+        val resultado = chamarApi { api.reagir(ReacaoRequisicao(mensagemId, emoji)) }.map { }
+        recarregar(conversaId, mensagemId)
+        return resultado
+    }
+
+    /**
+     * Ocultar (ENV-18, FC-503): `DELETE /mensagem`. Com `excluida_em` a mensagem fica marcada
+     * como oculta; sem, era agendada e foi apagada de vez.
+     */
+    suspend fun ocultar(mensagemId: Long): Result<Unit> = chamarApi { api.ocultarMensagem(mensagemId) }.map { resposta ->
+        val excluidaEm = resposta.excluidaEm
+        if (excluidaEm != null) mensagemDao.atualizarOculta(mensagemId, excluidaEm.toEpochMilli()) else mensagemDao.remover(mensagemId)
     }
 
     private suspend fun salvar(lista: List<com.conversa.app.core.network.dto.MensagemDto>): Int {

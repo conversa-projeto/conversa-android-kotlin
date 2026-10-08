@@ -61,7 +61,7 @@
 - 2026-10-08 · [Etapa 6 — matriz de testes manuais de chamada](2026-10-08-18-etapa-6-matriz-de-testes.md) — `docs/testes/chamadas.md` com o que passou no emulador e o que falta em aparelho; "atender no web com o celular tocando" testado
 
 ## Ações sobre mensagens (etapa 7)
-_(nada ainda)_
+- 2026-10-08 · [Etapa 7 — menu da mensagem, reações, ocultar e copiar](2026-10-08-19-etapa-7-menu-reacoes-ocultar.md) — toque longo com reações rápidas, seletor de emoji, chips e "quem reagiu", WS 7, Ocultar com a confirmação do web e Copiar (texto ou imagem)
 
 ## Atividades, pesquisa, perfil e configurações (etapa 8)
 _(nada ainda)_

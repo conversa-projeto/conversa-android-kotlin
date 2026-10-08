@@ -127,6 +127,16 @@ interface MensagemDao {
     )
     suspend fun atualizarStatusDaMinha(id: Long, eu: Long, recebida: Boolean, visualizada: Boolean, reproduzida: Boolean)
 
+    @Query("SELECT * FROM reacao WHERE mensagemId = :mensagemId")
+    suspend fun reacoesDe(mensagemId: Long): List<ReacaoEntidade>
+
+    /** Troca as reações de uma mensagem (a reação otimista, ENV-17). */
+    @Transaction
+    suspend fun trocarReacoes(mensagemId: Long, reacoes: List<ReacaoEntidade>) {
+        removerReacoes(listOf(mensagemId))
+        salvarReacoes(reacoes)
+    }
+
     /** Ocultar vale para qualquer mensagem. */
     @Query("UPDATE mensagem SET excluidaEm = :excluidaEmMs WHERE id = :id")
     suspend fun atualizarOculta(id: Long, excluidaEmMs: Long?)

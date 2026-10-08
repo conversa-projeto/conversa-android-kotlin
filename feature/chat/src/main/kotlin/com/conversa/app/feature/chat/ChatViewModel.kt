@@ -120,6 +120,15 @@ sealed interface EventoChat {
 
     /** Anexo baixado para o cache: a tela abre o "Compartilhar" do Android. */
     data class Compartilhar(val arquivo: java.io.File, val mime: String?) : EventoChat
+
+    /** "Copiar" numa mensagem de texto: a tela põe na área de transferência (7.6). */
+    data class CopiarTexto(val texto: String) : EventoChat
+
+    /** "Copiar" numa imagem: baixada para o cache, vai como URI do FileProvider (7.6). */
+    data class CopiarImagem(val arquivo: java.io.File) : EventoChat
+
+    /** O `DELETE /mensagem` falhou (7.4). */
+    data object OcultarFalhou : EventoChat
 }
 
 /**
@@ -175,6 +184,7 @@ class ChatViewModel @Inject constructor(
 ) : ViewModel() {
     val conversaId: Long = checkNotNull(salvo["conversaId"])
     private val eu: Long = sessao.sessao.value?.usuarioId ?: 0
+    private val meuNome: String = sessao.sessao.value?.nome.orEmpty()
 
     private val membros = MutableStateFlow<List<MembroConversa>>(emptyList())
     private val carga = MutableStateFlow(Carga())
@@ -374,6 +384,43 @@ class ChatViewModel @Inject constructor(
                 .onSuccess { eventos.enviar(EventoChat.Compartilhar(it, null)) }
                 .onFailure { eventos.enviar(EventoChat.Erro(it.paraErroApi().mensagemAmigavel())) }
         }
+    }
+
+    /** Reação do menu, do chip ou do seletor (7.2): alterna a minha; aparece na hora. */
+    fun reagir(mensagem: Mensagem, emoji: String) {
+        if (mensagem.id <= 0) return
+        viewModelScope.launch {
+            mensagens.reagir(conversaId, mensagem.id, emoji, eu, meuNome)
+                .onFailure { eventos.enviar(EventoChat.Erro(it.paraErroApi().mensagemAmigavel())) }
+        }
+    }
+
+    /** Ocultar (7.4): a lista da conversa também muda (a prévia pode ser esta mensagem). */
+    fun ocultar(mensagem: Mensagem) {
+        if (mensagem.id <= 0) return
+        viewModelScope.launch {
+            mensagens.ocultar(mensagem.id)
+                .onSuccess { conversas.atualizar() }
+                .onFailure { eventos.enviar(EventoChat.OcultarFalhou) }
+        }
+    }
+
+    /**
+     * "Copiar" (7.6), como o web: imagem vai como imagem; senão, os textos da mensagem
+     * (um por linha).
+     */
+    fun copiar(mensagem: Mensagem) {
+        val imagem = mensagem.conteudos.firstOrNull { it.tipo == TipoConteudo.IMAGEM && !it.local }
+        if (imagem != null) {
+            viewModelScope.launch {
+                arquivos.baixar(imagem.conteudo, imagem.nome.ifBlank { imagem.conteudo })
+                    .onSuccess { eventos.enviar(EventoChat.CopiarImagem(it)) }
+                    .onFailure { eventos.enviar(EventoChat.Erro(it.paraErroApi().mensagemAmigavel())) }
+            }
+            return
+        }
+        val texto = mensagem.conteudos.filter { it.tipo == TipoConteudo.TEXTO }.joinToString("\n") { it.conteudo }
+        if (texto.isNotBlank()) eventos.enviar(EventoChat.CopiarTexto(texto))
     }
 
     /** "Abrir" num PDF (FC-411): baixa para o cache e abre no visualizador do app, como o web. */
