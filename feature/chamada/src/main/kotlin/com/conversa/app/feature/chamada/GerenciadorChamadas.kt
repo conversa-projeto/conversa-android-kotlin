@@ -244,6 +244,45 @@ class GerenciadorChamadas @Inject constructor(
         }
     }
 
+    /**
+     * "Adicionar à chamada" (6.13): um `PUT /chamada/usuario` por pessoa, em sequência (como o web),
+     * e depois os dados da chamada. Quem já está nela recebe o WS 51 e passa a ver o novo participante.
+     */
+    fun adicionar(usuarios: List<Long>) {
+        escopo.launch {
+            val atual = _estado.value
+            val id = atual.chamadaId ?: return@launch
+            if (atual.fase != FaseChamada.ATIVA || usuarios.isEmpty()) return@launch
+            val g = geracao
+            for (usuario in usuarios.distinct()) {
+                try {
+                    remoto.adicionar(id, usuario)
+                } catch (e: CancellationException) {
+                    throw e
+                } catch (e: Exception) {
+                    if (vivo(g)) _avisos.tryEmit(AvisoChamada.Falhou(e.message))
+                }
+                if (!vivo(g)) return@launch
+            }
+            atualizarDados(id)
+        }
+    }
+
+    /**
+     * O chat da chamada (6.13): a conversa que já existe ou, na primeira vez, a criada agora
+     * (`PUT /chamada/chat`; os outros recebem o WS 57 `{acao:"chat"}`). Nulo sem chamada ou se falhar.
+     */
+    suspend fun garantirChat(): Long? = escopo.async {
+        val atual = _estado.value
+        atual.conversaChatId?.let { return@async it }
+        val id = atual.chamadaId ?: return@async null
+        if (!atual.emChamada) return@async null
+        val g = geracao
+        val conversa = tentar { remoto.chat(id) } ?: return@async null
+        if (vivo(g)) atualizar { it.copy(conversaChatId = conversa) }
+        conversa
+    }.await()
+
     /** Liga o vídeo numa chamada de áudio e avisa os outros (WS 56). */
     fun ligarVideo() {
         escopo.launch { ativarVideo(notificar = true, transmitir = true) }

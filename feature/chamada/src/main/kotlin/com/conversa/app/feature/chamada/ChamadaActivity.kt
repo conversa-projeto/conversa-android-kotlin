@@ -13,6 +13,7 @@ import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
 import androidx.compose.runtime.mutableStateOf
+import androidx.core.net.toUri
 import com.conversa.app.core.data.tempoReal.MonitorPrimeiroPlano
 import com.conversa.app.core.network.di.EscopoAplicacao
 import com.conversa.app.core.ui.componentes.AreaDeAvisos
@@ -59,6 +60,7 @@ class ChamadaActivity : ComponentActivity() {
                         aoPodePip = ::atualizarPip,
                         aoMinimizar = ::minimizar,
                         aoAreaDoVideo = ::novaAreaDoVideo,
+                        aoAbrirChat = ::abrirChat,
                     )
                 }
             }
@@ -69,6 +71,17 @@ class ChamadaActivity : ComponentActivity() {
     private fun atualizarPip(pode: Boolean) {
         podePip = pode && temPip()
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S && temPip()) setPictureInPictureParams(parametrosPip(podePip))
+    }
+
+    /** Chat da chamada (6.13): a conversa no app; em vídeo, a chamada vai para o picture-in-picture. */
+    private fun abrirChat(conversaId: Long) {
+        if (podePip) entrarEmPip()
+        startActivity(
+            Intent(
+                Intent.ACTION_VIEW,
+                "conversa://chat/$conversaId".toUri(),
+            ).setPackage(packageName).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK),
+        )
     }
 
     private fun novaAreaDoVideo(area: Rect) {

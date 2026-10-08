@@ -17,16 +17,22 @@ import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.heightIn
+import androidx.compose.foundation.layout.imePadding
 import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.statusBarsPadding
+import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.Chat
 import androidx.compose.material.icons.automirrored.filled.KeyboardArrowLeft
 import androidx.compose.material.icons.automirrored.filled.KeyboardArrowRight
+import androidx.compose.material.icons.automirrored.filled.Send
 import androidx.compose.material.icons.automirrored.filled.VolumeUp
 import androidx.compose.material.icons.filled.BluetoothAudio
 import androidx.compose.material.icons.filled.Call
@@ -38,18 +44,23 @@ import androidx.compose.material.icons.filled.GridView
 import androidx.compose.material.icons.filled.Headset
 import androidx.compose.material.icons.filled.Mic
 import androidx.compose.material.icons.filled.MicOff
+import androidx.compose.material.icons.filled.PersonAdd
 import androidx.compose.material.icons.filled.PhoneInTalk
 import androidx.compose.material.icons.filled.Videocam
 import androidx.compose.material.icons.filled.VideocamOff
 import androidx.compose.material.icons.filled.ViewAgenda
 import androidx.compose.material.icons.outlined.Visibility
 import androidx.compose.material3.AlertDialog
+import androidx.compose.material3.Checkbox
 import androidx.compose.material3.DropdownMenu
 import androidx.compose.material3.DropdownMenuItem
+import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.FilterChip
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.ModalBottomSheet
+import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
@@ -59,8 +70,10 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.key
 import androidx.compose.runtime.mutableLongStateOf
+import androidx.compose.runtime.mutableStateListOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -86,10 +99,15 @@ import androidx.core.telecom.CallEndpointCompat
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import androidx.lifecycle.viewModelScope
 import com.conversa.app.core.data.SessaoRepositorio
+import com.conversa.app.core.data.contatos.ContatosRepositorio
+import com.conversa.app.core.data.mensagens.EnvioMensagens
+import com.conversa.app.core.model.Contato
 import com.conversa.app.core.model.StatusParticipante
 import com.conversa.app.core.model.TipoChamada
 import com.conversa.app.core.ui.componentes.Avatar
+import com.conversa.app.core.ui.componentes.LocalAvisos
 import com.conversa.app.core.ui.tema.ConversaTema
 import com.conversa.app.core.webrtc.MidiaLocal
 import com.conversa.app.core.webrtc.MidiaWebRtc
@@ -100,6 +118,7 @@ import java.time.Duration
 import java.time.Instant
 import javax.inject.Inject
 import kotlinx.coroutines.delay
+import kotlinx.coroutines.launch
 import org.webrtc.EglBase
 import org.webrtc.RendererCommon
 import org.webrtc.SurfaceViewRenderer
@@ -111,7 +130,10 @@ class ChamadaViewModel @Inject constructor(
     private val midia: MidiaWebRtc,
     private val telecom: TelecomChamadas,
     sessao: SessaoRepositorio,
+    contatos: ContatosRepositorio,
+    private val envio: EnvioMensagens,
 ) : ViewModel() {
+    val contatos = contatos.observarOutros()
     val estado = gerenciador.estado
     val trilhas = midia.trilhas
     val emEspera = telecom.emEspera
@@ -141,6 +163,17 @@ class ChamadaViewModel @Inject constructor(
     fun mudarRota(rota: CallEndpointCompat) = telecom.mudarRota(rota)
 
     fun exibir(modo: ModoExibicao, destaque: Long? = null) = gerenciador.exibir(modo, destaque)
+
+    fun adicionar(usuarios: List<Long>) = gerenciador.adicionar(usuarios)
+
+    /** Primeira mensagem do chat da chamada: cria o chat (se preciso), põe na fila de envio e abre a conversa. */
+    fun enviarNoChat(texto: String, aoAbrir: (Long) -> Unit, aoFalhar: () -> Unit) {
+        viewModelScope.launch {
+            val conversa = gerenciador.garantirChat() ?: return@launch aoFalhar()
+            envio.enviarTexto(conversa, texto)
+            aoAbrir(conversa)
+        }
+    }
 }
 
 @Composable
@@ -152,12 +185,16 @@ fun TelaChamadaRota(
     aoPodePip: (Boolean) -> Unit = {},
     aoMinimizar: () -> Unit = aoFechar,
     aoAreaDoVideo: (Rect) -> Unit = {},
+    aoAbrirChat: (Long) -> Unit = {},
     viewModel: ChamadaViewModel = hiltViewModel(),
 ) {
     val estado by viewModel.estado.collectAsStateWithLifecycle()
     val trilhas by viewModel.trilhas.collectAsStateWithLifecycle()
     val emEspera by viewModel.emEspera.collectAsStateWithLifecycle()
     val rotas by viewModel.rotas.collectAsStateWithLifecycle()
+    val contatos by viewModel.contatos.collectAsStateWithLifecycle(emptyList())
+    var adicionando by remember { mutableStateOf(false) }
+    var escrevendoNoChat by remember { mutableStateOf(false) }
     val rotaAtual by viewModel.rotaAtual.collectAsStateWithLifecycle()
     // Celular no ouvido: a tela apaga (só com o áudio no fone do aparelho, 6.8).
     SensorDeProximidade(
@@ -228,9 +265,36 @@ fun TelaChamadaRota(
                     aoMudarRota = viewModel::mudarRota,
                     aoExibir = viewModel::exibir,
                     aoAreaDoVideo = aoAreaDoVideo,
+                    aoAdicionar = { adicionando = true },
+                    // Chat já existe: a conversa completa; senão, o campo da primeira mensagem (como o web).
+                    aoChat = { estado.conversaChatId?.let(aoAbrirChat) ?: run { escrevendoNoChat = true } },
                 ),
             )
         }
+    }
+    if (escrevendoNoChat) {
+        val avisos = LocalAvisos.current
+        val escopo = rememberCoroutineScope()
+        val falhou = stringResource(R.string.erro_ao_enviar)
+        PrimeiraMensagemDoChat(
+            aoEnviar = { texto ->
+                escrevendoNoChat = false
+                viewModel.enviarNoChat(texto, aoAbrir = aoAbrirChat, aoFalhar = { escopo.launch { avisos.showSnackbar(falhou) } })
+            },
+            aoFechar = { escrevendoNoChat = false },
+        )
+    }
+    if (adicionando) {
+        // Fora da chamada: quem não está entre os participantes (qualquer status), como o web.
+        val naChamada = estado.dados?.participantes.orEmpty().mapTo(mutableSetOf()) { it.usuarioId } + viewModel.eu
+        DialogoAdicionar(
+            contatos = contatos.filter { it.id !in naChamada },
+            aoConfirmar = { ids ->
+                adicionando = false
+                viewModel.adicionar(ids)
+            },
+            aoCancelar = { adicionando = false },
+        )
     }
     estado.pedidoVideo?.let { pedido ->
         AlertDialog(
@@ -313,6 +377,8 @@ private data class AcoesEmChamada(
     val aoExibir: (ModoExibicao, Long?) -> Unit,
     /** Onde o vídeo está na tela: o picture-in-picture "encolhe" a partir daí. */
     val aoAreaDoVideo: (Rect) -> Unit,
+    val aoAdicionar: () -> Unit,
+    val aoChat: () -> Unit,
 )
 
 /** Rotas de áudio do Telecom: as disponíveis e a de agora. */
@@ -651,9 +717,11 @@ private fun BarraDeControles(estado: EstadoChamada, rotas: Rotas, acoes: AcoesEm
     val cores = ConversaTema.cores
     val ligado = stringResource(R.string.ligado)
     val desligado = stringResource(R.string.desligado)
+    // Rola na horizontal quando os botões não cabem (tela estreita, chamada de vídeo).
     Row(
-        Modifier.fillMaxWidth().background(cores.chamadaBarraInferior).padding(vertical = 16.dp),
-        horizontalArrangement = Arrangement.SpaceEvenly,
+        Modifier.fillMaxWidth().background(cores.chamadaBarraInferior).horizontalScroll(rememberScrollState())
+            .padding(horizontal = 12.dp, vertical = 16.dp),
+        horizontalArrangement = Arrangement.spacedBy(12.dp, Alignment.CenterHorizontally),
         verticalAlignment = Alignment.CenterVertically,
     ) {
         val emAndamento = estado.fase != FaseChamada.ENCERRANDO
@@ -694,6 +762,22 @@ private fun BarraDeControles(estado: EstadoChamada, rotas: Rotas, acoes: AcoesEm
             )
         }
         BotaoRota(rotas, acoes.aoMudarRota)
+        if (estado.fase == FaseChamada.ATIVA) {
+            BotaoRedondo(
+                Icons.Filled.PersonAdd,
+                stringResource(R.string.adicionar_usuario),
+                cores.chamadaBotao,
+                cores.chamadaIconeBotao,
+                onClick = acoes.aoAdicionar,
+            )
+            BotaoRedondo(
+                Icons.AutoMirrored.Filled.Chat,
+                stringResource(R.string.chat_da_chamada),
+                cores.chamadaBotao,
+                cores.chamadaIconeBotao,
+                onClick = acoes.aoChat,
+            )
+        }
         BotaoRedondo(
             Icons.Filled.CallEnd,
             stringResource(R.string.sair_da_chamada),
@@ -842,6 +926,69 @@ private fun TelaPip(estado: EstadoChamada, trilhas: TrilhasChamada, egl: EglBase
             VideoDaTrilha(video, egl, modifier = Modifier.fillMaxSize())
         } else {
             Avatar(nome.ifBlank { null }, null, tamanho = 56.dp)
+        }
+    }
+}
+
+/** "Adicionar à chamada" (texto do web): marca os contatos e adiciona de uma vez. */
+@Composable
+private fun DialogoAdicionar(contatos: List<Contato>, aoConfirmar: (List<Long>) -> Unit, aoCancelar: () -> Unit) {
+    val marcados = remember { mutableStateListOf<Long>() }
+    AlertDialog(
+        onDismissRequest = aoCancelar,
+        title = { Text(stringResource(R.string.adicionar_a_chamada)) },
+        text = {
+            if (contatos.isEmpty()) {
+                Text(stringResource(R.string.nenhum_contato_para_adicionar))
+            } else {
+                LazyColumn(Modifier.heightIn(max = 320.dp)) {
+                    items(contatos, key = { it.id }) { contato ->
+                        val marcado = contato.id in marcados
+                        Row(
+                            Modifier.fillMaxWidth().clickable { if (marcado) marcados.remove(contato.id) else marcados.add(contato.id) },
+                            verticalAlignment = Alignment.CenterVertically,
+                        ) {
+                            Checkbox(checked = marcado, onCheckedChange = null)
+                            Spacer(Modifier.size(8.dp))
+                            Text(contato.nome, maxLines = 1, overflow = TextOverflow.Ellipsis)
+                        }
+                    }
+                }
+            }
+        },
+        confirmButton = {
+            TextButton(enabled = marcados.isNotEmpty(), onClick = {
+                aoConfirmar(marcados.toList())
+            }) { Text(stringResource(R.string.adicionar)) }
+        },
+        dismissButton = { TextButton(onClick = aoCancelar) { Text(stringResource(R.string.cancelar)) } },
+    )
+}
+
+/**
+ * "Chat da chamada" antes de existir o chat (texto do web): só o campo. A primeira mensagem
+ * cria o chat (`PUT /chamada/chat`) e abre a conversa completa.
+ */
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+private fun PrimeiraMensagemDoChat(aoEnviar: (String) -> Unit, aoFechar: () -> Unit) {
+    var texto by remember { mutableStateOf("") }
+    ModalBottomSheet(onDismissRequest = aoFechar) {
+        Column(Modifier.fillMaxWidth().padding(horizontal = 16.dp).padding(bottom = 16.dp).imePadding()) {
+            Text(stringResource(R.string.chat_da_chamada), style = MaterialTheme.typography.titleMedium)
+            Spacer(Modifier.height(12.dp))
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                OutlinedTextField(
+                    value = texto,
+                    onValueChange = { texto = it },
+                    placeholder = { Text(stringResource(R.string.mensagem)) },
+                    modifier = Modifier.weight(1f),
+                    maxLines = 4,
+                )
+                IconButton(enabled = texto.isNotBlank(), onClick = { aoEnviar(texto.trim()) }) {
+                    Icon(Icons.AutoMirrored.Filled.Send, contentDescription = stringResource(R.string.enviar))
+                }
+            }
         }
     }
 }

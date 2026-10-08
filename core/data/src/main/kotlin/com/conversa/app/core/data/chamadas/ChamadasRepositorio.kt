@@ -5,6 +5,7 @@ import com.conversa.app.core.model.ChamadaHistorico
 import com.conversa.app.core.model.ServidoresIce
 import com.conversa.app.core.model.TipoChamada
 import com.conversa.app.core.network.api.ConversaApi
+import com.conversa.app.core.network.dto.AdicionarUsuarioChamadaRequisicao
 import com.conversa.app.core.network.dto.IdDto
 import com.conversa.app.core.network.dto.IniciarChamadaRequisicao
 import com.conversa.app.core.network.dto.RecusarChamadaRequisicao
@@ -36,6 +37,12 @@ interface ChamadasRemotas {
     /** WS 56 aos outros: liguei o vídeo numa chamada de áudio. */
     suspend fun anunciarVideo(chamadaId: Long)
 
+    /** `PUT /chamada/usuario`: um por vez (o servidor não confere duplicidade). Toca para ele e manda WS 51 aos outros. */
+    suspend fun adicionar(chamadaId: Long, usuarioId: Long)
+
+    /** `PUT /chamada/chat`: a conversa (grupo) do chat da chamada; a primeira vez cria (contrato §9.12). */
+    suspend fun chat(chamadaId: Long): Long
+
     suspend fun ice(): ServidoresIce
 }
 
@@ -66,6 +73,12 @@ class ChamadasRepositorio @Inject constructor(private val api: ConversaApi) : Ch
     override suspend fun anunciarVideo(chamadaId: Long) {
         chamarApi { api.ativarVideo(IdDto(chamadaId)) }.getOrThrow()
     }
+
+    override suspend fun adicionar(chamadaId: Long, usuarioId: Long) {
+        chamarApi { api.adicionarUsuarioChamada(AdicionarUsuarioChamadaRequisicao(chamadaId, usuarioId)) }.getOrThrow()
+    }
+
+    override suspend fun chat(chamadaId: Long): Long = chamarApi { api.chatChamada(IdDto(chamadaId)) }.getOrThrow().conversaId
 
     override suspend fun ice(): ServidoresIce = chamarApi { api.ice() }.getOrThrow().paraModelo()
 

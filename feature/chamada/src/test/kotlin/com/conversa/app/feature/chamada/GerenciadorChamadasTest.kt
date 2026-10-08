@@ -854,6 +854,63 @@ class GerenciadorChamadasTest {
         assertThat(chamadaAtiva.value).isFalse()
     }
 
+    // --- Adicionar à chamada (6.13) ---
+
+    @Test
+    fun `adicionar manda um PUT por pessoa e atualiza os dados`() = runTest {
+        val g = criar()
+        ativaRecebida(g)
+
+        g.adicionar(listOf(TERCEIRO, 40L, TERCEIRO))
+        runCurrent()
+
+        assertThat(remoto.chamadas.filter { it.startsWith("adicionar") })
+            .containsExactly("adicionar $RECEBIDA $TERCEIRO", "adicionar $RECEBIDA 40").inOrder()
+        assertThat(remoto.chamadas.last()).isEqualTo("dados $RECEBIDA")
+        assertThat(g.estado.value.dados?.participantes?.map { it.usuarioId }).containsAtLeast(TERCEIRO, 40L)
+    }
+
+    @Test
+    fun `adicionar so vale com a chamada ativa`() = runTest {
+        val g = criar()
+        tocando(g)
+
+        g.adicionar(listOf(TERCEIRO))
+        runCurrent()
+
+        assertThat(remoto.chamadas.filter { it.startsWith("adicionar") }).isEmpty()
+    }
+
+    // --- Chat da chamada (6.13) ---
+
+    @Test
+    fun `garantir o chat cria uma vez e depois usa a conversa guardada`() = runTest {
+        val g = criar()
+        ativaRecebida(g)
+        val ids = mutableListOf<Long?>()
+
+        backgroundScope.launch { ids += g.garantirChat() }
+        runCurrent()
+        backgroundScope.launch { ids += g.garantirChat() }
+        runCurrent()
+
+        assertThat(ids).containsExactly(77L, 77L)
+        assertThat(remoto.chamadas.filter { it.startsWith("chat") }).containsExactly("chat $RECEBIDA")
+        assertThat(g.estado.value.conversaChatId).isEqualTo(77L)
+    }
+
+    @Test
+    fun `garantir o chat sem chamada devolve nulo`() = runTest {
+        val g = criar()
+        val ids = mutableListOf<Long?>()
+
+        backgroundScope.launch { ids += g.garantirChat() }
+        runCurrent()
+
+        assertThat(ids).containsExactly(null)
+        assertThat(remoto.chamadas).isEmpty()
+    }
+
     // --- Modo de exibição (6.11) ---
 
     @Test
@@ -973,6 +1030,16 @@ class GerenciadorChamadasTest {
 
         override suspend fun anunciarVideo(chamadaId: Long) {
             chamadas += "video $chamadaId"
+        }
+
+        override suspend fun chat(chamadaId: Long): Long {
+            chamadas += "chat $chamadaId"
+            return 77
+        }
+
+        override suspend fun adicionar(chamadaId: Long, usuarioId: Long) {
+            chamadas += "adicionar $chamadaId $usuarioId"
+            dados[chamadaId]?.let { dados[chamadaId] = it.copy(participantes = it.participantes + p(usuarioId, PENDENTE)) }
         }
 
         override suspend fun ice() = ServidoresIce(emptyList(), somenteRelay = true)

@@ -55,6 +55,7 @@
 - 2026-10-08 · [Etapa 6 — histórico de chamadas](2026-10-08-12-etapa-6-historico-de-chamadas.md) — aba "Chamadas": Todas/Perdidas, busca, período, Hoje/Ontem/data, seta e cores, abrir a conversa, "Ligar novamente"; "perdida" corrigida em relação ao web (status 5 nunca é gravado); 278 testes
 - 2026-10-08 · [Etapa 6 — modos de exibição da chamada (grade, destaque, tela única)](2026-10-08-13-etapa-6-modos-de-exibicao.md) — modo no estado do gerenciador (+ testes), seletor com os rótulos do web, toque para destacar, setas na tela única, "só assistir" em tela única; testado numa chamada em grupo com a nova conta C; 283 testes
 - 2026-10-08 · [Etapa 6 — minimizar a chamada: picture-in-picture e a faixa "voltar à chamada"](2026-10-08-14-etapa-6-minimizar.md) — PiP automático em vídeo (tarefa própria, só o vídeo principal), "voltar" minimiza, faixa verde "Toque para voltar à chamada" no topo do app; testado no emulador; 283 testes
+- 2026-10-08 · [Etapa 6 — adicionar à chamada e chat da chamada](2026-10-08-15-etapa-6-adicionar-e-chat.md) — "Adicionar à chamada" (um `PUT` por pessoa) e "Chat da chamada" (a primeira mensagem cria o chat e abre a conversa; a chamada vai para o PiP); testado com B e C no web; 287 testes
 
 ## Ações sobre mensagens (etapa 7)
 _(nada ainda)_
