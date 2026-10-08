@@ -28,9 +28,11 @@ import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.outlined.Forward
 import androidx.compose.material.icons.automirrored.outlined.Reply
 import androidx.compose.material.icons.outlined.AddReaction
 import androidx.compose.material.icons.outlined.ContentCopy
+import androidx.compose.material.icons.outlined.PersonOutline
 import androidx.compose.material.icons.outlined.VisibilityOff
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.ExperimentalMaterial3Api
@@ -71,6 +73,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.viewinterop.AndroidView
 import androidx.emoji2.emojipicker.EmojiPickerView
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.conversa.app.core.model.ItemChat
 import com.conversa.app.core.model.Mensagem
 import com.conversa.app.core.model.REACOES_A_MOSTRA
@@ -182,6 +185,8 @@ fun DeslizarParaResponder(habilitado: Boolean, aoResponder: () -> Unit, conteudo
 /** Ações do menu da mensagem. */
 data class AcoesMenu(
     val aoResponder: () -> Unit,
+    val aoResponderNoPrivado: () -> Unit,
+    val aoEncaminhar: () -> Unit,
     val aoReagir: (String) -> Unit,
     val aoMaisEmojis: () -> Unit,
     val aoCopiar: () -> Unit,
@@ -191,7 +196,7 @@ data class AcoesMenu(
 /** Toque longo na bolha (TODO 7.1): reações rápidas + "mais" e as ações (textos do web). */
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun MenuMensagem(mensagem: Mensagem, propria: Boolean, acoes: AcoesMenu, aoFechar: () -> Unit) {
+fun MenuMensagem(mensagem: Mensagem, propria: Boolean, grupo: Boolean, acoes: AcoesMenu, aoFechar: () -> Unit) {
     val haptico = LocalHapticFeedback.current
     ModalBottomSheet(onDismissRequest = aoFechar) {
         Row(
@@ -221,6 +226,13 @@ fun MenuMensagem(mensagem: Mensagem, propria: Boolean, acoes: AcoesMenu, aoFecha
         }
         HorizontalDivider(Modifier.padding(vertical = 4.dp))
         ItemMenu(Icons.AutoMirrored.Outlined.Reply, stringResource(R.string.responder), onClick = acoes.aoResponder)
+        if (grupo && !propria) {
+            ItemMenu(Icons.Outlined.PersonOutline, stringResource(R.string.responder_no_privado), onClick = acoes.aoResponderNoPrivado)
+        }
+        // Votação não pode ser encaminhada: o servidor recusa (FC-518).
+        if (mensagem.conteudos.none { it.tipo == TipoConteudo.ENQUETE }) {
+            ItemMenu(Icons.AutoMirrored.Outlined.Forward, stringResource(R.string.encaminhar), onClick = acoes.aoEncaminhar)
+        }
         val temTexto = mensagem.conteudos.any { it.tipo == TipoConteudo.TEXTO || it.tipo == TipoConteudo.IMAGEM }
         if (temTexto) {
             ItemMenu(Icons.Outlined.ContentCopy, stringResource(R.string.copiar), onClick = acoes.aoCopiar)
@@ -419,6 +431,9 @@ class AcoesAbertas {
 
     /** Id da mensagem do "+N" tocado. */
     var maisReacoes by mutableStateOf<Long?>(null)
+
+    /** Id da mensagem sendo encaminhada (a folha de destinos). */
+    var encaminhando by mutableStateOf<Long?>(null)
     var ocultando by mutableStateOf<Mensagem?>(null)
 }
 
@@ -434,7 +449,16 @@ internal fun AcoesDaMensagem(abertas: AcoesAbertas, estado: ChatUiState, viewMod
         MenuMensagem(
             mensagem,
             propria = mensagem.remetenteId == estado.eu,
+            grupo = estado.grupo,
             acoes = AcoesMenu(
+                aoResponderNoPrivado = {
+                    abertas.menuDe = null
+                    viewModel.responderNoPrivado(mensagem)
+                },
+                aoEncaminhar = {
+                    abertas.menuDe = null
+                    abertas.encaminhando = mensagem.id
+                },
                 aoResponder = {
                     abertas.menuDe = null
                     viewModel.responder(mensagem)
@@ -475,6 +499,23 @@ internal fun AcoesDaMensagem(abertas: AcoesAbertas, estado: ChatUiState, viewMod
             LaunchedEffect(Unit) { abertas.quemReagiu = null }
         } else {
             QuemReagiu(reacoes, emoji, aoFechar = { abertas.quemReagiu = null })
+        }
+    }
+    abertas.encaminhando?.let { id ->
+        val mensagem = atual(id)
+        if (mensagem == null) {
+            LaunchedEffect(Unit) { abertas.encaminhando = null }
+        } else {
+            val destinos by viewModel.destinosEncaminhar.collectAsStateWithLifecycle()
+            EncaminharMensagem(
+                mensagem,
+                destinos,
+                aoEscolher = { destino ->
+                    abertas.encaminhando = null
+                    viewModel.encaminhar(mensagem, destino)
+                },
+                aoFechar = { abertas.encaminhando = null },
+            )
         }
     }
     abertas.maisReacoes?.let { id ->

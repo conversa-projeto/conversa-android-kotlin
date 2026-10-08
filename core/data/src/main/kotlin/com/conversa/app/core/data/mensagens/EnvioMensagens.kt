@@ -29,6 +29,7 @@ import com.conversa.app.core.model.Mensagem
 import com.conversa.app.core.model.PREFIXO_LOCAL
 import com.conversa.app.core.model.TipoConteudo
 import com.conversa.app.core.model.TipoReferencia
+import com.conversa.app.core.model.local
 import com.conversa.app.core.network.api.ConversaApi
 import com.conversa.app.core.network.dto.ConteudoEnvioDto
 import com.conversa.app.core.network.dto.EnviarMensagemRequisicao
@@ -130,21 +131,31 @@ class EnvioMensagens @Inject constructor(
     /**
      * Cria a mensagem otimista e agenda o envio. Ordem dos conteúdos (como o web):
      * texto primeiro, depois os anexos na ordem em que foram escolhidos. Com [referencia],
-     * vai `mensagem_referencia {tipo, origem_mensagem_id}` e a otimista já mostra a citação.
+     * vai `mensagem_referencia {tipo, origem_mensagem_id}` e a otimista já mostra a citação;
+     * encaminhada (7.6) leva antes os conteúdos da original (os identificadores, sem subir de
+     * novo; votação não vai: o servidor recusa) e pode ir sem texto.
      * Devolve o id local.
      */
     suspend fun enviar(conversaId: Long, texto: String, anexosLocais: List<AnexoLocal>, referencia: ReferenciaPendente? = null): Long {
         val atual = sessao.sessao.value ?: error("Sem sessão")
         val agora = relogio.instant()
         val textoLimpo = texto.trim()
-        require(textoLimpo.isNotEmpty() || anexosLocais.isNotEmpty()) { "Mensagem vazia" }
+        val encaminhados = if (referencia?.tipo == TipoReferencia.ENCAMINHAMENTO) {
+            referencia.mensagem.conteudos.sortedBy { it.ordem }.filter { !it.local && it.tipo != TipoConteudo.ENQUETE }
+        } else {
+            emptyList()
+        }
+        require(textoLimpo.isNotEmpty() || anexosLocais.isNotEmpty() || encaminhados.isNotEmpty()) { "Mensagem vazia" }
         val idLocal = trava.withLock {
             val id = minOf(mensagemDao.menorId() ?: 0, 0) - 1
-            val conteudosTexto = if (textoLimpo.isEmpty()) {
+            val conteudosEncaminhados = encaminhados.mapIndexed { i, conteudo ->
+                ConteudoEnvioDto(i + 1, conteudo.tipo.codigo, conteudo.conteudo)
+            }
+            val conteudosTexto = conteudosEncaminhados + if (textoLimpo.isEmpty()) {
                 emptyList()
             } else {
                 listOf(
-                    ConteudoEnvioDto(1, TipoConteudo.TEXTO.codigo, textoLimpo),
+                    ConteudoEnvioDto(encaminhados.size + 1, TipoConteudo.TEXTO.codigo, textoLimpo),
                 )
             }
             val pendentes = anexosLocais.mapIndexed { i, anexo ->
@@ -181,7 +192,12 @@ class EnvioMensagens @Inject constructor(
                             enviando = true,
                         ),
                         conteudos =
-                        conteudosTexto.map { ConteudoEntidade(id, it.ordem, null, it.tipo, it.conteudo.orEmpty(), "", "", 0, "") } +
+                        encaminhados.mapIndexed { i, it ->
+                            ConteudoEntidade(id, i + 1, null, it.tipo.codigo, it.conteudo, it.nome, it.extensao, 0, "")
+                        } +
+                            conteudosTexto.drop(encaminhados.size).map {
+                                ConteudoEntidade(id, it.ordem, null, it.tipo, it.conteudo.orEmpty(), "", "", 0, "")
+                            } +
                             pendentes.map {
                                 ConteudoEntidade(id, it.ordem, null, it.tipo, PREFIXO_LOCAL + it.uri, it.nome, extensaoDe(it.nome), 0, "")
                             },

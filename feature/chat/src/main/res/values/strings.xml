@@ -4,6 +4,23 @@
     <string name="voltar">Voltar</string>
     <!-- Ações sobre a mensagem (etapa 7; textos do web: MensagemAcoes.vue, MessageList.vue) -->
     <string name="responder">Responder</string>
+    <string name="responder_no_privado">Responder no privado</string>
+    <string name="encaminhar">Encaminhar</string>
+    <string name="encaminhando_de">Encaminhando de %1$s</string>
+    <string name="encaminhar_mensagem">Encaminhar mensagem</string>
+    <string name="encaminhar_descricao">Escolha uma conversa ou contato para receber esta mensagem.</string>
+    <string name="mensagem_selecionada">Mensagem selecionada</string>
+    <string name="buscar_destino">Buscar destino</string>
+    <string name="nome_da_conversa_ou_contato">Nome da conversa ou contato</string>
+    <string name="nenhum_destino">Nenhum destino encontrado.</string>
+    <string name="grupo_sem_nome">Grupo sem nome</string>
+    <string name="conversa_direta">Conversa direta</string>
+    <string name="grupo_existente">Grupo existente</string>
+    <string name="conversa_direta_existente">Conversa direta existente</string>
+    <string name="novo_chat_direto">Novo chat direto</string>
+    <string name="etiqueta_conversa">Conversa</string>
+    <string name="etiqueta_contato">Contato</string>
+    <string name="erro_ao_encaminhar">Erro ao encaminhar mensagem</string>
     <string name="resposta">Resposta</string>
     <string name="encaminhado">Encaminhado</string>
     <string name="ir_para_a_mensagem">Ir para a mensagem</string>

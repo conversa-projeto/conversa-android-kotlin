@@ -79,8 +79,8 @@ data class ChatUiState(
     val textoParaCampo: String? = null,
     /** O campo pega o foco uma vez ([ChatViewModel.campoFocado]). */
     val focarCampo: Boolean = false,
-    /** Mensagem sendo respondida (7.3): a barra acima do campo; vai no próximo envio. */
-    val respondendo: Mensagem? = null,
+    /** Resposta (7.3) ou encaminhada do "Responder no privado" (7.6): a barra acima do campo; vai no próximo envio. */
+    val respondendo: ReferenciaPendente? = null,
     /** "Ir para a mensagem" (7.5): a tela rola até ela e avisa ([ChatViewModel.chegouNaMensagem]). */
     val irPara: Long? = null,
     /** Mensagem destacada por 1,2 s depois do salto. */
@@ -99,8 +99,15 @@ sealed interface EventoChat {
     /** Depois de enviar: descer até a última mensagem. */
     data object RolarAoFim : EventoChat
 
-    /** Abrir outra conversa: a direta de uma menção (CON-06) ou a de uma encaminhada (7.5, com a mensagem). */
-    data class AbrirConversa(val conversaId: Long, val mensagemId: Long = 0) : EventoChat
+    /**
+     * Abrir outra conversa: a direta de uma menção (CON-06), a de uma encaminhada (7.5, com a
+     * [mensagemId]), o destino de um encaminhamento ou a direta do "Responder no privado"
+     * (7.6, com a mensagem pendente em [encaminharDe]).
+     */
+    data class AbrirConversa(val conversaId: Long, val mensagemId: Long = 0, val encaminharDe: Long = 0) : EventoChat
+
+    /** O encaminhamento não saiu (a direta com o contato não foi criada): "Erro ao encaminhar mensagem". */
+    data object EncaminharFalhou : EventoChat
 
     /** "Ir para a mensagem" não achou a original (7.5). */
     data object MensagemNaoLocalizada : EventoChat
@@ -163,7 +170,13 @@ private const val DESTAQUE_MS = 1_200L
 /** "Ir para a mensagem": aonde a tela deve rolar e o que fica destacado. */
 private data class Salto(val irPara: Long? = null, val destaque: Long? = null, val buscando: Boolean = false)
 
-private data class ExtrasDoCampo(val texto: String?, val foco: Boolean, val respondendo: Mensagem?, val salto: Salto, val minhas: Set<Long>)
+private data class ExtrasDoCampo(
+    val texto: String?,
+    val foco: Boolean,
+    val respondendo: ReferenciaPendente?,
+    val salto: Salto,
+    val minhas: Set<Long>,
+)
 
 /**
  * Áudio na conversa (ANX-10), lido só pelas bolhas de áudio: a posição muda várias
@@ -199,7 +212,7 @@ fun chaveDoAudio(mensagem: Mensagem, conteudo: com.conversa.app.core.model.Conte
 class ChatViewModel @Inject constructor(
     salvo: SavedStateHandle,
     private val conversas: ConversasRepositorio,
-    contatos: ContatosRepositorio,
+    private val contatos: ContatosRepositorio,
     presenca: PresencaRepositorio,
     sessao: SessaoRepositorio,
     private val mensagens: MensagensRepositorio,
@@ -247,7 +260,7 @@ class ChatViewModel @Inject constructor(
 
     /** Chat da chamada recém-criado: abre com o cursor no campo, como o web (6.13). */
     private val focarCampo = MutableStateFlow(salvo.get<Boolean>("focar") == true)
-    private val respondendo = MutableStateFlow<Mensagem?>(null)
+    private val respondendo = MutableStateFlow<ReferenciaPendente?>(null)
     private val salto = MutableStateFlow(Salto())
     private val minhasConversas = conversas.observarTodas().map { lista -> lista.mapTo(mutableSetOf()) { it.id } }
 
@@ -305,6 +318,13 @@ class ChatViewModel @Inject constructor(
             val resultado = mensagens.carregarRecentes(conversaId)
             carga.value = carga.value.copy(carregou = true)
             resultado.onFailure { eventos.enviar(EventoChat.Erro(it.paraErroApi().mensagemAmigavel())) }
+            // "Responder no privado" (7.6): a mensagem do grupo fica pendente como encaminhada.
+            salvo.get<Long>("encaminharDe")?.takeIf { it > 0 }?.let { id ->
+                mensagens.buscar(id)?.let {
+                    respondendo.value = ReferenciaPendente(TipoReferencia.ENCAMINHAMENTO, it)
+                    focarCampo.value = true
+                }
+            }
             // Veio de um link ou de uma encaminhada com a mensagem (`?mensagem=`): vai até ela.
             salvo.get<Long>("mensagemId")?.takeIf { it > 0 }?.let { irParaMensagem(it, conversaId) }
             // "Últimas": a primeira de outra pessoa ainda não lida, decidida uma vez só.
@@ -346,10 +366,12 @@ class ChatViewModel @Inject constructor(
     fun enviar(texto: String, aoGravar: () -> Unit) {
         val limpo = texto.trim()
         val anexosNaFila = fila.value
-        if (limpo.isEmpty() && anexosNaFila.isEmpty()) return
+        val resposta = respondendo.value
+        // A encaminhada do "Responder no privado" pode ir sem texto: leva os conteúdos dela.
+        val encaminhando = resposta?.tipo == TipoReferencia.ENCAMINHAMENTO
+        if (limpo.isEmpty() && anexosNaFila.isEmpty() && !encaminhando) return
         viewModelScope.launch {
-            val resposta = respondendo.value
-            envio.enviar(conversaId, limpo, anexosNaFila, resposta?.let { ReferenciaPendente(TipoReferencia.RESPOSTA, it) })
+            envio.enviar(conversaId, limpo, anexosNaFila, resposta)
             fila.value = fila.value - anexosNaFila.toSet()
             if (respondendo.value == resposta) respondendo.value = null
             aoGravar()
@@ -455,8 +477,48 @@ class ChatViewModel @Inject constructor(
     /** "Responder" no menu ou deslizando a bolha (7.3): a barra aparece e o campo pega o foco. */
     fun responder(mensagem: Mensagem) {
         if (!podeAbrirMenu(mensagem)) return
-        respondendo.value = mensagem
+        respondendo.value = ReferenciaPendente(TipoReferencia.RESPOSTA, mensagem)
         focarCampo.value = true
+    }
+
+    /** Destinos do "Encaminhar" (7.6): as conversas, menos esta, e os contatos sem direta. */
+    val destinosEncaminhar: StateFlow<List<DestinoEncaminhar>> = combine(conversas.observarTodas(), contatos.observarOutros()) {
+            lista,
+            pessoas,
+        ->
+        destinosParaEncaminhar(lista, pessoas, conversaId)
+    }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), emptyList())
+
+    /**
+     * Encaminhar (7.6): para contato sem conversa, cria a direta antes; a mensagem vai pela fila
+     * (`mensagem_referencia` tipo 2, com os conteúdos da original) e o destino abre.
+     */
+    fun encaminhar(mensagem: Mensagem, destino: DestinoEncaminhar) {
+        if (mensagem.id <= 0) return
+        viewModelScope.launch {
+            val conversa = when (destino) {
+                is DestinoEncaminhar.ParaConversa -> destino.conversaId
+                is DestinoEncaminhar.ParaContato -> conversas.obterOuCriarDireta(destino.contatoId).getOrElse {
+                    eventos.enviar(EventoChat.EncaminharFalhou)
+                    return@launch
+                }
+            }
+            envio.enviar(conversa, "", emptyList(), ReferenciaPendente(TipoReferencia.ENCAMINHAMENTO, mensagem))
+            eventos.enviar(EventoChat.AbrirConversa(conversa))
+        }
+    }
+
+    /**
+     * "Responder no privado" (7.6, grupo): abre (ou cria) a direta com quem escreveu, com esta
+     * mensagem pendente como encaminhada, para acrescentar o comentário (como o web).
+     */
+    fun responderNoPrivado(mensagem: Mensagem) {
+        if (mensagem.id <= 0 || mensagem.remetenteId == eu || mensagem.remetenteId <= 0) return
+        viewModelScope.launch {
+            conversas.obterOuCriarDireta(mensagem.remetenteId)
+                .onSuccess { eventos.enviar(EventoChat.AbrirConversa(it, encaminharDe = mensagem.id)) }
+                .onFailure { eventos.enviar(EventoChat.Erro(it.paraErroApi().mensagemAmigavel())) }
+        }
     }
 
     fun cancelarResposta() {
@@ -625,7 +687,7 @@ class ChatViewModel @Inject constructor(
         relogio = relogio,
         es = Dispatchers.IO,
         avisar = { eventos.enviar(it) },
-        pegarResposta = { respondendo.value?.let { ReferenciaPendente(TipoReferencia.RESPOSTA, it) }.also { respondendo.value = null } },
+        pegarResposta = { respondendo.value.also { respondendo.value = null } },
     )
 
     /** Separado do [estado]: o tempo e o nível mudam 10 vezes por segundo e só o campo lê. */

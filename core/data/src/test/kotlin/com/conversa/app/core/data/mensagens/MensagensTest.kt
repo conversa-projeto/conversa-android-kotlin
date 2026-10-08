@@ -218,6 +218,45 @@ class MensagensTest {
     }
 
     @Test
+    fun `encaminhada leva os conteudos da original antes do texto e pode ir sem texto`() = runTest {
+        val envio = envio()
+        val original = msg(300, "olha isto", remetente = 8).copy(
+            conteudos = listOf(
+                ConteudoDto(1, 1, 1, "olha isto"),
+                ConteudoDto(2, 2, 2, "img-9", nome = "foto.jpg", extensao = "jpg"),
+            ),
+        ).paraModelo()
+
+        val semTexto = envio.enviar(50, "", emptyList(), ReferenciaPendente(TipoReferencia.ENCAMINHAMENTO, original))
+        val comTexto = envio.enviar(50, "veja", emptyList(), ReferenciaPendente(TipoReferencia.ENCAMINHAMENTO, original))
+
+        val otimista = banco.mensagemDao().buscar(semTexto)!!.paraModelo()
+        assertThat(otimista.conteudos.map { it.tipo to it.conteudo }).containsExactly(
+            TipoConteudo.TEXTO to "olha isto",
+            TipoConteudo.IMAGEM to "img-9",
+        ).inOrder()
+        assertThat(otimista.referencia!!.tipo).isEqualTo(TipoReferencia.ENCAMINHAMENTO)
+        assertThat(
+            banco.mensagemDao().buscar(comTexto)!!.paraModelo().conteudos.map {
+                it.conteudo
+            },
+        ).containsExactly("olha isto", "img-9", "veja").inOrder()
+
+        coEvery { api.enviarMensagem(any()) } returns MensagemCriadaDto(id = 600, conversaId = 50)
+        coEvery { api.mensagens(50, any(), 0, 0) } throws java.io.IOException("sem rede")
+        envio.processarPendentes()
+        coVerify {
+            api.enviarMensagem(
+                EnviarMensagemRequisicao(
+                    50,
+                    listOf(ConteudoEnvioDto(1, 1, "olha isto"), ConteudoEnvioDto(2, 2, "img-9"), ConteudoEnvioDto(3, 1, "veja")),
+                    mensagemReferencia = ReferenciaEnvioDto(2, 300),
+                ),
+            )
+        }
+    }
+
+    @Test
     fun `resposta manda a referencia e a otimista ja mostra a citacao`() = runTest {
         val envio = envio()
         val respondida = msg(300, "pergunta", remetente = 8).paraModelo()

@@ -96,7 +96,12 @@ class ChatViewModelTest {
 
     private val compartilhamentos = mockk<com.conversa.app.core.data.anexos.Compartilhamentos>(relaxed = true)
 
-    private fun TestScope.criar(comCompartilhamento: Boolean = false, focar: Boolean = false, mensagemId: Long = 0): ChatViewModel {
+    private fun TestScope.criar(
+        comCompartilhamento: Boolean = false,
+        focar: Boolean = false,
+        mensagemId: Long = 0,
+        encaminharDe: Long = 0,
+    ): ChatViewModel {
         val vm = ChatViewModel(
             SavedStateHandle(
                 mapOf(
@@ -104,6 +109,7 @@ class ChatViewModelTest {
                     "comCompartilhamento" to comCompartilhamento,
                     "focar" to focar,
                     "mensagemId" to mensagemId,
+                    "encaminharDe" to encaminharDe,
                 ),
             ),
             conversas,
@@ -423,7 +429,7 @@ class ChatViewModelTest {
 
         vm.responder(pergunta)
         advanceUntilIdle()
-        assertThat(vm.estado.value.respondendo).isEqualTo(pergunta)
+        assertThat(vm.estado.value.respondendo?.mensagem).isEqualTo(pergunta)
         assertThat(vm.estado.value.focarCampo).isTrue()
 
         vm.enviar("sim") { }
@@ -497,6 +503,68 @@ class ChatViewModelTest {
         advanceUntilIdle()
 
         assertThat(vm.estado.value.irPara).isEqualTo(7)
+    }
+
+    @Test
+    fun `encaminhar para conversa vai pela fila como encaminhada e abre o destino`() = runTest {
+        val vm = criar()
+        advanceUntilIdle()
+        val original = mensagem(9, 8, lida = true)
+
+        vm.encaminhar(original, DestinoEncaminhar.ParaConversa(50, "Outro", grupo = true))
+        advanceUntilIdle()
+
+        coVerify { envio.enviar(50, "", emptyList(), ReferenciaPendente(TipoReferencia.ENCAMINHAMENTO, original)) }
+        assertThat(vm.eventos.fluxo.first()).isEqualTo(EventoChat.AbrirConversa(50))
+    }
+
+    @Test
+    fun `encaminhar para contato cria a direta antes e avisa se nao conseguir`() = runTest {
+        coEvery { conversas.obterOuCriarDireta(8) } returns Result.success(60)
+        coEvery { conversas.obterOuCriarDireta(9) } returns Result.failure(java.io.IOException("sem rede"))
+        val vm = criar()
+        advanceUntilIdle()
+        val original = mensagem(9, 8, lida = true)
+
+        vm.encaminhar(original, DestinoEncaminhar.ParaContato(8, "Bruno", null))
+        advanceUntilIdle()
+        coVerify { envio.enviar(60, "", emptyList(), ReferenciaPendente(TipoReferencia.ENCAMINHAMENTO, original)) }
+        assertThat(vm.eventos.fluxo.first()).isEqualTo(EventoChat.AbrirConversa(60))
+
+        vm.encaminhar(original, DestinoEncaminhar.ParaContato(9, "Carla", null))
+        advanceUntilIdle()
+        assertThat(vm.eventos.fluxo.first()).isEqualTo(EventoChat.EncaminharFalhou)
+    }
+
+    @Test
+    fun `responder no privado abre a direta com a mensagem pendente, que pode ir sem texto`() = runTest {
+        coEvery { conversas.obterOuCriarDireta(8) } returns Result.success(60)
+        val vm = criar()
+        advanceUntilIdle()
+
+        vm.responderNoPrivado(mensagem(9, 8, lida = true))
+        vm.responderNoPrivado(mensagem(10, 7, lida = true))
+        advanceUntilIdle()
+
+        assertThat(vm.eventos.fluxo.first()).isEqualTo(EventoChat.AbrirConversa(60, encaminharDe = 9))
+        coVerify(exactly = 1) { conversas.obterOuCriarDireta(any()) }
+    }
+
+    @Test
+    fun `aberta com encaminharDe deixa a encaminhada pendente e o envio sem texto sai`() = runTest {
+        val original = mensagem(9, 8, lida = true)
+        coEvery { mensagens.buscar(9) } returns original
+        val vm = criar(encaminharDe = 9)
+        advanceUntilIdle()
+
+        assertThat(vm.estado.value.respondendo).isEqualTo(ReferenciaPendente(TipoReferencia.ENCAMINHAMENTO, original))
+        assertThat(vm.estado.value.focarCampo).isTrue()
+
+        vm.enviar("") { }
+        advanceUntilIdle()
+
+        coVerify { envio.enviar(42, "", emptyList(), ReferenciaPendente(TipoReferencia.ENCAMINHAMENTO, original)) }
+        assertThat(vm.estado.value.respondendo).isNull()
     }
 
     @Test

@@ -697,7 +697,7 @@
 
 ### 7.1 Menu de ações (FC-500, ENV-20)
 - [x] Toque longo na bolha → barra de reações 👍 ❤️ 😂 😮 😢 👏 🔥 + "mais" ✔ 52d6d03
-- [ ] Itens: Responder; Responder no privado (grupo e mensagem de outro); Encaminhar; Copiar; Ocultar (minha e não oculta) — Copiar e Ocultar prontos ✔ 52d6d03; Responder pronto ✔ cdfb8cf; Encaminhar e Responder no privado entram com 7.6
+- [x] Itens: Responder; Responder no privado (grupo e mensagem de outro); Encaminhar; Copiar; Ocultar (minha e não oculta) — Copiar e Ocultar prontos ✔ 52d6d03; Responder pronto ✔ cdfb8cf; Encaminhar e Responder no privado entram com 7.6 — Responder no privado e Encaminhar no bloco do 7.6
 - [x] Não abrir para chamada, oculta ou mensagem ainda sem id real ✔ 52d6d03
 
 ### 7.2 Reações (FC-501, ENV-17)
@@ -732,11 +732,11 @@
 - [x] Erro → "Não foi possível localizar esta mensagem no contexto da conversa." — não achou, falhou a rede ou a conversa de origem não é minha (+ testes) ✔ 2a4cc59
 
 ### 7.6 Encaminhar, copiar e responder no privado (FC-506, FC-507, FC-512)
-- [ ] Encaminhar: tela de destino (conversas exceto a de origem + contatos sem direta), com busca
-- [ ] `PUT /mensagem` no destino com os conteúdos copiados (ordem 1..n) e `mensagem_referencia:{tipo:2, origem_mensagem_id}`
-- [ ] Contato sem conversa → criar a direta antes; depois abrir o destino
+- [x] Encaminhar: tela de destino (conversas exceto a de origem + contatos sem direta), com busca — folha "Encaminhar mensagem" (`EncaminharMensagem`, `destinosParaEncaminhar`, textos do web) (+ testes)
+- [x] `PUT /mensagem` no destino com os conteúdos copiados (ordem 1..n) e `mensagem_referencia:{tipo:2, origem_mensagem_id}` — pela fila de envio (`ReferenciaPendente` encaminhada: os conteúdos da original vão antes, com os identificadores, sem subir de novo; votação nunca); a otimista aparece no destino, que abre. No emulador: encaminhada para o "Grupo de teste 2" saiu com o conteúdo e a referência tipo 2
+- [x] Contato sem conversa → criar a direta antes; depois abrir o destino — `obterOuCriarDireta`; se falhar, "Erro ao encaminhar mensagem" (+ teste)
 - [x] Copiar: texto → área de transferência; imagem → `ClipData` com URI ✔ 52d6d03
-- [ ] Responder no privado: abrir/criar a direta com o remetente e deixar a mensagem pendente como encaminhada (`tipo:2`, conteúdos antes do texto)
+- [x] Responder no privado: abrir/criar a direta com o remetente e deixar a mensagem pendente como encaminhada (`tipo:2`, conteúdos antes do texto) — só em grupo e em mensagem de outra pessoa; abre `RotaChat(direta, encaminharDe)`, com a barra "Encaminhando de …" e o "Enviar" mesmo sem texto. No emulador: saiu na direta com o B com o conteúdo da original antes do comentário e a referência tipo 2
 
 ### 7.7 Menções (FC-508, ENV-05, MSG-12)
 - [ ] Ao digitar `@` + texto → popup com até 6 contatos/membros (nome/login)
@@ -788,7 +788,7 @@
 - [ ] Criar: "Permitir várias escolhas" / "Cada pessoa pode marcar mais de uma opção."
 - [ ] Criar: "Cancelar" / "Criar votação" ("Criando..."), habilitado com pergunta e ≥ 2 opções
 - [ ] `PUT /enquete {conversa_id, pergunta, opcoes (preenchidas, trim), multipla}` → atualizar a conversa; mostrar os erros do servidor
-- [ ] Esconder "Encaminhar" no menu de uma mensagem de votação (o servidor recusa com 400)
+- [x] Esconder "Encaminhar" no menu de uma mensagem de votação (o servidor recusa com 400) — feito com o 7.6
 - [ ] 🆕 `5cad911` DTO `Enquete` com `encerra_em`, `encerrada_em`, `encerrada`, `pode_encerrar`, `pode_alterar_prazo`; rotas `POST /enquete/encerrar {enquete_id}` e `PATCH /enquete {enquete_id, encerra_em|null}` (as duas devolvem a enquete e mandam o WS 62)
 - [ ] 🆕 `785bdef` Criar: "Definir data final" / "Depois dela ninguém vota mais. Dá para mudar ou encerrar antes pela votação." + data e hora (sugestão: amanhã, na próxima hora cheia); erros "Informe a data e a hora", "A data final precisa estar no futuro", "A data final não pode passar de 1 ano" (com erro, "Criar votação" desabilitado); vai como `encerra_em`
 - [ ] 🆕 `785bdef` Bolha aberta com data final: "Escolha uma opção · encerra hoje 18:00" ("amanhã 08:30", "12/10 18:00"; com o ano se for outro)

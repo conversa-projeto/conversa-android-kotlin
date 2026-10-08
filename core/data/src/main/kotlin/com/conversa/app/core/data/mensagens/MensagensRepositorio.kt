@@ -83,6 +83,9 @@ class MensagensRepositorio @Inject constructor(
         return Result.success(false)
     }
 
+    /** Uma mensagem do aparelho (a pendente do "Responder no privado", 7.6). */
+    suspend fun buscar(mensagemId: Long): Mensagem? = mensagemDao.buscar(mensagemId)?.paraModelo()
+
     /** Relê uma mensagem do servidor (reações com nomes, marca de oculta). */
     suspend fun recarregar(conversaId: Long, mensagemId: Long): Result<Unit> =
         chamarApi {

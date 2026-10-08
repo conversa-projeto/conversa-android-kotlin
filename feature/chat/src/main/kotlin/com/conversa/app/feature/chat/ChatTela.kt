@@ -115,7 +115,7 @@ private const val LONGE_DO_FIM = 6
 fun ChatRotaTela(
     aoVoltar: () -> Unit,
     aoMembros: (Long) -> Unit,
-    aoAbrirConversa: (conversaId: Long, mensagemId: Long) -> Unit,
+    aoAbrirConversa: (conversaId: Long, mensagemId: Long, encaminharDe: Long) -> Unit,
     viewModel: ChatViewModel = hiltViewModel(),
 ) {
     val estado by viewModel.estado.collectAsStateWithLifecycle()
@@ -153,6 +153,7 @@ fun ChatRotaTela(
     val naoOcultou = stringResource(R.string.nao_foi_possivel_ocultar)
     val limiteDeReacoes = stringResource(R.string.limite_de_reacoes)
     val naoLocalizada = stringResource(R.string.mensagem_nao_localizada)
+    val encaminharFalhou = stringResource(R.string.erro_ao_encaminhar)
     val microfoneIndisponivel = stringResource(R.string.microfone_indisponivel)
     val gravacaoCurta = stringResource(R.string.gravacao_curta)
     val gravacaoFalhou = stringResource(R.string.gravacao_falhou)
@@ -163,7 +164,8 @@ fun ChatRotaTela(
             EventoChat.GravacaoFalhou -> avisos.mostrarErro(gravacaoFalhou)
             is EventoChat.Erro -> avisos.mostrarErro(evento.mensagem)
             EventoChat.RolarAoFim -> lista.animateScrollToItem(0)
-            is EventoChat.AbrirConversa -> aoAbrirConversa(evento.conversaId, evento.mensagemId)
+            is EventoChat.AbrirConversa -> aoAbrirConversa(evento.conversaId, evento.mensagemId, evento.encaminharDe)
+            EventoChat.EncaminharFalhou -> avisos.mostrarErro(encaminharFalhou)
             EventoChat.MensagemNaoLocalizada -> avisos.mostrarErro(naoLocalizada)
             is EventoChat.ArquivoGrande -> avisos.mostrarErro(recursos.getString(R.string.arquivo_grande, evento.nome))
             is EventoChat.AbrirArquivo -> if (!abrirComOutroApp(contexto, evento.arquivo, evento.mime)) avisos.mostrarErro(semApp)

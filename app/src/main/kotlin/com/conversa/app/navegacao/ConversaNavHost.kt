@@ -92,7 +92,9 @@ fun ConversaNavHost(destinoInicial: Any, principal: MainViewModel) {
             ChatRotaTela(
                 aoVoltar = { nav.popBackStack() },
                 aoMembros = { nav.navigate(RotaMembros(it)) },
-                aoAbrirConversa = { conversa, mensagem -> nav.navigate(RotaChat(conversa, mensagem)) },
+                aoAbrirConversa = { conversa, mensagem, encaminharDe ->
+                    nav.navigate(RotaChat(conversa, mensagem, encaminharDe = encaminharDe))
+                },
             )
         }
         composable<RotaEnviarPara> {

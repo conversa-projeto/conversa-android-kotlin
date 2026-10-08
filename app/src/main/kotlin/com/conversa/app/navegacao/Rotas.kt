@@ -24,9 +24,16 @@ data object RotaPrincipal
  * Conversa aberta. [mensagemId] = 0 quando não há mensagem para destacar.
  * [comCompartilhamento]: veio do "Enviar para…" (os itens compartilhados entram na fila do campo).
  * [focar]: abrir com o cursor no campo (o chat da chamada recém-criado, 6.13).
+ * [encaminharDe]: "Responder no privado" (7.6): a mensagem do grupo fica pendente como encaminhada.
  */
 @Serializable
-data class RotaChat(val conversaId: Long, val mensagemId: Long = 0, val comCompartilhamento: Boolean = false, val focar: Boolean = false)
+data class RotaChat(
+    val conversaId: Long,
+    val mensagemId: Long = 0,
+    val comCompartilhamento: Boolean = false,
+    val focar: Boolean = false,
+    val encaminharDe: Long = 0,
+)
 
 /** "Enviar para…": o que outro app compartilhou (AND-10). */
 @Serializable

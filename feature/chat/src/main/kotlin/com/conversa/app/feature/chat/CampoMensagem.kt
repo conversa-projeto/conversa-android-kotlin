@@ -104,8 +104,9 @@ import androidx.core.content.ContextCompat
 import androidx.core.content.FileProvider
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.conversa.app.core.data.anexos.AnexoLocal
-import com.conversa.app.core.model.Mensagem
+import com.conversa.app.core.data.mensagens.ReferenciaPendente
 import com.conversa.app.core.model.TipoConteudo
+import com.conversa.app.core.model.TipoReferencia
 import com.conversa.app.core.model.resumoDaMensagem
 import com.conversa.app.core.ui.componentes.LocalAvisos
 import com.conversa.app.core.ui.componentes.mostrarErro
@@ -144,7 +145,7 @@ internal fun Campo(
     textoCompartilhado: String?,
     acoes: AcoesChat,
     focar: Boolean = false,
-    respondendo: Mensagem? = null,
+    respondendo: ReferenciaPendente? = null,
 ) {
     // Estado do texto local e síncrono (o cursor não pula); sobrevive a girar a tela.
     val texto = rememberTextFieldState()
@@ -182,14 +183,27 @@ internal fun Campo(
         if (comBarra) {
             BarraGravacao(atual, acoes.gravacao)
         } else {
-            LinhaDoCampo(texto, fila.isNotEmpty(), atual as? EstadoGravacao.Gravando, acoes, foco)
+            // A encaminhada pendente pode ir sem texto (os conteúdos dela vão junto): o Enviar aparece.
+            val encaminhando = respondendo?.tipo == TipoReferencia.ENCAMINHAMENTO
+            LinhaDoCampo(texto, fila.isNotEmpty() || encaminhando, atual as? EstadoGravacao.Gravando, acoes, foco)
         }
     }
 }
 
-/** Respondendo (7.3): quem escreveu e o resumo, com borda azul à esquerda e o "×" (como o web). */
+/**
+ * Respondendo (7.3) ou encaminhando ("Responder no privado", 7.6): quem escreveu e o resumo,
+ * com borda azul à esquerda e o "×" (como o web).
+ */
 @Composable
-private fun BarraResposta(mensagem: Mensagem, aoCancelar: () -> Unit) {
+private fun BarraResposta(referencia: ReferenciaPendente, aoCancelar: () -> Unit) {
+    val mensagem = referencia.mensagem
+    val titulo = if (referencia.tipo ==
+        TipoReferencia.ENCAMINHAMENTO
+    ) {
+        stringResource(R.string.encaminhando_de, mensagem.remetente)
+    } else {
+        mensagem.remetente
+    }
     Row(
         Modifier
             .fillMaxWidth()
@@ -200,7 +214,7 @@ private fun BarraResposta(mensagem: Mensagem, aoCancelar: () -> Unit) {
     ) {
         Box(Modifier.width(3.dp).fillMaxHeight().background(MaterialTheme.colorScheme.primary))
         Column(Modifier.weight(1f).padding(horizontal = 8.dp, vertical = 6.dp)) {
-            Text(mensagem.remetente, style = MaterialTheme.typography.labelMedium, color = MaterialTheme.colorScheme.primary, maxLines = 1)
+            Text(titulo, style = MaterialTheme.typography.labelMedium, color = MaterialTheme.colorScheme.primary, maxLines = 1)
             Text(
                 textoDoResumo(resumoDaMensagem(mensagem)),
                 style = MaterialTheme.typography.bodySmall,
