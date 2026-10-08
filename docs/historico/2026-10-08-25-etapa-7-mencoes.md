@@ -4,7 +4,7 @@
 - **Tipo:** funcionalidade
 - **Itens:** `TODO.md` 7.7; FC-508; ENV-05, MSG-12
 - **Branch:** `reescrita`
-- **Commits:** _(preencher)_
+- **Commits:** `76a7357`
 
 ## Contexto
 No web, digitar `@` no campo abre uma lista de até 6 contatos (`MencaoDropdown.vue`). Escolher insere "@Nome" e guarda o id; no envio, o texto vira `@[Nome](id)` (`utils/mencoesTexto.ts`). A bolha já mostrava `@[Nome](id)` como "@Nome" clicável desde a etapa 3.
