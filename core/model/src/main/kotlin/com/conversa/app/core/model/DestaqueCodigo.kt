@@ -222,3 +222,6 @@ private fun destacarXml(codigo: String): List<TokenCodigo> {
 
 /** ```md / ```markdown: o bloco aparece formatado, com "Visualizar"/"Código" (como o `useMarkdown.ts` do web). */
 fun ehLinguagemMarkdown(linguagem: String?): Boolean = linguagem?.lowercase().let { it == "md" || it == "markdown" }
+
+/** ```mermaid: o bloco aparece como diagrama, com "Visualizar"/"Código" (como o `useMermaid.ts` do web). */
+fun ehLinguagemMermaid(linguagem: String?): Boolean = linguagem?.lowercase() == "mermaid"

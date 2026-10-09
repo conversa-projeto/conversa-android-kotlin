@@ -53,14 +53,21 @@ import com.conversa.app.core.model.SegmentoCodigo
 import com.conversa.app.core.model.TipoToken
 import com.conversa.app.core.model.destacarCodigo
 import com.conversa.app.core.model.ehLinguagemMarkdown
+import com.conversa.app.core.model.ehLinguagemMermaid
 import com.conversa.app.core.ui.tema.ConversaTema
+import com.mikepenz.markdown.compose.components.markdownComponents
+import com.mikepenz.markdown.compose.elements.MarkdownCodeFence
 import com.mikepenz.markdown.m3.Markdown
+import com.mikepenz.markdown.m3.elements.MarkdownCheckBox
 import com.mikepenz.markdown.m3.markdownColor
 import com.mikepenz.markdown.m3.markdownTypography
 import com.mikepenz.markdown.model.MarkdownColors
 import com.mikepenz.markdown.model.MarkdownTypography
 import com.mikepenz.markdown.model.markdownAlertColors
 import kotlinx.coroutines.delay
+import org.intellij.markdown.MarkdownTokenTypes
+import org.intellij.markdown.ast.findChildOfType
+import org.intellij.markdown.ast.getTextInNode
 
 /** Altura do bloco recolhido (o `max-h-60` do web). */
 private val ALTURA_RECOLHIDO = 240.dp
@@ -88,8 +95,11 @@ internal fun BlocoCodigo(codigo: SegmentoCodigo.Codigo) {
     val corFundo = MaterialTheme.colorScheme.surface
     val corCabecalho = ConversaTema.cores.campoEntrada
     val texto = textoDestacado(codigo)
-    // ```md: formatado por padrão; "Código" mostra o texto cru (7.9, como o web).
+    // ```md formatado e ```mermaid como diagrama, por padrão; "Código" mostra o texto cru (7.9, como o web).
+    // Diagrama inválido fica como código, sem a alternância.
     val markdown = ehLinguagemMarkdown(codigo.linguagem)
+    var mermaidFalhou by remember(codigo.conteudo) { mutableStateOf(false) }
+    val mermaid = ehLinguagemMermaid(codigo.linguagem) && !mermaidFalhou
     var verCodigo by rememberSaveable(codigo.conteudo) { mutableStateOf(false) }
     Column(Modifier.fillMaxWidth().clip(RoundedCornerShape(8.dp)).background(corFundo)) {
         Row(
@@ -103,7 +113,7 @@ internal fun BlocoCodigo(codigo: SegmentoCodigo.Codigo) {
                 color = ConversaTema.cores.textoTerciario,
                 modifier = Modifier.weight(1f),
             )
-            if (markdown) AlternarVisual(verCodigo) { verCodigo = it }
+            if (markdown || mermaid) AlternarVisual(verCodigo) { verCodigo = it }
             Text(
                 stringResource(if (copiado) R.string.copiado else R.string.copiar),
                 style = MaterialTheme.typography.labelSmall,
@@ -125,10 +135,17 @@ internal fun BlocoCodigo(codigo: SegmentoCodigo.Codigo) {
                     content = codigo.conteudo,
                     colors = coresDoMarkdown(),
                     typography = tipografiaDoMarkdown(),
+                    components = componentesDoMarkdown(),
                     modifier = Modifier
                         .fillMaxWidth()
                         .recolhivel(expandido, ALTURA_RECOLHIDO) { if (it) longo = true }
                         .padding(10.dp),
+                )
+            } else if (mermaid && !verCodigo) {
+                DiagramaMermaid(
+                    codigo.conteudo,
+                    aoFalhar = { mermaidFalhou = true },
+                    modifier = Modifier.recolhivel(expandido, ALTURA_RECOLHIDO) { if (it) longo = true }.padding(10.dp),
                 )
             } else {
                 Text(
@@ -279,4 +296,38 @@ private fun tipografiaDoMarkdown(): MarkdownTypography {
         table = texto,
         alertTitle = titulo(texto),
     )
+}
+
+/** Os blocos de código dentro do Markdown: ```mermaid vira diagrama (como o web); o resto fica como a biblioteca desenha. */
+@Composable
+private fun componentesDoMarkdown() = markdownComponents(
+    checkbox = { MarkdownCheckBox(it.content, it.node, it.typography.text) },
+    codeFence = { modelo ->
+        val linguagem = modelo.node.findChildOfType(MarkdownTokenTypes.FENCE_LANG)?.getTextInNode(modelo.content)?.toString()
+        if (ehLinguagemMermaid(linguagem)) {
+            MarkdownCodeFence(modelo.content, modelo.node, modelo.typography.code) { codigo, _, estilo -> DiagramaOuCodigo(codigo, estilo) }
+        } else {
+            MarkdownCodeFence(modelo.content, modelo.node, modelo.typography.code)
+        }
+    },
+)
+
+/** Diagrama dentro do Markdown; inválido fica como código. */
+@Composable
+private fun DiagramaOuCodigo(codigo: String, estilo: TextStyle) {
+    var falhou by remember(codigo) { mutableStateOf(false) }
+    if (falhou) {
+        Text(
+            codigo,
+            style = estilo,
+            modifier = Modifier
+                .fillMaxWidth()
+                .clip(RoundedCornerShape(4.dp))
+                .background(ConversaTema.cores.campoEntrada)
+                .horizontalScroll(rememberScrollState())
+                .padding(8.dp),
+        )
+    } else {
+        DiagramaMermaid(codigo, aoFalhar = { falhou = true })
+    }
 }

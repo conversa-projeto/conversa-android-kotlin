@@ -1,0 +1,37 @@
+<!doctype html>
+<!--
+  Diagrama Mermaid de uma mensagem (TODO 7.9), desenhado offline num WebView do app.
+  mermaid.min.js 12.0.0 (MIT, LICENSE-mermaid.txt), a mesma versão do web (bun.lock).
+  securityLevel 'strict': o texto vem de mensagens de outras pessoas, então o diagrama
+  não roda script nem cria link clicável. Sem rede: o WebView bloqueia carregamentos.
+-->
+<html lang="pt-BR">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <style>
+    html, body { margin: 0; padding: 0; background: transparent; overflow: hidden; }
+    #diagrama svg { display: block; max-width: 100%; height: auto; margin: 0 auto; }
+  </style>
+  <script src="mermaid.min.js"></script>
+</head>
+<body>
+  <div id="diagrama"></div>
+  <script>
+    // Chamado pelo app com o texto do diagrama e as cores (tokens do FMX). Avisa a altura
+    // desenhada (Conversa.altura) ou que o texto não é um diagrama válido (Conversa.falhou).
+    async function desenhar(codigo, cores) {
+      try {
+        mermaid.initialize({ startOnLoad: false, securityLevel: 'strict', theme: 'base', themeVariables: cores })
+        if (!(await mermaid.parse(codigo, { suppressErrors: true }))) { Conversa.falhou(); return }
+        const { svg } = await mermaid.render('diagrama-svg', codigo)
+        const alvo = document.getElementById('diagrama')
+        alvo.innerHTML = svg
+        requestAnimationFrame(() => Conversa.altura(Math.ceil(alvo.getBoundingClientRect().height)))
+      } catch (e) {
+        Conversa.falhou()
+      }
+    }
+  </script>
+</body>
+</html>

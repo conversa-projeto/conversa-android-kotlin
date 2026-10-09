@@ -66,6 +66,8 @@ class DestaqueCodigoTest {
         assertThat(ehLinguagemMarkdown("markdown")).isTrue()
         assertThat(ehLinguagemMarkdown("mermaid")).isFalse()
         assertThat(ehLinguagemMarkdown(null)).isFalse()
+        assertThat(ehLinguagemMermaid("Mermaid")).isTrue()
+        assertThat(ehLinguagemMermaid("md")).isFalse()
     }
 
     @Test
