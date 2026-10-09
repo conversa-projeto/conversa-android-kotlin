@@ -109,4 +109,49 @@
     <string name="chamadas_banda_economica_texto">Até 0,5 Mbps: para conexões fracas ou dados móveis.</string>
     <string name="chamadas_banda_alta">Alto</string>
     <string name="chamadas_banda_alta_texto">Até 3 Mbps: imagem mais nítida em conexões boas.</string>
+    <!-- Sistema e Acessos (8.5, CFG-07/08; textos do ConfiguracaoSistema.vue e do ConfiguracaoAcessos.vue) -->
+    <string name="config_sistema">Sistema</string>
+    <string name="config_sistema_resumo">Configurações que valem para todos</string>
+    <string name="config_acessos">Acessos</string>
+    <string name="config_acessos_resumo">Quem pode mexer no sistema e nas permissões</string>
+    <string name="sistema_aviso">Valem para todos os usuários e entram em vigor ao salvar, sem reiniciar o servidor.</string>
+    <string name="sistema_firebase">Notificações (Firebase)</string>
+    <string name="sistema_firebase_texto">Conta de serviço do Firebase Cloud Messaging, usada para avisar quem está com o app fechado.</string>
+    <string name="sistema_fcm_projeto">ID do projeto</string>
+    <string name="sistema_fcm_email">E-mail da conta de serviço</string>
+    <string name="sistema_fcm_chave">Chave privada</string>
+    <string name="sistema_fcm_chave_configurada">(configurada)</string>
+    <string name="sistema_fcm_chave_nao_configurada">(não configurada)</string>
+    <string name="sistema_fcm_chave_manter">Deixe em branco para manter a atual</string>
+    <string name="sistema_fcm_chave_texto">A chave salva nunca é mostrada. Cole o campo private_key do JSON da conta de serviço para trocar.</string>
+    <string name="sistema_chamadas">Chamadas</string>
+    <string name="sistema_turn">Forçar relay pelo TURN</string>
+    <string name="sistema_turn_texto">Toda a mídia das chamadas passa pelo servidor TURN. Use quando redes com firewall não conectam direto.</string>
+    <string name="sistema_gravacao">Guardar as gravações por (dias)</string>
+    <string name="sistema_gravacao_texto">0 guarda para sempre. As mais antigas são apagadas automaticamente.</string>
+    <string name="sistema_gravacao_invalida">Use um número de 0 a 36500.</string>
+    <string name="sistema_transcricao">Transcrição de áudio</string>
+    <string name="sistema_transcritor">Endereço do transcritor</string>
+    <string name="sistema_transcritor_texto">Em branco desliga o botão Transcrever.</string>
+    <string name="sistema_transcritor_exemplo" translatable="false">http://transcritor:8000</string>
+    <string name="sistema_idioma">Idioma</string>
+    <string name="sistema_idioma_exemplo" translatable="false">pt</string>
+    <string name="sistema_armazenamento">Armazenamento</string>
+    <string name="sistema_bucket">Bucket dos anexos: %1$s</string>
+    <string name="sistema_bucket_vazio">(vazio)</string>
+    <string name="sistema_bucket_texto">Não muda por aqui: os anexos já enviados ficariam no bucket anterior.</string>
+    <string name="sistema_salvar">Salvar</string>
+    <string name="sistema_salvando">Salvando…</string>
+    <string name="sistema_salvo">Configurações salvas.</string>
+    <string name="sistema_erro_carregar">Erro ao carregar as configurações</string>
+    <string name="sistema_erro_salvar">Erro ao salvar as configurações</string>
+    <string name="acessos_modo_aberto_titulo">Ninguém tem a permissão Acessos ainda:</string>
+    <string name="acessos_modo_aberto">todos os usuários podem mexer nas configurações e nas permissões. Marque Sistema e Acessos para quem deve cuidar disso; ao marcar Acessos para alguém, só passa a valer o que estiver marcado.</string>
+    <string name="acessos_o_que_libera">O que cada permissão libera</string>
+    <string name="acessos_buscar">Buscar usuário</string>
+    <string name="acessos_voce">(você)</string>
+    <string name="acessos_nenhum">Nenhum usuário encontrado.</string>
+    <string name="acessos_caixa">%1$s para %2$s</string>
+    <string name="acessos_erro_carregar">Erro ao carregar as permissões</string>
+    <string name="acessos_erro_alterar">Erro ao alterar a permissão</string>
 </resources>

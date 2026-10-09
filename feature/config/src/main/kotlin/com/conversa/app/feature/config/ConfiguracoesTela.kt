@@ -15,11 +15,13 @@ import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.outlined.KeyboardArrowRight
 import androidx.compose.material.icons.automirrored.outlined.Logout
+import androidx.compose.material.icons.outlined.AdminPanelSettings
 import androidx.compose.material.icons.outlined.Call
 import androidx.compose.material.icons.outlined.Dns
 import androidx.compose.material.icons.outlined.Info
 import androidx.compose.material.icons.outlined.Notifications
 import androidx.compose.material.icons.outlined.Palette
+import androidx.compose.material.icons.outlined.Tune
 import androidx.compose.material.icons.outlined.VerifiedUser
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.ExperimentalMaterial3Api
@@ -58,6 +60,8 @@ class AcoesConfiguracoes(
     val aoAbrirNotificacoes: () -> Unit = {},
     val aoAbrirPermissoes: () -> Unit = {},
     val aoAbrirChamadas: () -> Unit = {},
+    val aoAbrirSistema: () -> Unit = {},
+    val aoAbrirAcessos: () -> Unit = {},
     val aoFotoFalhar: () -> Unit = {},
     val aoAlterarTema: (PreferenciaTema) -> Unit = {},
     val aoSair: () -> Unit = {},
@@ -71,6 +75,8 @@ fun ConfiguracoesRotaTela(
     aoAbrirNotificacoes: () -> Unit,
     aoAbrirPermissoes: () -> Unit,
     aoAbrirChamadas: () -> Unit,
+    aoAbrirSistema: () -> Unit,
+    aoAbrirAcessos: () -> Unit,
     modifier: Modifier = Modifier,
     viewModel: ConfiguracoesViewModel = hiltViewModel(),
 ) {
@@ -84,6 +90,8 @@ fun ConfiguracoesRotaTela(
             aoAbrirNotificacoes = aoAbrirNotificacoes,
             aoAbrirPermissoes = aoAbrirPermissoes,
             aoAbrirChamadas = aoAbrirChamadas,
+            aoAbrirSistema = aoAbrirSistema,
+            aoAbrirAcessos = aoAbrirAcessos,
             aoFotoFalhar = viewModel::fotoFalhou,
             aoAlterarTema = viewModel::alterarTema,
             aoSair = viewModel::sair,
@@ -137,6 +145,22 @@ internal fun ConfiguracoesTela(estado: ConfiguracoesUiState, acoes: AcoesConfigu
                 acoes.aoAbrirPermissoes,
             )
             Item(Icons.Outlined.Dns, stringResource(R.string.config_servidor), estado.servidor, acoes.aoTrocarServidor)
+            if (estado.podeSistema) {
+                Item(
+                    Icons.Outlined.Tune,
+                    stringResource(R.string.config_sistema),
+                    stringResource(R.string.config_sistema_resumo),
+                    acoes.aoAbrirSistema,
+                )
+            }
+            if (estado.podeAcessos) {
+                Item(
+                    Icons.Outlined.AdminPanelSettings,
+                    stringResource(R.string.config_acessos),
+                    stringResource(R.string.config_acessos_resumo),
+                    acoes.aoAbrirAcessos,
+                )
+            }
             Item(Icons.Outlined.Info, stringResource(R.string.config_sobre), versaoDoApp(), acoes.aoAbrirSobre)
             HorizontalDivider()
             ListItem(

@@ -16,7 +16,6 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.SegmentedButton
 import androidx.compose.material3.SegmentedButtonDefaults
 import androidx.compose.material3.SingleChoiceSegmentedButtonRow
-import androidx.compose.material3.Switch
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
@@ -36,6 +35,7 @@ import com.conversa.app.core.model.ConfigChamada
 import com.conversa.app.core.model.QUADROS_POR_SEGUNDO
 import com.conversa.app.core.model.QualidadeAudio
 import com.conversa.app.core.model.ResolucaoVideo
+import com.conversa.app.core.ui.componentes.Interruptor
 import com.conversa.app.core.ui.tema.ConversaTema
 import dagger.hilt.android.lifecycle.HiltViewModel
 import javax.inject.Inject
@@ -82,13 +82,13 @@ private fun QualidadeChamadas(config: ConfigChamada, aoAlterar: ((ConfigChamada)
             modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp),
         )
         Secao(R.string.chamadas_audio)
-        Interruptor(R.string.chamadas_ruido, R.string.chamadas_ruido_texto, config.reducaoRuido) { v ->
+        LinhaInterruptor(R.string.chamadas_ruido, R.string.chamadas_ruido_texto, config.reducaoRuido) { v ->
             aoAlterar { it.copy(reducaoRuido = v) }
         }
-        Interruptor(R.string.chamadas_eco, R.string.chamadas_eco_texto, config.cancelamentoEco) { v ->
+        LinhaInterruptor(R.string.chamadas_eco, R.string.chamadas_eco_texto, config.cancelamentoEco) { v ->
             aoAlterar { it.copy(cancelamentoEco = v) }
         }
-        Interruptor(R.string.chamadas_ganho, R.string.chamadas_ganho_texto, config.ganhoAutomatico) { v ->
+        LinhaInterruptor(R.string.chamadas_ganho, R.string.chamadas_ganho_texto, config.ganhoAutomatico) { v ->
             aoAlterar { it.copy(ganhoAutomatico = v) }
         }
         Escolha(
@@ -137,7 +137,7 @@ private fun Secao(@StringRes titulo: Int) {
 }
 
 @Composable
-private fun Interruptor(@StringRes titulo: Int, @StringRes texto: Int, ligado: Boolean, aoMudar: (Boolean) -> Unit) {
+private fun LinhaInterruptor(@StringRes titulo: Int, @StringRes texto: Int, ligado: Boolean, aoMudar: (Boolean) -> Unit) {
     Row(
         Modifier
             .fillMaxWidth()
@@ -150,7 +150,7 @@ private fun Interruptor(@StringRes titulo: Int, @StringRes texto: Int, ligado: B
             Text(stringResource(titulo), style = MaterialTheme.typography.bodyLarge)
             Text(stringResource(texto), style = MaterialTheme.typography.bodySmall, color = ConversaTema.cores.textoTerciario)
         }
-        Switch(checked = ligado, onCheckedChange = null)
+        Interruptor(ligado)
     }
 }
 

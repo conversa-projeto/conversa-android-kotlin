@@ -4,6 +4,7 @@ import com.conversa.app.core.data.ServidorRepositorio
 import com.conversa.app.core.data.autenticacao.AutenticacaoRepositorio
 import com.conversa.app.core.data.perfil.PerfilRepositorio
 import com.conversa.app.core.data.preferencias.PreferenciasRepositorio
+import com.conversa.app.core.data.sistema.SistemaRepositorio
 import com.conversa.app.core.model.PreferenciaTema
 import com.conversa.app.core.model.Sessao
 import com.conversa.app.core.network.config.ServerConfig
@@ -39,10 +40,15 @@ class ConfiguracoesViewModelTest {
         coEvery { alterarTema(any()) } answers { this@ConfiguracoesViewModelTest.tema.value = firstArg() }
     }
 
-    private fun criar() = ConfiguracoesViewModel(perfil, servidor, autenticacao, preferencias, Clock.systemUTC())
+    private val sistema = mockk<SistemaRepositorio> {
+        every { minhasPermissoes } returns MutableStateFlow(setOf("parametros"))
+        coEvery { carregarMinhasPermissoes() } returns Result.success(setOf("parametros"))
+    }
+
+    private fun criar() = ConfiguracoesViewModel(perfil, servidor, autenticacao, preferencias, sistema, Clock.systemUTC())
 
     @Test
-    fun `mostra quem esta logado, a foto, o servidor e o tema escolhido`() = runTest {
+    fun `mostra quem esta logado, a foto, o servidor, o tema e so o Sistema para quem so tem parametros`() = runTest {
         val vm = criar()
         backgroundScope.launch { vm.estado.collect {} }
         advanceUntilIdle()
@@ -57,6 +63,8 @@ class ConfiguracoesViewModelTest {
                 fotoUrl = "https://s/foto",
                 servidor = "https://conversa.exemplo.test/",
                 tema = PreferenciaTema.ESCURO,
+                podeSistema = true,
+                podeAcessos = false,
             ),
         )
     }
@@ -72,5 +80,6 @@ class ConfiguracoesViewModelTest {
 
         assertThat(vm.estado.value.saindo).isTrue()
         coVerify(exactly = 1) { autenticacao.sair() }
+        coVerify { sistema.carregarMinhasPermissoes() }
     }
 }

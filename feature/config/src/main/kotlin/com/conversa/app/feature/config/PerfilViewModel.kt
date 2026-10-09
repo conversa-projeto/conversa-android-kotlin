@@ -1,7 +1,6 @@
 package com.conversa.app.feature.config
 
 import android.net.Uri
-import androidx.annotation.StringRes
 import androidx.compose.runtime.Immutable
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
@@ -9,9 +8,6 @@ import com.conversa.app.core.data.perfil.PerfilRepositorio
 import com.conversa.app.core.model.ErroSenha
 import com.conversa.app.core.model.dadosDoPerfilValidos
 import com.conversa.app.core.model.validarTrocaDeSenha
-import com.conversa.app.core.network.http.ErroApi
-import com.conversa.app.core.network.http.mensagemAmigavel
-import com.conversa.app.core.network.http.paraErroApi
 import dagger.hilt.android.lifecycle.HiltViewModel
 import java.time.Clock
 import javax.inject.Inject
@@ -22,10 +18,6 @@ import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
-
-/** Um aviso embaixo de um bloco: o texto do app ([recurso]) ou o que o servidor disse ([texto]). */
-@Immutable
-data class Aviso(val ok: Boolean, @StringRes val recurso: Int? = null, val texto: String? = null)
 
 @Immutable
 data class PerfilUiState(
@@ -94,7 +86,7 @@ class PerfilViewModel @Inject constructor(
             val aviso = if (jpeg == null) {
                 Aviso(ok = false, recurso = R.string.perfil_foto_ilegivel)
             } else {
-                perfil.trocarFoto(jpeg).exceptionOrNull()?.let { erroDoServidor(it, R.string.perfil_foto_falhou) }
+                perfil.trocarFoto(jpeg).exceptionOrNull()?.let { avisoDeErro(it, R.string.perfil_foto_falhou) }
             }
             andamento.update { it.copy(enviandoFoto = false, avisoFoto = aviso) }
         }
@@ -104,7 +96,7 @@ class PerfilViewModel @Inject constructor(
         if (andamento.value.enviandoFoto) return
         andamento.update { it.copy(enviandoFoto = true, avisoFoto = null) }
         viewModelScope.launch {
-            val aviso = perfil.removerFoto().exceptionOrNull()?.let { erroDoServidor(it, R.string.perfil_remover_falhou) }
+            val aviso = perfil.removerFoto().exceptionOrNull()?.let { avisoDeErro(it, R.string.perfil_remover_falhou) }
             andamento.update { it.copy(enviandoFoto = false, avisoFoto = aviso) }
         }
     }
@@ -118,7 +110,7 @@ class PerfilViewModel @Inject constructor(
         viewModelScope.launch {
             val aviso = perfil.alterarDados(nome, email).fold(
                 onSuccess = { Aviso(ok = true, recurso = R.string.perfil_dados_salvos) },
-                onFailure = { erroDoServidor(it, R.string.perfil_dados_falhou) },
+                onFailure = { avisoDeErro(it, R.string.perfil_dados_falhou) },
             )
             andamento.update { it.copy(salvandoDados = false, avisoDados = aviso) }
         }
@@ -147,19 +139,9 @@ class PerfilViewModel @Inject constructor(
                     }
                 },
                 onFailure = { falha ->
-                    andamento.update { it.copy(salvandoSenha = false, avisoSenha = erroDoServidor(falha, R.string.perfil_senha_falhou)) }
+                    andamento.update { it.copy(salvandoSenha = false, avisoSenha = avisoDeErro(falha, R.string.perfil_senha_falhou)) }
                 },
             )
         }
-    }
-
-    /** A mensagem do servidor quando ele explica (400/403/409…); senão a do app, ou a de rede. */
-    private fun erroDoServidor(falha: Throwable, @StringRes padrao: Int): Aviso = when (val erro = falha.paraErroApi()) {
-        is ErroApi.Servidor -> if (erro.status < 500 && erro.detalhe.isNotBlank()) {
-            Aviso(ok = false, texto = erro.detalhe)
-        } else {
-            Aviso(ok = false, recurso = padrao)
-        }
-        else -> Aviso(ok = false, texto = erro.mensagemAmigavel())
     }
 }

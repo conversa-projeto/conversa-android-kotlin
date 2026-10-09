@@ -88,6 +88,7 @@
 - 2026-10-09 · [Etapa 8 — Configurações: tela, aparência e sobre](2026-10-09-04-etapa-8-configuracoes-aparencia-sobre.md) — aba Configurações no `:feature:config` (usuário → perfil, Aparência, Servidor, Sobre com licenças, Sair); tema Sistema/Claro/Escuro com padrão Claro enquanto o escuro for proposta; `surfaceContainer*` do esquema escuro
 - 2026-10-09 · [Etapa 8 — notificações e permissões](2026-10-09-05-etapa-8-notificacoes-e-permissoes.md) — Permissões (notificações, microfone, câmera, tela cheia, bateria: estado e "Permitir"/"Abrir configurações") e Notificações (as do app e cada canal, abrindo a tela do sistema)
 - 2026-10-09 · [Etapa 8 — qualidade das chamadas](2026-10-09-06-etapa-8-qualidade-das-chamadas.md) — Configurações → Chamadas como o web (ruído, eco, ganho, 32/64/128 kbps, 360p–1080p, 15–30 fps, banda); a mídia lê ao abrir, a fábrica do WebRTC é refeita entre chamadas quando o áudio do aparelho muda, Opus estéreo no SDP
+- 2026-10-09 · [Etapa 8 — sistema e acessos](2026-10-09-07-etapa-8-sistema-e-acessos.md) — Sistema (parâmetros do servidor, só o que mudou, chave nunca exibida) e Acessos (modo aberto, busca, caixa só muda se o servidor aceitar), visíveis conforme `/usuario/permissoes`; `Interruptor` com o polegar visível nas cores do FMX; o 8.5 fecha
 
 ## Extras — SIP, compartilhar tela (etapa 9)
 _(nada ainda)_

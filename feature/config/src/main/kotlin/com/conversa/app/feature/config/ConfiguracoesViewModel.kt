@@ -7,6 +7,8 @@ import com.conversa.app.core.data.ServidorRepositorio
 import com.conversa.app.core.data.autenticacao.AutenticacaoRepositorio
 import com.conversa.app.core.data.perfil.PerfilRepositorio
 import com.conversa.app.core.data.preferencias.PreferenciasRepositorio
+import com.conversa.app.core.data.sistema.SistemaRepositorio
+import com.conversa.app.core.model.CodigoPermissao
 import com.conversa.app.core.model.PreferenciaTema
 import dagger.hilt.android.lifecycle.HiltViewModel
 import java.time.Clock
@@ -26,6 +28,9 @@ data class ConfiguracoesUiState(
     val servidor: String = "",
     val tema: PreferenciaTema = PreferenciaTema.PADRAO,
     val saindo: Boolean = false,
+    /** Sistema e Acessos só aparecem para quem tem a permissão (AUT-09). */
+    val podeSistema: Boolean = false,
+    val podeAcessos: Boolean = false,
 )
 
 /**
@@ -38,6 +43,7 @@ class ConfiguracoesViewModel @Inject constructor(
     servidor: ServidorRepositorio,
     private val autenticacao: AutenticacaoRepositorio,
     private val preferencias: PreferenciasRepositorio,
+    private val sistema: SistemaRepositorio,
     relogio: Clock,
 ) : ViewModel() {
     private val foto = FotoDaSessao(perfil, relogio, viewModelScope)
@@ -48,8 +54,8 @@ class ConfiguracoesViewModel @Inject constructor(
         foto.url,
         servidor.atual,
         preferencias.tema,
-        saindo,
-    ) { sessao, url, config, tema, saindoAgora ->
+        combine(saindo, sistema.minhasPermissoes, ::Pair),
+    ) { sessao, url, config, tema, (saindoAgora, permissoes) ->
         ConfiguracoesUiState(
             nome = sessao?.nome.orEmpty(),
             email = sessao?.email,
@@ -57,8 +63,15 @@ class ConfiguracoesViewModel @Inject constructor(
             servidor = config?.base?.toString().orEmpty(),
             tema = tema,
             saindo = saindoAgora,
+            podeSistema = CodigoPermissao.PARAMETROS in permissoes,
+            podeAcessos = CodigoPermissao.PERMISSOES in permissoes,
         )
     }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), ConfiguracoesUiState())
+
+    init {
+        // A cada abertura da aba: alguém pode ter dado ou tirado a permissão.
+        viewModelScope.launch { sistema.carregarMinhasPermissoes() }
+    }
 
     /** A foto não carregou (URL vencida): busca outra, no máximo a cada 30 s. */
     fun fotoFalhou() = foto.falhou()

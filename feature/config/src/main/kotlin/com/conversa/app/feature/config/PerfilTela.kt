@@ -121,7 +121,7 @@ private fun Titulo(titulo: String, texto: String) {
 }
 
 @Composable
-private fun TextoAviso(aviso: Aviso?) {
+internal fun TextoAviso(aviso: Aviso?) {
     aviso ?: return
     val texto = aviso.texto ?: aviso.recurso?.let { stringResource(it) } ?: return
     Text(

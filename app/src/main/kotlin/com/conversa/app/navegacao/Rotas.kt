@@ -72,3 +72,11 @@ data object RotaPermissoes
 /** Qualidade das chamadas (8.5): áudio e vídeo que este aparelho envia. */
 @Serializable
 data object RotaQualidadeChamadas
+
+/** Sistema (8.5): parâmetros do servidor; só com a permissão "parametros". */
+@Serializable
+data object RotaSistema
+
+/** Acessos (8.5): quem pode o quê; só com a permissão "permissoes". */
+@Serializable
+data object RotaAcessos
