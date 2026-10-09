@@ -4,7 +4,7 @@
 - **Tipo:** funcionalidade / módulo novo / correção
 - **Itens:** `TODO.md` 8.1 e parte da linha dos módulos; FC-800; ATV-01, ATV-02
 - **Branch:** `reescrita`
-- **Commits:** (preencher)
+- **Commits:** `84a6ec3`
 
 ## Contexto
 A aba Atividades da barra inferior mostrava "em breve"; só o badge (`GET /atividades/novas`, WS 61) já funcionava. A `ConversaApi`, o DTO, o modelo e a tabela `atividade` do Room já existiam.
