@@ -759,7 +759,7 @@
 - [x] Destaque de sintaxe (lib leve) para as linguagens do web — tokenizador próprio, sem biblioteca e sem regex (`DestaqueCodigo.kt`, + 7 testes): js/ts, python, sql, json, xml/html, css, bash/sh, csharp/cs, pascal/delphi (a lib leve disponível não cobria sql, json, xml, css nem pascal); cores reaproveitam tokens da paleta (`docs/design/cores.md` §6.4, pergunta 12) ✔ 74ce225
 - [x] Recolher acima de ~240 dp: "Expandir código"/"Recolher código" — com o degradê no fim, como o web ✔ 74ce225
 - [x] ` ```md `/` ```markdown ` → Markdown renderizado (Markwon ou compose-markdown), alternância "Visualizar"/"Código" — `multiplatform-markdown-renderer-m3` 0.45.0 (Compose, Apache 2.0); recolhe acima de 240 dp; cores e tamanhos de bolha (cores.md §6.4) ✔ 26f4ea2
-- [x] ` ```mermaid ` → WebView offline com mermaid.js embutido (P2) — mermaid 12.0.0 (o do web, conferido pelo sha512) nos assets, 1,87 MB no APK; também os diagramas dentro de ```md; inválido fica como código
+- [x] ` ```mermaid ` → WebView offline com mermaid.js embutido (P2) — mermaid 12.0.0 (o do web, conferido pelo sha512) nos assets, 1,87 MB no APK; também os diagramas dentro de ```md; inválido fica como código ✔ cba9d66
 
 ### 7.10 Detalhe de status e agendamento (FC-513, FC-514)
 - [x] Toque no ✓ → bottom sheet: `GET /mensagem/status/detalhe?id=` (aqui os campos são **datas**) ✔ f3cab38

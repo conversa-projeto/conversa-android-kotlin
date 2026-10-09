@@ -4,7 +4,7 @@
 - **Tipo:** funcionalidade / asset novo
 - **Itens:** `TODO.md` 7.9 (mermaid, P2); FC-511; MSG-15
 - **Branch:** `reescrita`
-- **Commits:** (preencher)
+- **Commits:** `cba9d66`
 
 ## Contexto
 No web (`useMermaid.ts`), um bloco ```` ```mermaid ```` vira diagrama, com "Visualizar"/"Código". Os blocos ```mermaid que vêm dentro de um ```md também viram diagrama. Diagrama inválido fica como código. O usuário autorizou embutir o mermaid no app (pedido de 2026-10-08).
