@@ -3,3 +3,5 @@
 # Scripts do Gradle com o fim de linha certo em qualquer sistema
 gradlew text eol=lf
 *.bat text eol=crlf
+# Bibliotecas de terceiros embutidas: byte a byte como vieram (conferidas por hash)
+feature/chat/src/main/assets/mermaid/mermaid.min.js -text
