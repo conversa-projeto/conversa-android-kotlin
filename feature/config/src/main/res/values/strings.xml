@@ -1,0 +1,34 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- Perfil (8.3), textos do web (ProfileSettingsModal.vue), com acentos -->
+    <string name="perfil">Perfil</string>
+    <string name="perfil_voltar">Voltar</string>
+    <string name="perfil_foto">Foto de perfil</string>
+    <string name="perfil_foto_texto">Atualize o avatar exibido no chat e nas conversas.</string>
+    <string name="perfil_alterar_foto">Alterar foto</string>
+    <string name="perfil_enviando">Enviando…</string>
+    <string name="perfil_remover_foto">Remover</string>
+    <string name="perfil_foto_falhou">Erro ao enviar avatar</string>
+    <string name="perfil_foto_ilegivel">Não foi possível ler a imagem.</string>
+    <string name="perfil_remover_falhou">Erro ao remover avatar</string>
+    <string name="perfil_dados">Dados do usuário</string>
+    <string name="perfil_dados_texto">Nome e e-mail visíveis na sua conta.</string>
+    <string name="perfil_nome">Nome</string>
+    <string name="perfil_email">E-mail</string>
+    <string name="perfil_salvar_dados">Salvar dados</string>
+    <string name="perfil_salvando">Salvando…</string>
+    <string name="perfil_preencha_dados">Preencha nome e e-mail.</string>
+    <string name="perfil_dados_salvos">Dados atualizados com sucesso.</string>
+    <string name="perfil_dados_falhou">Não foi possível salvar os dados do usuário.</string>
+    <string name="perfil_senha">Senha</string>
+    <string name="perfil_senha_texto">Altere sua senha de acesso.</string>
+    <string name="perfil_senha_atual">Senha atual</string>
+    <string name="perfil_senha_nova">Nova senha</string>
+    <string name="perfil_senha_confirmar">Confirmar nova senha</string>
+    <string name="perfil_salvar_senha">Salvar senha</string>
+    <string name="perfil_senha_campos">Preencha todos os campos de senha.</string>
+    <string name="perfil_senha_curta">A nova senha deve ter pelo menos 6 caracteres.</string>
+    <string name="perfil_senha_nao_confere">A confirmação da senha não confere.</string>
+    <string name="perfil_senha_alterada">Senha alterada com sucesso.</string>
+    <string name="perfil_senha_falhou">Não foi possível alterar a senha.</string>
+</resources>

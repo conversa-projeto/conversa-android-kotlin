@@ -805,7 +805,7 @@
 
 ## Etapa 8 — Atividades, pesquisa, perfil e configurações
 
-- [ ] Criar os módulos `:feature:atividades`, `:feature:pesquisa` e `:feature:config` (adiados da 1.2) — `:feature:atividades` (8.1) e `:feature:pesquisa` (8.2) criados; o `:feature:config` entra com o 8.5
+- [x] Criar os módulos `:feature:atividades`, `:feature:pesquisa` e `:feature:config` (adiados da 1.2) — `:feature:atividades` (8.1), `:feature:pesquisa` (8.2) e `:feature:config` (8.3, com o perfil; as configurações entram no 8.5)
 ### 8.1 Atividades (FC-800, ATV-01, ATV-02)
 - [x] Aba Atividades: `GET /atividades?antes=0&limite=30` ✔ 84a6ec3
 - [x] Paginação: perto do fim → `antes=<id da última>`; fim quando vierem < 30 ✔ 84a6ec3
@@ -824,12 +824,12 @@
 - [x] Estados "Pesquisando…" / "Nenhum resultado encontrado." ✔ 28cef66
 
 ### 8.3 Perfil (FC-802, AUT-06, AUT-07, AUT-08)
-- [ ] Editar nome e e-mail → `PATCH /usuario {id, nome, email}` → "Dados atualizados com sucesso."
-- [ ] Alterar senha: atual, nova (≥ 6), confirmação → `POST /alterar-senha {senha_atual, senha}`
-- [ ] Mensagens: "Preencha todos os campos de senha.", "A nova senha deve ter pelo menos 6 caracteres.", "A confirmação da senha não confere.", "Senha alterada com sucesso."
-- [ ] Avatar: Photo Picker → recorte quadrado central 256×256 → JPEG 85% → upload (4.1) → `PATCH /usuario {id, avatar_anexo_id}`
-- [ ] Remover avatar: `PATCH /usuario {id, avatar_anexo_id:null}`
-- [ ] Avatar com URL expirada → renovar (no máximo a cada 30 s)
+- [x] Editar nome e e-mail → `PATCH /usuario {id, nome, email}` → "Dados atualizados com sucesso."
+- [x] Alterar senha: atual, nova (≥ 6), confirmação → `POST /alterar-senha {senha_atual, senha}`
+- [x] Mensagens: "Preencha todos os campos de senha.", "A nova senha deve ter pelo menos 6 caracteres.", "A confirmação da senha não confere.", "Senha alterada com sucesso."
+- [x] Avatar: Photo Picker → recorte quadrado central 256×256 → JPEG 85% → upload (4.1) → `PATCH /usuario {id, avatar_anexo_id}`
+- [x] Remover avatar: `PATCH /usuario {id, avatar_anexo_id:null}`
+- [x] Avatar com URL expirada → renovar (no máximo a cada 30 s)
 
 ### 8.4 Perfil de outro usuário (FC-803, AUT-10)
 - [ ] Toque no avatar da direta → bottom sheet: foto, nome, e-mail, telefone ("Não informado"), "Ver anexos", "Ligar"

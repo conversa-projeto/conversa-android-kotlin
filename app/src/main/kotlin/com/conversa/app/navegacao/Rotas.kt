@@ -52,3 +52,7 @@ data class RotaMembros(val conversaId: Long)
 /** Pesquisa em todos os chats (8.2), já com o termo do campo da lista, se houver. */
 @Serializable
 data class RotaPesquisa(val termo: String = "")
+
+/** Perfil do usuário logado: foto, nome e e-mail, senha (8.3). */
+@Serializable
+data object RotaPerfil

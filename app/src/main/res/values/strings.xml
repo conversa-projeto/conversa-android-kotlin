@@ -43,7 +43,8 @@
     <string name="permissao_tela_cheia_texto">Para a chamada recebida aparecer na tela, mesmo com o celular bloqueado, permita que o Conversa use a tela cheia.</string>
     <string name="permissao_tela_cheia_abrir">Abrir configurações</string>
 
-    <string name="config_em_breve">Perfil, senha, notificações e as demais opções chegam na etapa 8.</string>
+    <string name="config_em_breve">Notificações, aparência e as demais opções chegam com o restante da etapa 8.</string>
+    <string name="config_perfil">Abrir o perfil</string>
 
 
 </resources>

@@ -76,7 +76,7 @@ Instruções para quem trabalha neste repositório, pessoas ou agentes de IA. Le
 - `:core:media` — mídia: `PlayerAudio` (Media3, um áudio por vez) e `GravadorAudio` (microfone em AAC/M4A, trechos juntados por `juntarTrechos`).
 - `:core:webrtc` — mídia da chamada: `MidiaChamada` e a implementação `MidiaWebRtc` (libwebrtc; publica por WHIP e assina por WHEP no MediaMTX; `ClienteWhipWhep` no OkHttp do app).
 - `:core:testing` — regras de teste e fixtures JSON do contrato.
-- `:feature:*` — uma por área (hoje: `auth` — servidor, login, cadastro; `conversas` — lista, nova conversa, grupos, membros; `chat` — a conversa aberta; `chamada` — o `GerenciadorChamadas`, dono da chamada, a `ChamadaActivity`, os botões de ligar e a integração com o sistema: toque, notificações, serviço e Core-Telecom).
+- `:feature:*` — uma por área (hoje: `auth` — servidor, login, cadastro; `conversas` — lista, nova conversa, grupos, membros; `chat` — a conversa aberta; `chamada` — o `GerenciadorChamadas`, dono da chamada, a `ChamadaActivity`, os botões de ligar e a integração com o sistema: toque, notificações, serviço e Core-Telecom; `atividades` — a aba Atividades; `pesquisa` — a pesquisa em todos os chats; `config` — o perfil e, no 8.5, as configurações).
 - Convention plugins em `build-logic/`. O app antigo está em `app-legado/`, fora do build.
 - **Cores:** só as de `docs/design/cores.md` (vêm do `conversa-windows-fmx`), nunca as do web.
 

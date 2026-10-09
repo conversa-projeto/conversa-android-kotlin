@@ -45,7 +45,8 @@ fun inicialDoNome(nome: String?): String {
 
 /**
  * Avatar redondo: a foto quando há URL e ela carrega; senão a inicial
- * (cores do FMX: fundo claro, letra azul). Imagem que falha volta à inicial.
+ * (cores do FMX: fundo claro, letra azul). Imagem que falha volta à inicial e avisa
+ * [aoFalhar] (a URL assinada pode ter vencido: quem mostra pode buscar outra).
  */
 @Composable
 fun Avatar(
@@ -54,6 +55,7 @@ fun Avatar(
     modifier: Modifier = Modifier,
     tamanho: Dp = 40.dp,
     online: Boolean = false,
+    aoFalhar: (() -> Unit)? = null,
 ) {
     val textoOnline = stringResource(R.string.online)
     Box(
@@ -61,7 +63,7 @@ fun Avatar(
             .size(tamanho)
             .semantics { contentDescription = if (online) "${nome.orEmpty()}, $textoOnline" else nome.orEmpty() },
     ) {
-        ImagemAvatar(nome, url, tamanho)
+        ImagemAvatar(nome, url, tamanho, aoFalhar)
         if (online) {
             // Bolinha verde no canto (PRE-01), com borda da cor do fundo para destacar.
             val diametro = (tamanho.value * 0.3f).coerceAtLeast(10f).dp
@@ -80,7 +82,7 @@ fun Avatar(
 }
 
 @Composable
-private fun ImagemAvatar(nome: String?, url: String?, tamanho: Dp) {
+private fun ImagemAvatar(nome: String?, url: String?, tamanho: Dp, aoFalhar: (() -> Unit)?) {
     var falhou by remember(url) { mutableStateOf(false) }
     val cores = ConversaTema.cores
     Box(
@@ -102,7 +104,10 @@ private fun ImagemAvatar(nome: String?, url: String?, tamanho: Dp) {
                 model = url,
                 contentDescription = null,
                 contentScale = ContentScale.Crop,
-                onError = { falhou = true },
+                onError = {
+                    falhou = true
+                    aoFalhar?.invoke()
+                },
                 modifier = Modifier.size(tamanho),
             )
         }

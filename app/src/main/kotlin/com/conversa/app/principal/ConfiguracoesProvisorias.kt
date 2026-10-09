@@ -35,12 +35,20 @@ import com.conversa.app.R
 import com.conversa.app.core.data.ServidorRepositorio
 import com.conversa.app.core.data.SessaoRepositorio
 import com.conversa.app.core.data.autenticacao.AutenticacaoRepositorio
+import com.conversa.app.core.data.perfil.PerfilRepositorio
 import com.conversa.app.core.ui.componentes.Avatar
 import com.conversa.app.core.ui.componentes.DialogoConfirmacao
 import dagger.hilt.android.lifecycle.HiltViewModel
 import javax.inject.Inject
+import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.SharingStarted
+import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.distinctUntilChanged
+import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.flow.mapLatest
+import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
 
 @HiltViewModel
@@ -48,9 +56,18 @@ class ConfiguracoesViewModel @Inject constructor(
     sessao: SessaoRepositorio,
     servidor: ServidorRepositorio,
     private val autenticacao: AutenticacaoRepositorio,
+    private val perfil: PerfilRepositorio,
 ) : ViewModel() {
     val sessao = sessao.sessao
     val servidor = servidor.atual
+
+    /** A foto do perfil (8.3): a URL assinada acompanha o identificador da sessão. */
+    @OptIn(ExperimentalCoroutinesApi::class)
+    val fotoUrl: StateFlow<String?> = sessao.sessao
+        .map { it?.avatarIdentificador }
+        .distinctUntilChanged()
+        .mapLatest { identificador -> identificador?.let { perfil.urlDaFoto(it).getOrNull() } }
+        .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), null)
 
     private val _saindo = MutableStateFlow(false)
     val saindo = _saindo.asStateFlow()
@@ -70,23 +87,29 @@ class ConfiguracoesViewModel @Inject constructor(
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun ConfiguracoesProvisorias(
+    aoAbrirPerfil: () -> Unit,
     aoTrocarServidor: () -> Unit,
     modifier: Modifier = Modifier,
     viewModel: ConfiguracoesViewModel = hiltViewModel(),
 ) {
     val sessao by viewModel.sessao.collectAsStateWithLifecycle()
     val servidor by viewModel.servidor.collectAsStateWithLifecycle()
+    val fotoUrl by viewModel.fotoUrl.collectAsStateWithLifecycle()
     val saindo by viewModel.saindo.collectAsStateWithLifecycle()
     var confirmarSaida by rememberSaveable { mutableStateOf(false) }
 
     Column(modifier.verticalScroll(rememberScrollState())) {
         TopAppBar(title = { Text(stringResource(R.string.aba_configuracoes)) })
+        // Toque na linha do usuário: o perfil (foto, nome e e-mail, senha — 8.3).
         Row(
-            modifier = Modifier.fillMaxWidth().padding(16.dp),
+            modifier = Modifier.fillMaxWidth().clickable(
+                onClickLabel = stringResource(R.string.config_perfil),
+                onClick = aoAbrirPerfil,
+            ).padding(16.dp),
             verticalAlignment = Alignment.CenterVertically,
             horizontalArrangement = Arrangement.spacedBy(16.dp),
         ) {
-            Avatar(nome = sessao?.nome, url = null, tamanho = 56.dp)
+            Avatar(nome = sessao?.nome, url = fotoUrl, tamanho = 56.dp)
             Column {
                 Text(sessao?.nome.orEmpty(), style = MaterialTheme.typography.titleMedium)
                 sessao?.email?.let {

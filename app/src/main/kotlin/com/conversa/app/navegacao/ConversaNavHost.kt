@@ -17,6 +17,7 @@ import com.conversa.app.feature.auth.login.LoginRotaTela
 import com.conversa.app.feature.auth.servidor.ServidorRotaTela
 import com.conversa.app.feature.chamada.HistoricoChamadasRota
 import com.conversa.app.feature.chat.ChatRotaTela
+import com.conversa.app.feature.config.PerfilRotaTela
 import com.conversa.app.feature.conversas.enviarpara.EnviarParaRotaTela
 import com.conversa.app.feature.conversas.grupo.CriarGrupoRotaTela
 import com.conversa.app.feature.conversas.lista.ConversasRotaTela
@@ -92,6 +93,7 @@ fun ConversaNavHost(destinoInicial: Any, principal: MainViewModel) {
                 },
                 configuracoes = { modificador ->
                     ConfiguracoesProvisorias(
+                        aoAbrirPerfil = { nav.navigate(RotaPerfil) },
                         aoTrocarServidor = { nav.navigate(RotaServidor(podeVoltar = true)) },
                         modifier = modificador,
                     )
@@ -141,6 +143,7 @@ fun ConversaNavHost(destinoInicial: Any, principal: MainViewModel) {
                 aoVoltar = { nav.popBackStack() },
             )
         }
+        composable<RotaPerfil> { PerfilRotaTela(aoVoltar = { nav.popBackStack() }) }
         composable<RotaMembros> {
             MembrosRotaTela(
                 // Saiu do grupo: a conversa some; volta à lista.
