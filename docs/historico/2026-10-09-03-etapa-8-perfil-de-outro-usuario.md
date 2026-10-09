@@ -4,7 +4,7 @@
 - **Tipo:** funcionalidade
 - **Itens:** `TODO.md` 8.4; FC-803; AUT-10
 - **Branch:** `reescrita`
-- **Commits:** (preencher)
+- **Commits:** `4d53ba8`
 
 ## Contexto
 No web, o `UserInfoModal.vue` abre ao clicar no avatar de uma conversa **direta**, tanto na lista (botão "Ver perfil") quanto no cabeçalho. Ele mostra:
