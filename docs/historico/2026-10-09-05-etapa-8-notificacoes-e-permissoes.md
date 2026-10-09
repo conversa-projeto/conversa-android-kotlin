@@ -4,7 +4,7 @@
 - **Tipo:** funcionalidade
 - **Itens:** `TODO.md` 8.5 (Notificações, Permissões); FC-806; CFG-04, NOT-06
 - **Branch:** `reescrita`
-- **Commits:** (preencher)
+- **Commits:** `ee1237c`
 
 ## Contexto
 O web tem a aba "Permissões": Notificações, Microfone e Câmera, com o estado ("Concedida", "Negada"…) e o botão "Solicitar".
