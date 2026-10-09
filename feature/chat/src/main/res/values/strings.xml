@@ -241,4 +241,11 @@
     <string name="criar_votacao">Criar votação</string>
     <string name="criando">Criando…</string>
     <string name="criar_votacao_falhou">Não foi possível criar a votação</string>
+
+    <!-- Pesquisa na conversa (8.2), textos do web -->
+    <string name="mais_opcoes">Mais opções</string>
+    <string name="pesquisar_na_conversa">Pesquisar na conversa</string>
+    <string name="pesquisar_nesta_conversa">Pesquisar nesta conversa</string>
+    <string name="fechar_pesquisa">Fechar pesquisa</string>
+    <string name="acao_pesquisar">Pesquisar</string>
 </resources>

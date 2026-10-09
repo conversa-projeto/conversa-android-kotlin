@@ -14,10 +14,10 @@
     <string name="ligou_video_perdida">ligou (chamada de vídeo perdida)</string>
     <string name="em_grupo">em %1$s</string>
     <string name="nova">Nova</string>
-    <string name="previa_imagem">Imagem</string>
-    <string name="previa_arquivo">Arquivo</string>
-    <string name="previa_audio">Áudio</string>
-    <string name="previa_figurinha">Figurinha</string>
-    <string name="previa_votacao">Votação</string>
-    <string name="previa_entre_aspas">“%1$s”</string>
+    <string name="atividade_previa_imagem">Imagem</string>
+    <string name="atividade_previa_arquivo">Arquivo</string>
+    <string name="atividade_previa_audio">Áudio</string>
+    <string name="atividade_previa_figurinha">Figurinha</string>
+    <string name="atividade_previa_votacao">Votação</string>
+    <string name="atividade_previa_entre_aspas">“%1$s”</string>
 </resources>

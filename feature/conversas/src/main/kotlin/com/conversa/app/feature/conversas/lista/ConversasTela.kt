@@ -28,6 +28,7 @@ import androidx.compose.material.icons.outlined.Edit
 import androidx.compose.material.icons.outlined.ExpandLess
 import androidx.compose.material.icons.outlined.ExpandMore
 import androidx.compose.material.icons.outlined.Group
+import androidx.compose.material.icons.outlined.ManageSearch
 import androidx.compose.material.icons.outlined.PushPin
 import androidx.compose.material.icons.outlined.Search
 import androidx.compose.material.icons.outlined.Unarchive
@@ -91,6 +92,8 @@ class AcoesConversas(
     val aoMover: (Long, Int) -> Unit = { _, _ -> },
     val aoArquivar: (Long, Boolean) -> Unit = { _, _ -> },
     val aoMembros: (Long) -> Unit = {},
+    /** "Pesquisar em todos os chats" (8.2), com o termo do campo. */
+    val aoPesquisarEmTodos: (String) -> Unit = {},
 )
 
 @Composable
@@ -98,6 +101,7 @@ fun ConversasRotaTela(
     aoAbrirConversa: (Long) -> Unit,
     aoNovaConversa: () -> Unit,
     aoMembros: (Long) -> Unit,
+    aoPesquisarEmTodos: (String) -> Unit,
     modifier: Modifier = Modifier,
     viewModel: ConversasViewModel = hiltViewModel(),
 ) {
@@ -123,6 +127,7 @@ fun ConversasRotaTela(
             aoMover = viewModel::mover,
             aoArquivar = viewModel::arquivar,
             aoMembros = aoMembros,
+            aoPesquisarEmTodos = aoPesquisarEmTodos,
         ),
         modifier = modifier,
     )
@@ -148,7 +153,7 @@ fun ConversasTela(estado: ConversasUiState, acoes: AcoesConversas, modifier: Mod
         },
     ) { margens ->
         Column(Modifier.fillMaxSize().padding(margens)) {
-            CampoBusca(estado.termo, acoes.aoAlterarTermo)
+            CampoBusca(estado.termo, acoes.aoAlterarTermo, acoes.aoPesquisarEmTodos)
             PullToRefreshBox(
                 isRefreshing = estado.atualizando,
                 onRefresh = acoes.aoAtualizar,
@@ -180,7 +185,7 @@ fun ConversasTela(estado: ConversasUiState, acoes: AcoesConversas, modifier: Mod
 }
 
 @Composable
-private fun CampoBusca(termoInicial: String, aoAlterar: (String) -> Unit) {
+private fun CampoBusca(termoInicial: String, aoAlterar: (String) -> Unit, aoPesquisarEmTodos: (String) -> Unit) {
     // Texto do campo em estado local (síncrono): passar pelo combine/stateIn do ViewModel
     // atrasa um quadro e o cursor pula enquanto se digita.
     var termo by rememberSaveable { mutableStateOf(termoInicial) }
@@ -193,11 +198,17 @@ private fun CampoBusca(termoInicial: String, aoAlterar: (String) -> Unit) {
         placeholder = { Text(stringResource(R.string.pesquisar)) },
         leadingIcon = { Icon(Icons.Outlined.Search, contentDescription = null) },
         trailingIcon = {
-            if (termo.isNotEmpty()) {
-                IconButton(onClick = {
-                    termo = ""
-                    aoAlterar("")
-                }) { Icon(Icons.Outlined.Close, contentDescription = stringResource(R.string.limpar_busca)) }
+            Row {
+                if (termo.isNotEmpty()) {
+                    IconButton(onClick = {
+                        termo = ""
+                        aoAlterar("")
+                    }) { Icon(Icons.Outlined.Close, contentDescription = stringResource(R.string.limpar_busca)) }
+                }
+                // Como o web: o botão ao lado do campo pesquisa nas mensagens de todos os chats (8.2).
+                IconButton(onClick = { aoPesquisarEmTodos(termo) }) {
+                    Icon(Icons.Outlined.ManageSearch, contentDescription = stringResource(R.string.pesquisar_em_todos))
+                }
             }
         },
         singleLine = true,

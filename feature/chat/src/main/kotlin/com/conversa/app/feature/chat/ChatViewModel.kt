@@ -57,6 +57,7 @@ import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.debounce
 import kotlinx.coroutines.flow.first
@@ -65,6 +66,7 @@ import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.onEach
 import kotlinx.coroutines.flow.stateIn
+import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 
@@ -107,6 +109,16 @@ data class ChatUiState(
 ) {
     val grupo: Boolean get() = conversa?.tipo == TipoConversa.GRUPO
 }
+
+/** Pesquisa na conversa (8.2): aberta no cabeçalho, o termo pesquisado e os resultados (nulo = ainda não pesquisou). */
+@Immutable
+data class PesquisaNaConversa(
+    val aberta: Boolean = false,
+    val termo: String = "",
+    val buscando: Boolean = false,
+    val resultados: List<Mensagem>? = null,
+    val erro: String? = null,
+)
 
 sealed interface EventoChat {
     data class Erro(val mensagem: String) : EventoChat
@@ -636,6 +648,47 @@ class ChatViewModel @Inject constructor(
      * Toque na citação (7.5, MSG-06): nesta conversa, traz a original (sem deixar buraco), rola
      * e destaca; de outra conversa (encaminhada), abre aquela, se participo dela.
      */
+    // --- Pesquisa na conversa (8.2, PES-01) ---
+
+    private val _pesquisa = MutableStateFlow(PesquisaNaConversa())
+
+    /** A barra de pesquisa do cabeçalho e os resultados (mais recentes primeiro). */
+    val pesquisa: StateFlow<PesquisaNaConversa> = _pesquisa.asStateFlow()
+    private var busca: Job? = null
+
+    fun abrirPesquisa() {
+        _pesquisa.value = PesquisaNaConversa(aberta = true)
+    }
+
+    fun fecharPesquisa() {
+        busca?.cancel()
+        _pesquisa.value = PesquisaNaConversa()
+    }
+
+    /** `GET /pesquisar?texto=&conversa=<esta>`; uma pesquisa nova cancela a anterior. */
+    fun pesquisar(termo: String) {
+        val limpo = termo.trim()
+        busca?.cancel()
+        if (limpo.isEmpty()) {
+            _pesquisa.update { it.copy(termo = "", buscando = false, resultados = null, erro = null) }
+            return
+        }
+        _pesquisa.update { it.copy(termo = limpo, buscando = true, erro = null) }
+        busca = viewModelScope.launch {
+            mensagens.pesquisar(limpo, conversaId)
+                .onSuccess { lista -> _pesquisa.update { it.copy(buscando = false, resultados = lista) } }
+                .onFailure { falha ->
+                    _pesquisa.update { it.copy(buscando = false, resultados = emptyList(), erro = falha.paraErroApi().mensagemAmigavel()) }
+                }
+        }
+    }
+
+    /** Toque num resultado: fecha a pesquisa e vai até a mensagem (o mesmo caminho da citação, 7.5). */
+    fun abrirResultado(mensagem: Mensagem) {
+        fecharPesquisa()
+        irParaMensagem(mensagem.id, conversaId)
+    }
+
     fun irParaMensagem(mensagemId: Long, conversaDaMensagem: Long) {
         if (mensagemId <= 0) return
         viewModelScope.launch {

@@ -29,11 +29,15 @@ import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
+import androidx.compose.material.icons.filled.MoreVert
 import androidx.compose.material.icons.outlined.Call
 import androidx.compose.material.icons.outlined.Group
 import androidx.compose.material.icons.outlined.KeyboardArrowDown
+import androidx.compose.material.icons.outlined.Search
 import androidx.compose.material.icons.outlined.Videocam
 import androidx.compose.material3.CircularProgressIndicator
+import androidx.compose.material3.DropdownMenu
+import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
@@ -122,6 +126,7 @@ fun ChatRotaTela(
     viewModel: ChatViewModel = hiltViewModel(),
 ) {
     val estado by viewModel.estado.collectAsStateWithLifecycle()
+    val pesquisa by viewModel.pesquisa.collectAsStateWithLifecycle()
     val avisos = LocalAvisos.current
     val lista = rememberLazyListState()
     val escopo = rememberCoroutineScope()
@@ -205,9 +210,14 @@ fun ChatRotaTela(
         ChatTela(
             estado = estado,
             lista = lista,
+            pesquisa = pesquisa,
             acoes = AcoesChat(
                 aoVoltar = aoVoltar,
                 aoMembros = { aoMembros(viewModel.conversaId) },
+                aoAbrirPesquisa = viewModel::abrirPesquisa,
+                aoFecharPesquisa = viewModel::fecharPesquisa,
+                aoPesquisar = viewModel::pesquisar,
+                aoAbrirResultado = viewModel::abrirResultado,
                 aoLigar = aoLigar,
                 aoEnviar = viewModel::enviar,
                 aoAgendar = viewModel::agendar,
@@ -331,6 +341,11 @@ private fun abrirComOutroApp(contexto: Context, arquivo: File, mime: String?): B
 
 class AcoesChat(
     val aoVoltar: () -> Unit = {},
+    /** Pesquisa na conversa (8.2). */
+    val aoAbrirPesquisa: () -> Unit = {},
+    val aoFecharPesquisa: () -> Unit = {},
+    val aoPesquisar: (String) -> Unit = {},
+    val aoAbrirResultado: (Mensagem) -> Unit = {},
     val aoMembros: () -> Unit = {},
     val aoLigar: (TipoChamada) -> Unit = {},
     val aoEnviar: (String, () -> Unit) -> Unit = { _, _ -> },
@@ -369,7 +384,12 @@ class AcoesChat(
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun ChatTela(estado: ChatUiState, lista: androidx.compose.foundation.lazy.LazyListState, acoes: AcoesChat) {
+fun ChatTela(
+    estado: ChatUiState,
+    lista: androidx.compose.foundation.lazy.LazyListState,
+    acoes: AcoesChat,
+    pesquisa: PesquisaNaConversa = PesquisaNaConversa(),
+) {
     // A lista é desenhada de baixo para cima (reverseLayout): o item 0 é a mensagem mais nova.
     val itens = remember(estado.itens) { estado.itens.asReversed() }
     val dono = LocalLifecycleOwner.current
@@ -482,7 +502,7 @@ fun ChatTela(estado: ChatUiState, lista: androidx.compose.foundation.lazy.LazyLi
     }
 
     Scaffold(
-        topBar = { Cabecalho(estado, acoes) },
+        topBar = { if (pesquisa.aberta) BarraPesquisa(acoes) else Cabecalho(estado, acoes) },
         bottomBar = {
             Campo(
                 estado.fila,
@@ -538,6 +558,7 @@ fun ChatTela(estado: ChatUiState, lista: androidx.compose.foundation.lazy.LazyLi
             }
             // "Ir para a mensagem" trazendo páginas antigas (7.5).
             if (estado.buscandoMensagem) LinearProgressIndicator(Modifier.fillMaxWidth().align(Alignment.TopCenter))
+            if (pesquisa.aberta) ResultadosPesquisa(pesquisa, acoes.aoAbrirResultado, Modifier.align(Alignment.TopCenter))
             Column(Modifier.align(Alignment.BottomEnd).padding(16.dp), horizontalAlignment = Alignment.End) {
                 AnimatedVisibility(visible = haNovas, enter = fadeIn(), exit = fadeOut()) {
                     Surface(
@@ -635,6 +656,23 @@ private fun Cabecalho(estado: ChatUiState, acoes: AcoesChat) {
             if (estado.grupo) {
                 IconButton(onClick = acoes.aoMembros) {
                     Icon(Icons.Outlined.Group, contentDescription = stringResource(R.string.membros_do_grupo))
+                }
+            }
+            // "⋮": a pesquisa na conversa (8.2) cabe aqui sem apertar os ícones de ligar.
+            var menu by remember { mutableStateOf(false) }
+            Box {
+                IconButton(onClick = { menu = true }) {
+                    Icon(Icons.Filled.MoreVert, contentDescription = stringResource(R.string.mais_opcoes))
+                }
+                DropdownMenu(expanded = menu, onDismissRequest = { menu = false }) {
+                    DropdownMenuItem(
+                        text = { Text(stringResource(R.string.pesquisar_na_conversa)) },
+                        leadingIcon = { Icon(Icons.Outlined.Search, contentDescription = null) },
+                        onClick = {
+                            menu = false
+                            acoes.aoAbrirPesquisa()
+                        },
+                    )
                 }
             }
         },

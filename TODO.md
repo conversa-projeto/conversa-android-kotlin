@@ -805,7 +805,7 @@
 
 ## Etapa 8 — Atividades, pesquisa, perfil e configurações
 
-- [ ] Criar os módulos `:feature:atividades`, `:feature:pesquisa` e `:feature:config` (adiados da 1.2) — `:feature:atividades` criado com o 8.1; os outros dois entram com o 8.2 e o 8.5
+- [ ] Criar os módulos `:feature:atividades`, `:feature:pesquisa` e `:feature:config` (adiados da 1.2) — `:feature:atividades` (8.1) e `:feature:pesquisa` (8.2) criados; o `:feature:config` entra com o 8.5
 ### 8.1 Atividades (FC-800, ATV-01, ATV-02)
 - [x] Aba Atividades: `GET /atividades?antes=0&limite=30` ✔ 84a6ec3
 - [x] Paginação: perto do fim → `antes=<id da última>`; fim quando vierem < 30 ✔ 84a6ec3
@@ -818,10 +818,10 @@
 - [x] Vazio: "Nenhuma atividade ainda." / "Reações, respostas, menções e chamadas perdidas aparecem aqui." ✔ 84a6ec3
 
 ### 8.2 Pesquisa (FC-801, PES-01, PES-02)
-- [ ] Na conversa: ícone de busca → campo → `GET /pesquisar?texto=&conversa=<id>` → resultados (mais recentes primeiro) → ir para a mensagem
-- [ ] Global: "Pesquisar em todos os chats" → `GET /pesquisar?texto=&conversa=0`
-- [ ] Resultados agrupados por conversa: remetente, data `dd/MM/aa HH:mm`, trecho com o termo destacado
-- [ ] Estados "Pesquisando…" / "Nenhum resultado encontrado."
+- [x] Na conversa: ícone de busca → campo (no Android, "⋮" → "Pesquisar na conversa", para não apertar os ícones de ligar) → `GET /pesquisar?texto=&conversa=<id>` → resultados (mais recentes primeiro) → ir para a mensagem
+- [x] Global: "Pesquisar em todos os chats" → `GET /pesquisar?texto=&conversa=0`
+- [x] Resultados agrupados por conversa: remetente, data `dd/MM/aa HH:mm`, trecho com o termo destacado
+- [x] Estados "Pesquisando…" / "Nenhum resultado encontrado."
 
 ### 8.3 Perfil (FC-802, AUT-06, AUT-07, AUT-08)
 - [ ] Editar nome e e-mail → `PATCH /usuario {id, nome, email}` → "Dados atualizados com sucesso."

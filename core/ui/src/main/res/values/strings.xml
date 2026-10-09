@@ -14,5 +14,10 @@
     <string name="previa_figurinha">Figurinha</string>
     <string name="previa_votacao">📊 Votação</string>
     <string name="previa_sem_texto">Anexo ou chamada</string>
+    <string name="previa_audio">Áudio</string>
+    <string name="previa_arquivo">Arquivo</string>
+    <!-- Pesquisa (8.2), textos do web -->
+    <string name="pesquisa_pesquisando">Pesquisando…</string>
+    <string name="pesquisa_nenhum_resultado">Nenhum resultado encontrado.</string>
     <string name="ontem">Ontem</string>
 </resources>

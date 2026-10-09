@@ -48,3 +48,7 @@ data object RotaCriarGrupo
 
 @Serializable
 data class RotaMembros(val conversaId: Long)
+
+/** Pesquisa em todos os chats (8.2), já com o termo do campo da lista, se houver. */
+@Serializable
+data class RotaPesquisa(val termo: String = "")

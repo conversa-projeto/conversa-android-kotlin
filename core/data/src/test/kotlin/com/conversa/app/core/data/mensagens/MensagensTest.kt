@@ -569,4 +569,14 @@ class MensagensTest {
         assertThat(banco.mensagemDao().buscar(1)!!.paraModelo().oculta).isTrue()
         assertThat(banco.mensagemDao().buscar(2)).isNull()
     }
+
+    @Test
+    fun `pesquisar devolve as mais recentes primeiro, so da conversa, sem gravar no Room`() = runTest {
+        coEvery { api.pesquisar("bolo", 42) } returns listOf(msg(3, "bolo de cenoura"), msg(9, "mais bolo"), msg(5).copy(conversaId = 7))
+
+        val resultados = repo().pesquisar(" bolo ", 42).getOrThrow()
+
+        assertThat(resultados.map { it.id }).containsExactly(9L, 3L).inOrder()
+        assertThat(banco.mensagemDao().buscar(9)).isNull()
+    }
 }

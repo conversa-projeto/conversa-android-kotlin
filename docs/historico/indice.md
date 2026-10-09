@@ -82,6 +82,7 @@
 
 ## Atividades, pesquisa, perfil e configurações (etapa 8)
 - 2026-10-08 · [Etapa 8 — aba Atividades](2026-10-08-37-etapa-8-atividades.md) — módulo `:feature:atividades`: lista por dia com selos, prévias e "Nova", paginação, abrir marca como vistas e o WS 61 relê com a aba aberta; corrigido o POST de vistas (o OkHttp recusava POST sem corpo)
+- 2026-10-09 · [Etapa 8 — pesquisa](2026-10-09-01-etapa-8-pesquisa.md) — na conversa ("⋮" → campo no cabeçalho, resultados levam à mensagem) e em todos os chats (módulo `:feature:pesquisa`, agrupado por conversa); corrigidas colisões de nomes de texto entre módulos e criado `ferramentas/textos-repetidos.mjs`
 
 ## Extras — SIP, compartilhar tela (etapa 9)
 _(nada ainda)_

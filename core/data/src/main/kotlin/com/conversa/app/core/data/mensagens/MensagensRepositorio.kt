@@ -116,6 +116,19 @@ class MensagensRepositorio @Inject constructor(
         if (excluidaEm != null) mensagemDao.atualizarOculta(mensagemId, excluidaEm.toEpochMilli()) else mensagemDao.remover(mensagemId)
     }
 
+    /**
+     * Pesquisa (8.2, PES-01/02): `GET /pesquisar` em uma conversa ou em todas (`conversa = 0`),
+     * mais recentes primeiro. Os resultados não vão para o Room: uma mensagem antiga solta ali
+     * abriria um buraco na lista do chat (o "ir para a mensagem" traz o caminho todo).
+     */
+    suspend fun pesquisar(texto: String, conversaId: Long = 0): Result<List<Mensagem>> =
+        chamarApi { api.pesquisar(texto.trim(), conversaId) }.map { lista ->
+            lista.map { it.paraEntidade().paraModelo() }
+                // Como o web: se o servidor não filtrar pela conversa, filtra aqui.
+                .filter { conversaId == 0L || it.conversaId == conversaId }
+                .sortedByDescending { it.dataEfetiva }
+        }
+
     /** Detalhe do status (7.10, FC-513): `GET /mensagem/status/detalhe`, uma linha por destinatário, com datas. */
     suspend fun statusDetalhe(mensagemId: Long): Result<List<StatusDestinatario>> =
         chamarApi { api.statusDetalhe(mensagemId) }.map { lista ->

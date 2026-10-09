@@ -4,6 +4,7 @@
     <string name="conversas_titulo">Conversas</string>
     <string name="pesquisar">Pesquisar…</string>
     <string name="limpar_busca">Limpar a pesquisa</string>
+    <string name="pesquisar_em_todos">Pesquisar em todos os chats</string>
     <string name="conversas_vazio">Nenhuma conversa ainda</string>
     <string name="conversas_vazio_descricao">Toque no lápis para começar uma conversa ou criar um grupo.</string>
     <string name="busca_vazia">Nada encontrado</string>

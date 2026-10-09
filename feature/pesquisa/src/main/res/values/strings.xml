@@ -1,0 +1,8 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- Pesquisa em todos os chats (8.2), textos do web (PesquisaAvancada.vue) -->
+    <string name="pesquisa_placeholder">Pesquisar em todos os chats…</string>
+    <string name="cancelar">Cancelar</string>
+    <string name="acao_pesquisar">Pesquisar</string>
+    <string name="conversa_numero">Conversa #%1$d</string>
+</resources>

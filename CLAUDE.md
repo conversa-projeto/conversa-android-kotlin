@@ -89,7 +89,7 @@ Instruções para quem trabalha neste repositório, pessoas ou agentes de IA. Le
   - nada de `TrustManager` que aceita tudo;
   - nunca registrar em log token, senha ou conteúdo de mensagem;
   - nunca guardar a senha do usuário.
-- **Textos de UI:** sempre em `strings.xml`. Quando existir no web, use o mesmo texto (doc 03 §6).
+- **Textos de UI:** sempre em `strings.xml`. Quando existir no web, use o mesmo texto (doc 03 §6). Os nomes são globais no APK: um nome repetido em dois módulos com textos diferentes faz um módulo mostrar o texto do outro. Confira com `node ferramentas/textos-repetidos.mjs`.
 - **Testes:** parsers, mapeadores e a máquina de estados de chamada sempre com teste unitário.
 - **Regex:** o Android usa o regex do **ICU**, não o da JVM dos testes unitários. Um padrão aceito nos testes pode fechar o app (aconteceu com `(?U)`). Evite flags embutidas e classes de propriedade Unicode; não use `\w` (no ICU aceita acentos; use `[A-Za-z0-9_]`). Toda função nova com regex entra no `app/src/androidTest/.../RegexNoAndroidTest.kt`.
 - **Campos de texto:** o valor do `TextField` fica em estado local (síncrono). Passar pelo `combine`/`stateIn` do ViewModel atrasa um quadro e o cursor pula.

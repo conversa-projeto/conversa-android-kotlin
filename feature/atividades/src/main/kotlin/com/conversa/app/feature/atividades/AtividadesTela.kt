@@ -207,7 +207,7 @@ private fun LinhaAtividade(atividade: Atividade, aoAbrir: () -> Unit) {
             }
             textoDaPrevia(atividade.previa())?.let {
                 Text(
-                    stringResource(R.string.previa_entre_aspas, it),
+                    stringResource(R.string.atividade_previa_entre_aspas, it),
                     style = MaterialTheme.typography.bodySmall,
                     fontStyle = FontStyle.Italic,
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
@@ -273,10 +273,10 @@ private fun textoDaPrevia(previa: PreviaAtividade?): String? = when (previa) {
     null -> null
     is PreviaAtividade.Texto -> previa.texto
     is PreviaAtividade.Tipo -> when (previa.tipo) {
-        TipoConteudo.IMAGEM -> stringResource(R.string.previa_imagem)
-        TipoConteudo.AUDIO, TipoConteudo.GRAVACAO_AUDIO -> stringResource(R.string.previa_audio)
-        TipoConteudo.FIGURINHA -> stringResource(R.string.previa_figurinha)
-        TipoConteudo.ENQUETE -> stringResource(R.string.previa_votacao)
-        else -> stringResource(R.string.previa_arquivo)
+        TipoConteudo.IMAGEM -> stringResource(R.string.atividade_previa_imagem)
+        TipoConteudo.AUDIO, TipoConteudo.GRAVACAO_AUDIO -> stringResource(R.string.atividade_previa_audio)
+        TipoConteudo.FIGURINHA -> stringResource(R.string.atividade_previa_figurinha)
+        TipoConteudo.ENQUETE -> stringResource(R.string.atividade_previa_votacao)
+        else -> stringResource(R.string.atividade_previa_arquivo)
     }
 }

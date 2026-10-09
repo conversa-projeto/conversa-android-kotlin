@@ -50,6 +50,7 @@ dependencies {
     implementation(projects.feature.chat)
     implementation(projects.feature.chamada)
     implementation(projects.feature.atividades)
+    implementation(projects.feature.pesquisa)
 
     implementation(libs.androidx.core.ktx)
     implementation(libs.androidx.activity.compose)

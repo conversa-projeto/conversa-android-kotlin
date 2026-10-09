@@ -22,6 +22,7 @@ import com.conversa.app.feature.conversas.grupo.CriarGrupoRotaTela
 import com.conversa.app.feature.conversas.lista.ConversasRotaTela
 import com.conversa.app.feature.conversas.membros.MembrosRotaTela
 import com.conversa.app.feature.conversas.novaconversa.NovaConversaRotaTela
+import com.conversa.app.feature.pesquisa.PesquisaRotaTela
 import com.conversa.app.principal.ConfiguracoesProvisorias
 import com.conversa.app.principal.PrincipalTela
 
@@ -75,6 +76,7 @@ fun ConversaNavHost(destinoInicial: Any, principal: MainViewModel) {
                         aoAbrirConversa = { nav.navigate(RotaChat(it)) },
                         aoNovaConversa = { nav.navigate(RotaNovaConversa) },
                         aoMembros = { nav.navigate(RotaMembros(it)) },
+                        aoPesquisarEmTodos = { termo -> nav.navigate(RotaPesquisa(termo)) },
                         modifier = modificador,
                     )
                 },
@@ -130,6 +132,12 @@ fun ConversaNavHost(destinoInicial: Any, principal: MainViewModel) {
         composable<RotaCriarGrupo> {
             CriarGrupoRotaTela(
                 aoCriado = { id -> nav.navigate(RotaChat(id)) { popUpTo<RotaPrincipal>() } },
+                aoVoltar = { nav.popBackStack() },
+            )
+        }
+        composable<RotaPesquisa> {
+            PesquisaRotaTela(
+                aoAbrirMensagem = { conversa, mensagem -> nav.navigate(RotaChat(conversa, mensagem)) },
                 aoVoltar = { nav.popBackStack() },
             )
         }

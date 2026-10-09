@@ -201,6 +201,26 @@ class ChatViewModelTest {
     }
 
     @Test
+    fun `pesquisa na conversa - busca so nesta, e o resultado fecha a pesquisa e vai ate a mensagem`() = runTest {
+        val achada = mensagem(3, 8, lida = true)
+        coEvery { mensagens.pesquisar("bolo", 42) } returns Result.success(listOf(achada))
+        coEvery { mensagens.trazerAte(42, 3) } returns Result.success(true)
+        val vm = criar()
+        advanceUntilIdle()
+
+        vm.abrirPesquisa()
+        vm.pesquisar("  bolo ")
+        advanceUntilIdle()
+        assertThat(vm.pesquisa.value.resultados).containsExactly(achada)
+        assertThat(vm.pesquisa.value.termo).isEqualTo("bolo")
+
+        vm.abrirResultado(achada)
+        advanceUntilIdle()
+        assertThat(vm.pesquisa.value.aberta).isFalse()
+        coVerify { mensagens.trazerAte(42, 3) }
+    }
+
+    @Test
     fun `votacao - a falha traz a mensagem do servidor`() = runTest {
         coEvery { enquetes.votar(5, listOf(1L)) } returns Result.failure(
             com.conversa.app.core.network.http.ErroApi.Servidor(400, "Esta votação já foi encerrada."),
