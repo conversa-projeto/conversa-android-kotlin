@@ -4,7 +4,7 @@
 - **Tipo:** funcionalidade
 - **Itens:** `TODO.md` 7.12 (o resto do bloco, incluindo as linhas 🆕 `785bdef` e `eaa8bac`); FC-516, FC-517; MSG-16, MSG-20, ENV-22
 - **Branch:** `reescrita`
-- **Commits:** (preencher)
+- **Commits:** `b6d8631`
 
 ## Contexto
 A base de dados da votação entrou em [30](2026-10-08-30-etapa-7-enquetes-base.md): DTO, rotas novas, `EnquetesRepositorio` com cache e WS 62. Faltavam:
