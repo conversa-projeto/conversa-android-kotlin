@@ -14,6 +14,7 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.selection.selectable
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
@@ -27,22 +28,38 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.draw.clipToBounds
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.layout.layout
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.text.AnnotatedString
 import androidx.compose.ui.text.SpanStyle
+import androidx.compose.ui.text.TextLinkStyles
+import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.buildAnnotatedString
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontStyle
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.text.style.TextDecoration
+import androidx.compose.ui.unit.Constraints
+import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.conversa.app.core.model.SegmentoCodigo
 import com.conversa.app.core.model.TipoToken
 import com.conversa.app.core.model.destacarCodigo
+import com.conversa.app.core.model.ehLinguagemMarkdown
 import com.conversa.app.core.ui.tema.ConversaTema
+import com.mikepenz.markdown.m3.Markdown
+import com.mikepenz.markdown.m3.markdownColor
+import com.mikepenz.markdown.m3.markdownTypography
+import com.mikepenz.markdown.model.MarkdownColors
+import com.mikepenz.markdown.model.MarkdownTypography
+import com.mikepenz.markdown.model.markdownAlertColors
 import kotlinx.coroutines.delay
 
 /** Altura do bloco recolhido (o `max-h-60` do web). */
@@ -71,13 +88,22 @@ internal fun BlocoCodigo(codigo: SegmentoCodigo.Codigo) {
     val corFundo = MaterialTheme.colorScheme.surface
     val corCabecalho = ConversaTema.cores.campoEntrada
     val texto = textoDestacado(codigo)
+    // ```md: formatado por padrão; "Código" mostra o texto cru (7.9, como o web).
+    val markdown = ehLinguagemMarkdown(codigo.linguagem)
+    var verCodigo by rememberSaveable(codigo.conteudo) { mutableStateOf(false) }
     Column(Modifier.fillMaxWidth().clip(RoundedCornerShape(8.dp)).background(corFundo)) {
         Row(
             Modifier.fillMaxWidth().background(corCabecalho).padding(horizontal = 10.dp, vertical = 4.dp),
             verticalAlignment = Alignment.CenterVertically,
-            horizontalArrangement = Arrangement.SpaceBetween,
+            horizontalArrangement = Arrangement.spacedBy(8.dp),
         ) {
-            Text(codigo.linguagem ?: "code", style = MaterialTheme.typography.labelSmall, color = ConversaTema.cores.textoTerciario)
+            Text(
+                codigo.linguagem ?: "code",
+                style = MaterialTheme.typography.labelSmall,
+                color = ConversaTema.cores.textoTerciario,
+                modifier = Modifier.weight(1f),
+            )
+            if (markdown) AlternarVisual(verCodigo) { verCodigo = it }
             Text(
                 stringResource(if (copiado) R.string.copiado else R.string.copiar),
                 style = MaterialTheme.typography.labelSmall,
@@ -94,18 +120,30 @@ internal fun BlocoCodigo(codigo: SegmentoCodigo.Codigo) {
             )
         }
         Box {
-            Text(
-                texto,
-                fontFamily = FontFamily.Monospace,
-                fontSize = 13.sp,
-                lineHeight = 19.sp,
-                color = MaterialTheme.colorScheme.onSurface,
-                onTextLayout = { if (it.didOverflowHeight) longo = true },
-                modifier = Modifier
-                    .then(if (expandido) Modifier else Modifier.heightIn(max = ALTURA_RECOLHIDO))
-                    .horizontalScroll(rememberScrollState())
-                    .padding(10.dp),
-            )
+            if (markdown && !verCodigo) {
+                Markdown(
+                    content = codigo.conteudo,
+                    colors = coresDoMarkdown(),
+                    typography = tipografiaDoMarkdown(),
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .recolhivel(expandido, ALTURA_RECOLHIDO) { if (it) longo = true }
+                        .padding(10.dp),
+                )
+            } else {
+                Text(
+                    texto,
+                    fontFamily = FontFamily.Monospace,
+                    fontSize = 13.sp,
+                    lineHeight = 19.sp,
+                    color = MaterialTheme.colorScheme.onSurface,
+                    onTextLayout = { if (it.didOverflowHeight) longo = true },
+                    modifier = Modifier
+                        .then(if (expandido) Modifier else Modifier.heightIn(max = ALTURA_RECOLHIDO))
+                        .horizontalScroll(rememberScrollState())
+                        .padding(10.dp),
+                )
+            }
             if (longo && !expandido) {
                 // O fim some num degradê, como no web.
                 Box(
@@ -157,4 +195,88 @@ private fun textoDestacado(codigo: SegmentoCodigo.Codigo): AnnotatedString {
             }
         }
     }
+}
+
+/** "Visualizar" | "Código" no cabeçalho de um bloco ```md (o web mostra os dois lado a lado). */
+@Composable
+private fun AlternarVisual(verCodigo: Boolean, aoMudar: (Boolean) -> Unit) {
+    Row(
+        Modifier.clip(RoundedCornerShape(4.dp)).background(ConversaTema.cores.divisorLista).padding(2.dp),
+        horizontalArrangement = Arrangement.spacedBy(2.dp),
+    ) {
+        OpcaoAlternar(stringResource(R.string.visualizar), selecionada = !verCodigo) { aoMudar(false) }
+        OpcaoAlternar(stringResource(R.string.codigo), selecionada = verCodigo) { aoMudar(true) }
+    }
+}
+
+@Composable
+private fun OpcaoAlternar(texto: String, selecionada: Boolean, aoTocar: () -> Unit) {
+    Text(
+        texto,
+        style = MaterialTheme.typography.labelSmall,
+        color = if (selecionada) MaterialTheme.colorScheme.onSurface else ConversaTema.cores.textoTerciario,
+        modifier = Modifier
+            .clip(RoundedCornerShape(3.dp))
+            .background(if (selecionada) MaterialTheme.colorScheme.surface else Color.Transparent)
+            .selectable(selected = selecionada, role = Role.Tab, onClick = aoTocar)
+            .padding(horizontal = 6.dp, vertical = 2.dp),
+    )
+}
+
+/**
+ * Altura limitada a [maximo] enquanto não está [expandido] (o conteúdo é medido inteiro e
+ * cortado). [aoMedir] diz se passou do limite, para mostrar o degradê e "Expandir código".
+ */
+private fun Modifier.recolhivel(expandido: Boolean, maximo: Dp, aoMedir: (Boolean) -> Unit) = clipToBounds().layout { medivel, limites ->
+    val medido = medivel.measure(limites.copy(maxHeight = Constraints.Infinity))
+    val limite = maximo.roundToPx()
+    aoMedir(medido.height > limite)
+    val altura = if (expandido) medido.height else minOf(medido.height, limite)
+    layout(medido.width, altura) { medido.placeRelative(0, 0) }
+}
+
+/** Cores do Markdown só com tokens (`docs/design/cores.md` §6.4); os alertas do GitHub também. */
+@Composable
+private fun coresDoMarkdown(): MarkdownColors {
+    val texto = MaterialTheme.colorScheme.onSurface
+    val cores = ConversaTema.cores
+    return markdownColor(
+        text = texto,
+        codeBackground = cores.campoEntrada,
+        dividerColor = cores.divisorLista,
+        tableBackground = cores.campoEntrada,
+        alert = markdownAlertColors(
+            note = MaterialTheme.colorScheme.primary,
+            tip = cores.chamadaAtender,
+            important = cores.link,
+            warning = cores.avisoConexao,
+            caution = cores.chamadaEncerrar,
+        ),
+    )
+}
+
+/** Tamanhos de bolha, como o web (`CLASSES_MARKDOWN`: h1 em `text-lg`, h2 em `text-base`, texto em `text-sm`). */
+@Composable
+private fun tipografiaDoMarkdown(): MarkdownTypography {
+    val tipos = MaterialTheme.typography
+    val titulo = { estilo: TextStyle -> estilo.copy(fontWeight = FontWeight.SemiBold) }
+    val texto = tipos.bodyMedium
+    return markdownTypography(
+        h1 = titulo(tipos.titleLarge),
+        h2 = titulo(tipos.titleMedium),
+        h3 = titulo(tipos.titleSmall),
+        h4 = titulo(texto),
+        h5 = titulo(texto),
+        h6 = titulo(texto),
+        text = texto,
+        code = tipos.bodySmall.copy(fontFamily = FontFamily.Monospace),
+        quote = texto.copy(fontStyle = FontStyle.Italic),
+        paragraph = texto,
+        ordered = texto,
+        bullet = texto,
+        list = texto,
+        textLink = TextLinkStyles(SpanStyle(color = MaterialTheme.colorScheme.primary, textDecoration = TextDecoration.Underline)),
+        table = texto,
+        alertTitle = titulo(texto),
+    )
 }

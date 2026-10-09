@@ -17,4 +17,5 @@ dependencies {
     implementation(libs.androidx.emoji2.emojipicker)
     // Figurinhas animadas (7.8): as mesmas animações Lottie do web, nos assets.
     implementation(libs.lottie.compose)
+    implementation(libs.markdown.renderer.m3)
 }

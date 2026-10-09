@@ -62,6 +62,10 @@ class DestaqueCodigoTest {
         assertThat(destacarCodigo("const x = 1", null)).isEmpty()
         assertThat(temDestaque("JSON")).isTrue()
         assertThat(temDestaque("markdown")).isFalse()
+        assertThat(ehLinguagemMarkdown("MD")).isTrue()
+        assertThat(ehLinguagemMarkdown("markdown")).isTrue()
+        assertThat(ehLinguagemMarkdown("mermaid")).isFalse()
+        assertThat(ehLinguagemMarkdown(null)).isFalse()
     }
 
     @Test

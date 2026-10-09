@@ -219,3 +219,6 @@ private fun destacarXml(codigo: String): List<TokenCodigo> {
     }
     return tokens
 }
+
+/** ```md / ```markdown: o bloco aparece formatado, com "Visualizar"/"Código" (como o `useMarkdown.ts` do web). */
+fun ehLinguagemMarkdown(linguagem: String?): Boolean = linguagem?.lowercase().let { it == "md" || it == "markdown" }

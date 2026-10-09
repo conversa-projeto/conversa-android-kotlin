@@ -301,6 +301,18 @@ O FMX não tem destaque de sintaxe. Para os blocos de código (TODO 7.9), os pap
 | Atributo de XML/HTML | `link` | `#0000EE` | `#8AB4F8` |
 | Cabeçalho do bloco ("js", "Copiar") | `campoEntrada` (fundo), `textoTerciario`, `iconeAcao` | — | — |
 
+**Markdown formatado (```` ```md ````, 2026-10-08)**, também sem cor nova:
+
+| Papel | Token reaproveitado |
+|---|---|
+| Texto | `onSurface` |
+| Fundo do código e da tabela | `campoEntrada` |
+| Divisórias; fundo do "Visualizar"/"Código" | `divisorLista` |
+| Link | `primary` |
+| Alertas do GitHub (`> [!NOTE]` etc.) | nota `primary`; dica `chamadaAtender`; importante `link`; aviso `avisoConexao`; cuidado `chamadaEncerrar` |
+
+Os alertas do GitHub têm cores próprias na biblioteca; aqui elas são trocadas pelos tokens acima.
+
 Ver a pergunta 12 da §9.
 
 ## 7. Snippet Kotlin (Compose)

@@ -27,11 +27,14 @@ import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateListOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.runtime.saveable.listSaver
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
+import androidx.compose.runtime.toMutableStateList
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.focus.FocusRequester
@@ -65,18 +68,21 @@ internal fun NovaVotacao(
 ) {
     val zona = ZoneId.systemDefault()
     var pergunta by rememberSaveable { mutableStateOf("") }
-    var opcoes by rememberSaveable { mutableStateOf(arrayListOf("", "")) }
+    // Opções: lista observável que sobrevive a girar a tela.
+    val opcoes = rememberSaveable(saver = listSaver(save = { it.toList() }, restore = { it.toMutableStateList() })) {
+        mutableStateListOf("", "")
+    }
     var multipla by rememberSaveable { mutableStateOf(false) }
     var comPrazo by rememberSaveable { mutableStateOf(false) }
     var encerraEm by rememberSaveable { mutableStateOf(sugestaoPrazoEnquete(Instant.now(), zona)) }
     var criando by remember { mutableStateOf(false) }
     var erro by remember { mutableStateOf<String?>(null) }
     val escopo = rememberCoroutineScope()
+    val falhaCriar = stringResource(R.string.criar_votacao_falhou)
     val foco = remember { FocusRequester() }
     LaunchedEffect(Unit) { runCatching { foco.requestFocus() } }
     val erroPrazo = if (comPrazo) validarPrazoEnquete(encerraEm, Instant.now(), zona) else null
     val valida = podeCriarEnquete(pergunta, opcoes, erroPrazo)
-    val mudarOpcoes = { mudanca: ArrayList<String>.() -> Unit -> opcoes = ArrayList(opcoes).apply(mudanca) }
 
     ModalBottomSheet(onDismissRequest = aoFechar, sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)) {
         Column(
@@ -97,20 +103,20 @@ internal fun NovaVotacao(
                 Row(verticalAlignment = Alignment.CenterVertically) {
                     OutlinedTextField(
                         value = texto,
-                        onValueChange = { novo -> mudarOpcoes { set(indice, novo.take(LIMITE_OPCAO_ENQUETE)) } },
+                        onValueChange = { novo -> opcoes[indice] = novo.take(LIMITE_OPCAO_ENQUETE) },
                         placeholder = { Text(stringResource(R.string.opcao_n, indice + 1)) },
                         singleLine = true,
                         modifier = Modifier.weight(1f),
                     )
                     if (opcoes.size > MINIMO_OPCOES_ENQUETE) {
-                        IconButton(onClick = { mudarOpcoes { removeAt(indice) } }) {
+                        IconButton(onClick = { opcoes.removeAt(indice) }) {
                             Icon(Icons.Outlined.Close, contentDescription = stringResource(R.string.remover_opcao_n, indice + 1))
                         }
                     }
                 }
             }
             if (opcoes.size < MAXIMO_OPCOES_ENQUETE) {
-                TextButton(onClick = { mudarOpcoes { add("") } }) { Text(stringResource(R.string.adicionar_opcao)) }
+                TextButton(onClick = { opcoes.add("") }) { Text(stringResource(R.string.adicionar_opcao)) }
             }
             LinhaMarcar(
                 marcado = multipla,
@@ -143,9 +149,10 @@ internal fun NovaVotacao(
                         criando = true
                         erro = null
                         escopo.launch {
-                            val falha = aoCriar(pergunta, opcoes, multipla, if (comPrazo) encerraEm.atZone(zona).toInstant() else null)
+                            val falha =
+                                aoCriar(pergunta, opcoes.toList(), multipla, if (comPrazo) encerraEm.atZone(zona).toInstant() else null)
                             criando = false
-                            if (falha == null) aoFechar() else erro = falha
+                            if (falha == null) aoFechar() else erro = falha.ifBlank { falhaCriar }
                         }
                     },
                 ) { Text(stringResource(if (criando) R.string.criando else R.string.criar_votacao)) }
