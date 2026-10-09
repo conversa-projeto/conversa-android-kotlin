@@ -818,10 +818,10 @@
 - [x] Vazio: "Nenhuma atividade ainda." / "Reações, respostas, menções e chamadas perdidas aparecem aqui." ✔ 84a6ec3
 
 ### 8.2 Pesquisa (FC-801, PES-01, PES-02)
-- [x] Na conversa: ícone de busca → campo (no Android, "⋮" → "Pesquisar na conversa", para não apertar os ícones de ligar) → `GET /pesquisar?texto=&conversa=<id>` → resultados (mais recentes primeiro) → ir para a mensagem
-- [x] Global: "Pesquisar em todos os chats" → `GET /pesquisar?texto=&conversa=0`
-- [x] Resultados agrupados por conversa: remetente, data `dd/MM/aa HH:mm`, trecho com o termo destacado
-- [x] Estados "Pesquisando…" / "Nenhum resultado encontrado."
+- [x] Na conversa: ícone de busca → campo (no Android, "⋮" → "Pesquisar na conversa", para não apertar os ícones de ligar) → `GET /pesquisar?texto=&conversa=<id>` → resultados (mais recentes primeiro) → ir para a mensagem ✔ 28cef66
+- [x] Global: "Pesquisar em todos os chats" → `GET /pesquisar?texto=&conversa=0` ✔ 28cef66
+- [x] Resultados agrupados por conversa: remetente, data `dd/MM/aa HH:mm`, trecho com o termo destacado ✔ 28cef66
+- [x] Estados "Pesquisando…" / "Nenhum resultado encontrado." ✔ 28cef66
 
 ### 8.3 Perfil (FC-802, AUT-06, AUT-07, AUT-08)
 - [ ] Editar nome e e-mail → `PATCH /usuario {id, nome, email}` → "Dados atualizados com sucesso."

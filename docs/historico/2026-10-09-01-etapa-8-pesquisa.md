@@ -4,7 +4,7 @@
 - **Tipo:** funcionalidade / módulo novo / correção de recursos
 - **Itens:** `TODO.md` 8.2 e parte da linha dos módulos; FC-801; PES-01, PES-02
 - **Branch:** `reescrita`
-- **Commits:** (preencher)
+- **Commits:** `28cef66`
 
 ## Contexto
 O web tem duas pesquisas de mensagens:
