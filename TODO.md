@@ -774,32 +774,32 @@
 - [x] Atalhos `:)` → 🙂 etc. (tabela do `emojiAtalhos.ts`), só como palavra solta e fora de código ✔ c2a31d6
 - [x] Colar texto com mais de 10 linhas → sugerir "Enviar como código" ✔ c2a31d6
 - [x] Tela "Inserir código" simples (linguagem + texto monoespaçado) ✔ c2a31d6
-- [x] 🆕 `7322e83` Rascunho por conversa (FC-519, ENV-23): texto com menções, fila de anexos e resposta/encaminhamento pendente guardados no aparelho; restaurar ao abrir a conversa; apagar ao enviar
+- [x] 🆕 `7322e83` Rascunho por conversa (FC-519, ENV-23): texto com menções, fila de anexos e resposta/encaminhamento pendente guardados no aparelho; restaurar ao abrir a conversa; apagar ao enviar ✔ 217be62
 
 ### 7.12 Votação em grupo (FC-516, FC-517, FC-518, MSG-20, ENV-22)
 - [x] Store/repositório de enquetes: cache por id; leituras simultâneas deduplicadas ✔ c182ddc
-- [ ] Bolha: `GET /enquete?id=<conteudo>`; "Carregando votação..." / erro
-- [ ] Bolha: nome do remetente (grupo, mensagem de outro), "📊 <pergunta>", "Escolha uma opção" / "Escolha uma ou mais opções"
-- [ ] Bolha: cada opção com círculo (única) ou quadrado (múltipla) + ✓, texto, contagem, barra `round(votos / total_votantes × 100)%`, nomes dos votantes
-- [ ] Bolha: rodapé "1 pessoa votou" / "N pessoas votaram" + hora/status
-- [ ] Votar: única → troca o voto (tocar na marcada tira); múltipla → marca/desmarca
-- [ ] `POST /enquete/votar {enquete_id, opcoes:[lista completa]}` → substituir o cache; desabilitar durante o voto; erro → "Não foi possível votar"
+- [x] Bolha: `GET /enquete?id=<conteudo>`; "Carregando votação..." / erro
+- [x] Bolha: nome do remetente (grupo, mensagem de outro), "📊 <pergunta>", "Escolha uma opção" / "Escolha uma ou mais opções"
+- [x] Bolha: cada opção com círculo (única) ou quadrado (múltipla) + ✓, texto, contagem, barra `round(votos / total_votantes × 100)%`, nomes dos votantes
+- [x] Bolha: rodapé "1 pessoa votou" / "N pessoas votaram" + hora/status
+- [x] Votar: única → troca o voto (tocar na marcada tira); múltipla → marca/desmarca
+- [x] `POST /enquete/votar {enquete_id, opcoes:[lista completa]}` → substituir o cache; desabilitar durante o voto; erro → "Não foi possível votar"
 - [x] WS 62 → reler `GET /enquete` só se estiver em cache/na tela ✔ c182ddc
-- [ ] Resumo "Votação" em prévia, notificação, citação, atividade e chat da chamada
-- [ ] Criar: "+" → "Votação" (só em grupo) → bottom sheet "Nova votação"
-- [ ] Criar: "Pergunta" (≤ 300, placeholder "Ex.: Onde vamos almoçar?"), "Opções" 2–12 (≤ 200), "+ Adicionar opção", remover acima de 2
-- [ ] Criar: "Permitir várias escolhas" / "Cada pessoa pode marcar mais de uma opção."
-- [ ] Criar: "Cancelar" / "Criar votação" ("Criando..."), habilitado com pergunta e ≥ 2 opções
-- [ ] `PUT /enquete {conversa_id, pergunta, opcoes (preenchidas, trim), multipla}` → atualizar a conversa; mostrar os erros do servidor
+- [x] Resumo "Votação" em prévia, notificação, citação, atividade e chat da chamada — prévia da lista ("📊 Votação"), notificação, citação e chat da chamada (é o chat completo); a tela de atividades ainda não existe (etapa 8) e usa o mesmo resumo quando vier
+- [x] Criar: "+" → "Votação" (só em grupo) → bottom sheet "Nova votação"
+- [x] Criar: "Pergunta" (≤ 300, placeholder "Ex.: Onde vamos almoçar?"), "Opções" 2–12 (≤ 200), "+ Adicionar opção", remover acima de 2
+- [x] Criar: "Permitir várias escolhas" / "Cada pessoa pode marcar mais de uma opção."
+- [x] Criar: "Cancelar" / "Criar votação" ("Criando..."), habilitado com pergunta e ≥ 2 opções
+- [x] `PUT /enquete {conversa_id, pergunta, opcoes (preenchidas, trim), multipla}` → atualizar a conversa; mostrar os erros do servidor
 - [x] Esconder "Encaminhar" no menu de uma mensagem de votação (o servidor recusa com 400) — feito com o 7.6 ✔ 19add2b
 - [x] 🆕 `5cad911` DTO `Enquete` com `encerra_em`, `encerrada_em`, `encerrada`, `pode_encerrar`, `pode_alterar_prazo`; rotas `POST /enquete/encerrar {enquete_id}` e `PATCH /enquete {enquete_id, encerra_em|null}` (as duas devolvem a enquete e mandam o WS 62) ✔ c182ddc
-- [ ] 🆕 `785bdef` Criar: "Definir data final" / "Depois dela ninguém vota mais. Dá para mudar ou encerrar antes pela votação." + data e hora (sugestão: amanhã, na próxima hora cheia); erros "Informe a data e a hora", "A data final precisa estar no futuro", "A data final não pode passar de 1 ano" (com erro, "Criar votação" desabilitado); vai como `encerra_em`
-- [ ] 🆕 `785bdef` Bolha aberta com data final: "Escolha uma opção · encerra hoje 18:00" ("amanhã 08:30", "12/10 18:00"; com o ano se for outro)
-- [ ] 🆕 `785bdef` Quem criou (`pode_alterar_prazo`): "Definir data final" / "Alterar data final" → "Data final" com "Tirar data" (se tem), "Cancelar" e "Salvar"; erro "Não foi possível mudar a data final"
-- [ ] 🆕 `785bdef` Quem criou a votação ou o grupo (`pode_encerrar`): "Encerrar votação" → confirmação de perigo "Encerrar votação" / "Depois de encerrada, ninguém vota mais e o resultado fica como está." / "Encerrar"; erro "Não foi possível encerrar a votação"
-- [ ] 🆕 `785bdef` Encerrada (`encerrada`, ou `encerra_em` vencido com a bolha na tela, na hora exata): "🔒 Votação encerrada <quando>", opções desabilitadas, botões somem, a mais votada (empates com votos) em negrito com 🏆
-- [ ] 🆕 `eaa8bac` Votação oculta revelada (3.4): resumo só de leitura "📊 <pergunta>" + contagem por opção ("Votação encerrada" se for o caso); "Carregando votação..." / erro
-- [ ] **Teste:** criar no celular, votar no web → a barra atualiza no celular sem recarregar
+- [x] 🆕 `785bdef` Criar: "Definir data final" / "Depois dela ninguém vota mais. Dá para mudar ou encerrar antes pela votação." + data e hora (sugestão: amanhã, na próxima hora cheia); erros "Informe a data e a hora", "A data final precisa estar no futuro", "A data final não pode passar de 1 ano" (com erro, "Criar votação" desabilitado); vai como `encerra_em`
+- [x] 🆕 `785bdef` Bolha aberta com data final: "Escolha uma opção · encerra hoje 18:00" ("amanhã 08:30", "12/10 18:00"; com o ano se for outro)
+- [x] 🆕 `785bdef` Quem criou (`pode_alterar_prazo`): "Definir data final" / "Alterar data final" → "Data final" com "Tirar data" (se tem), "Cancelar" e "Salvar"; erro "Não foi possível mudar a data final"
+- [x] 🆕 `785bdef` Quem criou a votação ou o grupo (`pode_encerrar`): "Encerrar votação" → confirmação de perigo "Encerrar votação" / "Depois de encerrada, ninguém vota mais e o resultado fica como está." / "Encerrar"; erro "Não foi possível encerrar a votação"
+- [x] 🆕 `785bdef` Encerrada (`encerrada`, ou `encerra_em` vencido com a bolha na tela, na hora exata): "🔒 Votação encerrada <quando>", opções desabilitadas, botões somem, a mais votada (empates com votos) em negrito com 🏆
+- [x] 🆕 `eaa8bac` Votação oculta revelada (3.4): resumo só de leitura "📊 <pergunta>" + contagem por opção ("Votação encerrada" se for o caso); "Carregando votação..." / erro
+- [x] **Teste:** criar no celular, votar no web → a barra atualiza no celular sem recarregar — criada no emulador como A; o voto do B foi pela API (mesma rota e WS 62 que o web usa) e a barra mudou na hora
 
 ---
 

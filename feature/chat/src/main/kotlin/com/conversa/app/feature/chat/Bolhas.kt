@@ -128,6 +128,8 @@ data class AcoesBolha(
     val participaDe: (conversaId: Long) -> Boolean = { false },
     /** Toque no status de uma minha: o detalhe (7.10). */
     val aoVerStatus: (Mensagem) -> Unit = {},
+    /** A votação (7.12): ler, votar, encerrar e mudar a data final. */
+    val enquetes: AcoesEnquete? = null,
 )
 
 /**
@@ -196,7 +198,8 @@ fun LinhaMensagem(
                         TipoExibicao.EMOJI -> BolhaEmoji(mensagem, propria)
                         TipoExibicao.FIGURINHA -> BolhaFigurinha(mensagem, propria)
                         TipoExibicao.CHAMADA -> BolhaChamada(mensagem, propria, acoes)
-                        TipoExibicao.OCULTA -> BolhaOculta(mensagem, propria)
+                        TipoExibicao.OCULTA -> BolhaOculta(mensagem, propria, acoes)
+                        TipoExibicao.ENQUETE -> Fundo(propria) { BolhaEnquete(mensagem, propria, acoes) }
                         TipoExibicao.TEXTO_CURTO -> Fundo(propria) { TextoCurto(mensagem, propria, acoes) }
                         TipoExibicao.CODIGO -> Fundo(propria) { CorpoPadrao(mensagem, propria, acoes) }
                         TipoExibicao.IMAGEM -> BolhaImagem(mensagem, propria, progresso, acoes)
@@ -283,10 +286,8 @@ private fun ConteudoNaBolha(mensagem: Mensagem, conteudo: Conteudo, propria: Boo
         TipoConteudo.AUDIO, TipoConteudo.GRAVACAO_AUDIO -> PlayerNaBolha(mensagem, conteudo, propria, cor, acoes)
         TipoConteudo.ARQUIVO -> if (ehVideo(conteudo)) VideoNaBolha(mensagem, conteudo, acoes) else LinhaArquivo(conteudo, cor, acoes)
         TipoConteudo.FIGURINHA -> FigurinhaAnimada(conteudo.conteudo, 120.dp)
-        TipoConteudo.ENQUETE -> Column {
-            Text("📊 " + stringResource(R.string.votacao), color = cor, fontWeight = FontWeight.SemiBold)
-            Text(stringResource(R.string.votacao_no_computador), color = cor, style = MaterialTheme.typography.bodySmall)
-        }
+        // Na citação e na oculta revelada: só o resumo (7.12); a bolha da votação é a BolhaEnquete.
+        TipoConteudo.ENQUETE -> ResumoEnquete(conteudo.conteudo.toLongOrNull(), cor, acoes.enquetes)
         TipoConteudo.CHAMADA, TipoConteudo.DESCONHECIDO -> Marcador("•", stringResource(R.string.conteudo_desconhecido), cor)
     }
 }
@@ -399,7 +400,7 @@ fun TextoRico(texto: String, cor: Color, acoes: AcoesBolha, modifier: Modifier =
 
 /** Hora e, nas minhas, o status de entrega (MSG-08). */
 @Composable
-private fun Rodape(mensagem: Mensagem, propria: Boolean, modifier: Modifier = Modifier) {
+internal fun Rodape(mensagem: Mensagem, propria: Boolean, modifier: Modifier = Modifier) {
     Row(
         modifier.tocarParaVerStatus(),
         verticalAlignment = Alignment.CenterVertically,
@@ -451,7 +452,7 @@ private fun BolhaFigurinha(mensagem: Mensagem, propria: Boolean) {
 
 /** "Mensagem oculta" (MSG-16): toque revela ou esconde o conteúdo original. */
 @Composable
-private fun BolhaOculta(mensagem: Mensagem, propria: Boolean) {
+private fun BolhaOculta(mensagem: Mensagem, propria: Boolean, acoes: AcoesBolha) {
     var revelada by rememberSaveable(mensagem.id) { mutableStateOf(false) }
     val cor = ConversaTema.cores.textoTerciario
     Box(
@@ -469,6 +470,10 @@ private fun BolhaOculta(mensagem: Mensagem, propria: Boolean) {
             if (revelada) {
                 mensagem.conteudos.filter { it.tipo == TipoConteudo.TEXTO }.forEach {
                     Text(it.conteudo, color = cor, style = MaterialTheme.typography.bodyMedium, modifier = Modifier.padding(top = 4.dp))
+                }
+                // Votação oculta revelada (🆕 web `eaa8bac`): o resumo só de leitura.
+                mensagem.conteudos.filter { it.tipo == TipoConteudo.ENQUETE }.forEach {
+                    Box(Modifier.padding(top = 4.dp)) { ResumoEnquete(it.conteudo.toLongOrNull(), cor, acoes.enquetes) }
                 }
             }
         }

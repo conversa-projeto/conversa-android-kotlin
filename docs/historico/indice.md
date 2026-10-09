@@ -76,6 +76,7 @@
 - 2026-10-08 · [Etapa 7 — votação: base de dados](2026-10-08-30-etapa-7-enquetes-base.md) — DTO com data final e encerramento (servidor `5cad911`), rotas encerrar/PATCH, `EnquetesRepositorio` com cache e leituras deduplicadas, WS 62 relê só o que está em cache
 - 2026-10-08 · [Agendadas no relógio e encaminhada de encaminhada](2026-10-08-32-agendadas-no-relogio-e-encaminhada-dupla.md) — como o web `7322e83`: agendadas fora do chat, relógio com o número ao lado do microfone e folha "Mensagens agendadas" com "Cancelar"; a citação de uma encaminhada não repete o que a de baixo já mostra
 - 2026-10-08 · [Rascunho por conversa](2026-10-08-33-rascunho-por-conversa.md) — como o web `7322e83`: texto com menções, anexos e resposta pendente guardados no Room (versão 3, migração automática) e restaurados ao abrir a conversa; apagado ao esvaziar ou enviar
+- 2026-10-08 · [Etapa 7 — votação](2026-10-08-34-etapa-7-votacao.md) — bolha com votar, barras e nomes ao vivo (WS 62), encerrada com 🏆 (inclusive pelo prazo, na hora), data final e encerrar para quem pode; "Nova votação" pelo "+" em grupo; resumo na citação, na oculta e na prévia
 
 ## Atividades, pesquisa, perfil e configurações (etapa 8)
 _(nada ainda)_

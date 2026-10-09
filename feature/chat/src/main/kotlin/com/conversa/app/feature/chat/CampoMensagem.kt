@@ -66,6 +66,7 @@ import androidx.compose.material.icons.outlined.Delete
 import androidx.compose.material.icons.outlined.EmojiEmotions
 import androidx.compose.material.icons.outlined.Image
 import androidx.compose.material.icons.outlined.PhotoCamera
+import androidx.compose.material.icons.outlined.Poll
 import androidx.compose.material.icons.outlined.Schedule
 import androidx.compose.material3.DropdownMenu
 import androidx.compose.material3.DropdownMenuItem
@@ -172,6 +173,7 @@ internal fun Campo(
     focar: Boolean = false,
     respondendo: ReferenciaPendente? = null,
     agendadas: List<Mensagem> = emptyList(),
+    grupo: Boolean = false,
 ) {
     // Estado do texto local e síncrono (o cursor não pula); sobrevive a girar a tela.
     val texto = rememberTextFieldState()
@@ -179,6 +181,9 @@ internal fun Campo(
     // Menções inseridas pela lista (7.7): o campo mostra "@Nome"; no envio vira "@[Nome](id)".
     val mencoes = remember { mutableStateListOf<MencaoInserida>() }
     // "Inserir código" (7.11): pelo "+" (vazio) ou por um texto longo colado (preenchido).
+    // "Nova votação" (7.12): só em grupo, pelo "+".
+    var criandoVotacao by rememberSaveable { mutableStateOf(false) }
+    if (criandoVotacao) NovaVotacao(acoes.aoCriarVotacao, aoFechar = { criandoVotacao = false })
     var vendoAgendadas by rememberSaveable { mutableStateOf(false) }
     if (vendoAgendadas) MensagensAgendadas(agendadas, acoes.aoCancelarAgendada, aoFechar = { vendoAgendadas = false })
     var codigoAberto by rememberSaveable { mutableStateOf(false) }
@@ -268,6 +273,7 @@ internal fun Campo(
                 aoInserirCodigo = { codigoAberto = true },
                 agendadas = agendadas.size,
                 aoVerAgendadas = { vendoAgendadas = true },
+                aoNovaVotacao = if (grupo) ({ criandoVotacao = true }) else null,
             )
         }
     }
@@ -385,6 +391,7 @@ private fun LinhaDoCampo(
     transformacao: InputTransformation,
     aoInserirCodigo: () -> Unit,
     agendadas: Int,
+    aoNovaVotacao: (() -> Unit)?,
     aoVerAgendadas: () -> Unit,
 ) {
     Row(
@@ -393,7 +400,7 @@ private fun LinhaDoCampo(
         horizontalArrangement = Arrangement.spacedBy(4.dp),
     ) {
         Box(Modifier.heightIn(min = 48.dp), contentAlignment = Alignment.Center) {
-            if (segurando == null) BotaoAnexar(acoes, aoInserirCodigo) else Spacer(Modifier.width(8.dp))
+            if (segurando == null) BotaoAnexar(acoes, aoInserirCodigo, aoNovaVotacao) else Spacer(Modifier.width(8.dp))
         }
         Box(Modifier.weight(1f).heightIn(min = 48.dp), contentAlignment = Alignment.CenterStart) {
             if (segurando != null) {
@@ -726,7 +733,7 @@ private fun tempoGravacao(ms: Long): String {
  * acontecer depois, pelo WorkManager, com o app já fechado.
  */
 @Composable
-private fun BotaoAnexar(acoes: AcoesChat, aoInserirCodigo: () -> Unit) {
+private fun BotaoAnexar(acoes: AcoesChat, aoInserirCodigo: () -> Unit, aoNovaVotacao: (() -> Unit)?) {
     val contexto = LocalContext.current
     val avisos = LocalAvisos.current
     val escopo = rememberCoroutineScope()
@@ -815,6 +822,17 @@ private fun BotaoAnexar(acoes: AcoesChat, aoInserirCodigo: () -> Unit) {
                     aoInserirCodigo()
                 },
             )
+            // Votação só em grupo (o servidor recusa na direta), como o web.
+            aoNovaVotacao?.let { abrir ->
+                DropdownMenuItem(
+                    text = { Text(stringResource(R.string.votacao)) },
+                    leadingIcon = { Icon(Icons.Outlined.Poll, contentDescription = null) },
+                    onClick = {
+                        menu = false
+                        abrir()
+                    },
+                )
+            }
         }
     }
 }

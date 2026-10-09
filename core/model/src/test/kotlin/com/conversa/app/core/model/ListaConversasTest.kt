@@ -52,9 +52,10 @@ class ListaConversasTest {
     }
 
     @Test
-    fun `previa de imagem, figurinha, anexo e vazia`() {
+    fun `previa de imagem, figurinha, votacao, anexo e vazia`() {
         assertThat(previaDaConversa(conversa(1, ultimaMensagemId = 5, texto = "imagem"))).isEqualTo(PreviaConversa.Imagem)
         assertThat(previaDaConversa(conversa(1, ultimaMensagemId = 5, texto = "figurinha"))).isEqualTo(PreviaConversa.Figurinha)
+        assertThat(previaDaConversa(conversa(1, ultimaMensagemId = 5, texto = "enquete"))).isEqualTo(PreviaConversa.Votacao)
         assertThat(previaDaConversa(conversa(1, ultimaMensagemId = 5, texto = ""))).isEqualTo(PreviaConversa.SemTexto)
         assertThat(previaDaConversa(conversa(1, ultimaMensagemId = 0, texto = null))).isEqualTo(PreviaConversa.SemMensagens)
     }

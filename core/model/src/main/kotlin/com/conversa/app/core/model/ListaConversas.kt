@@ -16,6 +16,9 @@ sealed interface PreviaConversa {
 
     data object Figurinha : PreviaConversa
 
+    /** Votação (7.12): o servidor manda `"enquete"`; aparece "Votação". */
+    data object Votacao : PreviaConversa
+
     /** Arquivo, áudio, gravação ou chamada: o servidor manda `""` (contrato §11.2). */
     data object SemTexto : PreviaConversa
 
@@ -24,7 +27,7 @@ sealed interface PreviaConversa {
 
 /**
  * Prévia a partir de `ultima_mensagem_texto` (contrato §11.2): texto cru do primeiro
- * conteúdo, `"imagem"`, `"figurinha"`, `"Mensagem oculta"` ou `""`.
+ * conteúdo, `"imagem"`, `"figurinha"`, `"enquete"`, `"Mensagem oculta"` ou `""`.
  * Diferença do web: lá, `""` com mensagem mostra "Sem mensagens"; aqui vira [PreviaConversa.SemTexto].
  */
 fun previaDaConversa(conversa: Conversa): PreviaConversa {
@@ -33,6 +36,7 @@ fun previaDaConversa(conversa: Conversa): PreviaConversa {
     return when {
         bruto == "imagem" -> PreviaConversa.Imagem
         bruto == "figurinha" -> PreviaConversa.Figurinha
+        bruto == "enquete" -> PreviaConversa.Votacao
         bruto.isBlank() -> if (temMensagem) PreviaConversa.SemTexto else PreviaConversa.SemMensagens
         else -> resumirTexto(bruto).let { if (it.isEmpty()) PreviaConversa.SemTexto else PreviaConversa.Texto(it) }
     }

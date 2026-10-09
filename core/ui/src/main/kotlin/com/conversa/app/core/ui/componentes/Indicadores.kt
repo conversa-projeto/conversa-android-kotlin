@@ -95,6 +95,7 @@ fun textoDaPrevia(previa: PreviaConversa): String = when (previa) {
     PreviaConversa.SemMensagens -> stringResource(R.string.previa_sem_mensagens)
     PreviaConversa.Imagem -> stringResource(R.string.previa_imagem)
     PreviaConversa.Figurinha -> stringResource(R.string.previa_figurinha)
+    PreviaConversa.Votacao -> stringResource(R.string.previa_votacao)
     PreviaConversa.SemTexto -> stringResource(R.string.previa_sem_texto)
     is PreviaConversa.Texto -> previa.texto
 }

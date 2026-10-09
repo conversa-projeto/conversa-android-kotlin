@@ -12,6 +12,7 @@
     <string name="previa_sem_mensagens">Sem mensagens</string>
     <string name="previa_imagem">Imagem</string>
     <string name="previa_figurinha">Figurinha</string>
+    <string name="previa_votacao">📊 Votação</string>
     <string name="previa_sem_texto">Anexo ou chamada</string>
     <string name="ontem">Ontem</string>
 </resources>

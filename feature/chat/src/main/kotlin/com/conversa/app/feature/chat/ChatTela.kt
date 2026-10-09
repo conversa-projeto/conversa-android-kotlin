@@ -213,6 +213,7 @@ fun ChatRotaTela(
                 aoAgendar = viewModel::agendar,
                 aoCancelarAgendada = viewModel::cancelarAgendada,
                 aoMudarRascunho = viewModel::aoMudarRascunho,
+                aoCriarVotacao = viewModel::criarVotacao,
                 aoDigitar = viewModel::aoDigitar,
                 aoCarregarAnteriores = viewModel::carregarAnteriores,
                 aoVerMensagens = viewModel::marcarLidas,
@@ -246,6 +247,7 @@ fun ChatRotaTela(
                     aoVerReacoes = { mensagem, emoji -> acoesDaMensagem.quemReagiu = mensagem.id to emoji },
                     aoVerMaisReacoes = { acoesDaMensagem.maisReacoes = it.id },
                     aoVerStatus = { acoesDaMensagem.statusDe = it },
+                    enquetes = viewModel.acoesEnquete,
                     aoResponder = viewModel::responder,
                     aoIrParaMensagem = viewModel::irParaMensagem,
                 ),
@@ -338,6 +340,8 @@ class AcoesChat(
     val aoCancelarAgendada: suspend (Mensagem) -> Boolean = { false },
     /** O campo mudou: o rascunho da conversa (FC-519). */
     val aoMudarRascunho: (String) -> Unit = {},
+    /** "Nova votação" (7.12): o erro para mostrar na folha, ou nulo se criou. */
+    val aoCriarVotacao: suspend (String, List<String>, Boolean, Instant?) -> String? = { _, _, _, _ -> null },
     val aoDigitar: (String) -> Unit = {},
     val aoCarregarAnteriores: () -> Unit = {},
     val aoVerMensagens: (List<com.conversa.app.core.model.Mensagem>) -> Unit = {},
@@ -487,6 +491,7 @@ fun ChatTela(estado: ChatUiState, lista: androidx.compose.foundation.lazy.LazyLi
                 focar = estado.focarCampo,
                 respondendo = estado.respondendo,
                 agendadas = estado.agendadas,
+                grupo = estado.grupo,
             )
         },
     ) { margens ->

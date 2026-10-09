@@ -4,7 +4,7 @@
 - **Tipo:** funcionalidade (acompanha o web) / banco de dados
 - **Itens:** `TODO.md` 7.11 (linha 🆕 `7322e83`); FC-519; ENV-23
 - **Branch:** `reescrita`
-- **Commits:** (preencher)
+- **Commits:** `217be62`
 
 ## Contexto
 O web `7322e83` passou a guardar um rascunho por usuário e conversa (`services/rascunhos.ts`, IndexedDB). O rascunho tem o campo, os arquivos e o "respondendo a…", e volta ao reabrir a conversa, mesmo depois de fechar o navegador. No Android, sair da conversa perdia o texto, a fila de anexos e a resposta pendente.

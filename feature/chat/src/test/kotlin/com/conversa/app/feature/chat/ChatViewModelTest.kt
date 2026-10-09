@@ -78,6 +78,7 @@ class ChatViewModelTest {
         every { resultados } returns kotlinx.coroutines.flow.MutableSharedFlow()
     }
     private val player = PlayerFalso()
+    private val enquetes = mockk<com.conversa.app.core.data.enquetes.EnquetesRepositorio>(relaxed = true)
     private val rascunhos = mockk<com.conversa.app.core.data.rascunhos.RascunhosRepositorio>(relaxed = true) {
         coEvery { ler(any()) } returns null
     }
@@ -133,6 +134,7 @@ class ChatViewModelTest {
             mockk(relaxed = true),
             Clock.fixed(agora, ZoneOffset.UTC),
             rascunhos,
+            enquetes,
         )
         backgroundScope.launch { vm.estado.collect {} }
         return vm
@@ -196,6 +198,35 @@ class ChatViewModelTest {
         advanceTimeBy(10_000)
         runCurrent()
         coVerify(exactly = 2) { mensagens.avisarDigitando(42) }
+    }
+
+    @Test
+    fun `votacao - a falha traz a mensagem do servidor`() = runTest {
+        coEvery { enquetes.votar(5, listOf(1L)) } returns Result.failure(
+            com.conversa.app.core.network.http.ErroApi.Servidor(400, "Esta votação já foi encerrada."),
+        )
+        coEvery { enquetes.encerrar(5) } returns Result.success(
+            com.conversa.app.core.model.Enquete(5, 42, 9, "Onde?", false, 7, emptyList(), 0, emptyList()),
+        )
+        val vm = criar()
+
+        assertThat(vm.acoesEnquete.votar(5, listOf(1L)).exceptionOrNull()?.message).isEqualTo("Esta votação já foi encerrada.")
+        assertThat(vm.acoesEnquete.encerrar(5).isSuccess).isTrue()
+    }
+
+    @Test
+    fun `criar votacao rele as mensagens e a lista, e mostra o erro do servidor`() = runTest {
+        coEvery { enquetes.criar(42, "Onde?", listOf("a", "b"), false, null) } returns Result.success(77)
+        coEvery { enquetes.criar(42, "Onde?", listOf("a"), false, null) } returns Result.failure(
+            com.conversa.app.core.network.http.ErroApi.Servidor(400, "Votação só em grupo."),
+        )
+        val vm = criar()
+        advanceUntilIdle()
+
+        assertThat(vm.criarVotacao("Onde?", listOf("a", "b"), false, null)).isNull()
+        coVerify(exactly = 2) { mensagens.carregarRecentes(42) }
+        coVerify { conversas.atualizar() }
+        assertThat(vm.criarVotacao("Onde?", listOf("a"), false, null)).isEqualTo("Votação só em grupo.")
     }
 
     @Test

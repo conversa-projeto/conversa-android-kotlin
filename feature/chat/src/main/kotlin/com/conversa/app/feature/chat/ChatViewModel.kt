@@ -15,6 +15,7 @@ import com.conversa.app.core.data.anexos.ResultadoDownload
 import com.conversa.app.core.data.anexos.TranscricoesRepositorio
 import com.conversa.app.core.data.contatos.ContatosRepositorio
 import com.conversa.app.core.data.conversas.ConversasRepositorio
+import com.conversa.app.core.data.enquetes.EnquetesRepositorio
 import com.conversa.app.core.data.mensagens.EnvioMensagens
 import com.conversa.app.core.data.mensagens.MensagensRepositorio
 import com.conversa.app.core.data.mensagens.ReferenciaPendente
@@ -246,6 +247,7 @@ class ChatViewModel @Inject constructor(
     gravador: GravadorAudio,
     private val relogio: Clock,
     private val rascunhos: RascunhosRepositorio,
+    private val enquetes: EnquetesRepositorio,
 ) : ViewModel() {
     val conversaId: Long = checkNotNull(salvo["conversaId"])
     private val eu: Long = sessao.sessao.value?.usuarioId ?: 0
@@ -413,6 +415,40 @@ class ChatViewModel @Inject constructor(
 
     /** "Agendar" (7.10): a mesma mensagem, com `visivel_em` (o diálogo já validou 5 min..1 ano). */
     fun agendar(texto: String, quando: Instant, aoGravar: () -> Unit) = enviar(texto, quando, aoGravar)
+
+    /**
+     * A bolha de votação (7.12) fala com o repositório de enquetes. A falha vira a mensagem
+     * para mostrar: a do servidor (ex.: "Esta votação já foi encerrada.") ou a amigável da rede.
+     */
+    val acoesEnquete: AcoesEnquete = object : AcoesEnquete {
+        override fun observar(id: Long) = enquetes.observar(id)
+
+        override suspend fun carregar(id: Long) = enquetes.carregar(id).semDados()
+
+        override suspend fun votar(id: Long, opcoes: List<Long>) = enquetes.votar(id, opcoes).semDados()
+
+        override suspend fun encerrar(id: Long) = enquetes.encerrar(id).semDados()
+
+        override suspend fun alterarPrazo(id: Long, encerraEm: Instant?) = enquetes.alterarPrazo(id, encerraEm).semDados()
+
+        private fun Result<*>.semDados(): Result<Unit> =
+            fold({ Result.success(Unit) }, { Result.failure(Exception(it.paraErroApi().mensagemAmigavel())) })
+    }
+
+    /**
+     * "Nova votação" (7.12): `PUT /enquete`; depois, como o web, relê as mensagens e a lista de
+     * conversas e desce ao fim. Devolve o erro para a folha (o do servidor), ou nulo.
+     */
+    suspend fun criarVotacao(pergunta: String, opcoes: List<String>, multipla: Boolean, encerraEm: Instant?): String? =
+        enquetes.criar(conversaId, pergunta, opcoes, multipla, encerraEm).fold(
+            onSuccess = {
+                mensagens.carregarRecentes(conversaId)
+                conversas.atualizar()
+                eventos.enviar(EventoChat.RolarAoFim)
+                null
+            },
+            onFailure = { it.paraErroApi().mensagemAmigavel() },
+        )
 
     /** "Cancelar" na lista de agendadas: apaga de vez (ninguém a viu). Falso = "Não foi possível cancelar". */
     suspend fun cancelarAgendada(mensagem: Mensagem): Boolean = mensagens.ocultar(mensagem.id).isSuccess

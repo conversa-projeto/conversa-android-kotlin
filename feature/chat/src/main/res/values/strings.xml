@@ -90,7 +90,6 @@
     <string name="conteudo_figurinha">Figurinha</string>
     <string name="conteudo_desconhecido">Conteúdo que esta versão ainda não mostra</string>
     <string name="votacao">Votação</string>
-    <string name="votacao_no_computador">Abra no computador para votar</string>
     <string name="status_enviando">Enviando</string>
     <string name="status_falhou">Não enviada</string>
     <string name="status_enviada">Enviada</string>
@@ -199,4 +198,46 @@
     <string name="inserir_codigo">Inserir código</string>
     <string name="linguagem">Linguagem</string>
     <string name="codigo_placeholder">Cole ou escreva seu código aqui…</string>
+
+    <!-- Votação (7.12), textos do web -->
+    <string name="carregando_votacao">Carregando votação…</string>
+    <string name="votacao_carregar_falhou">Não foi possível carregar a votação</string>
+    <string name="escolha_uma_opcao">Escolha uma opção</string>
+    <string name="escolha_uma_ou_mais">Escolha uma ou mais opções</string>
+    <string name="escolha_e_prazo">%1$s · encerra %2$s</string>
+    <string name="votacao_encerrada">🔒 Votação encerrada</string>
+    <string name="votacao_encerrada_em">🔒 Votação encerrada %1$s</string>
+    <string name="votacao_encerrada_resumo">Votação encerrada</string>
+    <plurals name="pessoas_votaram">
+        <item quantity="one">%1$d pessoa votou</item>
+        <item quantity="many">%1$d pessoas votaram</item>
+        <item quantity="other">%1$d pessoas votaram</item>
+    </plurals>
+    <string name="votar_falhou">Não foi possível votar</string>
+    <string name="definir_data_final">Definir data final</string>
+    <string name="alterar_data_final">Alterar data final</string>
+    <string name="data_final">Data final</string>
+    <string name="tirar_data">Tirar data</string>
+    <string name="salvar">Salvar</string>
+    <string name="prazo_falhou">Não foi possível mudar a data final</string>
+    <string name="prazo_sem_data">Informe a data e a hora</string>
+    <string name="prazo_no_passado">A data final precisa estar no futuro</string>
+    <string name="prazo_muito_longe">A data final não pode passar de 1 ano</string>
+    <string name="encerrar_votacao">Encerrar votação</string>
+    <string name="encerrar_votacao_texto">Depois de encerrada, ninguém vota mais e o resultado fica como está.</string>
+    <string name="encerrar">Encerrar</string>
+    <string name="encerrar_falhou">Não foi possível encerrar a votação</string>
+    <string name="nova_votacao">Nova votação</string>
+    <string name="pergunta">Pergunta</string>
+    <string name="pergunta_exemplo">Ex.: Onde vamos almoçar?</string>
+    <string name="opcoes">Opções</string>
+    <string name="opcao_n">Opção %1$d</string>
+    <string name="remover_opcao_n">Remover opção %1$d</string>
+    <string name="adicionar_opcao">+ Adicionar opção</string>
+    <string name="permitir_varias">Permitir várias escolhas</string>
+    <string name="permitir_varias_texto">Cada pessoa pode marcar mais de uma opção.</string>
+    <string name="definir_data_final_texto">Depois dela ninguém vota mais. Dá para mudar ou encerrar antes pela votação.</string>
+    <string name="criar_votacao">Criar votação</string>
+    <string name="criando">Criando…</string>
+    <string name="criar_votacao_falhou">Não foi possível criar a votação</string>
 </resources>

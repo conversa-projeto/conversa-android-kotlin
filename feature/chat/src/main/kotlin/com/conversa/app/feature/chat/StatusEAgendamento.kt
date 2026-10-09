@@ -166,24 +166,17 @@ private fun SecaoStatus.rotulo() = when (this) {
  * "Agendar mensagem" (FC-514), como o `AgendarMensagemModal.vue`: data e hora (sugestão: amanhã
  * 08:00), pelo menos 5 minutos no futuro e no máximo 1 ano; com erro, "Agendar" fica desabilitado.
  */
-@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 internal fun AgendarMensagem(aoConfirmar: (Instant) -> Unit, aoFechar: () -> Unit) {
     val zona = ZoneId.systemDefault()
-    val sugestao = remember { sugestaoAgendamento(Instant.now(), zona) }
-    var data by rememberSaveable { mutableStateOf(sugestao.toLocalDate()) }
-    var hora by rememberSaveable { mutableStateOf(sugestao.toLocalTime()) }
-    var escolhendoData by rememberSaveable { mutableStateOf(false) }
-    var escolhendoHora by rememberSaveable { mutableStateOf(false) }
-    val quando = LocalDateTime.of(data, hora)
+    var quando by rememberSaveable { mutableStateOf(sugestaoAgendamento(Instant.now(), zona)) }
     val erro = validarAgendamento(quando, Instant.now(), zona)
     AlertDialog(
         onDismissRequest = aoFechar,
         title = { Text(stringResource(R.string.agendar_mensagem)) },
         text = {
             Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
-                CampoEscolha(stringResource(R.string.agendar_data), FORMATO_DATA.format(data)) { escolhendoData = true }
-                CampoEscolha(stringResource(R.string.agendar_hora), FORMATO_HORA_CAMPO.format(hora)) { escolhendoHora = true }
+                CamposDataHora(quando) { quando = it }
                 erro?.let {
                     Text(
                         stringResource(if (it == ErroAgendamento.MUITO_CEDO) R.string.agendar_muito_cedo else R.string.agendar_muito_longe),
@@ -204,14 +197,29 @@ internal fun AgendarMensagem(aoConfirmar: (Instant) -> Unit, aoFechar: () -> Uni
         },
         dismissButton = { TextButton(onClick = aoFechar) { Text(stringResource(R.string.cancelar)) } },
     )
+}
+
+/** Data e hora (o `CampoDataHora` do web): dois botões que abrem o calendário e o relógio de 24 h. */
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+internal fun CamposDataHora(valor: LocalDateTime, aoMudar: (LocalDateTime) -> Unit) {
+    var escolhendoData by rememberSaveable { mutableStateOf(false) }
+    var escolhendoHora by rememberSaveable { mutableStateOf(false) }
+    Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
+        CampoEscolha(stringResource(R.string.agendar_data), FORMATO_DATA.format(valor)) { escolhendoData = true }
+        CampoEscolha(stringResource(R.string.agendar_hora), FORMATO_HORA_CAMPO.format(valor)) { escolhendoHora = true }
+    }
     if (escolhendoData) {
         // O DatePicker trabalha com a meia-noite UTC do dia escolhido.
-        val estado = rememberDatePickerState(initialSelectedDateMillis = data.atStartOfDay(ZoneOffset.UTC).toInstant().toEpochMilli())
+        val estado =
+            rememberDatePickerState(initialSelectedDateMillis = valor.toLocalDate().atStartOfDay(ZoneOffset.UTC).toInstant().toEpochMilli())
         DatePickerDialog(
             onDismissRequest = { escolhendoData = false },
             confirmButton = {
                 TextButton(onClick = {
-                    estado.selectedDateMillis?.let { data = Instant.ofEpochMilli(it).atZone(ZoneOffset.UTC).toLocalDate() }
+                    estado.selectedDateMillis?.let {
+                        aoMudar(LocalDateTime.of(Instant.ofEpochMilli(it).atZone(ZoneOffset.UTC).toLocalDate(), valor.toLocalTime()))
+                    }
                     escolhendoData = false
                 }) { Text(stringResource(android.R.string.ok)) }
             },
@@ -219,13 +227,13 @@ internal fun AgendarMensagem(aoConfirmar: (Instant) -> Unit, aoFechar: () -> Uni
         ) { DatePicker(estado) }
     }
     if (escolhendoHora) {
-        val estado = rememberTimePickerState(initialHour = hora.hour, initialMinute = hora.minute, is24Hour = true)
+        val estado = rememberTimePickerState(initialHour = valor.hour, initialMinute = valor.minute, is24Hour = true)
         AlertDialog(
             onDismissRequest = { escolhendoHora = false },
             text = { TimePicker(estado) },
             confirmButton = {
                 TextButton(onClick = {
-                    hora = LocalTime.of(estado.hour, estado.minute)
+                    aoMudar(LocalDateTime.of(valor.toLocalDate(), LocalTime.of(estado.hour, estado.minute)))
                     escolhendoHora = false
                 }) { Text(stringResource(android.R.string.ok)) }
             },
