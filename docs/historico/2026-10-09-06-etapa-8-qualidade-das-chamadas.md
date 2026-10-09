@@ -56,5 +56,5 @@ No Android, a mídia (`MidiaWebRtc`) tinha tudo fixo: Opus a 32 kbps e câmera 6
 - **Quando vale:** a mudança vale a partir da próxima chamada. No web, parte dela vale na hora: reabre o microfone e aplica as restrições do vídeo. Aqui, mudar no meio da chamada pediria refazer as fontes e as trilhas. A aba de configurações quase nunca é aberta durante uma chamada, e a tela avisa.
 
 ## Pendências
-- **Aparelho real:** conferir o eco e o ruído do hardware. Entra na matriz de `docs/testes/chamadas.md`.
+- **Aparelho real:** conferir o eco e o ruído do hardware desligados e ouvir o estéreo do outro lado. Duas linhas novas na matriz de `docs/testes/chamadas.md` ("Áudio e sistema").
 - **O resto do 8.5:** Sistema e Acessos.

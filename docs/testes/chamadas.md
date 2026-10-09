@@ -45,6 +45,8 @@ Atualize a linha (data, versão, onde e o que aconteceu) a cada rodada.
 | Sensor de proximidade (tela apaga no ouvido) | A | ⏳ | Só com o áudio no fone do aparelho |
 | Música tocando quando chega a chamada | A | ⏳ | O Telecom pausa (foco de áudio) |
 | TalkBack: atender e desligar | A | ⏳ | Não se liga o TalkBack no emulador de teste (configuração do aparelho) |
+| 🆕 Qualidade das chamadas: eco e ruído do aparelho desligados (8.5) | A | ⏳ | Desligar "Cancelamento de eco" e "Redução de ruído" e ligar no viva-voz: o outro lado deve ouvir eco e ruído. O emulador não tem esses efeitos |
+| 🆕 Qualidade "Música" (estéreo, 8.5) | E/A | ✅ 2026-10-09 (E) | No emulador, o microfone abre em estéreo; falta ouvir o estéreo do outro lado (web) |
 
 ## Tipos de chamada
 
