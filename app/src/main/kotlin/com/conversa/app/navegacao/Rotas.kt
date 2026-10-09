@@ -56,3 +56,7 @@ data class RotaPesquisa(val termo: String = "")
 /** Perfil do usuário logado: foto, nome e e-mail, senha (8.3). */
 @Serializable
 data object RotaPerfil
+
+/** Sobre (8.5): versão, servidor e licenças. */
+@Serializable
+data object RotaSobre

@@ -18,14 +18,15 @@ import com.conversa.app.feature.auth.servidor.ServidorRotaTela
 import com.conversa.app.feature.chamada.HistoricoChamadasRota
 import com.conversa.app.feature.chamada.rememberLigarParaUsuario
 import com.conversa.app.feature.chat.ChatRotaTela
+import com.conversa.app.feature.config.ConfiguracoesRotaTela
 import com.conversa.app.feature.config.PerfilRotaTela
+import com.conversa.app.feature.config.SobreRotaTela
 import com.conversa.app.feature.conversas.enviarpara.EnviarParaRotaTela
 import com.conversa.app.feature.conversas.grupo.CriarGrupoRotaTela
 import com.conversa.app.feature.conversas.lista.ConversasRotaTela
 import com.conversa.app.feature.conversas.membros.MembrosRotaTela
 import com.conversa.app.feature.conversas.novaconversa.NovaConversaRotaTela
 import com.conversa.app.feature.pesquisa.PesquisaRotaTela
-import com.conversa.app.principal.ConfiguracoesProvisorias
 import com.conversa.app.principal.PrincipalTela
 
 @Composable
@@ -96,9 +97,10 @@ fun ConversaNavHost(destinoInicial: Any, principal: MainViewModel) {
                     )
                 },
                 configuracoes = { modificador ->
-                    ConfiguracoesProvisorias(
+                    ConfiguracoesRotaTela(
                         aoAbrirPerfil = { nav.navigate(RotaPerfil) },
                         aoTrocarServidor = { nav.navigate(RotaServidor(podeVoltar = true)) },
+                        aoAbrirSobre = { nav.navigate(RotaSobre) },
                         modifier = modificador,
                     )
                 },
@@ -147,6 +149,7 @@ fun ConversaNavHost(destinoInicial: Any, principal: MainViewModel) {
                 aoVoltar = { nav.popBackStack() },
             )
         }
+        composable<RotaSobre> { SobreRotaTela(aoVoltar = { nav.popBackStack() }) }
         composable<RotaPerfil> { PerfilRotaTela(aoVoltar = { nav.popBackStack() }) }
         composable<RotaMembros> {
             MembrosRotaTela(

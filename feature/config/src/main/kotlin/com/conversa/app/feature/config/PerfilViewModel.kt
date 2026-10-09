@@ -14,15 +14,11 @@ import com.conversa.app.core.network.http.mensagemAmigavel
 import com.conversa.app.core.network.http.paraErroApi
 import dagger.hilt.android.lifecycle.HiltViewModel
 import java.time.Clock
-import java.time.Duration
-import java.time.Instant
 import javax.inject.Inject
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.combine
-import kotlinx.coroutines.flow.distinctUntilChanged
-import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
@@ -55,11 +51,7 @@ private data class Andamento(
     val salvandoSenha: Boolean = false,
     val avisoSenha: Aviso? = null,
     val senhasTrocadas: Int = 0,
-    val fotoUrl: String? = null,
 )
-
-/** Renovar a URL da foto no máximo a cada 30 s (como o `renovarAvatarExpirado` do web). */
-private val INTERVALO_RENOVAR_FOTO: Duration = Duration.ofSeconds(30)
 
 /**
  * Perfil (8.3, FC-802, AUT-06/07/08), como o `ProfileSettingsModal.vue`: a foto (trocar e
@@ -70,17 +62,17 @@ private val INTERVALO_RENOVAR_FOTO: Duration = Duration.ofSeconds(30)
 class PerfilViewModel @Inject constructor(
     private val perfil: PerfilRepositorio,
     private val preparador: PreparadorFotoDePerfil,
-    private val relogio: Clock,
+    relogio: Clock,
 ) : ViewModel() {
     private val andamento = MutableStateFlow(Andamento())
-    private var renovadaEm: Instant? = null
+    private val foto = FotoDaSessao(perfil, relogio, viewModelScope)
 
-    val estado: StateFlow<PerfilUiState> = combine(perfil.sessao, andamento) { sessao, a ->
+    val estado: StateFlow<PerfilUiState> = combine(perfil.sessao, andamento, foto.url) { sessao, a, url ->
         PerfilUiState(
             nome = sessao?.nome.orEmpty(),
             email = sessao?.email.orEmpty(),
             temFoto = sessao?.avatarIdentificador != null,
-            fotoUrl = a.fotoUrl.takeIf { sessao?.avatarIdentificador != null },
+            fotoUrl = url.takeIf { sessao?.avatarIdentificador != null },
             enviandoFoto = a.enviandoFoto,
             avisoFoto = a.avisoFoto,
             salvandoDados = a.salvandoDados,
@@ -91,28 +83,8 @@ class PerfilViewModel @Inject constructor(
         )
     }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), PerfilUiState())
 
-    init {
-        // A URL assinada da foto acompanha o identificador da sessão.
-        viewModelScope.launch {
-            perfil.sessao.map { it?.avatarIdentificador }.distinctUntilChanged().collect { carregarUrl(it) }
-        }
-    }
-
-    private suspend fun carregarUrl(identificador: String?) {
-        val url = identificador?.let { perfil.urlDaFoto(it).getOrNull() }
-        andamento.update { it.copy(fotoUrl = url) }
-    }
-
     /** A imagem não carregou (URL vencida): busca outra, no máximo a cada 30 s. */
-    fun fotoFalhou() {
-        val identificador = perfil.sessao.value?.avatarIdentificador ?: return
-        val agora = relogio.instant()
-        val ultima = renovadaEm
-        if (ultima != null && Duration.between(ultima, agora) < INTERVALO_RENOVAR_FOTO) return
-        renovadaEm = agora
-        perfil.esquecerUrl(identificador)
-        viewModelScope.launch { carregarUrl(identificador) }
-    }
+    fun fotoFalhou() = foto.falhou()
 
     fun trocarFoto(uri: Uri) {
         if (andamento.value.enviandoFoto) return

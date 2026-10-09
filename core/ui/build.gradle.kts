@@ -13,4 +13,6 @@ dependencies {
     api(libs.coil.compose)
     api(libs.androidx.lifecycle.runtime.compose)
     implementation(libs.androidx.core.ktx)
+    // Barras do sistema na cor do tema escolhido no app (8.5).
+    implementation(libs.androidx.activity.compose)
 }

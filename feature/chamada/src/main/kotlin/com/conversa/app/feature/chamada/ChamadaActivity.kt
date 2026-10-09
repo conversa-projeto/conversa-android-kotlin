@@ -12,9 +12,13 @@ import android.view.WindowManager
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
+import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.runtime.mutableStateOf
 import androidx.core.net.toUri
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import com.conversa.app.core.data.preferencias.PreferenciasRepositorio
 import com.conversa.app.core.data.tempoReal.MonitorPrimeiroPlano
+import com.conversa.app.core.model.PreferenciaTema
 import com.conversa.app.core.network.di.EscopoAplicacao
 import com.conversa.app.core.ui.componentes.AreaDeAvisos
 import com.conversa.app.core.ui.tema.ConversaTema
@@ -34,6 +38,8 @@ import kotlinx.coroutines.launch
  */
 @AndroidEntryPoint
 class ChamadaActivity : ComponentActivity() {
+    @Inject lateinit var preferencias: PreferenciasRepositorio
+
     /** "Atender" da notificação: atende assim que a tela abre. */
     private val pedidoAtender = mutableStateOf(false)
     private val emPip = mutableStateOf(false)
@@ -50,7 +56,9 @@ class ChamadaActivity : ComponentActivity() {
         window.addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON)
         addOnPictureInPictureModeChangedListener { emPip.value = it.isInPictureInPictureMode }
         setContent {
-            ConversaTema {
+            // A tela da chamada é escura nos dois temas; o tema vale para o que abre por cima (8.5).
+            val tema = preferencias.tema.collectAsStateWithLifecycle(PreferenciaTema.PADRAO).value
+            ConversaTema(escuro = tema.escuro(isSystemInDarkTheme())) {
                 AreaDeAvisos {
                     TelaChamadaRota(
                         aoFechar = ::finish,

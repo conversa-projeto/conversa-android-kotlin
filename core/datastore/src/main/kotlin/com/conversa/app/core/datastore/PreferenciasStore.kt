@@ -14,7 +14,8 @@ import kotlinx.coroutines.flow.map
  * - endereço do servidor;
  * - id do dispositivo, reenviado no próximo login para reaproveitar o mesmo registro
  *   (contrato §2.1);
- * - último usuário digitado no login (só o login, nunca a senha), para preencher o campo.
+ * - último usuário digitado no login (só o login, nunca a senha), para preencher o campo;
+ * - o tema escolhido (8.5).
  */
 class PreferenciasStore(private val dataStore: DataStore<Preferences>) {
     val enderecoServidor: Flow<String?> = dataStore.data.map { it[ENDERECO_SERVIDOR] }
@@ -28,6 +29,13 @@ class PreferenciasStore(private val dataStore: DataStore<Preferences>) {
 
     /** Já explicou a tela cheia das chamadas (Android 14+, TODO 6.5): uma vez só. */
     val pediuTelaCheia: Flow<Boolean> = dataStore.data.map { it[PEDIU_TELA_CHEIA] == true }
+
+    /** "sistema", "claro" ou "escuro" (`PreferenciaTema.chave`); nulo = nunca escolheu. */
+    val tema: Flow<String?> = dataStore.data.map { it[TEMA] }
+
+    suspend fun salvarTema(chave: String) {
+        dataStore.edit { it[TEMA] = chave }
+    }
 
     suspend fun salvarEnderecoServidor(endereco: String) {
         dataStore.edit { it[ENDERECO_SERVIDOR] = endereco }
@@ -55,5 +63,6 @@ class PreferenciasStore(private val dataStore: DataStore<Preferences>) {
         val ULTIMO_LOGIN = stringPreferencesKey("ultimo_login")
         val PEDIU_NOTIFICACOES = booleanPreferencesKey("pediu_notificacoes")
         val PEDIU_TELA_CHEIA = booleanPreferencesKey("pediu_tela_cheia")
+        val TEMA = stringPreferencesKey("tema")
     }
 }

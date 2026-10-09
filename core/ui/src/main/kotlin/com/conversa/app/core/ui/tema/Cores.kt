@@ -55,7 +55,7 @@ internal val EsquemaClaro = lightColorScheme(
     inverseOnSurface = FundoApp,
 )
 
-/** PROPOSTA: o FMX não tem modo escuro ativo (base: bin/tema/escuro.pss). Só ligar com aprovação. */
+/** PROPOSTA: o FMX não tem modo escuro ativo (base: bin/tema/escuro.pss). Só por escolha em Aparência (8.5); o padrão do app é o claro até a aprovação. */
 internal val EsquemaEscuro = darkColorScheme(
     primary = AzulConversa,
     onPrimary = Branco,
@@ -72,6 +72,10 @@ internal val EsquemaEscuro = darkColorScheme(
     onSurface = Color(0xFFF0F0F0),
     surfaceVariant = Color(0xFF282828),
     onSurfaceVariant = Color(0xFFB4B4B4),
+    // Como no claro: o mais baixo = surface, o baixo = background, o médio = surfaceVariant (barra inferior).
+    surfaceContainerLowest = Color(0xFF3C3C3C),
+    surfaceContainerLow = Color(0xFF323232),
+    surfaceContainer = Color(0xFF282828),
     surfaceContainerHigh = Color(0xFF464646),
     surfaceContainerHighest = Color(0xFF282828),
     outline = Color(0xFF5A5A5A),

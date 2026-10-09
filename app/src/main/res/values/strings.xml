@@ -17,10 +17,6 @@
 
 
     <!-- Configurações provisórias (a tela completa é da etapa 8) -->
-    <string name="config_servidor">Servidor</string>
-    <string name="config_sair">Sair</string>
-    <string name="config_saindo">Saindo…</string>
-    <string name="config_sair_confirmar">Você vai precisar entrar de novo neste aparelho. As notificações param até lá.</string>
     <!-- Notificação de mensagem (NOT-02; corpo como o web) -->
     <string name="notificacao_voce">Você</string>
     <string name="notificacao_oculta">Mensagem oculta</string>
@@ -43,8 +39,6 @@
     <string name="permissao_tela_cheia_texto">Para a chamada recebida aparecer na tela, mesmo com o celular bloqueado, permita que o Conversa use a tela cheia.</string>
     <string name="permissao_tela_cheia_abrir">Abrir configurações</string>
 
-    <string name="config_em_breve">Notificações, aparência e as demais opções chegam com o restante da etapa 8.</string>
-    <string name="config_perfil">Abrir o perfil</string>
 
 
 </resources>

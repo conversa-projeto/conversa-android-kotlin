@@ -85,6 +85,7 @@
 - 2026-10-09 · [Etapa 8 — pesquisa](2026-10-09-01-etapa-8-pesquisa.md) — na conversa ("⋮" → campo no cabeçalho, resultados levam à mensagem) e em todos os chats (módulo `:feature:pesquisa`, agrupado por conversa); corrigidas colisões de nomes de texto entre módulos e criado `ferramentas/textos-repetidos.mjs`
 - 2026-10-09 · [Etapa 8 — perfil](2026-10-09-02-etapa-8-perfil.md) — módulo `:feature:config` com a tela Perfil: foto (Photo Picker, quadrado 256×256 em JPEG, remover, URL renovada a cada 30 s no máximo), nome e e-mail, troca de senha com as conferências e mensagens do web
 - 2026-10-09 · [Etapa 8 — perfil de outro usuário](2026-10-09-03-etapa-8-perfil-de-outro-usuario.md) — folha com foto, nome, e-mail, telefone ("Não informado") e "Ligar", aberta pelo avatar da direta na lista e pelo cabeçalho do chat
+- 2026-10-09 · [Etapa 8 — Configurações: tela, aparência e sobre](2026-10-09-04-etapa-8-configuracoes-aparencia-sobre.md) — aba Configurações no `:feature:config` (usuário → perfil, Aparência, Servidor, Sobre com licenças, Sair); tema Sistema/Claro/Escuro com padrão Claro enquanto o escuro for proposta; `surfaceContainer*` do esquema escuro
 
 ## Extras — SIP, compartilhar tela (etapa 9)
 _(nada ainda)_

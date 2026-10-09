@@ -220,6 +220,9 @@ Derivado de `bin/tema/escuro.pss` (`fundo #323232`, `fundo_claro_1 #3C3C3C`, `fu
 | `onSurface` | `#F0F0F0` | proposta |
 | `surfaceVariant` | `#282828` | `escuro.pss` `fundo_escuro` |
 | `onSurfaceVariant` | `#B4B4B4` | proposta |
+| `surfaceContainerLowest` | `#3C3C3C` | 🆕 8.5: espelha o claro (= `surface`) |
+| `surfaceContainerLow` | `#323232` | 🆕 8.5: espelha o claro (= `background`) |
+| `surfaceContainer` | `#282828` | 🆕 8.5: espelha o claro (= `surfaceVariant`; barra inferior). Sem ele, o Material usava um cinza arroxeado |
 | `surfaceContainerHigh` | `#464646` | proposta (campos) |
 | `surfaceContainerHighest` | `#282828` | `fundo_escuro` (menu lateral/barra) |
 | `outline` | `#5A5A5A` | proposta |

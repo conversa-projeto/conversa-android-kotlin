@@ -6,9 +6,12 @@ import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
 import androidx.activity.viewModels
+import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.core.splashscreen.SplashScreen.Companion.installSplashScreen
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import com.conversa.app.core.model.PreferenciaTema
 import com.conversa.app.core.ui.componentes.AreaDeAvisos
+import com.conversa.app.core.ui.tema.BarrasDoSistema
 import com.conversa.app.core.ui.tema.ConversaTema
 import com.conversa.app.feature.chamada.ComBannerDaChamada
 import com.conversa.app.navegacao.ConversaNavHost
@@ -21,15 +24,19 @@ class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         val splash = installSplashScreen()
         super.onCreate(savedInstanceState)
-        // A splash fica até saber para onde ir (servidor configurado? sessão?).
-        splash.setKeepOnScreenCondition { viewModel.destinoInicial.value == null }
+        // A splash fica até saber para onde ir (servidor configurado? sessão?) e o tema (sem piscar).
+        splash.setKeepOnScreenCondition { viewModel.destinoInicial.value == null || viewModel.tema.value == null }
         enableEdgeToEdge()
         if (savedInstanceState == null) {
             viewModel.receberLink(intent?.data)
             viewModel.receberCompartilhamento(intent?.let(::lerCompartilhamento))
         }
         setContent {
-            ConversaTema {
+            // Tema escolhido nas Configurações (8.5); "Sistema" acompanha o aparelho na hora.
+            val tema = viewModel.tema.collectAsStateWithLifecycle().value ?: PreferenciaTema.PADRAO
+            val escuro = tema.escuro(isSystemInDarkTheme())
+            BarrasDoSistema(this, escuro)
+            ConversaTema(escuro = escuro) {
                 AreaDeAvisos {
                     val destino = viewModel.destinoInicial.collectAsStateWithLifecycle().value
                     // Em chamada, a faixa "Toque para voltar à chamada" fica no topo de todas as telas (6.12).

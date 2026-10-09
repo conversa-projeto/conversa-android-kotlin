@@ -31,4 +31,21 @@
     <string name="perfil_senha_nao_confere">A confirmação da senha não confere.</string>
     <string name="perfil_senha_alterada">Senha alterada com sucesso.</string>
     <string name="perfil_senha_falhou">Não foi possível alterar a senha.</string>
+    <!-- Configurações (8.5) -->
+    <string name="config_titulo">Configurações</string>
+    <string name="config_perfil">Abrir o perfil</string>
+    <string name="config_aparencia">Aparência</string>
+    <string name="config_tema">Tema</string>
+    <string name="config_tema_sistema">Seguir o sistema</string>
+    <string name="config_tema_claro">Claro</string>
+    <string name="config_tema_escuro">Escuro</string>
+    <string name="config_servidor">Servidor</string>
+    <string name="config_sobre">Sobre</string>
+    <string name="config_versao">Versão %1$s</string>
+    <string name="config_sair">Sair</string>
+    <string name="config_saindo">Saindo…</string>
+    <string name="config_sair_confirmar">Você vai precisar entrar de novo neste aparelho. As notificações param até lá.</string>
+    <string name="sobre_nome_do_app">Conversa</string>
+    <string name="sobre_servidor">Servidor: %1$s</string>
+    <string name="sobre_licencas">Licenças de código aberto</string>
 </resources>

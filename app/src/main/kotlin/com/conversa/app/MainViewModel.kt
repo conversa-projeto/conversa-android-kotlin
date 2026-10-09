@@ -7,6 +7,8 @@ import com.conversa.app.core.data.MotivoFimSessao
 import com.conversa.app.core.data.ServidorRepositorio
 import com.conversa.app.core.data.SessaoRepositorio
 import com.conversa.app.core.data.anexos.Compartilhamentos
+import com.conversa.app.core.data.preferencias.PreferenciasRepositorio
+import com.conversa.app.core.model.PreferenciaTema
 import com.conversa.app.core.ui.estado.EventosUnicos
 import com.conversa.app.feature.auth.login.AvisoLogin
 import com.conversa.app.navegacao.RotaChat
@@ -16,9 +18,11 @@ import com.conversa.app.navegacao.RotaServidor
 import dagger.hilt.android.lifecycle.HiltViewModel
 import javax.inject.Inject
 import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
 
 /** Navegação pedida pelo app (não por um clique): fim da sessão, link para uma conversa. */
@@ -39,6 +43,7 @@ sealed interface NavegacaoGlobal {
 @HiltViewModel
 class MainViewModel @Inject constructor(
     servidor: ServidorRepositorio,
+    preferencias: PreferenciasRepositorio,
     private val sessao: SessaoRepositorio,
     private val compartilhamentos: Compartilhamentos,
 ) : ViewModel() {
@@ -46,6 +51,9 @@ class MainViewModel @Inject constructor(
     val destinoInicial: StateFlow<Any?> = _destinoInicial.asStateFlow()
 
     val navegacao = EventosUnicos<NavegacaoGlobal>()
+
+    /** Tema escolhido (8.5); nulo até ler as preferências (a splash espera). */
+    val tema: StateFlow<PreferenciaTema?> = preferencias.tema.stateIn(viewModelScope, SharingStarted.Eagerly, null)
 
     /** Link recebido antes de haver sessão: abre depois do login. */
     private var linkPendente: RotaChat? = null
