@@ -835,11 +835,11 @@
 - [x] Toque no avatar da direta (lista ou cabeçalho) → bottom sheet: foto, nome, e-mail, telefone ("Não informado"), "Ligar"; o "Ver anexos" entra com a tela do 8.6 ✔ 4d53ba8
 
 ### 8.5 Configurações (FC-804…808)
-- [ ] Tela com seções: Perfil, Aparência, Notificações, Chamadas, Permissões, Servidor, Sistema*, Acessos*, Ramal SIP, Sobre — já há Perfil, Aparência, Notificações, Permissões, Servidor, Sobre e Sair; o Ramal SIP fica com o SIP (etapa 9)
+- [ ] Tela com seções: Perfil, Aparência, Notificações, Chamadas, Permissões, Servidor, Sistema*, Acessos*, Ramal SIP, Sobre — já há Perfil, Aparência, Notificações, Chamadas, Permissões, Servidor, Sobre e Sair; o Ramal SIP fica com o SIP (etapa 9)
 - [x] Aparência: Sistema / Claro / Escuro (+ Material You opcional) — padrão **Claro** enquanto o esquema escuro for proposta (`cores.md` pergunta 9); sem Material You (só as cores do `cores.md`) ✔ 5214cce
 - [x] Notificações: atalhos para as configurações de cada canal (e as do app), com o estado de cada um ✔ ee1237c
 - [x] Permissões: estado de notificações, microfone, câmera, full-screen intent e bateria, com botão para o sistema ("Permitir" pede pelo diálogo; negada de vez abre o sistema) ✔ ee1237c
-- [ ] Chamadas: redução de ruído, cancelamento de eco, ganho automático, qualidade de áudio (32/64/128), resolução (360/720/1080), fps (15/24/30), banda; "Restaurar padrão"
+- [x] Chamadas: redução de ruído, cancelamento de eco, ganho automático, qualidade de áudio (32/64/128), resolução (360/720/1080), fps (15/24/30), banda; "Restaurar padrão" — valem a partir da próxima chamada; a prioridade da tela vem com o compartilhamento (etapa 9)
 - [x] Sobre: versão do app, servidor conectado, licenças ✔ 5214cce
 - [ ] `GET /usuario/permissoes` → mostrar Sistema (`parametros`) e Acessos (`permissoes`) só para quem tem
 - [ ] Sistema: `GET /parametros`; editar Firebase (ID do projeto, e-mail, chave — nunca exibida), forçar relay TURN, dias de gravação (0–36500), transcritor (URL, idioma); `PATCH /parametros` só com o que mudou

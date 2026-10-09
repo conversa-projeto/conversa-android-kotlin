@@ -10,6 +10,8 @@ import com.conversa.app.core.data.chamadas.ChamadasRemotas
 import com.conversa.app.core.data.chamadas.ChamadasRepositorio
 import com.conversa.app.core.data.mensagens.AgendadorEnvio
 import com.conversa.app.core.data.mensagens.AgendadorEnvioWorkManager
+import com.conversa.app.core.data.preferencias.PreferenciasRepositorio
+import com.conversa.app.core.model.FonteConfigChamada
 import com.conversa.app.core.network.auth.TokenProvider
 import com.conversa.app.core.network.config.ServerConfigProvider
 import dagger.Binds
@@ -39,6 +41,9 @@ abstract class DadosModulo {
 
     @Binds
     abstract fun chamadasRemotas(repositorio: ChamadasRepositorio): ChamadasRemotas
+
+    @Binds
+    abstract fun configChamada(repositorio: PreferenciasRepositorio): FonteConfigChamada
 
     companion object {
         /** Relógio injetável (testes controlam a hora). */

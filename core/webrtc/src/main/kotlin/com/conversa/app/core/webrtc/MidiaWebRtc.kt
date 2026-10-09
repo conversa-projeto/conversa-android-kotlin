@@ -5,6 +5,8 @@ import android.content.Context
 import android.content.pm.PackageManager
 import android.os.SystemClock
 import androidx.core.content.ContextCompat
+import com.conversa.app.core.model.ConfigChamada
+import com.conversa.app.core.model.FonteConfigChamada
 import com.conversa.app.core.model.ServidoresIce
 import com.conversa.app.core.network.api.ConversaApi
 import com.conversa.app.core.network.di.EscopoAplicacao
@@ -72,7 +74,8 @@ data class TrilhaRemota(
 
 /**
  * [MidiaChamada] com o libwebrtc e o MediaMTX (contrato §9.9, plano §3.5):
- * - publicação: uma `PeerConnection` só de envio (Opus a 32 kbps, câmera 360p a 15 fps), H264 → VP9 → resto;
+ * - publicação: uma `PeerConnection` só de envio, com a qualidade escolhida em Configurações
+ *   (8.5; padrão: Opus a 32 kbps, câmera 360p a 15 fps), H264 → VP9 → resto;
  * - uma assinatura por participante: `PeerConnection` só de recepção, registrada antes da
  *   resposta (#10); WHEP 404 tenta de novo (vídeo 40×1 s, áudio 12×0,8 s);
  * - conexão que falha (ICE) refaz só aquela `PeerConnection`;
@@ -89,6 +92,7 @@ class MidiaWebRtc @Inject constructor(
     private val whip: ClienteWhipWhep,
     private val api: ConversaApi,
     @EscopoAplicacao private val escopoApp: CoroutineScope,
+    private val fonteConfig: FonteConfigChamada,
 ) : MidiaChamada {
     private val vez = Dispatchers.Default.limitedParallelism(1)
     private val raiz = SupervisorJob(escopoApp.coroutineContext[Job])
@@ -117,6 +121,9 @@ class MidiaWebRtc @Inject constructor(
     private var chamadaId = 0L
     private var eu = 0L
     private var comVideo = false
+
+    /** Qualidade desta chamada, lida ao abrir a mídia (8.5): mudanças valem na próxima. */
+    private var config = ConfigChamada.PADRAO
 
     private class Local {
         var fonteAudio: AudioSource? = null
@@ -159,7 +166,10 @@ class MidiaWebRtc @Inject constructor(
 
     // --- MidiaChamada ---
 
-    override suspend fun abrirLocal(video: Boolean): MidiaLocal = naVez { abrir(video) }
+    override suspend fun abrirLocal(video: Boolean): MidiaLocal {
+        val escolhida = runCatching { fonteConfig.configChamada() }.getOrDefault(ConfigChamada.PADRAO)
+        return naVez { abrir(video, escolhida) }
+    }
 
     override suspend fun publicar(chamadaId: Long, eu: Long) = naVez { s ->
         this@MidiaWebRtc.chamadaId = chamadaId
@@ -225,11 +235,20 @@ class MidiaWebRtc @Inject constructor(
 
     // --- Mídia local ---
 
-    private fun abrir(video: Boolean): MidiaLocal {
+    private fun abrir(video: Boolean, escolhida: ConfigChamada): MidiaLocal {
+        if (local == null) {
+            config = escolhida
+            // Começo de chamada, nada vivo: a fábrica pode ser refeita com o áudio do aparelho pedido.
+            if (publicacao == null && assinaturas.isEmpty()) {
+                webrtc.prepararAudio(
+                    AudioDoAparelho(eco = config.cancelamentoEco, ruido = config.reducaoRuido, estereo = config.qualidadeAudio.estereo),
+                )
+            }
+        }
         val l = local ?: Local().also { local = it }
         if (l.audio == null && permitido(Manifest.permission.RECORD_AUDIO)) {
             try {
-                val fonte = webrtc.fabrica.createAudioSource(MediaConstraints())
+                val fonte = webrtc.fabrica.createAudioSource(restricoesDeAudio(config))
                 l.fonteAudio = fonte
                 l.audio = webrtc.fabrica.createAudioTrack("audio0", fonte)
             } catch (e: RuntimeException) {
@@ -250,7 +269,7 @@ class MidiaWebRtc @Inject constructor(
             val ajudante = SurfaceTextureHelper.create("camera", webrtc.egl.eglBaseContext)
             val fonte = webrtc.fabrica.createVideoSource(false)
             capturador.initialize(ajudante, contexto, fonte.capturerObserver)
-            capturador.startCapture(LARGURA, ALTURA, QUADROS)
+            capturador.startCapture(config.resolucao.largura, config.resolucao.altura, config.quadros)
             l.capturador = capturador
             l.ajudante = ajudante
             l.fonteVideo = fonte
@@ -280,7 +299,7 @@ class MidiaWebRtc @Inject constructor(
         l.quadrosPretos = null
         l.video?.setEnabled(true)
         if (!l.capturando && l.capturador != null) {
-            l.capturador?.startCapture(LARGURA, ALTURA, QUADROS)
+            l.capturador?.startCapture(config.resolucao.largura, config.resolucao.altura, config.quadros)
             l.capturando = true
         }
     }
@@ -341,7 +360,7 @@ class MidiaWebRtc @Inject constructor(
             )
             if (trilha is VideoTrack) preferirGravaveis(transceptor)
         }
-        val oferta = pc.criarOferta()
+        val oferta = pc.criarOferta().let { if (config.qualidadeAudio.estereo) estereo(it) else it }
         checar(s, pub)
         pc.definirLocal(oferta)
         checar(s, pub)
@@ -394,7 +413,7 @@ class MidiaWebRtc @Inject constructor(
         if (resultado.isError) Timber.w("Preferência de codec recusada")
     }
 
-    /** Opus a 32 kbps ("normal" do web) e vídeo a 15 fps (celular). */
+    /** Bitrate do Opus, fps e teto de banda do vídeo, como o `aplicarParametrosEnvio` do web (8.5). */
     private fun aplicarLimites(pc: PeerConnection) {
         for (transceptor in pc.transceivers) {
             val envio = transceptor.sender
@@ -404,9 +423,10 @@ class MidiaWebRtc @Inject constructor(
             if (trilha.kind() ==
                 MediaStreamTrack.AUDIO_TRACK_KIND
             ) {
-                codificacao.maxBitrateBps = BITRATE_AUDIO
+                codificacao.maxBitrateBps = config.qualidadeAudio.bitrate
             } else {
-                codificacao.maxFramerate = QUADROS
+                codificacao.maxFramerate = config.quadros
+                codificacao.maxBitrateBps = config.banda.bitrate
             }
             envio.setParameters(parametros)
         }
@@ -447,7 +467,7 @@ class MidiaWebRtc @Inject constructor(
         val recepcao = { RtpTransceiver.RtpTransceiverInit(RtpTransceiver.RtpTransceiverDirection.RECV_ONLY) }
         pc.addTransceiver(MediaStreamTrack.MediaType.MEDIA_TYPE_AUDIO, recepcao())
         if (a.comVideo) pc.addTransceiver(MediaStreamTrack.MediaType.MEDIA_TYPE_VIDEO, recepcao())
-        val oferta = pc.criarOferta()
+        val oferta = estereo(pc.criarOferta())
         checar(s, a)
         pc.definirLocal(oferta)
         checar(s, a)
@@ -683,14 +703,19 @@ class MidiaWebRtc @Inject constructor(
         return escopo.launch(dono, block = bloco)
     }
 
+    private fun estereo(oferta: SessionDescription) = SessionDescription(oferta.type, comOpusEstereo(oferta.description))
+
+    /** Processamento do microfone em software (o do aparelho vai na fábrica): eco, ruído e ganho. */
+    private fun restricoesDeAudio(c: ConfigChamada) = MediaConstraints().apply {
+        fun opcao(chave: String, ligado: Boolean) = mandatory.add(MediaConstraints.KeyValuePair(chave, ligado.toString()))
+        opcao("googEchoCancellation", c.cancelamentoEco)
+        opcao("googNoiseSuppression", c.reducaoRuido)
+        opcao("googHighpassFilter", c.reducaoRuido)
+        opcao("googAutoGainControl", c.ganhoAutomatico)
+    }
+
     private companion object {
         const val STREAM = "conversa"
-
-        // Padrão do web para celular: 360p a 15 fps; áudio "normal" a 32 kbps.
-        const val LARGURA = 640
-        const val ALTURA = 360
-        const val QUADROS = 15
-        const val BITRATE_AUDIO = 32_000
 
         // Quadro preto (câmera desligada): pequeno e 2 por segundo bastam.
         const val LARGURA_PRETO = 320

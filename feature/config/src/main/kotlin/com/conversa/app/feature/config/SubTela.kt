@@ -1,5 +1,6 @@
 package com.conversa.app.feature.config
 
+import androidx.compose.foundation.layout.RowScope
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
@@ -20,7 +21,12 @@ import androidx.compose.ui.res.stringResource
  */
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-internal fun SubTela(titulo: String, aoVoltar: () -> Unit, conteudo: @Composable (Modifier) -> Unit) {
+internal fun SubTela(
+    titulo: String,
+    aoVoltar: () -> Unit,
+    acoes: @Composable RowScope.() -> Unit = {},
+    conteudo: @Composable (Modifier) -> Unit,
+) {
     Scaffold(
         containerColor = MaterialTheme.colorScheme.surface,
         topBar = {
@@ -34,6 +40,7 @@ internal fun SubTela(titulo: String, aoVoltar: () -> Unit, conteudo: @Composable
                         )
                     }
                 },
+                actions = acoes,
             )
         },
     ) { margens -> conteudo(Modifier.padding(margens)) }

@@ -15,6 +15,7 @@ import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.outlined.KeyboardArrowRight
 import androidx.compose.material.icons.automirrored.outlined.Logout
+import androidx.compose.material.icons.outlined.Call
 import androidx.compose.material.icons.outlined.Dns
 import androidx.compose.material.icons.outlined.Info
 import androidx.compose.material.icons.outlined.Notifications
@@ -56,6 +57,7 @@ class AcoesConfiguracoes(
     val aoAbrirSobre: () -> Unit = {},
     val aoAbrirNotificacoes: () -> Unit = {},
     val aoAbrirPermissoes: () -> Unit = {},
+    val aoAbrirChamadas: () -> Unit = {},
     val aoFotoFalhar: () -> Unit = {},
     val aoAlterarTema: (PreferenciaTema) -> Unit = {},
     val aoSair: () -> Unit = {},
@@ -68,6 +70,7 @@ fun ConfiguracoesRotaTela(
     aoAbrirSobre: () -> Unit,
     aoAbrirNotificacoes: () -> Unit,
     aoAbrirPermissoes: () -> Unit,
+    aoAbrirChamadas: () -> Unit,
     modifier: Modifier = Modifier,
     viewModel: ConfiguracoesViewModel = hiltViewModel(),
 ) {
@@ -80,6 +83,7 @@ fun ConfiguracoesRotaTela(
             aoAbrirSobre = aoAbrirSobre,
             aoAbrirNotificacoes = aoAbrirNotificacoes,
             aoAbrirPermissoes = aoAbrirPermissoes,
+            aoAbrirChamadas = aoAbrirChamadas,
             aoFotoFalhar = viewModel::fotoFalhou,
             aoAlterarTema = viewModel::alterarTema,
             aoSair = viewModel::sair,
@@ -119,6 +123,12 @@ internal fun ConfiguracoesTela(estado: ConfiguracoesUiState, acoes: AcoesConfigu
                 stringResource(R.string.config_notificacoes),
                 stringResource(R.string.config_notificacoes_resumo),
                 acoes.aoAbrirNotificacoes,
+            )
+            Item(
+                Icons.Outlined.Call,
+                stringResource(R.string.config_chamadas),
+                stringResource(R.string.config_chamadas_resumo),
+                acoes.aoAbrirChamadas,
             )
             Item(
                 Icons.Outlined.VerifiedUser,

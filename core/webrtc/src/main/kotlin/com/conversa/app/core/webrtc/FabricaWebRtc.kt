@@ -25,24 +25,58 @@ import org.webrtc.SdpObserver
 import org.webrtc.SessionDescription
 import org.webrtc.audio.JavaAudioDeviceModule
 
-/** `PeerConnectionFactory` e `EglBase` únicos por processo, criados na primeira chamada (plano §3.5). */
+/**
+ * O que o módulo de áudio do aparelho faz (8.5): eco e ruído pelo hardware, quando houver,
+ * e microfone e saída em estéreo (qualidade "Música"). Só se escolhe ao criar a fábrica.
+ */
+data class AudioDoAparelho(val eco: Boolean = true, val ruido: Boolean = true, val estereo: Boolean = false)
+
+/**
+ * `PeerConnectionFactory` e `EglBase` únicos por processo, criados na primeira chamada
+ * (plano §3.5). A fábrica é refeita entre chamadas quando o [AudioDoAparelho] pedido muda.
+ */
 @Singleton
 class FabricaWebRtc @Inject constructor(@ApplicationContext private val contexto: Context) {
     val egl: EglBase by lazy { EglBase.create() }
 
-    val fabrica: PeerConnectionFactory by lazy {
+    private val inicializada by lazy {
         PeerConnectionFactory.initialize(PeerConnectionFactory.InitializationOptions.builder(contexto).createInitializationOptions())
-        val audio = JavaAudioDeviceModule.builder(contexto)
-            .setUseHardwareAcousticEchoCanceler(true)
-            .setUseHardwareNoiseSuppressor(true)
+    }
+    private var criada: Pair<AudioDoAparelho, PeerConnectionFactory>? = null
+    private var pedido = AudioDoAparelho()
+
+    val fabrica: PeerConnectionFactory
+        get() = synchronized(this) { criada?.second ?: criar(pedido) }
+
+    /**
+     * O áudio do aparelho da próxima chamada. Só com nada vivo (nem trilha nem conexão):
+     * se mudou, a fábrica atual é descartada e a próxima [fabrica] sai com o pedido.
+     */
+    fun prepararAudio(audio: AudioDoAparelho) = synchronized(this) {
+        pedido = audio
+        val atual = criada ?: return@synchronized
+        if (atual.first != audio) {
+            atual.second.dispose()
+            criada = null
+        }
+    }
+
+    private fun criar(audio: AudioDoAparelho): PeerConnectionFactory {
+        inicializada
+        val modulo = JavaAudioDeviceModule.builder(contexto)
+            .setUseHardwareAcousticEchoCanceler(audio.eco)
+            .setUseHardwareNoiseSuppressor(audio.ruido)
+            .setUseStereoInput(audio.estereo)
+            .setUseStereoOutput(audio.estereo)
             .createAudioDeviceModule()
-        PeerConnectionFactory.builder()
-            .setAudioDeviceModule(audio)
+        return PeerConnectionFactory.builder()
+            .setAudioDeviceModule(modulo)
             .setVideoEncoderFactory(DefaultVideoEncoderFactory(egl.eglBaseContext, true, true))
             .setVideoDecoderFactory(DefaultVideoDecoderFactory(egl.eglBaseContext))
             .createPeerConnectionFactory()
             // A fábrica guarda a própria referência ao módulo de áudio.
-            .also { audio.release() }
+            .also { modulo.release() }
+            .also { criada = audio to it }
     }
 }
 

@@ -15,7 +15,7 @@ import kotlinx.coroutines.flow.map
  * - id do dispositivo, reenviado no próximo login para reaproveitar o mesmo registro
  *   (contrato §2.1);
  * - último usuário digitado no login (só o login, nunca a senha), para preencher o campo;
- * - o tema escolhido (8.5).
+ * - o tema escolhido e a qualidade das chamadas (8.5).
  */
 class PreferenciasStore(private val dataStore: DataStore<Preferences>) {
     val enderecoServidor: Flow<String?> = dataStore.data.map { it[ENDERECO_SERVIDOR] }
@@ -35,6 +35,13 @@ class PreferenciasStore(private val dataStore: DataStore<Preferences>) {
 
     suspend fun salvarTema(chave: String) {
         dataStore.edit { it[TEMA] = chave }
+    }
+
+    /** Qualidade das chamadas como texto (`ConfigChamada.paraTexto`); nulo = padrão. */
+    val configChamada: Flow<String?> = dataStore.data.map { it[CONFIG_CHAMADA] }
+
+    suspend fun salvarConfigChamada(texto: String) {
+        dataStore.edit { it[CONFIG_CHAMADA] = texto }
     }
 
     suspend fun salvarEnderecoServidor(endereco: String) {
@@ -64,5 +71,6 @@ class PreferenciasStore(private val dataStore: DataStore<Preferences>) {
         val PEDIU_NOTIFICACOES = booleanPreferencesKey("pediu_notificacoes")
         val PEDIU_TELA_CHEIA = booleanPreferencesKey("pediu_tela_cheia")
         val TEMA = stringPreferencesKey("tema")
+        val CONFIG_CHAMADA = stringPreferencesKey("config_chamada")
     }
 }

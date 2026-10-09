@@ -68,3 +68,7 @@ data object RotaNotificacoes
 /** Permissões (8.5): notificações, microfone, câmera, tela cheia e bateria. */
 @Serializable
 data object RotaPermissoes
+
+/** Qualidade das chamadas (8.5): áudio e vídeo que este aparelho envia. */
+@Serializable
+data object RotaQualidadeChamadas

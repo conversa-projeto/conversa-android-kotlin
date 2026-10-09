@@ -22,6 +22,7 @@ import com.conversa.app.feature.config.ConfiguracoesRotaTela
 import com.conversa.app.feature.config.NotificacoesRotaTela
 import com.conversa.app.feature.config.PerfilRotaTela
 import com.conversa.app.feature.config.PermissoesRotaTela
+import com.conversa.app.feature.config.QualidadeChamadasRotaTela
 import com.conversa.app.feature.config.SobreRotaTela
 import com.conversa.app.feature.conversas.enviarpara.EnviarParaRotaTela
 import com.conversa.app.feature.conversas.grupo.CriarGrupoRotaTela
@@ -105,6 +106,7 @@ fun ConversaNavHost(destinoInicial: Any, principal: MainViewModel) {
                         aoAbrirSobre = { nav.navigate(RotaSobre) },
                         aoAbrirNotificacoes = { nav.navigate(RotaNotificacoes) },
                         aoAbrirPermissoes = { nav.navigate(RotaPermissoes) },
+                        aoAbrirChamadas = { nav.navigate(RotaQualidadeChamadas) },
                         modifier = modificador,
                     )
                 },
@@ -156,6 +158,7 @@ fun ConversaNavHost(destinoInicial: Any, principal: MainViewModel) {
         composable<RotaSobre> { SobreRotaTela(aoVoltar = { nav.popBackStack() }) }
         composable<RotaNotificacoes> { NotificacoesRotaTela(aoVoltar = { nav.popBackStack() }) }
         composable<RotaPermissoes> { PermissoesRotaTela(aoVoltar = { nav.popBackStack() }) }
+        composable<RotaQualidadeChamadas> { QualidadeChamadasRotaTela(aoVoltar = { nav.popBackStack() }) }
         composable<RotaPerfil> { PerfilRotaTela(aoVoltar = { nav.popBackStack() }) }
         composable<RotaMembros> {
             MembrosRotaTela(

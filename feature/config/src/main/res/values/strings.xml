@@ -79,4 +79,34 @@
     <string name="notificacoes_ativadas">Ativadas</string>
     <string name="notificacoes_desativadas">Desativadas</string>
     <string name="notificacoes_abrir_no_sistema">Abrir nas configurações do Android</string>
+    <!-- Qualidade das chamadas (8.5, CFG-06; textos do ConfiguracaoChamadas.vue) -->
+    <string name="config_chamadas">Chamadas</string>
+    <string name="config_chamadas_resumo">Qualidade do áudio e do vídeo</string>
+    <string name="chamadas_titulo">Chamadas</string>
+    <string name="chamadas_restaurar">Restaurar padrão</string>
+    <string name="chamadas_texto">O que este aparelho envia nas chamadas. As mudanças valem a partir da próxima chamada.</string>
+    <string name="chamadas_audio">Áudio</string>
+    <string name="chamadas_ruido">Redução de ruído</string>
+    <string name="chamadas_ruido_texto">Tira barulho de fundo, como ventilador e teclado.</string>
+    <string name="chamadas_eco">Cancelamento de eco</string>
+    <string name="chamadas_eco_texto">Evita que os outros ouçam a própria voz saindo do seu alto-falante. Desligue só usando fone.</string>
+    <string name="chamadas_ganho">Ganho automático do microfone</string>
+    <string name="chamadas_ganho_texto">Ajusta o volume da sua voz sozinho.</string>
+    <string name="chamadas_qualidade_audio">Qualidade do áudio</string>
+    <string name="chamadas_audio_normal">Normal</string>
+    <string name="chamadas_audio_normal_texto">Voz clara usando pouca banda (32 kbps).</string>
+    <string name="chamadas_audio_alta">Alta</string>
+    <string name="chamadas_audio_alta_texto">Voz com mais detalhe (64 kbps).</string>
+    <string name="chamadas_audio_musica">Música</string>
+    <string name="chamadas_audio_musica_texto">Estéreo a 128 kbps, para música.</string>
+    <string name="chamadas_video">Vídeo da câmera</string>
+    <string name="chamadas_resolucao">Resolução</string>
+    <string name="chamadas_quadros">Quadros por segundo</string>
+    <string name="chamadas_banda">Limite de banda</string>
+    <string name="chamadas_banda_auto">Automático</string>
+    <string name="chamadas_banda_auto_texto">O app ajusta conforme a conexão.</string>
+    <string name="chamadas_banda_economica">Econômico</string>
+    <string name="chamadas_banda_economica_texto">Até 0,5 Mbps: para conexões fracas ou dados móveis.</string>
+    <string name="chamadas_banda_alta">Alto</string>
+    <string name="chamadas_banda_alta_texto">Até 3 Mbps: imagem mais nítida em conexões boas.</string>
 </resources>
