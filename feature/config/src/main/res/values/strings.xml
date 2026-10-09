@@ -48,4 +48,35 @@
     <string name="sobre_nome_do_app">Conversa</string>
     <string name="sobre_servidor">Servidor: %1$s</string>
     <string name="sobre_licencas">Licenças de código aberto</string>
+    <string name="config_notificacoes">Notificações</string>
+    <string name="config_notificacoes_resumo">Mensagens, chamadas e avisos do sistema</string>
+    <string name="config_permissoes">Permissões</string>
+    <string name="config_permissoes_resumo">Notificações, microfone, câmera e bateria</string>
+    <!-- Permissões (8.5, CFG-04) -->
+    <string name="permissoes_titulo">Permissões</string>
+    <string name="permissoes_texto">O que o Conversa pode usar neste aparelho. O que já foi negado de vez só se muda nas configurações do Android.</string>
+    <string name="permissoes_notificacoes">Notificações</string>
+    <string name="permissoes_notificacoes_texto">Avisos de mensagens novas e de chamadas.</string>
+    <string name="permissoes_microfone">Microfone</string>
+    <string name="permissoes_microfone_texto">Chamadas e mensagens de voz.</string>
+    <string name="permissoes_camera">Câmera</string>
+    <string name="permissoes_camera_texto">Chamadas de vídeo.</string>
+    <string name="permissoes_tela_cheia">Chamadas em tela cheia</string>
+    <string name="permissoes_tela_cheia_texto">A chamada recebida aparece na tela, mesmo com o celular bloqueado.</string>
+    <string name="permissoes_bateria">Uso de bateria</string>
+    <string name="permissoes_bateria_texto">Sem restrição, chamadas e mensagens chegam na hora mesmo com o celular parado há muito tempo.</string>
+    <string name="permissoes_bateria_livre">Sem restrição</string>
+    <string name="permissoes_bateria_otimizada">Com restrição</string>
+    <string name="permissoes_concedida">Concedida</string>
+    <string name="permissoes_nao_concedida">Não concedida</string>
+    <string name="permissoes_permitir">Permitir</string>
+    <string name="permissoes_abrir_configuracoes">Abrir configurações</string>
+    <!-- Notificações (8.5) -->
+    <string name="notificacoes_titulo">Notificações</string>
+    <string name="notificacoes_texto">Som, vibração e o jeito de cada aviso se mudam nas configurações do Android. Toque num item para abrir.</string>
+    <string name="notificacoes_do_app">Notificações do Conversa</string>
+    <string name="notificacoes_tipos">Tipos de aviso</string>
+    <string name="notificacoes_ativadas">Ativadas</string>
+    <string name="notificacoes_desativadas">Desativadas</string>
+    <string name="notificacoes_abrir_no_sistema">Abrir nas configurações do Android</string>
 </resources>

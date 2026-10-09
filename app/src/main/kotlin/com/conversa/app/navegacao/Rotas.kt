@@ -60,3 +60,11 @@ data object RotaPerfil
 /** Sobre (8.5): versão, servidor e licenças. */
 @Serializable
 data object RotaSobre
+
+/** Notificações (8.5): as do app e as de cada canal. */
+@Serializable
+data object RotaNotificacoes
+
+/** Permissões (8.5): notificações, microfone, câmera, tela cheia e bateria. */
+@Serializable
+data object RotaPermissoes

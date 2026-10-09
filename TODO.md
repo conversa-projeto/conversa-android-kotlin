@@ -835,10 +835,10 @@
 - [x] Toque no avatar da direta (lista ou cabeçalho) → bottom sheet: foto, nome, e-mail, telefone ("Não informado"), "Ligar"; o "Ver anexos" entra com a tela do 8.6 ✔ 4d53ba8
 
 ### 8.5 Configurações (FC-804…808)
-- [ ] Tela com seções: Perfil, Aparência, Notificações, Chamadas, Permissões, Servidor, Sistema*, Acessos*, Ramal SIP, Sobre — já há Perfil, Aparência, Servidor, Sobre e Sair; o Ramal SIP fica com o SIP (etapa 9)
+- [ ] Tela com seções: Perfil, Aparência, Notificações, Chamadas, Permissões, Servidor, Sistema*, Acessos*, Ramal SIP, Sobre — já há Perfil, Aparência, Notificações, Permissões, Servidor, Sobre e Sair; o Ramal SIP fica com o SIP (etapa 9)
 - [x] Aparência: Sistema / Claro / Escuro (+ Material You opcional) — padrão **Claro** enquanto o esquema escuro for proposta (`cores.md` pergunta 9); sem Material You (só as cores do `cores.md`) ✔ 5214cce
-- [ ] Notificações: atalhos para as configurações de cada canal
-- [ ] Permissões: estado de notificações, microfone, câmera, full-screen intent e bateria, com botão para o sistema
+- [x] Notificações: atalhos para as configurações de cada canal (e as do app), com o estado de cada um
+- [x] Permissões: estado de notificações, microfone, câmera, full-screen intent e bateria, com botão para o sistema ("Permitir" pede pelo diálogo; negada de vez abre o sistema)
 - [ ] Chamadas: redução de ruído, cancelamento de eco, ganho automático, qualidade de áudio (32/64/128), resolução (360/720/1080), fps (15/24/30), banda; "Restaurar padrão"
 - [x] Sobre: versão do app, servidor conectado, licenças ✔ 5214cce
 - [ ] `GET /usuario/permissoes` → mostrar Sistema (`parametros`) e Acessos (`permissoes`) só para quem tem

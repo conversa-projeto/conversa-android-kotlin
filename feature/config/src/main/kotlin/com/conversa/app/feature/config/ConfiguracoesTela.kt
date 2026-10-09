@@ -17,7 +17,9 @@ import androidx.compose.material.icons.automirrored.outlined.KeyboardArrowRight
 import androidx.compose.material.icons.automirrored.outlined.Logout
 import androidx.compose.material.icons.outlined.Dns
 import androidx.compose.material.icons.outlined.Info
+import androidx.compose.material.icons.outlined.Notifications
 import androidx.compose.material.icons.outlined.Palette
+import androidx.compose.material.icons.outlined.VerifiedUser
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.HorizontalDivider
@@ -52,6 +54,8 @@ class AcoesConfiguracoes(
     val aoAbrirPerfil: () -> Unit = {},
     val aoTrocarServidor: () -> Unit = {},
     val aoAbrirSobre: () -> Unit = {},
+    val aoAbrirNotificacoes: () -> Unit = {},
+    val aoAbrirPermissoes: () -> Unit = {},
     val aoFotoFalhar: () -> Unit = {},
     val aoAlterarTema: (PreferenciaTema) -> Unit = {},
     val aoSair: () -> Unit = {},
@@ -62,6 +66,8 @@ fun ConfiguracoesRotaTela(
     aoAbrirPerfil: () -> Unit,
     aoTrocarServidor: () -> Unit,
     aoAbrirSobre: () -> Unit,
+    aoAbrirNotificacoes: () -> Unit,
+    aoAbrirPermissoes: () -> Unit,
     modifier: Modifier = Modifier,
     viewModel: ConfiguracoesViewModel = hiltViewModel(),
 ) {
@@ -72,6 +78,8 @@ fun ConfiguracoesRotaTela(
             aoAbrirPerfil = aoAbrirPerfil,
             aoTrocarServidor = aoTrocarServidor,
             aoAbrirSobre = aoAbrirSobre,
+            aoAbrirNotificacoes = aoAbrirNotificacoes,
+            aoAbrirPermissoes = aoAbrirPermissoes,
             aoFotoFalhar = viewModel::fotoFalhou,
             aoAlterarTema = viewModel::alterarTema,
             aoSair = viewModel::sair,
@@ -105,6 +113,18 @@ internal fun ConfiguracoesTela(estado: ConfiguracoesUiState, acoes: AcoesConfigu
                 titulo = stringResource(R.string.config_aparencia),
                 resumo = stringResource(textoDoTema(estado.tema)),
                 aoTocar = { escolherTema = true },
+            )
+            Item(
+                Icons.Outlined.Notifications,
+                stringResource(R.string.config_notificacoes),
+                stringResource(R.string.config_notificacoes_resumo),
+                acoes.aoAbrirNotificacoes,
+            )
+            Item(
+                Icons.Outlined.VerifiedUser,
+                stringResource(R.string.config_permissoes),
+                stringResource(R.string.config_permissoes_resumo),
+                acoes.aoAbrirPermissoes,
             )
             Item(Icons.Outlined.Dns, stringResource(R.string.config_servidor), estado.servidor, acoes.aoTrocarServidor)
             Item(Icons.Outlined.Info, stringResource(R.string.config_sobre), versaoDoApp(), acoes.aoAbrirSobre)

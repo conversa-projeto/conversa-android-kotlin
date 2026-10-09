@@ -86,6 +86,7 @@
 - 2026-10-09 · [Etapa 8 — perfil](2026-10-09-02-etapa-8-perfil.md) — módulo `:feature:config` com a tela Perfil: foto (Photo Picker, quadrado 256×256 em JPEG, remover, URL renovada a cada 30 s no máximo), nome e e-mail, troca de senha com as conferências e mensagens do web
 - 2026-10-09 · [Etapa 8 — perfil de outro usuário](2026-10-09-03-etapa-8-perfil-de-outro-usuario.md) — folha com foto, nome, e-mail, telefone ("Não informado") e "Ligar", aberta pelo avatar da direta na lista e pelo cabeçalho do chat
 - 2026-10-09 · [Etapa 8 — Configurações: tela, aparência e sobre](2026-10-09-04-etapa-8-configuracoes-aparencia-sobre.md) — aba Configurações no `:feature:config` (usuário → perfil, Aparência, Servidor, Sobre com licenças, Sair); tema Sistema/Claro/Escuro com padrão Claro enquanto o escuro for proposta; `surfaceContainer*` do esquema escuro
+- 2026-10-09 · [Etapa 8 — notificações e permissões](2026-10-09-05-etapa-8-notificacoes-e-permissoes.md) — Permissões (notificações, microfone, câmera, tela cheia, bateria: estado e "Permitir"/"Abrir configurações") e Notificações (as do app e cada canal, abrindo a tela do sistema)
 
 ## Extras — SIP, compartilhar tela (etapa 9)
 _(nada ainda)_

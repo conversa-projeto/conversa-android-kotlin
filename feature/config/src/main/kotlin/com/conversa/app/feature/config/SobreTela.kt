@@ -7,17 +7,10 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.automirrored.filled.ArrowBack
-import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.HorizontalDivider
-import androidx.compose.material3.Icon
-import androidx.compose.material3.IconButton
 import androidx.compose.material3.ListItem
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
-import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
@@ -57,28 +50,11 @@ class SobreViewModel @Inject constructor(servidor: ServidorRepositorio) : ViewMo
 }
 
 /** Sobre (8.5): a versão do app, o servidor conectado e as licenças de código aberto. */
-@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun SobreRotaTela(aoVoltar: () -> Unit, viewModel: SobreViewModel = hiltViewModel()) {
     val servidor by viewModel.servidor.collectAsStateWithLifecycle()
-    Scaffold(
-        // Uma cor só, como a lista de Configurações (os itens da lista ficam na superfície).
-        containerColor = MaterialTheme.colorScheme.surface,
-        topBar = {
-            TopAppBar(
-                title = { Text(stringResource(R.string.config_sobre)) },
-                navigationIcon = {
-                    IconButton(onClick = aoVoltar) {
-                        Icon(
-                            Icons.AutoMirrored.Filled.ArrowBack,
-                            contentDescription = stringResource(com.conversa.app.core.ui.R.string.voltar),
-                        )
-                    }
-                },
-            )
-        },
-    ) { margens ->
-        LazyColumn(Modifier.fillMaxSize().padding(margens)) {
+    SubTela(titulo = stringResource(R.string.config_sobre), aoVoltar = aoVoltar) { modificador ->
+        LazyColumn(modificador.fillMaxSize()) {
             item {
                 Column(Modifier.fillMaxWidth().padding(16.dp), verticalArrangement = Arrangement.spacedBy(4.dp)) {
                     Text(stringResource(R.string.sobre_nome_do_app), style = MaterialTheme.typography.titleLarge)
