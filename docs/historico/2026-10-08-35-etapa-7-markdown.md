@@ -4,7 +4,7 @@
 - **Tipo:** funcionalidade / dependência nova
 - **Itens:** `TODO.md` 7.9 (Markdown); FC-510; MSG-15
 - **Branch:** `reescrita`
-- **Commits:** (preencher)
+- **Commits:** `26f4ea2`
 
 ## Contexto
 No web (`MessageContent.vue`, `useMarkdown.ts`), um bloco ```` ```md ```` ou ```` ```markdown ```` aparece formatado (`marked`), com "Visualizar" e "Código" no cabeçalho. Os blocos de código do Android ([27](2026-10-08-27-etapa-7-blocos-de-codigo.md)) mostravam o Markdown como texto.
