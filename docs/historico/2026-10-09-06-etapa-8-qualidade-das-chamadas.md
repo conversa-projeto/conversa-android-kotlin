@@ -4,7 +4,7 @@
 - **Tipo:** funcionalidade
 - **Itens:** `TODO.md` 8.5 (Chamadas); FC-807; CFG-06, CHA-20
 - **Branch:** `reescrita`
-- **Commits:** (preencher)
+- **Commits:** `705ee2e`
 
 ## Contexto
 O web tem "Configurações → Chamadas" (`ConfiguracaoChamadas.vue`, `useConfigChamada.ts`), guardado no navegador:

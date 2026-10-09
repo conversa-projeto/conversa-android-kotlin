@@ -839,7 +839,7 @@
 - [x] Aparência: Sistema / Claro / Escuro (+ Material You opcional) — padrão **Claro** enquanto o esquema escuro for proposta (`cores.md` pergunta 9); sem Material You (só as cores do `cores.md`) ✔ 5214cce
 - [x] Notificações: atalhos para as configurações de cada canal (e as do app), com o estado de cada um ✔ ee1237c
 - [x] Permissões: estado de notificações, microfone, câmera, full-screen intent e bateria, com botão para o sistema ("Permitir" pede pelo diálogo; negada de vez abre o sistema) ✔ ee1237c
-- [x] Chamadas: redução de ruído, cancelamento de eco, ganho automático, qualidade de áudio (32/64/128), resolução (360/720/1080), fps (15/24/30), banda; "Restaurar padrão" — valem a partir da próxima chamada; a prioridade da tela vem com o compartilhamento (etapa 9)
+- [x] Chamadas: redução de ruído, cancelamento de eco, ganho automático, qualidade de áudio (32/64/128), resolução (360/720/1080), fps (15/24/30), banda; "Restaurar padrão" — valem a partir da próxima chamada; a prioridade da tela vem com o compartilhamento (etapa 9) ✔ 705ee2e
 - [x] Sobre: versão do app, servidor conectado, licenças ✔ 5214cce
 - [ ] `GET /usuario/permissoes` → mostrar Sistema (`parametros`) e Acessos (`permissoes`) só para quem tem
 - [ ] Sistema: `GET /parametros`; editar Firebase (ID do projeto, e-mail, chave — nunca exibida), forçar relay TURN, dias de gravação (0–36500), transcritor (URL, idioma); `PATCH /parametros` só com o que mudou
