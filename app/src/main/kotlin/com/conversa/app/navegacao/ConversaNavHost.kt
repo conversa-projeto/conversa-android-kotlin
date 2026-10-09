@@ -16,6 +16,7 @@ import com.conversa.app.feature.auth.login.AvisoLogin
 import com.conversa.app.feature.auth.login.LoginRotaTela
 import com.conversa.app.feature.auth.servidor.ServidorRotaTela
 import com.conversa.app.feature.chamada.HistoricoChamadasRota
+import com.conversa.app.feature.chamada.rememberLigarParaUsuario
 import com.conversa.app.feature.chat.ChatRotaTela
 import com.conversa.app.feature.config.PerfilRotaTela
 import com.conversa.app.feature.conversas.enviarpara.EnviarParaRotaTela
@@ -73,11 +74,14 @@ fun ConversaNavHost(destinoInicial: Any, principal: MainViewModel) {
         composable<RotaPrincipal> {
             PrincipalTela(
                 conversas = { modificador ->
+                    // "Ligar" do perfil da pessoa (8.4): pede o microfone e liga, como os botões da conversa.
+                    val ligar = rememberLigarParaUsuario()
                     ConversasRotaTela(
                         aoAbrirConversa = { nav.navigate(RotaChat(it)) },
                         aoNovaConversa = { nav.navigate(RotaNovaConversa) },
                         aoMembros = { nav.navigate(RotaMembros(it)) },
                         aoPesquisarEmTodos = { termo -> nav.navigate(RotaPesquisa(termo)) },
+                        aoLigar = ligar,
                         modifier = modificador,
                     )
                 },

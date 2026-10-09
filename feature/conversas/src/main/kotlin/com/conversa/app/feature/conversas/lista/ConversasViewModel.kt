@@ -9,6 +9,7 @@ import com.conversa.app.core.data.presenca.PresencaRepositorio
 import com.conversa.app.core.data.sessao.IniciadorSessao
 import com.conversa.app.core.model.Contato
 import com.conversa.app.core.model.Conversa
+import com.conversa.app.core.model.FichaUsuario
 import com.conversa.app.core.model.PreviaConversa
 import com.conversa.app.core.model.RotuloData
 import com.conversa.app.core.model.TipoConversa
@@ -16,6 +17,7 @@ import com.conversa.app.core.model.avatarDoContato
 import com.conversa.app.core.model.contatoCombina
 import com.conversa.app.core.model.conversaCombina
 import com.conversa.app.core.model.diretaCom
+import com.conversa.app.core.model.fichaDaConversa
 import com.conversa.app.core.model.ordenarConversas
 import com.conversa.app.core.model.previaDaConversa
 import com.conversa.app.core.model.rotuloData
@@ -51,6 +53,8 @@ data class ItemConversa(
     /** Posição entre as fixadas, para habilitar "mover para cima/baixo". */
     val podeSubir: Boolean = false,
     val podeDescer: Boolean = false,
+    /** Direta: o perfil da pessoa, aberto pelo avatar (8.4). */
+    val ficha: FichaUsuario? = null,
 )
 
 /** Contato sem conversa direta, na seção "Nova conversa" (CON-02). */
@@ -181,6 +185,7 @@ class ConversasViewModel @Inject constructor(
                 digitando = d.digitando[conversa.id].orEmpty().isNotEmpty(),
                 podeSubir = posicao > 0,
                 podeDescer = posicao >= 0 && posicao < fixadasIds.lastIndex,
+                ficha = fichaDaConversa(conversa, d.contatos),
             )
         }
 

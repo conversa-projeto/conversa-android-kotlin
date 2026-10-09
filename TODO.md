@@ -832,7 +832,7 @@
 - [x] Avatar com URL expirada → renovar (no máximo a cada 30 s) ✔ 143d8d6
 
 ### 8.4 Perfil de outro usuário (FC-803, AUT-10)
-- [ ] Toque no avatar da direta → bottom sheet: foto, nome, e-mail, telefone ("Não informado"), "Ver anexos", "Ligar"
+- [x] Toque no avatar da direta (lista ou cabeçalho) → bottom sheet: foto, nome, e-mail, telefone ("Não informado"), "Ligar"; o "Ver anexos" entra com a tela do 8.6
 
 ### 8.5 Configurações (FC-804…808)
 - [ ] Tela com seções: Perfil, Aparência, Notificações, Chamadas, Permissões, Servidor, Sistema*, Acessos*, Ramal SIP, Sobre

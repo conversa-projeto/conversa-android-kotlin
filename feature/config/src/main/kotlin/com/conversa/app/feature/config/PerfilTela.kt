@@ -3,6 +3,7 @@ package com.conversa.app.feature.config
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.PickVisualMediaRequest
 import androidx.activity.result.contract.ActivityResultContracts
+import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -13,6 +14,7 @@ import androidx.compose.foundation.layout.imePadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
@@ -133,7 +135,14 @@ private fun TextoAviso(aviso: Aviso?) {
 private fun BlocoFoto(estado: PerfilUiState, acoes: AcoesPerfil) {
     Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(16.dp)) {
         Box(contentAlignment = Alignment.Center) {
-            Avatar(estado.nome, estado.fotoUrl, tamanho = 80.dp, aoFalhar = acoes.aoFotoFalhar)
+            // A borda marca o círculo da inicial: o fundo dela (#F5F5F5) é o mesmo da tela.
+            Avatar(
+                estado.nome,
+                estado.fotoUrl,
+                tamanho = 80.dp,
+                aoFalhar = acoes.aoFotoFalhar,
+                modifier = Modifier.border(1.dp, MaterialTheme.colorScheme.outlineVariant, CircleShape),
+            )
             if (estado.enviandoFoto) CircularProgressIndicator(Modifier.size(80.dp))
         }
         Column(verticalArrangement = Arrangement.spacedBy(6.dp)) {

@@ -65,6 +65,12 @@ class LigarViewModel @Inject constructor(
     fun ligarPara(tipo: TipoChamada, participantes: List<Long>, conversaId: Long?) {
         gerenciador.ligar(tipo, participantes, conversaId)
     }
+
+    /** Voz na direta com [usuarioId] (o "Ligar" do perfil da pessoa, 8.4): ele e eu, sem buscar a conversa. */
+    fun ligarParaUsuario(usuarioId: Long, conversaId: Long) {
+        val eu = sessao.sessao.value?.usuarioId ?: return
+        gerenciador.ligar(TipoChamada.AUDIO, listOf(usuarioId, eu).distinct(), conversaId)
+    }
 }
 
 /**
@@ -85,6 +91,13 @@ fun rememberLigarNovamente(viewModel: LigarViewModel = hiltViewModel()): (Chamad
     return { chamada ->
         comPermissao(chamada.tipo) { viewModel.ligarPara(chamada.tipo, chamada.participantes.map { it.usuarioId }, chamada.conversaId) }
     }
+}
+
+/** "Ligar" do perfil da pessoa na lista de conversas (8.4): chamada de voz na direta com ela. */
+@Composable
+fun rememberLigarParaUsuario(viewModel: LigarViewModel = hiltViewModel()): (usuarioId: Long, conversaId: Long) -> Unit {
+    val comPermissao = rememberComPermissaoDeLigar(viewModel)
+    return { usuario, conversa -> comPermissao(TipoChamada.AUDIO) { viewModel.ligarParaUsuario(usuario, conversa) } }
 }
 
 /**

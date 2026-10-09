@@ -44,6 +44,7 @@ import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.pulltorefresh.PullToRefreshBox
+import androidx.compose.material3.ripple
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -70,6 +71,7 @@ import com.conversa.app.core.ui.componentes.Avatar
 import com.conversa.app.core.ui.componentes.Carregando
 import com.conversa.app.core.ui.componentes.EstadoErro
 import com.conversa.app.core.ui.componentes.EstadoVazio
+import com.conversa.app.core.ui.componentes.FolhaPerfilUsuario
 import com.conversa.app.core.ui.componentes.IndicadorDigitando
 import com.conversa.app.core.ui.componentes.LocalAvisos
 import com.conversa.app.core.ui.componentes.mostrarErro
@@ -94,6 +96,8 @@ class AcoesConversas(
     val aoMembros: (Long) -> Unit = {},
     /** "Pesquisar em todos os chats" (8.2), com o termo do campo. */
     val aoPesquisarEmTodos: (String) -> Unit = {},
+    /** "Ligar" do perfil da pessoa (8.4): voz na direta. */
+    val aoLigar: (usuarioId: Long, conversaId: Long) -> Unit = { _, _ -> },
 )
 
 @Composable
@@ -102,6 +106,7 @@ fun ConversasRotaTela(
     aoNovaConversa: () -> Unit,
     aoMembros: (Long) -> Unit,
     aoPesquisarEmTodos: (String) -> Unit,
+    aoLigar: (usuarioId: Long, conversaId: Long) -> Unit,
     modifier: Modifier = Modifier,
     viewModel: ConversasViewModel = hiltViewModel(),
 ) {
@@ -128,6 +133,7 @@ fun ConversasRotaTela(
             aoArquivar = viewModel::arquivar,
             aoMembros = aoMembros,
             aoPesquisarEmTodos = aoPesquisarEmTodos,
+            aoLigar = aoLigar,
         ),
         modifier = modifier,
     )
@@ -141,6 +147,8 @@ fun ConversasRotaTela(
 @Composable
 fun ConversasTela(estado: ConversasUiState, acoes: AcoesConversas, modifier: Modifier = Modifier) {
     var menuDe by rememberSaveable { mutableStateOf<Long?>(null) }
+    // Direta: o toque no avatar abre o perfil da pessoa (8.4), como o web.
+    var perfilDe by rememberSaveable { mutableStateOf<Long?>(null) }
     Scaffold(
         modifier = modifier,
         // Dentro da tela principal: a barra inferior já cuida da área do sistema embaixo.
@@ -172,7 +180,7 @@ fun ConversasTela(estado: ConversasUiState, acoes: AcoesConversas, modifier: Mod
                         } else {
                             EstadoVazio(titulo = stringResource(R.string.busca_vazia), icone = Icons.Outlined.Search)
                         }
-                    else -> Lista(estado, acoes, aoMenu = { menuDe = it })
+                    else -> Lista(estado, acoes, aoMenu = { menuDe = it }, aoVerPerfil = { perfilDe = it })
                 }
             }
         }
@@ -181,6 +189,17 @@ fun ConversasTela(estado: ConversasUiState, acoes: AcoesConversas, modifier: Mod
     val itemDoMenu = menuDe?.let { id -> (estado.principais + estado.arquivadas).firstOrNull { it.id == id } }
     if (itemDoMenu != null) {
         MenuConversa(itemDoMenu, acoes, aoFechar = { menuDe = null })
+    }
+    val itemDoPerfil = perfilDe?.let { id -> (estado.principais + estado.arquivadas).firstOrNull { it.id == id } }
+    itemDoPerfil?.ficha?.let { ficha ->
+        FolhaPerfilUsuario(
+            ficha = ficha,
+            aoFechar = { perfilDe = null },
+            aoLigar = {
+                perfilDe = null
+                acoes.aoLigar(ficha.id, itemDoPerfil.id)
+            },
+        )
     }
 }
 
@@ -218,11 +237,17 @@ private fun CampoBusca(termoInicial: String, aoAlterar: (String) -> Unit, aoPesq
 }
 
 @Composable
-private fun Lista(estado: ConversasUiState, acoes: AcoesConversas, aoMenu: (Long) -> Unit) {
+private fun Lista(estado: ConversasUiState, acoes: AcoesConversas, aoMenu: (Long) -> Unit, aoVerPerfil: (Long) -> Unit) {
     // Lista sobre a superfície branca (como no FMX): o fundo do avatar (#F5F5F5) precisa de contraste.
     LazyColumn(Modifier.fillMaxSize().background(MaterialTheme.colorScheme.surface)) {
         items(estado.principais, key = { "c${it.id}" }) { item ->
-            LinhaConversa(item, mostrarArquivada = estado.termo.isNotBlank(), aoAbrir = acoes.aoAbrir, aoMenu = aoMenu)
+            LinhaConversa(
+                item,
+                mostrarArquivada = estado.termo.isNotBlank(),
+                aoAbrir = acoes.aoAbrir,
+                aoMenu = aoMenu,
+                aoVerPerfil = aoVerPerfil,
+            )
         }
         if (estado.arquivadas.isNotEmpty()) {
             item(key = "arquivadas") {
@@ -240,7 +265,7 @@ private fun Lista(estado: ConversasUiState, acoes: AcoesConversas, aoMenu: (Long
             }
             if (estado.arquivadasAbertas) {
                 items(estado.arquivadas, key = { "a${it.id}" }) { item ->
-                    LinhaConversa(item, mostrarArquivada = false, aoAbrir = acoes.aoAbrir, aoMenu = aoMenu)
+                    LinhaConversa(item, mostrarArquivada = false, aoAbrir = acoes.aoAbrir, aoMenu = aoMenu, aoVerPerfil = aoVerPerfil)
                 }
             }
         }
@@ -268,8 +293,15 @@ private fun Lista(estado: ConversasUiState, acoes: AcoesConversas, aoMenu: (Long
 }
 
 @Composable
-private fun LinhaConversa(item: ItemConversa, mostrarArquivada: Boolean, aoAbrir: (Long) -> Unit, aoMenu: (Long) -> Unit) {
+private fun LinhaConversa(
+    item: ItemConversa,
+    mostrarArquivada: Boolean,
+    aoAbrir: (Long) -> Unit,
+    aoMenu: (Long) -> Unit,
+    aoVerPerfil: (Long) -> Unit,
+) {
     val rotuloMenu = stringResource(R.string.mais_opcoes)
+    val rotuloPerfil = stringResource(com.conversa.app.core.ui.R.string.perfil_usuario_ver)
     Row(
         modifier = Modifier
             .fillMaxWidth()
@@ -279,10 +311,16 @@ private fun LinhaConversa(item: ItemConversa, mostrarArquivada: Boolean, aoAbrir
                 onLongClickLabel = rotuloMenu,
             )
             .semantics {
-                customActions = listOf(
+                customActions = listOfNotNull(
                     CustomAccessibilityAction(rotuloMenu) {
                         aoMenu(item.id)
                         true
+                    },
+                    item.ficha?.let {
+                        CustomAccessibilityAction(rotuloPerfil) {
+                            aoVerPerfil(item.id)
+                            true
+                        }
                     },
                 )
             }
@@ -290,7 +328,18 @@ private fun LinhaConversa(item: ItemConversa, mostrarArquivada: Boolean, aoAbrir
         verticalAlignment = Alignment.CenterVertically,
         horizontalArrangement = Arrangement.spacedBy(12.dp),
     ) {
-        Avatar(nome = item.titulo, url = item.avatarUrl, tamanho = 48.dp, online = item.online)
+        // Na direta, o avatar abre o perfil da pessoa (o web usa o botão "Ver perfil"). Ripple redondo
+        // sem recortar: a bolinha de online fica no canto.
+        val toqueNoAvatar = if (item.ficha != null) {
+            Modifier.clickable(
+                interactionSource = null,
+                indication = ripple(bounded = false, radius = 24.dp),
+                onClickLabel = rotuloPerfil,
+            ) { aoVerPerfil(item.id) }
+        } else {
+            Modifier
+        }
+        Avatar(nome = item.titulo, url = item.avatarUrl, tamanho = 48.dp, online = item.online, modifier = toqueNoAvatar)
         Column(Modifier.weight(1f)) {
             Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(6.dp)) {
                 Text(

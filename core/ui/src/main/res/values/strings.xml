@@ -20,4 +20,11 @@
     <string name="pesquisa_pesquisando">Pesquisando…</string>
     <string name="pesquisa_nenhum_resultado">Nenhum resultado encontrado.</string>
     <string name="ontem">Ontem</string>
+    <!-- Perfil de outra pessoa (8.4, UserInfoModal.vue do web) -->
+    <string name="perfil_usuario_ver">Ver perfil</string>
+    <string name="perfil_usuario_email">E-mail</string>
+    <string name="perfil_usuario_telefone">Telefone</string>
+    <string name="perfil_usuario_nao_informado">Não informado</string>
+    <string name="perfil_usuario_ligar">Ligar</string>
+    <string name="perfil_usuario_ver_anexos">Ver anexos</string>
 </resources>

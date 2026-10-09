@@ -84,10 +84,12 @@ import com.conversa.app.core.model.Mensagem
 import com.conversa.app.core.model.RotuloDia
 import com.conversa.app.core.model.TipoChamada
 import com.conversa.app.core.model.TipoConteudo
+import com.conversa.app.core.model.fichaDaConversa
 import com.conversa.app.core.model.rotuloDia
 import com.conversa.app.core.ui.componentes.Avatar
 import com.conversa.app.core.ui.componentes.Carregando
 import com.conversa.app.core.ui.componentes.EstadoVazio
+import com.conversa.app.core.ui.componentes.FolhaPerfilUsuario
 import com.conversa.app.core.ui.componentes.IndicadorDigitando
 import com.conversa.app.core.ui.componentes.LocalAvisos
 import com.conversa.app.core.ui.componentes.mostrarErro
@@ -132,6 +134,20 @@ fun ChatRotaTela(
     val escopo = rememberCoroutineScope()
     // Botões de voz e vídeo (e "ligar de novo" na bolha da chamada): pede as permissões e liga (6.4).
     val aoLigar: (TipoChamada) -> Unit = rememberLigar(estado.conversa)
+    // Perfil da pessoa (8.4, AUT-10): dados do contato e a foto da conversa, como o web.
+    var verPerfil by rememberSaveable { mutableStateOf(false) }
+    val contatos by viewModel.contatosMencao.collectAsStateWithLifecycle()
+    val ficha = remember(estado.conversa, contatos) { estado.conversa?.let { fichaDaConversa(it, contatos) } }
+    if (verPerfil && ficha != null) {
+        FolhaPerfilUsuario(
+            ficha = ficha,
+            aoFechar = { verPerfil = false },
+            aoLigar = {
+                verPerfil = false
+                aoLigar(TipoChamada.AUDIO)
+            },
+        )
+    }
     val contexto = LocalContext.current
     val recursos = LocalResources.current
     val semApp = stringResource(R.string.nenhum_app_para_abrir)
@@ -213,6 +229,7 @@ fun ChatRotaTela(
             pesquisa = pesquisa,
             acoes = AcoesChat(
                 aoVoltar = aoVoltar,
+                aoVerPerfil = { verPerfil = true },
                 aoMembros = { aoMembros(viewModel.conversaId) },
                 aoAbrirPesquisa = viewModel::abrirPesquisa,
                 aoFecharPesquisa = viewModel::fecharPesquisa,
@@ -341,6 +358,8 @@ private fun abrirComOutroApp(contexto: Context, arquivo: File, mime: String?): B
 
 class AcoesChat(
     val aoVoltar: () -> Unit = {},
+    /** Direta: avatar e nome do cabeçalho abrem o perfil da pessoa (8.4). */
+    val aoVerPerfil: () -> Unit = {},
     /** Pesquisa na conversa (8.2). */
     val aoAbrirPesquisa: () -> Unit = {},
     val aoFecharPesquisa: () -> Unit = {},
@@ -599,11 +618,14 @@ private fun Cabecalho(estado: ChatUiState, acoes: AcoesChat) {
         },
         title = {
             // Grupo: avatar e nome abrem os dados do grupo, como o painel do web (eaa8bac).
+            // Direta: abrem o perfil da pessoa (8.4).
             Row(
                 modifier = Modifier.clickable(
-                    enabled = estado.grupo,
-                    onClickLabel = stringResource(R.string.membros_do_grupo),
-                    onClick = acoes.aoMembros,
+                    enabled = conversa != null,
+                    onClickLabel = stringResource(
+                        if (estado.grupo) R.string.membros_do_grupo else com.conversa.app.core.ui.R.string.perfil_usuario_ver,
+                    ),
+                    onClick = if (estado.grupo) acoes.aoMembros else acoes.aoVerPerfil,
                 ),
                 verticalAlignment = Alignment.CenterVertically,
                 horizontalArrangement = Arrangement.spacedBy(10.dp),
