@@ -4,7 +4,7 @@
 - **Tipo:** funcionalidade / design
 - **Itens:** `TODO.md` 8.5 (Aparência, Sobre e o começo da tela com seções); FC-804, FC-805; CFG-01, CFG-02
 - **Branch:** `reescrita`
-- **Commits:** (preencher)
+- **Commits:** `5214cce`
 
 ## Contexto
 A aba Configurações era provisória, no `app`: o usuário, o servidor e "Sair". O 8.5 pede uma tela com seções, como as abas do `ProfileSettingsModal.vue` do web, que no celular viram uma lista em que cada item abre uma sub-tela.
