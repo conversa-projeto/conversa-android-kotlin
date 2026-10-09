@@ -20,6 +20,8 @@
 8. [Anexo A — Commits desde 2026-09-12 e o que tocaram](#8-anexo-a--commits-desde-2026-09-12-e-o-que-tocaram)
 9. [Anexo B — Código morto / legado encontrado](#9-anexo-b--código-morto--legado-encontrado)
 10. [🆕 Atualização de 2026-10-06 (noite) — commit `39d06f9`](#10-atualização-de-2026-10-06-noite--commit-39d06f9)
+11. [🆕 Atualização de 2026-10-08 — commits `eaa8bac` e `785bdef`](#11-atualização-de-2026-10-08--commits-eaa8bac-e-785bdef)
+12. [🆕 Atualização de 2026-10-08 (noite) — commits `7322e83` e `e8d82cb`](#12-atualização-de-2026-10-08-noite--commits-7322e83-e-e8d82cb)
 
 ---
 
@@ -422,13 +424,13 @@ Hora (`HH:MM`) dentro da bolha (`MensagemStatus.vue`), posição conforme varian
 - Sem menu de ações e sem reações. Não entra na galeria do visualizador. Citações de mensagem oculta mostram "Mensagem oculta" sem o conteúdo.
 - 🆕 `eaa8bac` Votação oculta: ao revelar, mostra o resumo só de leitura (`EnqueteResumo.vue`): "📊 <pergunta>" e cada opção com a contagem (tooltip com os nomes ou "Ninguém votou"); "Carregando votação..." / erro.
 
-**MSG-17 Selo de mensagem agendada** (só o autor vê antes da hora)
+**MSG-17 Selo de mensagem agendada** (só o autor vê antes da hora) — 🆕 `7322e83`: **substituído** pela lista do relógio (ver §12); a agendada não aparece mais no chat antes da hora. A descrição abaixo é histórica.
 - Acima da bolha: "Agendada para hoje HH:MM" / "amanhã HH:MM" / "dd/MM HH:MM". Some exatamente na hora (timer agendado, não espera o ciclo de 30 s — `useAgora.ts`).
 
 **MSG-18 Modo conexão lenta**
 - Com `navigator.connection.effectiveType` em `slow-2g`/`2g`: imagens mostram "Toque para abrir" e vídeos "Toque para carregar" antes de baixar (`useConexao.ts`).
 
-**MSG-19 Citação (resposta/encaminhada) na bolha** (`BolhaReferencia.vue`, `ReferenciaRecursiva.vue`)
+**MSG-19 Citação (resposta/encaminhada) na bolha** (`BolhaReferencia.vue`, `ReferenciaRecursiva.vue`) — 🆕 `7322e83`: dentro da citação, a encaminhada também não repete o que já aparece na citação de baixo (§12)
 - Bloco com título: remetente (resposta) ou "Encaminhado de <remetente>" / "Encaminhado"; hora; conteúdos da original (imagens, áudio etc.), citação aninhada recursiva até profundidade 5. Clique no título vai para a original (MSG-06).
 - Encaminhada: conteúdos próprios iguais aos da referência não são repetidos — só aparece o que foi acrescentado.
 
@@ -486,12 +488,12 @@ Hora (`HH:MM`) dentro da bolha (`MensagemStatus.vue`), posição conforme varian
 - Qualquer letra digitada fora de um campo, sem modal por cima, foca o campo de mensagem no fim do texto.
 - Campo recebe foco ao trocar de conversa e ao iniciar resposta.
 
-**ENV-13 Agendar mensagem** (`AgendarMensagemModal.vue`)
+**ENV-13 Agendar mensagem** (`AgendarMensagemModal.vue`) — 🆕 `7322e83`: depois de agendar, a mensagem vai para o relógio ao lado do microfone, não para o chat (§12)
 - Botão "Agendar mensagem" (aparece com conteúdo). Modal "Agendar mensagem": "Data" (calendário próprio `DateInput`) e "Hora" (`HH:MM`); padrão **amanhã 08:00**.
 - Validações: "Data/hora inválida", "O envio deve ser no mínimo 5 minutos no futuro", "O envio não pode ser mais de 1 ano no futuro". Botões "Cancelar" / "Agendar".
 - Envia o conteúdo atual (texto + fila) com `visivel_em` em ISO (UTC). O autor vê a mensagem na hora com o selo (MSG-17); destinatários só depois.
 
-**ENV-14 Cancelar mensagem agendada**
+**ENV-14 Cancelar mensagem agendada** — 🆕 `7322e83`: agora pela lista "Mensagens agendadas" do relógio (§12), com a mesma confirmação
 - Na própria mensagem ainda futura, a ação "Ocultar" vira confirmação "Cancelar mensagem agendada" / "Ela não será enviada." / "Cancelar envio" / "Voltar".
 - API: `DELETE /mensagem?id=` — para agendada não enviada a resposta **não** traz `excluida_em` e a mensagem é removida da lista.
 
@@ -523,7 +525,7 @@ Hora (`HH:MM`) dentro da bolha (`MensagemStatus.vue`), posição conforme varian
 - Ação "Copiar": se o menu foi aberto por clique direito **numa imagem**, copia aquela imagem; **no texto**, copia o texto; pelo botão (sem alvo): se a mensagem tem imagem copia a primeira imagem, senão todos os textos unidos por `\n`.
 - Imagem é copiada como PNG (converte via canvas se não for PNG) — `utils/copiarImagem.ts`.
 
-**ENV-20 Menu de ações da mensagem** (`MensagemAcoes.vue`)
+**ENV-20 Menu de ações da mensagem** (`MensagemAcoes.vue`) — 🆕 `7322e83`/`e8d82cb`: Ctrl + clique direito abre só as reações rápidas (com "mais emojis"); toque longo no celular abre o menu completo (§12)
 - Abre pelo botão ⋯ ao passar o mouse na bolha (acompanha a rolagem em bolhas altas) ou clique direito na bolha. Só para mensagens salvas (id > 0), não para chamada nem oculta. Abre abaixo do botão ou acima se não couber; um menu por vez; fecha ao rolar ou clicar fora.
 - Itens, nesta ordem: reações rápidas; **Responder**; **Responder no privado** (grupo e mensagem de outro); **Encaminhar**; **Copiar**; **Ocultar** (própria e não oculta).
 
@@ -812,7 +814,8 @@ Arquivos centrais: `stores/call.ts`, `CallWindow.vue`, `components/CallBar.vue`,
 | CFG — Configurações e administração | CFG-01…08 | 8 |
 | GER — UX geral | GER-01…07 | 7 |
 | 🆕 Novos em `39d06f9` | ENV-21, ENV-22, MSG-20, CHA-24 | 4 |
-| **Total** | | **136** |
+| 🆕 Novo em `7322e83` | ENV-23 | 1 |
+| **Total** | | **137** |
 
 ---
 
@@ -1241,3 +1244,42 @@ Os dois commits são de 2026-10-07 (noite) e acompanham os do servidor `d4435db`
 - Chat da chamada (6.x): criar o grupo ao tocar no campo, não na primeira mensagem.
 - Chave nos controles da chamada: adaptação visual; no Android os botões de liga/desliga já mostram o estado pelo ícone e pela cor.
 - HTML (ANX-07): o Android abre o HTML com outro app (4.x), então não se aplica.
+
+## 12. Atualização de 2026-10-08 (noite) — commits `7322e83` e `e8d82cb`
+
+Dois commits do web de 2026-10-08 (noite). No servidor só entrou `779c8ed` (o `iniciar-desenvolvimento.bat` também atualiza as dependências da API), sem mudança de contrato. Há **um ID novo**, ENV-23, e o total passa a **137**.
+
+### `7322e83` — "Campo de mensagem: seleção, desfazer e rascunho; reações rápidas e agendadas"
+- **MSG-17 / ENV-13 / ENV-14 — agendadas fora do chat:**
+  - a mensagem agendada **não aparece no chat** antes da hora (`chat.ts#agendadasAtivas`, `MessageList.vue`);
+  - com o campo **vazio**, um **relógio** ao lado do microfone mostra quantas há, com o título "1 mensagem agendada" ou "N mensagens agendadas"; com algo no campo, o relógio some;
+  - o relógio abre "Mensagens agendadas" (`MensagensAgendadasModal.vue`), só da conversa aberta e em ordem de horário. Cada linha tem:
+    - o horário (`formatarPrazo`: "hoje 18:00", "amanhã 08:30", "12/10 18:00", com o ano se for outro);
+    - o resumo do conteúdo, até 3 linhas;
+    - "Cancelar" ("Cancelando..."), com a confirmação "Cancelar mensagem agendada" / "Ela não será enviada." / "Cancelar envio" / "Voltar"; em erro, "Não foi possível cancelar";
+  - a lista fecha sozinha quando fica vazia;
+  - na hora marcada, a mensagem sai da lista e entra no chat, sem esperar a próxima leitura (`useAgora` na próxima agendada).
+- **MSG-19 — encaminhada de encaminhada:** dentro da citação, os conteúdos que a encaminhada copiou da citação de baixo (já à mostra) não se repetem (`semCopiasDaReferencia`: tira uma cópia por igual `tipo:conteudo`, na mesma quantidade; resposta não copia nada).
+- **ENV-23 🆕 — rascunho por conversa** (`services/rascunhos.ts`, IndexedDB):
+  - um rascunho por usuário e conversa, com o campo (texto, menções, peças), os arquivos e o "respondendo a..." ou encaminhando;
+  - gravado com um pequeno atraso a cada mudança; vazio apaga;
+  - restaurado ao voltar à conversa, mesmo depois de fechar o navegador;
+  - apagado ao enviar.
+- **ENV-20 — menu:**
+  - Ctrl + clique direito abre só a barra de reações rápidas, junto do clique;
+  - toque longo no celular (500 ms, tolerância de 10 px) abre o menu completo e engole o clique ao soltar.
+- Campo rico (ENV-21): a peça selecionada fica azul; Ctrl+Z/Ctrl+Y próprios. Copiar GIF leva a imagem inteira.
+
+### `e8d82cb` — "Campo de mensagem no Tiptap; 'mais emojis' na barra de reações rápidas"
+- **ENV-21:** o campo passa a ser um editor Tiptap (ProseMirror) no lugar do `contenteditable` feito à mão. Anexos e figurinhas são peças do editor; a peça pode ser arrastada para mudar a ordem, e copiar e colar uma peça a duplica. O rascunho guarda o documento do editor.
+- **ENV-20:** a barra de reações rápidas ganha o botão da lista completa de emojis.
+
+### Para o Android
+- **Agendadas (7.10, já feito com o selo no chat):** passar para o modelo novo:
+  - a agendada fica fora da lista do chat até a hora;
+  - relógio com o número ao lado do microfone, com o campo vazio;
+  - folha "Mensagens agendadas" com horário, resumo e "Cancelar".
+- **Citação (7.5):** aplicar `semCopiasDaReferencia` nos níveis aninhados.
+- **Rascunho (ENV-23):** guardar no aparelho, por conversa, o texto com as menções, a fila de anexos e a resposta ou encaminhamento pendente; restaurar ao abrir a conversa.
+- **Menu (ENV-20):** o Android já abre o menu completo no toque longo, com "Mais emojis". Ctrl + clique direito não se aplica.
+- **Tiptap (ENV-21):** detalhe interno do web; a decisão FC-416 do Android continua valendo.

@@ -55,6 +55,8 @@ A coluna **Fase** indica em que fase do plano da nova base (doc 07) a funcionali
 > 🆕 **Atualizado em 2026-10-06 (noite)** com os commits `8031fa5` (servidor) e `39d06f9` (web): +4 funcionalidades (ENV-21, ENV-22, MSG-20, CHA-24), todas ⬜ no Android.
 >
 > 🆕 **Atualizado em 2026-10-08** com os commits `d4435db` e `5cad911` (servidor) e `eaa8bac` e `785bdef` (web): nenhuma funcionalidade nova; mudam CON-08, MSG-16, MSG-20, ENV-17, ENV-22, ANX-13, CHA-11, CHA-18 e CHA-24 (coluna "Adaptação"). A coluna "Android" continua sendo a do app **legado**; o andamento da nova base está no `TODO.md`.
+
+> 🆕 **Atualizado em 2026-10-08 (noite)** com os commits do web `7322e83` e `e8d82cb` (o do servidor, `779c8ed`, só mexe no script de desenvolvimento): +1 funcionalidade (ENV-23, rascunho por conversa); mudam MSG-17, MSG-19, ENV-13, ENV-14 e ENV-20 (coluna "Adaptação").
 >
 > **Leitura:** só 2 de 136 funcionalidades estão íntegras. 42 existem de alguma forma (🟡+🔴), mas 16 delas quebram contra o servidor atual. 78 nunca existiram no Android.
 
@@ -113,9 +115,9 @@ A coluna **Fase** indica em que fase do plano da nova base (doc 07) a funcionali
 | MSG-14 | Mensagem só de emojis (fonte grande) | ⬜ | — | Detectar com `BreakIterator`/regex de emoji | F2 | P2 |
 | MSG-15 | Blocos de código (destaque, copiar, recolher, Markdown, Mermaid) | ⬜ | Aparecem os ``` crus | Parser idêntico ao web (`codeBlocks.ts`). Destaque: lib leve ou WebView com highlight.js. Markdown: Markwon/compose-markdown. Mermaid: WebView offline | F4 | P1 (código/markdown), P2 (mermaid) |
 | MSG-16 | Mensagem oculta ("Mensagem oculta", toque para revelar) | 🔴 | **Mostra o conteúdo original** (doc 02 Q6) | Ler `excluida_em`; bolha própria — 🆕 `eaa8bac`: votação oculta revelada mostra o resumo (pergunta + votos) | F2 | **P0** |
-| MSG-17 | Selo de mensagem agendada | ⬜ | — | "Agendada para hoje HH:MM / amanhã / dd/MM" | F4 | P2 |
+| MSG-17 | Selo de mensagem agendada | ⬜ | — | "Agendada para hoje HH:MM / amanhã / dd/MM" — 🆕 `7322e83`: a agendada sai do chat; relógio com o número ao lado do microfone (campo vazio) e folha "Mensagens agendadas" (horário, resumo, "Cancelar") | F4 | P2 |
 | MSG-18 | Modo conexão lenta | ➖ | — | Usar `ConnectivityManager` (rede limitada/economia de dados) → "Toque para carregar" | F3 | P3 |
-| MSG-19 | Citação de resposta/encaminhada (recursiva até 5) | ⬜ | — | Componente recursivo | F4 | P1 |
+| MSG-19 | Citação de resposta/encaminhada (recursiva até 5) | ⬜ | — | Componente recursivo — 🆕 `7322e83`: encaminhada de encaminhada não repete, na citação, o que a citação de baixo já mostra | F4 | P1 |
 | MSG-20 🆕 | Bolha de votação (tipo 8): pergunta, opções com barra, votantes, votar/trocar/tirar voto, tempo real (WS 62) | ⬜ | O app antigo mostra a bolha **vazia** | `GET /enquete?id=` com cache por id; `POST /enquete/votar` com a lista completa; reler no WS 62 se estiver na tela. **No F2, pelo menos um placeholder "📊 Votação"** — 🆕 `5cad911`/`785bdef`: data final, encerrar (`POST /enquete/encerrar`), mudar a data (`PATCH /enquete`), estado encerrado com 🏆 e prazo vencendo na tela | F4 (placeholder F2) | P1 (placeholder P0) |
 
 ## ENV — Composição e ações
@@ -134,16 +136,17 @@ A coluna **Fase** indica em que fase do plano da nova base (doc 07) a funcionali
 | ENV-10 | Janela "Inserir código" | ➖ | — | Tela simples com seletor de linguagem e monoespaçado (sem CodeMirror) | F4 | P3 |
 | ENV-11 | Colar imagem | ➖ | — | `contentReceiver` (Compose) para imagens do teclado e da área de transferência | F3 | P2 |
 | ENV-12 | Atalhos de teclado | ➖ | — | Só suporte básico a teclado físico (Enter envia é opcional) | — | P3 |
-| ENV-13 | Agendar mensagem (`visivel_em`) | ⬜ | Modelo morto tem o campo | Toque longo no "Enviar" → seletor de data e hora; mesmas validações (≥ 5 min, ≤ 1 ano) | F4 | P2 |
-| ENV-14 | Cancelar agendada | ⬜ | — | "Ocultar" vira "Cancelar envio" | F4 | P2 |
+| ENV-13 | Agendar mensagem (`visivel_em`) | ⬜ | Modelo morto tem o campo | Toque longo no "Enviar" → seletor de data e hora; mesmas validações (≥ 5 min, ≤ 1 ano) — 🆕 `7322e83`: depois de agendar, a mensagem vai para o relógio, não para o chat | F4 | P2 |
+| ENV-14 | Cancelar agendada | ⬜ | — | "Ocultar" vira "Cancelar envio" — 🆕 `7322e83`: pela folha "Mensagens agendadas" | F4 | P2 |
 | ENV-15 | Digitando (enviar e receber) | 🟡 | **Não commitado**; throttle de 2,5 s; recebimento sem expirar corretamente; textos de grupo ausentes | Throttle de 2,5 s; expira em 4 s; textos exatos do web | F2 | P1 |
 | ENV-16 | Gravando áudio (indicador) | ⬜ | `broadcastGravando` não é usado; WS 5 sem efeito | `POST /conversa/gravando` a cada 2,5 s durante a gravação | F3 | P1 |
 | ENV-17 | Reações (toggle, chips, quem reagiu) | ⬜ | Só no repositório morto | Barra de reações no menu de toque longo; WS 7 — 🆕 `d4435db`/`eaa8bac`: até 5 emojis diferentes por pessoa (conferir antes da otimista); 5 chips à mostra e "+N" | F4 | P0 |
 | ENV-18 | Ocultar mensagem (com confirmação) | ⬜ | `DELETE /mensagem` está só no repositório morto | Ação "Ocultar" com o texto exato do web | F4 | P0 |
 | ENV-19 | Copiar (texto/imagem) | ⬜ | — | `ClipboardManager` (texto) e `ClipData` com URI de conteúdo (imagem) | F4 | P1 |
-| ENV-20 | Menu de ações da mensagem | ⬜ | — | Toque longo → reações + Responder, Responder no privado, Encaminhar, Copiar, Ocultar | F4 | P0 |
+| ENV-20 | Menu de ações da mensagem | ⬜ | — | Toque longo → reações + Responder, Responder no privado, Encaminhar, Copiar, Ocultar — 🆕 `7322e83`/`e8d82cb`: no celular o web também abre o menu completo no toque longo; Ctrl + clique direito (só reações) não se aplica | F4 | P0 |
 | ENV-21 🆕 | Campo de mensagem rico (texto e anexos/figurinhas/menções intercalados, enviados na ordem) | ⬜ | — | Editor por blocos (texto ↔ peça) acima do teclado; figurinha/gravação com o campo vazio vão na hora. Ver a decisão FC-416 | F3 | P1 |
 | ENV-22 🆕 | Criar votação (só grupo): pergunta ≤ 300, 2–12 opções ≤ 200, "Permitir várias escolhas" | ⬜ | — | Bottom sheet "Nova votação" a partir do "+"; `PUT /enquete` — 🆕 `785bdef`: "Definir data final" opcional (`encerra_em`) | F4 | P1 |
+| ENV-23 🆕 | Rascunho por conversa (texto, menções, anexos e resposta pendente), restaurado ao voltar | ⬜ | — | Guardar no aparelho por conversa (Room) e restaurar ao abrir o chat; apagar ao enviar | F4 | P2 |
 
 ## ANX — Anexos e mídia
 

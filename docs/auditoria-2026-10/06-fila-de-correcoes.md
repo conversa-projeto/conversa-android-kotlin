@@ -344,6 +344,7 @@
   - `GET /mensagem/status/detalhe?id=` → datas (aqui **não** são booleanos).
 - [ ] **FC-514 · P2 · Agendar + cancelar agendada** (ENV-13, ENV-14, MSG-17).
   - `visivel_em` em ISO UTC; entre 5 min e 1 ano no futuro.
+  - 🆕 `7322e83`: a agendada fica fora do chat até a hora; relógio com o número ao lado do microfone (campo vazio) abre "Mensagens agendadas" (horário, resumo, "Cancelar" com confirmação).
 - [ ] **FC-515 · P3 · Atalhos de emoji, "inserir código", colar texto longo** (ENV-02, ENV-09, ENV-10).
 - [ ] **FC-516 · P1 · 🆕 Bolha de votação** (MSG-20).
   - `GET /enquete?id=<conteudo>`, com cache por id (Room ou memória) e leituras simultâneas deduplicadas.
@@ -365,6 +366,8 @@
   - `PUT /enquete {conversa_id, pergunta, opcoes (preenchidas, trim), multipla}`; mostrar o erro do servidor (repetidas, só grupo).
   - 🆕 `785bdef`: "Definir data final" opcional (`encerra_em`; no futuro, até 1 ano; sugestão amanhã na próxima hora cheia).
   - Depois, atualizar a conversa.
+- [ ] **FC-519 · P2 · 🆕 `7322e83` Rascunho por conversa** (ENV-23): texto com menções, fila de anexos e resposta/encaminhamento pendente guardados no aparelho por conversa; restaurar ao abrir o chat; apagar ao enviar.
+- [ ] **FC-520 · P2 · 🆕 `7322e83` Encaminhada de encaminhada** (MSG-19): na citação aninhada, não repetir os conteúdos que a citação de baixo já mostra.
 - [ ] **FC-518 · P1 · 🆕 Esconder "Encaminhar" para mensagem de votação.** O servidor recusa tipo 8 em `PUT /mensagem` (400); no web o botão aparece e falha.
 
 ## Bloco H — Notificações e push (F5)

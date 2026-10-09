@@ -4,9 +4,11 @@
 > 🆕 **Atualização 2026-10-06 (noite):** incorporados os commits `8031fa5` (servidor: votação em grupo — 3 rotas, WS 62, conteúdo tipo 8, migração 035) e `39d06f9` (web: campo de mensagem rico, votação, chat completo na chamada, cores dos botões da chamada). Agora são **67 rotas** e **136 funcionalidades** no web. Os itens alterados nos docs estão marcados com 🆕. Observação: o web mostra "Encaminhar" em mensagem de votação, mas o servidor recusa (400) — no Android, esconder (FC-518).
 >
 > 🆕 **Atualização 2026-10-08:** incorporados os commits do servidor `d4435db` (no máximo 5 emojis diferentes por pessoa numa mensagem) e `5cad911` (votação com data final e encerramento: `POST /enquete/encerrar`, `PATCH /enquete`, migração 036), e os do web `eaa8bac` (painel "Dados do grupo" com anexos, "+N" nas reações, resumo da votação oculta, chave nos botões da chamada, grupo do chat da chamada criado no primeiro toque) e `785bdef` (data final e encerrar na votação). Agora são **69 rotas**; as funcionalidades do web seguem **136**. Marcações nos docs: 🆕 com o commit.
+>
+> 🆕 **Atualização 2026-10-08 (noite):** incorporados os commits do web `7322e83` (agendadas fora do chat, num relógio ao lado do microfone com a lista; rascunho por conversa; encaminhada de encaminhada sem repetir conteúdo; toque longo abre o menu completo) e `e8d82cb` (campo de mensagem no Tiptap; "mais emojis" nas reações rápidas). O do servidor, `779c8ed`, só mexe no script de desenvolvimento: o contrato segue com **69 rotas**. Funcionalidades do web: **137** (+ENV-23, rascunho). Novos FC-519 e FC-520.
 
 **Escopo:** `conversa-android-kotlin` (branch `novo`, último commit `e3e2a65` em 2026-04-26) comparado a
-`conversa` (servidor, HEAD `7f670c3` → 🆕 `8031fa5` → 🆕 `5cad911`) e `conversa-web` (HEAD `bfb79d8` → 🆕 `39d06f9` → 🆕 `785bdef`), de 2026-10-06 e 2026-10-07.
+`conversa` (servidor, HEAD `7f670c3` → 🆕 `8031fa5` → 🆕 `5cad911` → 🆕 `779c8ed`) e `conversa-web` (HEAD `bfb79d8` → 🆕 `39d06f9` → 🆕 `785bdef` → 🆕 `e8d82cb`), de 2026-10-06 a 2026-10-08.
 **Método:** leitura integral do código dos três repositórios, do histórico Git do servidor desde abril (Delphi → Node → Bun/Elysia) e build real do Android (`assembleDebug`, sucesso, JDK 21 do Android Studio). Nenhum código foi alterado; só esta pasta foi criada.
 
 ---
