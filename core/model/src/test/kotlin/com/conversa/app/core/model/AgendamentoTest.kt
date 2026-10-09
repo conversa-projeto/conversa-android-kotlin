@@ -31,13 +31,25 @@ class AgendamentoTest {
     }
 
     @Test
-    fun `selo hoje, amanha ou com a data, e some na hora exata`() {
-        assertThat(quandoAgendada(Instant.parse("2026-10-08T21:00:00Z"), agora, zona)).isEqualTo(DiaAgendado.HOJE to "18:00")
-        assertThat(quandoAgendada(Instant.parse("2026-10-09T11:30:00Z"), agora, zona)).isEqualTo(DiaAgendado.AMANHA to "08:30")
-        assertThat(quandoAgendada(Instant.parse("2026-10-12T21:00:00Z"), agora, zona)).isEqualTo(DiaAgendado.OUTRO to "12/10 18:00")
-        assertThat(mensagem(visivelEm = agora.plusSeconds(1)).agendadaFutura(agora)).isTrue()
-        assertThat(mensagem(visivelEm = agora).agendadaFutura(agora)).isFalse()
-        assertThat(mensagem().agendadaFutura(agora)).isFalse()
+    fun `prazo hoje, amanha, com a data e com o ano se for outro (formatarPrazo do web)`() {
+        assertThat(quandoPrazo(Instant.parse("2026-10-08T21:00:00Z"), agora, zona)).isEqualTo(DiaPrazo.HOJE to "18:00")
+        assertThat(quandoPrazo(Instant.parse("2026-10-09T11:30:00Z"), agora, zona)).isEqualTo(DiaPrazo.AMANHA to "08:30")
+        assertThat(quandoPrazo(Instant.parse("2026-10-12T21:00:00Z"), agora, zona)).isEqualTo(DiaPrazo.OUTRO to "12/10 18:00")
+        assertThat(quandoPrazo(Instant.parse("2027-01-05T11:00:00Z"), agora, zona)).isEqualTo(DiaPrazo.OUTRO to "05/01/2027 08:00")
+    }
+
+    @Test
+    fun `agendadas saem do chat, em ordem de horario, e voltam na hora exata`() {
+        val depois = mensagem(visivelEm = agora.plusSeconds(120)).copy(id = 2)
+        val antes = mensagem(visivelEm = agora.plusSeconds(60)).copy(id = 3)
+        val normal = mensagem().copy(id = 4)
+        val jaSaiu = mensagem(visivelEm = agora).copy(id = 5)
+
+        val separadas = separarAgendadas(listOf(depois, normal, antes, jaSaiu), agora)
+
+        assertThat(separadas.visiveis.map { it.id }).containsExactly(4L, 5L).inOrder()
+        assertThat(separadas.agendadas.map { it.id }).containsExactly(3L, 2L).inOrder()
+        assertThat(separarAgendadas(listOf(antes), agora.plusSeconds(60)).agendadas).isEmpty()
     }
 
     @Test

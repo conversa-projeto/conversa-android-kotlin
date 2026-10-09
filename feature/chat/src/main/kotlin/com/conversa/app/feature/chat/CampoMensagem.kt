@@ -121,6 +121,7 @@ import com.conversa.app.core.data.anexos.AnexoLocal
 import com.conversa.app.core.data.mensagens.ReferenciaPendente
 import com.conversa.app.core.model.Contato
 import com.conversa.app.core.model.MencaoInserida
+import com.conversa.app.core.model.Mensagem
 import com.conversa.app.core.model.TipoConteudo
 import com.conversa.app.core.model.TipoReferencia
 import com.conversa.app.core.model.dividirMencoes
@@ -170,6 +171,7 @@ internal fun Campo(
     acoes: AcoesChat,
     focar: Boolean = false,
     respondendo: ReferenciaPendente? = null,
+    agendadas: List<Mensagem> = emptyList(),
 ) {
     // Estado do texto local e síncrono (o cursor não pula); sobrevive a girar a tela.
     val texto = rememberTextFieldState()
@@ -177,6 +179,8 @@ internal fun Campo(
     // Menções inseridas pela lista (7.7): o campo mostra "@Nome"; no envio vira "@[Nome](id)".
     val mencoes = remember { mutableStateListOf<MencaoInserida>() }
     // "Inserir código" (7.11): pelo "+" (vazio) ou por um texto longo colado (preenchido).
+    var vendoAgendadas by rememberSaveable { mutableStateOf(false) }
+    if (vendoAgendadas) MensagensAgendadas(agendadas, acoes.aoCancelarAgendada, aoFechar = { vendoAgendadas = false })
     var codigoAberto by rememberSaveable { mutableStateOf(false) }
     var codigoColado by rememberSaveable { mutableStateOf<String?>(null) }
     val transformacao = remember {
@@ -246,10 +250,18 @@ internal fun Campo(
         } else {
             // A encaminhada pendente pode ir sem texto (os conteúdos dela vão junto): o Enviar aparece.
             val encaminhando = respondendo?.tipo == TipoReferencia.ENCAMINHAMENTO
-            LinhaDoCampo(texto, fila.isNotEmpty() || encaminhando, atual as? EstadoGravacao.Gravando, acoes, foco, mencoes, transformacao) {
-                codigoAberto =
-                    true
-            }
+            LinhaDoCampo(
+                texto,
+                fila.isNotEmpty() || encaminhando,
+                atual as? EstadoGravacao.Gravando,
+                acoes,
+                foco,
+                mencoes,
+                transformacao,
+                aoInserirCodigo = { codigoAberto = true },
+                agendadas = agendadas.size,
+                aoVerAgendadas = { vendoAgendadas = true },
+            )
         }
     }
 }
@@ -365,6 +377,8 @@ private fun LinhaDoCampo(
     mencoes: SnapshotStateList<MencaoInserida>,
     transformacao: InputTransformation,
     aoInserirCodigo: () -> Unit,
+    agendadas: Int,
+    aoVerAgendadas: () -> Unit,
 ) {
     Row(
         Modifier.fillMaxWidth().padding(horizontal = 8.dp, vertical = 6.dp),
@@ -445,6 +459,8 @@ private fun LinhaDoCampo(
                 }
             }
         } else {
+            // Campo vazio com agendadas: o relógio abre a lista (🆕 web `7322e83`).
+            if (agendadas > 0 && segurando == null) RelogioAgendadas(agendadas, aoVerAgendadas)
             BotaoMicrofone(segurando != null, acoes.gravacao)
         }
         if (agendando) {

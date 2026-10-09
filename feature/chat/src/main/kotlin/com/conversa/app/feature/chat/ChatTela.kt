@@ -76,6 +76,7 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.repeatOnLifecycle
 import com.conversa.app.core.model.AtividadeConversa
 import com.conversa.app.core.model.ItemChat
+import com.conversa.app.core.model.Mensagem
 import com.conversa.app.core.model.RotuloDia
 import com.conversa.app.core.model.TipoChamada
 import com.conversa.app.core.model.TipoConteudo
@@ -210,6 +211,7 @@ fun ChatRotaTela(
                 aoLigar = aoLigar,
                 aoEnviar = viewModel::enviar,
                 aoAgendar = viewModel::agendar,
+                aoCancelarAgendada = viewModel::cancelarAgendada,
                 aoDigitar = viewModel::aoDigitar,
                 aoCarregarAnteriores = viewModel::carregarAnteriores,
                 aoVerMensagens = viewModel::marcarLidas,
@@ -331,6 +333,8 @@ class AcoesChat(
     val aoEnviar: (String, () -> Unit) -> Unit = { _, _ -> },
     /** Toque longo no Enviar → "Agendar" (7.10): o texto e o momento do envio. */
     val aoAgendar: (String, Instant, () -> Unit) -> Unit = { _, _, _ -> },
+    /** "Cancelar" na lista de agendadas (🆕 web `7322e83`): falso = não deu. */
+    val aoCancelarAgendada: suspend (Mensagem) -> Boolean = { false },
     val aoDigitar: (String) -> Unit = {},
     val aoCarregarAnteriores: () -> Unit = {},
     val aoVerMensagens: (List<com.conversa.app.core.model.Mensagem>) -> Unit = {},
@@ -472,7 +476,16 @@ fun ChatTela(estado: ChatUiState, lista: androidx.compose.foundation.lazy.LazyLi
 
     Scaffold(
         topBar = { Cabecalho(estado, acoes) },
-        bottomBar = { Campo(estado.fila, estado.textoParaCampo, acoes, focar = estado.focarCampo, respondendo = estado.respondendo) },
+        bottomBar = {
+            Campo(
+                estado.fila,
+                estado.textoParaCampo,
+                acoes,
+                focar = estado.focarCampo,
+                respondendo = estado.respondendo,
+                agendadas = estado.agendadas,
+            )
+        },
     ) { margens ->
         Box(Modifier.fillMaxSize().padding(margens).background(MaterialTheme.colorScheme.background)) {
             when {

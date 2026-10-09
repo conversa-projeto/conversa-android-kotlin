@@ -307,9 +307,20 @@ fun separarConteudosDaCitacao(mensagem: Mensagem): ConteudosComCitacao {
     val citada = referencia?.mensagem ?: return ConteudosComCitacao(emptyList(), mensagem.conteudos)
     if (referencia.tipo != TipoReferencia.ENCAMINHAMENTO) return ConteudosComCitacao(citada.conteudos, mensagem.conteudos)
     val daCitacao = citada.conteudos.ifEmpty { mensagem.conteudos }
-    val jaExibidos = daCitacao.map { it.tipo to it.conteudo }.toMutableList()
-    val proprios = mensagem.conteudos.filter { conteudo -> !jaExibidos.remove(conteudo.tipo to conteudo.conteudo) }
+    val proprios = semCopiasDaReferencia(mensagem.conteudos, referencia.copy(mensagem = citada.copy(conteudos = daCitacao)))
     return ConteudosComCitacao(daCitacao, proprios)
+}
+
+/**
+ * 🆕 web `7322e83` (`semCopiasDaReferencia`): a encaminhada leva uma cópia dos conteúdos da
+ * citação de baixo. Com ela à mostra, as cópias somem (uma por igual tipo + conteúdo, na mesma
+ * quantidade) e fica só o acrescentado. Resposta não copia nada.
+ */
+fun semCopiasDaReferencia(conteudos: List<Conteudo>, referencia: ReferenciaMensagem?): List<Conteudo> {
+    val citada = referencia?.mensagem
+    if (referencia?.tipo != TipoReferencia.ENCAMINHAMENTO || citada == null) return conteudos
+    val jaExibidos = citada.conteudos.map { it.tipo to it.conteudo }.toMutableList()
+    return conteudos.filter { !jaExibidos.remove(it.tipo to it.conteudo) }
 }
 
 /** A citada como mensagem, para desenhar os conteúdos dela com as mesmas bolhas (imagem, áudio, arquivo). */

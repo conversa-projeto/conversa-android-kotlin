@@ -79,6 +79,20 @@ class ChatTest {
     }
 
     @Test
+    fun `encaminhada de encaminhada - na citacao, a copia da citacao de baixo nao se repete (web 7322e83)`() {
+        val foto = conteudo(TipoConteudo.IMAGEM, "img-1", ordem = 1)
+        val nota = conteudo(TipoConteudo.TEXTO, "veja", ordem = 2)
+        // A de baixo (original) tem a foto; a do meio a encaminhou e acrescentou "veja".
+        val original = ReferenciaMensagem(TipoReferencia.ENCAMINHAMENTO, MensagemResumida(1, 7, "Bia", agora, null, listOf(foto), null))
+
+        assertThat(semCopiasDaReferencia(listOf(foto, nota), original).map { it.conteudo }).containsExactly("veja")
+        // Duas cópias iguais: só uma sai por conteúdo da citação.
+        assertThat(semCopiasDaReferencia(listOf(foto, foto), original).map { it.conteudo }).containsExactly("img-1")
+        // Resposta não copia nada: tudo fica.
+        assertThat(semCopiasDaReferencia(listOf(foto), original.copy(tipo = TipoReferencia.RESPOSTA))).hasSize(1)
+    }
+
+    @Test
     fun `encaminhada com a citada sem conteudo usa os proprios na citacao`() {
         val m = mensagem(texto("repasse"), referencia = encaminhando())
 

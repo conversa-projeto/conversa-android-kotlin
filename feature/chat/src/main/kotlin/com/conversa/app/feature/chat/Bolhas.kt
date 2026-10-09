@@ -36,7 +36,6 @@ import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.drawBehind
 import androidx.compose.ui.geometry.Size
@@ -79,6 +78,7 @@ import com.conversa.app.core.model.classificarMensagem
 import com.conversa.app.core.model.comoMensagem
 import com.conversa.app.core.model.ehVideo
 import com.conversa.app.core.model.formatarDuracao
+import com.conversa.app.core.model.semCopiasDaReferencia
 import com.conversa.app.core.model.separarBlocosDeCodigo
 import com.conversa.app.core.model.separarConteudosDaCitacao
 import com.conversa.app.core.model.separarTexto
@@ -165,15 +165,11 @@ fun LinhaMensagem(
         val comAcoes = podeAbrirMenu(mensagem)
         val rotuloAcoes = stringResource(R.string.acoes_da_mensagem)
         val rotuloResponder = stringResource(R.string.responder)
-        // Agendada (7.10): selo acima e a bolha esmaecida até a hora exata (só o autor a vê antes).
-        val agendada by agendadaNaTela(mensagem.visivelEm.takeIf { propria })
-        if (agendada) mensagem.visivelEm?.let { SeloAgendada(it) }
         val aoVerStatus = if (propria && mensagem.id > 0 && !mensagem.enviando) ({ acoes.aoVerStatus(mensagem) }) else null
         DeslizarParaResponder(habilitado = comAcoes, aoResponder = { acoes.aoResponder(mensagem) }) {
             Box(
                 Modifier
                     .widthIn(max = larguraMax)
-                    .alpha(if (agendada) 0.7f else 1f)
                     .toqueLongo(comAcoes) { acoes.aoMenu(mensagem) }
                     // O toque longo e o deslizar são gestos: o TalkBack chega neles por estas ações.
                     .then(
@@ -362,11 +358,17 @@ private fun BlocoCitacao(
             )
         } else {
             val aninhada = citada.referencia
-            val conteudosAninhada = aninhada?.mensagem?.conteudos
-            if (aninhada != null && conteudosAninhada != null && nivel < MAXIMO_NIVEIS_CITACAO) {
-                BlocoCitacao(aninhada, conteudosAninhada, propria, cor, acoes, nivel + 1)
+            val citadaAninhada = aninhada?.mensagem?.takeIf { nivel < MAXIMO_NIVEIS_CITACAO }
+            if (aninhada != null && citadaAninhada != null) BlocoCitacao(aninhada, citadaAninhada.conteudos, propria, cor, acoes, nivel + 1)
+            // Encaminhada de encaminhada (🆕 web `7322e83`): o que já aparece na citação de baixo não se repete.
+            val exibidos = if (citadaAninhada != null &&
+                conteudos == citada.conteudos
+            ) {
+                semCopiasDaReferencia(conteudos, aninhada)
+            } else {
+                conteudos
             }
-            conteudos.forEach { ConteudoNaBolha(comoMensagem, it, propria, cor, acoes) }
+            exibidos.forEach { ConteudoNaBolha(comoMensagem, it, propria, cor, acoes) }
         }
     }
 }

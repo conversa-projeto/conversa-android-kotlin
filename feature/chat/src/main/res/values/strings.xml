@@ -183,9 +183,16 @@
     <string name="agendar">Agendar</string>
     <string name="agendar_muito_cedo">O envio deve ser no mínimo 5 minutos no futuro</string>
     <string name="agendar_muito_longe">O envio não pode ser mais de 1 ano no futuro</string>
-    <string name="agendada_hoje">Agendada para hoje %1$s</string>
-    <string name="agendada_amanha">Agendada para amanhã %1$s</string>
-    <string name="agendada_outro_dia">Agendada para %1$s</string>
+    <string name="prazo_hoje">hoje %1$s</string>
+    <string name="prazo_amanha">amanhã %1$s</string>
+    <string name="mensagens_agendadas">Mensagens agendadas</string>
+    <plurals name="mensagens_agendadas_quantas">
+        <item quantity="one">%1$d mensagem agendada</item>
+        <item quantity="many">%1$d mensagens agendadas</item>
+        <item quantity="other">%1$d mensagens agendadas</item>
+    </plurals>
+    <string name="cancelando">Cancelando…</string>
+    <string name="cancelar_agendada_falhou">Não foi possível cancelar</string>
 
     <!-- Código (7.11), textos do web -->
     <string name="codigo">Código</string>

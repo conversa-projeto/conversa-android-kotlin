@@ -29,20 +29,31 @@ fun validarAgendamento(quando: LocalDateTime, agora: Instant, zona: ZoneId = Zon
     }
 }
 
-/** Agendada para depois de [agora]: selo "Agendada para …" e a bolha esmaecida (só o autor vê). */
+/** Agendada para depois de [agora] (só o autor a recebe antes da hora). */
 fun Mensagem.agendadaFutura(agora: Instant): Boolean = visivelEm?.let { it > agora } == true
 
-/** O dia do selo, sem a palavra (o "hoje"/"amanhã" vem do strings.xml). */
-enum class DiaAgendado { HOJE, AMANHA, OUTRO }
+/** O chat sem as agendadas e, à parte, as agendadas em ordem de horário (🆕 web `7322e83`: elas ficam no relógio). */
+data class MensagensDoChat(val visiveis: List<Mensagem>, val agendadas: List<Mensagem>)
 
-/** "hoje 18:00", "amanhã 08:30" ou "12/10 18:00": o dia e o texto da hora (com a data, se for outro dia). */
-fun quandoAgendada(visivelEm: Instant, agora: Instant, zona: ZoneId = ZoneId.systemDefault()): Pair<DiaAgendado, String> {
-    val local = visivelEm.atZone(zona)
+fun separarAgendadas(mensagens: List<Mensagem>, agora: Instant): MensagensDoChat {
+    val (agendadas, visiveis) = mensagens.partition { it.agendadaFutura(agora) }
+    return MensagensDoChat(visiveis, agendadas.sortedBy { it.visivelEm })
+}
+
+/** O dia, sem a palavra (o "hoje"/"amanhã" vem do strings.xml). */
+enum class DiaPrazo { HOJE, AMANHA, OUTRO }
+
+/**
+ * "hoje 18:00", "amanhã 08:30" ou "12/10 18:00" (com o ano, se for outro): o `formatarPrazo`
+ * do web, usado na lista de agendadas e na data final da votação.
+ */
+fun quandoPrazo(instante: Instant, agora: Instant, zona: ZoneId = ZoneId.systemDefault()): Pair<DiaPrazo, String> {
+    val local = instante.atZone(zona)
     val hoje = LocalDate.ofInstant(agora, zona)
     return when (local.toLocalDate()) {
-        hoje -> DiaAgendado.HOJE to HORA.format(local)
-        hoje.plusDays(1) -> DiaAgendado.AMANHA to HORA.format(local)
-        else -> DiaAgendado.OUTRO to DIA_HORA.format(local)
+        hoje -> DiaPrazo.HOJE to HORA.format(local)
+        hoje.plusDays(1) -> DiaPrazo.AMANHA to HORA.format(local)
+        else -> DiaPrazo.OUTRO to (if (local.year == hoje.year) DIA_HORA else DIA_ANO_HORA).format(local)
     }
 }
 
@@ -89,3 +100,4 @@ fun horaDoStatus(em: Instant, agora: Instant, zona: ZoneId = ZoneId.systemDefaul
 
 private val HORA = DateTimeFormatter.ofPattern("HH:mm")
 private val DIA_HORA = DateTimeFormatter.ofPattern("dd/MM HH:mm")
+private val DIA_ANO_HORA = DateTimeFormatter.ofPattern("dd/MM/yyyy HH:mm")

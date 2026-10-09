@@ -195,6 +195,24 @@ class ChatViewModelTest {
     }
 
     @Test
+    fun `agendada fica fora do chat, no relogio, e entra na hora exata`() = runTest {
+        val agendada = mensagem(5, 7, lida = false).copy(visivelEm = agora.plusSeconds(60))
+        lista.value = listOf(mensagem(1, 8, lida = true), agendada)
+        val vm = criar()
+        runCurrent()
+
+        val bolhas = { vm.estado.value.itens.filterIsInstance<ItemChat.Bolha>().map { it.mensagem.id } }
+        assertThat(bolhas()).containsExactly(1L)
+        assertThat(vm.estado.value.agendadas.map { it.id }).containsExactly(5L)
+
+        advanceTimeBy(60_001)
+        runCurrent()
+
+        assertThat(bolhas()).containsExactly(1L, 5L).inOrder()
+        assertThat(vm.estado.value.agendadas).isEmpty()
+    }
+
+    @Test
     fun `agendar manda o mesmo envio com visivel_em e limpa o campo`() = runTest {
         val quando = java.time.Instant.parse("2027-01-02T11:00:00Z")
         coEvery { envio.enviar(42, "depois", any(), any(), any(), any()) } returns -1

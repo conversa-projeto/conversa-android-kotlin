@@ -4,7 +4,7 @@
 - **Tipo:** documentação
 - **Itens:** `TODO.md` 7.5, 7.10, 7.11 (linhas 🆕); FC-514, FC-519 (novo), FC-520 (novo); ENV-23 (novo)
 - **Branch:** `reescrita`
-- **Commits:** (preencher)
+- **Commits:** `08a1974`
 - **Commits de origem** (pull feito em 2026-10-08, à noite):
   - servidor `779c8ed`: "iniciar-desenvolvimento.bat atualiza também as dependências da API";
   - web `7322e83` (2026-10-08 19:50): "Campo de mensagem: seleção, desfazer e rascunho; reações rápidas e agendadas";

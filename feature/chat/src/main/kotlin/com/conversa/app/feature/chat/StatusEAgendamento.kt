@@ -1,23 +1,29 @@
 package com.conversa.app.feature.chat
 
-import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.rememberScrollState
-import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.outlined.Schedule
 import androidx.compose.material3.AlertDialog
+import androidx.compose.material3.Badge
+import androidx.compose.material3.BadgedBox
 import androidx.compose.material3.DatePicker
 import androidx.compose.material3.DatePickerDialog
 import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.ModalBottomSheet
 import androidx.compose.material3.OutlinedButton
@@ -28,20 +34,21 @@ import androidx.compose.material3.rememberDatePickerState
 import androidx.compose.material3.rememberTimePickerState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
-import androidx.compose.runtime.State
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.produceState
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.runtime.staticCompositionLocalOf
-import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.res.pluralStringResource
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.semantics.clearAndSetSemantics
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
-import com.conversa.app.core.model.DiaAgendado
+import com.conversa.app.core.model.DiaPrazo
 import com.conversa.app.core.model.ErroAgendamento
 import com.conversa.app.core.model.EtapaEntrega
 import com.conversa.app.core.model.Mensagem
@@ -49,19 +56,19 @@ import com.conversa.app.core.model.SecaoStatus
 import com.conversa.app.core.model.StatusDestinatario
 import com.conversa.app.core.model.etapasDaDireta
 import com.conversa.app.core.model.horaDoStatus
-import com.conversa.app.core.model.quandoAgendada
+import com.conversa.app.core.model.quandoPrazo
+import com.conversa.app.core.model.resumoDaMensagem
 import com.conversa.app.core.model.secoesDoGrupo
 import com.conversa.app.core.model.sugestaoAgendamento
 import com.conversa.app.core.model.validarAgendamento
 import com.conversa.app.core.ui.tema.ConversaTema
-import java.time.Duration
 import java.time.Instant
 import java.time.LocalDateTime
 import java.time.LocalTime
 import java.time.ZoneId
 import java.time.ZoneOffset
 import java.time.format.DateTimeFormatter
-import kotlinx.coroutines.delay
+import kotlinx.coroutines.launch
 
 /**
  * Toque no status de uma mensagem minha (7.10): a linha dá a ação, o rodapé da bolha a usa.
@@ -238,36 +245,113 @@ private fun CampoEscolha(rotulo: String, valor: String, aoTocar: () -> Unit) {
 private val FORMATO_DATA = DateTimeFormatter.ofPattern("dd/MM/yyyy")
 private val FORMATO_HORA_CAMPO = DateTimeFormatter.ofPattern("HH:mm")
 
-/** Ainda agendada (só o autor vê): vira falso na hora exata do `visivel_em`, sem precisar de nova lista. */
+/** "hoje 18:00", "amanhã 08:30" ou "12/10 18:00" (o `formatarPrazo` do web): agendadas e data final da votação. */
 @Composable
-internal fun agendadaNaTela(visivelEm: Instant?): State<Boolean> =
-    produceState(initialValue = visivelEm?.isAfter(Instant.now()) == true, visivelEm) {
-        val falta = visivelEm?.let { Duration.between(Instant.now(), it).toMillis() } ?: 0
-        if (falta > 0) {
-            value = true
-            delay(falta)
-        }
-        value = false
+internal fun textoDoPrazo(instante: Instant): String {
+    val (dia, quando) = quandoPrazo(instante, Instant.now())
+    return when (dia) {
+        DiaPrazo.HOJE -> stringResource(R.string.prazo_hoje, quando)
+        DiaPrazo.AMANHA -> stringResource(R.string.prazo_amanha, quando)
+        DiaPrazo.OUTRO -> quando
     }
+}
 
-/** "Agendada para hoje 18:00 / amanhã 08:30 / 12/10 18:00", acima da bolha (como o web). */
+/** Relógio ao lado do microfone, com o campo vazio: quantas agendadas há (🆕 web `7322e83`). */
 @Composable
-internal fun SeloAgendada(visivelEm: Instant) {
-    val (dia, quando) = quandoAgendada(visivelEm, Instant.now())
-    val texto = when (dia) {
-        DiaAgendado.HOJE -> stringResource(R.string.agendada_hoje, quando)
-        DiaAgendado.AMANHA -> stringResource(R.string.agendada_amanha, quando)
-        DiaAgendado.OUTRO -> stringResource(R.string.agendada_outro_dia, quando)
+internal fun RelogioAgendadas(quantas: Int, aoAbrir: () -> Unit) {
+    val descricao = pluralStringResource(R.plurals.mensagens_agendadas_quantas, quantas, quantas)
+    IconButton(onClick = aoAbrir, modifier = Modifier.size(48.dp)) {
+        BadgedBox(
+            badge = {
+                Badge(
+                    containerColor = MaterialTheme.colorScheme.primary,
+                    contentColor = MaterialTheme.colorScheme.onPrimary,
+                    modifier = Modifier.clearAndSetSemantics {},
+                ) { Text("$quantas") }
+            },
+        ) { Icon(Icons.Outlined.Schedule, contentDescription = descricao, tint = MaterialTheme.colorScheme.primary) }
     }
-    Row(
-        Modifier
-            .padding(bottom = 2.dp)
-            .background(ConversaTema.cores.campoEntrada, RoundedCornerShape(50))
-            .padding(horizontal = 8.dp, vertical = 2.dp),
-        verticalAlignment = Alignment.CenterVertically,
-        horizontalArrangement = Arrangement.spacedBy(4.dp),
-    ) {
-        Icon(Icons.Outlined.Schedule, contentDescription = null, tint = ConversaTema.cores.iconeAcao, modifier = Modifier.size(12.dp))
-        Text(texto, style = MaterialTheme.typography.labelSmall, color = ConversaTema.cores.iconeAcao)
+}
+
+/**
+ * "Mensagens agendadas" (🆕 web `7322e83`, `MensagensAgendadasModal.vue`): as minhas desta
+ * conversa que ainda não saíram, com o horário, o resumo e "Cancelar" (com a confirmação de
+ * sempre). Fecha sozinha quando a última sai (na hora ou cancelada).
+ */
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+internal fun MensagensAgendadas(agendadas: List<Mensagem>, aoCancelar: suspend (Mensagem) -> Boolean, aoFechar: () -> Unit) {
+    if (agendadas.isEmpty()) {
+        LaunchedEffect(Unit) { aoFechar() }
+        return
+    }
+    var confirmando by remember { mutableStateOf<Mensagem?>(null) }
+    var cancelando by remember { mutableStateOf<Long?>(null) }
+    var erro by remember { mutableStateOf(false) }
+    val escopo = rememberCoroutineScope()
+    ModalBottomSheet(onDismissRequest = aoFechar) {
+        Text(
+            stringResource(R.string.mensagens_agendadas),
+            style = MaterialTheme.typography.titleMedium,
+            modifier = Modifier.padding(horizontal = 20.dp).padding(bottom = 8.dp),
+        )
+        LazyColumn(Modifier.fillMaxWidth().heightIn(max = 480.dp)) {
+            items(agendadas, key = { it.id }) { mensagem ->
+                Row(
+                    Modifier.fillMaxWidth().padding(horizontal = 20.dp, vertical = 10.dp),
+                    horizontalArrangement = Arrangement.spacedBy(12.dp),
+                ) {
+                    Icon(
+                        Icons.Outlined.Schedule,
+                        contentDescription = null,
+                        tint = MaterialTheme.colorScheme.primary,
+                        modifier = Modifier.padding(top = 2.dp).size(18.dp),
+                    )
+                    Column(Modifier.weight(1f)) {
+                        Text(
+                            mensagem.visivelEm?.let { textoDoPrazo(it) }.orEmpty(),
+                            style = MaterialTheme.typography.labelMedium,
+                            fontWeight = FontWeight.SemiBold,
+                            color = MaterialTheme.colorScheme.primary,
+                        )
+                        Text(
+                            textoDoResumo(resumoDaMensagem(mensagem)),
+                            style = MaterialTheme.typography.bodyMedium,
+                            maxLines = 3,
+                            overflow = TextOverflow.Ellipsis,
+                        )
+                    }
+                    val esta = cancelando == mensagem.id
+                    TextButton(enabled = !esta, onClick = { confirmando = mensagem }) {
+                        Text(stringResource(if (esta) R.string.cancelando else R.string.cancelar), color = MaterialTheme.colorScheme.error)
+                    }
+                }
+                HorizontalDivider()
+            }
+        }
+        if (erro) {
+            Text(
+                stringResource(R.string.cancelar_agendada_falhou),
+                color = MaterialTheme.colorScheme.error,
+                style = MaterialTheme.typography.bodySmall,
+                modifier = Modifier.padding(horizontal = 20.dp, vertical = 8.dp),
+            )
+        }
+        Spacer(Modifier.height(16.dp))
+    }
+    confirmando?.let { mensagem ->
+        ConfirmarOcultar(
+            agendada = true,
+            aoConfirmar = {
+                confirmando = null
+                cancelando = mensagem.id
+                erro = false
+                escopo.launch {
+                    erro = !aoCancelar(mensagem)
+                    cancelando = null
+                }
+            },
+            aoCancelar = { confirmando = null },
+        )
     }
 }

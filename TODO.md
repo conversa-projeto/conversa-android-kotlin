@@ -730,7 +730,7 @@
 - [x] Ir para a mensagem: se não carregada, `GET /mensagens?…&mensagemreferencia=<id>&mensagensprevias=30&mensagensseguintes=30` (se não vier, 120/120) → substituir a lista → centralizar + destacar por 1,2 s — no Android a lista é o Room, então em vez de substituir: `trazerAte` volta de 99 em 99 a partir da mais antiga salva até a mensagem aparecer (até 20 páginas), sem deixar buraco; barra de progresso enquanto busca; centraliza (longe: salta sem animar) e destaca 1,2 s. O link `?mensagem=` também usa isso ✔ 2a4cc59
 - [x] Original em outra conversa → abrir aquela conversa (se participo) — `RotaChat(conversa, mensagem)`; de quem não participo a citação não é tocável ✔ 2a4cc59
 - [x] Erro → "Não foi possível localizar esta mensagem no contexto da conversa." — não achou, falhou a rede ou a conversa de origem não é minha (+ testes) ✔ 2a4cc59
-- [ ] 🆕 `7322e83` Encaminhada de encaminhada (FC-520): dentro da citação, não repetir os conteúdos que a citação de baixo já mostra (`semCopiasDaReferencia`: uma cópia por `tipo:conteudo` igual)
+- [x] 🆕 `7322e83` Encaminhada de encaminhada (FC-520): dentro da citação, não repetir os conteúdos que a citação de baixo já mostra (`semCopiasDaReferencia`: uma cópia por `tipo:conteudo` igual)
 
 ### 7.6 Encaminhar, copiar e responder no privado (FC-506, FC-507, FC-512)
 - [x] Encaminhar: tela de destino (conversas exceto a de origem + contatos sem direta), com busca — folha "Encaminhar mensagem" (`EncaminharMensagem`, `destinosParaEncaminhar`, textos do web) (+ testes) ✔ 19add2b
@@ -768,7 +768,7 @@
 - [x] Toque longo no Enviar → "Agendar": data e hora (padrão amanhã 08:00) ✔ f3cab38
 - [x] Validações: ≥ 5 min no futuro; ≤ 1 ano ✔ f3cab38
 - [x] `visivel_em` em ISO UTC; selo "Agendada para hoje HH:MM / amanhã / dd/MM HH:MM"; some na hora exata ✔ f3cab38
-- [ ] 🆕 `7322e83` Agendadas fora do chat: a agendada não aparece na lista do chat até a hora (substitui o selo acima); com o campo vazio, relógio com o número ao lado do microfone ("1 mensagem agendada" / "N mensagens agendadas"); folha "Mensagens agendadas" com o horário ("hoje 18:00", "amanhã 08:30", "12/10 18:00", com o ano se for outro), o resumo e "Cancelar" ("Cancelando...", mesma confirmação; erro "Não foi possível cancelar"); fecha quando esvazia; na hora, sai da lista e entra no chat
+- [x] 🆕 `7322e83` Agendadas fora do chat: a agendada não aparece na lista do chat até a hora (substitui o selo acima); com o campo vazio, relógio com o número ao lado do microfone ("1 mensagem agendada" / "N mensagens agendadas"); folha "Mensagens agendadas" com o horário ("hoje 18:00", "amanhã 08:30", "12/10 18:00", com o ano se for outro), o resumo e "Cancelar" ("Cancelando...", mesma confirmação; erro "Não foi possível cancelar"); fecha quando esvazia; na hora, sai da lista e entra no chat
 
 ### 7.11 Pequenos extras (FC-515)
 - [x] Atalhos `:)` → 🙂 etc. (tabela do `emojiAtalhos.ts`), só como palavra solta e fora de código ✔ c2a31d6

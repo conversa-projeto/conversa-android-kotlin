@@ -28,6 +28,7 @@ import com.conversa.app.core.model.Conversa
 import com.conversa.app.core.model.ItemChat
 import com.conversa.app.core.model.MembroConversa
 import com.conversa.app.core.model.Mensagem
+import com.conversa.app.core.model.MensagensDoChat
 import com.conversa.app.core.model.PREFIXO_LOCAL
 import com.conversa.app.core.model.StatusDestinatario
 import com.conversa.app.core.model.TipoConteudo
@@ -37,6 +38,7 @@ import com.conversa.app.core.model.atividadeDaConversa
 import com.conversa.app.core.model.local
 import com.conversa.app.core.model.montarItensChat
 import com.conversa.app.core.model.podeReagir
+import com.conversa.app.core.model.separarAgendadas
 import com.conversa.app.core.network.http.mensagemAmigavel
 import com.conversa.app.core.network.http.paraErroApi
 import com.conversa.app.core.ui.estado.EventosUnicos
@@ -45,6 +47,7 @@ import java.time.Clock
 import java.time.Instant
 import javax.inject.Inject
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -52,6 +55,8 @@ import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.flow.flatMapLatest
+import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
@@ -66,6 +71,8 @@ data class ChatUiState(
     val atividade: AtividadeConversa = AtividadeConversa.Nenhuma,
     /** Em ordem cronológica (a tela desenha de baixo para cima). */
     val itens: List<ItemChat> = emptyList(),
+    /** Minhas agendadas que ainda não saíram, por horário: o relógio ao lado do microfone (🆕 web `7322e83`). */
+    val agendadas: List<Mensagem> = emptyList(),
     val eu: Long = 0,
     /** Ainda não há nada no Room e a primeira carga não terminou. */
     val carregando: Boolean = true,
@@ -271,22 +278,43 @@ class ChatViewModel @Inject constructor(
             ExtrasDoCampo(texto, foco, resposta, s, minhas)
         }
 
+    /**
+     * O chat sem as agendadas (🆕 web `7322e83`): elas ficam no relógio ao lado do microfone.
+     * Na hora da próxima a lista é refeita e ela entra no chat, sem esperar o Room mudar.
+     */
+    @OptIn(ExperimentalCoroutinesApi::class)
+    private val mensagensDoChat = mensagens.observar(conversaId).flatMapLatest { lista ->
+        flow<MensagensDoChat> {
+            var agora = relogio.instant()
+            while (true) {
+                val separadas = separarAgendadas(lista, agora)
+                emit(separadas)
+                val proxima = separadas.agendadas.firstOrNull()?.visivelEm ?: break
+                delay(java.time.Duration.between(relogio.instant(), proxima).toMillis().coerceAtLeast(0))
+                // Passada a espera, a próxima já conta como visível (mesmo com um relógio parado, nos testes).
+                agora = maxOf(relogio.instant(), proxima)
+            }
+        }
+    }
+
     private val base = combine(
         conversas.observar(conversaId),
-        mensagens.observar(conversaId),
+        mensagensDoChat,
         presente,
         carga,
         primeiraNaoLida,
-    ) { conversa, lista, p, c, naoLida ->
+    ) { conversa, separadas, p, c, naoLida ->
         val grupo = conversa?.tipo == TipoConversa.GRUPO
+        val lista = separadas.visiveis
         ChatUiState(
             conversa = conversa,
             online = conversa?.tipo == TipoConversa.DIRETA && conversa.destinatarioId in p.online,
             membros = if (grupo) membros.value.map { it.nome }.sorted().joinToString(", ") else "",
             atividade = atividadeDaConversa(grupo, p.digitando, p.gravando, p.nomes, eu),
             itens = montarItensChat(lista, naoLida?.takeIf { it > 0 }, grupo, eu, relogio.zone),
+            agendadas = separadas.agendadas,
             eu = eu,
-            carregando = lista.isEmpty() && !c.carregou,
+            carregando = lista.isEmpty() && separadas.agendadas.isEmpty() && !c.carregou,
             carregandoAnteriores = c.anteriores,
             chegouAoInicio = c.inicio,
             pronto = naoLida != null,
@@ -369,6 +397,9 @@ class ChatViewModel @Inject constructor(
 
     /** "Agendar" (7.10): a mesma mensagem, com `visivel_em` (o diálogo já validou 5 min..1 ano). */
     fun agendar(texto: String, quando: Instant, aoGravar: () -> Unit) = enviar(texto, quando, aoGravar)
+
+    /** "Cancelar" na lista de agendadas: apaga de vez (ninguém a viu). Falso = "Não foi possível cancelar". */
+    suspend fun cancelarAgendada(mensagem: Mensagem): Boolean = mensagens.ocultar(mensagem.id).isSuccess
 
     /** Detalhe do status (7.10): a folha pede quando abre. */
     suspend fun statusDetalhe(mensagemId: Long): Result<List<StatusDestinatario>> = mensagens.statusDetalhe(mensagemId)
