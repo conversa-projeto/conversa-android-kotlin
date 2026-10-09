@@ -4,7 +4,7 @@
 - **Tipo:** funcionalidade
 - **Itens:** `TODO.md` 8.5 (tela com seções, permissões do usuário, Sistema, Acessos): o 8.5 fecha; FC-804, FC-808; CFG-07, CFG-08, AUT-09
 - **Branch:** `reescrita`
-- **Commits:** (preencher)
+- **Commits:** `afd3269`
 
 ## Contexto
 O web mostra duas abas administrativas só para quem tem a permissão. As permissões vêm de `GET /usuario/permissoes`; no modo aberto, todos têm todas.
