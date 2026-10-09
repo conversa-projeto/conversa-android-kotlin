@@ -210,6 +210,13 @@ interface AtividadeDao {
 
     @Query("DELETE FROM atividade")
     suspend fun limpar()
+
+    /** A primeira página relida: troca tudo (o que saiu do servidor sai daqui também). */
+    @Transaction
+    suspend fun trocar(atividades: List<AtividadeEntidade>) {
+        limpar()
+        salvar(atividades)
+    }
 }
 
 @Dao

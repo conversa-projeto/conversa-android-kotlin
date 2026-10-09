@@ -24,6 +24,7 @@ No web (`useMermaid.ts`), um bloco ```` ```mermaid ```` vira diagrama, com "Visu
   - diagrama inválido fica como código, sem a alternância;
   - dentro do Markdown, o código cercado `mermaid` vira diagrama (`componentesDoMarkdown`), e o inválido fica como código.
 - **`core:model`:** `ehLinguagemMermaid`, com teste no `DestaqueCodigoTest`.
+- **`.gitattributes`:** o `mermaid.min.js` como `-text` (`92bbbcd`), para ficar byte a byte igual ao conferido; o autocrlf mudaria as quebras de linha.
 
 ## Como foi verificado
 - `./gradlew :app:assembleDebug testDebugUnitTest :core:model:test :core:testing:test :app:lintDebug ktlintCheck` passou. O lint só aponta versões novas.

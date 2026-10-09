@@ -1,6 +1,7 @@
 package com.conversa.app.core.data.sincronizacao
 
 import com.conversa.app.core.data.SessaoRepositorio
+import com.conversa.app.core.data.atividades.AtividadesRepositorio
 import com.conversa.app.core.data.enquetes.EnquetesRepositorio
 import com.conversa.app.core.data.paraEntidade
 import com.conversa.app.core.data.presenca.PresencaRepositorio
@@ -25,11 +26,9 @@ import kotlinx.coroutines.async
 import kotlinx.coroutines.awaitAll
 import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.flow.MutableSharedFlow
-import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharedFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asSharedFlow
-import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.debounce
 import kotlinx.coroutines.flow.filter
 import kotlinx.coroutines.flow.filterIsInstance
@@ -66,12 +65,13 @@ class SyncManager @Inject constructor(
     private val presenca: PresencaRepositorio,
     private val sessao: SessaoRepositorio,
     private val enquetes: EnquetesRepositorio,
+    private val atividades: AtividadesRepositorio,
     @EscopoAplicacao private val escopo: CoroutineScope,
 ) {
     private val trava = Mutex()
 
-    private val _atividadesNovas = MutableStateFlow(0)
-    val atividadesNovas: StateFlow<Int> = _atividadesNovas.asStateFlow()
+    /** Badge da aba Atividades (8.1): o contador fica no repositório, que também sabe se a aba está aberta. */
+    val atividadesNovas: StateFlow<Int> = atividades.novas
 
     private val _chamadasPendentes = MutableSharedFlow<List<ChamadaPendente>>(replay = 1)
 
@@ -115,7 +115,7 @@ class SyncManager @Inject constructor(
                     async { sincronizarMensagensNovasTravado() },
                     async { sincronizarConversas() },
                     async { presenca.recarregarOnline() },
-                    async { sincronizarAtividades() },
+                    async { atividades.atualizarNovas() },
                     async { sincronizarChamadasPendentes() },
                 ).awaitAll()
             }
@@ -181,7 +181,7 @@ class SyncManager @Inject constructor(
 
     /** Fim da sessão: zera o que fica só em memória (o banco é limpo à parte). */
     fun limpar() {
-        _atividadesNovas.value = 0
+        atividades.limpar()
         _chamadasPendentes.resetReplayCache()
     }
 
@@ -195,17 +195,13 @@ class SyncManager @Inject constructor(
             .onSuccess { lista -> mensagemDao.salvarCompletas(lista.filter { it.id == evento.mensagemId }.map { it.paraEntidade() }) }
     }
 
-    private suspend fun sincronizarAtividades() {
-        chamarApi { api.atividadesNovas() }.onSuccess { _atividadesNovas.value = it.quantidade }
-    }
-
     private suspend fun sincronizarChamadasPendentes() {
         chamarApi { api.chamadasPendentes() }.onSuccess { lista -> _chamadasPendentes.emit(lista.map { it.paraModelo() }) }
     }
 
     private fun tratarEvento(evento: EventoSocket) {
         when (evento) {
-            is EventoSocket.NovaAtividade -> escopo.launch { sincronizarAtividades() }
+            is EventoSocket.NovaAtividade -> escopo.launch { atividades.aoReceberAviso() }
             is EventoSocket.ConversaAtualizada -> escopo.launch { sincronizarConversas() }
             is EventoSocket.StatusMensagens -> escopo.launch { atualizarStatus(evento) }
             is EventoSocket.Reacao -> escopo.launch { atualizarReacoes(evento) }

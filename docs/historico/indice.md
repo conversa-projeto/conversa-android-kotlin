@@ -81,7 +81,7 @@
 - 2026-10-08 · [Etapa 7 — diagramas Mermaid](2026-10-08-36-etapa-7-mermaid.md) — mermaid 12.0.0 embutido (o mesmo do web, 1,87 MB no APK) num WebView isolado: ```mermaid e os de dentro do ```md viram diagrama; inválido fica como código
 
 ## Atividades, pesquisa, perfil e configurações (etapa 8)
-_(nada ainda)_
+- 2026-10-08 · [Etapa 8 — aba Atividades](2026-10-08-37-etapa-8-atividades.md) — módulo `:feature:atividades`: lista por dia com selos, prévias e "Nova", paginação, abrir marca como vistas e o WS 61 relê com a aba aberta; corrigido o POST de vistas (o OkHttp recusava POST sem corpo)
 
 ## Extras — SIP, compartilhar tela (etapa 9)
 _(nada ainda)_

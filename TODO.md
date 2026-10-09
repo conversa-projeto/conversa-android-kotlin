@@ -805,17 +805,17 @@
 
 ## Etapa 8 — Atividades, pesquisa, perfil e configurações
 
-- [ ] Criar os módulos `:feature:atividades`, `:feature:pesquisa` e `:feature:config` (adiados da 1.2)
+- [ ] Criar os módulos `:feature:atividades`, `:feature:pesquisa` e `:feature:config` (adiados da 1.2) — `:feature:atividades` criado com o 8.1; os outros dois entram com o 8.2 e o 8.5
 ### 8.1 Atividades (FC-800, ATV-01, ATV-02)
-- [ ] Aba Atividades: `GET /atividades?antes=0&limite=30`
-- [ ] Paginação: perto do fim → `antes=<id da última>`; fim quando vierem < 30
-- [ ] Agrupar Hoje / Ontem / `dd/MM/aaaa`
-- [ ] Item: avatar com selo (emoji, "↩", "@", "✆"), "**autor** descrição", "em <grupo>", prévia, hora, "Nova"
-- [ ] Descrições: "reagiu <emoji> à sua mensagem", "respondeu sua mensagem", "mencionou você", "ligou (chamada perdida)" / "ligou (chamada de vídeo perdida)"
-- [ ] Toque: com `mensagem_id` → ir para a mensagem; sem → abrir a conversa
-- [ ] Badge: `GET /atividades/novas` → `{quantidade}` ao conectar e a cada WS 61 (`99+`)
-- [ ] Abrir a aba → `POST /atividades/vistas` → zerar o badge (itens seguem marcados como "Nova" enquanto aberta)
-- [ ] Vazio: "Nenhuma atividade ainda." / "Reações, respostas, menções e chamadas perdidas aparecem aqui."
+- [x] Aba Atividades: `GET /atividades?antes=0&limite=30`
+- [x] Paginação: perto do fim → `antes=<id da última>`; fim quando vierem < 30
+- [x] Agrupar Hoje / Ontem / `dd/MM/aaaa`
+- [x] Item: avatar com selo (emoji, "↩", "@", "✆"), "**autor** descrição", "em <grupo>", prévia, hora, "Nova"
+- [x] Descrições: "reagiu <emoji> à sua mensagem", "respondeu sua mensagem", "mencionou você", "ligou (chamada perdida)" / "ligou (chamada de vídeo perdida)"
+- [x] Toque: com `mensagem_id` → ir para a mensagem; sem → abrir a conversa
+- [x] Badge: `GET /atividades/novas` → `{quantidade}` ao conectar e a cada WS 61 (`99+`)
+- [x] Abrir a aba → `POST /atividades/vistas` → zerar o badge (itens seguem marcados como "Nova" enquanto aberta)
+- [x] Vazio: "Nenhuma atividade ainda." / "Reações, respostas, menções e chamadas perdidas aparecem aqui."
 
 ### 8.2 Pesquisa (FC-801, PES-01, PES-02)
 - [ ] Na conversa: ícone de busca → campo → `GET /pesquisar?texto=&conversa=<id>` → resultados (mais recentes primeiro) → ir para a mensagem

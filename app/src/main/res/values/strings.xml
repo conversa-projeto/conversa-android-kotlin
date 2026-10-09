@@ -15,8 +15,6 @@
     <!-- AUT-03: o erro do servidor vem antes; texto do web "(tentando de novo...)" -->
     <string name="tentando_de_novo">(tentando de novo…)</string>
 
-    <string name="atividades_em_breve">Atividades</string>
-    <string name="em_breve_descricao">Chega numa próxima versão desta reescrita.</string>
 
     <!-- Configurações provisórias (a tela completa é da etapa 8) -->
     <string name="config_servidor">Servidor</string>

@@ -1,0 +1,23 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- Aba Atividades (8.1), textos do web (AtividadesPage.vue) -->
+    <string name="atividades">Atividades</string>
+    <string name="carregando">Carregando…</string>
+    <string name="nenhuma_atividade">Nenhuma atividade ainda.</string>
+    <string name="nenhuma_atividade_texto">Reações, respostas, menções e chamadas perdidas aparecem aqui.</string>
+    <string name="hoje">Hoje</string>
+    <string name="ontem">Ontem</string>
+    <string name="reagiu">reagiu %1$s à sua mensagem</string>
+    <string name="respondeu">respondeu sua mensagem</string>
+    <string name="mencionou">mencionou você</string>
+    <string name="ligou_perdida">ligou (chamada perdida)</string>
+    <string name="ligou_video_perdida">ligou (chamada de vídeo perdida)</string>
+    <string name="em_grupo">em %1$s</string>
+    <string name="nova">Nova</string>
+    <string name="previa_imagem">Imagem</string>
+    <string name="previa_arquivo">Arquivo</string>
+    <string name="previa_audio">Áudio</string>
+    <string name="previa_figurinha">Figurinha</string>
+    <string name="previa_votacao">Votação</string>
+    <string name="previa_entre_aspas">“%1$s”</string>
+</resources>

@@ -71,6 +71,18 @@ class RedeTest {
     }
 
     @Test
+    fun `marcar atividades vistas e um POST que chega ao servidor`() = runTest {
+        servidor.enqueue(json(200, """{"vistas_em":"2026-10-08T12:00:00.000Z"}"""))
+
+        val resultado = chamarApi { api.marcarAtividadesVistas() }
+
+        assertThat(resultado.isSuccess).isTrue()
+        val requisicao = servidor.takeRequest()
+        assertThat(requisicao.method).isEqualTo("POST")
+        assertThat(requisicao.url.encodedPath).isEqualTo("/api/atividades/vistas")
+    }
+
+    @Test
     fun `token so vai para a api do servidor, nunca para o storage nem para outro host`() {
         servidor.enqueue(MockResponse.Builder().code(200).build())
         servidor.enqueue(MockResponse.Builder().code(200).build())

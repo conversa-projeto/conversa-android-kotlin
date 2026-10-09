@@ -53,7 +53,6 @@ import com.conversa.app.core.data.sincronizacao.SyncManager
 import com.conversa.app.core.data.tempoReal.ConexaoTempoReal
 import com.conversa.app.core.datastore.PreferenciasStore
 import com.conversa.app.core.network.http.mensagemAmigavel
-import com.conversa.app.core.ui.componentes.EstadoVazio
 import com.conversa.app.core.ui.componentes.FaixaSemConexao
 import com.conversa.app.core.ui.componentes.LocalAvisos
 import dagger.hilt.android.lifecycle.HiltViewModel
@@ -107,6 +106,7 @@ enum class Aba(@StringRes val rotulo: Int, val icone: ImageVector) {
 fun PrincipalTela(
     conversas: @Composable (Modifier) -> Unit,
     chamadas: @Composable (Modifier) -> Unit,
+    atividades: @Composable (Modifier) -> Unit,
     configuracoes: @Composable (Modifier) -> Unit,
     viewModel: PrincipalViewModel = hiltViewModel(),
 ) {
@@ -170,12 +170,7 @@ fun PrincipalTela(
             when (aba) {
                 Aba.CONVERSAS -> conversas(conteudo)
                 Aba.CHAMADAS -> chamadas(conteudo)
-                Aba.ATIVIDADES -> EstadoVazio(
-                    titulo = stringResource(R.string.atividades_em_breve),
-                    descricao = stringResource(R.string.em_breve_descricao),
-                    icone = Icons.Outlined.Notifications,
-                    modifier = conteudo.statusBarsPadding(),
-                )
+                Aba.ATIVIDADES -> atividades(conteudo)
                 Aba.CONFIGURACOES -> configuracoes(conteudo)
             }
         }

@@ -66,7 +66,6 @@ import kotlinx.serialization.json.JsonObject
 import retrofit2.http.Body
 import retrofit2.http.DELETE
 import retrofit2.http.GET
-import retrofit2.http.HTTP
 import retrofit2.http.Headers
 import retrofit2.http.PATCH
 import retrofit2.http.POST
@@ -299,8 +298,9 @@ interface ConversaApi {
     @GET("atividades/novas")
     suspend fun atividadesNovas(): QuantidadeDto
 
-    @HTTP(method = "POST", path = "atividades/vistas", hasBody = false)
-    suspend fun marcarAtividadesVistas(): VistasDto
+    /** O OkHttp recusa POST sem corpo: vai `{}` (o servidor não lê o corpo). */
+    @POST("atividades/vistas")
+    suspend fun marcarAtividadesVistas(@Body corpo: JsonObject = JsonObject(emptyMap())): VistasDto
 
     // --- SIP ---
 

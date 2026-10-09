@@ -1,11 +1,13 @@
 package com.conversa.app.core.data
 
+import com.conversa.app.core.database.entidades.AtividadeEntidade
 import com.conversa.app.core.database.entidades.ContatoEntidade
 import com.conversa.app.core.database.entidades.ConteudoEntidade
 import com.conversa.app.core.database.entidades.ConversaEntidade
 import com.conversa.app.core.database.entidades.MensagemCompleta
 import com.conversa.app.core.database.entidades.MensagemEntidade
 import com.conversa.app.core.database.entidades.ReacaoEntidade
+import com.conversa.app.core.model.Atividade
 import com.conversa.app.core.model.Contato
 import com.conversa.app.core.model.Conteudo
 import com.conversa.app.core.model.Conversa
@@ -14,6 +16,8 @@ import com.conversa.app.core.model.MensagemResumida
 import com.conversa.app.core.model.Reacao
 import com.conversa.app.core.model.ReferenciaMensagem
 import com.conversa.app.core.model.StatusTranscricao
+import com.conversa.app.core.model.TipoAtividade
+import com.conversa.app.core.model.TipoChamada
 import com.conversa.app.core.model.TipoConteudo
 import com.conversa.app.core.model.TipoConversa
 import com.conversa.app.core.model.UsuarioReacao
@@ -194,3 +198,43 @@ private fun MensagemResumida.paraDto(): MensagemResumidaDto = MensagemResumidaDt
 )
 
 private fun Conteudo.paraDto() = ConteudoDto(id, ordem, tipo.codigo, conteudo, nome, extensao, transcricaoStatus.codigo, transcricao)
+
+// --- Atividades (8.1): o Room guarda os códigos; o modelo, os enums ---
+
+internal fun Atividade.paraEntidade() = AtividadeEntidade(
+    id = id,
+    tipo = tipo.codigo,
+    criadoEm = criadoEm,
+    nova = nova,
+    autorId = autorId,
+    autorNome = autorNome,
+    autorAvatarUrl = autorAvatarUrl,
+    conversaId = conversaId,
+    conversaTipo = conversaTipo?.codigo,
+    conversaDescricao = conversaDescricao,
+    mensagemId = mensagemId,
+    conteudoTipo = conteudoTipo?.codigo,
+    texto = texto,
+    chamadaId = chamadaId,
+    chamadaTipo = chamadaTipo?.codigo,
+    emoji = emoji,
+)
+
+fun AtividadeEntidade.paraModelo() = Atividade(
+    id = id,
+    tipo = TipoAtividade.de(tipo),
+    criadoEm = criadoEm,
+    nova = nova,
+    autorId = autorId,
+    autorNome = autorNome,
+    autorAvatarUrl = autorAvatarUrl,
+    conversaId = conversaId,
+    conversaTipo = conversaTipo?.let(TipoConversa::de),
+    conversaDescricao = conversaDescricao,
+    mensagemId = mensagemId,
+    conteudoTipo = conteudoTipo?.let(TipoConteudo::de),
+    texto = texto,
+    chamadaId = chamadaId,
+    chamadaTipo = chamadaTipo?.let(TipoChamada::de),
+    emoji = emoji,
+)

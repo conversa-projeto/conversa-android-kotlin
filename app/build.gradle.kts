@@ -49,6 +49,7 @@ dependencies {
     implementation(projects.feature.conversas)
     implementation(projects.feature.chat)
     implementation(projects.feature.chamada)
+    implementation(projects.feature.atividades)
 
     implementation(libs.androidx.core.ktx)
     implementation(libs.androidx.activity.compose)

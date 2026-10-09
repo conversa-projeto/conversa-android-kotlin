@@ -10,6 +10,7 @@ import androidx.navigation.toRoute
 import com.conversa.app.MainViewModel
 import com.conversa.app.NavegacaoGlobal
 import com.conversa.app.core.ui.estado.ColetarEventos
+import com.conversa.app.feature.atividades.AtividadesRotaTela
 import com.conversa.app.feature.auth.cadastro.CadastroRotaTela
 import com.conversa.app.feature.auth.login.AvisoLogin
 import com.conversa.app.feature.auth.login.LoginRotaTela
@@ -79,6 +80,13 @@ fun ConversaNavHost(destinoInicial: Any, principal: MainViewModel) {
                 },
                 chamadas = { modificador ->
                     HistoricoChamadasRota(aoAbrirConversa = { nav.navigate(RotaChat(it)) }, modifier = modificador)
+                },
+                atividades = { modificador ->
+                    AtividadesRotaTela(
+                        aoAbrirMensagem = { conversa, mensagem -> nav.navigate(RotaChat(conversa, mensagem)) },
+                        aoAbrirConversa = { nav.navigate(RotaChat(it)) },
+                        modifier = modificador,
+                    )
                 },
                 configuracoes = { modificador ->
                     ConfiguracoesProvisorias(
