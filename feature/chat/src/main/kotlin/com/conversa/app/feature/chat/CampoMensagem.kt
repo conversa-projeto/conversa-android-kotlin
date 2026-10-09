@@ -218,11 +218,14 @@ internal fun Campo(
             acoes.aoCampoFocado()
         }
     }
-    // Texto que outro app compartilhou (AND-10): entra no campo uma vez, para a pessoa revisar.
+    // Texto do rascunho (FC-519) ou que outro app compartilhou (AND-10): entra no campo uma vez,
+    // para a pessoa revisar, e não conta como "digitando".
+    var textoDoApp by remember { mutableStateOf<String?>(null) }
     LaunchedEffect(textoCompartilhado) {
         if (textoCompartilhado != null) {
             // Texto com "@[Nome](id)" volta a mostrar "@Nome", com as menções guardadas.
             val (limpo, cruas) = extrairMencoesCruas(textoCompartilhado)
+            textoDoApp = limpo
             texto.setTextAndPlaceCursorAtEnd(limpo)
             mencoes.addAll(cruas)
             acoes.aoTextoUsado()
@@ -230,7 +233,11 @@ internal fun Campo(
     }
     // "Digitando" (ENV-15): cada mudança do texto (o ViewModel limita a um aviso a cada 2,5 s).
     LaunchedEffect(texto) {
-        snapshotFlow { texto.text.toString() }.drop(1).collect { acoes.aoDigitar(it) }
+        snapshotFlow { texto.text.toString() }.drop(1).collect { if (it != textoDoApp) acoes.aoDigitar(it) }
+    }
+    // Rascunho (FC-519): o texto com as menções cruas, a cada mudança.
+    LaunchedEffect(texto) {
+        snapshotFlow { textoParaEnvio(texto.text.toString(), mencoes.toList()) }.drop(1).collect { acoes.aoMudarRascunho(it) }
     }
     val gravacao by acoes.gravacao.estado.collectAsStateWithLifecycle()
     Column(

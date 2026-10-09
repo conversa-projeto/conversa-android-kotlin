@@ -168,3 +168,18 @@ data class EnvioPendenteEntidade(
 /** Pequenos valores de sincronização (ex.: cursor `ate` de `/mensagens/novas`). */
 @Entity(tableName = "sync_estado")
 data class SyncEstadoEntidade(@PrimaryKey val chave: String, val valor: String)
+
+/**
+ * Rascunho do campo de uma conversa (FC-519, 🆕 web `7322e83`): o texto (menções no formato
+ * `@[Nome](id)`), a fila de anexos em JSON e a resposta ou encaminhamento pendente.
+ */
+@Entity(tableName = "rascunho")
+data class RascunhoEntidade(
+    @PrimaryKey val conversaId: Long,
+    val texto: String,
+    val anexosJson: String,
+    /** Código do [com.conversa.app.core.model.TipoReferencia] pendente, ou nulo. */
+    val referenciaTipo: Int?,
+    val referenciaMensagemId: Long?,
+    val atualizadoEm: Instant,
+)

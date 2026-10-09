@@ -4,7 +4,7 @@
 - **Tipo:** funcionalidade (acompanha o web)
 - **Itens:** `TODO.md` 7.10 e 7.5 (linhas 🆕 `7322e83`); FC-514, FC-520; MSG-17, ENV-14, MSG-19
 - **Branch:** `reescrita`
-- **Commits:** (preencher)
+- **Commits:** `b7d6ef2`
 
 ## Contexto
 O web `7322e83` (ver a sincronização em [31](2026-10-08-31-sincronizacao-agendadas-rascunho.md)) mudou dois comportamentos que o Android já tinha:

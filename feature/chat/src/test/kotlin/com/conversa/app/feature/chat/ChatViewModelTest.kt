@@ -78,6 +78,9 @@ class ChatViewModelTest {
         every { resultados } returns kotlinx.coroutines.flow.MutableSharedFlow()
     }
     private val player = PlayerFalso()
+    private val rascunhos = mockk<com.conversa.app.core.data.rascunhos.RascunhosRepositorio>(relaxed = true) {
+        coEvery { ler(any()) } returns null
+    }
 
     private fun mensagem(id: Long, remetente: Long, lida: Boolean) = Mensagem(
         id = id,
@@ -129,6 +132,7 @@ class ChatViewModelTest {
             player,
             mockk(relaxed = true),
             Clock.fixed(agora, ZoneOffset.UTC),
+            rascunhos,
         )
         backgroundScope.launch { vm.estado.collect {} }
         return vm
@@ -192,6 +196,38 @@ class ChatViewModelTest {
         advanceTimeBy(10_000)
         runCurrent()
         coVerify(exactly = 2) { mensagens.avisarDigitando(42) }
+    }
+
+    @Test
+    fun `rascunho volta ao abrir - texto, anexos e a resposta`() = runTest {
+        val pergunta = mensagem(10, 8, lida = true)
+        val foto = com.conversa.app.core.data.anexos.AnexoLocal("content://f/1", "f.jpg", 10, "image/jpeg", TipoConteudo.IMAGEM)
+        coEvery { rascunhos.ler(42) } returns com.conversa.app.core.data.rascunhos.Rascunho(
+            "oi @[Bia](3)",
+            listOf(foto),
+            TipoReferencia.RESPOSTA to 10L,
+        )
+        coEvery { mensagens.buscar(10) } returns pergunta
+        val vm = criar()
+        advanceUntilIdle()
+
+        assertThat(vm.estado.value.textoParaCampo).isEqualTo("oi @[Bia](3)")
+        assertThat(vm.estado.value.fila).containsExactly(foto)
+        assertThat(vm.estado.value.respondendo).isEqualTo(ReferenciaPendente(TipoReferencia.RESPOSTA, pergunta))
+    }
+
+    @Test
+    fun `mudancas do campo viram rascunho depois de um pequeno atraso`() = runTest {
+        val vm = criar()
+        runCurrent()
+
+        vm.aoMudarRascunho("a")
+        vm.aoMudarRascunho("ab")
+        advanceTimeBy(600)
+        runCurrent()
+
+        io.mockk.verify(exactly = 1) { rascunhos.guardar(42, com.conversa.app.core.data.rascunhos.Rascunho("ab")) }
+        io.mockk.verify(exactly = 0) { rascunhos.guardar(42, com.conversa.app.core.data.rascunhos.Rascunho("a")) }
     }
 
     @Test

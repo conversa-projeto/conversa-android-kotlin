@@ -1,0 +1,680 @@
+{
+  "formatVersion": 1,
+  "database": {
+    "version": 3,
+    "identityHash": "80023e58349a15d9ba914571026baf40",
+    "entities": [
+      {
+        "tableName": "conversa",
+        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`id` INTEGER NOT NULL, `tipo` INTEGER NOT NULL, `descricao` TEXT, `nome` TEXT, `destinatarioId` INTEGER, `ultimaMensagemId` INTEGER NOT NULL, `ultimaMensagemEm` INTEGER, `ultimaMensagemTexto` TEXT, `naoLidas` INTEGER NOT NULL, `fixadaOrdem` INTEGER, `arquivadaEm` INTEGER, `avatarUrl` TEXT, PRIMARY KEY(`id`))",
+        "fields": [
+          {
+            "fieldPath": "id",
+            "columnName": "id",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "tipo",
+            "columnName": "tipo",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "descricao",
+            "columnName": "descricao",
+            "affinity": "TEXT"
+          },
+          {
+            "fieldPath": "nome",
+            "columnName": "nome",
+            "affinity": "TEXT"
+          },
+          {
+            "fieldPath": "destinatarioId",
+            "columnName": "destinatarioId",
+            "affinity": "INTEGER"
+          },
+          {
+            "fieldPath": "ultimaMensagemId",
+            "columnName": "ultimaMensagemId",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "ultimaMensagemEm",
+            "columnName": "ultimaMensagemEm",
+            "affinity": "INTEGER"
+          },
+          {
+            "fieldPath": "ultimaMensagemTexto",
+            "columnName": "ultimaMensagemTexto",
+            "affinity": "TEXT"
+          },
+          {
+            "fieldPath": "naoLidas",
+            "columnName": "naoLidas",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "fixadaOrdem",
+            "columnName": "fixadaOrdem",
+            "affinity": "INTEGER"
+          },
+          {
+            "fieldPath": "arquivadaEm",
+            "columnName": "arquivadaEm",
+            "affinity": "INTEGER"
+          },
+          {
+            "fieldPath": "avatarUrl",
+            "columnName": "avatarUrl",
+            "affinity": "TEXT"
+          }
+        ],
+        "primaryKey": {
+          "autoGenerate": false,
+          "columnNames": [
+            "id"
+          ]
+        }
+      },
+      {
+        "tableName": "mensagem",
+        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`id` INTEGER NOT NULL, `conversaId` INTEGER NOT NULL, `remetenteId` INTEGER NOT NULL, `remetente` TEXT NOT NULL, `inserida` INTEGER NOT NULL, `visivelEm` INTEGER, `excluidaEm` INTEGER, `dataEfetiva` INTEGER NOT NULL, `referenciaJson` TEXT, `recebida` INTEGER NOT NULL, `visualizada` INTEGER NOT NULL, `reproduzida` INTEGER NOT NULL, `enviando` INTEGER NOT NULL, `falhou` INTEGER NOT NULL, PRIMARY KEY(`id`))",
+        "fields": [
+          {
+            "fieldPath": "id",
+            "columnName": "id",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "conversaId",
+            "columnName": "conversaId",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "remetenteId",
+            "columnName": "remetenteId",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "remetente",
+            "columnName": "remetente",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "inserida",
+            "columnName": "inserida",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "visivelEm",
+            "columnName": "visivelEm",
+            "affinity": "INTEGER"
+          },
+          {
+            "fieldPath": "excluidaEm",
+            "columnName": "excluidaEm",
+            "affinity": "INTEGER"
+          },
+          {
+            "fieldPath": "dataEfetiva",
+            "columnName": "dataEfetiva",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "referenciaJson",
+            "columnName": "referenciaJson",
+            "affinity": "TEXT"
+          },
+          {
+            "fieldPath": "recebida",
+            "columnName": "recebida",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "visualizada",
+            "columnName": "visualizada",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "reproduzida",
+            "columnName": "reproduzida",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "enviando",
+            "columnName": "enviando",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "falhou",
+            "columnName": "falhou",
+            "affinity": "INTEGER",
+            "notNull": true
+          }
+        ],
+        "primaryKey": {
+          "autoGenerate": false,
+          "columnNames": [
+            "id"
+          ]
+        },
+        "indices": [
+          {
+            "name": "index_mensagem_conversaId",
+            "unique": false,
+            "columnNames": [
+              "conversaId"
+            ],
+            "orders": [],
+            "createSql": "CREATE INDEX IF NOT EXISTS `index_mensagem_conversaId` ON `${TABLE_NAME}` (`conversaId`)"
+          },
+          {
+            "name": "index_mensagem_conversaId_dataEfetiva",
+            "unique": false,
+            "columnNames": [
+              "conversaId",
+              "dataEfetiva"
+            ],
+            "orders": [],
+            "createSql": "CREATE INDEX IF NOT EXISTS `index_mensagem_conversaId_dataEfetiva` ON `${TABLE_NAME}` (`conversaId`, `dataEfetiva`)"
+          }
+        ]
+      },
+      {
+        "tableName": "conteudo",
+        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`mensagemId` INTEGER NOT NULL, `ordem` INTEGER NOT NULL, `id` INTEGER, `tipo` INTEGER NOT NULL, `conteudo` TEXT NOT NULL, `nome` TEXT NOT NULL, `extensao` TEXT NOT NULL, `transcricaoStatus` INTEGER NOT NULL, `transcricao` TEXT NOT NULL, PRIMARY KEY(`mensagemId`, `ordem`), FOREIGN KEY(`mensagemId`) REFERENCES `mensagem`(`id`) ON UPDATE NO ACTION ON DELETE CASCADE )",
+        "fields": [
+          {
+            "fieldPath": "mensagemId",
+            "columnName": "mensagemId",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "ordem",
+            "columnName": "ordem",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "id",
+            "columnName": "id",
+            "affinity": "INTEGER"
+          },
+          {
+            "fieldPath": "tipo",
+            "columnName": "tipo",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "conteudo",
+            "columnName": "conteudo",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "nome",
+            "columnName": "nome",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "extensao",
+            "columnName": "extensao",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "transcricaoStatus",
+            "columnName": "transcricaoStatus",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "transcricao",
+            "columnName": "transcricao",
+            "affinity": "TEXT",
+            "notNull": true
+          }
+        ],
+        "primaryKey": {
+          "autoGenerate": false,
+          "columnNames": [
+            "mensagemId",
+            "ordem"
+          ]
+        },
+        "foreignKeys": [
+          {
+            "table": "mensagem",
+            "onDelete": "CASCADE",
+            "onUpdate": "NO ACTION",
+            "columns": [
+              "mensagemId"
+            ],
+            "referencedColumns": [
+              "id"
+            ]
+          }
+        ]
+      },
+      {
+        "tableName": "reacao",
+        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`mensagemId` INTEGER NOT NULL, `emoji` TEXT NOT NULL, `quantidade` INTEGER NOT NULL, `reagiu` INTEGER NOT NULL, `usuariosJson` TEXT NOT NULL, `ordem` INTEGER NOT NULL DEFAULT 0, PRIMARY KEY(`mensagemId`, `emoji`), FOREIGN KEY(`mensagemId`) REFERENCES `mensagem`(`id`) ON UPDATE NO ACTION ON DELETE CASCADE )",
+        "fields": [
+          {
+            "fieldPath": "mensagemId",
+            "columnName": "mensagemId",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "emoji",
+            "columnName": "emoji",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "quantidade",
+            "columnName": "quantidade",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "reagiu",
+            "columnName": "reagiu",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "usuariosJson",
+            "columnName": "usuariosJson",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "ordem",
+            "columnName": "ordem",
+            "affinity": "INTEGER",
+            "notNull": true,
+            "defaultValue": "0"
+          }
+        ],
+        "primaryKey": {
+          "autoGenerate": false,
+          "columnNames": [
+            "mensagemId",
+            "emoji"
+          ]
+        },
+        "foreignKeys": [
+          {
+            "table": "mensagem",
+            "onDelete": "CASCADE",
+            "onUpdate": "NO ACTION",
+            "columns": [
+              "mensagemId"
+            ],
+            "referencedColumns": [
+              "id"
+            ]
+          }
+        ]
+      },
+      {
+        "tableName": "contato",
+        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`id` INTEGER NOT NULL, `nome` TEXT NOT NULL, `login` TEXT NOT NULL, `email` TEXT, `telefone` TEXT, `avatarUrl` TEXT, PRIMARY KEY(`id`))",
+        "fields": [
+          {
+            "fieldPath": "id",
+            "columnName": "id",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "nome",
+            "columnName": "nome",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "login",
+            "columnName": "login",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "email",
+            "columnName": "email",
+            "affinity": "TEXT"
+          },
+          {
+            "fieldPath": "telefone",
+            "columnName": "telefone",
+            "affinity": "TEXT"
+          },
+          {
+            "fieldPath": "avatarUrl",
+            "columnName": "avatarUrl",
+            "affinity": "TEXT"
+          }
+        ],
+        "primaryKey": {
+          "autoGenerate": false,
+          "columnNames": [
+            "id"
+          ]
+        }
+      },
+      {
+        "tableName": "atividade",
+        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`id` INTEGER NOT NULL, `tipo` INTEGER NOT NULL, `criadoEm` INTEGER, `nova` INTEGER NOT NULL, `autorId` INTEGER, `autorNome` TEXT, `autorAvatarUrl` TEXT, `conversaId` INTEGER, `conversaTipo` INTEGER, `conversaDescricao` TEXT, `mensagemId` INTEGER, `conteudoTipo` INTEGER, `texto` TEXT, `chamadaId` INTEGER, `chamadaTipo` INTEGER, `emoji` TEXT, PRIMARY KEY(`id`))",
+        "fields": [
+          {
+            "fieldPath": "id",
+            "columnName": "id",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "tipo",
+            "columnName": "tipo",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "criadoEm",
+            "columnName": "criadoEm",
+            "affinity": "INTEGER"
+          },
+          {
+            "fieldPath": "nova",
+            "columnName": "nova",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "autorId",
+            "columnName": "autorId",
+            "affinity": "INTEGER"
+          },
+          {
+            "fieldPath": "autorNome",
+            "columnName": "autorNome",
+            "affinity": "TEXT"
+          },
+          {
+            "fieldPath": "autorAvatarUrl",
+            "columnName": "autorAvatarUrl",
+            "affinity": "TEXT"
+          },
+          {
+            "fieldPath": "conversaId",
+            "columnName": "conversaId",
+            "affinity": "INTEGER"
+          },
+          {
+            "fieldPath": "conversaTipo",
+            "columnName": "conversaTipo",
+            "affinity": "INTEGER"
+          },
+          {
+            "fieldPath": "conversaDescricao",
+            "columnName": "conversaDescricao",
+            "affinity": "TEXT"
+          },
+          {
+            "fieldPath": "mensagemId",
+            "columnName": "mensagemId",
+            "affinity": "INTEGER"
+          },
+          {
+            "fieldPath": "conteudoTipo",
+            "columnName": "conteudoTipo",
+            "affinity": "INTEGER"
+          },
+          {
+            "fieldPath": "texto",
+            "columnName": "texto",
+            "affinity": "TEXT"
+          },
+          {
+            "fieldPath": "chamadaId",
+            "columnName": "chamadaId",
+            "affinity": "INTEGER"
+          },
+          {
+            "fieldPath": "chamadaTipo",
+            "columnName": "chamadaTipo",
+            "affinity": "INTEGER"
+          },
+          {
+            "fieldPath": "emoji",
+            "columnName": "emoji",
+            "affinity": "TEXT"
+          }
+        ],
+        "primaryKey": {
+          "autoGenerate": false,
+          "columnNames": [
+            "id"
+          ]
+        }
+      },
+      {
+        "tableName": "chamada_historico",
+        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`id` INTEGER NOT NULL, `tipo` INTEGER NOT NULL, `status` INTEGER NOT NULL, `criadoEm` INTEGER, `criadoPor` INTEGER, `conversaId` INTEGER, `iniciada` INTEGER, `finalizada` INTEGER, `duracaoSegundos` INTEGER, `participantesJson` TEXT NOT NULL, PRIMARY KEY(`id`))",
+        "fields": [
+          {
+            "fieldPath": "id",
+            "columnName": "id",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "tipo",
+            "columnName": "tipo",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "status",
+            "columnName": "status",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "criadoEm",
+            "columnName": "criadoEm",
+            "affinity": "INTEGER"
+          },
+          {
+            "fieldPath": "criadoPor",
+            "columnName": "criadoPor",
+            "affinity": "INTEGER"
+          },
+          {
+            "fieldPath": "conversaId",
+            "columnName": "conversaId",
+            "affinity": "INTEGER"
+          },
+          {
+            "fieldPath": "iniciada",
+            "columnName": "iniciada",
+            "affinity": "INTEGER"
+          },
+          {
+            "fieldPath": "finalizada",
+            "columnName": "finalizada",
+            "affinity": "INTEGER"
+          },
+          {
+            "fieldPath": "duracaoSegundos",
+            "columnName": "duracaoSegundos",
+            "affinity": "INTEGER"
+          },
+          {
+            "fieldPath": "participantesJson",
+            "columnName": "participantesJson",
+            "affinity": "TEXT",
+            "notNull": true
+          }
+        ],
+        "primaryKey": {
+          "autoGenerate": false,
+          "columnNames": [
+            "id"
+          ]
+        }
+      },
+      {
+        "tableName": "envio_pendente",
+        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`idFila` INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL, `conversaId` INTEGER NOT NULL, `mensagemIdLocal` INTEGER NOT NULL, `payloadJson` TEXT NOT NULL, `tentativas` INTEGER NOT NULL, `criadoEm` INTEGER NOT NULL)",
+        "fields": [
+          {
+            "fieldPath": "idFila",
+            "columnName": "idFila",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "conversaId",
+            "columnName": "conversaId",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "mensagemIdLocal",
+            "columnName": "mensagemIdLocal",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "payloadJson",
+            "columnName": "payloadJson",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "tentativas",
+            "columnName": "tentativas",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "criadoEm",
+            "columnName": "criadoEm",
+            "affinity": "INTEGER",
+            "notNull": true
+          }
+        ],
+        "primaryKey": {
+          "autoGenerate": true,
+          "columnNames": [
+            "idFila"
+          ]
+        },
+        "indices": [
+          {
+            "name": "index_envio_pendente_mensagemIdLocal",
+            "unique": true,
+            "columnNames": [
+              "mensagemIdLocal"
+            ],
+            "orders": [],
+            "createSql": "CREATE UNIQUE INDEX IF NOT EXISTS `index_envio_pendente_mensagemIdLocal` ON `${TABLE_NAME}` (`mensagemIdLocal`)"
+          }
+        ]
+      },
+      {
+        "tableName": "sync_estado",
+        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`chave` TEXT NOT NULL, `valor` TEXT NOT NULL, PRIMARY KEY(`chave`))",
+        "fields": [
+          {
+            "fieldPath": "chave",
+            "columnName": "chave",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "valor",
+            "columnName": "valor",
+            "affinity": "TEXT",
+            "notNull": true
+          }
+        ],
+        "primaryKey": {
+          "autoGenerate": false,
+          "columnNames": [
+            "chave"
+          ]
+        }
+      },
+      {
+        "tableName": "rascunho",
+        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`conversaId` INTEGER NOT NULL, `texto` TEXT NOT NULL, `anexosJson` TEXT NOT NULL, `referenciaTipo` INTEGER, `referenciaMensagemId` INTEGER, `atualizadoEm` INTEGER NOT NULL, PRIMARY KEY(`conversaId`))",
+        "fields": [
+          {
+            "fieldPath": "conversaId",
+            "columnName": "conversaId",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "texto",
+            "columnName": "texto",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "anexosJson",
+            "columnName": "anexosJson",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "referenciaTipo",
+            "columnName": "referenciaTipo",
+            "affinity": "INTEGER"
+          },
+          {
+            "fieldPath": "referenciaMensagemId",
+            "columnName": "referenciaMensagemId",
+            "affinity": "INTEGER"
+          },
+          {
+            "fieldPath": "atualizadoEm",
+            "columnName": "atualizadoEm",
+            "affinity": "INTEGER",
+            "notNull": true
+          }
+        ],
+        "primaryKey": {
+          "autoGenerate": false,
+          "columnNames": [
+            "conversaId"
+          ]
+        }
+      }
+    ],
+    "setupQueries": [
+      "CREATE TABLE IF NOT EXISTS room_master_table (id INTEGER PRIMARY KEY,identity_hash TEXT)",
+      "INSERT OR REPLACE INTO room_master_table (id,identity_hash) VALUES(42, '80023e58349a15d9ba914571026baf40')"
+    ]
+  }
+}

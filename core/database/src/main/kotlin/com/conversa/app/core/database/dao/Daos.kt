@@ -14,6 +14,7 @@ import com.conversa.app.core.database.entidades.ConversaEntidade
 import com.conversa.app.core.database.entidades.EnvioPendenteEntidade
 import com.conversa.app.core.database.entidades.MensagemCompleta
 import com.conversa.app.core.database.entidades.MensagemEntidade
+import com.conversa.app.core.database.entidades.RascunhoEntidade
 import com.conversa.app.core.database.entidades.ReacaoEntidade
 import com.conversa.app.core.database.entidades.SyncEstadoEntidade
 import kotlinx.coroutines.flow.Flow
@@ -252,4 +253,16 @@ interface SyncEstadoDao {
 
     @Upsert
     suspend fun gravar(estado: SyncEstadoEntidade)
+}
+
+@Dao
+interface RascunhoDao {
+    @Query("SELECT * FROM rascunho WHERE conversaId = :conversaId")
+    suspend fun buscar(conversaId: Long): RascunhoEntidade?
+
+    @Upsert
+    suspend fun salvar(rascunho: RascunhoEntidade)
+
+    @Query("DELETE FROM rascunho WHERE conversaId = :conversaId")
+    suspend fun apagar(conversaId: Long)
 }

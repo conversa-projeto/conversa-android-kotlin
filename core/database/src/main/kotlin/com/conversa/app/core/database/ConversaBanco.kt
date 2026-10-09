@@ -13,6 +13,7 @@ import com.conversa.app.core.database.dao.ContatoDao
 import com.conversa.app.core.database.dao.ConversaDao
 import com.conversa.app.core.database.dao.EnvioPendenteDao
 import com.conversa.app.core.database.dao.MensagemDao
+import com.conversa.app.core.database.dao.RascunhoDao
 import com.conversa.app.core.database.dao.SyncEstadoDao
 import com.conversa.app.core.database.entidades.AtividadeEntidade
 import com.conversa.app.core.database.entidades.ChamadaHistoricoEntidade
@@ -21,6 +22,7 @@ import com.conversa.app.core.database.entidades.ConteudoEntidade
 import com.conversa.app.core.database.entidades.ConversaEntidade
 import com.conversa.app.core.database.entidades.EnvioPendenteEntidade
 import com.conversa.app.core.database.entidades.MensagemEntidade
+import com.conversa.app.core.database.entidades.RascunhoEntidade
 import com.conversa.app.core.database.entidades.ReacaoEntidade
 import com.conversa.app.core.database.entidades.SyncEstadoEntidade
 import dagger.Module
@@ -50,11 +52,13 @@ class Conversores {
         ChamadaHistoricoEntidade::class,
         EnvioPendenteEntidade::class,
         SyncEstadoEntidade::class,
+        RascunhoEntidade::class,
     ],
-    version = 2,
+    version = 3,
     exportSchema = true,
     // 2: ordem das reações (a do servidor), para o "+N" esconder as mesmas que o web.
-    autoMigrations = [AutoMigration(from = 1, to = 2)],
+    // 3: rascunho por conversa (FC-519).
+    autoMigrations = [AutoMigration(from = 1, to = 2), AutoMigration(from = 2, to = 3)],
 )
 @TypeConverters(Conversores::class)
 abstract class ConversaBanco : RoomDatabase() {
@@ -71,6 +75,8 @@ abstract class ConversaBanco : RoomDatabase() {
     abstract fun envioPendenteDao(): EnvioPendenteDao
 
     abstract fun syncEstadoDao(): SyncEstadoDao
+
+    abstract fun rascunhoDao(): RascunhoDao
 
     companion object {
         const val NOME = "conversa.db"
@@ -98,4 +104,6 @@ object BancoModulo {
     @Provides fun envioPendenteDao(banco: ConversaBanco) = banco.envioPendenteDao()
 
     @Provides fun syncEstadoDao(banco: ConversaBanco) = banco.syncEstadoDao()
+
+    @Provides fun rascunhoDao(banco: ConversaBanco) = banco.rascunhoDao()
 }

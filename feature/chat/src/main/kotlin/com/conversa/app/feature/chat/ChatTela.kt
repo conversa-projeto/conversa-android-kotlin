@@ -212,6 +212,7 @@ fun ChatRotaTela(
                 aoEnviar = viewModel::enviar,
                 aoAgendar = viewModel::agendar,
                 aoCancelarAgendada = viewModel::cancelarAgendada,
+                aoMudarRascunho = viewModel::aoMudarRascunho,
                 aoDigitar = viewModel::aoDigitar,
                 aoCarregarAnteriores = viewModel::carregarAnteriores,
                 aoVerMensagens = viewModel::marcarLidas,
@@ -335,6 +336,8 @@ class AcoesChat(
     val aoAgendar: (String, Instant, () -> Unit) -> Unit = { _, _, _ -> },
     /** "Cancelar" na lista de agendadas (🆕 web `7322e83`): falso = não deu. */
     val aoCancelarAgendada: suspend (Mensagem) -> Boolean = { false },
+    /** O campo mudou: o rascunho da conversa (FC-519). */
+    val aoMudarRascunho: (String) -> Unit = {},
     val aoDigitar: (String) -> Unit = {},
     val aoCarregarAnteriores: () -> Unit = {},
     val aoVerMensagens: (List<com.conversa.app.core.model.Mensagem>) -> Unit = {},

@@ -20,6 +20,8 @@ import com.conversa.app.core.data.mensagens.MensagensRepositorio
 import com.conversa.app.core.data.mensagens.ReferenciaPendente
 import com.conversa.app.core.data.notificacoes.ConversaEmTela
 import com.conversa.app.core.data.presenca.PresencaRepositorio
+import com.conversa.app.core.data.rascunhos.Rascunho
+import com.conversa.app.core.data.rascunhos.RascunhosRepositorio
 import com.conversa.app.core.data.rede.EconomiaDados
 import com.conversa.app.core.media.GravadorAudio
 import com.conversa.app.core.media.PlayerAudio
@@ -48,16 +50,19 @@ import java.time.Instant
 import javax.inject.Inject
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
+import kotlinx.coroutines.FlowPreview
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.combine
+import kotlinx.coroutines.flow.debounce
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.flatMapLatest
 import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.flow.onEach
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
@@ -176,6 +181,9 @@ sealed interface EventoChat {
 /** Quanto tempo a mensagem fica destacada depois do "ir para a mensagem" (como o web). */
 private const val DESTAQUE_MS = 1_200L
 
+/** Atraso para gravar o rascunho depois da última mudança (o web também espera um pouco). */
+private const val RASCUNHO_MS = 500L
+
 /** "Ir para a mensagem": aonde a tela deve rolar e o que fica destacado. */
 private data class Salto(val irPara: Long? = null, val destaque: Long? = null, val buscando: Boolean = false)
 
@@ -237,6 +245,7 @@ class ChatViewModel @Inject constructor(
     private val player: PlayerAudio,
     gravador: GravadorAudio,
     private val relogio: Clock,
+    private val rascunhos: RascunhosRepositorio,
 ) : ViewModel() {
     val conversaId: Long = checkNotNull(salvo["conversaId"])
     private val eu: Long = sessao.sessao.value?.usuarioId ?: 0
@@ -266,6 +275,12 @@ class ChatViewModel @Inject constructor(
 
     private val fila = MutableStateFlow<List<AnexoLocal>>(emptyList())
     private val textoParaCampo = MutableStateFlow<String?>(null)
+
+    // Rascunho por conversa (FC-519): o texto do campo com as menções cruas.
+    private val textoRascunho = MutableStateFlow("")
+
+    /** Visto depois de restaurar; nulo = o rascunho salvo ainda não foi lido (sair antes não grava nada). */
+    private var ultimoRascunho: Rascunho? = null
 
     /** Chat da chamada recém-criado: abre com o cursor no campo, como o web (6.13). */
     private val focarCampo = MutableStateFlow(salvo.get<Boolean>("focar") == true)
@@ -344,6 +359,7 @@ class ChatViewModel @Inject constructor(
                 textoParaCampo.value = itens.texto.ifBlank { null }
             }
         }
+        viewModelScope.launch { restaurarEGuardarRascunho() }
         viewModelScope.launch {
             val resultado = mensagens.carregarRecentes(conversaId)
             carga.value = carga.value.copy(carregou = true)
@@ -766,6 +782,40 @@ class ChatViewModel @Inject constructor(
     override fun onCleared() {
         controleGravacao.descartar()
         if (player.estado.value.chave?.startsWith(prefixoAudio) == true) player.parar()
+        // O último estado do campo, sem esperar o atraso (grava no escopo do app).
+        ultimoRascunho?.let { rascunhos.guardar(conversaId, it) }
+    }
+
+    // --- Rascunho por conversa (FC-519, 🆕 web `7322e83`) ---
+
+    /** O campo mudou: o texto com as menções cruas (`@[Nome](id)`) entra no rascunho. */
+    fun aoMudarRascunho(texto: String) {
+        textoRascunho.value = texto
+    }
+
+    /**
+     * Ao abrir: o rascunho salvo volta (texto, anexos e a resposta pendente; um texto compartilhado
+     * por outro app vem depois do rascunho). Depois, cada mudança é gravada com um pequeno atraso.
+     */
+    @OptIn(FlowPreview::class)
+    private suspend fun restaurarEGuardarRascunho() {
+        rascunhos.ler(conversaId)?.let { salvo ->
+            if (salvo.anexos.isNotEmpty()) fila.value = (salvo.anexos + fila.value).distinctBy { it.uri }
+            if (salvo.texto.isNotBlank()) {
+                textoRascunho.value = salvo.texto
+                textoParaCampo.value = listOfNotNull(salvo.texto, textoParaCampo.value).joinToString("\n")
+            }
+            val (tipo, id) = salvo.referencia ?: (null to null)
+            if (respondendo.value == null && tipo != null && id != null) {
+                mensagens.buscar(id)?.let { respondendo.value = ReferenciaPendente(tipo, it) }
+            }
+        }
+        combine(textoRascunho, fila, respondendo) { texto, anexos, resposta ->
+            Rascunho(texto, anexos, resposta?.let { it.tipo to it.mensagem.id })
+        }
+            .onEach { ultimoRascunho = it }
+            .debounce(RASCUNHO_MS)
+            .collect { rascunhos.guardar(conversaId, it) }
     }
 
     /** Play/pause na bolha. Na primeira vez baixa o arquivo; áudio de outra pessoa vira "ouvido". */
