@@ -4,7 +4,7 @@
 - **Tipo:** correção
 - **Itens:** `TODO.md` 2.6 (nova linha depois de "Atualizar (sem spinner…)"); CON-01, CON-13
 - **Branch:** `reescrita`
-- **Commits:** (preencher)
+- **Commits:** `5e7e17b`
 
 ## Contexto
 O pedido foi garantir que, ao chegar mensagem nova, a lista se atualizasse corretamente. Todo o caminho foi conferido no emulador (conta A), com mensagens enviadas pela API como B:
