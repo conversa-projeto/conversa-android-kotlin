@@ -4,7 +4,7 @@
 - **Tipo:** código
 - **Itens:** `TODO.md` 2.7 (nova linha depois de "Campo de busca"); CON-02
 - **Branch:** `reescrita`
-- **Commits:** (preencher)
+- **Commits:** `489b2f0`
 
 ## Contexto
 O pedido foi que a pesquisa ficasse **só na barra de título** e fosse **dinâmica**. Antes de alterar, um mockup interativo mostrou o que tinha sido entendido, e a pessoa aprovou:
