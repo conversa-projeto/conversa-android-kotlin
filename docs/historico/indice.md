@@ -95,7 +95,7 @@
 _(nada ainda)_
 
 ## Qualidade, segurança e publicação
-_(nada ainda)_
+- 2026-10-09 · [Estabiliza o RealtimeClientTest](2026-10-09-09-estabiliza-realtimeclienttest.md) — o servidor de teste não respondia ao "close" do cliente; sob carga, um socket ainda não registrado ficava pendurado e o MockWebServer.close() desistia em 5 s (2 falhas em 150 → 0 em 450)
 
 ## App legado (hotfixes opcionais)
 _(nada ainda)_

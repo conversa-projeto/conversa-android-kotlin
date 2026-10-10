@@ -47,6 +47,14 @@ class RealtimeClientTest {
         override fun onMessage(webSocket: WebSocket, text: String) {
             recebidas.add(text)
         }
+
+        // Como o servidor de verdade, responde ao "close" do cliente. Sem isso, um socket cujo
+        // onOpen ainda não tinha rodado quando o @After fechou os registrados (sob carga, depois
+        // de um desconectar logo após conectar) ficava esperando, e o MockWebServer.close()
+        // desistia em 5 s ("Gave up waiting for queue to shut down").
+        override fun onClosing(webSocket: WebSocket, code: Int, reason: String) {
+            webSocket.close(1000, null)
+        }
     }
 
     private fun aceitarSocket() = servidor.enqueue(MockResponse.Builder().webSocketUpgrade(ouvinteServidor).build())
@@ -66,9 +74,11 @@ class RealtimeClientTest {
         cliente.desconectar()
         escopo.cancel()
         todosSocketsServidor.forEach { runCatching { it.close(1000, null) } }
+        // O servidor fecha antes das threads do cliente: o cliente ainda precisa ler o "close"
+        // do servidor e responder para a conexão terminar.
+        servidor.close()
         okHttp.dispatcher.executorService.shutdownNow()
         okHttp.connectionPool.evictAll()
-        servidor.close()
     }
 
     @Test
