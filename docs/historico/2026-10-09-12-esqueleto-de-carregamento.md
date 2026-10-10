@@ -4,7 +4,7 @@
 - **Tipo:** código
 - **Itens:** `TODO.md` 7.9 (linha nova no fim da seção); MSG-15; `docs/design/cores.md` §6.4
 - **Branch:** `reescrita`
-- **Commits:** (preencher)
+- **Commits:** `ec69ba8`
 
 ## Contexto
 O Markdown (` ```md `) e o diagrama (` ```mermaid `) demoram um instante para aparecer, e até lá o bloco ficava vazio. Foi pedido o efeito de carregamento conhecido como "shimmer": formas cinza que pulsam na opacidade, com um brilho passando.
