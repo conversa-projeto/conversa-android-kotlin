@@ -4,7 +4,7 @@
 - **Tipo:** funcionalidade
 - **Itens:** `TODO.md` 8.6, o que fecha a etapa 8 (e a nota do 8.4 sobre o "Ver anexos"); FC-809; ANX-13, AUT-10
 - **Branch:** `reescrita`
-- **Commits:** (preencher)
+- **Commits:** `95b9bb5`
 
 ## Contexto
 No web, a `AnexosLista.vue` aparece pelo "Ver anexos" do perfil e, desde o `eaa8bac`, dentro do painel do grupo. Ela tem:
