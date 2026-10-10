@@ -4,7 +4,7 @@
 - **Tipo:** código
 - **Itens:** `TODO.md` 6.5 (nova linha depois de "Botões tocáveis"); CHA-03; problema #25 (acessibilidade da tela de chamada)
 - **Branch:** `reescrita`
-- **Commits:** (preencher)
+- **Commits:** `34e1c8d`
 
 ## Contexto
 O primeiro teste num aparelho de verdade foi um Galaxy A25 (Android 16), ligado pela depuração por Wi-Fi. Depois dele, veio o pedido de trocar os botões de toque da chamada recebida por botões de **arrastar para qualquer lado**, com o efeito de "crescer" do discador da Samsung.
