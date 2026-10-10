@@ -15,4 +15,9 @@ dependencies {
     implementation(libs.androidx.core.ktx)
     // Barras do sistema na cor do tema escolhido no app (8.5).
     implementation(libs.androidx.activity.compose)
+
+    // Listas no Compose (Robolectric).
+    testImplementation(libs.robolectric)
+    testImplementation(platform(libs.compose.bom))
+    testImplementation(libs.compose.ui.test.junit4)
 }

@@ -16,6 +16,7 @@ import androidx.compose.foundation.layout.statusBars
 import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
@@ -74,6 +75,7 @@ import com.conversa.app.core.ui.componentes.EstadoVazio
 import com.conversa.app.core.ui.componentes.FolhaPerfilUsuario
 import com.conversa.app.core.ui.componentes.IndicadorDigitando
 import com.conversa.app.core.ui.componentes.LocalAvisos
+import com.conversa.app.core.ui.componentes.ManterNoTopo
 import com.conversa.app.core.ui.componentes.mostrarErro
 import com.conversa.app.core.ui.componentes.textoDaPrevia
 import com.conversa.app.core.ui.componentes.textoDoRotulo
@@ -246,8 +248,11 @@ private fun CampoBusca(termoInicial: String, aoAlterar: (String) -> Unit, aoPesq
 
 @Composable
 private fun Lista(estado: ConversasUiState, acoes: AcoesConversas, aoMenu: (Long) -> Unit, aoVerPerfil: (Long) -> Unit) {
+    val lista = rememberLazyListState()
+    // Mensagem nova sobe a conversa para o topo: quem está no topo vê a conversa que subiu.
+    ManterNoTopo(lista, estado.principais.firstOrNull()?.let { "c${it.id}" })
     // Lista sobre a superfície branca (como no FMX): o fundo do avatar (#F5F5F5) precisa de contraste.
-    LazyColumn(Modifier.fillMaxSize().background(MaterialTheme.colorScheme.surface)) {
+    LazyColumn(Modifier.fillMaxSize().background(MaterialTheme.colorScheme.surface), state = lista) {
         items(estado.principais, key = { "c${it.id}" }) { item ->
             LinhaConversa(
                 item,
