@@ -316,6 +316,16 @@ O FMX não tem destaque de sintaxe. Para os blocos de código (TODO 7.9), os pap
 
 Os alertas do GitHub têm cores próprias na biblioteca; aqui elas são trocadas pelos tokens acima.
 
+**Esqueleto de carregamento ("shimmer", 2026-10-09)**, também sem cor nova:
+
+| Papel | Token reaproveitado |
+|---|---|
+| Formas (linhas, bloco do diagrama) | `divisorLista` |
+| Brilho que passa (tema claro) | `surface` (α 0,85) |
+| Brilho que passa (tema escuro) | `onSurface` (α 0,22) |
+
+O conjunto pulsa entre opacidade 1 e 0,55. O brilho só pinta por cima das formas.
+
 Ver a pergunta 12 da §9.
 
 ## 7. Snippet Kotlin (Compose)

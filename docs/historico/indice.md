@@ -81,6 +81,7 @@
 - 2026-10-08 · [Etapa 7 — votação](2026-10-08-34-etapa-7-votacao.md) — bolha com votar, barras e nomes ao vivo (WS 62), encerrada com 🏆 (inclusive pelo prazo, na hora), data final e encerrar para quem pode; "Nova votação" pelo "+" em grupo; resumo na citação, na oculta e na prévia
 - 2026-10-08 · [Etapa 7 — Markdown formatado](2026-10-08-35-etapa-7-markdown.md) — blocos ```md formatados com "Visualizar"/"Código" (`multiplatform-markdown-renderer-m3` 0.45.0), recolhidos acima de 240 dp, cores só de tokens; mermaid (P2) aguarda decisão
 - 2026-10-08 · [Etapa 7 — diagramas Mermaid](2026-10-08-36-etapa-7-mermaid.md) — mermaid 12.0.0 embutido (o mesmo do web, 1,87 MB no APK) num WebView isolado: ```mermaid e os de dentro do ```md viram diagrama; inválido fica como código
+- 2026-10-09 · [Esqueleto de carregamento no Markdown e no diagrama](2026-10-09-12-esqueleto-de-carregamento.md) — `EsqueletoCarregando` no `core:ui` (formas que pulsam com um brilho passando na diagonal, só tokens) no lugar do ```md e do diagrama até aparecerem
 
 ## Atividades, pesquisa, perfil e configurações (etapa 8)
 - 2026-10-08 · [Etapa 8 — aba Atividades](2026-10-08-37-etapa-8-atividades.md) — módulo `:feature:atividades`: lista por dia com selos, prévias e "Nova", paginação, abrir marca como vistas e o WS 61 relê com a aba aberta; corrigido o POST de vistas (o OkHttp recusava POST sem corpo)

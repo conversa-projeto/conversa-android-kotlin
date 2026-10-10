@@ -6,6 +6,7 @@
     <string name="voltar">Voltar</string>
     <string name="online">online</string>
     <string name="digitando">Digitando…</string>
+    <string name="carregando">Carregando…</string>
     <!-- Texto do web: "Conexao em tempo real indisponivel — usando atualizacao periodica" -->
     <string name="sem_tempo_real">Conexão em tempo real indisponível — usando atualização periódica</string>
     <string name="tentar_agora">Tentar agora</string>

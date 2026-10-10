@@ -54,6 +54,7 @@ import com.conversa.app.core.model.TipoToken
 import com.conversa.app.core.model.destacarCodigo
 import com.conversa.app.core.model.ehLinguagemMarkdown
 import com.conversa.app.core.model.ehLinguagemMermaid
+import com.conversa.app.core.ui.componentes.EsqueletoCarregando
 import com.conversa.app.core.ui.tema.ConversaTema
 import com.mikepenz.markdown.compose.components.markdownComponents
 import com.mikepenz.markdown.compose.elements.MarkdownCodeFence
@@ -136,6 +137,8 @@ internal fun BlocoCodigo(codigo: SegmentoCodigo.Codigo) {
                     colors = coresDoMarkdown(),
                     typography = tipografiaDoMarkdown(),
                     components = componentesDoMarkdown(),
+                    // A biblioteca interpreta o texto fora da thread principal: até lá, o esqueleto com o brilho.
+                    loading = { EsqueletoCarregando(it) },
                     modifier = Modifier
                         .fillMaxWidth()
                         .recolhivel(expandido, ALTURA_RECOLHIDO) { if (it) longo = true }

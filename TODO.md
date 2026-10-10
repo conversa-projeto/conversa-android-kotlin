@@ -761,6 +761,7 @@
 - [x] Recolher acima de ~240 dp: "Expandir código"/"Recolher código" — com o degradê no fim, como o web ✔ 74ce225
 - [x] ` ```md `/` ```markdown ` → Markdown renderizado (Markwon ou compose-markdown), alternância "Visualizar"/"Código" — `multiplatform-markdown-renderer-m3` 0.45.0 (Compose, Apache 2.0); recolhe acima de 240 dp; cores e tamanhos de bolha (cores.md §6.4) ✔ 26f4ea2
 - [x] ` ```mermaid ` → WebView offline com mermaid.js embutido (P2) — mermaid 12.0.0 (o do web, conferido pelo sha512) nos assets, 1,87 MB no APK; também os diagramas dentro de ```md; inválido fica como código ✔ cba9d66
+- [x] Esqueleto de carregamento ("shimmer") enquanto o Markdown e o diagrama não aparecem (pedido em 2026-10-09: a demora deixava um vazio) — `EsqueletoCarregando` no `core:ui`: formas cinza que pulsam de leve com um brilho passando na diagonal; linhas de texto no slot `loading` do Markdown e um bloco de 120 dp no lugar do diagrama até o mermaid avisar a altura. No emulador: o diagrama dentro de um ```md levou ~4 s, com o esqueleto no lugar
 
 ### 7.10 Detalhe de status e agendamento (FC-513, FC-514)
 - [x] Toque no ✓ → bottom sheet: `GET /mensagem/status/detalhe?id=` (aqui os campos são **datas**) ✔ f3cab38

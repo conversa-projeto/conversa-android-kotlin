@@ -5,6 +5,7 @@ import android.webkit.JavascriptInterface
 import android.webkit.WebResourceRequest
 import android.webkit.WebView
 import android.webkit.WebViewClient
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.material3.MaterialTheme
@@ -12,6 +13,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.key
 import androidx.compose.runtime.mutableIntStateOf
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.runtime.setValue
@@ -20,6 +22,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.toArgb
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.viewinterop.AndroidView
+import com.conversa.app.core.ui.componentes.EsqueletoCarregando
 import com.conversa.app.core.ui.tema.ConversaTema
 import org.json.JSONObject
 
@@ -29,57 +32,68 @@ private const val PAGINA_MERMAID = "file:///android_asset/mermaid/diagrama.html"
 /** Altura enquanto desenha (o WebView precisa de algum tamanho para carregar). */
 private const val ALTURA_INICIAL_DP = 1
 
+/** Altura do esqueleto de carregamento, no lugar do diagrama que ainda não chegou. */
+private val ALTURA_ESQUELETO = 120.dp
+
 /**
  * Diagrama ```mermaid (7.9, como o `useMermaid.ts` do web), desenhado offline num WebView:
  * só a página dos assets, sem rede, sem acesso a arquivos e sem navegar; o mermaid roda com
  * `securityLevel: 'strict'`. A altura vem da página depois de desenhar. Texto que não é um
- * diagrama válido chama [aoFalhar] (a tela mostra o código, como o web).
+ * diagrama válido chama [aoFalhar] (a tela mostra o código, como o web). Até desenhar (o mermaid
+ * leva um instante para carregar), aparece o esqueleto com o brilho passando.
  */
 @SuppressLint("SetJavaScriptEnabled")
 @Composable
 internal fun DiagramaMermaid(codigo: String, aoFalhar: () -> Unit, modifier: Modifier = Modifier) {
     val cores = coresDoMermaid()
     var altura by remember(codigo, cores) { mutableIntStateOf(ALTURA_INICIAL_DP) }
+    var desenhado by remember(codigo, cores) { mutableStateOf(false) }
     val falhou by rememberUpdatedState(aoFalhar)
-    key(codigo, cores) {
-        AndroidView(
-            factory = { contexto ->
-                WebView(contexto).apply {
-                    setBackgroundColor(android.graphics.Color.TRANSPARENT)
-                    isVerticalScrollBarEnabled = false
-                    isHorizontalScrollBarEnabled = false
-                    settings.javaScriptEnabled = true
-                    settings.allowFileAccess = false
-                    settings.allowContentAccess = false
-                    settings.blockNetworkLoads = true
-                    // A página chama de volta pela ponte (numa thread do WebView: volta para a principal).
-                    addJavascriptInterface(
-                        object {
-                            @JavascriptInterface
-                            fun altura(px: Int) {
-                                post { altura = px.coerceAtLeast(ALTURA_INICIAL_DP) }
-                            }
+    Box(modifier.fillMaxWidth()) {
+        key(codigo, cores) {
+            AndroidView(
+                factory = { contexto ->
+                    WebView(contexto).apply {
+                        setBackgroundColor(android.graphics.Color.TRANSPARENT)
+                        isVerticalScrollBarEnabled = false
+                        isHorizontalScrollBarEnabled = false
+                        settings.javaScriptEnabled = true
+                        settings.allowFileAccess = false
+                        settings.allowContentAccess = false
+                        settings.blockNetworkLoads = true
+                        // A página chama de volta pela ponte (numa thread do WebView: volta para a principal).
+                        addJavascriptInterface(
+                            object {
+                                @JavascriptInterface
+                                fun altura(px: Int) {
+                                    post {
+                                        altura = px.coerceAtLeast(ALTURA_INICIAL_DP)
+                                        desenhado = true
+                                    }
+                                }
 
-                            @JavascriptInterface
-                            fun falhou() {
-                                post { falhou() }
-                            }
-                        },
-                        "Conversa",
-                    )
-                    webViewClient = object : WebViewClient() {
-                        override fun shouldOverrideUrlLoading(view: WebView, request: WebResourceRequest) = true
+                                @JavascriptInterface
+                                fun falhou() {
+                                    post { falhou() }
+                                }
+                            },
+                            "Conversa",
+                        )
+                        webViewClient = object : WebViewClient() {
+                            override fun shouldOverrideUrlLoading(view: WebView, request: WebResourceRequest) = true
 
-                        override fun onPageFinished(view: WebView, url: String) {
-                            view.evaluateJavascript("desenhar(${JSONObject.quote(codigo)}, $cores)", null)
+                            override fun onPageFinished(view: WebView, url: String) {
+                                view.evaluateJavascript("desenhar(${JSONObject.quote(codigo)}, $cores)", null)
+                            }
                         }
+                        loadUrl(PAGINA_MERMAID)
                     }
-                    loadUrl(PAGINA_MERMAID)
-                }
-            },
-            // A página usa a largura do aparelho: 1 px de CSS = 1 dp.
-            modifier = modifier.fillMaxWidth().height(altura.dp),
-        )
+                },
+                // A página usa a largura do aparelho: 1 px de CSS = 1 dp.
+                modifier = Modifier.fillMaxWidth().height(altura.dp),
+            )
+        }
+        if (!desenhado) EsqueletoCarregando(linhas = listOf(1f), alturaLinha = ALTURA_ESQUELETO)
     }
 }
 
