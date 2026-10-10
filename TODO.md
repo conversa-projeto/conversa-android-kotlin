@@ -261,8 +261,8 @@
 - [x] Observar `SessaoExpirada` (401) em qualquer lugar → limpar a sessão → Login com o aviso "Sessão expirada" — `SessaoRepositorio` encerra → `MainViewModel` leva ao login com "Sua sessão expirou. Entre novamente."
 - [x] Outros erros na inicialização mantêm a sessão e tentam de novo (como no web) — `IniciadorSessao`: Snackbar "<erro> (tentando de novo…)" e nova tentativa a cada 5 s
 - [x] Logout: `PATCH /dispositivo {id, token_fcm:null}` — `AutenticacaoRepositorio.sair` (3 s de limite; sai mesmo sem rede)
-- [ ] Logout: fechar o WS e encerrar a chamada ativa — 🔄 o WS fecha na hora sem sessão (`ConexaoTempoReal`); encerrar a chamada ativa entra com o `CallManager` (etapa 6)
-- [ ] Logout: limpar o Room, o cache de imagens e de áudio e cancelar todas as notificações — 🔄 Room (`LimpezaSessao`), imagens do Coil e notificações (`ConversaApplication`); cache de áudio entra na etapa 4
+- [x] Logout: fechar o WS e encerrar a chamada ativa — 🔄 o WS fecha na hora sem sessão (`ConexaoTempoReal`); encerrar a chamada ativa entra com o `CallManager` (etapa 6) — concluído depois (conferido em 2026-10-09): o `GerenciadorChamadas` encerra a chamada quando a sessão acaba ✔ ceeec72
+- [x] Logout: limpar o Room, o cache de imagens e de áudio e cancelar todas as notificações — 🔄 Room (`LimpezaSessao`), imagens do Coil e notificações (`ConversaApplication`); cache de áudio entra na etapa 4 — concluído depois (conferido em 2026-10-09): o cache de áudio e de arquivos sai com `ArquivosLocais.limpar()` na `LimpezaSessao` ✔ c5cefbb
 - [ ] **Teste:** depois do logout, mensagens do web não geram notificação — ⛔ não há notificações antes da etapa 5; o logout já cancela todas e limpa o `token_fcm` (conferido no banco: nulo)
 
 ### 2.4 Cadastro (FC-203, AUT-02)
@@ -273,7 +273,7 @@
 - [x] Sucesso → "Conta criada com sucesso!" → voltar ao Login com o usuário preenchido — volta ao login com o usuário preenchido e o aviso no Snackbar (sem a espera de 1,5 s do web)
 
 ### 2.5 Navegação principal
-- [ ] NavHost com rotas tipadas: Servidor, Login, Cadastro, Principal, Chat(conversaId, mensagemId?), Membros, Perfil, Visualizador, Configurações… — 🔄 `navegacao/Rotas.kt`: Servidor, Login, Cadastro, Principal, Chat, NovaConversa, CriarGrupo, Membros; Perfil e Visualizador entram nas etapas 4 e 8
+- [x] NavHost com rotas tipadas: Servidor, Login, Cadastro, Principal, Chat(conversaId, mensagemId?), Membros, Perfil, Visualizador, Configurações… — 🔄 `navegacao/Rotas.kt`: Servidor, Login, Cadastro, Principal, Chat, NovaConversa, CriarGrupo, Membros; Perfil e Visualizador entram nas etapas 4 e 8 — concluído depois (conferido em 2026-10-09): Perfil (`RotaPerfil`) veio no 8.3; o visualizador é um diálogo dentro do chat ✔ 143d8d6
 - [x] Barra inferior: Conversas, Chamadas, Atividades (com badge), Configurações — `PrincipalTela`; Chamadas e Atividades são provisórias (etapas 6 e 8); badge de atividades novas já funciona; Configurações provisória com Servidor e Sair
 - [x] Deep link `conversa://chat/{id}?mensagem={id}` — intent-filter + `MainViewModel.receberLink` (sem sessão, abre depois do login); `LinkConversaTest`
 
@@ -286,7 +286,7 @@
 - [x] Badge de não lidas (`mensagens_sem_visualizar`), escondido nas arquivadas — contador azul (99+), zerado nas arquivadas
 - [x] Hora: hoje `HH:mm`, ontem "Ontem", senão `dd/MM/aa` — `rotuloData` (+ teste)
 - [x] Três pontinhos animados quando alguém digita naquela conversa — `IndicadorDigitando` (WS 4, expira em 4 s); testado no emulador com um 2º cliente
-- [ ] Atualizar (sem spinner por cima da lista) em WS 2, 3 e 40, ao enviar e ao ler — 🔄 WS 2, 3 e 40 atualizam o Room e a lista acompanha (WS 40 testado no emulador: grupo criado por outro usuário apareceu sozinho); "ao enviar e ao ler" entram na etapa 3
+- [x] Atualizar (sem spinner por cima da lista) em WS 2, 3 e 40, ao enviar e ao ler — 🔄 WS 2, 3 e 40 atualizam o Room e a lista acompanha (WS 40 testado no emulador: grupo criado por outro usuário apareceu sozinho); "ao enviar e ao ler" entram na etapa 3 — concluído depois (conferido em 2026-10-09): ao enviar, `EnvioMensagens` atualiza a lista (✔ 0bdfe08); ao ler, o contador desconta na hora (3.8)
 - [x] Pull-to-refresh — `PullToRefreshBox` (conversas + contatos)
 - [x] Estados vazio e de erro — carregando (até a 1ª carga), vazio, nada encontrado, erro em tela cheia com "Tentar de novo" (só com cache vazio)
 - [ ] **Teste:** comparar lado a lado com o web (8 casos do CON-01) — ⛔ o web não está rodando nesta máquina; as regras do CON-01 têm teste unitário (`ListaConversasTest`, `ConversasViewModelTest`) e foram vistas no emulador
@@ -301,9 +301,9 @@
 - [x] Fixar: adicionar ao fim das fixadas → `PATCH /conversa/fixadas {conversas:[ids na ordem]}` — conferido no banco pelo emulador
 - [x] Reordenar fixadas: arrastar (ou "mover para cima/baixo") → mesmo PATCH com a lista inteira — "Mover para cima/baixo" no menu (arrastar fica para depois); conferido no banco
 - [x] Otimista; erro → recarregar `GET /conversas` e mostrar o aviso — `ConversasRepositorioTest`: erro → recarrega; aviso no Snackbar
-- [ ] Arquivar: `PATCH /conversa/arquivada {conversa, arquivada:true}` → tirar das fixadas, cancelar a notificação — 🔄 arquivar desfixa e reordena as outras (conferido no banco); cancelar a notificação entra na etapa 5
+- [x] Arquivar: `PATCH /conversa/arquivada {conversa, arquivada:true}` → tirar das fixadas, cancelar a notificação — 🔄 arquivar desfixa e reordena as outras (conferido no banco); cancelar a notificação entra na etapa 5 — concluído depois (conferido em 2026-10-09): a notificação some ao arquivar (NOT-03, 5.6) ✔ 199ce1b
 - [x] Seção recolhível "Arquivadas (N)" no fim da lista
-- [ ] Arquivada: sem som e sem notificação — ⛔ notificações são da etapa 5
+- [x] Arquivada: sem som e sem notificação — ⛔ notificações são da etapa 5 — concluído depois (conferido em 2026-10-09): a regra `decidirAviso` (arquivada → nada) veio com as notificações (5.4) ✔ 199ce1b
 
 ### 2.9 Contatos e conversa direta (FC-210, CON-06, CON-11)
 - [x] Tela/aba Contatos: `GET /usuario/contatos`, busca local — tela "Nova conversa" (lápis na lista): contatos, filtro e "Novo grupo"; atualiza ao abrir
@@ -341,11 +341,11 @@
 
 - [x] Criar o módulo `:feature:chat` (adiado da 1.2) — `feature/chat` (`ChatViewModel`, `ChatTela`, `Bolhas`)
 ### 3.1 Tela de chat (FC-300, CON-09)
-- [ ] Cabeçalho: voltar, avatar (toque → perfil do outro), título, bolinha online — 🔄 voltar, avatar com bolinha, título; o toque no avatar abre o perfil na etapa 8 (AUT-10)
+- [x] Cabeçalho: voltar, avatar (toque → perfil do outro), título, bolinha online — 🔄 voltar, avatar com bolinha, título; o toque no avatar abre o perfil na etapa 8 (AUT-10) — concluído depois (conferido em 2026-10-09): o toque no avatar abre o perfil (8.4) ✔ 4d53ba8
 - [x] Subtítulo: direta → "online"/nada; grupo → nomes dos membros; digitando/gravando substitui — digitando/gravando com os textos do web; direta "online"; grupo com os nomes dos membros
-- [ ] Ações do topo: chamada de voz, chamada de vídeo, pesquisa, membros (grupo) — 🔄 voz e vídeo (avisam "As chamadas chegam na etapa 6") e membros no grupo; a pesquisa entra na etapa 8
+- [x] Ações do topo: chamada de voz, chamada de vídeo, pesquisa, membros (grupo) — 🔄 voz e vídeo (avisam "As chamadas chegam na etapa 6") e membros no grupo; a pesquisa entra na etapa 8 — concluído depois (conferido em 2026-10-09): voz e vídeo ligam de verdade (6.4, ✔ cf43b1f); a pesquisa fica no "⋮" (8.2, ✔ 28cef66)
 - [x] Lista: `LazyColumn` com `reverseLayout` — itens ao contrário, a mais nova é o item 0
-- [ ] Campo de mensagem + botão Enviar/Microfone + botão de anexo — 🔄 campo + Enviar; microfone e anexo entram na etapa 4
+- [x] Campo de mensagem + botão Enviar/Microfone + botão de anexo — 🔄 campo + Enviar; microfone e anexo entram na etapa 4 — concluído depois (conferido em 2026-10-09): anexo (4.2, ✔ c5cefbb) e microfone (4.6, ✔ 399bae5)
 
 ### 3.2 Carregar e paginar (FC-301, MSG-01)
 - [x] Abrir: `GET /mensagens?conversa=X&mensagemreferencia=0&mensagensprevias=80&mensagensseguintes=0` (máximo de 100 por chamada) — `MensagensRepositorio.carregarRecentes` (+ `MensagensTest`)
@@ -353,7 +353,7 @@
 - [x] Rolar para cima: `mensagemreferencia=<mais antiga>&mensagensprevias=60`; parar quando vier vazio — `carregarAnteriores`: descarta a de referência (o servidor a inclui); 0 = começo (+ teste)
 - [x] Rolar para baixo (depois de um salto): `mensagemreferencia=<mais nova>&mensagensseguintes=60` — `carregarSeguintes` (mesma regra)
 - [x] Ordem: `coalesce(visivel_em, inserida)`, depois `id`; ids negativos (enviando) no fim — `ordenarMensagens` em `core/model/Chat.kt` (+ `ChatTest`)
-- [ ] Indicadores "Carregando mensagens anteriores/seguintes" — 🔄 "Carregando mensagens anteriores…" no topo; o de "seguintes" entra com o salto para uma mensagem (etapa 7)
+- [x] Indicadores "Carregando mensagens anteriores/seguintes" — 🔄 "Carregando mensagens anteriores…" no topo; o de "seguintes" entra com o salto para uma mensagem (etapa 7) — concluído depois (conferido em 2026-10-09): o de "seguintes" não se aplica: o salto (7.5) traz o caminho todo até a mensagem, sem buraco, com a barra de progresso enquanto busca ✔ 2a4cc59
 - [x] **Teste:** rolar até o início de uma conversa com 1000+ mensagens sem travar — no emulador: conversa com 1050 mensagens, 70 gestos até a "Mensagem número 1" (≈17 páginas de 60), sem fechar
 
 ### 3.3 Classificação e bolhas (FC-302, FC-303, MSG-07)
@@ -367,7 +367,7 @@
 ### 3.4 Mensagem oculta (FC-304, MSG-16)
 - [x] `excluida_em != null` → bolha "Mensagem oculta" + hora/status — `BolhaOculta`
 - [x] Toque alterna revelar/ocultar o conteúdo original
-- [ ] Sem menu e sem reações; fora da galeria de imagens — 🔄 ainda não há menu nem reações (etapa 7 respeita); galeria na etapa 4
+- [x] Sem menu e sem reações; fora da galeria de imagens — 🔄 ainda não há menu nem reações (etapa 7 respeita); galeria na etapa 4 — concluído depois (conferido em 2026-10-09): o menu só abre para mensagem que não está oculta (7.1) e a galeria pula as ocultas ✔ 52d6d03
 - [x] Citação de mensagem oculta → "Mensagem oculta" sem conteúdo — `resumoCitacao` → "Mensagem oculta"
 
 ### 3.5 Bolha de chamada (FC-305, MSG-13)
@@ -376,7 +376,7 @@
 - [x] Direta: "<remetente> · mm:ss" ou o status ("Recusada", "Perdida", "Cancelada")
 - [x] Grupo: lista de participantes com a duração ou o status
 - [x] Cores: verde (encerrada), vermelho (recusada/perdida); sem status de entrega — ícone verde (`chamadaRecebida`) / vermelho (`chamadaPerdida`), cores do FMX; sem status de entrega
-- [ ] Toque → ligar de novo (mesmo tipo) — 🔄 toque chama `aoLigar` (hoje só o aviso; liga de verdade na etapa 6)
+- [x] Toque → ligar de novo (mesmo tipo) — 🔄 toque chama `aoLigar` (hoje só o aviso; liga de verdade na etapa 6) — concluído depois (conferido em 2026-10-09): liga de verdade (6.4) ✔ cf43b1f
 
 ### 3.6 Separadores e hora (FC-306, MSG-02)
 - [x] Separador de dia ("seg., 05/10/2026" ou "Hoje"/"Ontem") — "Hoje"/"Ontem"/"qua., 07/10/2026"; dia pela data efetiva
@@ -396,7 +396,7 @@
 ### 3.8 Lida e status (FC-308, FC-309, MSG-04, MSG-08, MSG-10)
 - [x] Detectar as mensagens visíveis na tela (de outros, não visualizadas, app em primeiro plano) — `snapshotFlow` dos itens visíveis, só com a tela `RESUMED`; o ViewModel filtra (de outros, não lidas, id > 0) (+ teste)
 - [x] Para cada uma: `POST /mensagem/visualizar {conversa, mensagem}` (fila serial; trocar por lote quando S9 existir) — `MensagensRepositorio.marcarLida`: fila serial, uma vez por mensagem, tenta de novo se falhar (+ teste)
-- [ ] Descontar o contador da conversa (otimista); ao chegar a 0, cancelar a notificação da conversa — 🔄 desconta o contador e marca lida no Room na hora (+ teste); cancelar a notificação entra na etapa 5
+- [x] Descontar o contador da conversa (otimista); ao chegar a 0, cancelar a notificação da conversa — 🔄 desconta o contador e marca lida no Room na hora (+ teste); cancelar a notificação entra na etapa 5 — concluído depois (conferido em 2026-10-09): a notificação some com o contador zerado (NOT-03, 5.6) ✔ 199ce1b
 - [x] Ícone de status nas minhas mensagens: relógio → ✓ → ✓✓ cinza → ✓✓ cor primária — relógio → ✓ → ✓✓ cinza → ✓✓ azul (`statusLida`); ⚠ vermelho se falhou
 - [x] WS 3 `{grupo:conversaId, mensagens:"12,13"}` → `GET /mensagem/status?conversa=&mensagem=12,13` → atualizar `recebida`/`visualizada`/`reproduzida`/`excluida_em` — `SyncManager`; **corrigido**: o status dessa rota é o agregado de todos os destinatários, então só é aplicado nas minhas mensagens (`atualizarStatusDaMinha`); ocultar vale para todas (+ teste no `SyncManagerTest` e no `BancoTest`)
 - [x] Se algum id do WS 3 não está carregado e a conversa está aberta → recarregar — `SyncManager`: id do WS 3 fora do cache → busca as seguintes da conversa (sempre, não só com a conversa aberta). Necessário para o resumo de chamada, que só chega por WS 3 (+ teste)
@@ -442,7 +442,7 @@
 - [x] Fila acima do campo: miniaturas (imagem), ícone + nome + tamanho (outros), "Remover" — `FilaAnexos`; Enviar habilitado só com anexos (testado no emulador) ✔ 389e66d
 - [x] 🆕 Devolver o acesso aos arquivos ao sair da fila (enviada, descartada ou removida do campo) e apagar a foto da câmera; o Android limita as permissões guardadas por app — `FontesArquivo.liberar` + `EnvioMensagens.desistirDoArquivo`; arquivo ainda usado por outra mensagem da fila não é liberado (+ teste; no emulador a foto some de `cache/camera` ao enviar e ao remover) ✔ 389e66d
 - [x] Tipo: `image/*` → 2; `audio/*` → 4; gravação do microfone → **5**; resto → 3 (vídeo = 3 com extensão) — `tipoPorMime` + `ehVideo` (extensão, como o web) em `core/model/Chat.kt` (+ teste); a gravação é sempre 5
-- [ ] Mensagem: [encaminhados] → texto → figurinha → arquivos, com `ordem` 1..n — 🔄 texto (ordem 1) → arquivos na ordem escolhida (+ teste; no emulador o banco gravou texto=1, imagens=2 e 3); encaminhados e figurinha entram nas etapas 7
+- [x] Mensagem: [encaminhados] → texto → figurinha → arquivos, com `ordem` 1..n — 🔄 texto (ordem 1) → arquivos na ordem escolhida (+ teste; no emulador o banco gravou texto=1, imagens=2 e 3); encaminhados e figurinha entram nas etapas 7 — concluído depois (conferido em 2026-10-09): encaminhados (7.6) e figurinha (7.8) entraram na ordem ✔ 61d6a2c
 - [x] Erro em qualquer upload cancela a mensagem inteira (como no web) — arquivo inacessível, grande demais ou recusado → a mensagem inteira vira "falhou"; sem rede espera (+ teste)
 - [x] Indicador de upload (nome, barra, %) na bolha otimista — `EnvioMensagens.progresso` (fração por mensagem) → barra na bolha (`LinhaMensagem(progresso)`), com o nome do arquivo e o relógio de "enviando"; visto no emulador com o arquivo de 200 MB (sem o número em %, a barra basta) ✔ 389e66d
 
@@ -466,7 +466,7 @@
 - [x] Bolha de áudio: play/pause, barra com seek, `mm:ss`; nome do arquivo (tipo 4) ou só o player (tipo 5) — `PlayerNaBolha` (barra fina própria: tocar ou arrastar; o `Slider` do M3 é grande demais para a bolha); o estado chega por `LocalAudio` (fluxo) para a posição não recompor a lista. No emulador: WAV de 7 s e 4 s do B, pausa, pular para 75% (00:05), fim volta ao início ✔ 1ceaad0
 - [x] Download sob demanda para o cache: arquivo `.part` → rename ao terminar — `ArquivosLocais.baixar` (o mesmo do "Abrir"), só no primeiro play; agora com URL vencida → pede outra e tenta de novo (+ teste `ArquivosLocaisTest`; achado no emulador com `URL_VENCIDA=1`) ✔ 1ceaad0
 - [x] Áudio de outro não ouvido: botão verde; o primeiro play chama `POST /mensagem/reproduzir {conversa, mensagem}` — verde = `waveform` do FMX (o FMX não tem cor de "não ouvido"); `MensagensRepositorio.marcarReproduzida` (Room otimista + uma chamada; não marca lida) (+ testes). No emulador: `mensagem_status.reproduzida` gravado só no áudio tocado ✔ 1ceaad0
-- [ ] Parar o áudio ao sair da conversa ou ao começar uma chamada — 🔄 sair da conversa: `ChatViewModel.onCleared` para o áudio dela (+ teste; no emulador, 0 players ativos depois de voltar); a chamada (etapa 6) deve chamar `PlayerAudio.parar()`
+- [x] Parar o áudio ao sair da conversa ou ao começar uma chamada — 🔄 sair da conversa: `ChatViewModel.onCleared` para o áudio dela (+ teste; no emulador, 0 players ativos depois de voltar); a chamada (etapa 6) deve chamar `PlayerAudio.parar()` — concluído depois (conferido em 2026-10-09): a chamada para o áudio ao começar (`SistemaChamada`) ✔ 5837aec
 
 ### 4.6 Gravação de áudio (FC-406, ANX-11, ENV-16)
 - [x] Transplantar o `AudioRecorderHelper` (pegar `Exception` em `start()`, #48) — `GravadorMediaRecorder` (`:core:media`): AAC/M4A mono 64 kbps (toca no web, no Windows e no Android), qualquer `Exception` ao abrir o microfone vira "Não foi possível iniciar a gravação"; pausa = fecha o trecho e `juntarTrechos` (MediaMuxer, sem recodificar) monta o arquivo. No emulador: 2 trechos juntados = 42,42 s contínuos (1827 quadros AAC) ✔ 399bae5
@@ -571,7 +571,7 @@
 - [x] Transplantar o `WhipWhepClient` para `:core:webrtc`, usando o OkHttp compartilhado — reescrito como `ClienteWhipWhep` (o legado aceitava qualquer certificado): OkHttp do app (o token só vai para `/api`), sem trickle ICE (+ testes com MockWebServer) ✔ cf43b1f
 - [x] WHIP/WHEP: ler o header `Location` e fazer `DELETE` ao encerrar — o MediaMTX responde o caminho a partir da raiz dele; atrás do nginx vira `<base>/webrtc/...` (+ teste). No emulador, contra o web (Chrome com câmera falsa): depois de sair, o stream some do MediaMTX (404) ✔ cf43b1f
 - [x] `PeerConnectionFactory` e `EglBase` únicos por processo — `FabricaWebRtc` (`io.github.webrtc-sdk:android` 144.7559.15) ✔ cf43b1f
-- [ ] `PublicadorWhip`: PC `SEND_ONLY`, áudio Opus (32/64/128 kbps conforme a configuração), vídeo opcional — 🔄 publicação só de envio com Opus a 32 kbps (o "normal" do web) e vídeo opcional; 64/128 kbps entram com a configuração de chamadas (etapa 8). No emulador, contra o web (Chrome com câmera falsa): publicado e assistido pelo web
+- [x] `PublicadorWhip`: PC `SEND_ONLY`, áudio Opus (32/64/128 kbps conforme a configuração), vídeo opcional — 🔄 publicação só de envio com Opus a 32 kbps (o "normal" do web) e vídeo opcional; 64/128 kbps entram com a configuração de chamadas (etapa 8). No emulador, contra o web (Chrome com câmera falsa): publicado e assistido pelo web — concluído depois (conferido em 2026-10-09): 64/128 kbps e estéreo vieram com a qualidade das chamadas (8.5) ✔ 705ee2e
 - [x] Câmera desligada manda quadros pretos — o MediaMTX só registra a trilha que já chega com pacote ao publicar; sem isso, "Apenas assistir" publicava só o áudio e depois não dava para ligar a câmera. A câmera fecha (some o indicador do Android). No emulador, contra o web (Chrome com câmera falsa): "Apenas assistir" → 2 trilhas (Opus, VP9); ligar a câmera → o web passou a ver o vídeo ✔ cf43b1f
 - [x] `setCodecPreferences`: H264 → VP9 → VP8 — `ordenarGravaveis` (+ teste). No emulador, contra o web (Chrome com câmera falsa): sem H264 por hardware no emulador, saiu VP9, e o MediaMTX gravou (`vp09` + Opus) ✔ cf43b1f
 - [x] Câmera: padrão 360p a 15 fps (como no web para celular); trocar frontal/traseira — `Camera2Enumerator`, frontal primeiro; "Trocar câmera" na tela. No emulador, contra o web (Chrome com câmera falsa): trocou da câmera 1 para a 10 ✔ cf43b1f
@@ -900,7 +900,7 @@
 ---
 
 ## Revisão periódica
-- [ ] Marcar o que foi feito neste TODO (com o commit)
-- [ ] Atualizar `docs/auditoria-2026-10/05-matriz-paridade.md`
+- [ ] Marcar o que foi feito neste TODO (com o commit) — última vez: 2026-10-09 (16 linhas antigas das etapas 2–6, cumpridas depois, foram fechadas)
+- [ ] Atualizar `docs/auditoria-2026-10/05-matriz-paridade.md` — última vez: 2026-10-09 (coluna "Nova base" e placar dela)
 - [ ] Ver se o servidor mudou: `git -C ../conversa log --since="1 week ago" --oneline`; se mudou o contrato → atualizar o doc 01 e as fixtures
 - [ ] Ver se o web ganhou funcionalidade nova: `git -C ../conversa-web log --since="1 week ago" --oneline` → acrescentar aqui

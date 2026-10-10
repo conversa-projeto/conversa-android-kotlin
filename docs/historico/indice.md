@@ -12,6 +12,7 @@
 - 2026-10-06 · [TODO literal, cronograma removido e correção sobre o OpenAPI](2026-10-06-02-todo-detalhado.md) — `TODO.md` com 586 passos; sem datas; o OpenAPI já existe (faltam as respostas)
 - 2026-10-06 · [Criação do histórico de alterações e do CLAUDE.md](2026-10-06-04-historico-e-claude-md.md) — `docs/historico/` por fluxo + regra obrigatória no `CLAUDE.md`
 - 2026-10-07 · [Cores do app vêm do conversa-windows-fmx](2026-10-07-01-cores-do-fmx.md) — `docs/design/cores.md`; primária `#007DFF`; escuro é proposta e fica desligado
+- 2026-10-09 · [Matriz de paridade com a nova base](2026-10-09-10-matriz-paridade-nova-base.md) — coluna "Nova base" no doc 05 (121 ✅, 2 🟡, 2 ⛔, 9 ⬜, 3 ➖ de 137) e placar dela; placar do legado corrigido (ENV-23); 16 linhas antigas do TODO, cumpridas depois, fechadas com o commit
 
 ## Sincronização com servidor e web
 - 2026-10-06 · [Commits da noite: votação, campo rico, chat completo na chamada](2026-10-06-03-sincronizacao-votacao-campo-rico.md) — servidor `8031fa5` (enquete, WS 62, tipo 8) e web `39d06f9`; 136 funcionalidades; novos FC-315/415/416/516–518/723
