@@ -4,7 +4,7 @@
 - **Tipo:** documentação
 - **Itens:** `TODO.md` "Revisão periódica" (atualizar o doc 05 e marcar o que foi feito); doc 05
 - **Branch:** `reescrita`
-- **Commits:** (preencher)
+- **Commits:** `3babed2`
 
 ## Contexto
 A matriz de paridade web × Android (`docs/auditoria-2026-10/05-matriz-paridade.md`) tinha só a situação do app **legado**, da auditoria de 2026-10-06. O andamento da nova base, com as etapas 1 a 8 prontas, só aparecia no `TODO.md`. Por isso a matriz ainda dizia, por exemplo, ⬜ para o perfil, a pesquisa e as configurações.
