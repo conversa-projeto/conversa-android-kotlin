@@ -24,26 +24,21 @@ import androidx.compose.material.icons.automirrored.outlined.Chat
 import androidx.compose.material.icons.outlined.Archive
 import androidx.compose.material.icons.outlined.ArrowDownward
 import androidx.compose.material.icons.outlined.ArrowUpward
-import androidx.compose.material.icons.outlined.Close
 import androidx.compose.material.icons.outlined.Edit
 import androidx.compose.material.icons.outlined.ExpandLess
 import androidx.compose.material.icons.outlined.ExpandMore
 import androidx.compose.material.icons.outlined.Group
-import androidx.compose.material.icons.outlined.ManageSearch
 import androidx.compose.material.icons.outlined.PushPin
 import androidx.compose.material.icons.outlined.Search
 import androidx.compose.material.icons.outlined.Unarchive
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.FloatingActionButton
 import androidx.compose.material3.Icon
-import androidx.compose.material3.IconButton
 import androidx.compose.material3.ListItem
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.ModalBottomSheet
-import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
-import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.pulltorefresh.PullToRefreshBox
 import androidx.compose.material3.ripple
 import androidx.compose.runtime.Composable
@@ -159,7 +154,10 @@ fun ConversasTela(estado: ConversasUiState, acoes: AcoesConversas, modifier: Mod
         modifier = modifier,
         // Dentro da tela principal: a barra inferior já cuida da área do sistema embaixo.
         contentWindowInsets = WindowInsets.statusBars,
-        topBar = { TopAppBar(title = { Text(stringResource(R.string.conversas_titulo)) }) },
+        // A pesquisa fica só na barra de título: a lupa se abre no campo (2026-10-09).
+        topBar = {
+            BarraConversas(stringResource(R.string.conversas_titulo), estado.termo, acoes.aoAlterarTermo, acoes.aoPesquisarEmTodos)
+        },
         floatingActionButton = {
             FloatingActionButton(onClick = acoes.aoNovaConversa) {
                 Icon(Icons.Outlined.Edit, contentDescription = stringResource(R.string.nova_conversa))
@@ -167,7 +165,6 @@ fun ConversasTela(estado: ConversasUiState, acoes: AcoesConversas, modifier: Mod
         },
     ) { margens ->
         Column(Modifier.fillMaxSize().padding(margens)) {
-            CampoBusca(estado.termo, acoes.aoAlterarTermo, acoes.aoPesquisarEmTodos)
             PullToRefreshBox(
                 isRefreshing = estado.atualizando,
                 onRefresh = acoes.aoAtualizar,
@@ -211,39 +208,6 @@ fun ConversasTela(estado: ConversasUiState, acoes: AcoesConversas, modifier: Mod
             },
         )
     }
-}
-
-@Composable
-private fun CampoBusca(termoInicial: String, aoAlterar: (String) -> Unit, aoPesquisarEmTodos: (String) -> Unit) {
-    // Texto do campo em estado local (síncrono): passar pelo combine/stateIn do ViewModel
-    // atrasa um quadro e o cursor pula enquanto se digita.
-    var termo by rememberSaveable { mutableStateOf(termoInicial) }
-    OutlinedTextField(
-        value = termo,
-        onValueChange = {
-            termo = it
-            aoAlterar(it)
-        },
-        placeholder = { Text(stringResource(R.string.pesquisar)) },
-        leadingIcon = { Icon(Icons.Outlined.Search, contentDescription = null) },
-        trailingIcon = {
-            Row {
-                if (termo.isNotEmpty()) {
-                    IconButton(onClick = {
-                        termo = ""
-                        aoAlterar("")
-                    }) { Icon(Icons.Outlined.Close, contentDescription = stringResource(R.string.limpar_busca)) }
-                }
-                // Como o web: o botão ao lado do campo pesquisa nas mensagens de todos os chats (8.2).
-                IconButton(onClick = { aoPesquisarEmTodos(termo) }) {
-                    Icon(Icons.Outlined.ManageSearch, contentDescription = stringResource(R.string.pesquisar_em_todos))
-                }
-            }
-        },
-        singleLine = true,
-        shape = RoundedCornerShape(24.dp),
-        modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 4.dp),
-    )
 }
 
 @Composable

@@ -294,6 +294,7 @@
 
 ### 2.7 Filtro e "Nova conversa" (FC-206, CON-02)
 - [x] Campo de busca: filtra por título e prévia — sem acento e sem maiúscula (`conversaCombina`)
+- [x] Pesquisa só na barra de título (pedido em 2026-10-09, com mockup aprovado): a linha do campo some; a lupa à direita de "Conversas" se estica até ocupar a barra, com o campo focado e o teclado; "←" (ou o voltar do sistema) fecha e limpa o filtro, "×" apaga, o ícone de "Pesquisar em todos os chats" (8.2) continua; com termo guardado já abre aberta — `BarraConversas` (+ 6 testes Robolectric). No emulador: abrir, filtrar "lista", "×", fechar pela seta e pelo voltar (o 1º voltar fecha o teclado, o 2º a pesquisa, sem sair do app); tema escuro conferido
 - [x] Com termo, mostrar também as arquivadas (com a etiqueta "Arquivada") — com a etiqueta "Arquivada"
 - [x] Seção "Nova conversa" com contatos sem conversa direta (nome/login/e-mail) — também na tela "Nova conversa" (botão lápis)
 

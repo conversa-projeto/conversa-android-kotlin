@@ -5,6 +5,9 @@
     <string name="pesquisar">Pesquisar…</string>
     <string name="limpar_busca">Limpar a pesquisa</string>
     <string name="pesquisar_em_todos">Pesquisar em todos os chats</string>
+    <!-- Só no Android: a lupa da barra de título e o "←" que fecha a pesquisa (2026-10-09). -->
+    <string name="abrir_pesquisa">Pesquisar</string>
+    <string name="fechar_pesquisa">Fechar pesquisa</string>
     <string name="conversas_vazio">Nenhuma conversa ainda</string>
     <string name="conversas_vazio_descricao">Toque no lápis para começar uma conversa ou criar um grupo.</string>
     <string name="busca_vazia">Nada encontrado</string>

@@ -12,7 +12,11 @@ import androidx.compose.runtime.snapshots.Snapshot
  *
  * Só age se a lista estava no topo: quem rolou para baixo continua onde estava.
  * [primeiraChave] é a chave (a mesma do `items(key = …)`) do primeiro item da lista.
+ *
+ * A posição é lida sem observação (não recompõe a cada rolagem) e só quando o primeiro item
+ * muda: daí o `@Suppress` do aviso do lint.
  */
+@Suppress("FrequentlyChangingValue")
 @Composable
 fun ManterNoTopo(lista: LazyListState, primeiraChave: Any?) {
     val anterior = remember { UltimaChave() }

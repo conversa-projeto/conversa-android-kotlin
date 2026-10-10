@@ -30,6 +30,7 @@
 - 2026-10-07 · [Etapa 2 — login, cadastro, navegação e saída](2026-10-07-04-etapa-2-login-cadastro-navegacao.md) — telas de login e cadastro, rotas tipadas, barra inferior, links `conversa://chat`, sair com limpeza; 124 testes
 - 2026-10-07 · [Etapa 2 — conversas, grupos e teste de ponta a ponta no emulador](2026-10-07-05-etapa-2-conversas-e-teste-no-emulador.md) — `:feature:conversas` (lista, nova conversa, grupos, membros), 6 correções achadas no emulador, S15/S16; 137 testes
 - 2026-10-09 · [Lista de conversas: a conversa que recebe mensagem aparece no topo](2026-10-09-13-lista-de-conversas-no-topo.md) — conferida a chegada de mensagem de ponta a ponta; corrigido o `LazyColumn` que escondia acima do topo a conversa que subia (`ManterNoTopo`, 5 testes Robolectric); versão antiga × corrigida no emulador
+- 2026-10-09 · [Pesquisa só na barra de título da lista de conversas](2026-10-09-14-pesquisa-na-barra-de-titulo.md) — a lupa se estica até virar o campo (mockup aprovado antes); ← e o voltar fecham e limpam; "Pesquisar em todos os chats" dentro da barra; 6 testes Robolectric
 
 ## Mensagens (etapa 3)
 - 2026-10-07 · [Etapa 3 — regras do chat, carregar, ler e enviar](2026-10-07-06-etapa-3-regras-e-dados.md) — classificação e links do web, paginação, fila de leitura, envio com WorkManager; status do WS 3 só nas minhas; 159 testes
