@@ -832,7 +832,7 @@
 - [x] Avatar com URL expirada → renovar (no máximo a cada 30 s) ✔ 143d8d6
 
 ### 8.4 Perfil de outro usuário (FC-803, AUT-10)
-- [x] Toque no avatar da direta (lista ou cabeçalho) → bottom sheet: foto, nome, e-mail, telefone ("Não informado"), "Ligar"; o "Ver anexos" entra com a tela do 8.6 ✔ 4d53ba8
+- [x] Toque no avatar da direta (lista ou cabeçalho) → bottom sheet: foto, nome, e-mail, telefone ("Não informado"), "Ligar"; o "Ver anexos" entra com a tela do 8.6 ✔ 4d53ba8 (o "Ver anexos" veio com o 8.6)
 
 ### 8.5 Configurações (FC-804…808)
 - [x] Tela com seções: Perfil, Aparência, Notificações, Chamadas, Permissões, Servidor, Sistema*, Acessos*, Ramal SIP, Sobre — todas, mais "Sair"; o Ramal SIP fica com o SIP (etapa 9) ✔ afd3269
@@ -846,11 +846,11 @@
 - [x] Acessos: `GET /permissoes` → tabela usuário × permissão com busca; `PUT /permissao/usuario {usuario_id, codigo}`; `DELETE /permissao/usuario?usuario_id=&codigo=`; aviso de "modo aberto" (no celular, uma linha por usuário com uma caixa por permissão) ✔ afd3269
 
 ### 8.6 Anexos da conversa (FC-809, ANX-13)
-- [ ] A partir do perfil ou do grupo: "Ver anexos" (🆕 `eaa8bac`: no web, os anexos ficam dentro do painel do grupo)
-- [ ] `GET /anexos?conversa=&direcao=(enviados|recebidos|)&tipos=2,3,4,5&antes=<anexo_id>&limite=60`
-- [ ] Filtros: Todos / Enviados / Recebidos e Todos / Imagens / Arquivos / Áudios / Gravações
-- [ ] Imagens em grade; demais em lista (nome, tamanho, data, autor); ações "Abrir mensagem" e "Baixar"
-- [ ] Paginação infinita
+- [x] A partir do perfil ou do grupo: "Ver anexos" (🆕 `eaa8bac`: no web, os anexos ficam dentro do painel do grupo) — folha do perfil (lista e cabeçalho) e item nos dados do grupo
+- [x] `GET /anexos?conversa=&direcao=(enviados|recebidos|)&tipos=2,3,4,5&antes=<anexo_id>&limite=60`
+- [x] Filtros: Todos / Enviados / Recebidos e Todos / Imagens / Arquivos / Áudios / Gravações
+- [x] Imagens em grade; demais em lista (nome, tamanho, data, autor); ações "Abrir mensagem" e "Baixar" — o toque abre: imagem e vídeo no visualizador do chat, PDF no do app, o resto com outro app
+- [x] Paginação infinita
 
 ---
 

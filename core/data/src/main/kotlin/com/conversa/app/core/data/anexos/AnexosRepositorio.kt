@@ -1,8 +1,13 @@
 package com.conversa.app.core.data.anexos
 
+import com.conversa.app.core.model.AnexoDaConversa
+import com.conversa.app.core.model.DirecaoAnexos
+import com.conversa.app.core.model.FiltroAnexos
+import com.conversa.app.core.model.LIMITE_ANEXOS
 import com.conversa.app.core.model.TipoConteudo
 import com.conversa.app.core.network.api.ConversaApi
 import com.conversa.app.core.network.di.DespachanteEs
+import com.conversa.app.core.network.dto.AnexoItemDto
 import com.conversa.app.core.network.dto.IncluirAnexoRequisicao
 import com.conversa.app.core.network.http.ErroApi
 import com.conversa.app.core.network.http.chamarApi
@@ -176,6 +181,22 @@ class AnexosRepositorio @Inject constructor(
         urls.remove(identificador)
     }
 
+    // --- Anexos da conversa (8.6, ANX-13) ---
+
+    /**
+     * `GET /anexos` de uma conversa, do mais novo para o mais antigo; [antes] = o último
+     * `anexoId` da página anterior. As URLs assinadas que vêm junto já entram no cache.
+     */
+    suspend fun daConversa(conversaId: Long, direcao: DirecaoAnexos, filtro: FiltroAnexos, antes: Long = 0): Result<List<AnexoDaConversa>> =
+        chamarApi {
+            api.anexos(conversaId = conversaId, direcao = direcao.chave, tipos = filtro.parametro, antes = antes, limite = LIMITE_ANEXOS)
+        }.map { lista ->
+            lista.map { item ->
+                item.url?.let { guardarUrl(item.identificador, it) }
+                item.paraModelo()
+            }
+        }
+
     private fun guardarUrl(identificador: String, url: String) {
         urls[identificador] = url to relogio.instant().plusSeconds(VALIDADE_URL_S - MARGEM_URL_S)
     }
@@ -191,3 +212,16 @@ class AnexosRepositorio @Inject constructor(
         private const val MARGEM_URL_S = 60L
     }
 }
+
+internal fun AnexoItemDto.paraModelo() = AnexoDaConversa(
+    anexoId = anexoId,
+    identificador = identificador,
+    nome = nome.orEmpty(),
+    extensao = extensao.orEmpty(),
+    tamanho = tamanho,
+    criadoEm = criadoEm,
+    tipo = TipoConteudo.de(tipo),
+    mensagemId = mensagemId ?: 0,
+    conversaId = conversaId ?: 0,
+    autorNome = autorNome.orEmpty(),
+)

@@ -72,4 +72,5 @@
         <item quantity="one">%d não pôde ser enviado</item>
         <item quantity="other">%d não puderam ser enviados</item>
     </plurals>
+    <string name="membros_ver_anexos">Ver anexos</string>
 </resources>

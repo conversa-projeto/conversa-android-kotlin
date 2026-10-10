@@ -1,7 +1,11 @@
 package com.conversa.app.core.data.anexos
 
+import com.conversa.app.core.model.AnexoDaConversa
+import com.conversa.app.core.model.DirecaoAnexos
+import com.conversa.app.core.model.FiltroAnexos
 import com.conversa.app.core.model.TipoConteudo
 import com.conversa.app.core.network.api.ConversaApi
+import com.conversa.app.core.network.dto.AnexoItemDto
 import com.conversa.app.core.network.dto.ConfirmarAnexoDto
 import com.conversa.app.core.network.dto.IncluirAnexoRequisicao
 import com.conversa.app.core.network.dto.IncluirAnexoResposta
@@ -151,5 +155,31 @@ class AnexosRepositorioTest {
         assertThat(repo.url("abc").getOrThrow()).isEqualTo("https://x/2")
         repo.esquecerUrl("abc")
         assertThat(repo.url("abc").getOrThrow()).isEqualTo("https://x/3")
+    }
+
+    @Test
+    fun `anexos da conversa - filtros na rota, modelo e URL que ja entra no cache`() = runTest {
+        coEvery { api.anexos(any(), any(), any(), any(), any(), any()) } returns listOf(
+            AnexoItemDto(
+                anexoId = 9,
+                identificador = "img",
+                nome = null,
+                tamanho = 2048,
+                criadoEm = agora,
+                tipo = 2,
+                mensagemId = 70,
+                conversaId = 3,
+                autorNome = "Ana",
+                url = "https://s/img",
+            ),
+        )
+        val repo = repositorio()
+
+        val lista = repo.daConversa(3, DirecaoAnexos.RECEBIDOS, FiltroAnexos.IMAGENS, antes = 120).getOrThrow()
+
+        coVerify { api.anexos(conversaId = 3, autorId = 0, direcao = "recebidos", tipos = "2", antes = 120, limite = 60) }
+        assertThat(lista).containsExactly(AnexoDaConversa(9, "img", "", "", 2048, agora, TipoConteudo.IMAGEM, 70, 3, "Ana"))
+        assertThat(repo.url("img").getOrThrow()).isEqualTo("https://s/img")
+        coVerify(exactly = 0) { api.urlAnexo(any()) }
     }
 }

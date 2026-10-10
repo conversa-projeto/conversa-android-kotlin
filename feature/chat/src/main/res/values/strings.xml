@@ -248,4 +248,16 @@
     <string name="pesquisar_nesta_conversa">Pesquisar nesta conversa</string>
     <string name="fechar_pesquisa">Fechar pesquisa</string>
     <string name="acao_pesquisar">Pesquisar</string>
+    <!-- Anexos da conversa (8.6, ANX-13; textos da AnexosLista.vue, com acento) -->
+    <string name="anexos_titulo">Anexos</string>
+    <string name="anexos_todos">Todos</string>
+    <string name="anexos_enviados">Enviados</string>
+    <string name="anexos_recebidos">Recebidos</string>
+    <string name="anexos_imagens">Imagens</string>
+    <string name="anexos_arquivos">Arquivos</string>
+    <string name="anexos_audios">Áudios</string>
+    <string name="anexos_gravacoes">Gravações</string>
+    <string name="anexos_vazio">Nenhum anexo encontrado</string>
+    <string name="anexos_sem_nome">Sem nome</string>
+    <string name="abrir_mensagem">Abrir mensagem</string>
 </resources>

@@ -89,6 +89,7 @@
 - 2026-10-09 · [Etapa 8 — notificações e permissões](2026-10-09-05-etapa-8-notificacoes-e-permissoes.md) — Permissões (notificações, microfone, câmera, tela cheia, bateria: estado e "Permitir"/"Abrir configurações") e Notificações (as do app e cada canal, abrindo a tela do sistema)
 - 2026-10-09 · [Etapa 8 — qualidade das chamadas](2026-10-09-06-etapa-8-qualidade-das-chamadas.md) — Configurações → Chamadas como o web (ruído, eco, ganho, 32/64/128 kbps, 360p–1080p, 15–30 fps, banda); a mídia lê ao abrir, a fábrica do WebRTC é refeita entre chamadas quando o áudio do aparelho muda, Opus estéreo no SDP
 - 2026-10-09 · [Etapa 8 — sistema e acessos](2026-10-09-07-etapa-8-sistema-e-acessos.md) — Sistema (parâmetros do servidor, só o que mudou, chave nunca exibida) e Acessos (modo aberto, busca, caixa só muda se o servidor aceitar), visíveis conforme `/usuario/permissoes`; `Interruptor` com o polegar visível nas cores do FMX; o 8.5 fecha
+- 2026-10-09 · [Etapa 8 — anexos da conversa](2026-10-09-08-etapa-8-anexos-da-conversa.md) — "Ver anexos" (perfil e grupo): filtros, grade de imagens, lista, "Abrir mensagem", "Baixar", 60 por página; imagem e vídeo no visualizador do chat; a etapa 8 fecha
 
 ## Extras — SIP, compartilhar tela (etapa 9)
 _(nada ainda)_

@@ -125,6 +125,7 @@ fun ChatRotaTela(
     aoVoltar: () -> Unit,
     aoMembros: (Long) -> Unit,
     aoAbrirConversa: (conversaId: Long, mensagemId: Long, encaminharDe: Long) -> Unit,
+    aoVerAnexos: (conversaId: Long) -> Unit,
     viewModel: ChatViewModel = hiltViewModel(),
 ) {
     val estado by viewModel.estado.collectAsStateWithLifecycle()
@@ -145,6 +146,10 @@ fun ChatRotaTela(
             aoLigar = {
                 verPerfil = false
                 aoLigar(TipoChamada.AUDIO)
+            },
+            aoVerAnexos = {
+                verPerfil = false
+                aoVerAnexos(viewModel.conversaId)
             },
         )
     }
@@ -316,7 +321,7 @@ private fun copiar(contexto: Context, clipe: ClipData): Boolean {
 }
 
 /** PDF abre no visualizador do app (FC-411); os outros arquivos, com outro app. */
-private fun ehPdf(conteudo: com.conversa.app.core.model.Conteudo): Boolean =
+internal fun ehPdf(conteudo: com.conversa.app.core.model.Conteudo): Boolean =
     conteudo.extensao.equals("pdf", ignoreCase = true) || conteudo.nome.endsWith(".pdf", ignoreCase = true)
 
 /** Abre um arquivo salvo em Downloads (URI do MediaStore) com outro app. */
@@ -333,7 +338,7 @@ private fun abrirUri(contexto: Context, uri: String, mime: String): Boolean {
 }
 
 /** "Compartilhar" do Android com o anexo baixado (permissão de leitura temporária pelo `FileProvider`). */
-private fun compartilharArquivo(contexto: Context, arquivo: File, mime: String?) {
+internal fun compartilharArquivo(contexto: Context, arquivo: File, mime: String?) {
     val tipo = mime ?: MimeTypeMap.getSingleton().getMimeTypeFromExtension(arquivo.extension.lowercase()) ?: "application/octet-stream"
     val intencao = Intent(Intent.ACTION_SEND)
         .setType(tipo)
@@ -343,7 +348,7 @@ private fun compartilharArquivo(contexto: Context, arquivo: File, mime: String?)
 }
 
 /** Abre o arquivo baixado com outro app, pelo `FileProvider` (permissão só de leitura e temporária). */
-private fun abrirComOutroApp(contexto: Context, arquivo: File, mime: String?): Boolean {
+internal fun abrirComOutroApp(contexto: Context, arquivo: File, mime: String?): Boolean {
     val tipo = mime ?: MimeTypeMap.getSingleton().getMimeTypeFromExtension(arquivo.extension.lowercase()) ?: "application/octet-stream"
     val intencao = Intent(Intent.ACTION_VIEW)
         .setDataAndType(uriCompartilhado(contexto, arquivo), tipo)
@@ -508,8 +513,8 @@ fun ChatTela(
     }
     if (abertaMensagem != null) {
         val daConversa = remember(estado.itens) { imagensDaConversa(estado.itens) }
-        val achada = daConversa.indexOfFirst { it.mensagem.id == abertaMensagem && it.conteudo.conteudo == abertaConteudo }
-        val avulsa = imagemAvulsa?.takeIf { achada < 0 && it.mensagem.id == abertaMensagem && it.conteudo.conteudo == abertaConteudo }
+        val achada = daConversa.indexOfFirst { it.mensagemId == abertaMensagem && it.conteudo.conteudo == abertaConteudo }
+        val avulsa = imagemAvulsa?.takeIf { achada < 0 && it.mensagemId == abertaMensagem && it.conteudo.conteudo == abertaConteudo }
         val imagens = if (avulsa != null) listOf(avulsa) else daConversa
         val inicial = if (avulsa != null) 0 else achada
         val fechar = {

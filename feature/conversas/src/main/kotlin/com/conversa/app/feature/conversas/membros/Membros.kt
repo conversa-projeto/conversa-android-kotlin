@@ -11,6 +11,7 @@ import androidx.compose.foundation.lazy.items
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.automirrored.outlined.ExitToApp
+import androidx.compose.material.icons.outlined.AttachFile
 import androidx.compose.material.icons.outlined.PersonAdd
 import androidx.compose.material3.Button
 import androidx.compose.material3.ExperimentalMaterial3Api
@@ -189,7 +190,7 @@ class MembrosViewModel @Inject constructor(
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun MembrosRotaTela(aoSair: () -> Unit, aoVoltar: () -> Unit, viewModel: MembrosViewModel = hiltViewModel()) {
+fun MembrosRotaTela(aoSair: () -> Unit, aoVoltar: () -> Unit, aoVerAnexos: () -> Unit, viewModel: MembrosViewModel = hiltViewModel()) {
     val estado by viewModel.estado.collectAsStateWithLifecycle()
     val avisos = LocalAvisos.current
     var escolhendo by rememberSaveable { mutableStateOf(false) }
@@ -254,6 +255,15 @@ fun MembrosRotaTela(aoSair: () -> Unit, aoVoltar: () -> Unit, viewModel: Membros
                             leadingIconColor = MaterialTheme.colorScheme.primary,
                         ),
                         modifier = Modifier.clickable(enabled = !estado.adicionando) { escolhendo = true },
+                    )
+                    ListItem(
+                        headlineContent = { Text(stringResource(R.string.membros_ver_anexos)) },
+                        leadingContent = { Icon(Icons.Outlined.AttachFile, contentDescription = null) },
+                        colors = ListItemDefaults.colors(
+                            headlineColor = MaterialTheme.colorScheme.primary,
+                            leadingIconColor = MaterialTheme.colorScheme.primary,
+                        ),
+                        modifier = Modifier.clickable(onClick = aoVerAnexos),
                     )
                     HorizontalDivider()
                 }

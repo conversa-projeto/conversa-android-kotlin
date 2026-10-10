@@ -98,6 +98,8 @@ class AcoesConversas(
     val aoPesquisarEmTodos: (String) -> Unit = {},
     /** "Ligar" do perfil da pessoa (8.4): voz na direta. */
     val aoLigar: (usuarioId: Long, conversaId: Long) -> Unit = { _, _ -> },
+    /** "Ver anexos" do perfil da pessoa (8.6). */
+    val aoVerAnexos: (conversaId: Long) -> Unit = {},
 )
 
 @Composable
@@ -107,6 +109,7 @@ fun ConversasRotaTela(
     aoMembros: (Long) -> Unit,
     aoPesquisarEmTodos: (String) -> Unit,
     aoLigar: (usuarioId: Long, conversaId: Long) -> Unit,
+    aoVerAnexos: (conversaId: Long) -> Unit,
     modifier: Modifier = Modifier,
     viewModel: ConversasViewModel = hiltViewModel(),
 ) {
@@ -134,6 +137,7 @@ fun ConversasRotaTela(
             aoMembros = aoMembros,
             aoPesquisarEmTodos = aoPesquisarEmTodos,
             aoLigar = aoLigar,
+            aoVerAnexos = aoVerAnexos,
         ),
         modifier = modifier,
     )
@@ -198,6 +202,10 @@ fun ConversasTela(estado: ConversasUiState, acoes: AcoesConversas, modifier: Mod
             aoLigar = {
                 perfilDe = null
                 acoes.aoLigar(ficha.id, itemDoPerfil.id)
+            },
+            aoVerAnexos = {
+                perfilDe = null
+                acoes.aoVerAnexos(itemDoPerfil.id)
             },
         )
     }

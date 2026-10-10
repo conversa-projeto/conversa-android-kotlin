@@ -80,3 +80,7 @@ data object RotaSistema
 /** Acessos (8.5): quem pode o quê; só com a permissão "permissoes". */
 @Serializable
 data object RotaAcessos
+
+/** Anexos de uma conversa (8.6): "Ver anexos" do perfil da pessoa ou dos dados do grupo. */
+@Serializable
+data class RotaAnexos(val conversaId: Long)

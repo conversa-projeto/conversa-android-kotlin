@@ -17,6 +17,7 @@ import com.conversa.app.feature.auth.login.LoginRotaTela
 import com.conversa.app.feature.auth.servidor.ServidorRotaTela
 import com.conversa.app.feature.chamada.HistoricoChamadasRota
 import com.conversa.app.feature.chamada.rememberLigarParaUsuario
+import com.conversa.app.feature.chat.AnexosDaConversaRotaTela
 import com.conversa.app.feature.chat.ChatRotaTela
 import com.conversa.app.feature.config.AcessosRotaTela
 import com.conversa.app.feature.config.ConfiguracoesRotaTela
@@ -88,6 +89,7 @@ fun ConversaNavHost(destinoInicial: Any, principal: MainViewModel) {
                         aoMembros = { nav.navigate(RotaMembros(it)) },
                         aoPesquisarEmTodos = { termo -> nav.navigate(RotaPesquisa(termo)) },
                         aoLigar = ligar,
+                        aoVerAnexos = { nav.navigate(RotaAnexos(it)) },
                         modifier = modificador,
                     )
                 },
@@ -123,6 +125,7 @@ fun ConversaNavHost(destinoInicial: Any, principal: MainViewModel) {
                 aoAbrirConversa = { conversa, mensagem, encaminharDe ->
                     nav.navigate(RotaChat(conversa, mensagem, encaminharDe = encaminharDe))
                 },
+                aoVerAnexos = { nav.navigate(RotaAnexos(it)) },
             )
         }
         composable<RotaEnviarPara> {
@@ -166,11 +169,19 @@ fun ConversaNavHost(destinoInicial: Any, principal: MainViewModel) {
         composable<RotaSistema> { SistemaRotaTela(aoVoltar = { nav.popBackStack() }) }
         composable<RotaAcessos> { AcessosRotaTela(aoVoltar = { nav.popBackStack() }) }
         composable<RotaPerfil> { PerfilRotaTela(aoVoltar = { nav.popBackStack() }) }
-        composable<RotaMembros> {
+        composable<RotaMembros> { entrada ->
+            val conversaId = entrada.toRoute<RotaMembros>().conversaId
             MembrosRotaTela(
                 // Saiu do grupo: a conversa some; volta à lista.
                 aoSair = { nav.popBackStack<RotaPrincipal>(inclusive = false) },
                 aoVoltar = { nav.popBackStack() },
+                aoVerAnexos = { nav.navigate(RotaAnexos(conversaId)) },
+            )
+        }
+        composable<RotaAnexos> {
+            AnexosDaConversaRotaTela(
+                aoVoltar = { nav.popBackStack() },
+                aoAbrirMensagem = { conversa, mensagem -> nav.navigate(RotaChat(conversa, mensagem)) },
             )
         }
     }

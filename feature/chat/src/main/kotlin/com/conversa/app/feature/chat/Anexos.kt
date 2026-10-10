@@ -282,9 +282,18 @@ fun FilaAnexos(fila: List<AnexoLocal>, aoRemover: (String) -> Unit) {
     }
 }
 
-/** Uma imagem do visualizador: o conteúdo e o texto da mesma mensagem (legenda). */
-data class ImagemDaConversa(val mensagem: Mensagem, val conteudo: Conteudo) {
-    val legenda: String get() = mensagem.conteudos.filter { it.tipo == TipoConteudo.TEXTO }.joinToString("\n") { it.conteudo }
+/**
+ * Uma imagem (ou vídeo) do visualizador: de que mensagem veio, quem mandou, quando e o texto
+ * da mesma mensagem (legenda). Vem da conversa aberta ou da galeria de anexos (8.6).
+ */
+data class ImagemDaConversa(val mensagemId: Long, val conteudo: Conteudo, val autor: String, val hora: String, val legenda: String = "") {
+    constructor(mensagem: Mensagem, conteudo: Conteudo) : this(
+        mensagemId = mensagem.id,
+        conteudo = conteudo,
+        autor = mensagem.remetente,
+        hora = horaDa(mensagem),
+        legenda = mensagem.conteudos.filter { it.tipo == TipoConteudo.TEXTO }.joinToString("\n") { it.conteudo },
+    )
 }
 
 /** Todas as imagens da conversa, em ordem cronológica, menos as de mensagens ocultas (ANX-05). */
@@ -346,7 +355,13 @@ private fun QuadroDaBolha(mensagem: Mensagem, conteudo: Conteudo, acoes: AcoesBo
  * controles do Media3; embaixo, quem mandou, a legenda e a tira de miniaturas.
  */
 @Composable
-fun VisualizadorImagens(imagens: List<ImagemDaConversa>, inicial: Int, acoes: AcoesBolha, aoFechar: () -> Unit) {
+fun VisualizadorImagens(
+    imagens: List<ImagemDaConversa>,
+    inicial: Int,
+    acoes: AcoesBolha,
+    aoFechar: () -> Unit,
+    aoAbrirMensagem: ((ImagemDaConversa) -> Unit)? = null,
+) {
     Dialog(onDismissRequest = aoFechar, properties = DialogProperties(usePlatformDefaultWidth = false)) {
         val paginas = rememberPagerState(initialPage = inicial.coerceIn(0, (imagens.size - 1).coerceAtLeast(0))) { imagens.size }
         val escopo = rememberCoroutineScope()
@@ -376,7 +391,7 @@ fun VisualizadorImagens(imagens: List<ImagemDaConversa>, inicial: Int, acoes: Ac
             Column(Modifier.fillMaxWidth().background(Color.Black.copy(alpha = 0.5f)).navigationBarsPadding().padding(12.dp)) {
                 if (atual != null) {
                     Text(
-                        "${atual.mensagem.remetente} · ${horaDa(atual.mensagem)}",
+                        "${atual.autor} · ${atual.hora}",
                         color = Color.White,
                         style = MaterialTheme.typography.labelMedium,
                     )
@@ -389,7 +404,13 @@ fun VisualizadorImagens(imagens: List<ImagemDaConversa>, inicial: Int, acoes: Ac
                         )
                     }
                     if (!atual.conteudo.local) {
-                        Row {
+                        Row(Modifier.horizontalScroll(rememberScrollState())) {
+                            // Na galeria de anexos (8.6): leva à mensagem na conversa.
+                            aoAbrirMensagem?.let { abrir ->
+                                TextButton(onClick = { abrir(atual) }) {
+                                    Text(stringResource(R.string.abrir_mensagem), color = Color.White)
+                                }
+                            }
                             TextButton(onClick = { acoes.aoAbrirArquivo(atual.conteudo) }) {
                                 Text(stringResource(R.string.abrir_com), color = Color.White)
                             }
@@ -431,7 +452,7 @@ private fun TiraMiniaturas(imagens: List<ImagemDaConversa>, atual: Int, aoEscolh
     val lista = rememberLazyListState(initialFirstVisibleItemIndex = (atual - 2).coerceAtLeast(0))
     LaunchedEffect(atual) { lista.animateScrollToItem((atual - 2).coerceAtLeast(0)) }
     LazyRow(state = lista, horizontalArrangement = Arrangement.spacedBy(6.dp), modifier = Modifier.padding(top = 8.dp)) {
-        itemsIndexed(imagens, key = { _, item -> "${item.mensagem.id}:${item.conteudo.ordem}" }) { indice, item ->
+        itemsIndexed(imagens, key = { _, item -> "${item.mensagemId}:${item.conteudo.ordem}:${item.conteudo.conteudo}" }) { indice, item ->
             val selecionada = indice == atual
             Box(
                 Modifier
