@@ -26,6 +26,7 @@ Atualize a linha (data, versão, onde e o que aconteceu) a cada rodada.
 | Cenário | Onde | Situação | Observação |
 |---|---|---|---|
 | App aberto: recebe e atende | E | ✅ 2026-10-08 | A tela de chamada recebida abre sozinha |
+| App aberto: recebe e atende arrastando o botão | A | ✅ 2026-10-09 | Galaxy A25 (Android 16) pela depuração por Wi-Fi, contra o web (conta C): tocou, atendeu arrastando o botão verde; o gesto foi ajustado (limiar de 140 dp) e aprovado |
 | App em segundo plano (até 10 s, WebSocket ainda ligado) | E | ✅ 2026-10-08 | Notificação CallStyle com Atender/Recusar; "Atender" abre já atendendo |
 | App em segundo plano há mais de 10 s / fechado | A | ⛔ | Depende do push de chamada (FCM, 5.1) e do S1 no servidor |
 | Tela apagada | E | ✅ 2026-10-08 | A tela acende já na "Chamada recebida" (tela cheia) |

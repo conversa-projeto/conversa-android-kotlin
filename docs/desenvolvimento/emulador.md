@@ -54,3 +54,15 @@ Para testar chamada, o usuário B fica no cliente web, num Chrome à parte com c
 Chamada em grupo: um segundo Chrome de teste (outro perfil temporário, `--remote-debugging-port=9334`) com a conta `teste.android.c`; o B liga para [A, B, C] e cada web atende pela store `call`.
 
 Limitação conhecida: a câmera falsa do Chrome não abre de novo dentro da mesma chamada ("Could not start video source"). Para testar o vídeo do web outra vez, feche e abra o Chrome de teste.
+
+## Aparelho de verdade pela depuração por Wi-Fi
+
+O mesmo roteiro vale para um celular na mesma rede Wi-Fi do PC, sem cabo:
+
+1. No celular (quem faz é a pessoa dona do aparelho): Opções do desenvolvedor → Depuração por Wi-Fi → "Parear o dispositivo com um código de pareamento".
+2. No PC, a própria pessoa digita o código: `adb pair IP:PORTA` (no `cmd`, o adb fica em `"%LOCALAPPDATA%\Android\Sdk\platform-tools\adb.exe"`). Depois disso o adb acha o aparelho sozinho pela rede (mDNS).
+3. Com o emulador também ligado, todo comando leva o aparelho: `adb -s <serial>` ou `ANDROID_SERIAL=<serial>`.
+4. `adb reverse tcp:8081 tcp:8081` e `adb reverse tcp:3478 tcp:3478` funcionam pelo Wi-Fi: o `localhost` do app chega no PC pelo canal do adb, sem expor o servidor na rede. Se a depuração cair, refazer os dois.
+5. O app de teste (`com.conversa.conversa.dev`) fica ao lado do app oficial, sem dividir dados.
+
+Primeiro uso: 2026-10-09, Galaxy A25 (Android 16), conta `teste.android.b`, com o web na conta C ligando.

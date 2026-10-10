@@ -16,4 +16,9 @@ dependencies {
     // Chamadas pelo sistema (6.3): fone Bluetooth, chamada GSM concorrente, rotas de áudio.
     implementation(libs.androidx.core.telecom)
     implementation(libs.timber)
+
+    // Gesto do botão de arrastar (Compose no Robolectric).
+    testImplementation(libs.robolectric)
+    testImplementation(platform(libs.compose.bom))
+    testImplementation(libs.compose.ui.test.junit4)
 }

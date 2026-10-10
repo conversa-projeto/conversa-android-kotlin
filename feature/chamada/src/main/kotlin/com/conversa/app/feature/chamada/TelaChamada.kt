@@ -8,6 +8,7 @@ import android.os.PowerManager
 import androidx.activity.compose.BackHandler
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
+import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
@@ -82,6 +83,7 @@ import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
@@ -91,6 +93,7 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.pluralStringResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.Role
+import androidx.compose.ui.semantics.clearAndSetSemantics
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.role
 import androidx.compose.ui.semantics.semantics
@@ -102,6 +105,7 @@ import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.IntSize
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.viewinterop.AndroidView
+import androidx.compose.ui.zIndex
 import androidx.core.telecom.CallEndpointCompat
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.lifecycle.ViewModel
@@ -359,18 +363,32 @@ private fun TelaRecebendo(estado: EstadoChamada, aoAtender: (soAssistir: Boolean
             )
         }
         Column(horizontalAlignment = Alignment.CenterHorizontally) {
-            Row(horizontalArrangement = Arrangement.spacedBy(64.dp)) {
-                BotaoRedondo(
+            // Arrastar para qualquer lado (como o discador da Samsung); o outro botão some enquanto um é arrastado.
+            var segurando by remember { mutableStateOf<Boolean?>(null) }
+            Text(
+                stringResource(R.string.deslize_para_atender),
+                style = MaterialTheme.typography.labelMedium,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                modifier = Modifier.alpha(if (segurando == null) 1f else 0f),
+            )
+            Spacer(Modifier.height(40.dp))
+            Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceEvenly) {
+                BotaoDeArrastarComRotulo(
                     Icons.Filled.CallEnd,
                     stringResource(R.string.recusar),
                     cores.botaoRecusar,
-                    Color.White,
-                    72,
-                    onClick = aoRecusar,
+                    visivel = segurando != true,
+                    aoSegurar = { segurando = if (it) false else null },
+                    aoConcluir = aoRecusar,
                 )
-                BotaoRedondo(Icons.Filled.Call, stringResource(R.string.atender), cores.botaoAtender, Color.White, 72, onClick = {
-                    aoAtender(false)
-                })
+                BotaoDeArrastarComRotulo(
+                    Icons.Filled.Call,
+                    stringResource(R.string.atender),
+                    cores.botaoAtender,
+                    visivel = segurando != false,
+                    aoSegurar = { segurando = if (it) true else null },
+                    aoConcluir = { aoAtender(false) },
+                )
             }
             if (estado.tipo == TipoChamada.VIDEO) {
                 Spacer(Modifier.height(16.dp))
@@ -382,6 +400,32 @@ private fun TelaRecebendo(estado: EstadoChamada, aoAtender: (soAssistir: Boolean
             }
             Spacer(Modifier.height(24.dp))
         }
+    }
+}
+
+/** O botão de arrastar com o nome embaixo; o que está sendo arrastado fica por cima do outro. */
+@Composable
+private fun BotaoDeArrastarComRotulo(
+    icone: ImageVector,
+    descricao: String,
+    cor: Color,
+    visivel: Boolean,
+    aoSegurar: (Boolean) -> Unit,
+    aoConcluir: () -> Unit,
+) {
+    val alfa by animateFloatAsState(if (visivel) 1f else 0f, label = "alfa")
+    var segurando by remember { mutableStateOf(false) }
+    Column(
+        Modifier.alpha(alfa).zIndex(if (segurando) 1f else 0f),
+        horizontalAlignment = Alignment.CenterHorizontally,
+    ) {
+        BotaoDeArrastar(icone, descricao, cor, aoConcluir = aoConcluir, aoSegurar = {
+            segurando = it
+            aoSegurar(it)
+        })
+        Spacer(Modifier.height(12.dp))
+        // O TalkBack já lê o nome no botão.
+        Text(descricao, style = MaterialTheme.typography.labelLarge, modifier = Modifier.clearAndSetSemantics {})
     }
 }
 

@@ -9,6 +9,8 @@
     <string name="recusar">Recusar</string>
     <string name="atender">Atender</string>
     <string name="atender_so_assistindo">Atender só assistindo</string>
+    <!-- Só no Android: atender e recusar são de arrastar (para qualquer lado). -->
+    <string name="deslize_para_atender">Arraste um botão para qualquer lado</string>
 
     <string name="chamando">Chamando…</string>
     <string name="conectando">Conectando…</string>

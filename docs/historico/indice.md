@@ -62,6 +62,7 @@
 - 2026-10-08 · [Etapa 6 — indicador de fala e somente recepção](2026-10-08-16-etapa-6-fala-e-recepcao.md) — anel verde de quem fala (nível do WebRTC, 0,02 e 400 ms como o web) e "Ativar microfone/câmera" para quem entrou só recebendo; 292 testes
 - 2026-10-08 · [Etapa 6 — tela e ponteiro remotos](2026-10-08-17-etapa-6-tela-e-ponteiro.md) — a tela compartilhada entra em destaque, inteira; ponteiros dos outros com nome e cor; "Sair da chamada" fixo na barra; testado com o B compartilhando a tela e o C apontando; 295 testes
 - 2026-10-08 · [Etapa 6 — matriz de testes manuais de chamada](2026-10-08-18-etapa-6-matriz-de-testes.md) — `docs/testes/chamadas.md` com o que passou no emulador e o que falta em aparelho; "atender no web com o celular tocando" testado
+- 2026-10-09 · [Atender e recusar arrastando](2026-10-09-11-arrastar-para-atender.md) — botões de arrastar para qualquer lado, com o círculo que cresce até o anel (como a Samsung); tocar não age; TalkBack com toque duplo; 5 testes Robolectric; testado num Galaxy A25 pela depuração por Wi-Fi
 
 ## Ações sobre mensagens (etapa 7)
 - 2026-10-08 · [Etapa 7 — menu da mensagem, reações, ocultar e copiar](2026-10-08-19-etapa-7-menu-reacoes-ocultar.md) — toque longo com reações rápidas, seletor de emoji, chips e "quem reagiu", WS 7, Ocultar com a confirmação do web e Copiar (texto ou imagem)
