@@ -4,7 +4,7 @@
 - **Tipo:** teste / correção de instabilidade
 - **Itens:** a pendência anotada em `2026-10-08-26-etapa-7-figurinhas.md` (o `RealtimeClientTest` falhou uma vez ao fechar o `MockWebServer`)
 - **Branch:** `reescrita`
-- **Commits:** (preencher)
+- **Commits:** `762bf2c`
 
 ## Contexto
 O `RealtimeClientTest` (`core:network`) abre WebSockets de verdade contra o `MockWebServer`. Na verificação completa da 7.x, ele falhou uma vez no `@After`, com `AssertionError: Gave up waiting for queue to shut down` vindo do `MockWebServer.close()`, e passou quando repetido.
