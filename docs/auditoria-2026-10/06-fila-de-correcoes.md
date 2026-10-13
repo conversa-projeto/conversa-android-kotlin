@@ -1,6 +1,6 @@
 # 06 — Fila de correções e implementação (FC)
 
-**Data:** 2026-10-06 (🆕 atualizado à noite com os commits `8031fa5` e `39d06f9`: FC-315, 415–416, 516–518, 723 e ajustes em FC-108, 112, 303, 714; 🆕 de novo em 2026-10-08 com `d4435db`, `5cad911`, `eaa8bac` e `785bdef`: ajustes em FC-212, 501, 516, 517, 719 e 723) · **Premissa:** decisão do doc 00. Construir **nova base**; o app atual só recebe higiene e, opcionalmente, hotfixes de segurança.
+**Data:** 2026-10-06 (🆕 atualizado à noite com os commits `8031fa5` e `39d06f9`: FC-315, 415–416, 516–518, 723 e ajustes em FC-108, 112, 303, 714; 🆕 de novo em 2026-10-08 com `d4435db`, `5cad911`, `eaa8bac` e `785bdef`: ajustes em FC-212, 501, 516, 517, 719 e 723; 🆕 de novo em 2026-10-13 com o servidor `12cf0cf` e o web `d202c06`: FC-215–218, 316–317, 417–419, 521–524, 610, 724–728 e 810–812 — os P0 FC-316, FC-417 e FC-724 consertam o que o update quebrou) · **Premissa:** decisão do doc 00. Construir **nova base**; o app atual só recebe higiene e, opcionalmente, hotfixes de segurança.
 
 ## Como ler
 
@@ -217,6 +217,10 @@
   - Só contatos de conversa direta; só online/offline.
   - Remover qualquer "online" fixo.
 - [ ] **FC-214 · P1 · Banner "sem conexão em tempo real"** (GER-02), após 5 s desconectado.
+- [ ] **FC-215 · P1 · 🆕 `b8ea0c2`/`769bd7d` Presença ativo/ausente/offline** (PRE-01, PRE-02): `GET /contatos/presenca` no lugar de `/contatos/online`; WS 60 com `estado` e `visto_em` (guardar o último `visto_em`; o servidor manda também o meu próprio estado, logo após o login no socket); **enviar o WS 63** `{tipo:63, ativo, conversa_id}` pelo ciclo de vida (primeiro plano = ativo; chat aberto = `conversa_id`; segundo plano `ativo:false`), senão o app aparece "ativo" com o socket aberto em segundo plano; bolinha verde (ativo) e amarela (ausente).
+- [ ] **FC-216 · P2 · 🆕 `769bd7d` "Visto por último" e "nesta conversa"** (PRE-03): subtítulo da direta ("nesta conversa", "ativo agora", "ausente", "visto por último hoje/ontem/em dd/MM às HH:MM"); `GET /conversa/presentes` ao abrir e WS 63 `aberta`; " · nesta conversa" nos membros do grupo.
+- [ ] **FC-217 · P2 · 🆕 `b8ea0c2`/`769bd7d` Imagem ou emoji do grupo** (CON-15, GER-07): mostrar `emoji`/`avatar_url` do grupo em todos os avatares; editar na tela do grupo ("Imagem" com recorte 256 px JPEG, "Emoji", "Remover"; `PATCH /conversa {id, avatar_anexo_id, emoji}`, um tira o outro).
+- [ ] **FC-218 · P2 · 🆕 `769bd7d` Seção "Chamadas (N)" na lista** (CON-01): conversas `chamada:true` não fixadas nem arquivadas, recolhível, antes de "Arquivadas"; com termo, tudo junto.
 
 ## Bloco E — Mensagens: núcleo (F2)
 
@@ -259,6 +263,8 @@
 - [ ] **FC-313 · P2 · Mensagem só de emojis** (MSG-14).
 - [ ] **FC-314 · P0 · Deep link** `conversa/{id}?mensagem={id}` (CON-12): abre a conversa e **recarrega as mensagens**.
 - [ ] **FC-315 · P0 · 🆕 Placeholder da votação** (MSG-20): até a F4, a bolha tipo 8 mostra "📊 Votação" + "Abra no computador para votar". Nunca deixar a bolha vazia.
+- [ ] **FC-316 · P0 · 🆕 `12cf0cf` Respostas de postagem não podem prender o contador** (MSG-22, mínimo): as respostas ficam fora de `/mensagens`, mas contam em `mensagens_sem_visualizar`, viram a prévia da lista e chegam no WS 2, no WS 3 e no push. Ler `postagem` no DTO, chamar `POST /postagem/visualizar {postagem_id}` quando a postagem aparece, tratar o WS 64 e não reconsultar em laço os ids do WS 3 que são respostas. Achado no emulador em 2026-10-13: depois de abrir o grupo, "1 não lida" para sempre.
+- [ ] **FC-317 · P1 · 🆕 `12cf0cf`/`d202c06` Bolha de postagem com respostas** (MSG-22, MSG-07): "Postagem · <remetente>", título, contagem ("Nenhuma resposta ainda"/"1 resposta"/"N respostas"), selo "N novas", as 2 últimas (`ultimas`), "Ver todas as N"/"Mostrar menos" (`GET /postagem/respostas?id=`), "Mensagem apagada", campo "Responder à postagem" (`PUT /mensagem {…, postagem_id}`); classificação depois de Excluída e Chamada, antes de Imagem.
 
 ## Bloco F — Anexos e mídia (F3)
 
@@ -310,6 +316,9 @@
   - Completo: igual ao web (FC-415).
   - Simplificado: faixa de anexos + texto, enviado como [anexos…, texto]; perde a intercalação, mas é bem mais simples no Android.
   - Registrar a escolha em `docs/adr/`. Recomendação: começar simplificado na F3 e evoluir para o completo depois do Marco 1, porque as mensagens intercaladas que chegam do web são exibidas corretamente de qualquer forma.
+- [ ] **FC-417 · P0 · 🆕 `d202c06` Figurinhas do pacote Noto** (ENV-04): o web passou a ter só o pacote "Noto" (55, `noto/<nome>`, de `/figurinhas/noto/`) e apagou básico/rostos/coisas. Hoje as figurinhas não se entendem nos dois sentidos (aparecem como "Figurinha"). Embutir o pacote nos assets (3,7 MB), seletor só com ele e o crédito "Animated Noto Emoji © Google, CC BY 4.0"; manter os assets antigos só para desenhar mensagens antigas.
+- [ ] **FC-418 · P2 · 🆕 `d202c06` Seletor de emojis como o do web** (ENV-03, ENV-17): sem tons de pele, bandeiras nem FE0F sobrando (a reação não pode se dividir da do web); "Pesquisar emoji", categorias e "Recentes" (até 32). Opções: o catálogo `/emojis/pt.json` do web ou filtrar o `EmojiPickerView`.
+- [ ] **FC-419 · P2 · 🆕 `769bd7d` Recursos do servidor** (GER-08, ANX-12): `GET /recursos` → `{transcricao, ia}` uma vez por sessão; sem transcritor, esconder "Transcrever" (o já transcrito continua aparecendo).
 
 ## Bloco G — Ações sobre mensagens (F4)
 
@@ -369,6 +378,10 @@
 - [ ] **FC-519 · P2 · 🆕 `7322e83` Rascunho por conversa** (ENV-23): texto com menções, fila de anexos e resposta/encaminhamento pendente guardados no aparelho por conversa; restaurar ao abrir o chat; apagar ao enviar.
 - [ ] **FC-520 · P2 · 🆕 `7322e83` Encaminhada de encaminhada** (MSG-19): na citação aninhada, não repetir os conteúdos que a citação de baixo já mostra.
 - [ ] **FC-518 · P1 · 🆕 Esconder "Encaminhar" para mensagem de votação.** O servidor recusa tipo 8 em `PUT /mensagem` (400); no web o botão aparece e falha.
+- [ ] **FC-521 · P1 · 🆕 `b8ea0c2`/`769bd7d` Confirmação de leitura** (ENV-24, MSG-21): pedir pelo "+" › "Confirmar leitura" (faixa "A mensagem vai pedir confirmação de leitura", `pede_confirmacao:true`, só na próxima mensagem); na bolha, quem recebe marca "Confirmar leitura" → "Leitura confirmada" (`POST /mensagem/confirmar`, idempotente); quem enviou vê "Aguardando confirmação"/"Confirmada por N de T"/"Confirmada por N" e quem confirmou; WS 8.
+- [ ] **FC-522 · P1 · 🆕 `d202c06` Criar postagem** (ENV-26): "+" › "Postagem" (só grupo), faixa "Postagem: as respostas ficam embaixo dela" com "Título (opcional)" (até 150) e X "Não postar"; a próxima mensagem vira a postagem (`postagem:{titulo}`).
+- [ ] **FC-523 · P3 · 🆕 `f798e9c` Sugestão de texto da IA** (ENV-25): `POST /ia/sugestao` depois de 600 ms parado, com ≥ 3 caracteres e o cursor no fim; no celular, chip acima do teclado em vez do Tab; chave "Sugerir a continuação ao digitar" na Privacidade (preferência do aparelho).
+- [ ] **FC-524 · P2 · 🆕 `d202c06` Pesquisa na conversa e destaque** (PES-01, MSG-06): painel com "N resultados para “termo”"/"Nenhuma mensagem com “termo”", autor, quando e trecho com o termo destacado; ao ir para a mensagem, faixa da largura toda (1,5 s + 0,7 s de saída).
 
 ## Bloco H — Notificações e push (F5)
 
@@ -393,6 +406,7 @@
 - [ ] **FC-609 · P0 · Sem serviço permanente** (AND-07, #15).
   - WS só em primeiro plano; em segundo plano, FCM.
   - **Depende de S1/S2** para as chamadas tocarem com o app fechado.
+- [ ] **FC-610 · P1 · 🆕 `d202c06` Notificação de resposta a postagem** (NOT-02): WS 64 → "<nome> respondeu a uma postagem", exceto com a conversa aberta, arquivada ou resposta minha.
 
 ## Bloco I — Chamadas (F6)
 
@@ -464,6 +478,11 @@
   - Exibir o ponteiro (WS 57 `{acao:"ponteiro", alvo, x, y}`).
   - Enviar ponteiro tocando na tela compartilhada.
 - [ ] **FC-723 · P2 · 🆕 Chat completo da chamada** (CHA-24): quando o grupo da chamada existe, o painel usa a própria tela de chat (lista + campo completos) com a conversa do grupo; antes da primeira mensagem, o painel simples (FC-719). 🆕 `eaa8bac`: sem grupo, o toque no campo cria o grupo e abre o chat completo.
+- [ ] **FC-724 · P0 · 🆕 `b8ea0c2` "Chamar de novo" precisa tocar** (CHA-25): o servidor manda outro WS 51 para uma chamada que o aparelho já recusou ou perdeu; o `GerenciadorChamadas` ignora ids "encerrados". Nesse caso, conferir `GET /chamada/dados` e tocar se o meu status voltou a 1 com a chamada em andamento (+ teste).
+- [ ] **FC-725 · P1 · 🆕 `a40fd47` Chat da chamada reaproveitado** (CHA-18, CHA-24): `PUT /chamada/chat` pode devolver a conversa de origem (até direta), sem WS 40; quem não é membro dela recebe o WS 57 `chat` e 403 ao abrir. Abrir a conversa de origem e avisar no 403 (doc 08).
+- [ ] **FC-726 · P2 · 🆕 `769bd7d` Convidados fora da chamada** (CHA-25): na grade, "Chamando..." e "Não atendeu" com "Chamar de novo" (`POST /chamada/chamar-novamente {chamada_id, usuario_id}`); WS 57 `{acao:"participantes"}` → reler `GET /chamada/dados`.
+- [ ] **FC-727 · P2 · 🆕 `964ed72` Chat da ligação só leitura** (CHA-26, MSG-13, CHA-22): "Ver chat da chamada"/"Esconder o chat da chamada" na bolha da ligação (`chat_chamada_id`) e no histórico (`conversa_chat_id`); "Ninguém escreveu no chat da chamada."; "Abrir o chat completo".
+- [ ] **FC-728 · P3 · 🆕 `769bd7d` Etapas ao ligar o vídeo** (CHA-16): "Abrindo a câmera...", "Enviando o vídeo...", "Recebendo o vídeo dos participantes..."; republicar sem derrubar o áudio.
 
 ## Bloco J — Atividades, pesquisa, perfil, configurações (F7)
 
@@ -485,6 +504,9 @@
   - Visíveis conforme `GET /usuario/permissoes`.
   - `GET/PATCH /parametros`; `GET /permissoes`, `PUT/DELETE /permissao/usuario`.
 - [ ] **FC-809 · P2 · Página de anexos por conversa** (ANX-13): `GET /anexos?conversa=&direcao=&tipos=&antes=&limite=60`.
+- [ ] **FC-810 · P2 · 🆕 `769bd7d` Privacidade** (CFG-09): "Aparecer offline", "Mostrar o visto por último", "Mostrar quando estou na conversa" (textos do web); `GET /usuario/privacidade`, `PATCH /usuario`; com "Aparecer offline" ligado, as outras duas desabilitadas.
+- [ ] **FC-811 · P2 · 🆕 `769bd7d`/`05507a0` Resumo da conversa por IA** (CON-14): "Resumir conversa" no "⋮" (só com `recursos.ia`); períodos "Últimas 24 horas", "7 dias", "30 dias", "Últimas 400 mensagens"; `POST /conversa/resumo` e `GET /conversa/resumo?id=` a cada 2 s; assuntos, pendências e "Ver na conversa"; último resumo por conversa no Room, retomando a consulta.
+- [ ] **FC-812 · P3 · 🆕 `769bd7d` Sistema › Inteligência artificial** (CFG-07): endereço, modelo, token ("O token salvo nunca é mostrado."), "Testar conexão". Uso de administrador: avaliar se fica só no web.
 
 ## Bloco K — SIP e extras (F8)
 

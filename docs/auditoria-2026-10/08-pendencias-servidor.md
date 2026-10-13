@@ -1,6 +1,6 @@
 # 08 — Pendências no servidor (`conversa`) que afetam o Android
 
-**Data:** 2026-10-06 · **Origem:** leitura de `conversa/src/*.ts` durante a auditoria (detalhes e linhas no doc 01).
+**Data:** 2026-10-06 (🆕 S17–S22 em 2026-10-13, servidor em `12cf0cf`) · **Origem:** leitura de `conversa/src/*.ts` durante a auditoria (detalhes e linhas no doc 01).
 
 > **Nenhuma alteração foi feita no servidor.** Esta lista serve para planejar o trabalho no repositório `conversa`. Itens marcados como **bloqueante** impedem uma funcionalidade P0 do Android.
 
@@ -46,6 +46,7 @@
 - As animações ficam em `conversa-web/public/figurinhas/**`, mas o `bin/web` (build publicado) não contém a pasta. Ou seja, nem o web de produção as teria se o build não fosse refeito.
 - **Para o Android:** embutir no APK (FC-509).
 - **Para o servidor:** garantir que o build do web publique `/figurinhas/`. Se o catálogo for crescer, considerar servi-lo pela API.
+- 🆕 2026-10-13: o web (`d202c06`) trocou o catálogo pelo pacote `noto` (55 figurinhas, CC BY 4.0) e apagou `basico/`, `rostos/` e `coisas/`. Mensagens antigas com esses ids passam a mostrar só "Figurinha" no web (doc 01 §10.6).
 
 ### S6 · `DELETE /api/conversa` não funciona
 
@@ -71,6 +72,7 @@
 
 - O cliente não sabe se a transcrição está configurada (`transcritor_url`), e só administradores leem `/parametros`.
 - **Proposta:** `GET /api/recursos` (para qualquer usuário logado) → `{transcricao:boolean, sip:boolean, gravacao:boolean, versao_api:"…"}`.
+- 🆕 2026-10-13: **parcialmente atendida** em `b8ea0c2`: `GET /api/recursos` existe, para qualquer usuário logado, e devolve `{transcricao, ia}` (doc 01 §13.3). Ainda faltam `versao_api` (e `sip`/`gravacao`, se fizerem sentido).
 
 ### S11 · Ambiguidade do `tipo` da chamada
 
@@ -113,14 +115,51 @@
 - Em `GET /conversas`, `ultima_mensagem_texto` vem `""` para arquivo, áudio, gravação e chamada (doc 01 §11.2). O cliente não sabe o que foi: o web mostra "Sem mensagens"; o Android mostra "Anexo ou chamada".
 - **Proposta:** incluir `ultima_mensagem_tipo` (tipo do primeiro conteúdo) na lista, para a prévia dizer "Áudio", "Arquivo", "Chamada perdida"…
 
+### S17 · Respostas de postagem contam como mensagens do fluxo em `/conversas` e `/mensagens/novas` 🆕 (2026-10-13, `12cf0cf`)
+
+- **Hoje:** as respostas de postagem (`mensagem.postagem_id` não nulo) ficam fora de `GET /mensagens` e `GET /pesquisar` (`mensagens.ts`, filtro `m.postagem_id is null`), mas **não** são filtradas em:
+  - `GET /conversas` (`conversas.ts`, `conversas`): `mensagem_id`, `ultima_mensagem` e `ultima_mensagem_texto` podem ser de uma resposta, e `mensagens_sem_visualizar` conta as respostas não vistas;
+  - `GET /mensagens/novas` (`mensagens.ts`, `novasMensagens`): uma resposta faz a conversa aparecer, com `mensagem_id` = id da resposta;
+  - também WS 3 (ids de respostas), `GET /anexos` e o resumo por IA.
+- **Efeito:** a lista mostra como "última mensagem" e como "não lida" algo que o cliente não encontra no fluxo da conversa. O contador só zera se o cliente chamar `POST /postagem/visualizar` (ou visualizar cada resposta). Um cliente que usa `mensagem_id` de `/mensagens/novas` para buscar a mensagem (`mensagemreferencia=<id>`) recebe `[]`.
+- **Proposta:** em `/conversas` e `/mensagens/novas`, ou filtrar `postagem_id is null` e somar à parte as respostas não lidas (ex.: `respostas_sem_visualizar`), ou devolver também `postagem_id` da última mensagem/da linha, para o cliente levar até a postagem.
+
+### S18 · Push continua bloqueado por qualquer socket aberto, mesmo "ausente" 🆕 (2026-10-13, `b8ea0c2`)
+
+- **Hoje:** a presença ganhou estados (ativo, ausente, offline) e "aparecer offline", mas o push de mensagem continua usando `usuarioConectado(usuario_id)` (`notificacoes.ts:71`), que só olha se existe **alguma** conexão (`websocket.ts`, `usuarioConectado`).
+- **Efeito:** o Android em segundo plano com o socket aberto (mesmo depois de mandar `{tipo:63, ativo:false}`) **não recebe push**; idem se o usuário tiver uma aba do web escondida no PC. Complementa o item 2 da S2.
+- **Proposta:** enviar push quando o estado real do usuário não é `ativo` (ou, melhor, por dispositivo: push para os aparelhos cuja conexão não está ativa — exige ligar a conexão ao `dispositivo_id`, ver S2).
+
+### S19 · `PATCH /conversa` não valida `avatar_anexo_id` 🆕 (2026-10-13, `b8ea0c2`)
+
+- **Hoje:** `alterarConversa` (`conversas.ts`) grava `avatar_anexo_id` direto. Id inexistente → **500** com a mensagem de FK do Postgres; o tipo do anexo (imagem) e o `upload_status` também não são conferidos.
+- **Proposta:** conferir que o anexo existe, é tipo 2 e está concluído; responder 400/404 em português. Mesmo caso da S7.
+
+### S20 · Chat da chamada reaproveitado deixa de fora quem não é membro da conversa 🆕 (2026-10-13, `a40fd47`)
+
+- **Hoje:** `PUT /chamada/chat` (`chamadas.ts`, `chatChamada`) reaproveita a conversa da ligação quando todos os participantes com status 3/4/5 e quem pediu já são membros dela. Mas o WS 57 `{acao:"chat", conversa_id}` vai a **todos** os participantes (qualquer status), inclusive quem foi adicionado à chamada e não é membro da origem (ex.: ainda tocando). E `incluirNoChatChamada` não inclui ninguém quando `conversa_chat_id = conversa_id`, então quem entra depois **não ganha acesso**: abrir o chat dá **403**. `GET /chamada/dados` também devolve esse `conversa_chat_id` sem filtro.
+- **Efeito:** no web e no Android, o painel da chamada aponta para um chat que essa pessoa não consegue abrir nem usar.
+- **Proposta:** ao reaproveitar, mandar o `{acao:"chat"}` só aos membros da origem; para os outros, ou criar o grupo "Chamada: …" (regra antiga) ou incluí-los na origem só se for grupo (nunca numa conversa direta).
+
+### S21 · Resumo por IA só na memória 🆕 (2026-10-13, `b8ea0c2`)
+
+- **Hoje:** os resumos ficam num `Map` em `resumos.ts` (30 min de validade). Reiniciar a API (ou ter mais de um processo) perde o resumo pronto ou em andamento: o `GET /conversa/resumo?id=` passa a dar **404** e o cliente precisa pedir de novo (e esperar a IA, que pode levar minutos). Não há evento ao concluir (só polling).
+- **Proposta:** gravar os resumos numa tabela (com o período e as mensagens usadas) e avisar a conclusão por WebSocket; ou, no mínimo, documentar o 404 como "peça de novo" (é o que a mensagem já diz).
+
+### S22 · Tipo 63 aceita `conversa_id` de conversa alheia 🆕 (2026-10-13, `b8ea0c2`)
+
+- **Hoje:** ao receber `{tipo:63, ativo, conversa_id}`, o servidor guarda a conversa sem conferir se o usuário é membro (`websocket.ts`, `criarWebSocket`), e `notificarNaConversa` manda WS 63 `{conversa_id, usuario_id, aberta:true}` a **todos os membros** dessa conversa.
+- **Efeito:** qualquer usuário logado pode aparecer como "com a conversa aberta" para os membros de uma conversa da qual não participa. `GET /conversa/presentes` não é afetado (só lista membros).
+- **Proposta:** conferir a participação (`conversa_usuario`) antes de aceitar o `conversa_id`, como as rotas HTTP fazem com `validarAcessoConversa`. Até lá, o cliente ignora WS 63 de quem não é membro.
+
 ---
 
 ## Prioridade sugerida no servidor
 
 | Ordem | Itens | Por quê |
 |---|---|---|
-| 1 | S1, S2 | Sem eles, o Android não toca nem notifica de forma confiável |
-| 2 | S4 | Segurança (ouvir chamadas e baixar anexos alheios) |
-| 3 | S3, S13 | Qualidade das notificações e da sessão no celular |
-| 4 | S7, S8, S9, S11 | Robustez para todos os clientes |
-| 5 | S5, S6, S10, S12, S14, S15, S16 | Higiene e evolução |
+| 1 | S1, S2, 🆕 S18 | Sem eles, o Android não toca nem notifica de forma confiável |
+| 2 | S4, 🆕 S22 | Segurança (ouvir chamadas e baixar anexos alheios; presença em conversa alheia) |
+| 3 | S3, S13, 🆕 S17 | Qualidade das notificações, do contador de não lidas e da sessão no celular |
+| 4 | S7, S8, S9, S11, 🆕 S19, S20 | Robustez para todos os clientes |
+| 5 | S5, S6, S10, S12, S14, S15, S16, 🆕 S21 | Higiene e evolução |

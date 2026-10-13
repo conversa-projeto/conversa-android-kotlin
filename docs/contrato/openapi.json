@@ -292,6 +292,15 @@
                         "type": "null"
                       }
                     ]
+                  },
+                  "mostrar_visto_em": {
+                    "type": "boolean"
+                  },
+                  "mostrar_na_conversa": {
+                    "type": "boolean"
+                  },
+                  "aparecer_offline": {
+                    "type": "boolean"
                   }
                 }
               }
@@ -347,6 +356,15 @@
                         "type": "null"
                       }
                     ]
+                  },
+                  "mostrar_visto_em": {
+                    "type": "boolean"
+                  },
+                  "mostrar_na_conversa": {
+                    "type": "boolean"
+                  },
+                  "aparecer_offline": {
+                    "type": "boolean"
                   }
                 }
               }
@@ -402,6 +420,15 @@
                         "type": "null"
                       }
                     ]
+                  },
+                  "mostrar_visto_em": {
+                    "type": "boolean"
+                  },
+                  "mostrar_na_conversa": {
+                    "type": "boolean"
+                  },
+                  "aparecer_offline": {
+                    "type": "boolean"
                   }
                 }
               }
@@ -707,6 +734,40 @@
         "operationId": "getApiContatosOnline"
       }
     },
+    "/api/contatos/presenca": {
+      "get": {
+        "operationId": "getApiContatosPresenca"
+      }
+    },
+    "/api/usuario/privacidade": {
+      "get": {
+        "operationId": "getApiUsuarioPrivacidade"
+      }
+    },
+    "/api/conversa/presentes": {
+      "get": {
+        "parameters": [
+          {
+            "name": "conversa",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "anyOf": [
+                {
+                  "format": "integer",
+                  "default": 0,
+                  "type": "string"
+                },
+                {
+                  "type": "integer"
+                }
+              ]
+            }
+          }
+        ],
+        "operationId": "getApiConversaPresentes"
+      }
+    },
     "/api/conversa": {
       "put": {
         "requestBody": {
@@ -802,8 +863,7 @@
               "schema": {
                 "type": "object",
                 "required": [
-                  "id",
-                  "descricao"
+                  "id"
                 ],
                 "properties": {
                   "id": {
@@ -820,6 +880,33 @@
                   },
                   "descricao": {
                     "type": "string"
+                  },
+                  "avatar_anexo_id": {
+                    "nullable": true,
+                    "anyOf": [
+                      {
+                        "anyOf": [
+                          {
+                            "format": "integer",
+                            "default": 0,
+                            "type": "string"
+                          },
+                          {
+                            "type": "integer"
+                          }
+                        ]
+                      },
+                      {
+                        "type": "null"
+                      }
+                    ]
+                  },
+                  "emoji": {
+                    "nullable": true,
+                    "type": [
+                      "string",
+                      "null"
+                    ]
                   }
                 }
               }
@@ -828,8 +915,7 @@
               "schema": {
                 "type": "object",
                 "required": [
-                  "id",
-                  "descricao"
+                  "id"
                 ],
                 "properties": {
                   "id": {
@@ -846,6 +932,33 @@
                   },
                   "descricao": {
                     "type": "string"
+                  },
+                  "avatar_anexo_id": {
+                    "nullable": true,
+                    "anyOf": [
+                      {
+                        "anyOf": [
+                          {
+                            "format": "integer",
+                            "default": 0,
+                            "type": "string"
+                          },
+                          {
+                            "type": "integer"
+                          }
+                        ]
+                      },
+                      {
+                        "type": "null"
+                      }
+                    ]
+                  },
+                  "emoji": {
+                    "nullable": true,
+                    "type": [
+                      "string",
+                      "null"
+                    ]
                   }
                 }
               }
@@ -854,8 +967,7 @@
               "schema": {
                 "type": "object",
                 "required": [
-                  "id",
-                  "descricao"
+                  "id"
                 ],
                 "properties": {
                   "id": {
@@ -872,6 +984,33 @@
                   },
                   "descricao": {
                     "type": "string"
+                  },
+                  "avatar_anexo_id": {
+                    "nullable": true,
+                    "anyOf": [
+                      {
+                        "anyOf": [
+                          {
+                            "format": "integer",
+                            "default": 0,
+                            "type": "string"
+                          },
+                          {
+                            "type": "integer"
+                          }
+                        ]
+                      },
+                      {
+                        "type": "null"
+                      }
+                    ]
+                  },
+                  "emoji": {
+                    "nullable": true,
+                    "type": [
+                      "string",
+                      "null"
+                    ]
                   }
                 }
               }
@@ -1506,6 +1645,41 @@
                         ]
                       }
                     }
+                  },
+                  "pede_confirmacao": {
+                    "type": "boolean"
+                  },
+                  "postagem": {
+                    "type": "object",
+                    "properties": {
+                      "titulo": {
+                        "nullable": true,
+                        "type": [
+                          "string",
+                          "null"
+                        ]
+                      }
+                    }
+                  },
+                  "postagem_id": {
+                    "nullable": true,
+                    "anyOf": [
+                      {
+                        "anyOf": [
+                          {
+                            "format": "integer",
+                            "default": 0,
+                            "type": "string"
+                          },
+                          {
+                            "type": "integer"
+                          }
+                        ]
+                      },
+                      {
+                        "type": "null"
+                      }
+                    ]
                   }
                 }
               }
@@ -1617,6 +1791,41 @@
                         ]
                       }
                     }
+                  },
+                  "pede_confirmacao": {
+                    "type": "boolean"
+                  },
+                  "postagem": {
+                    "type": "object",
+                    "properties": {
+                      "titulo": {
+                        "nullable": true,
+                        "type": [
+                          "string",
+                          "null"
+                        ]
+                      }
+                    }
+                  },
+                  "postagem_id": {
+                    "nullable": true,
+                    "anyOf": [
+                      {
+                        "anyOf": [
+                          {
+                            "format": "integer",
+                            "default": 0,
+                            "type": "string"
+                          },
+                          {
+                            "type": "integer"
+                          }
+                        ]
+                      },
+                      {
+                        "type": "null"
+                      }
+                    ]
                   }
                 }
               }
@@ -1728,6 +1937,41 @@
                         ]
                       }
                     }
+                  },
+                  "pede_confirmacao": {
+                    "type": "boolean"
+                  },
+                  "postagem": {
+                    "type": "object",
+                    "properties": {
+                      "titulo": {
+                        "nullable": true,
+                        "type": [
+                          "string",
+                          "null"
+                        ]
+                      }
+                    }
+                  },
+                  "postagem_id": {
+                    "nullable": true,
+                    "anyOf": [
+                      {
+                        "anyOf": [
+                          {
+                            "format": "integer",
+                            "default": 0,
+                            "type": "string"
+                          },
+                          {
+                            "type": "integer"
+                          }
+                        ]
+                      },
+                      {
+                        "type": "null"
+                      }
+                    ]
                   }
                 }
               }
@@ -2185,6 +2429,182 @@
           }
         ],
         "operationId": "getApiPesquisar"
+      }
+    },
+    "/api/postagem/respostas": {
+      "get": {
+        "parameters": [
+          {
+            "name": "id",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "anyOf": [
+                {
+                  "format": "integer",
+                  "default": 0,
+                  "type": "string"
+                },
+                {
+                  "type": "integer"
+                }
+              ]
+            }
+          }
+        ],
+        "operationId": "getApiPostagemRespostas"
+      }
+    },
+    "/api/postagem/visualizar": {
+      "post": {
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": [
+                  "postagem_id"
+                ],
+                "properties": {
+                  "postagem_id": {
+                    "anyOf": [
+                      {
+                        "format": "integer",
+                        "default": 0,
+                        "type": "string"
+                      },
+                      {
+                        "type": "integer"
+                      }
+                    ]
+                  }
+                }
+              }
+            },
+            "application/x-www-form-urlencoded": {
+              "schema": {
+                "type": "object",
+                "required": [
+                  "postagem_id"
+                ],
+                "properties": {
+                  "postagem_id": {
+                    "anyOf": [
+                      {
+                        "format": "integer",
+                        "default": 0,
+                        "type": "string"
+                      },
+                      {
+                        "type": "integer"
+                      }
+                    ]
+                  }
+                }
+              }
+            },
+            "multipart/form-data": {
+              "schema": {
+                "type": "object",
+                "required": [
+                  "postagem_id"
+                ],
+                "properties": {
+                  "postagem_id": {
+                    "anyOf": [
+                      {
+                        "format": "integer",
+                        "default": 0,
+                        "type": "string"
+                      },
+                      {
+                        "type": "integer"
+                      }
+                    ]
+                  }
+                }
+              }
+            }
+          }
+        },
+        "operationId": "postApiPostagemVisualizar"
+      }
+    },
+    "/api/mensagem/confirmar": {
+      "post": {
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": [
+                  "mensagem_id"
+                ],
+                "properties": {
+                  "mensagem_id": {
+                    "anyOf": [
+                      {
+                        "format": "integer",
+                        "default": 0,
+                        "type": "string"
+                      },
+                      {
+                        "type": "integer"
+                      }
+                    ]
+                  }
+                }
+              }
+            },
+            "application/x-www-form-urlencoded": {
+              "schema": {
+                "type": "object",
+                "required": [
+                  "mensagem_id"
+                ],
+                "properties": {
+                  "mensagem_id": {
+                    "anyOf": [
+                      {
+                        "format": "integer",
+                        "default": 0,
+                        "type": "string"
+                      },
+                      {
+                        "type": "integer"
+                      }
+                    ]
+                  }
+                }
+              }
+            },
+            "multipart/form-data": {
+              "schema": {
+                "type": "object",
+                "required": [
+                  "mensagem_id"
+                ],
+                "properties": {
+                  "mensagem_id": {
+                    "anyOf": [
+                      {
+                        "format": "integer",
+                        "default": 0,
+                        "type": "string"
+                      },
+                      {
+                        "type": "integer"
+                      }
+                    ]
+                  }
+                }
+              }
+            }
+          }
+        },
+        "operationId": "postApiMensagemConfirmar"
       }
     },
     "/api/mensagem/reacao": {
@@ -3283,6 +3703,121 @@
         "operationId": "putApiChamadaUsuario"
       }
     },
+    "/api/chamada/chamar-novamente": {
+      "post": {
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": [
+                  "chamada_id",
+                  "usuario_id"
+                ],
+                "properties": {
+                  "chamada_id": {
+                    "anyOf": [
+                      {
+                        "format": "integer",
+                        "default": 0,
+                        "type": "string"
+                      },
+                      {
+                        "type": "integer"
+                      }
+                    ]
+                  },
+                  "usuario_id": {
+                    "anyOf": [
+                      {
+                        "format": "integer",
+                        "default": 0,
+                        "type": "string"
+                      },
+                      {
+                        "type": "integer"
+                      }
+                    ]
+                  }
+                }
+              }
+            },
+            "application/x-www-form-urlencoded": {
+              "schema": {
+                "type": "object",
+                "required": [
+                  "chamada_id",
+                  "usuario_id"
+                ],
+                "properties": {
+                  "chamada_id": {
+                    "anyOf": [
+                      {
+                        "format": "integer",
+                        "default": 0,
+                        "type": "string"
+                      },
+                      {
+                        "type": "integer"
+                      }
+                    ]
+                  },
+                  "usuario_id": {
+                    "anyOf": [
+                      {
+                        "format": "integer",
+                        "default": 0,
+                        "type": "string"
+                      },
+                      {
+                        "type": "integer"
+                      }
+                    ]
+                  }
+                }
+              }
+            },
+            "multipart/form-data": {
+              "schema": {
+                "type": "object",
+                "required": [
+                  "chamada_id",
+                  "usuario_id"
+                ],
+                "properties": {
+                  "chamada_id": {
+                    "anyOf": [
+                      {
+                        "format": "integer",
+                        "default": 0,
+                        "type": "string"
+                      },
+                      {
+                        "type": "integer"
+                      }
+                    ]
+                  },
+                  "usuario_id": {
+                    "anyOf": [
+                      {
+                        "format": "integer",
+                        "default": 0,
+                        "type": "string"
+                      },
+                      {
+                        "type": "integer"
+                      }
+                    ]
+                  }
+                }
+              }
+            }
+          }
+        },
+        "operationId": "postApiChamadaChamar-novamente"
+      }
+    },
     "/api/chamada/finalizar": {
       "post": {
         "requestBody": {
@@ -3841,6 +4376,11 @@
         "operationId": "getApiUsuarioPermissoes"
       }
     },
+    "/api/recursos": {
+      "get": {
+        "operationId": "getApiRecursos"
+      }
+    },
     "/api/permissoes": {
       "get": {
         "operationId": "getApiPermissoes"
@@ -3964,6 +4504,286 @@
         "operationId": "deleteApiPermissaoUsuario"
       }
     },
+    "/api/parametros/ia/testar": {
+      "post": {
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": [
+                  "url",
+                  "modelo"
+                ],
+                "properties": {
+                  "url": {
+                    "type": "string"
+                  },
+                  "modelo": {
+                    "type": "string"
+                  },
+                  "token": {
+                    "type": "string"
+                  }
+                }
+              }
+            },
+            "application/x-www-form-urlencoded": {
+              "schema": {
+                "type": "object",
+                "required": [
+                  "url",
+                  "modelo"
+                ],
+                "properties": {
+                  "url": {
+                    "type": "string"
+                  },
+                  "modelo": {
+                    "type": "string"
+                  },
+                  "token": {
+                    "type": "string"
+                  }
+                }
+              }
+            },
+            "multipart/form-data": {
+              "schema": {
+                "type": "object",
+                "required": [
+                  "url",
+                  "modelo"
+                ],
+                "properties": {
+                  "url": {
+                    "type": "string"
+                  },
+                  "modelo": {
+                    "type": "string"
+                  },
+                  "token": {
+                    "type": "string"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "operationId": "postApiParametrosIaTestar"
+      }
+    },
+    "/api/ia/sugestao": {
+      "post": {
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": [
+                  "conversa_id",
+                  "texto"
+                ],
+                "properties": {
+                  "conversa_id": {
+                    "anyOf": [
+                      {
+                        "format": "integer",
+                        "default": 0,
+                        "type": "string"
+                      },
+                      {
+                        "type": "integer"
+                      }
+                    ]
+                  },
+                  "texto": {
+                    "maxLength": 4000,
+                    "type": "string"
+                  }
+                }
+              }
+            },
+            "application/x-www-form-urlencoded": {
+              "schema": {
+                "type": "object",
+                "required": [
+                  "conversa_id",
+                  "texto"
+                ],
+                "properties": {
+                  "conversa_id": {
+                    "anyOf": [
+                      {
+                        "format": "integer",
+                        "default": 0,
+                        "type": "string"
+                      },
+                      {
+                        "type": "integer"
+                      }
+                    ]
+                  },
+                  "texto": {
+                    "maxLength": 4000,
+                    "type": "string"
+                  }
+                }
+              }
+            },
+            "multipart/form-data": {
+              "schema": {
+                "type": "object",
+                "required": [
+                  "conversa_id",
+                  "texto"
+                ],
+                "properties": {
+                  "conversa_id": {
+                    "anyOf": [
+                      {
+                        "format": "integer",
+                        "default": 0,
+                        "type": "string"
+                      },
+                      {
+                        "type": "integer"
+                      }
+                    ]
+                  },
+                  "texto": {
+                    "maxLength": 4000,
+                    "type": "string"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "operationId": "postApiIaSugestao"
+      }
+    },
+    "/api/conversa/resumo": {
+      "post": {
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": [
+                  "conversa_id",
+                  "periodo"
+                ],
+                "properties": {
+                  "conversa_id": {
+                    "anyOf": [
+                      {
+                        "format": "integer",
+                        "default": 0,
+                        "type": "string"
+                      },
+                      {
+                        "type": "integer"
+                      }
+                    ]
+                  },
+                  "periodo": {
+                    "type": "string",
+                    "enum": [
+                      "24h",
+                      "7d",
+                      "30d",
+                      "recentes"
+                    ]
+                  }
+                }
+              }
+            },
+            "application/x-www-form-urlencoded": {
+              "schema": {
+                "type": "object",
+                "required": [
+                  "conversa_id",
+                  "periodo"
+                ],
+                "properties": {
+                  "conversa_id": {
+                    "anyOf": [
+                      {
+                        "format": "integer",
+                        "default": 0,
+                        "type": "string"
+                      },
+                      {
+                        "type": "integer"
+                      }
+                    ]
+                  },
+                  "periodo": {
+                    "type": "string",
+                    "enum": [
+                      "24h",
+                      "7d",
+                      "30d",
+                      "recentes"
+                    ]
+                  }
+                }
+              }
+            },
+            "multipart/form-data": {
+              "schema": {
+                "type": "object",
+                "required": [
+                  "conversa_id",
+                  "periodo"
+                ],
+                "properties": {
+                  "conversa_id": {
+                    "anyOf": [
+                      {
+                        "format": "integer",
+                        "default": 0,
+                        "type": "string"
+                      },
+                      {
+                        "type": "integer"
+                      }
+                    ]
+                  },
+                  "periodo": {
+                    "type": "string",
+                    "enum": [
+                      "24h",
+                      "7d",
+                      "30d",
+                      "recentes"
+                    ]
+                  }
+                }
+              }
+            }
+          }
+        },
+        "operationId": "postApiConversaResumo"
+      },
+      "get": {
+        "parameters": [
+          {
+            "name": "id",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "operationId": "getApiConversaResumo"
+      }
+    },
     "/api/parametros": {
       "get": {
         "operationId": "getApiParametros"
@@ -4009,6 +4829,15 @@
                         "type": "integer"
                       }
                     ]
+                  },
+                  "ia_url": {
+                    "type": "string"
+                  },
+                  "ia_token": {
+                    "type": "string"
+                  },
+                  "ia_modelo": {
+                    "type": "string"
                   }
                 }
               }
@@ -4050,6 +4879,15 @@
                         "type": "integer"
                       }
                     ]
+                  },
+                  "ia_url": {
+                    "type": "string"
+                  },
+                  "ia_token": {
+                    "type": "string"
+                  },
+                  "ia_modelo": {
+                    "type": "string"
                   }
                 }
               }
@@ -4091,6 +4929,15 @@
                         "type": "integer"
                       }
                     ]
+                  },
+                  "ia_url": {
+                    "type": "string"
+                  },
+                  "ia_token": {
+                    "type": "string"
+                  },
+                  "ia_modelo": {
+                    "type": "string"
                   }
                 }
               }

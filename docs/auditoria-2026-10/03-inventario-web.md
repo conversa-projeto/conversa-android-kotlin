@@ -1,6 +1,6 @@
 # 03 — Inventário de funcionalidades e comportamento do cliente web (conversa-web)
 
-> Auditoria de 2026-10-06. Fonte: `C:\Users\danie\Desktop\GIT\conversa-projeto\conversa-web` no commit `bfb79d8` (2026-10-06, "Abas Sistema e Acessos nas configurações; Equipes sai da barra"), **atualizado com `39d06f9`** (2026-10-06 21:22, "Campo de mensagem rico, votação em grupo e chat completo na chamada"). Itens novos ou alterados por esse commit estão marcados com 🆕; o resumo está na §10. **Atualizado de novo em 2026-10-08** com `eaa8bac` e `785bdef` (2026-10-07 20:30 e 20:41): as marcações citam o commit (🆕 `eaa8bac`) e o resumo está na §11. Foram lidos `CLAUDE.md`, `README.md`, todo o `src/`, `chat-popup.html`, `public/firebase-messaging-sw.js`, `package.json`, `vite.config.ts`, os nomes dos testes em `tests/unit/` (589 casos) e o `git show --stat` de todos os commits desde 2026-09-12.
+> Auditoria de 2026-10-06. Fonte: `C:\Users\danie\Desktop\GIT\conversa-projeto\conversa-web` no commit `bfb79d8` (2026-10-06, "Abas Sistema e Acessos nas configurações; Equipes sai da barra"), **atualizado com `39d06f9`** (2026-10-06 21:22, "Campo de mensagem rico, votação em grupo e chat completo na chamada"). Itens novos ou alterados por esse commit estão marcados com 🆕; o resumo está na §10. **Atualizado de novo em 2026-10-08** com `eaa8bac` e `785bdef` (2026-10-07 20:30 e 20:41): as marcações citam o commit (🆕 `eaa8bac`) e o resumo está na §11. Depois vieram `7322e83` e `e8d82cb` (§12, total 137). **Atualizado de novo em 2026-10-13** até o commit **`d202c06`** (2026-10-11 18:00, "Postagens em grupo, todos os emojis, figurinhas Noto e pesquisa nova"), com `769bd7d`, `05507a0`, `f798e9c`, `964ed72` e `d202c06` (servidor até `12cf0cf`): 13 IDs novos, total **150**; as marcações citam o commit (🆕 `769bd7d`) e o resumo está na §13. Foram lidos `CLAUDE.md`, `README.md`, todo o `src/`, `chat-popup.html`, `public/firebase-messaging-sw.js`, `package.json`, `vite.config.ts`, os nomes dos testes em `tests/unit/` (589 casos) e o `git show --stat` de todos os commits desde 2026-09-12.
 >
 > Objetivo: servir de **checklist de paridade** para o app Android (`conversa-android-kotlin`). Cada funcionalidade tem um ID (ex.: `MSG-07`) para ser marcada como "feito / parcial / falta" na comparação com o Android.
 >
@@ -22,6 +22,7 @@
 10. [🆕 Atualização de 2026-10-06 (noite) — commit `39d06f9`](#10-atualização-de-2026-10-06-noite--commit-39d06f9)
 11. [🆕 Atualização de 2026-10-08 — commits `eaa8bac` e `785bdef`](#11-atualização-de-2026-10-08--commits-eaa8bac-e-785bdef)
 12. [🆕 Atualização de 2026-10-08 (noite) — commits `7322e83` e `e8d82cb`](#12-atualização-de-2026-10-08-noite--commits-7322e83-e-e8d82cb)
+13. [🆕 Atualização de 2026-10-13 — commits `769bd7d` a `d202c06`](#13-atualização-de-2026-10-13--commits-769bd7d-a-d202c06)
 
 ---
 
@@ -65,12 +66,12 @@ https://HOST
 | Store | Responsabilidade | Persistência |
 |---|---|---|
 | `auth` (`stores/auth.ts`) | token, usuário, `dispositivoId`, URL do avatar resolvida, permissões do sistema (`permissoes`, `temPermissao`) | `localStorage`: `conversa.token`, `conversa.user` (JSON), `conversa.deviceId`, `conversa.apiBase` |
-| `chat` (`stores/chat.ts`) | contatos, conversas, mensagens por conversa, conversa ativa, resposta pendente, digitando/gravando, online, WebSocket, polling, cursor de sincronização, buscas | memória (não persiste mensagens) |
+| `chat` (`stores/chat.ts`) | contatos, conversas, mensagens por conversa, conversa ativa, resposta pendente, digitando/gravando, online, WebSocket, polling, cursor de sincronização, buscas; 🆕 `769bd7d` presença (`presencas`: estado e visto por último; `presentesPorConversa`), confirmação pendente (`pedirConfirmacao`); 🆕 `d202c06` postagem pendente (`postagemPendente`) e respostas por postagem | memória (não persiste mensagens) |
 | `call` (`stores/call.ts`) | estado da chamada (`inativo`/`chamando`/`recebendo`/`ativa`/`encerrando`), peers WHIP/WHEP, mídia local, tela, ponteiros, chat da chamada | memória |
 | `sip` (`stores/sip.ts`) | config do ramal, UserAgent/Registerer sip.js, sessão, tons | memória |
 | `atividades` (`stores/atividades.ts`) | lista paginada, contador de novas, tela aberta | memória |
 
-Estados globais fora do Pinia (composables singleton): tema (`useTheme`, chave `theme` = `dark`/`light`), cores personalizadas (`useCoresPersonalizadas`, chave própria no localStorage, por tema), qualidade das chamadas (`useConfigChamada`, chave `conversa.chamada`), uploads ativos (`useUploadProgress`), áudio tocando (`useAudioManager`), relógio compartilhado (`useAgora`), conexão lenta (`useConexao`).
+Estados globais fora do Pinia (composables singleton): tema (`useTheme`, chave `theme` = `dark`/`light`), cores personalizadas (`useCoresPersonalizadas`, chave própria no localStorage, por tema), qualidade das chamadas (`useConfigChamada`, chave `conversa.chamada`), uploads ativos (`useUploadProgress`), áudio tocando (`useAudioManager`), relógio compartilhado (`useAgora`), conexão lenta (`useConexao`). 🆕 `769bd7d`…`d202c06`: recursos do servidor (`useRecursos`, GER-08), sugestão da IA (`useSugestaoIa`, chave `conversa.sugestoesIa`), catálogo e recentes de emojis (`useEmojis`, chave `conversa.emojisRecentes`), aba própria da chamada (`useAbaChamada`). IndexedDB: rascunhos (ENV-23) e o último resumo de cada conversa (banco `conversa-resumos`, CON-14).
 
 ### 1.3 Como fala com a API (Eden)
 
@@ -80,7 +81,7 @@ Estados globais fora do Pinia (composables singleton): tema (`useTheme`, chave `
   - **401** → `limparToken()` (remove `conversa.token` do localStorage) e lança `ErroNaoAutenticado`.
   - Corpo HTML (página de erro do nginx 502/504) → mensagem `"Servidor indisponível"`.
   - JSON `{ error }` ou `{ message }` → a string; senão `Erro HTTP <status>`.
-- **Datas**: o JSON é lido com reviver que só converte para `Date` as chaves em `CAMPOS_DATA` (`inserida, alterada, visivel_em, criado_em, atualizado_em, ultima_mensagem, arquivada_em, iniciada, finalizada, adicionado_em, entrou_em, saiu_em, recusou_em, recebida, visualizada, reproduzida, excluida_em, reagido_em, online_em, ate, vistas_em`) e só se o valor for ISO-8601 com fuso. Texto de mensagem nunca vira data. **Atenção Android**: `recebida`/`visualizada`/`reproduzida` são booleanos na lista de mensagens, mas datas (ou null) no detalhe de status — o mesmo nome de campo tem tipos diferentes por rota.
+- **Datas**: o JSON é lido com reviver que só converte para `Date` as chaves em `CAMPOS_DATA` (`inserida, alterada, visivel_em, encerra_em, encerrada_em, confirmada_em, visto_em, criado_em, atualizado_em, ultima_mensagem, arquivada_em, iniciada, finalizada, adicionado_em, entrou_em, saiu_em, recusou_em, recebida, visualizada, reproduzida, excluida_em, reagido_em, online_em, ate, vistas_em`; 🆕 `encerra_em`/`encerrada_em` vêm da votação de `785bdef` e `confirmada_em`/`visto_em` de `769bd7d`) e só se o valor for ISO-8601 com fuso. Texto de mensagem nunca vira data. **Atenção Android**: `recebida`/`visualizada`/`reproduzida` são booleanos na lista de mensagens, mas datas (ou null) no detalhe de status — o mesmo nome de campo tem tipos diferentes por rota.
 - Verbos: `GET` consulta, `PUT` cria, `PATCH` altera, `POST` ações, `DELETE` remove.
 
 ### 1.4 WebSocket
@@ -91,13 +92,14 @@ Arquivo: `src/stores/chat.ts` (`conectarWebSocket`, `tratarEventoSocket`).
 - `onopen`:
   1. `conectadoTempoReal = true`, zera tentativas.
   2. Envia `{"tipo":1,"token":"<token>"}` (autenticação).
-  3. Recarrega quem está online (`GET /contatos/online`) — quem saiu durante a queda não fica "online".
+  3. Recarrega quem está online (`GET /contatos/online`) — quem saiu durante a queda não fica "online". 🆕 `769bd7d`: agora `GET /contatos/presenca` (PRE-01); em seguida envia a própria presença (WS 63, PRE-02) e, com uma conversa aberta, busca quem está nela (`GET /conversa/presentes`, PRE-03).
   4. Atualiza o contador de atividades (`GET /atividades/novas`).
   5. Se o handler de chamada já está registrado, verifica chamadas pendentes (`GET /chamadas/pendentes`).
 - `onclose` → agenda reconexão com espera `min(30000, 1000 * 2^tentativas)` ms (1 s, 2 s, 4 s, … até 30 s).
 - **Polling de fallback**: a cada 8 s, **só se o socket estiver desconectado**, executa o mesmo fluxo de "nova mensagem" (`GET /mensagens/novas`) e verifica chamadas pendentes.
 - **Aviso visual**: se o socket fica desconectado por mais de 5 s com o usuário logado, aparece a faixa vermelha no topo: `Conexao em tempo real indisponivel — usando atualizacao periodica` (`App.vue`).
-- Envio: `{tipo:1, token}` (login) e `{tipo:57, chamada_id, dados}` (sinal de chamada; descartado se o socket não estiver `OPEN`).
+- Envio: `{tipo:1, token}` (login) e `{tipo:57, chamada_id, dados}` (sinal de chamada; descartado se o socket não estiver `OPEN`); 🆕 `769bd7d` `{tipo:63, ativo, conversa_id}` (presença, PRE-02).
+- 🆕 `769bd7d` `onclose` também apaga o **próprio** estado de presença (sem conexão ele fica desconhecido: o avatar da barra mostra offline).
 - Recebimento: ver tabela completa em §4.2.
 
 **Sincronização incremental (evento 2):** o evento `NovaMensagem` (tipo 2) não traz a mensagem. O cliente chama `GET /mensagens/novas?desde=<cursorSync ISO>` (devolve `[{conversa_id, mensagem_id, ate}]`), avança o cursor para o maior `ate` (e para `coalesce(visivel_em, inserida)` de cada mensagem recebida, **nunca para o futuro** — agendadas futuras do autor não avançam o cursor), busca `GET /mensagens?conversa=X&mensagemreferencia=0&mensagensprevias=10` de cada conversa afetada para ter o conteúdo (notificação), recarrega `GET /conversas` e, se a conversa ativa foi afetada, recarrega as 80 últimas mensagens dela. Também limpa o "digitando" das conversas que receberam mensagem. O cursor começa em `new Date()` no carregamento da página (não é persistido).
@@ -148,11 +150,12 @@ Não há vue-router. A URL é sincronizada manualmente com `history.pushState/re
 | `/` ou `/chat` | Chat sem conversa aberta | painel lateral aberto |
 | `/chat/:conversaId` | Chat com conversa aberta | deep link aplicado após `iniciarSessao` |
 | `/anexos`, `/anexos/:conversaId` | Página de anexos | |
-| `/config/:aba` | Configurações | `aba` ∈ `usuario, dispositivos, permissoes, voip, cores, chamadas, sistema, acessos` (inválida → `usuario`) |
+| `/config/:aba` | Configurações | `aba` ∈ `usuario, privacidade, dispositivos, permissoes, voip, cores, chamadas, sistema, acessos` (inválida → `usuario`; 🆕 `769bd7d` `privacidade`) |
 | `/chamadas` | Histórico de chamadas | |
 | `/atividades` | Atividades | |
 | `/ramal` | (válida no parser; o item da barra abre o discador em vez de navegar) | |
 | `/chat-popup.html?conversa=:id` | Janela separada de uma conversa | entrada própria |
+| 🆕 `964ed72` `/chamada.html` | Aba própria da chamada de vídeo (computador) | título "Chamada · Conversa"; desenhada pela aba do app (CHA-13); aberta sozinha mostra "A chamada acontece na aba do Conversa que a abriu. Volte para ela." |
 
 - O `history.state` guarda também a **âncora de rolagem** `{mensagemId, offset}` (atualizada por `replaceState` 200 ms após parar de rolar). Voltar/avançar restaura seção, conversa, aba e posição. Em **reload** a âncora é descartada (abre no fim ou na primeira não lida).
 - Mudar só a âncora usa `replaceState`; mudar seção/conversa/aba usa `pushState`.
@@ -163,7 +166,7 @@ Desktop: barra vertical à esquerda. Celular (< 768 px): barra horizontal no rod
 
 | Ordem | Item | Ação | Indicadores |
 |---|---|---|---|
-| 1 | Avatar do usuário (ou inicial) | seção `config` | tooltip "Configurações"; se a imagem falha, re-resolve a URL |
+| 1 | Avatar do usuário (ou inicial) | seção `config` | tooltip "Configurações"; se a imagem falha, re-resolve a URL; 🆕 `769bd7d` bolinha do **próprio** status (verde/amarela/cinza), tooltip "Para os outros você aparece ativo/ausente/offline" (PRE-02) |
 | 2 | Chat | seção `chat` | — |
 | 3 | Atividades | seção `atividades` | badge com `atividades.novas` (`99+` acima de 99) |
 | 4 | Chamadas | seção `chamadas` | — |
@@ -181,6 +184,7 @@ Desktop: barra vertical à esquerda. Celular (< 768 px): barra horizontal no rod
 - No celular só uma coluna aparece: lista **ou** conversa (`sidebarAberta`); botão de voltar no cabeçalho reabre a lista; tela vazia mostra "Selecione uma conversa." e (celular) botão "Ver conversas".
 - Chamada de **vídeo** ativa e não minimizada cobre o app inteiro (`CallWindow` em `fixed inset-0`). Minimizada no desktop → janela flutuante arrastável/redimensionável; no celular → só a `CallBar` no topo, app utilizável.
 - Chamada de **áudio** → só a `CallBar` (com controles) no topo da área do chat.
+- 🆕 `964ed72` **Computador:** a chamada de vídeo abre numa **aba própria** (`/chamada.html`) e o app fica só com a `CallBar` ("Abrir chamada" traz a aba de volta); se o navegador bloquear a aba, fica dentro do app como acima. **Celular** (tela < 768 px ou só toque): a chamada fica dentro do app; em tela estreita, fora da tela dela, a `CallBar` vai para o **topo do app, em qualquer seção** (CHA-13).
 
 ### 2.4 Painéis, modais e sobreposições
 
@@ -207,6 +211,9 @@ Desktop: barra vertical à esquerda. Celular (< 768 px): barra horizontal no rod
 | `VideoUpgradeModal` | evento 56 | Apenas assistir / Transmitir também |
 | `AddUserToCallModal` (App) e modal interno do `CallWindow` | botão "Adicionar usuário" | contatos fora da chamada |
 | `ChatChamada` | botão "Chat da chamada" no `CallWindow` | painel lateral (celular: por cima) |
+| 🆕 `769bd7d` `ResumoConversaModal` | botão "Resumir conversa" no cabeçalho (só com IA) | "Resumo da conversa" por período e assunto (CON-14) |
+| 🆕 `964ed72` `ChatDaChamada` | "Ver chat da chamada" na bolha da ligação ou no histórico | chat da ligação só leitura, "Abrir o chat completo" (CHA-26) |
+| 🆕 `d202c06` `BolhaPostagem` | postagem de grupo no chat | respostas embaixo e campo "Responder à postagem" (MSG-22) |
 | `SipDialerModal` | item Ramal da barra, ou chamada SIP recebida sendo conectada | discador flutuante arrastável |
 | `SipIncomingCallModal` | INVITE SIP | atender / recusar |
 | Overlay de arrastar arquivo | arrastar arquivos sobre a conversa | "Solte para enviar o arquivo" |
@@ -219,6 +226,7 @@ Título "Configuracoes" / "Preferencias da conta". Lista de abas à esquerda (ce
 | Aba (id) | Título | Descrição exibida | Visibilidade |
 |---|---|---|---|
 | `usuario` | Usuario | Nome, email, avatar e senha | todos |
+| 🆕 `769bd7d` `privacidade` | Privacidade | Status, visto por último e aparecer offline | todos (CFG-09) |
 | `dispositivos` | Dispositivos | Sessao atual e perifericos locais | todos |
 | `permissoes` | Permissoes | Notificacoes, microfone e camera | todos |
 | `voip` | Voip | Configuracao SIP do usuario | todos |
@@ -281,16 +289,19 @@ Legenda dos campos: **Comportamento** (o que o usuário vê/faz), **API/WS** (ro
 
 ### 3.2 CON — Conversas
 
-**CON-01 Lista de conversas** (`components/ChatSidebar.vue`)
-- API: `GET /conversas` → `Conversa[]` (`id, descricao, tipo, nome, destinatario_id, mensagem_id, ultima_mensagem, ultima_mensagem_texto, mensagens_sem_visualizar, avatar_url, fixada_ordem, arquivada_em`).
+**CON-01 Lista de conversas** (`components/ChatSidebar.vue`) — 🆕 `769bd7d`: seção recolhível "Chamadas (N)", emoji do grupo e bolinha amarela de ausente
+- API: `GET /conversas` → `Conversa[]` (`id, descricao, tipo, nome, destinatario_id, mensagem_id, ultima_mensagem, ultima_mensagem_texto, mensagens_sem_visualizar, avatar_url, fixada_ordem, arquivada_em`; 🆕 `769bd7d` `chamada` — grupo criado como chat de uma ligação — e `emoji` — grupo com emoji no lugar da inicial; a imagem do grupo vem em `avatar_url`).
 - Item: avatar (ou inicial — primeira letra, `Array.from` para não quebrar emoji), bolinha verde se o destinatário da direta está online, título (`descricao || nome || "Conversa #id"`), etiqueta "Grupo", ícone de alfinete se fixada, contador de não lidas (oculto em arquivadas), prévia `resumirTexto(ultima_mensagem_texto)` ou "Sem mensagens", três pontinhos animados se alguém digita, botões "Mais opções" e "Abrir em nova janela" (hover).
 - Ordem: fixadas primeiro por `fixada_ordem`; depois por `mensagem_id` desc. Arquivadas numa seção recolhível no fim: botão "Arquivadas (N)".
 - Prévia: menção `@[Nome](id)` vira `@Nome`; cada bloco de código vira `Código (linguagem)`; mensagem oculta aparece como o servidor mandar em `ultima_mensagem_texto` (o web recarrega a lista após ocultar para mostrar "Mensagem oculta").
 - Recarregada em: nova mensagem, status de mensagem (WS 3), conversa atualizada (WS 40), envio de mensagem, leitura.
+- 🆕 `769bd7d` **Seção "Chamadas":** a conversa com `chamada: true` que **não** está fixada nem arquivada sai da lista principal e vai para a seção recolhível **"Chamadas (N)"** no fim, **antes** de "Arquivadas (N)" (a primeira das duas seções encosta no fim do painel; cada uma abre e fecha independente da outra; começam fechadas). Arquivada vai para "Arquivadas"; fixada fica nas fixadas. Com termo no filtro, as duas seções somem e tudo aparece junto. O servidor só marca `chamada` no grupo **criado** para a ligação, não na conversa de origem reaproveitada (CHA-18).
+- 🆕 `769bd7d` Grupo com `emoji` mostra o emoji (maior) no lugar da inicial (CON-15). A bolinha de presença da direta fica **verde** (ativo) ou **amarela** (ausente), com tooltip "Ativo"/"Ausente"; offline não mostra bolinha (PRE-01).
 
 **CON-02 Filtro da lista e "Nova conversa"**
 - Campo "Pesquisar..." filtra localmente por título e pela prévia. Com termo, as arquivadas aparecem junto com a etiqueta "Arquivada" e não há arraste.
 - Abaixo, seção "Nova conversa" com contatos que **não** têm conversa direta, filtrados por nome/login/email; clicar cria/abre a conversa direta.
+- 🆕 `769bd7d` Cada contato de "Nova conversa" tem a bolinha de presença (verde/amarela, PRE-01).
 
 **CON-03 Fixar, desafixar e reordenar fixadas**
 - Menu: "Fixar" (entra no fim das fixadas) / "Desafixar". Arrastar uma fixada sobre outra (metade de cima = antes, de baixo = depois) reordena; linha azul indica a posição. Sem mudança → não chama a API.
@@ -317,11 +328,14 @@ Legenda dos campos: **Comportamento** (o que o usuário vê/faz), **API/WS** (ro
 - "Membros do grupo": campo "Nome do grupo" + "Renomear" (habilitado só se mudou; "Salvando..."); lista de membros com "Remover" (não aparece para si mesmo; "Removendo..."); "Adicionar participante" com select "Selecionar usuario" (contatos fora do grupo) + "Adicionar" ("Adicionando..."). Mensagens: "Grupo renomeado com sucesso.", "Participante adicionado com sucesso.", "Participante removido com sucesso.".
 - API: `GET /conversa/usuarios?conversa=` → `[{id (conversa_usuario_id), usuario_id, nome, avatar_url}]`; `PATCH /conversa {id, descricao}`; `PUT /conversa/usuario {conversa_id, usuario_id}`; `DELETE /conversa/usuario?id=<conversa_usuario_id>`.
 - Não há regra de administrador no cliente: qualquer membro pode renomear/adicionar/remover (o servidor pode recusar).
+- 🆕 `769bd7d` No topo do painel, o avatar do grupo (imagem, emoji ou inicial) com os botões "Imagem", "Emoji" e "Remover" (CON-15). Cada participante tem a bolinha verde/amarela (PRE-01) e, quem está com o grupo aberto agora, " · nesta conversa" depois do nome (PRE-03).
 
 **CON-09 Cabeçalho da conversa** (`ChatHeader.vue`)
 - Avatar (clicável na direta → AUT-10), bolinha online, título; subtítulo: em grupo, nomes dos membros separados por vírgula (some quando alguém digita/grava) e uma faixa de "chips" de membros (foto + nome) que, clicados, abrem a conversa direta com o membro.
 - Indicador animado de digitando/gravando (ver MSG-15).
 - Botões (escondidos durante chamada ou chamada recebida): "Chamada de voz", "Chamada de video", "Compartilhar tela"; em grupo "Gerenciar membros"; pesquisa na conversa (desktop: campo inline; celular: botão que abre painel "Pesquisar nesta conversa").
+- 🆕 `769bd7d` **Direta:** subtítulo de presença abaixo do título — "nesta conversa" (cor primária), "ativo agora", "ausente" ou "visto por último …" (PRE-03); some enquanto a pessoa digita/grava. Bolinha verde/amarela no avatar (PRE-01). **Grupo:** emoji no lugar da inicial (CON-15).
+- 🆕 `769bd7d` Botão **"Resumir conversa"** (ícone de brilhos), depois de "Compartilhar tela" e antes do de participantes, **só com a IA ligada** (`recursos.ia`, GER-08); aparece também durante chamada. Abre o diálogo do resumo (CON-14), que fecha ao trocar de conversa.
 
 **CON-10 Abrir conversa em nova janela (popup)**
 - Botão "Abrir em nova janela" em cada item da lista → `window.open('/chat-popup.html?conversa=<id>', 'chat-popup-<id>', 900×700 centralizada)`.
@@ -333,6 +347,24 @@ Legenda dos campos: **Comportamento** (o que o usuário vê/faz), **API/WS** (ro
 **CON-12 Deep link, histórico e âncora** — §2.1. Clique em notificação abre a conversa e **recarrega as mensagens** antes (as em memória não têm as que chegaram fechada).
 
 **CON-13 Conversa atualizada em tempo real** — WS tipo 40 → `GET /conversas`.
+
+**CON-14 🆕 `769bd7d` Resumo da conversa por IA** (`ResumoConversaModal.vue`; cache em `services/resumosSalvos.ts` desde `05507a0`)
+- Entrada: botão "Resumir conversa" do cabeçalho, só com a IA ligada (GER-08).
+- Diálogo **"Resumo da conversa"** (botão "Fechar"; clique fora fecha). Períodos em pílulas: **"Últimas 24 horas"** (padrão, `24h`), **"7 dias"** (`7d`), **"30 dias"** (`30d`), **"Últimas 400 mensagens"** (`recentes`; em `769bd7d` era "Últimas mensagens", renomeado em `05507a0`). Botão **"Resumir"** ("Resumir de novo" quando já há resumo); períodos e botão ficam desabilitados enquanto processa.
+- Estados:
+  - antes do primeiro pedido: "Escolha o período e toque em Resumir. As mensagens são separadas por assunto.";
+  - processando: "Resumindo N mensagens..." e "Pode levar alguns minutos, dependendo do servidor de IA.";
+  - erro: a mensagem do servidor numa caixa vermelha ("Erro ao pedir o resumo" / "Erro ao consultar o resumo" como fallback; consulta que falha, por exemplo porque o servidor reiniciou, vira erro);
+  - período sem mensagens: "Nenhuma mensagem nesse período.".
+- Resultado: linha "Resumo de dd/MM às HH:MM · <período> · N mensagem(ns)" (quando foi pedido; 🆕 `05507a0`); um cartão por **assunto** com título, resumo, **pendências** (lista com bolinha amarela) e o botão **"Ver na conversa (N mensagem/mensagens)"**, que fecha o diálogo e vai à **primeira** mensagem do assunto (MSG-06); rodapé "Gerado por IA a partir de N mensagens. Confira na conversa antes de agir.".
+- API: `POST /conversa/resumo {conversa_id, periodo}` → `ResumoConversa {id (texto), conversa_id, periodo, status: 'processando'|'concluido'|'erro', mensagens, assuntos:[{titulo, resumo, pendencias: string[], mensagens: number[]}], erro}`; enquanto `processando`, `GET /conversa/resumo?id=` **a cada 2 s**.
+- 🆕 `05507a0` **Cache:** o último resumo de cada conversa fica no IndexedDB (banco `conversa-resumos`, loja `resumos`, chave `<usuarioId>:<conversaId>`, valor `{resumo, geradoEm}`), gravado a cada mudança. Ao abrir o diálogo, ele volta com o período usado; se estava em andamento, volta a consultar o mesmo pedido. Ir até a mensagem e voltar, ou fechar o navegador, não perde o resumo. Sem IndexedDB o resumo só não fica guardado.
+
+**CON-15 🆕 `769bd7d` Imagem ou emoji do grupo** (`PainelGrupo.vue`, `chat.alterarAvatarGrupo`)
+- No topo do painel "Dados do grupo" (CON-08): avatar de 56 px (imagem, emoji ou inicial) e os botões **"Imagem"** (seletor de imagem), **"Emoji"** (abre o `EmojiPicker` na largura do painel) e **"Remover"** (só se há imagem ou emoji); "Salvando..." enquanto altera.
+- Imagem: recorte e redução como no avatar do usuário (`redimensionarImagem`), upload tipo 2 com o nome `avatar.jpg` (§1.7) e `PATCH /conversa {id, avatar_anexo_id, emoji: null}`. Emoji: `PATCH /conversa {id, avatar_anexo_id: null, emoji}`. Remover: os dois `null`. **Um tira o outro.** Depois recarrega `GET /conversas`.
+- Erros na caixa do painel: "Erro ao alterar a imagem do grupo" / "Erro ao enviar a imagem do grupo" (ou a mensagem do servidor).
+- Onde aparece: o emoji entra no lugar da inicial na lista (CON-01), no cabeçalho (CON-09), no painel e na página de Anexos (GER-07); a imagem vem em `avatar_url` da conversa.
 
 ### 3.3 MSG — Mensagens: exibição e leitura
 
@@ -365,9 +397,10 @@ Legenda dos campos: **Comportamento** (o que o usuário vê/faz), **API/WS** (ro
 - Botão flutuante "Há novas mensagens" quando chega mensagem e o usuário está longe do fim.
 
 **MSG-06 Ir para uma mensagem**
-- Se não está carregada: `GET /mensagens?conversa&mensagemreferencia=<id>&mensagensprevias=30&mensagensseguintes=30` (se não vier, tenta 120/120); **substitui** a lista e ativa paginação nos dois sentidos. Centraliza a mensagem e a destaca com anel amarelo por 1,2 s.
-- Usado por: resultado de pesquisa, citação de resposta, atividade, "Abrir mensagem" nos anexos. Encaminhada de outra conversa abre a conversa de origem **se o usuário participa dela**.
+- Se não está carregada: `GET /mensagens?conversa&mensagemreferencia=<id>&mensagensprevias=30&mensagensseguintes=30` (se não vier, tenta 120/120); **substitui** a lista e ativa paginação nos dois sentidos. Centraliza a mensagem e a destaca com anel amarelo por 1,2 s (🆕 `d202c06`: virou faixa, ver abaixo).
+- Usado por: resultado de pesquisa, citação de resposta, atividade, "Abrir mensagem" nos anexos. Encaminhada de outra conversa abre a conversa de origem **se o usuário participa dela**. 🆕 `769bd7d` Também "Ver na conversa" do resumo (CON-14).
 - Erro: "Nao foi possivel localizar esta mensagem no contexto da conversa.".
+- 🆕 `d202c06` **Destaque novo** (`useScrollManager.ts#destacarMensagem`): em vez do anel amarelo, uma **faixa da largura toda da lista** e da altura da mensagem, na cor `surface-800` a 15% (escura no tema claro, clara no escuro). A faixa **aparece de uma vez**, fica **1,5 s** e some aos poucos em **0,7 s**. Destacar outra mensagem antes disso limpa a anterior.
 
 **MSG-07 Classificação das bolhas** (`utils/classificarMensagem.ts`, por prioridade)
 
@@ -375,6 +408,7 @@ Legenda dos campos: **Comportamento** (o que o usuário vê/faz), **API/WS** (ro
 |---|---|---|
 | Excluida | `BolhaExcluida` | `excluida_em` preenchido (antes de tudo) |
 | Chamada | `BolhaChamada` | conteúdo único tipo 6 |
+| Postagem 🆕 `d202c06` | `BolhaPostagem` | `mensagem.postagem` preenchido (depois de Excluida e Chamada, antes de Imagem) — MSG-22 |
 | Imagem | `BolhaImagem` | conteúdo único tipo 2, sem referência |
 | Enquete 🆕 | `BolhaEnquete` | conteúdo único tipo 8 (**com ou sem** referência; vem antes de Figurinha) |
 | Figurinha | `BolhaFigurinha` | conteúdo único tipo 7, sem referência |
@@ -409,6 +443,7 @@ Hora (`HH:MM`) dentro da bolha (`MensagemStatus.vue`), posição conforme varian
 **MSG-13 Mensagem de chamada** (`BolhaChamada.vue`)
 - Conteúdo tipo 6 com JSON `{chamada_id, tipo, status, iniciada, finalizada, duracao, participantes:[{usuario_id, nome, status, duracao}]}`.
 - Título "Chamada de audio|video" (+ " em grupo" se > 2 participantes). Direta: "<remetente> · mm:ss" ou status ("Recusada"=2, "Perdida"=5, "Cancelada"=6). Grupo: lista de participantes com duração ou status ("Perdida"=1, "Recusou"=2, "Desconectou"=5). Cores: verde encerrada (4), vermelho recusada/perdida. Sem menu de ações e sem status de entrega.
+- 🆕 `964ed72` Quando o conteúdo traz `chat_chamada_id` (o chat da ligação; o servidor só manda para quem é membro dele e só quando o chat **não** é a própria conversa da ligação), a bolha ganha embaixo o botão **"Ver chat da chamada"** / **"Esconder o chat da chamada"**, que abre o chat da ligação só para leitura dentro da bolha (CHA-26); aberta, a bolha passa de 320 px para até 480 px de largura.
 
 **MSG-14 Mensagem só de emojis** — fonte grande, sem fundo de bolha (`BolhaEmoji`).
 
@@ -434,26 +469,59 @@ Hora (`HH:MM`) dentro da bolha (`MensagemStatus.vue`), posição conforme varian
 - Bloco com título: remetente (resposta) ou "Encaminhado de <remetente>" / "Encaminhado"; hora; conteúdos da original (imagens, áudio etc.), citação aninhada recursiva até profundidade 5. Clique no título vai para a original (MSG-06).
 - Encaminhada: conteúdos próprios iguais aos da referência não são repetidos — só aparece o que foi acrescentado.
 
+(MSG-20, a bolha de votação, está na §10.)
+
+**MSG-21 🆕 `769bd7d` Confirmação de leitura na bolha** (`MessageBubble.vue`, `chat.confirmarLeitura`)
+- Mensagem com `confirmacao` (`{total, confirmou, usuarios:[{usuario_id, nome, avatar_url, confirmada_em}]}`; só vem nas que pediram, ENV-24): um chip na linha das reações, **antes** delas, abaixo da bolha. Não aparece em mensagem oculta.
+- **Quem recebe:** caixa de marcar com o texto **"Confirmar leitura"**; marcada (desabilitada) vira **"Leitura confirmada"**. A caixa só fica marcada depois da resposta do servidor. 🆕 `964ed72`: a caixa e o ✓ são desenhados (a nativa sumia com a cor principal escura).
+- **Quem enviou:** ✓ num círculo e **"Aguardando confirmação"** (ninguém confirmou), **"Confirmada por N de T"** (com o total de destinatários) ou **"Confirmada por N"** (sem total, como na mensagem recém-enviada).
+- Passar o mouse no chip lista quem confirmou: foto (ou inicial), nome e horário (hoje `HH:MM`, senão `dd/MM HH:MM`).
+- API: `POST /mensagem/confirmar {mensagem_id}`; sucesso marca localmente (`confirmou = true` e me põe na lista). Erro: diálogo "Não foi possível confirmar a leitura".
+- Tempo real: WS 8 (`ConfirmacaoLeitura`) `{conversa_id, mensagem_id, usuario_id, nome, confirmada_em}` → acrescenta a pessoa (se a mensagem está em memória e ela ainda não está na lista).
+
+**MSG-22 🆕 `d202c06` Bolha de postagem com respostas embaixo** (`BolhaPostagem.vue`, store `chat`)
+- Classificação: `mensagem.postagem` (`{titulo, respostas, nao_lidas, ultimas: Mensagem[]}`) → `Postagem` (MSG-07). As respostas **não entram no fluxo** da conversa nem na pesquisa (servidor): ficam só no cartão.
+- Cartão (até 32rem): cabeçalho **"Postagem · Você"** ou **"Postagem · <remetente>"** e o título (se tem); o conteúdo (texto e anexos, como numa mensagem) com hora/status; a postagem continua com o menu de ações e as reações de uma mensagem comum.
+- Rodapé das respostas:
+  - contagem **"Nenhuma resposta ainda"** / **"1 resposta"** / **"N respostas"**;
+  - selo **"1 nova"** / **"N novas"** (`nao_lidas`);
+  - **"Ver todas as N"** (só quando há mais respostas que as 2 últimas que vêm junto) / **"Mostrar menos"**; abrir busca todas com `GET /postagem/respostas?id=<postagem>` → `Mensagem[]` e refaz a contagem;
+  - cada resposta: inicial, **"Você"** ou o nome, hora `HH:MM` e o conteúdo; resposta apagada mostra **"Mensagem apagada"**;
+  - campo **"Responder à postagem"** (Enter envia, Shift+Enter quebra a linha; botão "Responder"): `PUT /mensagem {conversa_id, conteudos:[texto], postagem_id}` → relê as respostas e as conversas; erro "Erro ao responder" (ou a mensagem do servidor) embaixo.
+- **Vistas:** com a postagem na tela, a conversa aberta e a janela em foco, havendo `nao_lidas`, zera o selo e chama `POST /postagem/visualizar {postagem_id}` (e recarrega `GET /conversas`).
+- **Tempo real:** WS 64 (`PostagemAtualizada`) `{conversa_id, postagem_id, usuario_id}` → recarrega as conversas; se a postagem está em memória, relê as respostas; se não estou vendo a conversa (aberta e em foco), ela não está arquivada e não fui eu → som e notificação "<nome> respondeu a uma postagem" (NOT-02).
+- **Atividade:** a resposta vira atividade "respondeu sua mensagem" para quem postou e para quem já respondeu, apontando para a **postagem** (o servidor grava; ATV-01 abre a postagem).
+
 ### 3.4 ENV — Mensagens: composição e ações
 
 **ENV-01 Enviar texto** — 🆕 o campo agora é rico (ENV-21); só texto continua indo como antes (`MessageInput.vue`, `stores/chat.ts#enviarMensagemComConteudos`)
 - Campo "Digite uma mensagem", cresce até 120 px. **Enter envia**; Shift+Enter quebra linha. Botão "Enviar" aparece quando há conteúdo (texto, fila ou resposta); sem conteúdo aparece o microfone.
 - Envio otimista: mensagem com `id = -Date.now()`, `enviando:true` aparece na hora; após `PUT /mensagem` troca pelo id do servidor; erro remove a otimista e mostra o erro acima do campo.
 - API: `PUT /mensagem {conversa_id, conteudos:[{ordem, tipo, conteudo}], mensagem_referencia?:{tipo, origem_mensagem_id}, visivel_em?: ISO}` → `{id, conversa_id, usuario_id}`.
+- 🆕 Campos opcionais novos no mesmo `PUT /mensagem`: `pede_confirmacao: true` (`769bd7d`, ENV-24), `postagem: {titulo: string | null}` (`d202c06`, cria uma postagem, ENV-26) e `postagem_id` (`d202c06`, resposta a uma postagem, MSG-22). Só vão quando usados.
 - Regras: texto `trim()`; pode enviar só a resposta (sem texto) — ver ENV-07. Após enviar, rola ao fim e recarrega a lista de conversas.
 
 **ENV-02 Atalhos de emoji no texto** (`utils/emojiAtalhos.ts`)
 - `:)`/`:-)`→🙂, `:D`/`:-D`→😃, `xD`/`XD`→😆, `;)`/`;-)`→😉, `:(`/`:-(`→🙁, `:'(`→😢, `:P`/`:p`→😛, `:O`/`:o`→😮, `:|`→😐, `:/`→😕, `:*`→😘, `<3`→❤️, `\o/`→🙌.
 - Só como palavra solta (início/espaço antes e espaço/quebra depois, ou no fim ao enviar); nunca dentro de código (crases).
 
-**ENV-03 Seletor de emoji** (`EmojiPicker.vue`)
-- Categorias "Populares", "Rostos", "Gestos", "Objetos" (listas fixas); tooltip com nome em português (`utils/emojiNomes.ts`). Insere no fim do texto e devolve o foco.
+**ENV-03 Seletor de emoji** (`EmojiPicker.vue`) — 🆕 `d202c06`: **todos os emojis**, por categoria e com pesquisa; as listas fixas antigas saíram
+- (Até `e8d82cb`) Categorias "Populares", "Rostos", "Gestos", "Objetos" (listas fixas); tooltip com nome em português (`utils/emojiNomes.ts`). Insere no fim do texto e devolve o foco. **Histórico: essas listas não existem mais.**
+- 🆕 `d202c06` **Catálogo:** `public/emojis/pt.json` (estático da página, baixado na primeira vez que o seletor abre; `composables/useEmojis.ts`), gerado por `scripts/gerar-emojis.ts` a partir do `emojibase-data` (pt). **1644 emojis**, cada um `[emoji, nome, palavras-chave, versão do Unicode]`. **Sem tons de pele** (só o amarelo padrão), **sem bandeiras** (grupo 9) e **sem componentes** (grupo 2). Sem o **FE0F que sobra**: o seletor de variação só fica quando o caractere sozinho seria texto (ex.: "❤️"); "👍" vai sem ele, igual às reações rápidas e à digitação, para as reações não se dividirem.
+- **Layout** (320 px): campo **"Pesquisar emoji"**; barra de categorias com ícone e tooltip (a atual marcada ao rolar; clicar leva até ela); grade de 8 colunas, 260 px de altura com rolagem. Categorias, nesta ordem: **"Recentes"** 🕒, **"Carinhas e emoções"** 😀, **"Pessoas e corpo"** 👋, **"Animais e natureza"** 🐶, **"Comida e bebida"** 🍔, **"Viagens e lugares"** ✈️, **"Atividades"** ⚽, **"Objetos"** 💡, **"Símbolos"** ❤️. Tooltip de cada emoji = nome do catálogo (fallback `emojiNomes`).
+- **Recentes:** até **32**, o último usado primeiro, salvos no navegador (`conversa.emojisRecentes`); sem nada usado, começam por 16 populares (😂 ❤️ 😍 🤣 😊 🙏 😭 😘 👍 😅 🔥 🥰 😎 💕 🎉 ✨).
+- **Pesquisa:** sem acento e sem diferenciar maiúsculas; cada palavra digitada precisa começar uma palavra do nome, das palavras-chave ou do nome do app; até 200 resultados. Textos "Nenhum emoji encontrado" e "Carregando os emojis...". Sem o catálogo (sem rede), ficam os Recentes e tenta de novo na próxima abertura.
+- **Suporte do sistema** (`utils/suporteEmoji.ts`): desenha num canvas um emoji representante de cada versão do Unicode (16, 15.1, 15, 14, 13.1, 13, 12, 11) e esconde os emojis de versão mais nova que a primeira que aparece colorida; se o teste falha, mostra tudo.
+- O mesmo componente serve ao campo de mensagem (com a aba "Figurinhas", ENV-04), ao "Mais emojis" das reações (ENV-17) e ao emoji do grupo (CON-15).
 
 **ENV-04 Figurinhas (Lottie)** — 🆕 com o campo **vazio** a figurinha é enviada na hora, sozinha; com algo escrito ela **entra no campo** no ponto do cursor e vai junto, na ordem (ENV-21)
 - Aba "Figurinhas" no seletor do campo de mensagem (abre sempre em "Emojis"). Pacotes: **Básico** (coracao, sorriso, risada, estrela, feito, festa, sono, pontinhos), **Rostos** (piscadinha, apaixonado, beijo, legal, surpreso, triste, bravo), **Coisas** (joinha, fogo, coracao-partido, presente, bolo, balao, cafe, sol, chuva).
 - Clicar **envia na hora**, sozinha (o texto digitado fica no campo; pode ir como resposta se houver resposta pendente).
 - Conteúdo tipo 7 com o identificador `pacote/nome`; animação em `/figurinhas/<pacote>/<nome>.json` (servida pela página, não pela API). Bolha 160 px; no picker 64 px; na resposta 120 px. Toca só quando visível; com "reduzir movimento" fica parada no quadro do meio. Falha → texto "Figurinha". Nome amigável em `nomeFigurinha()`.
 - Arquivos: `utils/figurinhas.ts`, `FigurinhaLottie.vue`, `BolhaFigurinha.vue`, `public/figurinhas/**`, `scripts/gerar-figurinhas.ts`.
+- 🆕 `d202c06` **Só o pacote "Noto"**: os pacotes Básico, Rostos e Coisas (e `scripts/gerar-figurinhas.ts`) foram **apagados**. O pacote `noto` (emojis animados do Google em Lottie, `utils/figurinhasNoto.ts`, baixado por `scripts/baixar-figurinhas-noto.ts`) tem **55 figurinhas** `noto/<nome>`: chorando-de-rir, rolando-de-rir, sorriso, ufa, piscadinha, apaixonado, cheio-de-amor, beijinho, legal, deslumbrado, festejando, abraco, ops, pensando, desconfiado, revirando-os-olhos, de-cabeca-para-baixo, envergonhado, por-favorzinho, triste, chorando, bravo, assustado, cabeca-explodindo, bocejando, dormindo, doente, morri, palhaco, fantasma, joinha, negativo, palmas, aleluia, por-favor, tchau, forca, combinado, paz, de-olho, coracao, coracao-partido, fogo, cem, brilhos, festa, confete, presente, bolo, foguete, ideia, raio, arco-iris, cafe, brinde (nomes amigáveis no catálogo, ex.: "Chorando de rir", "Abraço", "Arco-íris").
+- 🆕 `d202c06` Na aba "Figurinhas", o título do pacote "Noto" vem com o crédito que a licença pede, como link para a CC BY 4.0: **"Animated Noto Emoji © Google, CC BY 4.0"**. Grade de 4 colunas, 64 px.
+- 🆕 `d202c06` Figurinha de pacote apagado (`basico/…`, `rostos/…`, `coisas/…`) não carrega mais e aparece como o texto **"Figurinha"**; `nomeFigurinha()` também devolve "Figurinha" para id desconhecido.
 
 **ENV-05 Menções no campo**
 - Digitar `@` + texto abre lista com até 6 contatos (nome/login); ↑/↓ navegam, Enter/Tab confirmam, Esc fecha; clique também. Insere `@Nome` destacado no campo (camada de realce atrás do textarea); no envio vira `@[Nome](id)`. Texto colado com `@[Nome](id)` é convertido para `@Nome` com o id guardado. "@Ana" não casa com "@Anabela".
@@ -487,6 +555,8 @@ Hora (`HH:MM`) dentro da bolha (`MensagemStatus.vue`), posição conforme varian
 - Tab insere 4 espaços (Shift+Tab sai do campo).
 - Qualquer letra digitada fora de um campo, sem modal por cima, foca o campo de mensagem no fim do texto.
 - Campo recebe foco ao trocar de conversa e ao iniciar resposta.
+- 🆕 `769bd7d` **Ctrl/Cmd+Enter volta a enviar** (tinha parado com o editor Tiptap de `e8d82cb`); Enter continua enviando.
+- 🆕 `f798e9c` Com uma sugestão da IA à mostra (ENV-25), **Tab aceita** a sugestão (no lugar dos 4 espaços) e **Esc** a descarta.
 
 **ENV-13 Agendar mensagem** (`AgendarMensagemModal.vue`) — 🆕 `7322e83`: depois de agendar, a mensagem vai para o relógio ao lado do microfone, não para o chat (§12)
 - Botão "Agendar mensagem" (aparece com conteúdo). Modal "Agendar mensagem": "Data" (calendário próprio `DateInput`) e "Hora" (`HH:MM`); padrão **amanhã 08:00**.
@@ -507,7 +577,7 @@ Hora (`HH:MM`) dentro da bolha (`MensagemStatus.vue`), posição conforme varian
 - Recepção: WS tipo 5 `{conversa_id, usuario_id}`, expira 4 s. Cor vermelha; textos "Gravando áudio..." / "Ana está gravando áudio..." / "… estão gravando áudio...". Gravando tem prioridade sobre digitando na exibição.
 
 **ENV-17 Reações**
-- Menu de ações: linha 1 👍 ❤️ 😂 😮, linha 2 😢 👏 🔥 + "Mais emojis" (abre o seletor completo).
+- Menu de ações: linha 1 👍 ❤️ 😂 😮, linha 2 😢 👏 🔥 + "Mais emojis" (abre o seletor completo). 🆕 `d202c06`: o "Mais emojis" abre o seletor novo, com todos os emojis, Recentes e pesquisa (ENV-03).
 - Toggle: reagir de novo com o mesmo emoji remove. Atualização otimista; erro recarrega a conversa.
 - Abaixo da bolha: chips `emoji contagem` (destacado se eu reagi; clicar alterna); tooltip lista quem reagiu com foto e hora (hoje `HH:MM`, senão `dd/MM HH:MM`).
 - API: `PUT /mensagem/reacao {mensagem_id, emoji}` → `{mensagem_id, emoji, acao}`.
@@ -528,6 +598,24 @@ Hora (`HH:MM`) dentro da bolha (`MensagemStatus.vue`), posição conforme varian
 **ENV-20 Menu de ações da mensagem** (`MensagemAcoes.vue`) — 🆕 `7322e83`/`e8d82cb`: Ctrl + clique direito abre só as reações rápidas (com "mais emojis"); toque longo no celular abre o menu completo (§12)
 - Abre pelo botão ⋯ ao passar o mouse na bolha (acompanha a rolagem em bolhas altas) ou clique direito na bolha. Só para mensagens salvas (id > 0), não para chamada nem oculta. Abre abaixo do botão ou acima se não couber; um menu por vez; fecha ao rolar ou clicar fora.
 - Itens, nesta ordem: reações rápidas; **Responder**; **Responder no privado** (grupo e mensagem de outro); **Encaminhar**; **Copiar**; **Ocultar** (própria e não oculta).
+
+(ENV-21 e ENV-22 estão na §10; ENV-23 na §12.)
+
+**ENV-24 🆕 `769bd7d` Pedir confirmação de leitura** (`AnexoPopup.vue`, `MessageInput.vue`, `chat.pedirConfirmacao`)
+- Entrada: botão "+" → **"Confirmar leitura"** (em qualquer conversa, direta ou grupo; último item do menu, depois de Arquivo, Código e, em grupo, Votação e Postagem).
+- Marca a **próxima mensagem enviada**: aparece acima do campo a faixa **"A mensagem vai pedir confirmação de leitura"** com o × "Não pedir confirmação". Trocar de conversa desliga.
+- No envio: `PUT /mensagem {…, pede_confirmacao: true}` e a faixa some; a mensagem otimista já nasce com `confirmacao {total: 0, confirmou: false, usuarios: []}`, então quem enviou vê "Aguardando confirmação" na hora (MSG-21).
+
+**ENV-25 🆕 `f798e9c` Sugestão de texto da IA** (`composables/useSugestaoIa.ts`, `editor/sugestao.ts`)
+- Liga quando: a IA do servidor está ligada (`recursos.ia`, GER-08) **e** a preferência local está ligada (`localStorage['conversa.sugestoesIa'] !== '0'`; padrão ligada; muda em Configurações › Privacidade, CFG-09).
+- Pedido: a cada mudança no texto recomeça a contar; depois de **600 ms parado**, com o campo em foco, **sem a lista de menção aberta**, **sem seleção** e com o **cursor no fim** (depois dele só espaço ou peças) e **pelo menos 3 caracteres** antes do cursor (sem contar espaços nas pontas) → `POST /ia/sugestao {conversa_id, texto}` → `{sugestao}` (o texto vai até o cursor). Voltar a digitar cancela o pedido em andamento (`AbortController`); se o campo ou o cursor mudou enquanto a IA pensava, a resposta é jogada fora.
+- Exibição: o texto sugerido aparece **em cinza logo depois do cursor**, sem ser parte do campo (não seleciona, não recebe clique).
+- **Tab aceita** (insere o texto no cursor); **Esc descarta**. Qualquer mudança no campo, mover o cursor ou o campo perder o foco apaga a sugestão. Erro do servidor: só não aparece sugestão.
+
+**ENV-26 🆕 `d202c06` Criar postagem em grupo** (`AnexoPopup.vue`, `MessageInput.vue`, `chat.postagemPendente`)
+- Entrada: botão "+" → **"Postagem"** (só em grupo, depois de "Votação").
+- Marca a **próxima mensagem enviada** como postagem: acima do campo, a faixa **"Postagem: as respostas ficam embaixo dela"** com o campo de título (placeholder **"Título (opcional)"**, máx. **150** caracteres) e o × "Não postar". Trocar de conversa desliga.
+- No envio: `PUT /mensagem {…, postagem: {titulo}}` com o título `trim()` ou `null`; a mensagem otimista já é um cartão de postagem sem respostas (MSG-22). O servidor só aceita postagem em grupo.
 
 ### 3.5 ANX — Anexos e mídia
 
@@ -577,6 +665,7 @@ Hora (`HH:MM`) dentro da bolha (`MensagemStatus.vue`), posição conforme varian
 - Abaixo de áudios (tipo 4 e 5) já enviados. Estados (`StatusTranscricao`): 0 Nenhuma → botão "Transcrever"; 1 Processando → "Transcrevendo..." com consulta a cada 3 s; 2 Concluída → texto (ou "(nenhuma fala reconhecida)"); 3 Erro → botão "Não foi possível transcrever. Tentar de novo" + mensagem de erro.
 - Estado inicial vem nos próprios conteúdos da mensagem (`transcricao_status`, `transcricao`).
 - API: `PUT /anexo/transcricao {identificador}` e `GET /anexo/transcricao?identificador=` → `{status, texto, erro}`. Se o servidor não tem transcritor configurado (parâmetro `transcritor_url` vazio), o botão não funciona (ver CFG-07).
+- 🆕 `769bd7d` O botão **"Transcrever"** (e o "Tentar de novo" do erro) **só aparece com `recursos.transcricao`** (GER-08). Sem transcritor, continuam aparecendo a transcrição **concluída** e a **em andamento** ("Transcrevendo..."); as outras situações não mostram nada.
 
 **ANX-13 Página de Anexos** (`AnexosPage.vue`, `AnexosLista.vue`) — 🆕 `eaa8bac`: a mesma `AnexosLista` aparece no painel "Dados do grupo" (CON-08), já com a conversa do grupo
 - Sem conversa selecionada: campo "Buscar contato ou grupo..." e "Selecione um contato ou grupo para ver os anexos"; resultados com avatar, etiqueta "Grupo", prévia; "Nenhum resultado".
@@ -596,7 +685,11 @@ Hora (`HH:MM`) dentro da bolha (`MensagemStatus.vue`), posição conforme varian
 **PES-01 Pesquisa na conversa**
 - Campo "Pesquisar..." no cabeçalho (desktop) ou painel "Pesquisar nesta conversa" (celular); Enter pesquisa; × limpa.
 - API: `GET /pesquisar?texto=<termo>&conversa=<id>` → `Mensagem[]` (o cliente ainda filtra por `conversa_id`).
-- Resultados numa lista sob o cabeçalho (ordem invertida, mais recentes primeiro): "#<id> - <resumo>"; clique → MSG-06.
+- (Até `e8d82cb`) Resultados numa lista sob o cabeçalho: "#<id> - <resumo>"; clique → MSG-06. **Correção desta revisão:** a ordem é **do mais antigo ao mais novo**, como na conversa (o cliente inverte o que a API devolve); a versão anterior deste doc dizia "mais recentes primeiro", o que estava errado.
+- 🆕 `d202c06` **Painel de resultados refeito** (`ChatHeader.vue`), aberto depois de uma pesquisa feita (some ao limpar ou trocar de conversa):
+  - cabeçalho **"N resultado para “termo”"** / **"N resultados para “termo”"**, ou **"Nenhuma mensagem com “termo”"** (aspas curvas; o termo é o da última pesquisa feita, não o que está no campo);
+  - cada resultado: **autor** ("Você" nas minhas) e, à direita, **quando** (hoje `HH:MM`; outro dia `dd/MM HH:MM`, com `/aa` se for de outro ano); embaixo, **uma linha** com o trecho do texto começando **até 30 caracteres antes** do termo ("…" quando corta o começo), menções como `@Nome`, e o termo destacado com `<mark>` (sem diferenciar maiúsculas) — sem texto, o resumo da mensagem;
+  - lista com altura máxima de **16rem** e rolagem; clique → MSG-06 (com a faixa de destaque nova).
 
 **PES-02 Pesquisa em todos os chats** (`PesquisaAvancada.vue`)
 - Botão "Pesquisar em todos os chats" na lista (leva o termo do filtro). Campo "Pesquisar em todos os chats...", Enter pesquisa, "Cancelar".
@@ -614,6 +707,7 @@ Arquivos centrais: `stores/call.ts`, `CallWindow.vue`, `components/CallBar.vue`,
 - Som de chamando (`/chamando.mp3`, loop) até alguém atender. Se o navegador bloquear autoplay, toca no primeiro clique/tecla.
 
 **CHA-02 Iniciar compartilhando a tela** — botão "Compartilhar tela" no cabeçalho: chamada de **vídeo** com a tela no lugar da câmera + microfone (+ som do sistema misturado, CHA-15).
+- 🆕 `964ed72` No **celular** (tela < 768 px ou só toque) a janela da chamada **não tem** "Compartilhar tela" (os navegadores de celular não compartilham tela; CHA-11). O botão "Compartilhar tela" do **cabeçalho** da conversa, porém, continua aparecendo no celular (lacuna do web; o `ChatHeader` não confere o aparelho).
 
 **CHA-03 Chamada recebida**
 - WS 51 `{chamada_id, usuario_id}` → `GET /chamada/dados?id=` → estado `recebendo`, toca `/toque.mp3` em loop, notificação do sistema "Chamada recebida" / "<nome> está ligando (Vídeo|Áudio)" (`tag: conversa-chamada`, `requireInteraction`), modal:
@@ -649,10 +743,15 @@ Arquivos centrais: `stores/call.ts`, `CallWindow.vue`, `components/CallBar.vue`,
 - Microfone (liga/desliga a trilha), Câmera (só vídeo), Compartilhar tela (só vídeo), Chat da chamada (com contador de não lidas), Ponteiro (só quando alguém compartilha a tela), Áudio de saída (silencia os outros), Adicionar usuário (só `ativa`), Voltar ao grid (em destaque), Minimizar/Expandir, Sair (vermelho).
 - Cabeçalho: indicador, "Chamando..." / "Em chamada" / "Encerrando...", duração `mm:ss` ou `hh:mm:ss`, "Vídeo"/"Áudio", "N pessoa(s)".
 - Tiles: nome ("<eu> (você)"); sem vídeo → iniciais; erro de conexão em faixa vermelha (`erroMsg`, ex.: "Erro ao conectar com <nome>: …"; 404 de WHEP não vira erro, tenta de novo).
+- 🆕 `964ed72` **Celular** (tela < 768 px ou só toque): sem o botão "Compartilhar tela"; o "Minimizar" chama-se **"Voltar ao chat"** (deixa a chamada na barra do topo, CHA-13). Na **aba própria** do computador (CHA-13) não há "Minimizar".
+- 🆕 `769bd7d` A grade também tem os tiles dos convidados fora da chamada (CHA-25), que contam no número de colunas.
 
 **CHA-12 Modos de exibição** (só vídeo, janela não flutuante) — **Grade** ("Todos os participantes lado a lado"), **Destaque** ("Um participante grande e os demais na lateral"), **Tela única** ("Só um participante, ocupando toda a área", setas "Participante anterior"/"Proximo participante"). Clique num tile destaca; clique no destaque volta à grade. Grade: 1 col (1), 2 col (2–4), 3 col (≤6), 4 col (mais). Se o destacado sai em tela única, o pedido fica pendente e volta quando ele reconectar.
 
 **CHA-13 Janela flutuante e barra** — vídeo minimizado no desktop: janela flutuante arrastável pelo cabeçalho e redimensionável pelas bordas/cantos. `CallBar` (áudio sempre; vídeo minimizado): status, duração, tipo, nº de pessoas, avatares (anel verde em quem fala); em áudio: microfone, saída, adicionar, botão "Vídeo" (upgrade) e sair; em vídeo: "Abrir chamada" e sair. No celular a chamada minimizada fica só na barra.
+- 🆕 `769bd7d` Enquanto o vídeo é ligado numa chamada de áudio, a barra mostra a etapa no lugar de "Vídeo"/"Áudio" (CHA-16).
+- 🆕 `964ed72` **Computador** (tela ≥ 768 px e não só toque): a chamada de **vídeo** abre numa **aba própria do navegador** (`/chamada.html`, título **"Chamada · Conversa"**, `composables/useAbaChamada.ts`). A conexão e os dados continuam na aba do app, que desenha a janela da chamada dentro da outra aba (mesmo Vue e mesmo Pinia; estilos e tema copiados e acompanhados). No app fica só a `CallBar`; **"Abrir chamada"** traz a aba de volta (ou a reabre). **Fechar a aba não desliga**: a chamada continua só na barra. No fim da chamada a aba fecha sozinha. Se o navegador **bloquear** a aba nova, a chamada fica dentro do app, como antes (tela cheia / janela flutuante); se a aba abrir mas não carregar em 10 s, ela é fechada e a chamada fica só na barra. Na aba própria não há "Minimizar" e o chat da chamada é o painel simples, só de texto (CHA-18), não o completo (CHA-24). A página aberta direto, sem o app, mostra "A chamada acontece na aba do Conversa que a abriu. Volte para ela.".
+- 🆕 `964ed72` **Celular** (tela < 768 px ou só toque): a chamada fica dentro do app e o "Minimizar" vira **"Voltar ao chat"**. Em tela estreita (< 768 px), a `CallBar` vai para o **topo do app, em qualquer seção** (lista, configurações, atividades…), e não só na área da conversa; em tela larga só de toque (tablet) ela fica no lugar de sempre.
 
 **CHA-14 Adicionar participante** — modal "Adicionar à chamada" com contatos que não estão na chamada ("Nenhum contato disponível para adicionar."), checkboxes, "Adicionar". API: `PUT /chamada/usuario {chamada_id, usuario_id}` (um por vez) → `GET /chamada/dados`.
 
@@ -662,21 +761,30 @@ Arquivos centrais: `stores/call.ts`, `CallWindow.vue`, `components/CallBar.vue`,
 - Som do computador + microfone misturados num `AudioContext` numa trilha única que substitui a do microfone; mutar o microfone silencia só a voz. Parar (botão ou "parar compartilhamento" do navegador) restaura câmera (ou abre uma nova) e o microfone puro.
 - Anuncia aos outros com sinal `{acao:'tela', ativa}` (CHA-17) e reanuncia para quem entra depois.
 - `contentHint` e limites de envio pela prioridade (Nitidez: 15 fps, `maintain-resolution`; Fluidez: 30 fps, `maintain-framerate`).
+- 🆕 `769bd7d` O **tile local mostra a própria tela compartilhada** (antes continuava mostrando a câmera): a stream local é trocada por uma nova (áudio + tela), e não só a trilha dentro da mesma; ao parar, outra stream nova com a câmera.
 
 **CHA-16 Troca de tipo áudio → vídeo**
 - Botão "Vídeo" na barra de chamada de áudio: abre a câmera (sem câmera continua só recebendo vídeo), muda para vídeo, reconecta todos os peers e `POST /chamada/video {id}` (proteção contra clique duplo).
 - Os outros recebem WS 56 (`VideoAtivado`): se já estão em vídeo → só reassinam quem republicou; senão modal "Vídeo ativado" / "<nome> ativou o vídeo" / "Deseja transmitir seu vídeo também?" com **"Apenas assistir"** (câmera desligada, tela única em quem ativou) e **"Transmitir também"**; sem resposta em **15 s** → "Apenas assistir".
+- 🆕 `769bd7d` **Ligar o vídeo não derruba mais as conexões:**
+  - etapas mostradas na janela (faixa no topo do vídeo) e na `CallBar`, com um giro: **"Abrindo a câmera..."** → **"Enviando o vídeo..."** → **"Recebendo o vídeo dos participantes..."**;
+  - **republica sem interromper**: publica a transmissão nova (com vídeo) no mesmo caminho WHIP **antes** de fechar a antiga (o MediaMTX troca uma pela outra); se ele recusar a troca, fecha a antiga e publica de novo;
+  - cada assinatura (WHEP) é **trocada só quando a nova está pronta**; o áudio segue pela antiga enquanto isso;
+  - "Apenas assistir" já abre a câmera **desligada** (dá para ligar depois);
+  - quem recebe o WS 56 **sempre reassina na hora** quem republicou (para voltar a ouvi-lo, e ver se já está em vídeo); só então pergunta, se ainda está em áudio.
 
 **CHA-17 Ponteiro remoto** (commit `20d5b73`)
 - Quem compartilha a tela avisa por WS 57 `{acao:'tela', ativa:true|false}`. Quem assiste vê o botão "Apontar na tela compartilhada"/"Desligar ponteiro" (só com tela remota; desliga sozinho quando não há mais telas).
 - Ligado, o movimento do mouse sobre a imagem da tela envia `{acao:'ponteiro', alvo:<id de quem compartilha>, x, y}` com x/y de 0 a 1 **relativos à imagem do vídeo** (descontando faixas de `object-contain`), no máximo a cada 40 ms (o último sempre vai); sair da imagem envia `x:null, y:null`.
 - Todos que veem aquela tela (inclusive quem compartilha, sobre o próprio vídeo local) desenham o ponteiro com o nome e uma cor por usuário (`id % 5`). Ponteiro parado some após 5 s; some quando a pessoa sai ou a tela para. Sinal de outra chamada é ignorado.
+- 🆕 `769bd7d` Novo sinal WS 57 **`{acao:'participantes'}`**: o servidor manda aos demais quando alguém que não atendeu é chamado de novo (CHA-25); o cliente relê `GET /chamada/dados` para atualizar a grade.
 
 **CHA-18 Chat da chamada** — 🆕 na janela principal o painel virou o **chat completo** (CHA-24) (commit `20d5b73`)
 - Painel "Chat da chamada" ao lado do vídeo (celular: por cima). Vazio: "As mensagens enviadas aqui ficam num grupo com quem está na chamada.". Só texto: anexos aparecem como "[Imagem]", "[Áudio]", "[Figurinha]", "[Arquivo]"; mensagens ocultas não aparecem. Campo "Mensagem", Enter envia.
 - 🆕 `eaa8bac` Agora o grupo é criado no **primeiro clique no campo** (não mais na primeira mensagem): sem grupo, o painel mostra o aviso e um campo-botão "Digite uma mensagem" ("Abrindo o chat..."); o clique chama `PUT /chamada/chat`, abre o chat completo (CHA-24) e põe o cursor no campo. Erro aparece numa faixa vermelha.
 - (Antes de `eaa8bac`) O grupo só é criado na **primeira mensagem**: `PUT /chamada/chat {id}` → `{conversa_id}` (idempotente; guardado em `chamada.conversa_chat_id`). Se outro criou, chega WS 57 `{acao:'chat', conversa_id}`. Quem entra depois passa a fazer parte (servidor).
 - Envio: `PUT /mensagem` no grupo; recarrega `GET /mensagens?conversa=<grupo>&…80`. Painel aberto marca as recebidas como visualizadas. Botão do chat mostra o número de não lidas do grupo quando fechado.
+- 🆕 `964ed72` (servidor `a40fd47`) **O chat da chamada reaproveita a conversa de origem:** no primeiro `PUT /chamada/chat`, se a ligação começou numa conversa (`conversa_id` do `PUT /chamada/iniciar`) e **todos** os que estão na ligação já são membros dela, o chat **é essa conversa** — na chamada **direta**, o chat da chamada **é a própria conversa direta**; num grupo com todos, o próprio grupo (ou o chat de outra ligação). Só quando falta alguém é criado um grupo novo "Chamada: <nomes>". Na conversa reaproveitada os membros não mudam (quem entra depois não é incluído) e ela não ganha `chamada: true` (CON-01). A resposta continua `{conversa_id}` e o WS 57 `{acao:'chat', conversa_id}` avisa os demais. A bolha da ligação e o histórico mostram o chat (CHA-26) só quando ele **não** é a conversa da ligação.
 
 **CHA-19 Indicador de fala** (`useFalaChamada.ts`)
 - A cada 100 ms mede o RMS do microfone local e do áudio de cada participante (`AnalyserNode`, 1024 amostras); acima de **0,02** conta como fala; mantém marcado por **400 ms** depois de parar. Microfone mutado não conta.
@@ -691,8 +799,22 @@ Arquivos centrais: `stores/call.ts`, `CallWindow.vue`, `components/CallBar.vue`,
 - API: `GET /chamadas?participante=0&de=YYYY-MM-DD&ate=YYYY-MM-DD` → `ChamadaHistoricoItem[]` (`id, tipo, status, criado_em, criado_por, conversa_id, iniciada, finalizada, duracao, participantes:[{usuario_id, nome, status, duracao, avatar_url}]`).
 - Agrupado por "Hoje"/"Ontem"/`dd/MM/aaaa`. Item: avatar do outro (grupo: "Grupo (N)"), seta efetuada/recebida (efetuada = `criado_por` sou eu), hora, "Video"/"Audio" · duração ou status ("Recusada", "Perdida", "Cancelada"), cor (vermelho perdida/recusada, cinza cancelada, verde demais).
 - Clique abre a conversa da chamada; botão "Ligar novamente" inicia nova chamada do mesmo tipo com os mesmos participantes. Vazio: "Nenhuma chamada" / "Nenhuma chamada perdida".
+- 🆕 `964ed72` O item ganha `conversa_chat_id` (o chat da ligação, só para quem é membro dele e só quando não é a conversa da ligação). Com ele, aparece um botão de balão com o título **"Ver chat da chamada"** / **"Esconder o chat da chamada"**, que abre **embaixo do item** o chat da ligação só para leitura (CHA-26); "Abrir o chat completo" abre a conversa.
 
 **CHA-23 Áudio remoto estável** — o áudio de cada participante toca num `HTMLAudioElement` criado pela store (vive a chamada inteira); os `<video>` são sempre mudos. Evita perder áudio ao alternar janela flutuante/tela cheia. "Áudio de saída" muta esses elementos.
+
+(CHA-24, o chat completo na chamada, está na §10.)
+
+**CHA-25 🆕 `769bd7d` Convidados fora da chamada na grade** (`CallWindow.vue`, `call.participantesAguardando`)
+- Na grade aparecem, além de quem está conectado, os convidados que **não estão** na chamada (menos eu e quem já tem peer): status **Pendente** (o telefone deles está tocando) ou **Recusou sem nunca ter entrado** (`entrou_em` vazio). Quem entrou e saiu não aparece aqui.
+- Tile apagado com as iniciais e o nome embaixo; Pendente mostra **"Chamando..."** (piscando); quem não atendeu mostra **"Não atendeu"** e o botão verde **"Chamar de novo"** (desabilitado até a resposta do servidor).
+- API: `POST /chamada/chamar-novamente {chamada_id, usuario_id}` → `Chamada` (a lista nova substitui a atual). O servidor volta o convidado a Pendente, **faz tocar de novo** no aparelho dele (WS 51) e manda aos demais o sinal WS 57 `{acao:'participantes'}`, que faz cada um reler `GET /chamada/dados` (CHA-17). Só vale para quem recusou/não atendeu e nunca entrou, com a chamada em andamento; senão o servidor recusa com "Só dá para chamar de novo quem não atendeu, com a chamada em andamento.". Erro aparece na faixa vermelha (`erroMsg`, fallback "Erro ao chamar de novo").
+
+**CHA-26 🆕 `964ed72` Chat da ligação só leitura na bolha e no histórico** (`ChatDaChamada.vue`)
+- Onde: dentro da bolha da ligação (MSG-13, botão "Ver chat da chamada" / "Esconder o chat da chamada") e embaixo do item do histórico (CHA-22). Só aparece quando a mensagem traz `chat_chamada_id` (conteúdo tipo 6) ou o item traz `conversa_chat_id` — o servidor manda só para quem é membro do chat e só quando o chat não é a própria conversa da ligação (CHA-18).
+- Carrega `GET /mensagens?conversa=<chat>&mensagemreferencia=0&mensagensprevias=100` ao abrir. Textos: **"Carregando o chat..."**; erro (a mensagem do servidor ou **"Não foi possível carregar o chat"**); vazio **"Ninguém escreveu no chat da chamada."**.
+- Linhas como uma citação com vários autores (barra à esquerda, altura máxima de 16rem com rolagem): **autor**, hora `HH:MM` e o texto. Mensagens ocultas não aparecem. Conteúdos: texto (menções como `@Nome`), **"📷 Imagem"**, **"📎 <nome do arquivo>"** (ou "📎 Arquivo"), áudio **"🎤 "<transcrição>""** ou **"🎤 Áudio"**, **"Figurinha"**, **"📊 Votação"**.
+- Botão **"Abrir o chat completo"** abre a conversa do chat (na bolha, `chat.selecionarConversa`; no histórico, a mesma navegação do clique no item). Não há campo para responder.
 
 ### 3.8 SIP — Telefonia SIP (ramal)
 
@@ -723,6 +845,7 @@ Arquivos centrais: `stores/call.ts`, `CallWindow.vue`, `components/CallBar.vue`,
 **NOT-02 Notificação do sistema por conversa** (`utils/sound.ts`)
 - Uma por conversa (agrupamento): título = nome do remetente da última mensagem; corpo = texto resumido ou "Imagem", "Gravacao de audio", "Audio", "Figurinha", "Arquivo"; ícone = avatar do contato/conversa ou `/logo.png`; `tag: conversa-<id>`, `renotify`, `requireInteraction` (fica até interagir), `silent` (o som é o do app).
 - Criada pelo service worker quando registrado (clique foca a aba e abre a conversa, mesmo após recarregar); senão pela página (`new Notification`, com cuidado do `onclose` assíncrono).
+- 🆕 `d202c06` **Resposta a uma postagem** (WS 64, MSG-22): som de mensagem e notificação com título = nome da conversa (ou "Grupo"), corpo **"<nome> respondeu a uma postagem"**, `tag: conversa-<id>` (substitui a da conversa). Mesmas exceções do NOT-01 (conversa aberta e em foco, arquivada) e não avisa a minha própria resposta.
 
 **NOT-03 Fechar notificação** — quando o contador de não lidas da conversa chega a 0 (leitura) e ao arquivar a conversa.
 
@@ -734,9 +857,31 @@ Arquivos centrais: `stores/call.ts`, `CallWindow.vue`, `components/CallBar.vue`,
 
 ### 3.10 PRE — Presença
 
-**PRE-01 Online/offline**
-- `GET /contatos/online` → `number[]` a cada conexão do WS; WS 60 `{usuario_id, online:boolean}`.
-- Bolinha verde no avatar da lista, do cabeçalho (direta) e em "Nova conversa". Não há "visto por último" na UI (o campo `online_em` existe na lista de datas, sem uso visível).
+**PRE-01 Online/offline** — 🆕 `769bd7d`: virou **ativo / ausente / offline**, com visto por último
+- (Até `e8d82cb`) `GET /contatos/online` → `number[]` a cada conexão do WS; WS 60 `{usuario_id, online:boolean}`; só bolinha verde. **Histórico.**
+- 🆕 `769bd7d` **Três estados** (`EstadoPresenca`): **ativo** (o Conversa visível e em uso em alguma aba/aparelho), **ausente** (conectado, mas escondido ou parado há 5 min) e **offline**. A API junta as abas e aparelhos de cada pessoa a partir do que cada um envia (PRE-02).
+- 🆕 `769bd7d` Carga: **`GET /contatos/presenca`** (substitui `/contatos/online`) → `[{usuario_id, estado, visto_em}]` a cada conexão do WS; quem não está na lista fica offline. O servidor só informa a presença de quem tem **conversa direta** comigo (lista e WS 60); membro de grupo sem direta fica sem bolinha. A lista **não traz o próprio usuário**: o próprio estado chega só pelo WS e é mantido se chegar antes da lista (`964ed72`).
+- 🆕 `769bd7d` Tempo real: WS 60 `{usuario_id, online, estado, visto_em}` (sem `estado`, usa `online` → ativo/offline). `visto_em` só vem quando muda; sem ele, fica o que já se sabia. O servidor manda o WS 60 **também do próprio usuário** (PRE-02).
+- 🆕 `769bd7d` **Bolinha** (`IndicadorPresenca.vue`): **verde** = ativo, **amarela** = ausente; offline **não mostra** bolinha (só no próprio avatar da barra, em cinza). Tooltip "Ativo" / "Ausente" / "Offline". Onde: lista de conversas (direta), cabeçalho (direta), "Nova conversa", participantes do painel do grupo, avatar da barra (PRE-02).
+- O "visto por último" e o "nesta conversa" estão em PRE-03; o que cada um mostra aos outros, em CFG-09.
+
+**PRE-02 🆕 `769bd7d` Presença enviada pelo cliente e o próprio status** (`stores/chat.ts#enviarPresenca`, `NavBar.vue`)
+- Cada aba envia pelo WS **`{tipo:63, ativo, conversa_id}`**: `ativo` = página **visível** (`document.visibilityState === 'visible'`) **e** sem **5 min parada** (sem `pointerdown`, `pointermove`, `keydown`, `wheel` ou `touchstart`); `conversa_id` = a conversa aberta **só quando ativo** (senão `null`).
+- O servidor trata toda conexão nova como **ativa e sem conversa** até chegar o primeiro 63.
+- Envia ao conectar o WS (depois do login), quando a visibilidade muda, quando fica parada 5 min, no primeiro uso depois de parada e ao trocar de conversa. Não repete um aviso igual ao anterior (reconectar zera essa memória).
+- **Próprio status:** o avatar da barra (NavBar) tem a bolinha de como os outros me veem (verde, amarela ou **cinza** para offline — por exemplo com "Aparecer offline", CFG-09), com o tooltip **"Para os outros você aparece ativo"** / **"… ausente"** / **"… offline"**. Vem do WS 60 com o meu id; com o WS caído, o próprio estado é apagado e aparece offline.
+
+**PRE-03 🆕 `769bd7d` "Visto por último" e "nesta conversa"** (`ChatHeader.vue`, `PainelGrupo.vue`)
+- Quem está **com a conversa aberta agora**: `GET /conversa/presentes?conversa=<id>` → `number[]` ao abrir uma conversa (e ao reconectar o WS, para a aberta); WS 63 recebido `{conversa_id, usuario_id, aberta}` acrescenta (`aberta: true`) ou tira a pessoa.
+- **Subtítulo do cabeçalho da direta**, nesta prioridade:
+  1. **"nesta conversa"** (cor primária) — a pessoa está com esta conversa aberta;
+  2. **"ativo agora"**;
+  3. **"ausente"**;
+  4. offline com `visto_em`: **"visto por último hoje às HH:MM"**, **"visto por último ontem às HH:MM"** ou **"visto por último em dd/MM às HH:MM"** (com `/aaaa` se for de outro ano);
+  5. offline sem `visto_em` (ou escondido pela privacidade): nada.
+  O subtítulo some enquanto a pessoa digita/grava (o indicador de digitando ocupa o lugar).
+- **Grupo:** no painel "Dados do grupo", **" · nesta conversa"** (cor primária) depois do nome de cada participante que está com o grupo aberto (não em mim). O cabeçalho do grupo não mostra presença.
+- O que aparece depende da privacidade de cada um (CFG-09), aplicada pelo servidor: sem "Mostrar o visto por último" o `visto_em` vem nulo; sem "Mostrar quando estou na conversa" a pessoa nunca aparece "nesta conversa"; com "Aparecer offline" ela fica offline para os outros e fora das conversas (o visto por último para de andar).
 
 ### 3.11 ATV — Atividades (commit `39d5af1`)
 
@@ -756,7 +901,7 @@ Arquivos centrais: `stores/call.ts`, `CallWindow.vue`, `components/CallBar.vue`,
 
 ### 3.12 CFG — Configurações, personalização e administração
 
-**CFG-01 Abas e navegação** — §2.5 (celular: lista de abas → sub-tela com botão voltar).
+**CFG-01 Abas e navegação** — §2.5 (celular: lista de abas → sub-tela com botão voltar). 🆕 `769bd7d` Aba nova **Privacidade** (`/config/privacidade`), a segunda da lista, logo depois de Usuario (CFG-09).
 
 **CFG-02 Tema escuro** — botão na aba Usuário ("Tema claro"/"Tema escuro"); padrão segue `prefers-color-scheme`; persistido em `theme`. Também aplicado no popup.
 
@@ -780,11 +925,28 @@ Arquivos centrais: `stores/call.ts`, `CallWindow.vue`, `components/CallBar.vue`,
 - Armazenamento: bucket só leitura.
 - Salva **só o que mudou** (chave só se digitada); "Configurações salvas.".
 - API: `GET /parametros` → `{fcm_project_id, fcm_client_email, fcm_private_key_configurada, turn_forcar_relay, transcritor_url, transcritor_idioma, gravacao_dias, s3_bucket}`; `PATCH /parametros {campos alterados, fcm_private_key?}` → mesmos campos.
+- 🆕 `769bd7d` Seção **"Inteligência artificial"** (entre Transcrição e Armazenamento):
+  - aviso "Servidor no padrão da OpenAI (vLLM, Ollama ou OpenAI), usado no resumo das conversas. As mensagens resumidas são enviadas a ele: prefira um servidor da sua rede.";
+  - **"Endereço"** (placeholder "http://ollama:11434/v1"; dica "Com ou sem o /v1. Em branco desliga os recursos de IA.");
+  - **"Modelo"** (placeholder "llama3.1, qwen2.5:14b, gpt-4o-mini...");
+  - **"Token"** com a situação "(configurado)" / "(será removido)" / "(sem token)"; campo de senha com placeholder "Deixe em branco para manter o atual" (com token) ou "Só se o servidor pedir (Ollama não pede)" (sem); dica "O token salvo nunca é mostrado." e o link "Remover o token" / "Manter o token";
+  - botão **"Testar conexão"** ("Testando..."; habilitado com endereço e modelo preenchidos) — testa o que está na tela, antes de salvar (token em branco usa o salvo); resultado em verde `Funcionando (1.2 s): "<resposta>"` (segundos com uma casa e ponto decimal) ou o erro em vermelho.
+  - API: `GET /parametros` ganha `ia_url, ia_modelo, ia_token_configurado` (o token nunca volta); `PATCH /parametros` aceita `ia_url, ia_modelo, ia_token` (`''` remove o token); `POST /parametros/ia/testar {url, modelo, token?}` → `{ok, resposta, erro, milissegundos}`. Depois de salvar, o web relê `GET /recursos` (GER-08).
 
 **CFG-08 Acessos — permissões** (`ConfiguracaoAcessos.vue`, permissão `permissoes`)
 - "Modo aberto" (ninguém tem Acessos): aviso de que todos podem mexer; marcar Acessos para alguém encerra o modo.
 - "O que cada permissão libera" (nomes: `parametros` → "Sistema", `permissoes` → "Acessos"), busca "Buscar usuário" (nome/login), tabela usuário × permissão com checkboxes ("(você)").
 - API: `GET /permissoes` → `{permissoes:[{codigo, descricao}], usuarios:[{id, nome, login, permissoes:[]}], modo_aberto}`; `PUT /permissao/usuario {usuario_id, codigo}`; `DELETE /permissao/usuario?usuario_id=&codigo=`. Recusa do servidor mostra o motivo e a caixa volta. Após cada mudança recarrega as próprias permissões (abas visíveis acompanham).
+
+**CFG-09 🆕 `769bd7d` Aba Configurações › Privacidade** (`ConfiguracaoPrivacidade.vue`; seção de IA desde `f798e9c`)
+- Rota `/config/privacidade`; aba "Privacidade" / "Status, visto por último e aparecer offline"; para todos. "Carregando..." enquanto lê.
+- Seção **"Status"**, texto "Os contatos veem você ativo com o Conversa aberto e em uso, ausente quando ele está escondido ou parado há 5 minutos. Valem para todos os seus aparelhos e mudam na hora." e três caixas:
+  - **"Aparecer offline"** — "Para os outros você fica offline, sem visto por último nem a conversa aberta." (padrão desligada);
+  - **"Mostrar o visto por último"** — "Quando você esteve ativo pela última vez, para quem tem conversa com você." (padrão ligada);
+  - **"Mostrar quando estou na conversa"** — "Quem está na conversa vê que você está com ela aberta." (padrão ligada).
+  Com "Aparecer offline" marcada, as outras duas ficam desabilitadas.
+- API: `GET /usuario/privacidade` → `{mostrar_visto_em, mostrar_na_conversa, aparecer_offline}`; cada clique salva na hora com `PATCH /usuario {id, <chave>: valor}` (otimista; erro volta a caixa e mostra a mensagem, fallback "Erro ao salvar a privacidade"; erro ao ler: "Erro ao carregar a privacidade"). O servidor aplica na hora a todos os aparelhos.
+- 🆕 `f798e9c` Seção **"Inteligência artificial"**, só com a IA ligada no servidor (GER-08): caixa **"Sugerir a continuação ao digitar"** — "Depois de uma pausa, a IA sugere em cinza como continuar a mensagem: Tab aceita, Esc descarta. Para isso, o que você digita e as últimas mensagens da conversa vão para o servidor de IA do sistema. Vale só neste navegador." Salva no `localStorage` (`conversa.sugestoesIa` = `1`/`0`; padrão ligada) — ENV-25.
 
 ### 3.13 GER — Comportamentos gerais de UX
 
@@ -794,7 +956,8 @@ Arquivos centrais: `stores/call.ts`, `CallWindow.vue`, `components/CallBar.vue`,
 **GER-04 Arrastar e soltar arquivos** — ANX-01.
 **GER-05 Menu de contexto nativo bloqueado** — exceto em campos de texto/conteúdo editável (clique direito abre os menus do app).
 **GER-06 Seções não implementadas** — tela "Em desenvolvimento".
-**GER-07 Avatares com fallback** — inicial do nome (primeira "letra" real, inclusive emoji); imagens que falham somem e fica a inicial.
+**GER-07 Avatares com fallback** — inicial do nome (primeira "letra" real, inclusive emoji); imagens que falham somem e fica a inicial. 🆕 `769bd7d`: num grupo com `emoji` (CON-15), o fallback é o **emoji do grupo** (em fonte maior) no lugar da inicial — lista, cabeçalho, painel do grupo e página de Anexos.
+**GER-08 🆕 `769bd7d` Recursos do servidor** (`composables/useRecursos.ts`) — `GET /recursos` → `{transcricao, ia}` diz o que está ligado no servidor (transcritor e servidor de IA configurados). Lido uma vez por janela, no primeiro uso (falha → tenta de novo no próximo uso; até lá, os dois `false`), e de novo depois de salvar a aba Sistema (CFG-07). Controla: botão "Transcrever" (ANX-12), botão "Resumir conversa" (CON-09/CON-14), a sugestão ao digitar (ENV-25) e a seção de IA da aba Privacidade (CFG-09).
 
 ### Contagem
 
@@ -815,7 +978,8 @@ Arquivos centrais: `stores/call.ts`, `CallWindow.vue`, `components/CallBar.vue`,
 | GER — UX geral | GER-01…07 | 7 |
 | 🆕 Novos em `39d06f9` | ENV-21, ENV-22, MSG-20, CHA-24 | 4 |
 | 🆕 Novo em `7322e83` | ENV-23 | 1 |
-| **Total** | | **137** |
+| 🆕 Novos em `769bd7d`…`d202c06` | PRE-02, PRE-03, CFG-09, ENV-24, MSG-21, CON-14, ENV-25, GER-08, CON-15, CHA-25, CHA-26, ENV-26, MSG-22 | 13 |
+| **Total** | | **150** |
 
 ---
 
@@ -831,14 +995,14 @@ Fonte única: `src/services/conversaApi.ts` (+ `eden.ts`). "Params" = query stri
 | 2 | PUT | `/usuario` | body `{nome, login, email, senha}` (sem token) | `{id, nome, login, email}` | AUT-02 |
 | 3 | PATCH | `/dispositivo` | body `{id, nome?, modelo?, versao_so?, plataforma?, token_fcm?}` | — | AUT-04 |
 | 4 | POST | `/alterar-senha` | body `{senha_atual, senha}` | — | AUT-07 |
-| 5 | PATCH | `/usuario` | body `{id, nome?, email?, telefone?, avatar_anexo_id?: number\|null}` | — | AUT-06, AUT-08 |
+| 5 | PATCH | `/usuario` | body `{id, nome?, email?, telefone?, avatar_anexo_id?: number\|null}`; 🆕 `769bd7d` também `mostrar_visto_em?, mostrar_na_conversa?, aparecer_offline?` | — | AUT-06, AUT-08, CFG-09 |
 | 6 | GET | `/usuario/contatos` | — | `Contato[]` | CON-11 |
-| 7 | GET | `/contatos/online` | — | `number[]` | PRE-01 |
+| 7 | GET | ~~`/contatos/online`~~ → 🆕 `769bd7d` `/contatos/presenca` | — | ~~`number[]`~~ → `[{usuario_id, estado: 'ativo'\|'ausente'\|'offline', visto_em}]` | PRE-01 |
 | 8 | GET | `/usuario/permissoes` | — | `string[]` | AUT-09 |
 | 9 | GET | `/conversas` | — | `Conversa[]` | CON-01 |
 | 10 | GET | `/conversa/usuarios` | `conversa` | `[{id, usuario_id, nome, avatar_url}]` | CON-08, CHA-01 |
 | 11 | PUT | `/conversa` | body `{descricao, tipo}` (1 direta, 2 grupo) | `{id, ...}` | CON-06, CON-07 |
-| 12 | PATCH | `/conversa` | body `{id, descricao}` | — | CON-08 |
+| 12 | PATCH | `/conversa` | body `{id, descricao}`; 🆕 `769bd7d` ou `{id, avatar_anexo_id: number\|null, emoji: string\|null}` | — | CON-08, CON-15 |
 | 13 | PUT | `/conversa/usuario` | body `{conversa_id, usuario_id}` | `{id, conversa_id, usuario_id}` | CON-06/07/08 |
 | 14 | DELETE | `/conversa/usuario` | `id` (= id do vínculo conversa_usuario) | — | CON-08 |
 | 15 | PATCH | `/conversa/fixadas` | body `{conversas: number[]}` | `{conversas}` | CON-03 |
@@ -847,7 +1011,7 @@ Fonte única: `src/services/conversaApi.ts` (+ `eden.ts`). "Params" = query stri
 | 18 | POST | `/conversa/gravando` | body `{id}` | — | ENV-16 |
 | 19 | GET | `/mensagens` | `conversa, mensagemreferencia, mensagensprevias, mensagensseguintes` | `Mensagem[]` | MSG-01, MSG-06, CHA-18 |
 | 20 | GET | `/mensagens/novas` | `desde` (ISO ou '') | `[{conversa_id, mensagem_id, ate}]` | §1.4 |
-| 21 | PUT | `/mensagem` | body `{conversa_id, conteudos:[{ordem, tipo, conteudo}], mensagem_referencia?:{tipo, origem_mensagem_id}, visivel_em?}` | `{id, conversa_id, usuario_id}` | ENV-01/04/06/07/08/13, CHA-18 |
+| 21 | PUT | `/mensagem` | body `{conversa_id, conteudos:[{ordem, tipo, conteudo}], mensagem_referencia?:{tipo, origem_mensagem_id}, visivel_em?}`; 🆕 `pede_confirmacao?: true` (`769bd7d`), `postagem?: {titulo}` e `postagem_id?` (`d202c06`) | `{id, conversa_id, usuario_id}` | ENV-01/04/06/07/08/13, CHA-18, ENV-24, ENV-26, MSG-22 |
 | 22 | DELETE | `/mensagem` | `id` | `{..., excluida_em?}` | ENV-14, ENV-18 |
 | 23 | PUT | `/mensagem/reacao` | body `{mensagem_id, emoji}` | `{mensagem_id, emoji, acao}` | ENV-17 |
 | 24 | POST | `/mensagem/visualizar` | body `{conversa, mensagem}` | `{sucesso}` | MSG-04 |
@@ -873,7 +1037,7 @@ Fonte única: `src/services/conversaApi.ts` (+ `eden.ts`). "Params" = query stri
 | 43 | PUT | `/chamada/usuario` | body `{chamada_id, usuario_id}` | `{id}` | CHA-14 |
 | 44 | POST | `/chamada/video` | body `{id}` | — | CHA-15/16 |
 | 45 | GET | `/chamadas/pendentes` | — | `ChamadaPendente[]` | CHA-08 |
-| 46 | GET | `/chamadas` | `participante, de, ate` | `ChamadaHistoricoItem[]` | CHA-22 |
+| 46 | GET | `/chamadas` | `participante, de, ate` | `ChamadaHistoricoItem[]` (🆕 `964ed72` com `conversa_chat_id`) | CHA-22, CHA-26 |
 | 47 | GET | `/ice` | — | `{iceServers: RTCIceServer[], iceTransportPolicy}` | §5, SIP-05 |
 | 48 | GET | `/sip` | — | `SipConfig` ou `{}` | SIP-01/02 |
 | 49 | PUT | `/sip` | body `{sip_user, auth_user, sip_password, display_name, domain, ws_server, ativo}` | `SipConfig` | SIP-01 |
@@ -884,10 +1048,23 @@ Fonte única: `src/services/conversaApi.ts` (+ `eden.ts`). "Params" = query stri
 | 54 | GET | `/permissoes` | — | `PermissoesSistema` | CFG-08 |
 | 55 | PUT | `/permissao/usuario` | body `{usuario_id, codigo}` | `{usuario_id, codigo}` | CFG-08 |
 | 56 | DELETE | `/permissao/usuario` | `usuario_id, codigo` | `{usuario_id, codigo}` | CFG-08 |
-| 57 | GET | `/parametros` | — | `ParametrosSistema` | CFG-07 |
-| 58 | PATCH | `/parametros` | body `AlteracaoParametros` | `ParametrosSistema` | CFG-07 |
+| 57 | GET | `/parametros` | — | `ParametrosSistema` (🆕 `769bd7d` + `ia_url, ia_modelo, ia_token_configurado`) | CFG-07 |
+| 58 | PATCH | `/parametros` | body `AlteracaoParametros` (🆕 `769bd7d` + `ia_url?, ia_modelo?, ia_token?`) | `ParametrosSistema` | CFG-07 |
+| 59 🆕 | GET | `/conversa/presentes` | `conversa` | `number[]` (quem está com a conversa aberta) | PRE-03 (`769bd7d`) |
+| 60 🆕 | GET | `/usuario/privacidade` | — | `{mostrar_visto_em, mostrar_na_conversa, aparecer_offline}` | CFG-09 (`769bd7d`) |
+| 61 🆕 | POST | `/mensagem/confirmar` | body `{mensagem_id}` | — | MSG-21 (`769bd7d`) |
+| 62 🆕 | GET | `/recursos` | — | `{transcricao, ia}` | GER-08 (`769bd7d`) |
+| 63 🆕 | POST | `/parametros/ia/testar` | body `{url, modelo, token?}` | `{ok, resposta, erro, milissegundos}` | CFG-07 (`769bd7d`) |
+| 64 🆕 | POST | `/conversa/resumo` | body `{conversa_id, periodo: '24h'\|'7d'\|'30d'\|'recentes'}` | `ResumoConversa` | CON-14 (`769bd7d`) |
+| 65 🆕 | GET | `/conversa/resumo` | `id` | `ResumoConversa {id, conversa_id, periodo, status, mensagens, assuntos:[{titulo, resumo, pendencias, mensagens}], erro}` | CON-14 (`769bd7d`) |
+| 66 🆕 | POST | `/chamada/chamar-novamente` | body `{chamada_id, usuario_id}` | `Chamada` | CHA-25 (`769bd7d`) |
+| 67 🆕 | POST | `/ia/sugestao` | body `{conversa_id, texto}` (cancelável) | `{sugestao}` | ENV-25 (`f798e9c`) |
+| 68 🆕 | GET | `/postagem/respostas` | `id` (da postagem) | `Mensagem[]` | MSG-22 (`d202c06`) |
+| 69 🆕 | POST | `/postagem/visualizar` | body `{postagem_id}` | — | MSG-22 (`d202c06`) |
 
-Fora da API: `POST /webrtc/<caminho>/whip` e `POST /webrtc/<caminho>/whep` (MediaMTX, `Content-Type: application/sdp`, sem Bearer) — §5; `GET /figurinhas/<pacote>/<nome>.json` (estático da página); `/notification.mp3`, `/toque.mp3`, `/chamando.mp3`, `/logo.png` (estáticos).
+As rotas da votação (`GET/PUT/PATCH /enquete`, `POST /enquete/votar`, `POST /enquete/encerrar`) estão em ENV-22 e MSG-20 (§10), fora desta tabela.
+
+Fora da API: `POST /webrtc/<caminho>/whip` e `POST /webrtc/<caminho>/whep` (MediaMTX, `Content-Type: application/sdp`, sem Bearer) — §5; `GET /figurinhas/<pacote>/<nome>.json` (estático da página; 🆕 `d202c06` só `noto/<nome>`); 🆕 `d202c06` `GET /emojis/pt.json` (catálogo do seletor, ENV-03); 🆕 `964ed72` `/chamada.html` (aba da chamada, CHA-13); `/notification.mp3`, `/toque.mp3`, `/chamando.mp3`, `/logo.png` (estáticos).
 
 ### 4.2 Eventos WebSocket
 
@@ -899,6 +1076,7 @@ Enum: `TipoEventoSocket` em `src/types/api.ts`. Mensagens são JSON.
 |---|---|---|---|
 | 1 | (login) | `{tipo:1, token}` | `onopen` |
 | 57 | SinalChamada | `{tipo:57, chamada_id, dados: SinalChamada}` | tela compartilhada, ponteiro (CHA-15/17) |
+| 63 🆕 `769bd7d` | Presenca | `{tipo:63, ativo, conversa_id}` (`conversa_id` só quando ativo, senão `null`) | ao conectar, visibilidade, 5 min parada, uso depois de parada, troca de conversa; sem repetir o mesmo aviso (PRE-02) |
 
 **Recebidos**
 
@@ -909,6 +1087,7 @@ Enum: `TipoEventoSocket` em `src/types/api.ts`. Mensagens são JSON.
 | 4 | Digitando | `conversa_id, usuario_id` | indicador 4 s |
 | 5 | GravandoAudio | `conversa_id, usuario_id` | indicador 4 s |
 | 7 | ReacaoMensagem | `conversa_id, mensagem_id, emoji, acao ('remove' ou outro), usuario_id` | atualiza a reação localmente (só se a mensagem está em memória) |
+| 8 🆕 `769bd7d` | ConfirmacaoLeitura | `conversa_id, mensagem_id, usuario_id, nome, confirmada_em` | acrescenta quem confirmou (só se a mensagem está em memória) — MSG-21 |
 | 40 | ConversaAtualizada | — | `GET /conversas` |
 | 51 | ChamadaRecebida | `chamada_id, usuario_id` | CHA-03/06 |
 | 52 | ChamadaFinalizada | `chamada_id` | encerra |
@@ -916,9 +1095,12 @@ Enum: `TipoEventoSocket` em `src/types/api.ts`. Mensagens são JSON.
 | 54 | UsuarioEntrou | `chamada_id, usuario_id` | CHA-07/10 |
 | 55 | UsuarioSaiu | `chamada_id, usuario_id` | CHA-10 |
 | 56 | VideoAtivado | `chamada_id, usuario_id` | CHA-16 |
-| 57 | SinalChamada | `chamada_id, usuario_id, dados` | `dados.acao`: `'tela'` `{ativa}` · `'ponteiro'` `{alvo, x, y}` (x/y null = saiu) · `'chat'` `{conversa_id}`; ignora o próprio e de outra chamada |
-| 60 | StatusUsuario | `usuario_id, online` | presença |
+| 57 | SinalChamada | `chamada_id, usuario_id, dados` | `dados.acao`: `'tela'` `{ativa}` · `'ponteiro'` `{alvo, x, y}` (x/y null = saiu) · `'chat'` `{conversa_id}` · 🆕 `769bd7d` `'participantes'` (relê `GET /chamada/dados`, CHA-25); ignora o próprio e de outra chamada |
+| 60 | StatusUsuario | `usuario_id, online`; 🆕 `769bd7d` + `estado` (`ativo`/`ausente`/`offline`), `visto_em` (só quando muda) | presença (PRE-01); também chega com o **meu** id (PRE-02) |
 | 61 | NovaAtividade | — | ATV-02 |
+| 62 | EnqueteAtualizada | `enquete_id` | relê `GET /enquete` se a enquete está na tela — MSG-20 (§10; faltava nesta tabela) |
+| 63 🆕 `769bd7d` | Presenca | `conversa_id, usuario_id, aberta` | põe/tira a pessoa de quem está com a conversa aberta (PRE-03) |
+| 64 🆕 `d202c06` | PostagemAtualizada | `conversa_id, postagem_id, usuario_id` | recarrega conversas, relê as respostas da postagem em memória, som e notificação (MSG-22, NOT-02) |
 
 Eventos 51–57 só são tratados depois que o handler de chamada é registrado em `iniciarSessao` (o popup de chat não registra — chamadas não tocam no popup). Tipo 6 não existe no enum do cliente.
 
@@ -952,6 +1134,7 @@ Arquivo: `src/stores/call.ts`. Não há malha P2P: cada participante **publica u
 - Captura: áudio `{echoCancellation, noiseSuppression, autoGainControl, channelCount: 2 se música senão 1}`; vídeo `{width/height ideal pela resolução (640×360, 1280×720, 1920×1080), frameRate {ideal, max}, facingMode:'user' em celular}`.
 - **Quando publica**: logo após `PUT /chamada/iniciar` (quem liga), logo após `POST /chamada/entrar` (quem atende, se tem mídia), ao ativar microfone/câmera em "somente recepção", ao fazer upgrade para vídeo (republica), ao compartilhar tela sem câmera (republica + `POST /chamada/video`).
 - **Recuperação**: `connectionState` `failed`/`disconnected` da publicação → fecha e republica, depois sincroniza peers (2 tentativas).
+- 🆕 `769bd7d` **Republicar sem interromper** (ligar o vídeo, CHA-16): a publicação nova vai ao **mesmo caminho** WHIP antes de fechar a antiga (o MediaMTX troca uma pela outra; a antiga perde o monitor de queda para não ser "recuperada"); se o MediaMTX recusar, fecha a antiga e publica de novo.
 
 ### 5.4 Assinatura (WHEP)
 
@@ -959,7 +1142,7 @@ Arquivo: `src/stores/call.ts`. Não há malha P2P: cada participante **publica u
 - Tentativas enquanto o outro ainda não publicou: vídeo **40 × 1 s**, áudio **12 × 0,8 s**; esgotado → erro `WHEP erro: <status|timeout>`. 404 não aparece como erro para o usuário: tenta de novo na próxima sincronização (1,5 s depois).
 - Trilhas recebidas vão para um `MediaStream` por peer; áudio toca num `HTMLAudioElement` dedicado (CHA-23); vídeos sempre mudos.
 - Reconexão: `failed`/`disconnected` → fecha e reassina após 2 s; chamada de vídeo sem trilha de vídeo 5 s depois de conectar → reassina; sincronização periódica (4 s) com `GET /chamada/dados` reassina peers com conexão `failed/disconnected/closed`, sem áudio vivo ou (vídeo) sem vídeo vivo, e desconecta quem não está mais com status "Entrou" (3).
-- Reassinar de propósito: ao receber `VideoAtivado` (56) já em vídeo.
+- Reassinar de propósito: ao receber `VideoAtivado` (56) já em vídeo. 🆕 `769bd7d`: agora **sempre** no 56 (também em áudio) e **sem cortar** (`trocarAssinatura`): a assinatura nova entra no lugar da antiga, que só fecha depois; o áudio segue pela antiga enquanto isso. Se a troca falha, reassina do jeito antigo.
 
 ### 5.5 Compartilhamento de tela
 
@@ -1017,6 +1200,13 @@ ativa --(sair | 52 | último outro saiu | recusa em direta)--> encerrando --> in
 | Arquivo | "Abrir" (PDF/HTML), "Download", "Baixar video", "Toque para abrir" / "Toque para carregar" |
 | Agendar | "Agendar mensagem", "Data", "Hora", "Cancelar", "Agendar"; erros "Data/hora inválida", "O envio deve ser no mínimo 5 minutos no futuro", "O envio não pode ser mais de 1 ano no futuro" |
 | Resumos de conteúdo | notificação: "Imagem", "Gravacao de audio", "Audio", "Figurinha", "Arquivo"; resposta/encaminhar (`resumoMensagem`): texto, "Imagem", "Áudio", "Arquivo"; código: "Código (linguagem)" |
+| 🆕 Menu "+" | "Arquivo", "Código", "Votação" (grupo), "Postagem" (grupo), "Confirmar leitura" |
+| 🆕 Confirmação de leitura | faixa "A mensagem vai pedir confirmação de leitura" (× "Não pedir confirmação"); quem recebe "Confirmar leitura" / "Leitura confirmada"; quem enviou "Aguardando confirmação" / "Confirmada por N de T" / "Confirmada por N"; erro "Não foi possível confirmar a leitura" |
+| 🆕 Postagem | faixa "Postagem: as respostas ficam embaixo dela", "Título (opcional)" (× "Não postar"); cartão "Postagem · Você" / "Postagem · <nome>", "Nenhuma resposta ainda" / "1 resposta" / "N respostas", "1 nova" / "N novas", "Ver todas as N" / "Mostrar menos", "Mensagem apagada", "Responder à postagem", botão "Responder"; notificação "<nome> respondeu a uma postagem" |
+| 🆕 Resumo (IA) | "Resumir conversa", "Resumo da conversa", "Últimas 24 horas", "7 dias", "30 dias", "Últimas 400 mensagens", "Resumir" / "Resumir de novo", "Resumindo N mensagens...", "Pode levar alguns minutos, dependendo do servidor de IA.", "Escolha o período e toque em Resumir. As mensagens são separadas por assunto.", "Nenhuma mensagem nesse período.", "Resumo de dd/MM às HH:MM · <período> · N mensagens", "Ver na conversa (N mensagens)", "Gerado por IA a partir de N mensagens. Confira na conversa antes de agir." |
+| 🆕 Emojis | "Pesquisar emoji", "Recentes", "Carinhas e emoções", "Pessoas e corpo", "Animais e natureza", "Comida e bebida", "Viagens e lugares", "Atividades", "Objetos", "Símbolos", "Nenhum emoji encontrado", "Carregando os emojis..."; figurinhas: pacote "Noto", crédito "Animated Noto Emoji © Google, CC BY 4.0" |
+| 🆕 Pesquisa na conversa | "N resultado para “termo”" / "N resultados para “termo”" / "Nenhuma mensagem com “termo”"; autor "Você" nas minhas |
+| 🆕 Transcrição | "Transcrever" só com o transcritor configurado (GER-08) |
 
 ### 6.2 Conversas, chamadas, atividades
 
@@ -1027,6 +1217,11 @@ ativa --(sair | 52 | último outro saiu | recusa em direta)--> encerrando --> in
 - Histórico: "Chamadas", "Todas", "Perdidas", "Buscar contato", "De", "Até", "Hoje", "Ontem", "Ligar novamente", "Nenhuma chamada", "Nenhuma chamada perdida".
 - Bolha de chamada: "Chamada de audio|video[ em grupo]", status "Recusada", "Perdida", "Cancelada"; participantes "Perdida", "Recusou", "Desconectou".
 - Atividades: ver ATV-01 (descrições exatas).
+- 🆕 Lista: seção "Chamadas (N)" antes de "Arquivadas (N)".
+- 🆕 Presença: tooltip da bolinha "Ativo" / "Ausente" / "Offline"; próprio avatar "Para os outros você aparece ativo" / "… ausente" / "… offline"; cabeçalho "nesta conversa", "ativo agora", "ausente", "visto por último hoje às HH:MM" / "visto por último ontem às HH:MM" / "visto por último em dd/MM às HH:MM"; painel do grupo " · nesta conversa".
+- 🆕 Grupo: "Imagem", "Emoji", "Remover", "Salvando...".
+- 🆕 Chamada: "Chamando...", "Não atendeu", "Chamar de novo"; etapas "Abrindo a câmera...", "Enviando o vídeo...", "Recebendo o vídeo dos participantes..."; "Voltar ao chat" (celular); chat da ligação "Ver chat da chamada" / "Esconder o chat da chamada", "Carregando o chat...", "Ninguém escreveu no chat da chamada.", "Abrir o chat completo".
+- 🆕 Privacidade: "Status", "Aparecer offline", "Mostrar o visto por último", "Mostrar quando estou na conversa", "Inteligência artificial", "Sugerir a continuação ao digitar" (descrições em CFG-09). Sistema › IA: "Endereço", "Modelo", "Token", "Testar conexão" / "Testando..." (CFG-07).
 
 ### 6.3 Regras de comportamento críticas
 
@@ -1043,6 +1238,9 @@ ativa --(sair | 52 | último outro saiu | recusa em direta)--> encerrando --> in
 11. **Responder no privado** = encaminhada (tipo 2) com conteúdos da original antes do texto.
 12. **Fixadas**: enviar a lista completa na ordem; ordem de exibição fixadas → recentes → arquivadas (seção recolhível).
 13. **Sessão**: 401 → login; outros erros → manter login e tentar de novo a cada 5 s.
+14. 🆕 **Presença**: cada aparelho avisa pelo WS 63 se está em uso e qual conversa está aberta. O servidor considera **ativa** toda conexão nova até ela dizer o contrário: um cliente que nunca manda o 63 aparece "ativo agora" o tempo todo em que o WS está aberto (inclusive em segundo plano) e nunca "nesta conversa" (PRE-02).
+15. 🆕 **Emoji igual ao do web**: sem o FE0F que sobra (só fica onde o caractere sozinho seria texto, como "❤️"); senão a mesma reação vira dois chips (ENV-03).
+16. 🆕 **Recursos do servidor**: Transcrever, Resumir e a sugestão só aparecem com `GET /recursos` dizendo que estão ligados (GER-08).
 
 ---
 
@@ -1062,7 +1260,7 @@ ativa --(sair | 52 | último outro saiu | recusa em direta)--> encerrando --> in
 | Visualizador PDF (pdf.js) | — | `PdfRenderer` nativo ou abrir com app externo via Intent |
 | Visualizador HTML isolado (iframe sandbox) | Risco de segurança | `WebView` com JavaScript permitido mas **sem acesso a arquivos/conteúdo**, sem cookies nem ponte JS, carregando por `loadDataWithBaseURL(null, …)`; ou abrir no navegador externo |
 | Markdown/Mermaid em blocos de código | — | Markwon para Markdown; Mermaid via WebView isolado ou mostrar só o código ("Visualizar" opcional) |
-| Figurinhas Lottie | Suportado | `lottie-android`/`lottie-compose`; baixar os JSON de `https://HOST/figurinhas/<pacote>/<nome>.json` (ou embarcar no APK) |
+| Figurinhas Lottie | Suportado | `lottie-android`/`lottie-compose`; baixar os JSON de `https://HOST/figurinhas/<pacote>/<nome>.json` (ou embarcar no APK). 🆕 `d202c06`: só o pacote `noto` (55), com o crédito CC BY 4.0 no seletor |
 | Download com `<a download>` | — | `DownloadManager` ou salvar via MediaStore/SAF |
 | Faixa "Conexao em tempo real indisponivel" | Útil | Manter (Snackbar/banner) |
 | Polling de 8 s sem WebSocket | Gasto de bateria em segundo plano | Só com a tela aberta; em segundo plano confiar no FCM |
@@ -1082,6 +1280,12 @@ ativa --(sair | 52 | último outro saiu | recusa em direta)--> encerrando --> in
 | `conversa.apiBase` | — | Base configurável no login/ambiente; WebSocket e MediaMTX devem derivar da **mesma base** (`/ws/`, `/webrtc/`) |
 | Seleção de texto bloqueada nas configurações, menu de contexto nativo bloqueado | — | Não se aplica |
 | Banner "Em desenvolvimento" / Equipes | — | Não implementar Equipes (removido do web) |
+| 🆕 Chamada de vídeo em aba própria do navegador (CHA-13, `964ed72`) | Não existe aba | Não se aplica: continua a Activity da chamada + PiP; o equivalente ao "Voltar ao chat" do web celular é a barra/notificação de chamada em andamento em qualquer tela |
+| 🆕 Presença pela visibilidade da aba e 5 min sem mexer (PRE-02, `769bd7d`) | Ciclo de vida | `ProcessLifecycleOwner` (primeiro plano = ativo, segundo plano = `ativo:false`) + a conversa aberta na tela; ociosidade de 5 min pela última interação (opcional) |
+| 🆕 Sugestão da IA: Tab aceita, Esc descarta (ENV-25, `f798e9c`) | Teclado virtual sem Tab | Texto cinza depois do cursor (ou chip acima do teclado) que se aceita com um toque; qualquer digitação descarta; Tab/Esc só com teclado físico |
+| 🆕 Hover em "quem confirmou" (MSG-21) | Sem hover | Toque no chip abre a lista de quem confirmou |
+| 🆕 Seletor de emoji próprio (ENV-03, `d202c06`) | `EmojiPickerView` (androidx) tem tons de pele, bandeiras e FE0F | Normalizar o emoji escolhido (tirar o FE0F que sobra; sem tom de pele) ou montar o seletor com o catálogo `/emojis/pt.json` |
+| 🆕 IndexedDB (rascunho ENV-23, resumo CON-14) | — | Room ou DataStore, por usuário e conversa |
 
 ---
 
@@ -1153,6 +1357,7 @@ Commit **`39d06f9`** — "Campo de mensagem rico, votação em grupo e chat comp
   - menções viram `@[Nome](id)` dentro do texto.
   - Exemplo: [texto, imagem, texto, figurinha] → conteúdos ordem 1..4 nessa sequência.
 - Mensagem só de texto: igual ao antes (ENV-01).
+- 🆕 `769bd7d`/`f798e9c`/`d202c06`: o `PUT /mensagem` pode levar `pede_confirmacao` (ENV-24), `postagem` (ENV-26) e `postagem_id` (MSG-22); acima do campo podem aparecer as faixas de confirmação de leitura e de postagem; Ctrl/Cmd+Enter volta a enviar (ENV-12); a sugestão da IA aparece em cinza depois do cursor (ENV-25).
 - **Figurinha** (ENV-04) e **gravação** (ANX-11) com o campo **vazio** são enviadas na hora, sozinhas; com algo escrito, entram como peça.
 - **Emoji** entra no ponto do cursor (o cursor é guardado quando o campo perde o foco).
 - **Placeholder:** "Digite uma mensagem". Altura máxima de 40% da tela, com rolagem.
@@ -1211,6 +1416,7 @@ Commit **`39d06f9`** — "Campo de mensagem rico, votação em grupo e chat comp
 - **Conversa ativa:** enquanto o painel está aberto, a conversa do grupo da chamada vira a **conversa ativa**; ao fechar, volta a conversa anterior.
 - **Antes da primeira mensagem** (o grupo ainda não existe), continua o painel simples, só de texto (CHA-18). A primeira mensagem cria o grupo (`PUT /chamada/chat`) e abre o modo completo.
 - **Android:** o painel de chat da chamada pode reaproveitar a própria tela de chat (`ChatScreen`) num bottom sheet/painel, com a conversa do grupo da chamada.
+- 🆕 `964ed72`: com a chamada de vídeo na **aba própria** do computador (CHA-13), o painel volta a ser o simples, só de texto (CHA-18); o completo fica para a chamada dentro do app (celular, aba bloqueada). E o "grupo da chamada" pode ser a **própria conversa de origem** — na direta, a conversa direta (CHA-18).
 
 ### Outros ajustes do commit
 - **Bolhas com vários conteúdos:** saiu o divisor entre conteúdos, e as imagens dentro da bolha padrão ou de referência ficam **sem moldura** (`imagemSemMoldura`).
@@ -1283,3 +1489,84 @@ Dois commits do web de 2026-10-08 (noite). No servidor só entrou `779c8ed` (o `
 - **Rascunho (ENV-23):** guardar no aparelho, por conversa, o texto com as menções, a fila de anexos e a resposta ou encaminhamento pendente; restaurar ao abrir a conversa.
 - **Menu (ENV-20):** o Android já abre o menu completo no toque longo, com "Mais emojis". Ctrl + clique direito não se aplica.
 - **Tiptap (ENV-21):** detalhe interno do web; a decisão FC-416 do Android continua valendo.
+
+## 13. Atualização de 2026-10-13 — commits `769bd7d` a `d202c06`
+
+Cinco commits do web, de 2026-10-09 a 2026-10-11, que acompanham os do servidor `b8ea0c2` (presença, confirmação de leitura, resumo por IA e chamar de novo), `ea7e974` (resumo pede JSON por `json_schema`), `ea02f57` (sugestão de texto), `a40fd47` (chat da chamada reaproveita a conversa) e `12cf0cf` (postagens). Há **13 IDs novos** e o total passa de 137 para **150**. Os textos foram conferidos no código do web em `d202c06`.
+
+### Commits
+- **`769bd7d`** (2026-10-09 21:24) — "Presença, confirmação de leitura, resumo por IA e ajustes nas chamadas": presença ativo/ausente/offline com visto por último e "nesta conversa"; aba Privacidade; confirmação de leitura; IA na aba Sistema e "Resumir conversa"; imagem ou emoji do grupo; seção "Chamadas" na lista; "Chamar de novo" na grade; ligar o vídeo sem derrubar; "Transcrever" só com transcritor; Ctrl+Enter volta a enviar; tile local mostra a tela compartilhada.
+- **`05507a0`** (2026-10-09 22:07) — "Resumo da conversa guardado no IndexedDB": último resumo por usuário e conversa; "Últimas 400 mensagens"; a linha "Resumo de …".
+- **`f798e9c`** (2026-10-09 22:21) — "Adiciona sugestão de texto": continuação sugerida pela IA em cinza; preferência na aba Privacidade.
+- **`964ed72`** (2026-10-10 13:26) — "Chamada de vídeo em aba própria, chat da ligação expandido e testes e2e": aba `chamada.html` no computador; "Voltar ao chat" e barra no topo no celular; chat da ligação só leitura na bolha e no histórico; testes Playwright (`e2e/`, fora do escopo do Android).
+- **`d202c06`** (2026-10-11 18:00) — "Postagens em grupo, todos os emojis, figurinhas Noto e pesquisa nova": postagem com respostas embaixo; seletor com todos os emojis; só figurinhas Noto; painel de resultados da pesquisa; faixa de destaque na mensagem encontrada.
+
+### IDs novos (13)
+- **PRE-02** — presença enviada pelo cliente (WS 63) e o próprio status no avatar da barra.
+- **PRE-03** — "visto por último" e "nesta conversa" (`GET /conversa/presentes`, WS 63 recebido).
+- **CFG-09** — aba Configurações › Privacidade, com a seção de IA.
+- **ENV-24** — pedir confirmação de leitura ("+" › "Confirmar leitura").
+- **MSG-21** — confirmação de leitura na bolha (`POST /mensagem/confirmar`, WS 8).
+- **CON-14** — resumo da conversa por IA, com cache no IndexedDB.
+- **ENV-25** — sugestão de texto da IA (`POST /ia/sugestao`).
+- **GER-08** — recursos do servidor (`GET /recursos`).
+- **CON-15** — imagem ou emoji do grupo.
+- **CHA-25** — convidados fora da chamada na grade, "Chamar de novo".
+- **CHA-26** — chat da ligação só leitura na bolha e no histórico.
+- **ENV-26** — criar postagem em grupo.
+- **MSG-22** — bolha de postagem com respostas embaixo (WS 64).
+
+### IDs alterados
+- **PRE-01** — ativo/ausente/offline, `/contatos/presenca`, WS 60 com `estado`/`visto_em`, bolinha amarela.
+- **CON-01** — seção "Chamadas (N)"; emoji do grupo; bolinha amarela. **CON-02** — bolinha em "Nova conversa". **CON-08** — imagem/emoji e " · nesta conversa". **CON-09** — subtítulo de presença e "Resumir conversa".
+- **MSG-06** — destaque em faixa da largura toda (1,5 s + 0,7 s). **MSG-07** — classe Postagem. **MSG-13** — "Ver chat da chamada".
+- **ENV-01 / ENV-21** — campos novos no `PUT /mensagem`. **ENV-03** — seletor com todos os emojis. **ENV-04** — só o pacote Noto. **ENV-12** — Ctrl/Cmd+Enter; Tab/Esc da sugestão. **ENV-17** — "Mais emojis" com o seletor novo.
+- **ANX-12** — "Transcrever" só com transcritor.
+- **PES-01** — painel de resultados novo; **corrigida** a ordem (do mais antigo ao mais novo).
+- **CHA-02 / CHA-11** — sem "Compartilhar tela" no celular. **CHA-13** — aba própria no computador; barra no topo no celular. **CHA-15** — tile local com a tela. **CHA-16** — etapas e troca sem derrubar. **CHA-17** — sinal `participantes`. **CHA-18 / CHA-24** — o chat reaproveita a conversa de origem; na aba própria o chat é o simples. **CHA-22** — "Ver chat da chamada" no histórico.
+- **NOT-02** — notificação de resposta a postagem.
+- **CFG-01** — aba Privacidade. **CFG-07** — seção "Inteligência artificial" na aba Sistema.
+- **GER-07** — fallback com o emoji do grupo.
+- §1.2 (estado), §1.3 (datas), §1.4 (WebSocket), §2 (rotas, barra, layout, painéis, abas), §4.1 (rotas 59–69 e alterações), §4.2 (eventos 8, 62, 63, 64 e campos novos do 60 e do 57), §5.3/§5.4 (republicar e reassinar sem cortar), §6 (textos e regras 14–16), §7 (adaptações novas) e as notas em ENV-21 e CHA-24 da §10.
+
+### O que muda para o Android
+**IDs novos**
+- **PRE-02:** mandar `{tipo:63, ativo, conversa_id}` a partir do ciclo de vida (`ProcessLifecycleOwner`, que o `ConexaoTempoReal` já usa): ativo em primeiro plano com a conversa aberta, `ativo:false` e `conversa_id:null` em segundo plano, ao conectar o WS e ao trocar de conversa; sem isso o servidor mostra o Android "ativo agora" o tempo todo. Mostrar o próprio status no avatar do perfil.
+- **PRE-03:** `GET /conversa/presentes` ao abrir a conversa e ao reconectar; tratar o WS 63 recebido; subtítulo do cabeçalho da direta com os textos exatos e " · nesta conversa" nos membros do grupo.
+- **CFG-09:** tela Privacidade com as três chaves (`GET /usuario/privacidade`, `PATCH /usuario`), salvando na hora; a caixa da sugestão da IA (preferência local) só com `recursos.ia`.
+- **ENV-24:** item "Confirmar leitura" no "+", faixa acima do campo com ×, `pede_confirmacao: true` na próxima mensagem.
+- **MSG-21:** chip de confirmação antes das reações (caixa para quem recebe; contagem para quem enviou); toque lista quem confirmou; `POST /mensagem/confirmar`; WS 8; DTO `confirmacao`.
+- **CON-14:** "Resumir conversa" no menu do cabeçalho só com `recursos.ia`; tela/folha do resumo com os períodos, consulta a cada 2 s, "Ver na conversa" e o último resumo guardado por usuário e conversa (Room/DataStore).
+- **ENV-25:** sugestão da IA depois de 600 ms parado (≥ 3 caracteres, cursor no fim), com aceite por toque (sem Tab no teclado virtual) e preferência desligável; avaliar custo de rede/bateria antes.
+- **GER-08:** `GET /recursos` no início da sessão (e ao voltar da aba Sistema); esconder Transcrever, Resumir e a sugestão quando desligados.
+- **CON-15:** "Imagem" / "Emoji" / "Remover" nos dados do grupo (`PATCH /conversa {avatar_anexo_id, emoji}`); usar `emoji` no lugar da inicial em todos os avatares de grupo.
+- **CHA-25:** tiles "Chamando..." / "Não atendeu" + "Chamar de novo" (`POST /chamada/chamar-novamente`); tratar o sinal `{acao:'participantes'}` relendo os dados da chamada.
+- **CHA-26:** "Ver chat da chamada" na bolha da ligação e no histórico, só leitura, com "Abrir o chat completo"; ler `chat_chamada_id` e `conversa_chat_id` nos DTOs.
+- **ENV-26:** item "Postagem" no "+" (só em grupo), faixa com título opcional ≤ 150, `postagem: {titulo}` no envio.
+- **MSG-22:** classificar a postagem antes de Imagem; cartão com as 2 últimas respostas, "Ver todas", campo de resposta (`postagem_id`), `GET /postagem/respostas`, `POST /postagem/visualizar`, WS 64 e a notificação "<nome> respondeu a uma postagem"; DTO `postagem`.
+
+**IDs alterados**
+- **PRE-01:** trocar `GET /contatos/online` (hoje em `ConversaApi` e `PresencaRepositorio`) por `/contatos/presenca`; ler `estado` e `visto_em` do WS 60 (inclusive o do próprio usuário); bolinha amarela para ausente.
+- **CON-01:** seção recolhível "Chamadas (N)" (conversas com `chamada: true`, não fixadas nem arquivadas) antes de "Arquivadas (N)"; emoji do grupo; bolinha amarela.
+- **CON-02 / CON-08 / CON-09:** bolinhas com três estados; imagem/emoji e " · nesta conversa" nos dados do grupo; subtítulo de presença e "Resumir conversa" no cabeçalho.
+- **MSG-06:** trocar o destaque da mensagem encontrada por uma faixa da largura toda que aparece de uma vez, fica 1,5 s e some em 0,7 s.
+- **MSG-07:** nova classe Postagem (depois de Excluida/Chamada, antes de Imagem).
+- **MSG-13:** "Ver chat da chamada" na bolha da ligação (CHA-26).
+- **ENV-01 / ENV-21:** acrescentar `pede_confirmacao`, `postagem` e `postagem_id` (opcionais) no DTO do `PUT /mensagem`.
+- **ENV-03:** o Android usa `EmojiPickerView` (androidx.emoji2) no "Mais emojis", com tons de pele, bandeiras e FE0F: as reações vão divergir do web (👍 e 👍️ viram chips diferentes). Normalizar antes de reagir/enviar (tirar o FE0F que sobra, sem tom de pele) ou montar o seletor com `/emojis/pt.json` (8 categorias, Recentes até 32, pesquisa sem acento).
+- **ENV-04:** o Android embarca `basico/rostos/coisas` (`feature/chat/src/main/assets/figurinhas`, `core/model/.../Figurinhas.kt`): trocar pelo pacote `noto` (55 figurinhas, nomes e crédito "Animated Noto Emoji © Google, CC BY 4.0"); figurinha desconhecida mostra "Figurinha".
+- **ENV-12:** com teclado físico, Ctrl+Enter envia (se houver a opção "Enter envia").
+- **ENV-17:** "Mais emojis" com o mesmo seletor/normalização do ENV-03.
+- **ANX-12:** esconder "Transcrever" sem `recursos.transcricao` (continua mostrando a transcrição pronta ou em andamento).
+- **PES-01:** a pesquisa na conversa do Android segue "mais recentes primeiro" (o erro antigo deste doc): inverter para do mais antigo ao mais novo; cabeçalho "N resultados para “termo”" / "Nenhuma mensagem com “termo”"; "Você" nas minhas; trecho a partir de 30 caracteres antes do termo.
+- **CHA-02 / CHA-11:** sem mudança no Android (compartilhar tela por `MediaProjection` continua); quem perdeu o botão foi o navegador de celular.
+- **CHA-13:** aba própria não se aplica; manter a Activity da chamada com PiP e a barra/notificação de chamada em andamento em qualquer tela (equivale ao "Voltar ao chat").
+- **CHA-15:** o tile local deve mostrar a tela compartilhada enquanto ela está no ar.
+- **CHA-16:** mostrar as três etapas; publicar o WHIP novo antes de fechar o antigo e trocar cada assinatura só quando a nova estiver pronta; no WS 56, reassinar sempre quem republicou.
+- **CHA-17:** tratar `{acao:'participantes'}` no sinal 57.
+- **CHA-18 / CHA-24:** o `PUT /chamada/chat` pode devolver a **conversa de origem** (na direta, a própria conversa direta): não supor grupo novo nem mexer nos membros; abrir o chat da chamada nessa conversa.
+- **CHA-22:** botão "Ver chat da chamada" no histórico quando vier `conversa_chat_id`.
+- **NOT-02:** com o app aberto, notificação "<nome> respondeu a uma postagem" pelo WS 64, agrupada na conversa; em segundo plano chega o push comum de mensagem (o servidor trata a resposta como mensagem nova: título = quem respondeu, corpo = o texto).
+- **CFG-01 / CFG-07:** aba Privacidade; na aba Sistema do Android (`SistemaRepositorio`), a seção "Inteligência artificial" com Endereço, Modelo, Token e "Testar conexão".
+- **GER-07:** emoji do grupo como fallback do avatar.
+- **§1.3:** o parser de datas precisa aceitar `confirmada_em`, `visto_em`, `encerra_em` e `encerrada_em`.

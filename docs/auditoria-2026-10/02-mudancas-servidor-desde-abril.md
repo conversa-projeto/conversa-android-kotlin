@@ -8,7 +8,7 @@ Auditoria feita em 2026-10-06, só leitura (nenhum código foi alterado).
 |---|---|
 | Repositório do servidor | `C:\Users\danie\Desktop\GIT\conversa-projeto\conversa` |
 | HEAD do servidor em 2026-04-26 (`git rev-list -1 --before=2026-04-27 HEAD`) | **`56e7cc0`** (2026-04-19, "Adiciona agendamento de mensagens"). Nenhum commit em nenhum branch entre 2026-04-19 e 2026-09-12. |
-| HEAD atual do servidor | **`7f670c3`** (2026-10-06, "Permissões do sistema e parâmetros alterados pela API") |
+| HEAD atual do servidor | **`7f670c3`** (2026-10-06, "Permissões do sistema e parâmetros alterados pela API") — 🆕 a linha do tempo (§1, linhas 23–31) e a §3 foram estendidas até **`12cf0cf`** (2026-10-11); as demais seções continuam referidas a `7f670c3` |
 | Commits entre os dois | 22 (`aa61b78` … `7f670c3`) |
 | Cliente Android | `conversa-android-kotlin`, HEAD `e3e2a65` (2026-04-26). **A árvore de trabalho tem alterações não commitadas** (MainActivity, SocketManager, ChamadaService, ChatActivity, SocketService, MensagemExtras etc.). As citações `arquivo:linha` do Android referem-se à árvore de trabalho atual. |
 | Fontes do servidor em abril (Delphi/Horse) | `conversa.rest.dpr` (rotas), `src/conversa/conversa.api.pas` (handlers), `src/conversa/WebSocket.pas`, `src/conversa/FCMNotification.pas`, `src/conversa/conversa.comum.pas`, `src/conversa/conversa.autorizacao.pas`, `bin/nginx/conf/nginx.conf`, `bin/mediamtx/mediamtx.yml` — todas lidas com `git show 56e7cc0:<caminho>`. |
@@ -27,7 +27,7 @@ Achado transversal importante para priorizar: **vários repositórios do Android
 
 ## 1. Linha do tempo dos commits do servidor desde 2026-04-26
 
-> Atualizado em 2026-10-06 (noite) com o commit `8031fa5` (linha 23) e em 2026-10-08 com `d4435db` e `5cad911` (linhas 24 e 25), marcados com 🆕.
+> Atualizado em 2026-10-06 (noite) com o commit `8031fa5` (linha 23), em 2026-10-08 com `d4435db` e `5cad911` (linhas 24 e 25) e em 2026-10-13 com `779c8ed` … `12cf0cf` (linhas 26 a 31), marcados com 🆕.
 
 Base: **`56e7cc0`** (2026-04-19) — Delphi + Horse na porta 8080, WebSocket próprio (Bird Socket) na porta **9090** (`dpr@56e7cc0:571`), nginx nativo no Windows escutando **4430** em DEV (`bin/nginx/conf/nginx.conf@56e7cc0:28`) e repassando `/ws/` → 9090, `/webrtc/` → MediaMTX nativo em 127.0.0.1:8889, `/storage/` → MinIO. Push FCM com bloco `notification` (sem `data`).
 
@@ -58,6 +58,12 @@ Base: **`56e7cc0`** (2026-04-19) — Delphi + Horse na porta 8080, WebSocket pr�
 | 23 🆕 | `8031fa5` | 2026-10-06 (noite) | Votação em grupo: enquete com escolha única ou múltipla | **Novos `PUT /enquete`, `GET /enquete?id=`, `POST /enquete/votar`**; **novo evento WS 62 (`EnqueteAtualizada`)** `{enquete_id, conversa_id}`; **conteúdo tipo 8** = id da enquete, que só o servidor grava (`PUT /mensagem` com tipo 8 → 400, então enquete não pode ser encaminhada); prévia/push `enquete`. Migração 035. Não altera nenhuma rota que o Android antigo usa; o app antigo mostra a bolha vazia (tipo desconhecido) e ignora o WS 62. Detalhes: doc 01 §10.13 |
 | 24 🆕 | `d4435db` | 2026-10-07 (noite) | Reações: no máximo 5 emojis diferentes por pessoa na mesma mensagem | `PUT /mensagem/reacao` recusa o 6º emoji diferente da mesma pessoa na mesma mensagem: 400 `Você já reagiu com 5 emojis nesta mensagem.` Tirar continua livre. O app antigo não reage (não afeta). Detalhes: doc 01 §10.12 |
 | 25 🆕 | `5cad911` | 2026-10-07 (noite) | Votação com data final e encerramento antes do prazo | **Novos `POST /enquete/encerrar` e `PATCH /enquete`**; `PUT /enquete` aceita `encerra_em`; o `Enquete` ganha `encerra_em`, `encerrada_em`, `encerrada`, `pode_encerrar`, `pode_alterar_prazo`; votar encerrada → 400; WS 62 também ao encerrar e ao mudar a data. Migração 036. O app antigo não tem votação (não afeta). Detalhes: doc 01 §10.13 |
+| 26 🆕 | `779c8ed` | 2026-10-08 | iniciar-desenvolvimento.bat atualiza também as dependências da API | Só script de desenvolvimento. |
+| 27 🆕 | `b8ea0c2` | 2026-10-09 | Presença, confirmação de leitura, resumo por IA e chamar de novo | **Presença**: o cliente manda o tipo 63 `{ativo, conversa_id}` por conexão; estados `ativo`/`ausente`/`offline`, visto por último e privacidade (`mostrar_visto_em`, `mostrar_na_conversa`, `aparecer_offline` no `PATCH /usuario`); **WS 60** passa a `{usuario_id, online, estado, visto_em}` a cada mudança, também ao próprio usuário e logo após o login; **WS 63** `{conversa_id, usuario_id, aberta}`; novos `GET /contatos/presenca`, `GET /usuario/privacidade`, `GET /conversa/presentes`; `/contatos/online` usa a presença visível. **Confirmação de leitura**: `pede_confirmacao` no `PUT /mensagem`, chave `confirmacao` nas mensagens, `POST /mensagem/confirmar`, **WS 8**. **IA**: parâmetros `ia_url`/`ia_token`/`ia_modelo`, `POST /parametros/ia/testar`, resumo assíncrono `POST`/`GET /conversa/resumo`; `GET /recursos` `{transcricao, ia}`. **Grupo com imagem ou emoji** (`PATCH /conversa` com `avatar_anexo_id`/`emoji`, `descricao` opcional, agora com WS 40); `GET /conversas` ganha `emoji` e `chamada`. **`POST /chamada/chamar-novamente`** (WS 51 ao alvo, WS 57 `{acao:'participantes'}`). Migrações 037–041. O push **não** mudou (qualquer socket aberto continua bloqueando). Detalhes: doc 01 §6, §9.14, §10.14, §11, §13, §15 |
+| 28 🆕 | `ea7e974` | 2026-10-09 | IA: resumo pede JSON por json_schema (LM Studio recusa json_object) | Interno: formato do pedido ao servidor de IA; refaz sem os extras se ele responder 400. Sem efeito no contrato. |
+| 29 🆕 | `ea02f57` | 2026-10-09 | Adiciona sugestão de texto | **Novo `POST /ia/sugestao`** `{conversa_id, texto ≤ 4000}` → `{sugestao}` (continuação do texto; falha da IA = `""`; cancela se a requisição HTTP for abortada). Detalhes: doc 01 §13.6 |
+| 30 🆕 | `a40fd47` | 2026-10-10 | Chat da chamada reaproveita a conversa e vai junto da mensagem da ligação | `PUT /chamada/chat` devolve a **própria conversa da ligação** (pode ser direta) quando todos já são membros dela — sem WS 40 e sem incluir ninguém em `/chamada/entrar`; senão cria o grupo "Chamada: …" como antes. Conteúdo tipo 6 ganha `chat_chamada_id` e o histórico `conversa_chat_id` (só para membros do chat e só quando é outra conversa); `chamada: false` na conversa reaproveitada. Detalhes: doc 01 §9.12 |
+| 31 🆕 | `12cf0cf` | 2026-10-11 | Postagens em grupo com respostas embaixo da postagem | `PUT /mensagem` aceita `postagem: {titulo}` (só grupo) e `postagem_id` (resposta); 3 erros 400 novos; mensagens ganham a chave `postagem` `{titulo, respostas, nao_lidas, ultimas}`; **novos `GET /postagem/respostas` e `POST /postagem/visualizar`**; **WS 64** `{conversa_id, postagem_id, usuario_id}`; atividade "respondeu" para quem postou e quem já respondeu (aponta para a postagem). Respostas ficam fora de `GET /mensagens` e `/pesquisar`, mas contam em `/conversas`, `/mensagens/novas`, WS 2/3 e push. Migração 042. Detalhes: doc 01 §10.15 |
 
 ---
 
@@ -254,6 +260,20 @@ Diferenças com abril (`api.pas@56e7cc0:1683-1810`): `excluida_em` novo; `transc
 | 🆕 `POST /api/enquete/encerrar` `{enquete_id}` | `5cad911` | Encerra antes do prazo (quem criou a votação ou o grupo); devolve a enquete; WS 62 |
 | 🆕 `PATCH /api/enquete` `{enquete_id, encerra_em\|null}` | `5cad911` | Define, adia ou tira a data final (quem criou); devolve a enquete; WS 62 |
 | 🆕 `POST /api/enquete/votar` `{enquete_id, opcoes:int[]}` | `8031fa5` | Substitui o voto (vazio tira); devolve a enquete; WS 62 a todos os membros |
+| 🆕 `GET /api/contatos/presenca` | `b8ea0c2` | `[{usuario_id, estado: 'ativo'\|'ausente'\|'offline', visto_em}]` dos contatos de conversa direta (doc 01 §15.1) |
+| 🆕 `GET /api/usuario/privacidade` | `b8ea0c2` | `{mostrar_visto_em, mostrar_na_conversa, aparecer_offline}` do próprio usuário (alterar por `PATCH /usuario`) |
+| 🆕 `GET /api/conversa/presentes?conversa=` | `b8ea0c2` | `number[]`: outros membros com a conversa aberta agora; 403 se não é membro (doc 01 §15.2) |
+| 🆕 `POST /api/mensagem/confirmar` `{mensagem_id}` | `b8ea0c2` | Confirma a leitura de mensagem com `pede_confirmacao` → `{mensagem_id}`; idempotente; WS 8 na 1ª vez (doc 01 §10.14) |
+| 🆕 `POST /api/chamada/chamar-novamente` `{chamada_id, usuario_id}` | `b8ea0c2` | Chama de novo quem recusou/não atendeu (chamada 1/3) → dados da chamada; WS 51 ao alvo, WS 57 `{acao:'participantes'}` aos outros (doc 01 §9.14) |
+| 🆕 `GET /api/recursos` | `b8ea0c2` | `{transcricao: bool, ia: bool}` para qualquer usuário logado (doc 01 §13.3) |
+| 🆕 `POST /api/parametros/ia/testar` `{url, modelo, token?}` | `b8ea0c2` | Testa o servidor de IA (permissão `parametros`) → `{ok, resposta, erro, milissegundos}` (doc 01 §13.4) |
+| 🆕 `POST /api/conversa/resumo` `{conversa_id, periodo}` | `b8ea0c2` | Pede o resumo por IA (`24h`/`7d`/`30d`/`recentes`) → `{id, conversa_id, periodo, status, mensagens, assuntos, erro}`; processa em segundo plano (doc 01 §13.5) |
+| 🆕 `GET /api/conversa/resumo?id=` | `b8ea0c2` | Consulta o resumo (só quem pediu; 404 se venceu/reiniciou) |
+| 🆕 `POST /api/ia/sugestao` `{conversa_id, texto}` | `ea02f57` | Continuação do texto digitado → `{sugestao}` (doc 01 §13.6) |
+| 🆕 `GET /api/postagem/respostas?id=` | `12cf0cf` | Até 100 respostas da postagem, mais antiga primeiro, formato `MensagemResposta` (doc 01 §10.15) |
+| 🆕 `POST /api/postagem/visualizar` `{postagem_id}` | `12cf0cf` | Marca as respostas como vistas → `{vistas}`; WS 3 aos outros se mudou algo |
+
+🆕 Rotas que **mudaram** em outubro (além das novas): `PATCH /usuario` (privacidade), `GET /contatos/online` (presença visível), `PATCH /conversa` (imagem/emoji, `descricao` opcional, WS 40), `GET /conversas` (`emoji`, `chamada`, imagem do grupo), `PUT /mensagem` (`pede_confirmacao`, `postagem`, `postagem_id`), `GET /mensagens` e `/pesquisar` (sem respostas de postagem), `GET`/`PATCH /parametros` (`ia_*`), `PUT /chamada/chat` e `POST /chamada/entrar` (chat reaproveitado), `GET /chamadas` (`conversa_chat_id`). Total de rotas em `rotas.ts`: **81**. Detalhes no doc 01 §4.
 
 ---
 
@@ -292,9 +312,12 @@ Envelope sempre JSON plano com `tipo` numérico, sem campo `dados` (exceto o 57)
 | 55 | UsuarioSaiu | idem | igual | 55 | ok | ok |
 | 56 | VideoAtivado | idem | igual | 56 | ok | ok |
 | **57** | **SinalChamada** (novo, `315464b`) | — | Bidirecional. Cliente→servidor `{tipo:57, chamada_id, dados:{...}}` (≤ 2000 caracteres, só participantes com status 3); servidor→cliente `{tipo:57, chamada_id, usuario_id, dados}` — `dados` ex.: `{acao:'chat', conversa_id}` ou ponteiro de tela compartilhada (`websocket.ts:155-221`) | — | cai no `else` (log) | ignorado, sem crash |
-| 60 | StatusUsuario | `{tipo, usuario_id, online:bool}` | igual | `TYPE_STATUS_USUARIO=60` | ok | ok |
+| **8** 🆕 | **ConfirmacaoLeitura** (novo, `b8ea0c2`) | — | `{tipo:8, conversa_id, mensagem_id, usuario_id, nome, confirmada_em}` aos outros membros na 1ª confirmação | — | `else` (log) | ignorado |
+| 60 | StatusUsuario | `{tipo, usuario_id, online:bool}` | ~~igual~~ 🆕 `b8ea0c2`: `{tipo, usuario_id, online, estado:'ativo'\|'ausente'\|'offline', visto_em}` a cada mudança de estado, também ao próprio usuário e logo após o login | `TYPE_STATUS_USUARIO=60` | ok (lê `online`) | ok; campos novos ignorados |
 | **61** | **NovaAtividade** (novo, `8283616`) | — | `{tipo:61}` sem outros campos (`websocket.ts:151-153`) | — | `else` (log) | ignorado |
 | **62** 🆕 | **EnqueteAtualizada** (novo, `8031fa5`) | — | `{tipo:62, enquete_id, conversa_id}` a todos os membros a cada voto | — | `else` (log) | ignorado |
+| **63** 🆕 | **Presenca** (novo, `b8ea0c2`) | — | Bidirecional. Cliente→servidor `{tipo:63, ativo, conversa_id}`; servidor→cliente `{tipo:63, conversa_id, usuario_id, aberta}` aos outros membros | — | `else` (log) | ignorado; sem o 63, o app conta como **ativo** enquanto o socket está aberto |
+| **64** 🆕 | **PostagemAtualizada** (novo, `12cf0cf`) | — | `{tipo:64, conversa_id, postagem_id, usuario_id}` aos outros membros quando chega resposta numa postagem | — | `else` (log) | ignorado |
 
 Observação: o comentário do Android "Novo payload (alinhado com backend): { tipo:2, mensagem: {...} }" (`SocketManager.kt:256`) e o formato `mensagens` como array de objetos (`:293-301`) **não correspondem a nenhuma versão do servidor** — só o ramo CSV/gatilho é exercitado.
 

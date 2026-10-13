@@ -291,6 +291,8 @@
 - [x] Pull-to-refresh — `PullToRefreshBox` (conversas + contatos)
 - [x] Estados vazio e de erro — carregando (até a 1ª carga), vazio, nada encontrado, erro em tela cheia com "Tentar de novo" (só com cache vazio)
 - [ ] **Teste:** comparar lado a lado com o web (8 casos do CON-01) — ⛔ o web não está rodando nesta máquina; as regras do CON-01 têm teste unitário (`ListaConversasTest`, `ConversasViewModelTest`) e foram vistas no emulador
+- [ ] 🆕 `769bd7d` Seção recolhível "Chamadas (N)" no fim da lista, antes de "Arquivadas": conversas com `chamada:true` não fixadas nem arquivadas; com termo no filtro, tudo junto (CON-01, FC-218)
+- [ ] 🆕 `b8ea0c2` Emoji ou imagem do grupo no lugar da inicial em todos os avatares de grupo (`emoji`, `avatar_url`) (CON-15, GER-07, FC-217)
 
 ### 2.7 Filtro e "Nova conversa" (FC-206, CON-02)
 - [x] Campo de busca: filtra por título e prévia — sem acento e sem maiúscula (`conversaCombina`)
@@ -327,6 +329,7 @@
 - [ ] Remover (não para mim mesmo): `DELETE /conversa/usuario?id=<conversa_usuario_id>` — ⛔ o servidor só aceita remover o próprio vínculo (403 para os outros; o botão do web sempre falha). Não oferecido; a tela explica. Pendência S15
 - [x] Sair do grupo: `DELETE /conversa/usuario?id=<meu conversa_usuario_id>` — com confirmação de perigo; volta à lista
 - [x] 🆕 `eaa8bac` Tocar no avatar/nome do grupo no cabeçalho do chat abre os dados do grupo (no web, o painel "Dados do grupo"; no Android, a tela "Membros do grupo"); os anexos do grupo entram nessa tela com o 8.6 — avatar e nome clicáveis só em grupo (ação "Membros do grupo" para o TalkBack); testado no emulador ✔ fffcc10
+- [ ] 🆕 `769bd7d` Imagem ou emoji do grupo na tela do grupo: "Imagem" (recorte 256 px JPEG, upload tipo 2, `PATCH /conversa {id, avatar_anexo_id, emoji:null}`), "Emoji" (`{avatar_anexo_id:null, emoji}`), "Remover"; um tira o outro (CON-15, FC-217)
 
 ### 2.11 Presença e conexão (FC-213, FC-214, PRE-01, GER-02)
 - [x] `PresencaRepository`: conjunto de ids online a partir de `GET /contatos/online` + WS 60 `{usuario_id, online}` — `PresencaRepositorio` (+ teste)
@@ -336,6 +339,9 @@
 - [x] **Teste:** abrir e fechar o web com outro usuário → a bolinha acende e apaga no celular — no emulador com um 2º cliente (Node, conta B): bolinha e "digitando" acendem e apagam
 
 ---
+- [ ] 🆕 `b8ea0c2`/`769bd7d` Presença ativo/ausente/offline: `GET /contatos/presenca` no lugar de `/contatos/online`; WS 60 com `estado` e `visto_em` (guardar o último `visto_em`; chega também o meu próprio estado); bolinha verde (ativo) e amarela (ausente) (PRE-01, FC-215)
+- [ ] 🆕 `769bd7d` Enviar o WS 63 `{tipo:63, ativo, conversa_id}` pelo ciclo de vida: ativo em primeiro plano, `conversa_id` = chat aberto, `ativo:false` em segundo plano; só reenviar quando muda — sem isso o Android aparece "ativo" para os outros enquanto o socket está aberto (PRE-02, FC-215)
+- [ ] 🆕 `769bd7d` Subtítulo da direta: "nesta conversa", "ativo agora", "ausente", "visto por último hoje às HH:MM" / "ontem às" / "em dd/MM às" (`GET /conversa/presentes` ao abrir, WS 63 `aberta`); " · nesta conversa" nos membros do grupo (PRE-03, FC-216)
 
 ## Etapa 3 — Mensagens (núcleo)
 
@@ -379,6 +385,7 @@
 - [x] Grupo: lista de participantes com a duração ou o status
 - [x] Cores: verde (encerrada), vermelho (recusada/perdida); sem status de entrega — ícone verde (`chamadaRecebida`) / vermelho (`chamadaPerdida`), cores do FMX; sem status de entrega
 - [x] Toque → ligar de novo (mesmo tipo) — 🔄 toque chama `aoLigar` (hoje só o aviso; liga de verdade na etapa 6) — concluído depois (conferido em 2026-10-09): liga de verdade (6.4) ✔ cf43b1f
+- [ ] 🆕 `964ed72` "Ver chat da chamada" / "Esconder o chat da chamada" na bolha da ligação com `chat_chamada_id`: o chat só leitura ("Ninguém escreveu no chat da chamada.", "Abrir o chat completo") (CHA-26, FC-727)
 
 ### 3.6 Separadores e hora (FC-306, MSG-02)
 - [x] Separador de dia ("seg., 05/10/2026" ou "Hoje"/"Ontem") — "Hoje"/"Ontem"/"qua., 07/10/2026"; dia pela data efetiva
@@ -403,6 +410,8 @@
 - [x] WS 3 `{grupo:conversaId, mensagens:"12,13"}` → `GET /mensagem/status?conversa=&mensagem=12,13` → atualizar `recebida`/`visualizada`/`reproduzida`/`excluida_em` — `SyncManager`; **corrigido**: o status dessa rota é o agregado de todos os destinatários, então só é aplicado nas minhas mensagens (`atualizarStatusDaMinha`); ocultar vale para todas (+ teste no `SyncManagerTest` e no `BancoTest`)
 - [x] Se algum id do WS 3 não está carregado e a conversa está aberta → recarregar — `SyncManager`: id do WS 3 fora do cache → busca as seguintes da conversa (sempre, não só com a conversa aberta). Necessário para o resumo de chamada, que só chega por WS 3 (+ teste)
 - [x] **Teste:** ler no web → o ✓✓ do celular fica azul sem recarregar — no emulador com um 2º cliente (Node, conta B) lendo as mensagens: ✓✓ ficou azul sozinho
+- [ ] 🆕 `769bd7d` Confirmação de leitura na bolha: quem recebe marca "Confirmar leitura" → "Leitura confirmada" (`POST /mensagem/confirmar`); quem enviou vê "Aguardando confirmação" / "Confirmada por N de T" / "Confirmada por N" e a lista de quem confirmou; WS 8 (MSG-21, FC-521)
+- [ ] 🆕 `769bd7d` Pedir confirmação: "+" › "Confirmar leitura", faixa "A mensagem vai pedir confirmação de leitura" com X "Não pedir confirmação"; vale só para a próxima mensagem (`pede_confirmacao:true`) (ENV-24, FC-521)
 
 ### 3.9 Linha "Últimas", FABs e links (FC-310, FC-311, MSG-03, MSG-05, MSG-11)
 - [x] Linha "Últimas" antes da primeira não lida (posição fixada ao abrir; fica até sair da conversa) — decidida uma vez só depois da 1ª carga; não pula enquanto lê (+ teste). **Corrigido no emulador**: a tela se posicionava antes da decisão quando o Room já tinha mensagens
@@ -493,6 +502,7 @@
 - [x] "Transcrevendo…" → `GET /anexo/transcricao?identificador=` a cada 3 s — também quando a mensagem já chega "processando" (pedida por outra pessoa); no escopo do app, até 1 h (+ testes `TranscricoesRepositorioTest`). ⚠ No emulador só deu para testar o servidor sem transcritor (o de dev está com `transcritor_url` vazio); pedir, acompanhar e mostrar o texto ficaram testados por unidade ✔ f5d1501
 - [x] Concluída → texto (ou "(nenhuma fala reconhecida)"); erro → "Não foi possível transcrever. Tentar de novo" — e o motivo do transcritor embaixo, como o web ✔ f5d1501
 - [x] Esconder o botão se o servidor não tem transcritor (por enquanto: esconder após o primeiro erro de configuração; depois, via S10) — 400 → `desligada` até o fim da sessão; o motivo do servidor aparece no aviso. Testado no emulador ("Transcrição não configurada: defina o parâmetro transcritor_url." e os 4 botões sumiram) ✔ f5d1501
+- [ ] 🆕 `769bd7d` "Transcrever" só quando o servidor tem transcritor (`GET /recursos` → `transcricao`, 8.8); a transcrição já feita ou em andamento continua aparecendo (ANX-12, FC-419)
 
 ### 4.9 Receber compartilhamento (FC-410, AND-10)
 - [x] `intent-filter` `ACTION_SEND`/`ACTION_SEND_MULTIPLE` para `text/*`, `image/*`, `video/*`, `*/*` — na `MainActivity` (`*/*` cobre todos); `lerCompartilhamento` (+ teste); sem sessão, o "Enviar para…" abre depois do login ✔ 1fbfc38
@@ -547,6 +557,7 @@
 - [x] Com o app aberto (via WS): não notificar se a conversa está aberta na tela — `decidirAviso` (regra do web): na frente com a conversa na tela, nada; na frente em outra tela, só o som; em segundo plano, a notificação (+ teste). `ConversaEmTela` marcada pelo `ON_RESUME`/`ON_PAUSE` do chat. No emulador: com o app na lista, nenhuma notificação ✔ 199ce1b
 - [x] Nunca notificar conversas arquivadas — `decidirAviso` (+ teste) ✔ 199ce1b
 - [x] Toque → deep link para a conversa — `conversa://chat/{id}` na `MainActivity`. No emulador: o toque abriu a conversa na mensagem ✔ 199ce1b
+- [ ] 🆕 `d202c06` Notificação de resposta a postagem: "<nome> respondeu a uma postagem" (WS 64), exceto com a conversa aberta, arquivada ou resposta minha (NOT-02, FC-610)
 
 ### 5.5 Ações da notificação (FC-604, AND-08)
 - [x] Resposta direta (RemoteInput) → `PUT /mensagem` no `conversa_id` real → atualizar a notificação — a resposta entra na fila de envio (WorkManager) e a conversa fica lida; a notificação é atualizada com "Você: …" e sai em 2 s (no Android 15+ só cancelar não basta: o sistema segura a notificação respondida até uma atualização). No emulador: a resposta chegou ao servidor e a notificação saiu ✔ 199ce1b
@@ -661,6 +672,7 @@
 - [x] Agrupar: Hoje / Ontem / `dd/MM/aaaa` (portar a lógica do adapter antigo) — `agruparHistorico` pelo dia local, como o web (+ teste, inclusive a virada de dia pelo fuso) ✔ b952923
 - [x] Item: avatar (grupo: "Grupo (N)"), seta efetuada/recebida (`criado_por == eu`), hora, "Vídeo"/"Áudio" · duração ou status, cor — seta e nome em vermelho na perdida; cores do FMX (`chamadaRealizada`, `chamadaRecebida`, `chamadaPerdida`) ✔ b952923
 - [x] Toque → abrir a conversa; botão "Ligar novamente" (mesmo tipo e participantes) — a linha sem conversa (chamada que não veio de uma conversa) não abre nada, como no web. No emulador: a linha abriu a conversa com o B; "Ligar novamente" ligou e o web tocou ✔ b952923
+- [ ] 🆕 `964ed72` "Ver chat da chamada" no item do histórico com `conversa_chat_id` (o mesmo chat só leitura do 3.5) (CHA-26, FC-727)
 
 ### 6.11 Vídeo (FC-716, CHA-12, CHA-16)
 - [x] Renderers com `key(track)` e `onRelease` (#39); PiP local com `setZOrderMediaOverlay(true)` — o `removeSink` é protegido (a trilha pode já ter sido descartada no fim da chamada) ✔ cf43b1f
@@ -669,6 +681,7 @@
 - [x] Upgrade áudio→vídeo: abrir a câmera → republicar → `POST /chamada/video {id}` (proteger contra toque duplo) — "Ativar vídeo". No emulador, contra o web (Chrome com câmera falsa): o web recebeu o 56 ("Teste Android A ativou o vídeo") e o vídeo do app ✔ cf43b1f
 - [x] Receber o WS 56: já em vídeo → reassinar quem republicou; senão, modal "<nome> ativou o vídeo" com "Apenas assistir" / "Transmitir também" (15 s → "Apenas assistir") — No emulador, contra o web (Chrome com câmera falsa): o modal apareceu; "Apenas assistir" mostrou o vídeo do web com a câmera do app desligada ✔ cf43b1f
 - [x] FGS com o tipo `camera` adicionado quando o vídeo liga — o `ServicoChamada` refaz o `startForeground` quando a câmera liga ou desliga. No emulador, numa chamada de vídeo em grupo (app + B e C no web): `phoneCall|microphone|camera` (0xC4) ✔ 482037d
+- [ ] 🆕 `769bd7d` Ao ligar o vídeo, mostrar as etapas "Abrindo a câmera...", "Enviando o vídeo...", "Recebendo o vídeo dos participantes..." e republicar sem derrubar o áudio (CHA-16, FC-728)
 
 ### 6.12 Minimizar (FC-717, CHA-13, AND-06)
 - [x] Picture-in-Picture em chamada de vídeo (`setAutoEnterEnabled` no Android 12+) — só o vídeo principal na janela; antes do 12, pelo `onUserLeaveHint`; com `setSourceRectHint` (a área do vídeo). A `ChamadaActivity` tem tarefa própria: o PiP leva só a chamada e o app continua usável. No emulador: "início" e "voltar" numa chamada de vídeo → janela flutuante (`pinned`) com o vídeo do B; a chamada seguiu; ao encerrar, o PiP fechou ✔ add5196
@@ -684,6 +697,7 @@
 - [x] Somente recepção: entrar sem microfone/câmera; botões "Ativar microfone"/"Ativar câmera" — `GerenciadorChamadas.ativarTransmissao(video)` abre a mídia e publica (+ 3 testes); os botões aparecem com a chamada ativa e sem mídia ("Ativar câmera" só em vídeo), pedindo a permissão na hora. Não testado no emulador: as permissões já estão concedidas lá (não revogo pelo adb) ✔ 068e10b
 - [x] Tela remota compartilhada: WS 57 `{acao:"tela", ativa}` → destacar a tela — `EstadoChamada.telas` (+ teste); a tela entra em destaque e aparece inteira (sem cortar); ao parar, volta à grade e somem os ponteiros sobre ela. No emulador: o B compartilhou a tela pelo web e o app passou sozinho ao destaque com ela ✔ 3a9f39d
 - [x] Ponteiro remoto: WS 57 `{acao:"ponteiro", alvo, x, y}` → desenhar com nome e cor (`id % 5`); some em 5 s — `EstadoChamada.ponteiros` (+ teste: x/y nulos tiram; 5 s sem atualizar some); bolinha e nome sobre a área real da imagem (o renderizador informa a resolução; `areaDaImagem`, + teste); 5 cores do tema no lugar das do web. No emulador: o C apontou no meio da tela do B e o ponteiro "Teste Android C" apareceu no meio; sumiu em 5 s ✔ 3a9f39d
+- [ ] 🆕 `769bd7d` Convidados fora da chamada na grade: "Chamando..." e "Não atendeu" com "Chamar de novo" (`POST /chamada/chamar-novamente {chamada_id, usuario_id}`); WS 57 `{acao:"participantes"}` → reler `GET /chamada/dados` (CHA-25, FC-726)
 
 ### 6.14 Matriz de testes manuais (FC-955)
 - [x] Criar `docs/testes/chamadas.md` com a matriz — rede, estado do app, áudio/sistema e tipos de chamada, com o que já passou no emulador e o que falta em aparelho ✔ 610bbe1
@@ -711,6 +725,7 @@
 - [x] "Mais" → seletor de emoji do sistema (emoji com no máximo 10 code points) (`androidx.emoji2:emoji2-emojipicker`) ✔ 52d6d03
 - [x] 🆕 `d4435db` No máximo 5 emojis diferentes por pessoa na mesma mensagem: conferir antes da reação otimista e avisar "Você já reagiu com 5 emojis nesta mensagem."; erro do servidor → "Não foi possível reagir" com o motivo — `podeReagir` (+ testes); no emulador, o 6º emoji mostrou o aviso sem ir ao servidor ✔ fffcc10
 - [x] 🆕 `eaa8bac` Na bolha, 5 chips à mostra e o resto num "+N" (destacado se eu reagi em algum); toque no "+N" → lista dos demais (emoji, contagem, nomes), e tocar num deles alterna — `MaisReacoes`; os chips seguem a ordem do servidor (a primeira reação de cada emoji), guardada na coluna nova `ordem` (banco versão 2, AutoMigration 1→2, testada instalando por cima no emulador); "Mais 1 reação"/"Mais N reações" para o TalkBack ✔ fffcc10
+- [ ] 🆕 `d202c06` Seletor de emojis como o do web ("Pesquisar emoji", categorias, "Recentes"): sem tons de pele, bandeiras nem FE0F sobrando — senão a mesma reação se divide entre web e Android (ENV-03, ENV-17, FC-418)
 
 ### 7.3 Responder (FC-502, ENV-06)
 - [x] Deslizar a bolha para a direita → responder — `DeslizarParaResponder`: a bolha acompanha o dedo, o ícone aparece atrás e vibra ao passar de 64 dp; também no menu ("Responder") e como ação de acessibilidade (o toque longo vira "Ações da mensagem" para o TalkBack) ✔ cdfb8cf
@@ -734,6 +749,7 @@
 - [x] Original em outra conversa → abrir aquela conversa (se participo) — `RotaChat(conversa, mensagem)`; de quem não participo a citação não é tocável ✔ 2a4cc59
 - [x] Erro → "Não foi possível localizar esta mensagem no contexto da conversa." — não achou, falhou a rede ou a conversa de origem não é minha (+ testes) ✔ 2a4cc59
 - [x] 🆕 `7322e83` Encaminhada de encaminhada (FC-520): dentro da citação, não repetir os conteúdos que a citação de baixo já mostra (`semCopiasDaReferencia`: uma cópia por `tipo:conteudo` igual) ✔ b7d6ef2
+- [ ] 🆕 `d202c06` Destaque ao ir para uma mensagem: faixa da largura toda, que aparece na hora, fica 1,5 s e some em 0,7 s (MSG-06, FC-524)
 
 ### 7.6 Encaminhar, copiar e responder no privado (FC-506, FC-507, FC-512)
 - [x] Encaminhar: tela de destino (conversas exceto a de origem + contatos sem direta), com busca — folha "Encaminhar mensagem" (`EncaminharMensagem`, `destinosParaEncaminhar`, textos do web) (+ testes) ✔ 19add2b
@@ -805,6 +821,13 @@
 - [x] 🆕 `eaa8bac` Votação oculta revelada (3.4): resumo só de leitura "📊 <pergunta>" + contagem por opção ("Votação encerrada" se for o caso); "Carregando votação..." / erro ✔ b6d8631
 - [x] **Teste:** criar no celular, votar no web → a barra atualiza no celular sem recarregar — criada no emulador como A; o voto do B foi pela API (mesma rota e WS 62 que o web usa) e a barra mudou na hora ✔ b6d8631
 
+### 7.13 🆕 Postagens em grupo (FC-317, FC-522, MSG-22, ENV-26) — servidor `12cf0cf`, web `d202c06`
+- [ ] DTO e rotas: `postagem {titulo, respostas, nao_lidas, ultimas}` na mensagem; `GET /postagem/respostas?id=`, `POST /postagem/visualizar {postagem_id}`; WS 64 (o mínimo, para o contador, vem antes, no 8.7)
+- [ ] Bolha de postagem: "Postagem · <remetente>" (ou "Você"), título, conteúdos, "Nenhuma resposta ainda" / "1 resposta" / "N respostas", selo "N novas", as 2 últimas respostas, "Ver todas as N" / "Mostrar menos"; resposta apagada = "Mensagem apagada"; classificação depois de Excluída e Chamada, antes de Imagem
+- [ ] Responder embaixo: campo "Responder à postagem" (só texto), `PUT /mensagem {…, postagem_id}`, recarregar as respostas e a lista
+- [ ] Criar: "+" › "Postagem" (só grupo), faixa "Postagem: as respostas ficam embaixo dela" com "Título (opcional)" (até 150) e X "Não postar"; a próxima mensagem vira a postagem (`postagem:{titulo}`)
+- [ ] **Teste:** postar e responder dos dois lados (web e Android); o contador zera; a notificação de resposta chega (5.4)
+
 ---
 
 ## Etapa 8 — Atividades, pesquisa, perfil e configurações
@@ -826,6 +849,7 @@
 - [x] Global: "Pesquisar em todos os chats" → `GET /pesquisar?texto=&conversa=0` ✔ 28cef66
 - [x] Resultados agrupados por conversa: remetente, data `dd/MM/aa HH:mm`, trecho com o termo destacado ✔ 28cef66
 - [x] Estados "Pesquisando…" / "Nenhum resultado encontrado." ✔ 28cef66
+- [ ] 🆕 `d202c06` Painel de resultados novo: "N resultados para “termo”" / "Nenhuma mensagem com “termo”"; cada resultado com autor ("Você"), quando e o trecho com o termo destacado; do mais antigo ao mais novo (PES-01, FC-524)
 
 ### 8.3 Perfil (FC-802, AUT-06, AUT-07, AUT-08)
 - [x] Editar nome e e-mail → `PATCH /usuario {id, nome, email}` → "Dados atualizados com sucesso." ✔ 143d8d6
@@ -848,6 +872,8 @@
 - [x] `GET /usuario/permissoes` → mostrar Sistema (`parametros`) e Acessos (`permissoes`) só para quem tem (relido a cada abertura da aba e depois de mexer em Acessos) ✔ afd3269
 - [x] Sistema: `GET /parametros`; editar Firebase (ID do projeto, e-mail, chave — nunca exibida), forçar relay TURN, dias de gravação (0–36500), transcritor (URL, idioma); `PATCH /parametros` só com o que mudou ✔ afd3269
 - [x] Acessos: `GET /permissoes` → tabela usuário × permissão com busca; `PUT /permissao/usuario {usuario_id, codigo}`; `DELETE /permissao/usuario?usuario_id=&codigo=`; aviso de "modo aberto" (no celular, uma linha por usuário com uma caixa por permissão) ✔ afd3269
+- [ ] 🆕 `769bd7d` Configurações › Privacidade: "Aparecer offline", "Mostrar o visto por último", "Mostrar quando estou na conversa" (textos do web; `GET /usuario/privacidade`, `PATCH /usuario`; com "Aparecer offline", as outras duas desabilitadas) (CFG-09, FC-810)
+- [ ] 🆕 `769bd7d` Sistema › "Inteligência artificial" (endereço, modelo, token, "Testar conexão") — uso de administrador; avaliar se fica só no web (CFG-07, FC-812)
 
 ### 8.6 Anexos da conversa (FC-809, ANX-13)
 - [x] A partir do perfil ou do grupo: "Ver anexos" (🆕 `eaa8bac`: no web, os anexos ficam dentro do painel do grupo) — folha do perfil (lista e cabeçalho) e item nos dados do grupo ✔ 95b9bb5
@@ -855,6 +881,20 @@
 - [x] Filtros: Todos / Enviados / Recebidos e Todos / Imagens / Arquivos / Áudios / Gravações ✔ 95b9bb5
 - [x] Imagens em grade; demais em lista (nome, tamanho, data, autor); ações "Abrir mensagem" e "Baixar" — o toque abre: imagem e vídeo no visualizador do chat, PDF no do app, o resto com outro app ✔ 95b9bb5
 - [x] Paginação infinita ✔ 95b9bb5
+
+### 8.7 🆕 O que o update de 2026-10-13 quebrou (servidor `12cf0cf`, web `d202c06`) — fazer primeiro
+- [ ] Postagens: as respostas ficam fora do fluxo, mas contam nas não lidas e viram a prévia da lista — no emulador, depois de abrir o grupo, ficou "1 não lida" para sempre. Ler `postagem` no DTO, `POST /postagem/visualizar {postagem_id}` quando a postagem aparece, tratar o WS 64 e não reconsultar em laço os ids do WS 3 que são respostas (FC-316)
+- [ ] Figurinhas: o web passou a usar só o pacote "Noto" (55, `noto/<nome>`) e apagou básico/rostos/coisas — hoje as do web aparecem no Android como "Figurinha", e as do Android no web. Embutir o pacote Noto nos assets (3,7 MB), seletor só com ele e o crédito "Animated Noto Emoji © Google, CC BY 4.0"; manter os assets antigos para desenhar mensagens antigas (FC-417, ENV-04)
+- [ ] "Chamar de novo" do web não toca no Android: o WS 51 de uma chamada que o aparelho já recusou ou perdeu é ignorado (`encerradas` no `GerenciadorChamadas`) — conferir `GET /chamada/dados` e tocar se o meu status voltou a 1 com a chamada em andamento (+ teste) (FC-724)
+- [ ] Chat da chamada reaproveitado: `PUT /chamada/chat` pode devolver a conversa de origem (até a direta); quem não é membro dela recebe o WS 57 `chat` e 403 ao abrir — conferir que o Android abre a conversa de origem e avisa no 403 em vez de falhar calado (FC-725, CHA-18, CHA-24)
+- [ ] **Teste:** no emulador contra o web: a postagem com resposta zera o contador; figurinha Noto nos dois sentidos; o "Chamar de novo" do web toca no Android; o chat de uma chamada 1:1 abre a própria conversa
+
+### 8.8 🆕 Recursos de IA (FC-419, FC-811, FC-523, CON-14, ENV-25, GER-08) — `769bd7d`, `05507a0`, `f798e9c`
+- [ ] `GET /recursos` uma vez por sessão → `{transcricao, ia}`; esconder Transcrever, Resumir e Sugestão quando o servidor não tem (GER-08)
+- [ ] "Resumir conversa" no "⋮" do chat (só com IA): períodos "Últimas 24 horas", "7 dias", "30 dias", "Últimas 400 mensagens"; `POST /conversa/resumo` e `GET /conversa/resumo?id=` a cada 2 s; assuntos com pendências e "Ver na conversa (N mensagens)" (CON-14)
+- [ ] Guardar o último resumo de cada conversa no aparelho (Room) e retomar a consulta se estava processando; linha "Resumo de dd/MM às HH:MM · período · N mensagens" (CON-14)
+- [ ] Sugestão de texto (`POST /ia/sugestao`, 600 ms parado, ≥ 3 caracteres, cursor no fim): no celular, chip de sugestão acima do teclado em vez do Tab; chave "Sugerir a continuação ao digitar" na Privacidade, preferência do aparelho (ENV-25) — baixa prioridade
+- [ ] **Teste:** com um servidor de IA configurado no Sistema do servidor de dev — ⛔ mexe nos parâmetros do servidor: pedir antes
 
 ---
 

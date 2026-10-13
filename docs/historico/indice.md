@@ -18,6 +18,7 @@
 - 2026-10-06 · [Commits da noite: votação, campo rico, chat completo na chamada](2026-10-06-03-sincronizacao-votacao-campo-rico.md) — servidor `8031fa5` (enquete, WS 62, tipo 8) e web `39d06f9`; 136 funcionalidades; novos FC-315/415/416/516–518/723
 - 2026-10-08 · [Sincronização: limite de reações, votação com data final e painel do grupo](2026-10-08-20-sincronizacao-reacoes-votacao-prazo.md) — servidor `d4435db`, `5cad911` (69 rotas, migração 036) e web `eaa8bac`, `785bdef`; docs 00–08, OpenAPI e linhas 🆕 no TODO (2.10, 6.13, 7.2, 7.12, 8.6)
 - 2026-10-08 · [Sincronização: agendadas fora do chat, rascunho e encaminhada de encaminhada](2026-10-08-31-sincronizacao-agendadas-rascunho.md) — web `7322e83`, `e8d82cb` e servidor `779c8ed` (só script); docs 00, 03 (ENV-23, total 137), 05, 06 (FC-519, FC-520) e linhas 🆕 no TODO (7.5, 7.10, 7.11)
+- 2026-10-13 · [Sincronização: presença, confirmação de leitura, IA, chat da chamada e postagens](2026-10-13-01-sincronizacao-presenca-ia-postagens.md) — servidor `12cf0cf` (81 rotas, migrações 037–042, WS 8/63/64) e web `d202c06` (150 funcionalidades); docs 00–08 e OpenAPI; **TODO 8.7: três quebras P0** (contador preso por respostas de postagem, figurinhas Noto, "Chamar de novo" sem toque)
 
 ## Repositório e build
 - 2026-10-06 · [Etapa 0 — preservação, limpeza e organização do repositório](2026-10-06-05-etapa-0-repositorio.md) — branch/tag legado, 11 stashes em tags e patches, limpeza, wrapper versionado, docs em `docs/legado/`, ADR 0001, README; push pendente
