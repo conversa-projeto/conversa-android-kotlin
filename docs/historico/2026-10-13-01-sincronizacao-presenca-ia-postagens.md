@@ -4,7 +4,7 @@
 - **Tipo:** documentação
 - **Itens:** `TODO.md` 8.7 e 8.8 (novas), 7.13 (nova) e linhas 🆕 em 2.6, 2.10, 2.11, 3.5, 3.8, 4.8, 5.4, 6.10, 6.11, 6.13, 7.2, 7.5, 8.2 e 8.5; FC-215–218, 316–317, 417–419, 521–524, 610, 724–728, 810–812; S17–S22
 - **Branch:** `reescrita`
-- **Commits:** (preencher)
+- **Commits:** `70d3385`
 - **Commits de origem** (pull feito em 2026-10-13, `--ff-only`; as cópias locais estavam 5 commits atrás em cada repositório):
   - **Servidor (`779c8ed` → `12cf0cf`):**
     - `b8ea0c2` "Presença, confirmação de leitura, resumo por IA e chamar de novo" (migrações 037–041);
