@@ -46,6 +46,7 @@ import androidx.lifecycle.viewModelScope
 import com.conversa.app.core.data.SessaoRepositorio
 import com.conversa.app.core.data.contatos.ContatosRepositorio
 import com.conversa.app.core.data.conversas.ConversasRepositorio
+import com.conversa.app.core.data.presenca.PresencaRepositorio
 import com.conversa.app.core.model.Contato
 import com.conversa.app.core.model.MembroConversa
 import com.conversa.app.core.network.http.mensagemAmigavel
@@ -86,6 +87,8 @@ data class MembrosUiState(
     val renomeando: Boolean = false,
     val adicionando: Boolean = false,
     val saindo: Boolean = false,
+    /** Quem está com o grupo aberto agora: " · nesta conversa" (PRE-03, web `PainelGrupo.vue`). */
+    val presentes: Set<Long> = emptySet(),
 ) {
     val podeRenomear: Boolean get() = nome.isNotBlank() && nome.trim() != nomeOriginal && !renomeando
 }
@@ -107,14 +110,15 @@ class MembrosViewModel @Inject constructor(
     private val conversas: ConversasRepositorio,
     contatos: ContatosRepositorio,
     sessao: SessaoRepositorio,
+    private val presenca: PresencaRepositorio,
 ) : ViewModel() {
     private val conversaId: Long = checkNotNull(salvo["conversaId"])
     private val formulario = MutableStateFlow(MembrosUiState(euId = sessao.sessao.value?.usuarioId ?: 0))
     val eventos = EventosUnicos<EventoMembros>()
 
-    val estado: StateFlow<MembrosUiState> = combine(formulario, contatos.observarOutros()) { f, pessoas ->
+    val estado: StateFlow<MembrosUiState> = combine(formulario, contatos.observarOutros(), presenca.presentes) { f, pessoas, presentes ->
         val dentro = f.membros.map { it.usuarioId }.toSet()
-        f.copy(candidatos = pessoas.filter { it.id !in dentro })
+        f.copy(candidatos = pessoas.filter { it.id !in dentro }, presentes = presentes[conversaId].orEmpty())
     }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), formulario.value)
 
     init {
@@ -123,6 +127,7 @@ class MembrosViewModel @Inject constructor(
             formulario.update { it.copy(nome = conversa.descricao.orEmpty(), nomeOriginal = conversa.descricao.orEmpty()) }
         }
         carregar()
+        viewModelScope.launch { presenca.carregarPresentes(conversaId) }
     }
 
     fun carregar() {
@@ -272,7 +277,11 @@ fun MembrosRotaTela(aoSair: () -> Unit, aoVoltar: () -> Unit, aoVerAnexos: () ->
                     ListItem(
                         headlineContent = {
                             Text(
-                                if (eu) "${membro.nome} (${stringResource(R.string.membros_voce)})" else membro.nome,
+                                when {
+                                    eu -> "${membro.nome} (${stringResource(R.string.membros_voce)})"
+                                    membro.usuarioId in estado.presentes -> membro.nome + stringResource(R.string.membro_nesta_conversa)
+                                    else -> membro.nome
+                                },
                                 maxLines = 1,
                                 overflow = TextOverflow.Ellipsis,
                             )

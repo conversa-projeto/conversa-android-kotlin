@@ -51,7 +51,15 @@ sealed interface EventoSocket {
     /** 57 — sinal entre participantes (tela, ponteiro, chat). */
     data class SinalChamada(val chamadaId: Long, val usuarioId: Long, val dados: JsonObject) : EventoSocket
 
-    data class StatusUsuario(val usuarioId: Long, val online: Boolean) : EventoSocket
+    /**
+     * 60 — o estado de um contato mudou (e o meu, logo depois do login no socket). [estado] é
+     * `ativo`/`ausente`/`offline` (servidor `769bd7d`); [vistoEm] só vem quando muda (texto ISO).
+     */
+    data class StatusUsuario(val usuarioId: Long, val online: Boolean, val estado: String? = null, val vistoEm: String? = null) :
+        EventoSocket
+
+    /** 63 — alguém abriu ([aberta]) ou deixou uma conversa de que participo. */
+    data class PresencaConversa(val conversaId: Long, val usuarioId: Long, val aberta: Boolean) : EventoSocket
 
     /** 61 — atividade nova ou removida (recarregar o contador). */
     data object NovaAtividade : EventoSocket
@@ -95,6 +103,9 @@ object TipoSocket {
     const val CONFIRMACAO_LEITURA = 8
     const val POSTAGEM_ATUALIZADA = 64
     const val CONFIRMACAO_PEDIDA = 65
+
+    /** Enviado: a minha presença `{ativo, conversa_id}`; recebido: quem abriu ou deixou a conversa. */
+    const val PRESENCA = 63
 }
 
 /** Converte o texto recebido no socket em [EventoSocket]. Nunca lança exceção. */
@@ -148,6 +159,13 @@ object EventoSocketParser {
         TipoSocket.STATUS_USUARIO -> EventoSocket.StatusUsuario(
             usuarioId = obj.longo("usuario_id") ?: return null,
             online = obj["online"]?.jsonPrimitive?.booleanOrNull ?: return null,
+            estado = obj.texto("estado"),
+            vistoEm = obj.texto("visto_em"),
+        )
+        TipoSocket.PRESENCA -> EventoSocket.PresencaConversa(
+            conversaId = obj.longo("conversa_id") ?: return null,
+            usuarioId = obj.longo("usuario_id") ?: return null,
+            aberta = obj["aberta"]?.jsonPrimitive?.booleanOrNull ?: return null,
         )
         TipoSocket.NOVA_ATIVIDADE -> EventoSocket.NovaAtividade
         TipoSocket.ENQUETE_ATUALIZADA -> EventoSocket.EnqueteAtualizada(

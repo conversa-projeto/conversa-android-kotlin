@@ -67,7 +67,10 @@ class ChatViewModelTest {
     }
     private val contatos = mockk<ContatosRepositorio> { every { observarOutros() } returns MutableStateFlow(emptyList()) }
     private val presenca = mockk<PresencaRepositorio> {
-        every { online } returns MutableStateFlow(setOf(8L))
+        every { presencas } returns
+            MutableStateFlow(mapOf(8L to com.conversa.app.core.model.PresencaContato(com.conversa.app.core.model.EstadoPresenca.ATIVO)))
+        every { presentes } returns MutableStateFlow(mapOf(42L to setOf(8L)))
+        coEvery { carregarPresentes(any()) } returns Unit
         every { digitando } returns MutableStateFlow(emptyMap())
         every { gravando } returns MutableStateFlow(emptyMap())
     }
@@ -155,6 +158,9 @@ class ChatViewModelTest {
         val estado = vm.estado.value
         assertThat(estado.pronto).isTrue()
         assertThat(estado.online).isTrue()
+        // A outra pessoa está com a conversa aberta: "nesta conversa" (PRE-03).
+        assertThat(estado.outroNestaConversa).isTrue()
+        coVerify { presenca.carregarPresentes(42) }
         val ordem = estado.itens.map { (it as? ItemChat.Bolha)?.mensagem?.id ?: if (it is ItemChat.NaoLidas) -99L else 0L }
         // A minha (2) não conta como não lida; a linha fica antes da 3.
         assertThat(ordem).containsExactly(0L, 1L, 2L, -99L, 3L, 4L).inOrder()

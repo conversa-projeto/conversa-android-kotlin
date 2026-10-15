@@ -130,6 +130,8 @@ data class ConversaCores(
     val fundoVisualizadorMidia: Color,
     /** PROPOSTA provisória: o FMX não tem indicador online (docs/design/cores.md §9). */
     val online: Color,
+    /** PROPOSTA provisória: presença "ausente" (servidor `769bd7d`); o FMX não tem (docs/design/cores.md §9, pergunta 13). */
+    val ausente: Color,
 )
 
 internal val ConversaCoresClaro = ConversaCores(
@@ -173,6 +175,7 @@ internal val ConversaCoresClaro = ConversaCores(
     overlayModal = Color(0x64000000),
     fundoVisualizadorMidia = Color(0xC8000000),
     online = Color(0xFF43A047),
+    ausente = Color(0xFFFFB300),
 )
 
 /** PROPOSTA (o FMX não tem modo escuro). */

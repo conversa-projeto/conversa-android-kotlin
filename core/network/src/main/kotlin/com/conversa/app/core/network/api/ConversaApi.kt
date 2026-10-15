@@ -50,6 +50,7 @@ import com.conversa.app.core.network.dto.PedirConfirmacaoRequisicao
 import com.conversa.app.core.network.dto.PermissaoUsuarioDto
 import com.conversa.app.core.network.dto.PermissoesDto
 import com.conversa.app.core.network.dto.PrazoEnqueteRequisicao
+import com.conversa.app.core.network.dto.PresencaContatoDto
 import com.conversa.app.core.network.dto.QuantidadeDto
 import com.conversa.app.core.network.dto.ReacaoRequisicao
 import com.conversa.app.core.network.dto.ReacaoResposta
@@ -122,6 +123,14 @@ interface ConversaApi {
 
     @GET("contatos/online")
     suspend fun contatosOnline(): List<Long>
+
+    /** Estado (ativo/ausente/offline) e "visto por último" de quem tem direta comigo (servidor `769bd7d`). */
+    @GET("contatos/presenca")
+    suspend fun contatosPresenca(): List<PresencaContatoDto>
+
+    /** Quem está com a conversa aberta agora (sem mim). */
+    @GET("conversa/presentes")
+    suspend fun presentesConversa(@Query("conversa") conversaId: Long): List<Long>
 
     // --- Conversas ---
 

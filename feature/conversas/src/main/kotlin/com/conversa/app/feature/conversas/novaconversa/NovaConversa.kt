@@ -39,8 +39,10 @@ import androidx.lifecycle.viewModelScope
 import com.conversa.app.core.data.contatos.ContatosRepositorio
 import com.conversa.app.core.data.conversas.ConversasRepositorio
 import com.conversa.app.core.data.presenca.PresencaRepositorio
+import com.conversa.app.core.model.EstadoPresenca
 import com.conversa.app.core.model.avatarDoContato
 import com.conversa.app.core.model.contatoCombina
+import com.conversa.app.core.model.estadoDe
 import com.conversa.app.core.network.http.mensagemAmigavel
 import com.conversa.app.core.network.http.paraErroApi
 import com.conversa.app.core.ui.componentes.Avatar
@@ -83,14 +85,24 @@ class NovaConversaViewModel @Inject constructor(
     val estado: StateFlow<NovaConversaUiState> = combine(
         contatos.observarOutros(),
         conversas.observarTodas(),
-        presenca.online,
+        presenca.presencas,
         termo,
         abrindo,
-    ) { pessoas, lista, online, t, abrindoAgora ->
+    ) { pessoas, lista, presencas, t, abrindoAgora ->
         NovaConversaUiState(
             termo = t,
             contatos = pessoas.filter { contatoCombina(it, t) }
-                .map { ItemContato(it.id, it.nome, it.login, avatarDoContato(it, lista), it.id in online) },
+                .map {
+                    val estado = presencas.estadoDe(it.id)
+                    ItemContato(
+                        it.id,
+                        it.nome,
+                        it.login,
+                        avatarDoContato(it, lista),
+                        estado == EstadoPresenca.ATIVO,
+                        estado == EstadoPresenca.AUSENTE,
+                    )
+                },
             abrindo = abrindoAgora,
         )
     }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), NovaConversaUiState())
@@ -178,7 +190,7 @@ fun NovaConversaRotaTela(
                     ListItem(
                         headlineContent = { Text(contato.nome, maxLines = 1, overflow = TextOverflow.Ellipsis) },
                         supportingContent = { Text(contato.detalhe, maxLines = 1, overflow = TextOverflow.Ellipsis) },
-                        leadingContent = { Avatar(contato.nome, contato.avatarUrl, online = contato.online) },
+                        leadingContent = { Avatar(contato.nome, contato.avatarUrl, online = contato.online, ausente = contato.ausente) },
                         modifier = Modifier.clickable(enabled = !estado.abrindo) { viewModel.abrir(contato.id) },
                     )
                 }

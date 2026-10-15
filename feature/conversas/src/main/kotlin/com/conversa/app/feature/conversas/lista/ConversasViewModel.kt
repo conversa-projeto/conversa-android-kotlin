@@ -9,7 +9,9 @@ import com.conversa.app.core.data.presenca.PresencaRepositorio
 import com.conversa.app.core.data.sessao.IniciadorSessao
 import com.conversa.app.core.model.Contato
 import com.conversa.app.core.model.Conversa
+import com.conversa.app.core.model.EstadoPresenca
 import com.conversa.app.core.model.FichaUsuario
+import com.conversa.app.core.model.PresencaContato
 import com.conversa.app.core.model.PreviaConversa
 import com.conversa.app.core.model.RotuloData
 import com.conversa.app.core.model.TipoConversa
@@ -17,6 +19,7 @@ import com.conversa.app.core.model.avatarDoContato
 import com.conversa.app.core.model.contatoCombina
 import com.conversa.app.core.model.conversaCombina
 import com.conversa.app.core.model.diretaCom
+import com.conversa.app.core.model.estadoDe
 import com.conversa.app.core.model.fichaDaConversa
 import com.conversa.app.core.model.ordenarConversas
 import com.conversa.app.core.model.previaDaConversa
@@ -55,11 +58,20 @@ data class ItemConversa(
     val podeDescer: Boolean = false,
     /** Direta: o perfil da pessoa, aberto pelo avatar (8.4). */
     val ficha: FichaUsuario? = null,
+    /** Direta com a pessoa ausente (bolinha amarela; [online] é a verde, de ativo). */
+    val ausente: Boolean = false,
 )
 
 /** Contato sem conversa direta, na seção "Nova conversa" (CON-02). */
 @Immutable
-data class ItemContato(val id: Long, val nome: String, val detalhe: String, val avatarUrl: String?, val online: Boolean)
+data class ItemContato(
+    val id: Long,
+    val nome: String,
+    val detalhe: String,
+    val avatarUrl: String?,
+    val online: Boolean,
+    val ausente: Boolean = false,
+)
 
 @Immutable
 data class ConversasUiState(
@@ -104,9 +116,9 @@ class ConversasViewModel @Inject constructor(
     private val dados = combine(
         conversas.observarTodas(),
         contatos.observarOutros(),
-        presenca.online,
+        presenca.presencas,
         presenca.digitando,
-    ) { lista, pessoas, online, digitando -> Dados(lista, pessoas, online, digitando) }
+    ) { lista, pessoas, presencas, digitando -> Dados(lista, pessoas, presencas, digitando) }
 
     private val controles = combine(termo, arquivadasAbertas, atualizando, erro) { t, abertas, atualizandoAgora, falha ->
         Controles(t, abertas, atualizandoAgora, falha)
@@ -176,7 +188,8 @@ class ConversasViewModel @Inject constructor(
                 titulo = conversa.titulo,
                 avatarUrl = conversa.avatarUrl,
                 grupo = !direta,
-                online = direta && conversa.destinatarioId != null && conversa.destinatarioId in d.online,
+                online = direta && d.presencas.estadoDe(conversa.destinatarioId) == EstadoPresenca.ATIVO,
+                ausente = direta && d.presencas.estadoDe(conversa.destinatarioId) == EstadoPresenca.AUSENTE,
                 fixada = conversa.fixada,
                 arquivada = conversa.arquivada,
                 naoLidas = if (conversa.arquivada) 0 else conversa.naoLidas,
@@ -198,7 +211,17 @@ class ConversasViewModel @Inject constructor(
         val arquivadas = if (comTermo) emptyList() else ordenadas.filter { it.arquivada }
         val novaConversa = d.contatos
             .filter { d.conversas.diretaCom(it.id) == null && contatoCombina(it, c.termo) }
-            .map { ItemContato(it.id, it.nome, it.login, avatarDoContato(it, d.conversas), it.id in d.online) }
+            .map {
+                val estado = d.presencas.estadoDe(it.id)
+                ItemContato(
+                    it.id,
+                    it.nome,
+                    it.login,
+                    avatarDoContato(it, d.conversas),
+                    estado == EstadoPresenca.ATIVO,
+                    estado == EstadoPresenca.AUSENTE,
+                )
+            }
 
         return ConversasUiState(
             // Cache vazio e a primeira carga da sessão ainda não terminou: spinner, não "nenhuma conversa".
@@ -216,7 +239,7 @@ class ConversasViewModel @Inject constructor(
     private data class Dados(
         val conversas: List<Conversa>,
         val contatos: List<Contato>,
-        val online: Set<Long>,
+        val presencas: Map<Long, PresencaContato>,
         val digitando: Map<Long, Set<Long>>,
     )
 

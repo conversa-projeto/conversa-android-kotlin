@@ -51,6 +51,12 @@
         <item quantity="other">Mais %1$d reações</item>
     </plurals>
     <string name="online">online</string>
+    <!-- Presença na direta (PRE-03, web ChatHeader.vue) -->
+    <string name="nesta_conversa">nesta conversa</string>
+    <string name="ativo_agora">ativo agora</string>
+    <string name="visto_hoje">visto por último hoje às %1$s</string>
+    <string name="visto_ontem">visto por último ontem às %1$s</string>
+    <string name="visto_em">visto por último em %1$s às %2$s</string>
     <string name="chamada_de_voz">Chamada de voz</string>
     <string name="chamada_de_video">Chamada de vídeo</string>
     <string name="membros_do_grupo">Membros do grupo</string>

@@ -14,6 +14,7 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asSharedFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
+import kotlinx.serialization.json.JsonNull
 import kotlinx.serialization.json.JsonObject
 import kotlinx.serialization.json.JsonPrimitive
 import kotlinx.serialization.json.buildJsonObject
@@ -101,6 +102,19 @@ class RealtimeClient(
             tentativas = 0
             abrirTravado()
         }
+    }
+
+    /**
+     * A minha presença (tipo 63, PRE-02): [ativo] com o app na frente e a conversa aberta. Devolve
+     * `false` se o socket não está aberto.
+     */
+    fun enviarPresenca(ativo: Boolean, conversaId: Long?): Boolean {
+        val mensagem = buildJsonObject {
+            put("tipo", TipoSocket.PRESENCA)
+            put("ativo", ativo)
+            put("conversa_id", conversaId?.let(::JsonPrimitive) ?: JsonNull)
+        }
+        return synchronized(trava) { socket?.send(mensagem.toString()) ?: false }
     }
 
     /** Sinal da chamada (tipo 57). Devolve `false` se o socket não está aberto. */

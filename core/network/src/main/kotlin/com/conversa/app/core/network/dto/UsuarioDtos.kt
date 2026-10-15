@@ -11,6 +11,14 @@ import kotlinx.serialization.json.JsonElement
 
 // Autenticação, usuário, dispositivo e contatos (contrato §2, §5.1, §7.3).
 
+/** Item de `GET /contatos/presenca`: [estado] é `ativo`/`ausente`/`offline`; [vistoEm] nulo se a pessoa esconde. */
+@Serializable
+data class PresencaContatoDto(
+    @SerialName("usuario_id") val usuarioId: Long,
+    val estado: String = "offline",
+    @SerialName("visto_em") val vistoEm: Instant? = null,
+)
+
 @Serializable
 data class LoginRequisicao(val login: String, val senha: String, @SerialName("dispositivo_id") val dispositivoId: Long? = null)
 

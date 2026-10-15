@@ -76,4 +76,6 @@
         <item quantity="other">%d não puderam ser enviados</item>
     </plurals>
     <string name="membros_ver_anexos">Ver anexos</string>
+    <!-- Presença no grupo (PRE-03, web PainelGrupo.vue) -->
+    <string name="membro_nesta_conversa">" · nesta conversa"</string>
 </resources>

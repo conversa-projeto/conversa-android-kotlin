@@ -69,6 +69,15 @@ class EventoSocketParserTest {
     @Test
     fun `presenca atividade e enquete`() {
         assertThat(ler("""{"tipo":60,"usuario_id":8,"online":true}""")).isEqualTo(EventoSocket.StatusUsuario(8, true))
+        // Servidor `769bd7d`: estado e visto por último (nulo quando não muda).
+        assertThat(ler("""{"tipo":60,"usuario_id":8,"online":false,"estado":"offline","visto_em":"2026-10-15T11:30:00.000Z"}"""))
+            .isEqualTo(EventoSocket.StatusUsuario(8, false, "offline", "2026-10-15T11:30:00.000Z"))
+        assertThat(ler("""{"tipo":60,"usuario_id":8,"online":true,"estado":"ausente","visto_em":null}"""))
+            .isEqualTo(EventoSocket.StatusUsuario(8, true, "ausente", null))
+        // 63: quem abriu ou deixou a conversa.
+        assertThat(
+            ler("""{"tipo":63,"conversa_id":42,"usuario_id":8,"aberta":true}"""),
+        ).isEqualTo(EventoSocket.PresencaConversa(42, 8, true))
         assertThat(ler("""{"tipo":61}""")).isEqualTo(EventoSocket.NovaAtividade)
         assertThat(ler("""{"tipo":62,"enquete_id":42,"conversa_id":50}""")).isEqualTo(EventoSocket.EnqueteAtualizada(42, 50))
     }

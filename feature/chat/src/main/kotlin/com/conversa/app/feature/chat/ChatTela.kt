@@ -82,10 +82,12 @@ import com.conversa.app.core.model.AtividadeConversa
 import com.conversa.app.core.model.ItemChat
 import com.conversa.app.core.model.Mensagem
 import com.conversa.app.core.model.RotuloDia
+import com.conversa.app.core.model.SubtituloPresenca
 import com.conversa.app.core.model.TipoChamada
 import com.conversa.app.core.model.TipoConteudo
 import com.conversa.app.core.model.fichaDaConversa
 import com.conversa.app.core.model.rotuloDia
+import com.conversa.app.core.model.subtituloPresenca
 import com.conversa.app.core.ui.componentes.Avatar
 import com.conversa.app.core.ui.componentes.Carregando
 import com.conversa.app.core.ui.componentes.EstadoVazio
@@ -668,7 +670,7 @@ private fun Cabecalho(estado: ChatUiState, acoes: AcoesChat) {
                 verticalAlignment = Alignment.CenterVertically,
                 horizontalArrangement = Arrangement.spacedBy(10.dp),
             ) {
-                Avatar(conversa?.titulo, conversa?.avatarUrl, tamanho = 38.dp, online = estado.online)
+                Avatar(conversa?.titulo, conversa?.avatarUrl, tamanho = 38.dp, online = estado.online, ausente = estado.ausente)
                 Column {
                     Text(
                         conversa?.titulo.orEmpty(),
@@ -700,8 +702,15 @@ private fun Cabecalho(estado: ChatUiState, acoes: AcoesChat) {
                                 overflow = TextOverflow.Ellipsis,
                             )
                         }
-                        estado.online -> Subtitulo(stringResource(R.string.online))
                         estado.grupo && estado.membros.isNotEmpty() -> Subtitulo(estado.membros)
+                        // Direta (PRE-03): "nesta conversa", "ativo agora", "ausente" ou "visto por último…".
+                        !estado.grupo -> {
+                            val subtitulo =
+                                subtituloPresenca(estado.presencaDoOutro, estado.outroNestaConversa, Instant.now(), ZoneId.systemDefault())
+                            textoDoSubtitulo(subtitulo)?.let { texto ->
+                                Subtitulo(texto, destaque = subtitulo == SubtituloPresenca.NestaConversa)
+                            }
+                        }
                     }
                 }
             }
@@ -740,11 +749,11 @@ private fun Cabecalho(estado: ChatUiState, acoes: AcoesChat) {
 }
 
 @Composable
-private fun Subtitulo(texto: String) {
+private fun Subtitulo(texto: String, destaque: Boolean = false) {
     Text(
         texto,
         style = MaterialTheme.typography.labelSmall,
-        color = MaterialTheme.colorScheme.onSurfaceVariant,
+        color = if (destaque) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurfaceVariant,
         maxLines = 1,
         overflow = TextOverflow.Ellipsis,
     )
@@ -815,4 +824,16 @@ private fun SeparadorNaoLidas() {
         )
         HorizontalDivider(Modifier.weight(1f), color = ConversaTema.cores.separadorNaoLidas)
     }
+}
+
+/** O texto do subtítulo da direta (web `ChatHeader.vue`); nulo = nada. */
+@Composable
+private fun textoDoSubtitulo(subtitulo: SubtituloPresenca): String? = when (subtitulo) {
+    SubtituloPresenca.NestaConversa -> stringResource(R.string.nesta_conversa)
+    SubtituloPresenca.AtivoAgora -> stringResource(R.string.ativo_agora)
+    SubtituloPresenca.Ausente -> stringResource(com.conversa.app.core.ui.R.string.ausente)
+    is SubtituloPresenca.VistoHoje -> stringResource(R.string.visto_hoje, subtitulo.hora)
+    is SubtituloPresenca.VistoOntem -> stringResource(R.string.visto_ontem, subtitulo.hora)
+    is SubtituloPresenca.VistoEm -> stringResource(R.string.visto_em, subtitulo.data, subtitulo.hora)
+    SubtituloPresenca.Nenhum -> null
 }

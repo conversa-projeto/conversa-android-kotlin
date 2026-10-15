@@ -259,7 +259,7 @@ private fun Lista(estado: ConversasUiState, acoes: AcoesConversas, aoMenu: (Long
                 ListItem(
                     headlineContent = { Text(contato.nome, maxLines = 1, overflow = TextOverflow.Ellipsis) },
                     supportingContent = { Text(contato.detalhe, maxLines = 1, overflow = TextOverflow.Ellipsis) },
-                    leadingContent = { Avatar(contato.nome, contato.avatarUrl, online = contato.online) },
+                    leadingContent = { Avatar(contato.nome, contato.avatarUrl, online = contato.online, ausente = contato.ausente) },
                     modifier = Modifier.clickable { acoes.aoAbrirContato(contato.id) },
                 )
             }
@@ -316,7 +316,14 @@ private fun LinhaConversa(
         } else {
             Modifier
         }
-        Avatar(nome = item.titulo, url = item.avatarUrl, tamanho = 48.dp, online = item.online, modifier = toqueNoAvatar)
+        Avatar(
+            nome = item.titulo,
+            url = item.avatarUrl,
+            tamanho = 48.dp,
+            online = item.online,
+            ausente = item.ausente,
+            modifier = toqueNoAvatar,
+        )
         Column(Modifier.weight(1f)) {
             Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(6.dp)) {
                 Text(

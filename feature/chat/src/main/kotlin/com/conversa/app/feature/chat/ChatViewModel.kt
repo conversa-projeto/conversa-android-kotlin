@@ -31,11 +31,13 @@ import com.conversa.app.core.media.PlayerAudio
 import com.conversa.app.core.model.AtividadeConversa
 import com.conversa.app.core.model.Conversa
 import com.conversa.app.core.model.DestinatarioConfirmacao
+import com.conversa.app.core.model.EstadoPresenca
 import com.conversa.app.core.model.ItemChat
 import com.conversa.app.core.model.MembroConversa
 import com.conversa.app.core.model.Mensagem
 import com.conversa.app.core.model.MensagensDoChat
 import com.conversa.app.core.model.PREFIXO_LOCAL
+import com.conversa.app.core.model.PresencaContato
 import com.conversa.app.core.model.StatusDestinatario
 import com.conversa.app.core.model.TipoConteudo
 import com.conversa.app.core.model.TipoConversa
@@ -76,7 +78,10 @@ import kotlinx.coroutines.withContext
 @Immutable
 data class ChatUiState(
     val conversa: Conversa? = null,
-    val online: Boolean = false,
+    /** Direta: o estado e o "visto por último" da outra pessoa (PRE-01, PRE-03). */
+    val presencaDoOutro: PresencaContato? = null,
+    /** Direta: a outra pessoa está com esta conversa aberta ("nesta conversa"). */
+    val outroNestaConversa: Boolean = false,
     /** Grupo: nomes dos membros (some quando alguém digita). */
     val membros: String = "",
     val atividade: AtividadeConversa = AtividadeConversa.Nenhuma,
@@ -117,6 +122,12 @@ data class ChatUiState(
     val confirmacaoNoCampo: ConfirmacaoNoCampo? = null,
 ) {
     val grupo: Boolean get() = conversa?.tipo == TipoConversa.GRUPO
+
+    /** Bolinha verde: a outra pessoa da direta está ativa. */
+    val online: Boolean get() = presencaDoOutro?.estado == EstadoPresenca.ATIVO
+
+    /** Bolinha amarela: a outra pessoa da direta está ausente. */
+    val ausente: Boolean get() = presencaDoOutro?.estado == EstadoPresenca.AUSENTE
 }
 
 /** Pesquisa na conversa (8.2): aberta no cabeçalho, o termo pesquisado e os resultados (nulo = ainda não pesquisou). */
@@ -267,7 +278,7 @@ class ChatViewModel @Inject constructor(
     salvo: SavedStateHandle,
     private val conversas: ConversasRepositorio,
     private val contatos: ContatosRepositorio,
-    presenca: PresencaRepositorio,
+    private val presenca: PresencaRepositorio,
     sessao: SessaoRepositorio,
     private val mensagens: MensagensRepositorio,
     private val envio: EnvioMensagens,
@@ -307,8 +318,14 @@ class ChatViewModel @Inject constructor(
         pessoas.associate { it.id to it.nome } + lista.associate { it.usuarioId to it.nome }
     }
 
-    private val presente = combine(presenca.online, presenca.digitando, presenca.gravando, nomes) { online, digitando, gravando, n ->
-        Presente(online, digitando[conversaId].orEmpty(), gravando[conversaId].orEmpty(), n)
+    private val presente = combine(presenca.presencas, presenca.presentes, presenca.digitando, presenca.gravando, nomes) {
+            presencas,
+            presentes,
+            digitando,
+            gravando,
+            n,
+        ->
+        Presente(presencas, presentes[conversaId].orEmpty(), digitando[conversaId].orEmpty(), gravando[conversaId].orEmpty(), n)
     }
 
     private val fila = MutableStateFlow<List<AnexoLocal>>(emptyList())
@@ -372,7 +389,8 @@ class ChatViewModel @Inject constructor(
         val lista = separadas.visiveis
         ChatUiState(
             conversa = conversa,
-            online = conversa?.tipo == TipoConversa.DIRETA && conversa.destinatarioId in p.online,
+            presencaDoOutro = conversa?.takeIf { it.tipo == TipoConversa.DIRETA }?.destinatarioId?.let { p.presencas[it] },
+            outroNestaConversa = conversa?.tipo == TipoConversa.DIRETA && conversa.destinatarioId in p.presentes,
             membros = if (grupo) membros.value.map { it.nome }.sorted().joinToString(", ") else "",
             atividade = atividadeDaConversa(grupo, p.digitando, p.gravando, p.nomes, eu),
             itens = montarItensChat(lista, naoLida?.takeIf { it > 0 }, grupo, eu, relogio.zone),
@@ -429,6 +447,8 @@ class ChatViewModel @Inject constructor(
             val lista = mensagens.observar(conversaId).first()
             primeiraNaoLida.value = lista.firstOrNull { it.remetenteId != eu && !it.visualizada && it.id > 0 && !it.oculta }?.id ?: 0
         }
+        // Quem está com esta conversa aberta (PRE-03); depois, o WS 63 mantém em dia.
+        viewModelScope.launch { presenca.carregarPresentes(conversaId) }
         viewModelScope.launch {
             // Conversa que ainda não está no aparelho (o grupo do chat da chamada recém-criado):
             // relê a lista, como o web, para o cabeçalho ter nome e membros.
@@ -1151,7 +1171,14 @@ class ChatViewModel @Inject constructor(
 
     private data class Carga(val carregou: Boolean = false, val anteriores: Boolean = false, val inicio: Boolean = false)
 
-    private data class Presente(val online: Set<Long>, val digitando: Set<Long>, val gravando: Set<Long>, val nomes: Map<Long, String>)
+    private data class Presente(
+        val presencas: Map<Long, PresencaContato>,
+        /** Quem está com esta conversa aberta. */
+        val presentes: Set<Long>,
+        val digitando: Set<Long>,
+        val gravando: Set<Long>,
+        val nomes: Map<Long, String>,
+    )
 
     companion object {
         /** Igual ao web (`DIGITANDO_DEBOUNCE_MS`). */

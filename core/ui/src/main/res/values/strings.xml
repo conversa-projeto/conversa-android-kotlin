@@ -5,6 +5,7 @@
     <string name="tentar_de_novo">Tentar de novo</string>
     <string name="voltar">Voltar</string>
     <string name="online">online</string>
+    <string name="ausente">ausente</string>
     <string name="digitando">Digitando…</string>
     <string name="carregando">Carregando…</string>
     <!-- Texto do web: "Conexao em tempo real indisponivel — usando atualizacao periodica" -->

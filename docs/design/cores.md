@@ -150,6 +150,7 @@ Ocorrências = declarações explícitas em `.fmx` (incl. `TColorAnimation` e `S
 ### 4.4 Papéis pedidos sem equivalente no FMX
 
 - **Indicador online:** não existe cor de presença no FMX (nenhum componente "online"). → pergunta em aberto.
+- **Presença "ausente"** (servidor `769bd7d`, 2026-10-15): o FMX também não tem; nenhuma cor amarela/âmbar na paleta. → pergunta 13.
 - **Modo escuro:** só `bin/tema/escuro.pss`, inativo.
 - **Botão danger com texto:** não existe botão vermelho com texto além de "Recusar" (`#E53935`).
 
@@ -290,6 +291,7 @@ Derivado de `bin/tema/escuro.pss` (`fundo #323232`, `fundo_claro_1 #3C3C3C`, `fu
 | `overlayModal` | `#64000000` | `#64000000` | `ModalView` |
 | `fundoVisualizadorMidia` | `#C8000000` | `#C8000000` | `Visualizador.Midia.fmx:5` |
 | `online` | **indefinido** | **indefinido** | não existe no FMX (pergunta 1) |
+| `ausente` | **PROPOSTA** `#FFB300` | **PROPOSTA** `#FFB300` | não existe no FMX (pergunta 13); bolinha de "ausente" |
 
 ### 6.4 Destaque de código (papel novo, sem cor nova) — 2026-10-08
 
@@ -462,6 +464,7 @@ data class ConversaCores(
     val overlayModal: Color,
     val fundoVisualizadorMidia: Color,
     val online: Color, // INDEFINIDO no FMX — ver perguntas em aberto
+    val ausente: Color, // INDEFINIDO no FMX — ver a pergunta 13
 )
 
 val ConversaCoresClaro = ConversaCores(
@@ -508,6 +511,7 @@ val ConversaCoresClaro = ConversaCores(
     overlayModal = Color(0x64000000),
     fundoVisualizadorMidia = Color(0xC8000000),
     online = Color(0xFF43A047), // PROPOSTA provisória — não existe no FMX
+    ausente = Color(0xFFFFB300), // PROPOSTA provisória — não existe no FMX (pergunta 13)
 )
 
 // PROPOSTA (FMX sem modo escuro)
@@ -588,3 +592,4 @@ fun ConversaTheme(
 10. **Tela de chamada no Android:** o FMX é claro; apps móveis costumam usar chamada escura. Se desejado, `chamadaFundo` escuro é decisão nova (não está no FMX).
 11. **Cabeçalho:** `Conversa.Chat.fmx` usa `#F0F0F0`, mas `Conversa.Conteudo.fmx:13` usa `#FFFFFF`. Proposta: top bar = `#F0F0F0` (`surfaceContainer`).
 12. **Destaque de código (§6.4):** como o FMX não tem, o Android reaproveita tokens da paleta (azul, verde de atender, cinza terciário, vermelho de encerrar, link). Confirmar se está bom ou se prefere outro esquema.
+13. **Presença "ausente" (2026-10-15):** o servidor passou a ter ativo/ausente/offline. O FMX não tem presença nem cor amarela. Proposta provisória: âmbar `#FFB300` (o mesmo nos dois temas), ao lado do verde provisório de `online`. Confirmar a cor, ou trocar por outra da paleta.

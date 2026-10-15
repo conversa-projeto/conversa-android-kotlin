@@ -36,7 +36,7 @@ class ConversasViewModelTest {
     private val agora = Instant.parse("2026-10-07T15:00:00Z")
     private val conversas = MutableStateFlow<List<Conversa>>(emptyList())
     private val contatos = MutableStateFlow<List<Contato>>(emptyList())
-    private val online = MutableStateFlow<Set<Long>>(emptySet())
+    private val presencas = MutableStateFlow<Map<Long, com.conversa.app.core.model.PresencaContato>>(emptyMap())
     private val digitando = MutableStateFlow<Map<Long, Set<Long>>>(emptyMap())
     private val carregada = MutableStateFlow(false)
     private val falha = MutableStateFlow<ErroApi?>(null)
@@ -44,7 +44,7 @@ class ConversasViewModelTest {
     private val repoConversas = mockk<ConversasRepositorio>(relaxed = true) { every { observarTodas() } returns conversas }
     private val repoContatos = mockk<ContatosRepositorio>(relaxed = true) { every { observarOutros() } returns contatos }
     private val presenca = mockk<PresencaRepositorio> {
-        every { online } returns this@ConversasViewModelTest.online
+        every { presencas } returns this@ConversasViewModelTest.presencas
         every { digitando } returns this@ConversasViewModelTest.digitando
     }
     private val iniciador = mockk<IniciadorSessao> {
@@ -111,7 +111,7 @@ class ConversasViewModelTest {
             conversa(2, tipo = TipoConversa.GRUPO, ultima = 90, fixada = 1),
             conversa(3, destinatario = 9, ultima = 70, naoLidas = 5, arquivada = true),
         )
-        online.value = setOf(8L)
+        presencas.value = mapOf(8L to com.conversa.app.core.model.PresencaContato(com.conversa.app.core.model.EstadoPresenca.ATIVO))
         digitando.value = mapOf(1L to setOf(8L))
         val (_, estado) = criar()
         advanceUntilIdle()
@@ -120,6 +120,13 @@ class ConversasViewModelTest {
         assertThat(s.principais.map { it.id }).containsExactly(2L, 1L).inOrder()
         val direta = s.principais.last()
         assertThat(direta.online).isTrue()
+        assertThat(direta.ausente).isFalse()
+        // Ausente: a bolinha amarela, não a verde.
+        presencas.value = mapOf(8L to com.conversa.app.core.model.PresencaContato(com.conversa.app.core.model.EstadoPresenca.AUSENTE))
+        advanceUntilIdle()
+        val ausente = estado().principais.last()
+        assertThat(ausente.ausente).isTrue()
+        assertThat(ausente.online).isFalse()
         assertThat(direta.digitando).isTrue()
         assertThat(direta.naoLidas).isEqualTo(2)
         assertThat(direta.previa).isEqualTo(PreviaConversa.Texto("oi @Ana"))

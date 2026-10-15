@@ -41,11 +41,13 @@ import com.conversa.app.core.data.anexos.Compartilhamentos
 import com.conversa.app.core.data.contatos.ContatosRepositorio
 import com.conversa.app.core.data.conversas.ConversasRepositorio
 import com.conversa.app.core.data.presenca.PresencaRepositorio
+import com.conversa.app.core.model.EstadoPresenca
 import com.conversa.app.core.model.TipoConversa
 import com.conversa.app.core.model.avatarDoContato
 import com.conversa.app.core.model.contatoCombina
 import com.conversa.app.core.model.conversaCombina
 import com.conversa.app.core.model.diretaCom
+import com.conversa.app.core.model.estadoDe
 import com.conversa.app.core.model.ordenarConversas
 import com.conversa.app.core.network.http.mensagemAmigavel
 import com.conversa.app.core.network.http.paraErroApi
@@ -74,6 +76,7 @@ data class Destino(
     val detalhe: String,
     val avatarUrl: String?,
     val online: Boolean,
+    val ausente: Boolean = false,
 )
 
 @Immutable
@@ -111,15 +114,25 @@ class EnviarParaViewModel @Inject constructor(
     val estado: StateFlow<EnviarParaUiState> = combine(
         conversas.observarTodas(),
         contatos.observarOutros(),
-        presenca.online,
+        presenca.presencas,
         termo,
         combine(abrindo, compartilhamentos.pendente) { a, p -> a to p },
-    ) { lista, pessoas, online, t, (abrindoAgora, pendente) ->
+    ) { lista, pessoas, presencas, t, (abrindoAgora, pendente) ->
         val dasConversas = ordenarConversas(lista).filter { conversaCombina(it, t) }.map {
-            Destino(it.id, null, it.titulo, "", it.avatarUrl, it.tipo == TipoConversa.DIRETA && it.destinatarioId in online)
+            val estado = if (it.tipo == TipoConversa.DIRETA) presencas.estadoDe(it.destinatarioId) else EstadoPresenca.OFFLINE
+            Destino(it.id, null, it.titulo, "", it.avatarUrl, estado == EstadoPresenca.ATIVO, estado == EstadoPresenca.AUSENTE)
         }
         val semConversa = pessoas.filter { lista.diretaCom(it.id) == null && contatoCombina(it, t) }.map {
-            Destino(null, it.id, it.nome, it.login, avatarDoContato(it, lista), it.id in online)
+            val estado = presencas.estadoDe(it.id)
+            Destino(
+                null,
+                it.id,
+                it.nome,
+                it.login,
+                avatarDoContato(it, lista),
+                estado == EstadoPresenca.ATIVO,
+                estado == EstadoPresenca.AUSENTE,
+            )
         }
         EnviarParaUiState(
             destinos = dasConversas + semConversa,
@@ -211,7 +224,9 @@ fun EnviarParaRotaTela(aoAbrirConversa: (Long) -> Unit, aoVoltar: () -> Unit, vi
                         ListItem(
                             headlineContent = { Text(destino.titulo, maxLines = 1, overflow = TextOverflow.Ellipsis) },
                             supportingContent = destino.detalhe.takeIf { it.isNotBlank() }?.let { { Text(it) } },
-                            leadingContent = { Avatar(destino.titulo, destino.avatarUrl, online = destino.online) },
+                            leadingContent = {
+                                Avatar(destino.titulo, destino.avatarUrl, online = destino.online, ausente = destino.ausente)
+                            },
                             modifier = Modifier.clickable(enabled = !estado.abrindo) { viewModel.escolher(destino) },
                         )
                     }

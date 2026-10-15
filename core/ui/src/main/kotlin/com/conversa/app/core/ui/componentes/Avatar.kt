@@ -56,16 +56,22 @@ fun Avatar(
     tamanho: Dp = 40.dp,
     online: Boolean = false,
     aoFalhar: (() -> Unit)? = null,
+    /** Ausente (PRE-01, servidor `769bd7d`): a bolinha fica amarela. */
+    ausente: Boolean = false,
 ) {
-    val textoOnline = stringResource(R.string.online)
+    val estado = when {
+        ausente -> stringResource(R.string.ausente)
+        online -> stringResource(R.string.online)
+        else -> null
+    }
     Box(
         modifier = modifier
             .size(tamanho)
-            .semantics { contentDescription = if (online) "${nome.orEmpty()}, $textoOnline" else nome.orEmpty() },
+            .semantics { contentDescription = if (estado != null) "${nome.orEmpty()}, $estado" else nome.orEmpty() },
     ) {
         ImagemAvatar(nome, url, tamanho, aoFalhar)
-        if (online) {
-            // Bolinha verde no canto (PRE-01), com borda da cor do fundo para destacar.
+        if (online || ausente) {
+            // Bolinha no canto (PRE-01): verde ativo, amarela ausente; borda da cor do fundo para destacar.
             val diametro = (tamanho.value * 0.3f).coerceAtLeast(10f).dp
             Box(
                 modifier = Modifier
@@ -75,7 +81,7 @@ fun Avatar(
                     .background(MaterialTheme.colorScheme.surface)
                     .padding(2.dp)
                     .clip(CircleShape)
-                    .background(ConversaTema.cores.online),
+                    .background(if (ausente) ConversaTema.cores.ausente else ConversaTema.cores.online),
             )
         }
     }
