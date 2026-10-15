@@ -30,11 +30,13 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.LocalUriHandler
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.role
 import androidx.compose.ui.semantics.semantics
+import androidx.compose.ui.text.style.TextDecoration
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import com.airbnb.lottie.compose.LottieAnimation
@@ -113,6 +115,19 @@ fun SeletorDeFigurinhas(aoEscolher: (String) -> Unit, aoFechar: () -> Unit) {
                 PACOTES_FIGURINHAS.forEachIndexed { i, pacote ->
                     Tab(selected = aba == i, onClick = { aba = i }, text = { Text(pacote.nome) })
                 }
+            }
+            // Pacote de terceiros: o crédito que a licença pede (CC BY), como o web.
+            PACOTES_FIGURINHAS[aba].credito?.let { credito ->
+                val abrir = LocalUriHandler.current
+                Text(
+                    credito.texto,
+                    style = MaterialTheme.typography.labelSmall,
+                    color = ConversaTema.cores.textoTerciario,
+                    textDecoration = TextDecoration.Underline,
+                    modifier = Modifier
+                        .padding(horizontal = 16.dp, vertical = 4.dp)
+                        .clickable(role = Role.Button) { abrir.openUri(credito.link) },
+                )
             }
             LazyVerticalGrid(
                 columns = GridCells.Adaptive(80.dp),

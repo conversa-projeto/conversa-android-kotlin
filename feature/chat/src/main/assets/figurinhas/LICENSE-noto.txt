@@ -1,0 +1,5 @@
+figurinhas/noto/*.json: Animated Noto Emoji, © Google, licença CC BY 4.0
+https://creativecommons.org/licenses/by/4.0/
+Origem: googlefonts.github.io/noto-emoji-animation (o mesmo pacote do conversa-web,
+public/figurinhas/noto, gerado pelo scripts/baixar-figurinhas-noto.ts do web).
+O crédito aparece no seletor de figurinhas, como a licença pede.
