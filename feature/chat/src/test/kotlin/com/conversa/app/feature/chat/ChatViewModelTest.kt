@@ -525,7 +525,7 @@ class ChatViewModelTest {
         val fluxo = MutableStateFlow<Conversa?>(null)
         every { conversas.observar(42) } returns fluxo
         coEvery { conversas.atualizar() } coAnswers {
-            fluxo.value = Conversa(42, TipoConversa.GRUPO, "Chamada: Ana, Bruno", null, 0, 0, null, null, 0, null, null, null)
+            fluxo.value = Conversa(42, TipoConversa.GRUPO, "Ana, Bruno", null, 0, 0, null, null, 0, null, null, null)
             Result.success(Unit)
         }
         coEvery { conversas.membros(42) } returns Result.success(emptyList())
