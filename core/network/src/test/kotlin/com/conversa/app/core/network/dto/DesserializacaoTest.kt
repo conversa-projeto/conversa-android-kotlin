@@ -92,6 +92,19 @@ class DesserializacaoTest {
     }
 
     @Test
+    fun `conversa com emoji do grupo e chat de ligacao`() {
+        val lista = ConversaJson.decodeFromString(
+            kotlinx.serialization.builtins.ListSerializer(ConversaDto.serializer()),
+            """[{"id":15,"tipo":2,"descricao":"Ana, Bruno","emoji":"🎉","chamada":true},{"id":3,"tipo":2}]""",
+        )
+        assertThat(
+            lista.map {
+                Triple(it.id, it.emoji, it.chamada)
+            },
+        ).containsExactly(Triple(15L, "🎉", true), Triple(3L, null, false)).inOrder()
+    }
+
+    @Test
     fun `dados da chamada`() {
         val chamada = ConversaJson.decodeFromString<DadosChamadaDto>(Fixtures.ler("chamada-dados.json")).paraModelo()
         assertThat(chamada.status).isEqualTo(StatusChamada.PENDENTE)

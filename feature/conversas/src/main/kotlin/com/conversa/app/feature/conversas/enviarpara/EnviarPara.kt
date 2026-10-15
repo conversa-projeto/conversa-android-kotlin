@@ -77,6 +77,8 @@ data class Destino(
     val avatarUrl: String?,
     val online: Boolean,
     val ausente: Boolean = false,
+    /** Grupo com emoji (sem imagem). */
+    val emoji: String? = null,
 )
 
 @Immutable
@@ -120,7 +122,7 @@ class EnviarParaViewModel @Inject constructor(
     ) { lista, pessoas, presencas, t, (abrindoAgora, pendente) ->
         val dasConversas = ordenarConversas(lista).filter { conversaCombina(it, t) }.map {
             val estado = if (it.tipo == TipoConversa.DIRETA) presencas.estadoDe(it.destinatarioId) else EstadoPresenca.OFFLINE
-            Destino(it.id, null, it.titulo, "", it.avatarUrl, estado == EstadoPresenca.ATIVO, estado == EstadoPresenca.AUSENTE)
+            Destino(it.id, null, it.titulo, "", it.avatarUrl, estado == EstadoPresenca.ATIVO, estado == EstadoPresenca.AUSENTE, it.emoji)
         }
         val semConversa = pessoas.filter { lista.diretaCom(it.id) == null && contatoCombina(it, t) }.map {
             val estado = presencas.estadoDe(it.id)
@@ -225,7 +227,13 @@ fun EnviarParaRotaTela(aoAbrirConversa: (Long) -> Unit, aoVoltar: () -> Unit, vi
                             headlineContent = { Text(destino.titulo, maxLines = 1, overflow = TextOverflow.Ellipsis) },
                             supportingContent = destino.detalhe.takeIf { it.isNotBlank() }?.let { { Text(it) } },
                             leadingContent = {
-                                Avatar(destino.titulo, destino.avatarUrl, online = destino.online, ausente = destino.ausente)
+                                Avatar(
+                                    destino.titulo,
+                                    destino.avatarUrl,
+                                    online = destino.online,
+                                    ausente = destino.ausente,
+                                    emoji = destino.emoji,
+                                )
                             },
                             modifier = Modifier.clickable(enabled = !estado.abrindo) { viewModel.escolher(destino) },
                         )

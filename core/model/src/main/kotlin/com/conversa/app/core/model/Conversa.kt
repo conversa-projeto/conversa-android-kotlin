@@ -32,6 +32,10 @@ data class Conversa(
     val arquivadaEm: Instant?,
     /** URL assinada (expira em 600 s); só em conversa direta. */
     val avatarUrl: String?,
+    /** Grupo: emoji no lugar da inicial (com imagem, vale a imagem). */
+    val emoji: String? = null,
+    /** Chat de uma ligação: fica na seção "Chamadas (N)" se não está fixado (CON-01). */
+    val chamada: Boolean = false,
 ) {
     /** Mesma regra do web: descrição, senão nome, senão "Conversa #id". */
     val titulo: String

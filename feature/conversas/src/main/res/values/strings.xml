@@ -13,7 +13,6 @@
     <string name="busca_vazia">Nada encontrado</string>
     <string name="nova_conversa">Nova conversa</string>
     <string name="arquivadas_n">Arquivadas (%1$d)</string>
-    <string name="etiqueta_grupo">Grupo</string>
     <string name="etiqueta_arquivada">Arquivada</string>
     <string name="fixada">Fixada</string>
     <string name="mais_opcoes">Mais opções</string>
@@ -78,4 +77,7 @@
     <string name="membros_ver_anexos">Ver anexos</string>
     <!-- Presença no grupo (PRE-03, web PainelGrupo.vue) -->
     <string name="membro_nesta_conversa">" · nesta conversa"</string>
+    <!-- Lista (🆕 web 769bd7d/e33ecba): a seção dos chats de ligação e o ícone de grupo -->
+    <string name="chamadas_n">Chamadas (%1$d)</string>
+    <string name="conversa_em_grupo">Conversa em grupo</string>
 </resources>

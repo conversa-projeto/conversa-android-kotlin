@@ -54,17 +54,19 @@ class Conversores {
         SyncEstadoEntidade::class,
         RascunhoEntidade::class,
     ],
-    version = 5,
+    version = 6,
     exportSchema = true,
     // 2: ordem das reações (a do servidor), para o "+N" esconder as mesmas que o web.
     // 3: rascunho por conversa (FC-519).
     // 4: postagem e confirmação de leitura na mensagem (servidor `12cf0cf`/`6d20ff7`).
     // 5: a postagem da resposta na fila (7.13), para ela ficar fora do fluxo do chat.
+    // 6: emoji do grupo e "chat de ligação" na conversa (FC-217, FC-218).
     autoMigrations = [
         AutoMigration(from = 1, to = 2),
         AutoMigration(from = 2, to = 3),
         AutoMigration(from = 3, to = 4),
         AutoMigration(from = 4, to = 5),
+        AutoMigration(from = 5, to = 6),
     ],
 )
 @TypeConverters(Conversores::class)

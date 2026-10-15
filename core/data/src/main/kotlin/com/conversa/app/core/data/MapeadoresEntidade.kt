@@ -49,6 +49,8 @@ internal fun ConversaDto.paraEntidade() = ConversaEntidade(
     fixadaOrdem = fixadaOrdem,
     arquivadaEm = arquivadaEm,
     avatarUrl = avatarUrl,
+    emoji = emoji?.trim()?.takeIf { it.isNotEmpty() },
+    chamada = chamada,
 )
 
 fun ConversaEntidade.paraModelo() = Conversa(
@@ -64,6 +66,8 @@ fun ConversaEntidade.paraModelo() = Conversa(
     fixadaOrdem = fixadaOrdem,
     arquivadaEm = arquivadaEm,
     avatarUrl = avatarUrl,
+    emoji = emoji,
+    chamada = chamada,
 )
 
 private val serializadorUsuariosReacao = ListSerializer(UsuarioReacaoDto.serializer())

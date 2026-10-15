@@ -58,6 +58,8 @@ fun Avatar(
     aoFalhar: (() -> Unit)? = null,
     /** Ausente (PRE-01, servidor `769bd7d`): a bolinha fica amarela. */
     ausente: Boolean = false,
+    /** Grupo com emoji (CON-15): no lugar da inicial, quando não há imagem. */
+    emoji: String? = null,
 ) {
     val estado = when {
         ausente -> stringResource(R.string.ausente)
@@ -69,7 +71,7 @@ fun Avatar(
             .size(tamanho)
             .semantics { contentDescription = if (estado != null) "${nome.orEmpty()}, $estado" else nome.orEmpty() },
     ) {
-        ImagemAvatar(nome, url, tamanho, aoFalhar)
+        ImagemAvatar(nome, url, tamanho, aoFalhar, emoji)
         if (online || ausente) {
             // Bolinha no canto (PRE-01): verde ativo, amarela ausente; borda da cor do fundo para destacar.
             val diametro = (tamanho.value * 0.3f).coerceAtLeast(10f).dp
@@ -88,7 +90,7 @@ fun Avatar(
 }
 
 @Composable
-private fun ImagemAvatar(nome: String?, url: String?, tamanho: Dp, aoFalhar: (() -> Unit)?) {
+private fun ImagemAvatar(nome: String?, url: String?, tamanho: Dp, aoFalhar: (() -> Unit)?, emoji: String? = null) {
     var falhou by remember(url) { mutableStateOf(false) }
     val cores = ConversaTema.cores
     Box(
@@ -98,7 +100,9 @@ private fun ImagemAvatar(nome: String?, url: String?, tamanho: Dp, aoFalhar: (()
             .background(cores.avatarFundo),
         contentAlignment = Alignment.Center,
     ) {
-        if (url.isNullOrBlank() || falhou) {
+        if ((url.isNullOrBlank() || falhou) && !emoji.isNullOrBlank()) {
+            Text(emoji, fontSize = (tamanho.value * 0.5f).sp)
+        } else if (url.isNullOrBlank() || falhou) {
             Text(
                 text = inicialDoNome(nome),
                 color = cores.avatarLetra,

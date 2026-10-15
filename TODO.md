@@ -291,9 +291,9 @@
 - [x] Pull-to-refresh — `PullToRefreshBox` (conversas + contatos)
 - [x] Estados vazio e de erro — carregando (até a 1ª carga), vazio, nada encontrado, erro em tela cheia com "Tentar de novo" (só com cache vazio)
 - [ ] **Teste:** comparar lado a lado com o web (8 casos do CON-01) — ⛔ o web não está rodando nesta máquina; as regras do CON-01 têm teste unitário (`ListaConversasTest`, `ConversasViewModelTest`) e foram vistas no emulador
-- [ ] 🆕 `769bd7d` Seção recolhível "Chamadas (N)" no fim da lista, antes de "Arquivadas": conversas com `chamada:true` não fixadas nem arquivadas; com termo no filtro, tudo junto (CON-01, FC-218)
-- [ ] 🆕 `b8ea0c2` Emoji ou imagem do grupo no lugar da inicial em todos os avatares de grupo (`emoji`, `avatar_url`) (CON-15, GER-07, FC-217)
-- [ ] 🆕 `e33ecba` Ícone de pessoas com a descrição "Conversa em grupo" no lugar da etiqueta "Grupo" (CON-01, FC-219)
+- [x] 🆕 `769bd7d` Seção recolhível "Chamadas (N)" no fim da lista, antes de "Arquivadas": conversas com `chamada:true` não fixadas nem arquivadas; com termo no filtro, tudo junto (CON-01, FC-218) — `chamada` na conversa (Room v6); no emulador, "Chamadas (4)" com os chats das ligações ✔ (preencher)
+- [x] 🆕 `b8ea0c2` Emoji ou imagem do grupo no lugar da inicial em todos os avatares de grupo (`emoji`, `avatar_url`) (CON-15, GER-07, FC-217) — `Avatar(emoji = …)` na lista, no cabeçalho do chat e no "Enviar para" ✔ (preencher)
+- [x] 🆕 `e33ecba` Ícone de pessoas com a descrição "Conversa em grupo" no lugar da etiqueta "Grupo" (CON-01, FC-219) — ícone `Group` ✔ (preencher)
 
 ### 2.7 Filtro e "Nova conversa" (FC-206, CON-02)
 - [x] Campo de busca: filtra por título e prévia — sem acento e sem maiúscula (`conversaCombina`)

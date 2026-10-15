@@ -25,6 +25,10 @@ data class ConversaDto(
     @SerialName("fixada_ordem") val fixadaOrdem: Int? = null,
     @SerialName("arquivada_em") val arquivadaEm: Instant? = null,
     @SerialName("avatar_url") val avatarUrl: String? = null,
+    /** Grupo: emoji no lugar da inicial (servidor `b8ea0c2`); com imagem também, vale a imagem. */
+    val emoji: String? = null,
+    /** Chat de uma ligação (servidor `769bd7d`): vai para a seção "Chamadas (N)" se não está fixado. */
+    val chamada: Boolean = false,
 )
 
 @Serializable

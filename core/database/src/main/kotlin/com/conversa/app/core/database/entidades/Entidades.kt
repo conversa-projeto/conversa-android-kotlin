@@ -26,6 +26,10 @@ data class ConversaEntidade(
     val fixadaOrdem: Int?,
     val arquivadaEm: Instant?,
     val avatarUrl: String?,
+    /** Grupo: emoji no lugar da inicial. */
+    val emoji: String? = null,
+    /** Chat de uma ligação: seção "Chamadas (N)". */
+    @ColumnInfo(defaultValue = "0") val chamada: Boolean = false,
 )
 
 /**

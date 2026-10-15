@@ -24,6 +24,7 @@ import androidx.compose.material.icons.automirrored.outlined.Chat
 import androidx.compose.material.icons.outlined.Archive
 import androidx.compose.material.icons.outlined.ArrowDownward
 import androidx.compose.material.icons.outlined.ArrowUpward
+import androidx.compose.material.icons.outlined.Call
 import androidx.compose.material.icons.outlined.Edit
 import androidx.compose.material.icons.outlined.ExpandLess
 import androidx.compose.material.icons.outlined.ExpandMore
@@ -84,6 +85,7 @@ class AcoesConversas(
     val aoAbrirContato: (Long) -> Unit = {},
     val aoAlterarTermo: (String) -> Unit = {},
     val aoAlternarArquivadas: () -> Unit = {},
+    val aoAlternarChamadas: () -> Unit = {},
     val aoAtualizar: () -> Unit = {},
     val aoNovaConversa: () -> Unit = {},
     val aoFixar: (Long) -> Unit = {},
@@ -125,6 +127,7 @@ fun ConversasRotaTela(
             aoAbrirContato = viewModel::abrirContato,
             aoAlterarTermo = viewModel::alterarTermo,
             aoAlternarArquivadas = viewModel::alternarArquivadas,
+            aoAlternarChamadas = viewModel::alternarChamadas,
             aoAtualizar = viewModel::atualizar,
             aoNovaConversa = aoNovaConversa,
             aoFixar = viewModel::fixar,
@@ -173,7 +176,7 @@ fun ConversasTela(estado: ConversasUiState, acoes: AcoesConversas, modifier: Mod
                 when {
                     estado.carregando -> Carregando()
                     estado.erro != null -> EstadoErro(mensagem = estado.erro, aoTentarDeNovo = acoes.aoAtualizar)
-                    estado.principais.isEmpty() && estado.arquivadas.isEmpty() && estado.novaConversa.isEmpty() ->
+                    estado.vazia ->
                         if (estado.termo.isBlank()) {
                             EstadoVazio(
                                 titulo = stringResource(R.string.conversas_vazio),
@@ -189,11 +192,11 @@ fun ConversasTela(estado: ConversasUiState, acoes: AcoesConversas, modifier: Mod
         }
     }
 
-    val itemDoMenu = menuDe?.let { id -> (estado.principais + estado.arquivadas).firstOrNull { it.id == id } }
+    val itemDoMenu = menuDe?.let { id -> (estado.principais + estado.chamadas + estado.arquivadas).firstOrNull { it.id == id } }
     if (itemDoMenu != null) {
         MenuConversa(itemDoMenu, acoes, aoFechar = { menuDe = null })
     }
-    val itemDoPerfil = perfilDe?.let { id -> (estado.principais + estado.arquivadas).firstOrNull { it.id == id } }
+    val itemDoPerfil = perfilDe?.let { id -> (estado.principais + estado.chamadas + estado.arquivadas).firstOrNull { it.id == id } }
     itemDoPerfil?.ficha?.let { ficha ->
         FolhaPerfilUsuario(
             ficha = ficha,
@@ -226,18 +229,28 @@ private fun Lista(estado: ConversasUiState, acoes: AcoesConversas, aoMenu: (Long
                 aoVerPerfil = aoVerPerfil,
             )
         }
+        if (estado.chamadas.isNotEmpty()) {
+            item(key = "chamadas") {
+                CabecalhoSecao(
+                    texto = stringResource(R.string.chamadas_n, estado.chamadas.size),
+                    icone = Icons.Outlined.Call,
+                    aberta = estado.chamadasAbertas,
+                    aoAlternar = acoes.aoAlternarChamadas,
+                )
+            }
+            if (estado.chamadasAbertas) {
+                items(estado.chamadas, key = { "h${it.id}" }) { item ->
+                    LinhaConversa(item, mostrarArquivada = false, aoAbrir = acoes.aoAbrir, aoMenu = aoMenu, aoVerPerfil = aoVerPerfil)
+                }
+            }
+        }
         if (estado.arquivadas.isNotEmpty()) {
             item(key = "arquivadas") {
-                ListItem(
-                    headlineContent = { Text(stringResource(R.string.arquivadas_n, estado.arquivadas.size)) },
-                    leadingContent = { Icon(Icons.Outlined.Archive, contentDescription = null) },
-                    trailingContent = {
-                        Icon(
-                            if (estado.arquivadasAbertas) Icons.Outlined.ExpandLess else Icons.Outlined.ExpandMore,
-                            contentDescription = null,
-                        )
-                    },
-                    modifier = Modifier.clickable(onClick = acoes.aoAlternarArquivadas),
+                CabecalhoSecao(
+                    texto = stringResource(R.string.arquivadas_n, estado.arquivadas.size),
+                    icone = Icons.Outlined.Archive,
+                    aberta = estado.arquivadasAbertas,
+                    aoAlternar = acoes.aoAlternarArquivadas,
                 )
             }
             if (estado.arquivadasAbertas) {
@@ -322,6 +335,7 @@ private fun LinhaConversa(
             tamanho = 48.dp,
             online = item.online,
             ausente = item.ausente,
+            emoji = item.emoji,
             modifier = toqueNoAvatar,
         )
         Column(Modifier.weight(1f)) {
@@ -334,7 +348,15 @@ private fun LinhaConversa(
                     overflow = TextOverflow.Ellipsis,
                     modifier = Modifier.weight(1f, fill = false),
                 )
-                if (item.grupo) Etiqueta(stringResource(R.string.etiqueta_grupo))
+                // Grupo: o ícone de pessoas com "Conversa em grupo" (web `e33ecba`), no lugar da etiqueta.
+                if (item.grupo) {
+                    Icon(
+                        Icons.Outlined.Group,
+                        contentDescription = stringResource(R.string.conversa_em_grupo),
+                        modifier = Modifier.size(16.dp),
+                        tint = ConversaTema.cores.iconeDiscreto,
+                    )
+                }
                 if (mostrarArquivada && item.arquivada) Etiqueta(stringResource(R.string.etiqueta_arquivada))
                 if (item.fixada) {
                     Icon(
@@ -494,4 +516,15 @@ private fun ConversasTelaPreview() {
             acoes = AcoesConversas(),
         )
     }
+}
+
+/** Cabeçalho de uma seção recolhível no fim da lista ("Chamadas (N)", "Arquivadas (N)"). */
+@Composable
+private fun CabecalhoSecao(texto: String, icone: androidx.compose.ui.graphics.vector.ImageVector, aberta: Boolean, aoAlternar: () -> Unit) {
+    ListItem(
+        headlineContent = { Text(texto) },
+        leadingContent = { Icon(icone, contentDescription = null) },
+        trailingContent = { Icon(if (aberta) Icons.Outlined.ExpandLess else Icons.Outlined.ExpandMore, contentDescription = null) },
+        modifier = Modifier.clickable(onClick = aoAlternar),
+    )
 }

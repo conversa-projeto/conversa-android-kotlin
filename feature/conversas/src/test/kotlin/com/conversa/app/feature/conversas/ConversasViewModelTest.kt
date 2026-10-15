@@ -61,6 +61,8 @@ class ConversasViewModelTest {
         naoLidas: Int = 0,
         fixada: Int? = null,
         arquivada: Boolean = false,
+        chamada: Boolean = false,
+        emoji: String? = null,
     ) = Conversa(
         id = id,
         tipo = tipo,
@@ -74,6 +76,8 @@ class ConversasViewModelTest {
         fixadaOrdem = fixada,
         arquivadaEm = if (arquivada) agora else null,
         avatarUrl = null,
+        emoji = emoji,
+        chamada = chamada,
     )
 
     private fun TestScope.criar(): Pair<ConversasViewModel, () -> ConversasUiState> {
@@ -155,6 +159,36 @@ class ConversasViewModelTest {
         assertThat(estado().principais.map { it.id }).containsExactly(1L, 3L)
         assertThat(estado().arquivadas).isEmpty()
         assertThat(estado().novaConversa.map { it.id }).containsExactly(9L)
+    }
+
+    @Test
+    fun `chats de ligacao nao fixados vao para Chamadas, recolhida, e com termo ficam junto`() = runTest {
+        carregada.value = true
+        conversas.value = listOf(
+            conversa(1, tipo = TipoConversa.GRUPO, nome = "Ligação antiga", ultima = 10, chamada = true),
+            conversa(2, tipo = TipoConversa.GRUPO, nome = "Ligação fixada", ultima = 20, chamada = true, fixada = 1),
+            conversa(3, tipo = TipoConversa.GRUPO, nome = "Ligação nova", ultima = 30, chamada = true),
+            conversa(4, tipo = TipoConversa.GRUPO, nome = "Festa", ultima = 40, emoji = "🎉"),
+            conversa(5, tipo = TipoConversa.GRUPO, nome = "Ligação arquivada", ultima = 50, chamada = true, arquivada = true),
+        )
+        val (vm, estado) = criar()
+        advanceUntilIdle()
+
+        // A fixada fica em cima, como no web; a arquivada vai para Arquivadas.
+        assertThat(estado().principais.map { it.id }).containsExactly(2L, 4L).inOrder()
+        assertThat(estado().chamadas.map { it.id }).containsExactly(3L, 1L).inOrder()
+        assertThat(estado().chamadasAbertas).isFalse()
+        assertThat(estado().arquivadas.map { it.id }).containsExactly(5L)
+        assertThat(estado().principais.last().emoji).isEqualTo("🎉")
+
+        vm.alternarChamadas()
+        advanceUntilIdle()
+        assertThat(estado().chamadasAbertas).isTrue()
+
+        vm.alterarTermo("ligação")
+        advanceUntilIdle()
+        assertThat(estado().principais.map { it.id }).containsExactly(2L, 5L, 3L, 1L).inOrder()
+        assertThat(estado().chamadas).isEmpty()
     }
 
     @Test

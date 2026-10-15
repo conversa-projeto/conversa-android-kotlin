@@ -60,6 +60,8 @@ data class ItemConversa(
     val ficha: FichaUsuario? = null,
     /** Direta com a pessoa ausente (bolinha amarela; [online] é a verde, de ativo). */
     val ausente: Boolean = false,
+    /** Grupo com emoji (sem imagem): no lugar da inicial. */
+    val emoji: String? = null,
 )
 
 /** Contato sem conversa direta, na seção "Nova conversa" (CON-02). */
@@ -79,6 +81,9 @@ data class ConversasUiState(
     val termo: String = "",
     /** Sem termo: as não arquivadas. Com termo: todas as que combinam, inclusive arquivadas. */
     val principais: List<ItemConversa> = emptyList(),
+    /** Só sem termo: a seção recolhível "Chamadas (N)", dos chats de ligação não fixados (🆕 web `769bd7d`). */
+    val chamadas: List<ItemConversa> = emptyList(),
+    val chamadasAbertas: Boolean = false,
     /** Só sem termo: a seção recolhível "Arquivadas (N)". */
     val arquivadas: List<ItemConversa> = emptyList(),
     val arquivadasAbertas: Boolean = false,
@@ -86,7 +91,10 @@ data class ConversasUiState(
     val atualizando: Boolean = false,
     /** Erro de carga, mostrado em tela cheia só quando não há nada no cache. */
     val erro: String? = null,
-)
+) {
+    /** Nada para mostrar: nem conversas (em nenhuma seção) nem contatos. */
+    val vazia: Boolean get() = principais.isEmpty() && chamadas.isEmpty() && arquivadas.isEmpty() && novaConversa.isEmpty()
+}
 
 sealed interface EventoConversas {
     data class Abrir(val conversaId: Long) : EventoConversas
@@ -108,6 +116,7 @@ class ConversasViewModel @Inject constructor(
 ) : ViewModel() {
     private val termo = MutableStateFlow("")
     private val arquivadasAbertas = MutableStateFlow(false)
+    private val chamadasAbertas = MutableStateFlow(false)
     private val atualizando = MutableStateFlow(false)
     private val erro = MutableStateFlow<String?>(null)
 
@@ -120,8 +129,14 @@ class ConversasViewModel @Inject constructor(
         presenca.digitando,
     ) { lista, pessoas, presencas, digitando -> Dados(lista, pessoas, presencas, digitando) }
 
-    private val controles = combine(termo, arquivadasAbertas, atualizando, erro) { t, abertas, atualizandoAgora, falha ->
-        Controles(t, abertas, atualizandoAgora, falha)
+    private val controles = combine(termo, arquivadasAbertas, chamadasAbertas, atualizando, erro) {
+            t,
+            abertas,
+            chamadas,
+            atualizandoAgora,
+            falha,
+        ->
+        Controles(t, abertas, atualizandoAgora, falha, chamadas)
     }
 
     private val inicio = combine(iniciador.carregada, iniciador.falha) { carregada, falha -> Inicio(carregada, falha?.mensagemAmigavel()) }
@@ -131,6 +146,10 @@ class ConversasViewModel @Inject constructor(
 
     fun alterarTermo(texto: String) {
         termo.value = texto
+    }
+
+    fun alternarChamadas() {
+        chamadasAbertas.value = !chamadasAbertas.value
     }
 
     fun alternarArquivadas() {
@@ -199,6 +218,7 @@ class ConversasViewModel @Inject constructor(
                 podeSubir = posicao > 0,
                 podeDescer = posicao >= 0 && posicao < fixadasIds.lastIndex,
                 ficha = fichaDaConversa(conversa, d.contatos),
+                emoji = conversa.emoji.takeIf { !direta },
             )
         }
 
@@ -206,8 +226,10 @@ class ConversasViewModel @Inject constructor(
         val principais = if (comTermo) {
             ordenadas.filter { conversaCombina(it, c.termo) }
         } else {
-            ordenadas.filterNot { it.arquivada }
+            ordenadas.filterNot { it.arquivada || naSecaoChamadas(it) }
         }
+        // Os chats de ligação não fixados ficam numa seção própria no fim (com termo, tudo junto).
+        val chamadas = if (comTermo) emptyList() else ordenadas.filter { !it.arquivada && naSecaoChamadas(it) }
         val arquivadas = if (comTermo) emptyList() else ordenadas.filter { it.arquivada }
         val novaConversa = d.contatos
             .filter { d.conversas.diretaCom(it.id) == null && contatoCombina(it, c.termo) }
@@ -228,6 +250,8 @@ class ConversasViewModel @Inject constructor(
             carregando = d.conversas.isEmpty() && !i.carregada && i.falha == null,
             termo = c.termo,
             principais = principais.map(::item),
+            chamadas = chamadas.map(::item),
+            chamadasAbertas = c.chamadasAbertas,
             arquivadas = arquivadas.map(::item),
             arquivadasAbertas = c.arquivadasAbertas,
             novaConversa = novaConversa,
@@ -243,7 +267,16 @@ class ConversasViewModel @Inject constructor(
         val digitando: Map<Long, Set<Long>>,
     )
 
-    private data class Controles(val termo: String, val arquivadasAbertas: Boolean, val atualizando: Boolean, val erro: String?)
+    private data class Controles(
+        val termo: String,
+        val arquivadasAbertas: Boolean,
+        val atualizando: Boolean,
+        val erro: String?,
+        val chamadasAbertas: Boolean = false,
+    )
+
+    /** "Chamadas (N)": chat de ligação que não está fixado (como o web: a fixada fica em cima). */
+    private fun naSecaoChamadas(conversa: Conversa) = conversa.chamada && !conversa.fixada
 
     private data class Inicio(val carregada: Boolean, val falha: String?)
 }

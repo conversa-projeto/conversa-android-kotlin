@@ -670,7 +670,14 @@ private fun Cabecalho(estado: ChatUiState, acoes: AcoesChat) {
                 verticalAlignment = Alignment.CenterVertically,
                 horizontalArrangement = Arrangement.spacedBy(10.dp),
             ) {
-                Avatar(conversa?.titulo, conversa?.avatarUrl, tamanho = 38.dp, online = estado.online, ausente = estado.ausente)
+                Avatar(
+                    conversa?.titulo,
+                    conversa?.avatarUrl,
+                    tamanho = 38.dp,
+                    online = estado.online,
+                    ausente = estado.ausente,
+                    emoji = conversa?.emoji,
+                )
                 Column {
                     Text(
                         conversa?.titulo.orEmpty(),
