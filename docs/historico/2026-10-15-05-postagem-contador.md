@@ -4,7 +4,7 @@
 - **Tipo:** correção
 - **Itens:** `TODO.md` 8.7 (1ª linha) e 7.13 (1ª linha, DTO e rotas); FC-316; MSG-22; contrato §10.14 e §10.15
 - **Branch:** `reescrita`
-- **Commits:** (preencher)
+- **Commits:** `4ba2643`
 
 ## Contexto
 O servidor `12cf0cf` tirou as respostas de postagem do fluxo: elas não vêm em `/mensagens`. Mesmo assim, elas:
