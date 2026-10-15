@@ -4,7 +4,7 @@
 - **Tipo:** código
 - **Itens:** `TODO.md` 5.4 (linha 🆕 `d202c06`) e 7.13 (**Teste**); FC-610; NOT-02, MSG-22
 - **Branch:** `reescrita`
-- **Commits:** (preencher)
+- **Commits:** `6f9a298`
 
 ## Contexto
 - **O que o web faz** (`tratarPostagemAtualizada`): no WS 64 de outra pessoa, mostra "<nome> respondeu a uma postagem", menos com a conversa aberta, arquivada ou com a resposta minha.
