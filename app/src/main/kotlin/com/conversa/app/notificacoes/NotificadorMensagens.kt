@@ -19,10 +19,12 @@ import androidx.core.net.toUri
 import com.conversa.app.MainActivity
 import com.conversa.app.R
 import com.conversa.app.core.data.SessaoRepositorio
+import com.conversa.app.core.data.contatos.ContatosRepositorio
 import com.conversa.app.core.data.conversas.ConversasRepositorio
 import com.conversa.app.core.data.notificacoes.CanaisNotificacao
 import com.conversa.app.core.data.notificacoes.ConversaEmTela
 import com.conversa.app.core.data.paraModelo
+import com.conversa.app.core.data.sincronizacao.RespostaDePostagem
 import com.conversa.app.core.data.sincronizacao.SyncManager
 import com.conversa.app.core.data.tempoReal.MonitorPrimeiroPlano
 import com.conversa.app.core.database.dao.MensagemDao
@@ -64,7 +66,8 @@ fun decidirAviso(arquivada: Boolean, emPrimeiroPlano: Boolean, conversaNaTela: B
  * - "Responder" (RemoteInput) e "Marcar como lida" ([AcoesNotificacaoReceiver]);
  * - toque abre a conversa (`conversa://chat/{id}`);
  * - some quando a conversa fica sem não lidas, é arquivada ou é aberta;
- * - cada conversa notificada vira um atalho de longa duração (seção "Conversas" do Android).
+ * - cada conversa notificada vira um atalho de longa duração (seção "Conversas" do Android);
+ * - resposta numa postagem (FC-610): "<nome> respondeu a uma postagem" na mesma notificação.
  * Hoje é disparada pelo [SyncManager] (WebSocket ou atualização periódica); o push (5.1)
  * vai chamar [avisar] depois de sincronizar.
  */
@@ -75,6 +78,7 @@ class NotificadorMensagens @Inject constructor(
     private val conversas: ConversasRepositorio,
     private val mensagemDao: MensagemDao,
     private val sessao: SessaoRepositorio,
+    private val contatos: ContatosRepositorio,
     private val primeiroPlano: MonitorPrimeiroPlano,
     private val emTela: ConversaEmTela,
     @EscopoAplicacao private val escopo: CoroutineScope,
@@ -82,8 +86,15 @@ class NotificadorMensagens @Inject constructor(
     private val gerenciador = NotificationManagerCompat.from(contexto)
     private var ultimoSomMs = 0L
 
+    /** Respostas de postagem já avisadas, por conversa: ficam na notificação até ela sumir. */
+    private val respostasAvisadas = mutableMapOf<Long, MutableList<Linha>>()
+
+    /** Uma linha da notificação: quem, o texto e quando (e a postagem, se é uma resposta a uma). */
+    private data class Linha(val usuarioId: Long, val nome: String, val texto: String, val quando: Long, val postagemId: Long? = null)
+
     fun iniciar() {
         sync.novasDeOutros.onEach { ids -> ids.forEach { avisar(it) } }.launchIn(escopo)
+        sync.respostasDePostagem.onEach { avisarResposta(it) }.launchIn(escopo)
         // NOT-03: lida (contador zerado) ou arquivada → some.
         conversas.observarTodas().onEach { lista ->
             val postadas = postadas()
@@ -104,15 +115,50 @@ class NotificadorMensagens @Inject constructor(
         when (decidirAviso(conversa.arquivada, primeiroPlano.emPrimeiroPlano.value, emTela.id.value == conversaId)) {
             AvisoMensagem.NADA -> Unit
             AvisoMensagem.SOM -> tocarSom()
+            AvisoMensagem.NOTIFICAR -> montar(conversa)
+        }
+    }
+
+    /**
+     * Resposta de outra pessoa numa postagem (FC-610, NOT-02, como o web): "<nome> respondeu a uma
+     * postagem", com a mesma regra das mensagens. A resposta não fica no Room, então o aviso fica
+     * guardado aqui e entra na notificação da conversa até ela sumir (aberta, lida ou arquivada).
+     */
+    suspend fun avisarResposta(resposta: RespostaDePostagem) {
+        val conversa = conversas.observar(resposta.conversaId).first() ?: return
+        when (decidirAviso(conversa.arquivada, primeiroPlano.emPrimeiroPlano.value, emTela.id.value == conversa.id)) {
+            AvisoMensagem.NADA -> Unit
+            AvisoMensagem.SOM -> tocarSom()
             AvisoMensagem.NOTIFICAR -> {
-                val eu = sessao.sessao.value?.usuarioId ?: return
-                val mensagens = mensagemDao.naoLidasDeOutros(conversaId, eu, MAX_NA_NOTIFICACAO).map { it.paraModelo() }.asReversed()
-                if (mensagens.isNotEmpty()) mostrar(conversa, mensagens)
+                // O nome completo do contato, como o web; sem ele, "Usuário <id>".
+                val nome = contatos.observarOutros().first().firstOrNull { it.id == resposta.usuarioId }?.nome
+                    ?: contexto.getString(R.string.notificacao_usuario, resposta.usuarioId)
+                val texto = contexto.getString(R.string.notificacao_respondeu_postagem)
+                val linha = Linha(resposta.usuarioId, nome, texto, System.currentTimeMillis(), resposta.postagemId)
+                synchronized(respostasAvisadas) { respostasAvisadas.getOrPut(conversa.id) { mutableListOf() } += linha }
+                montar(conversa)
             }
         }
     }
 
-    fun cancelar(conversaId: Long) = gerenciador.cancel(TAG, conversaId.toInt())
+    /** As postagens com resposta avisada na notificação da conversa: "Marcar como lida" marca as respostas delas. */
+    fun postagensAvisadas(conversaId: Long): Set<Long> =
+        synchronized(respostasAvisadas) { respostasAvisadas[conversaId].orEmpty().mapNotNullTo(mutableSetOf()) { it.postagemId } }
+
+    fun cancelar(conversaId: Long) {
+        synchronized(respostasAvisadas) { respostasAvisadas.remove(conversaId) }
+        gerenciador.cancel(TAG, conversaId.toInt())
+    }
+
+    /** A notificação da conversa: as não lidas de outros (do Room) e as respostas de postagem avisadas, por hora. */
+    private suspend fun montar(conversa: Conversa) {
+        val eu = sessao.sessao.value?.usuarioId ?: return
+        val mensagens = mensagemDao.naoLidasDeOutros(conversa.id, eu, MAX_NA_NOTIFICACAO).map { it.paraModelo() }
+            .map { Linha(it.remetenteId, it.remetente, texto(it), it.dataEfetiva.toEpochMilli()) }
+        val respostas = synchronized(respostasAvisadas) { respostasAvisadas[conversa.id].orEmpty().toList() }
+        val linhas = (mensagens + respostas).sortedBy { it.quando }.takeLast(MAX_NA_NOTIFICACAO)
+        if (linhas.isNotEmpty()) mostrar(conversa, linhas)
+    }
 
     /**
      * Depois de "Responder": no Android 15+ o sistema segura a notificação (e ignora o
@@ -142,6 +188,7 @@ class NotificadorMensagens @Inject constructor(
 
     /** Fim da sessão: notificações e atalhos de conversa somem (podem ser de outra conta). */
     fun limpar() {
+        synchronized(respostasAvisadas) { respostasAvisadas.clear() }
         gerenciador.cancelAll()
         ShortcutManagerCompat.removeAllDynamicShortcuts(contexto)
         runCatching {
@@ -158,15 +205,15 @@ class NotificadorMensagens @Inject constructor(
         gerenciador.activeNotifications.filter { it.tag == TAG }.map { it.id.toLong() }.toSet()
     }.getOrDefault(emptySet())
 
-    private fun mostrar(conversa: Conversa, mensagens: List<Mensagem>) {
+    private fun mostrar(conversa: Conversa, linhas: List<Linha>) {
         if (!podeNotificar()) return
         val grupo = conversa.tipo == TipoConversa.GRUPO
         val eu = Person.Builder().setName(contexto.getString(R.string.notificacao_voce)).setKey("eu").build()
         val estilo = NotificationCompat.MessagingStyle(eu).setGroupConversation(grupo)
         if (grupo) estilo.conversationTitle = conversa.titulo
-        mensagens.forEach { mensagem ->
-            val pessoa = Person.Builder().setName(mensagem.remetente).setKey("u${mensagem.remetenteId}").build()
-            estilo.addMessage(texto(mensagem), mensagem.dataEfetiva.toEpochMilli(), pessoa)
+        linhas.forEach { linha ->
+            val pessoa = Person.Builder().setName(linha.nome).setKey("u${linha.usuarioId}").build()
+            estilo.addMessage(linha.texto, linha.quando, pessoa)
         }
         val atalho = publicarAtalho(conversa)
         val notificacao = NotificationCompat.Builder(contexto, CanaisNotificacao.MENSAGENS)

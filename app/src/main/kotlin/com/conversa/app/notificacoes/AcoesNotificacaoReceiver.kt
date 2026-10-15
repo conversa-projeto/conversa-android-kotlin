@@ -18,7 +18,8 @@ import timber.log.Timber
  * Ações da notificação de mensagem (TODO 5.5, FC-604, AND-08):
  * - "Responder": a mensagem entra na fila de envio (WorkManager, nunca se perde) e a
  *   conversa é marcada como lida;
- * - "Marcar como lida": `POST /mensagem/visualizar` de cada não lida.
+ * - "Marcar como lida": `POST /mensagem/visualizar` de cada não lida e `POST /postagem/visualizar`
+ *   das postagens com resposta avisada (FC-610).
  * Usa `goAsync()` (#42 do legado): o trabalho termina antes de o Android encerrar o processo.
  * A notificação some sozinha quando o contador da conversa zera ([NotificadorMensagens]).
  */
@@ -47,11 +48,13 @@ class AcoesNotificacaoReceiver : BroadcastReceiver() {
                         val texto = RemoteInput.getResultsFromIntent(intent)?.getCharSequence(CHAVE_RESPOSTA)?.toString()?.trim()
                         if (!texto.isNullOrEmpty()) envio.enviarTexto(conversaId, texto)
                         mensagens.marcarConversaLida(conversaId, eu)
+                        mensagens.marcarPostagensVistas(conversaId, notificador.postagensAvisadas(conversaId))
                         // Atualizar (não só cancelar): o Android 15+ segura a notificação respondida até uma atualização.
                         if (texto.isNullOrEmpty()) notificador.cancelar(conversaId) else notificador.respondida(conversaId, texto)
                     }
                     ACAO_MARCAR_LIDA -> {
                         mensagens.marcarConversaLida(conversaId, eu)
+                        mensagens.marcarPostagensVistas(conversaId, notificador.postagensAvisadas(conversaId))
                         notificador.cancelar(conversaId)
                     }
                 }

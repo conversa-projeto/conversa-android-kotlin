@@ -197,6 +197,28 @@ class SyncManagerTest {
     }
 
     @Test
+    fun `WS 64 de outra pessoa rele a postagem e a lista e avisa a resposta, a minha nao`() = runTest {
+        prepararApi()
+        val sync =
+            SyncManager(api, tempoReal, conversaDao, mensagemDao, syncEstadoDao, presenca, sessao, enquetes, atividades, escopoDoTeste())
+        coEvery { mensagemDao.buscar(1170) } returns mockk(relaxed = true)
+        val avisos = mutableListOf<RespostaDePostagem>()
+        backgroundScope.launch { sync.respostasDePostagem.collect { avisos += it } }
+        sync.iniciar()
+        runCurrent()
+
+        eventos.emit(EventoSocket.PostagemAtualizada(conversaId = 3, postagemId = 1170, usuarioId = 8))
+        eventos.emit(EventoSocket.PostagemAtualizada(conversaId = 3, postagemId = 1170, usuarioId = 7))
+        advanceUntilIdle()
+        // O coletor está no backgroundScope: o advanceUntilIdle não o roda sozinho.
+        runCurrent()
+
+        coVerify(exactly = 2) { api.mensagens(3, mensagemReferencia = 1170, mensagensPrevias = 0, mensagensSeguintes = 0) }
+        coVerify(exactly = 2) { api.conversas() }
+        assertThat(avisos).containsExactly(RespostaDePostagem(3, 1170, 8))
+    }
+
+    @Test
     fun `avisa as conversas com mensagem nova de outra pessoa, nao as minhas nem as ja lidas`() = runTest {
         prepararApi()
         fun msg(id: Long, remetente: Long, conversa: Long, lida: Boolean = false) =

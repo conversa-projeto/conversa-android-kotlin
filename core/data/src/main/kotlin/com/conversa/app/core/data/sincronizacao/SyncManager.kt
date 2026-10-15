@@ -39,6 +39,9 @@ import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
 import timber.log.Timber
 
+/** Resposta de outra pessoa numa postagem (WS 64): a notificação diz quem respondeu (FC-610). */
+data class RespostaDePostagem(val conversaId: Long, val postagemId: Long, val usuarioId: Long)
+
 /**
  * Mantém o cache local em dia com o servidor.
  *
@@ -81,6 +84,13 @@ class SyncManager @Inject constructor(
     private val gatilhoMensagens = MutableSharedFlow<Unit>(extraBufferCapacity = 1)
 
     private val _novasDeOutros = MutableSharedFlow<Set<Long>>(extraBufferCapacity = 8)
+    private val _respostasDePostagem = MutableSharedFlow<RespostaDePostagem>(extraBufferCapacity = 8)
+
+    /**
+     * Respostas de outras pessoas nas postagens (WS 64, FC-610). Elas não ficam no Room (estão fora
+     * do fluxo), então não passam por [novasDeOutros]. Avisa depois de atualizar a lista.
+     */
+    val respostasDePostagem: SharedFlow<RespostaDePostagem> = _respostasDePostagem.asSharedFlow()
 
     /**
      * Ids do WS 3 que não estão no fluxo (respostas de postagem, §10.15): já procurados uma vez,
@@ -224,6 +234,10 @@ class SyncManager @Inject constructor(
             is EventoSocket.PostagemAtualizada -> escopo.launch {
                 reler(evento.conversaId, evento.postagemId)
                 sincronizarConversas()
+                // A minha resposta (de outro aparelho) não avisa, como no web.
+                if (evento.usuarioId != sessao.sessao.value?.usuarioId) {
+                    _respostasDePostagem.tryEmit(RespostaDePostagem(evento.conversaId, evento.postagemId, evento.usuarioId))
+                }
             }
             // 8 e 65: a confirmação de leitura da mensagem mudou — relê a mensagem.
             is EventoSocket.ConfirmacaoLeitura -> escopo.launch { reler(evento.conversaId, evento.mensagemId) }

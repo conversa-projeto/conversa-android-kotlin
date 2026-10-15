@@ -190,6 +190,26 @@ class MensagensTest {
     }
 
     @Test
+    fun `marcar como lida pela notificacao marca as respostas das postagens avisadas e desconta o que o servidor marcou`() = runTest {
+        val repo = repo()
+        banco.conversaDao().salvar(listOf(ConversaEntidade(42, 2, "Grupo", null, null, 160, agora, "resposta", 3, null, null, null)))
+        val postagem = msg(104, "aviso").copy(postagem = PostagemDto("Aviso", respostas = 2, naoLidas = 2))
+        banco.mensagemDao().salvarCompletas(listOf(postagem.paraEntidade()))
+        coEvery { api.visualizarPostagem(VisualizarPostagemRequisicao(104)) } returns RespostasVistasDto(2)
+        coEvery { api.visualizarPostagem(VisualizarPostagemRequisicao(105)) } returns RespostasVistasDto(1)
+        coEvery { api.mensagens(42, 104, 0, 0) } returns listOf(postagem.copy(postagem = postagem.postagem!!.copy(naoLidas = 0)))
+
+        // 105 não está no aparelho: só marca no servidor.
+        repo.marcarPostagensVistas(42, listOf(104, 105, 104))
+
+        coVerify(exactly = 1) { api.visualizarPostagem(VisualizarPostagemRequisicao(104)) }
+        coVerify(exactly = 1) { api.visualizarPostagem(VisualizarPostagemRequisicao(105)) }
+        coVerify(exactly = 0) { api.mensagens(42, 105, 0, 0) }
+        assertThat(banco.conversaDao().observar(42).first()!!.naoLidas).isEqualTo(0)
+        assertThat(banco.mensagemDao().buscar(104)!!.paraModelo().postagem!!.naoLidas).isEqualTo(0)
+    }
+
+    @Test
     fun `marcar a conversa como lida pela notificacao marca todas as de outros e espera o servidor`() = runTest {
         val escopo = escopoDoTeste()
         val repo = MensagensRepositorio(api, banco.mensagemDao(), banco.conversaDao(), escopo, java.time.Clock.systemUTC())

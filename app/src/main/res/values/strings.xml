@@ -29,6 +29,9 @@
     <string name="notificacao_responder">Responder</string>
     <string name="notificacao_responder_dica">Mensagem</string>
     <string name="notificacao_marcar_lida">Marcar como lida</string>
+    <!-- FC-610: resposta numa postagem (web e33ecba: "<nome> respondeu a uma postagem") -->
+    <string name="notificacao_respondeu_postagem">respondeu a uma postagem</string>
+    <string name="notificacao_usuario">Usuário %1$d</string>
 
     <!-- Pedido de permissão de notificações depois do login (FC-607, NOT-06) -->
     <string name="permissao_notificacoes_titulo">Notificações</string>

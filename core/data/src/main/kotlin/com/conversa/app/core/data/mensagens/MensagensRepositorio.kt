@@ -228,6 +228,20 @@ class MensagensRepositorio @Inject constructor(
      * Diferente de [marcarLida], espera cada `POST`: quem chama é uma ação de notificação,
      * que tem pouco tempo de vida.
      */
+    /**
+     * "Marcar como lida" e "Responder" na notificação (FC-610): as respostas das postagens avisadas
+     * não estão no Room. `POST /postagem/visualizar` de cada postagem; o contador da conversa desce
+     * o que o servidor marcou, e a postagem que está no aparelho é relida.
+     */
+    suspend fun marcarPostagensVistas(conversaId: Long, postagens: Collection<Long>) {
+        for (postagemId in postagens.distinct()) {
+            chamarApi { api.visualizarPostagem(VisualizarPostagemRequisicao(postagemId)) }
+                .onSuccess { conversaDao.descontarNaoLidas(conversaId, it.vistas) }
+                .onFailure { Timber.d("Falha ao marcar a postagem como vista: %s", it.javaClass.simpleName) }
+            if (mensagemDao.buscar(postagemId) != null) recarregar(conversaId, postagemId)
+        }
+    }
+
     suspend fun marcarConversaLida(conversaId: Long, eu: Long) {
         for (completa in mensagemDao.naoLidasDeOutros(conversaId, eu, Int.MAX_VALUE)) {
             val id = completa.mensagem.id
