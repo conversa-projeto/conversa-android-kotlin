@@ -4,7 +4,7 @@
 - **Tipo:** decisão (proposta, aguardando a pessoa)
 - **Itens:** `docs/adr/0002-push-opcional-sem-fcm.md` (novo); `TODO.md` 5.1 (nota), 5.7 (nota) e 5.9 (nova); doc 08 S23 e S24
 - **Branch:** `reescrita`
-- **Commits:** (preencher)
+- **Commits:** `7f5954c`
 
 ## Contexto
 A pessoa pediu: "o projeto também precisa funcionar sem FCM, seja opcional; investigue, anote as pendências e à noite decido".
