@@ -23,12 +23,15 @@ import com.conversa.app.core.network.dto.MarcarStatusRequisicao
 import com.conversa.app.core.network.dto.MensagemCriadaDto
 import com.conversa.app.core.network.dto.MensagemDto
 import com.conversa.app.core.network.dto.MensagemExcluidaDto
+import com.conversa.app.core.network.dto.PostagemDto
 import com.conversa.app.core.network.dto.ReacaoDto
 import com.conversa.app.core.network.dto.ReacaoRequisicao
 import com.conversa.app.core.network.dto.ReacaoResposta
 import com.conversa.app.core.network.dto.ReferenciaEnvioDto
+import com.conversa.app.core.network.dto.RespostasVistasDto
 import com.conversa.app.core.network.dto.SucessoDto
 import com.conversa.app.core.network.dto.UsuarioReacaoDto
+import com.conversa.app.core.network.dto.VisualizarPostagemRequisicao
 import com.conversa.app.core.network.dto.paraModelo
 import com.conversa.app.core.network.http.ErroApi
 import com.conversa.app.core.testing.escopoDoTeste
@@ -151,6 +154,34 @@ class MensagensTest {
         assertThat(banco.mensagemDao().buscar(104)!!.mensagem.visualizada).isTrue()
         assertThat(banco.conversaDao().observar(42).first()!!.naoLidas).isEqualTo(1)
         coVerify(exactly = 1) { api.visualizar(MarcarStatusRequisicao(42, 104)) }
+        escopo.cancel()
+    }
+
+    @Test
+    fun `postagem com respostas novas - marca vistas uma vez, desconta as respostas e rele a postagem`() = runTest {
+        val escopo = escopoDoTeste()
+        val repo = MensagensRepositorio(api, banco.mensagemDao(), banco.conversaDao(), escopo, java.time.Clock.systemUTC())
+        banco.conversaDao().salvar(listOf(ConversaEntidade(42, 2, "Grupo", null, null, 160, agora, "resposta", 3, null, null, null)))
+        val resposta = msg(160, "resposta", remetente = 9).copy(postagemId = 104)
+        val comNovas = msg(104, "aviso").copy(postagem = PostagemDto("Aviso", respostas = 2, naoLidas = 2, ultimas = listOf(resposta)))
+        coEvery { api.mensagens(42, 0, 80, 0) } returns listOf(comNovas)
+        coEvery { api.visualizarPostagem(VisualizarPostagemRequisicao(104)) } returns RespostasVistasDto(2)
+        coEvery { api.mensagens(42, 104, 0, 0) } returns listOf(comNovas.copy(postagem = comNovas.postagem!!.copy(naoLidas = 0)))
+        repo.carregarRecentes(42)
+        assertThat(repo.observar(42).first().single().postagem!!.ultimas.single().id).isEqualTo(160)
+
+        repo.visualizarPostagem(42, 104, 2, ultimaResposta = 160)
+        repo.visualizarPostagem(42, 104, 2, ultimaResposta = 160)
+        advanceUntilIdle()
+
+        coVerify(exactly = 1) { api.visualizarPostagem(VisualizarPostagemRequisicao(104)) }
+        assertThat(banco.conversaDao().observar(42).first()!!.naoLidas).isEqualTo(1)
+        assertThat(repo.observar(42).first().single().postagem!!.naoLidas).isEqualTo(0)
+
+        // Resposta nova (outra resposta mais recente), mesmo com a mesma quantidade de novas: marca de novo.
+        repo.visualizarPostagem(42, 104, 2, ultimaResposta = 161)
+        advanceUntilIdle()
+        coVerify(exactly = 2) { api.visualizarPostagem(VisualizarPostagemRequisicao(104)) }
         escopo.cancel()
     }
 

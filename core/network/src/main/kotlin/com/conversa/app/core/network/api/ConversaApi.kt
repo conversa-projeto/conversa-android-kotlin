@@ -51,6 +51,7 @@ import com.conversa.app.core.network.dto.QuantidadeDto
 import com.conversa.app.core.network.dto.ReacaoRequisicao
 import com.conversa.app.core.network.dto.ReacaoResposta
 import com.conversa.app.core.network.dto.RecusarChamadaRequisicao
+import com.conversa.app.core.network.dto.RespostasVistasDto
 import com.conversa.app.core.network.dto.SipDto
 import com.conversa.app.core.network.dto.StatusDetalheDto
 import com.conversa.app.core.network.dto.StatusMensagemDto
@@ -60,6 +61,7 @@ import com.conversa.app.core.network.dto.UrlAnexoDto
 import com.conversa.app.core.network.dto.UsuarioDto
 import com.conversa.app.core.network.dto.VinculoConversaDto
 import com.conversa.app.core.network.dto.VistasDto
+import com.conversa.app.core.network.dto.VisualizarPostagemRequisicao
 import com.conversa.app.core.network.dto.VotarEnqueteRequisicao
 import com.conversa.app.core.network.http.AutenticacaoInterceptor
 import kotlinx.serialization.json.JsonObject
@@ -174,6 +176,14 @@ interface ConversaApi {
 
     @POST("mensagem/visualizar")
     suspend fun visualizar(@Body corpo: MarcarStatusRequisicao): SucessoDto
+
+    /** Marca como vistas as respostas de uma postagem (contrato §10.15); o servidor manda o WS 3. */
+    @POST("postagem/visualizar")
+    suspend fun visualizarPostagem(@Body corpo: VisualizarPostagemRequisicao): RespostasVistasDto
+
+    /** Todas as respostas de uma postagem (até 100, da mais antiga para a mais nova). */
+    @GET("postagem/respostas")
+    suspend fun respostasPostagem(@Query("id") postagemId: Long): List<MensagemDto>
 
     @POST("mensagem/reproduzir")
     suspend fun reproduzir(@Body corpo: MarcarStatusRequisicao): SucessoDto

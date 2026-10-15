@@ -66,6 +66,9 @@ interface ConversaDao {
     @Query("UPDATE conversa SET naoLidas = MAX(0, naoLidas - 1) WHERE id = :id")
     suspend fun descontarNaoLida(id: Long)
 
+    @Query("UPDATE conversa SET naoLidas = MAX(0, naoLidas - :quantas) WHERE id = :id")
+    suspend fun descontarNaoLidas(id: Long, quantas: Int)
+
     @Query("UPDATE conversa SET arquivadaEm = :arquivadaEmMs WHERE id = :id")
     suspend fun definirArquivada(id: Long, arquivadaEmMs: Long?)
 

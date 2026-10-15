@@ -21,11 +21,13 @@ import com.conversa.app.core.model.TipoChamada
 import com.conversa.app.core.model.TipoConteudo
 import com.conversa.app.core.model.TipoConversa
 import com.conversa.app.core.model.UsuarioReacao
+import com.conversa.app.core.network.dto.ConfirmacaoDto
 import com.conversa.app.core.network.dto.ContatoDto
 import com.conversa.app.core.network.dto.ConteudoDto
 import com.conversa.app.core.network.dto.ConversaDto
 import com.conversa.app.core.network.dto.MensagemDto
 import com.conversa.app.core.network.dto.MensagemResumidaDto
+import com.conversa.app.core.network.dto.PostagemDto
 import com.conversa.app.core.network.dto.ReferenciaDto
 import com.conversa.app.core.network.dto.UsuarioReacaoDto
 import com.conversa.app.core.network.dto.paraModelo
@@ -80,6 +82,8 @@ internal fun MensagemDto.paraEntidade() = MensagemCompleta(
         recebida = recebida,
         visualizada = visualizada,
         reproduzida = reproduzida,
+        postagemJson = postagem?.let { ConversaJson.encodeToString(PostagemDto.serializer(), it) },
+        confirmacaoJson = confirmacao?.let { ConversaJson.encodeToString(ConfirmacaoDto.serializer(), it) },
     ),
     conteudos = conteudos.map {
         ConteudoEntidade(
@@ -122,6 +126,12 @@ fun MensagemCompleta.paraModelo() = Mensagem(
     reproduzida = mensagem.reproduzida,
     enviando = mensagem.enviando,
     falhou = mensagem.falhou,
+    postagem = mensagem.postagemJson?.let { json ->
+        runCatching { ConversaJson.decodeFromString(PostagemDto.serializer(), json).paraModelo() }.getOrNull()
+    },
+    confirmacao = mensagem.confirmacaoJson?.let { json ->
+        runCatching { ConversaJson.decodeFromString(ConfirmacaoDto.serializer(), json).paraModelo() }.getOrNull()
+    },
     conteudos = conteudos.sortedBy { it.ordem }.map {
         Conteudo(
             id = it.id,

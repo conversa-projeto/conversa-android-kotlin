@@ -177,6 +177,26 @@ class SyncManagerTest {
     }
 
     @Test
+    fun `WS 3 com resposta de postagem, que nao esta no fluxo, busca uma vez so`() = runTest {
+        prepararApi()
+        coEvery { api.statusMensagens(any(), any()) } returns emptyList()
+        coEvery { mensagemDao.buscar(171) } returns null
+        coEvery { mensagemDao.ultimaSalva(42) } returns 170L
+        val sync =
+            SyncManager(api, tempoReal, conversaDao, mensagemDao, syncEstadoDao, presenca, sessao, enquetes, atividades, escopoDoTeste())
+        sync.iniciar()
+        advanceUntilIdle()
+
+        // A resposta (171) nunca aparece em /mensagens (§10.15): o segundo WS 3 não procura de novo.
+        eventos.emit(EventoSocket.StatusMensagens(42, listOf(171)))
+        advanceUntilIdle()
+        eventos.emit(EventoSocket.StatusMensagens(42, listOf(171)))
+        advanceUntilIdle()
+
+        coVerify(exactly = 1) { api.mensagens(42, mensagemReferencia = 170, mensagensPrevias = 0, mensagensSeguintes = 100) }
+    }
+
+    @Test
     fun `avisa as conversas com mensagem nova de outra pessoa, nao as minhas nem as ja lidas`() = runTest {
         prepararApi()
         fun msg(id: Long, remetente: Long, conversa: Long, lida: Boolean = false) =

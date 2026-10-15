@@ -418,8 +418,16 @@ class ChatViewModel @Inject constructor(
     /** Mensagens de outras pessoas que apareceram na tela com o app em primeiro plano (MSG-04). */
     fun marcarLidas(visiveis: List<Mensagem>) {
         val paraLer = visiveis.filter { it.remetenteId != eu && !it.visualizada && it.id > 0 }
-        if (paraLer.isEmpty()) return
-        viewModelScope.launch { paraLer.forEach { mensagens.marcarLida(conversaId, it.id) } }
+        // Postagem à vista com respostas novas: as respostas (fora do fluxo) também contam como lidas (FC-316).
+        val postagens = visiveis.filter { (it.postagem?.naoLidas ?: 0) > 0 }
+        if (paraLer.isEmpty() && postagens.isEmpty()) return
+        viewModelScope.launch {
+            paraLer.forEach { mensagens.marcarLida(conversaId, it.id) }
+            postagens.forEach { mensagem ->
+                val postagem = mensagem.postagem ?: return@forEach
+                mensagens.visualizarPostagem(conversaId, mensagem.id, postagem.naoLidas, postagem.ultimas.maxOfOrNull { it.id } ?: 0)
+            }
+        }
     }
 
     /** Envia e avisa a tela para limpar o campo só depois de gravado no Room. */

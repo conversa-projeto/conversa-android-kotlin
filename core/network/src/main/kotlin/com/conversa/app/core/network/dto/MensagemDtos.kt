@@ -74,7 +74,49 @@ data class MensagemDto(
     val reproduzida: Boolean = false,
     val conteudos: List<ConteudoDto> = emptyList(),
     val reacoes: List<ReacaoDto> = emptyList(),
+    /** Postagem em grupo (servidor `12cf0cf`, contrato §10.15): as respostas ficam embaixo dela. */
+    val postagem: PostagemDto? = null,
+    /** Resposta de postagem: fica fora de `/mensagens` (só nas `ultimas` e em `/postagem/respostas`). */
+    @SerialName("postagem_id") val postagemId: Long? = null,
+    /** Confirmação de leitura pedida por quem enviou (`b8ea0c2`, `6d20ff7`, contrato §10.14). */
+    val confirmacao: ConfirmacaoDto? = null,
 )
+
+@Serializable
+data class PostagemDto(
+    val titulo: String? = null,
+    val respostas: Int = 0,
+    @SerialName("nao_lidas") val naoLidas: Int = 0,
+    /** As 2 últimas respostas, da mais antiga para a mais nova (inclui as apagadas). */
+    val ultimas: List<MensagemDto> = emptyList(),
+)
+
+@Serializable
+data class ConfirmacaoDto(
+    /** Quantas pessoas precisam confirmar (o tamanho da lista). */
+    val total: Int = 0,
+    val confirmou: Boolean = false,
+    @SerialName("pode_confirmar") val podeConfirmar: Boolean = false,
+    val destinatarios: List<DestinatarioConfirmacaoDto> = emptyList(),
+    val usuarios: List<ConfirmouDto> = emptyList(),
+)
+
+@Serializable
+data class DestinatarioConfirmacaoDto(@SerialName("usuario_id") val usuarioId: Long, val nome: String = "")
+
+@Serializable
+data class ConfirmouDto(
+    @SerialName("usuario_id") val usuarioId: Long,
+    val nome: String = "",
+    @SerialName("avatar_url") val avatarUrl: String? = null,
+    @SerialName("confirmada_em") val confirmadaEm: Instant? = null,
+)
+
+@Serializable
+data class VisualizarPostagemRequisicao(@SerialName("postagem_id") val postagemId: Long)
+
+@Serializable
+data class RespostasVistasDto(val vistas: Int = 0)
 
 @Serializable
 data class ConteudoEnvioDto(val ordem: Int, val tipo: Int, val conteudo: String?)

@@ -83,6 +83,12 @@ class SyncManager @Inject constructor(
     private val _novasDeOutros = MutableSharedFlow<Set<Long>>(extraBufferCapacity = 8)
 
     /**
+     * Ids do WS 3 que não estão no fluxo (respostas de postagem, §10.15): já procurados uma vez,
+     * não disparam outra busca a cada status.
+     */
+    private val foraDoFluxo = ArrayDeque<Long>()
+
+    /**
      * Conversas que acabaram de receber mensagens de outras pessoas ainda não lidas
      * (NOT-01/NOT-02). Avisa depois de atualizar a lista, para o contador já estar certo.
      */
@@ -195,6 +201,13 @@ class SyncManager @Inject constructor(
             .onSuccess { lista -> mensagemDao.salvarCompletas(lista.filter { it.id == evento.mensagemId }.map { it.paraEntidade() }) }
     }
 
+    /** Relê uma mensagem do servidor, só se ela está no aparelho. */
+    private suspend fun reler(conversaId: Long, mensagemId: Long) {
+        if (mensagemDao.buscar(mensagemId) == null) return
+        chamarApi { api.mensagens(conversaId, mensagemReferencia = mensagemId) }
+            .onSuccess { lista -> mensagemDao.salvarCompletas(lista.filter { it.id == mensagemId }.map { it.paraEntidade() }) }
+    }
+
     private suspend fun sincronizarChamadasPendentes() {
         chamarApi { api.chamadasPendentes() }.onSuccess { lista -> _chamadasPendentes.emit(lista.map { it.paraModelo() }) }
     }
@@ -207,6 +220,14 @@ class SyncManager @Inject constructor(
             is EventoSocket.Reacao -> escopo.launch { atualizarReacoes(evento) }
             // 62: relê a enquete só se alguma bolha já a carregou (7.12).
             is EventoSocket.EnqueteAtualizada -> escopo.launch { enquetes.aoAtualizar(evento.enqueteId) }
+            // 64: resposta nova numa postagem — relê a postagem (contagem e últimas) e a lista.
+            is EventoSocket.PostagemAtualizada -> escopo.launch {
+                reler(evento.conversaId, evento.postagemId)
+                sincronizarConversas()
+            }
+            // 8 e 65: a confirmação de leitura da mensagem mudou — relê a mensagem.
+            is EventoSocket.ConfirmacaoLeitura -> escopo.launch { reler(evento.conversaId, evento.mensagemId) }
+            is EventoSocket.ConfirmacaoPedida -> escopo.launch { reler(evento.conversaId, evento.mensagemId) }
             else -> Unit
         }
     }
@@ -215,8 +236,15 @@ class SyncManager @Inject constructor(
         if (evento.mensagens.isEmpty()) return
         // Id que ainda não está no cache: mensagem nova que chegou sem WS 2 — por exemplo o
         // resumo de chamada (tipo 6), que só gera WS 3 (contrato §9.8). Busca o que falta.
-        val faltando = evento.mensagens.filter { mensagemDao.buscar(it) == null }
-        if (faltando.isNotEmpty()) buscarSeguintes(evento.conversaId)
+        val faltando = evento.mensagens.filter { mensagemDao.buscar(it) == null && it !in foraDoFluxo }
+        if (faltando.isNotEmpty()) {
+            buscarSeguintes(evento.conversaId)
+            // O que continua faltando não está no fluxo (resposta de postagem): não procurar de novo.
+            faltando.filter { mensagemDao.buscar(it) == null }.forEach { id ->
+                foraDoFluxo.addLast(id)
+                while (foraDoFluxo.size > MAX_FORA_DO_FLUXO) foraDoFluxo.removeFirst()
+            }
+        }
         chamarApi { api.statusMensagens(evento.conversaId, evento.mensagens.joinToString(",")) }
             .onSuccess { lista ->
                 val eu = sessao.sessao.value?.usuarioId ?: return@onSuccess
@@ -234,5 +262,6 @@ class SyncManager @Inject constructor(
         private const val DEBOUNCE_MS = 300L
         private const val LOTE = 100
         private const val LOTE_INICIAL = 80
+        private const val MAX_FORA_DO_FLUXO = 200
     }
 }

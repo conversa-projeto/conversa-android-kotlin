@@ -67,6 +67,31 @@ class DesserializacaoTest {
     }
 
     @Test
+    fun `postagem com as ultimas respostas e confirmacao com lista`() {
+        val json = """
+            {"id":1170,"remetente_id":8,"remetente":"Bruno","conversa_id":3,"inserida":"2026-10-13T23:08:00.000Z",
+             "conteudos":[{"ordem":1,"tipo":1,"conteudo":"Aviso"}],
+             "postagem":{"titulo":"Teste de postagem","respostas":2,"nao_lidas":1,
+               "ultimas":[{"id":1171,"remetente_id":9,"remetente":"Carla","conversa_id":3,"inserida":"2026-10-13T23:09:00Z",
+                 "postagem_id":1170,"conteudos":[{"ordem":1,"tipo":1,"conteudo":"Resposta"}]}]},
+             "confirmacao":{"total":2,"confirmou":false,"pode_confirmar":true,
+               "destinatarios":[{"usuario_id":7,"nome":"Ana"},{"usuario_id":9,"nome":"Carla"}],
+               "usuarios":[{"usuario_id":9,"nome":"Carla","avatar_url":null,"confirmada_em":"2026-10-13T23:10:00Z"}]}}
+        """.trimIndent()
+        val mensagem = ConversaJson.decodeFromString<MensagemDto>(json).paraModelo()
+
+        val postagem = mensagem.postagem!!
+        assertThat(postagem.titulo).isEqualTo("Teste de postagem")
+        assertThat(postagem.respostas).isEqualTo(2)
+        assertThat(postagem.naoLidas).isEqualTo(1)
+        assertThat(postagem.ultimas.single().conteudos.single().conteudo).isEqualTo("Resposta")
+        val confirmacao = mensagem.confirmacao!!
+        assertThat(confirmacao.podeConfirmar).isTrue()
+        assertThat(confirmacao.destinatarios.map { it.nome }).containsExactly("Ana", "Carla").inOrder()
+        assertThat(confirmacao.usuarios.single().usuarioId).isEqualTo(9)
+    }
+
+    @Test
     fun `dados da chamada`() {
         val chamada = ConversaJson.decodeFromString<DadosChamadaDto>(Fixtures.ler("chamada-dados.json")).paraModelo()
         assertThat(chamada.status).isEqualTo(StatusChamada.PENDENTE)

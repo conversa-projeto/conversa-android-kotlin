@@ -54,11 +54,12 @@ class Conversores {
         SyncEstadoEntidade::class,
         RascunhoEntidade::class,
     ],
-    version = 3,
+    version = 4,
     exportSchema = true,
     // 2: ordem das reações (a do servidor), para o "+N" esconder as mesmas que o web.
     // 3: rascunho por conversa (FC-519).
-    autoMigrations = [AutoMigration(from = 1, to = 2), AutoMigration(from = 2, to = 3)],
+    // 4: postagem e confirmação de leitura na mensagem (servidor `12cf0cf`/`6d20ff7`).
+    autoMigrations = [AutoMigration(from = 1, to = 2), AutoMigration(from = 2, to = 3), AutoMigration(from = 3, to = 4)],
 )
 @TypeConverters(Conversores::class)
 abstract class ConversaBanco : RoomDatabase() {

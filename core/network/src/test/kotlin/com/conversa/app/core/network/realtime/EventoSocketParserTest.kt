@@ -74,6 +74,19 @@ class EventoSocketParserTest {
     }
 
     @Test
+    fun `confirmacao de leitura, postagem atualizada e confirmacao pedida`() {
+        assertThat(
+            ler("""{"tipo":8,"conversa_id":3,"mensagem_id":1170,"usuario_id":9,"nome":"Teste C","confirmada_em":"2026-10-15T12:00:00Z"}"""),
+        )
+            .isEqualTo(EventoSocket.ConfirmacaoLeitura(3, 1170, 9))
+        assertThat(
+            ler("""{"tipo":64,"conversa_id":3,"postagem_id":1170,"usuario_id":8}"""),
+        ).isEqualTo(EventoSocket.PostagemAtualizada(3, 1170, 8))
+        assertThat(ler("""{"tipo":65,"conversa_id":3,"mensagem_id":1170,"usuario_id":8,"confirmacao":{"total":2}}"""))
+            .isEqualTo(EventoSocket.ConfirmacaoPedida(3, 1170))
+    }
+
+    @Test
     fun `tipo novo ou json quebrado vira desconhecido sem excecao`() {
         assertThat(ler("""{"tipo":99,"x":1}""")).isInstanceOf(EventoSocket.Desconhecido::class.java)
         assertThat(ler("nao e json")).isInstanceOf(EventoSocket.Desconhecido::class.java)

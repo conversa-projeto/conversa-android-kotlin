@@ -5,9 +5,12 @@ import com.conversa.app.core.model.Chamada
 import com.conversa.app.core.model.ChamadaHistorico
 import com.conversa.app.core.model.ChamadaNaMensagem
 import com.conversa.app.core.model.ChamadaPendente
+import com.conversa.app.core.model.ConfirmacaoLeitura
+import com.conversa.app.core.model.ConfirmacaoUsuario
 import com.conversa.app.core.model.Contato
 import com.conversa.app.core.model.Conteudo
 import com.conversa.app.core.model.Conversa
+import com.conversa.app.core.model.DestinatarioConfirmacao
 import com.conversa.app.core.model.Enquete
 import com.conversa.app.core.model.MembroConversa
 import com.conversa.app.core.model.Mensagem
@@ -16,6 +19,7 @@ import com.conversa.app.core.model.OpcaoEnquete
 import com.conversa.app.core.model.ParticipanteChamada
 import com.conversa.app.core.model.ParticipanteHistorico
 import com.conversa.app.core.model.ParticipanteNaMensagem
+import com.conversa.app.core.model.Postagem
 import com.conversa.app.core.model.Reacao
 import com.conversa.app.core.model.ReferenciaMensagem
 import com.conversa.app.core.model.ServidorIce
@@ -83,6 +87,16 @@ fun MensagemResumidaDto.paraModelo(): MensagemResumida = MensagemResumida(
     referencia = mensagemReferencia?.paraModelo(),
 )
 
+fun PostagemDto.paraModelo(): Postagem = Postagem(titulo, respostas, naoLidas, ultimas.map { it.paraModelo() })
+
+fun ConfirmacaoDto.paraModelo(): ConfirmacaoLeitura = ConfirmacaoLeitura(
+    total = total,
+    confirmou = confirmou,
+    podeConfirmar = podeConfirmar,
+    destinatarios = destinatarios.map { DestinatarioConfirmacao(it.usuarioId, it.nome) },
+    usuarios = usuarios.map { ConfirmacaoUsuario(it.usuarioId, it.nome, it.avatarUrl, it.confirmadaEm) },
+)
+
 fun ReacaoDto.paraModelo() = Reacao(
     emoji = emoji,
     quantidade = quantidade,
@@ -90,7 +104,7 @@ fun ReacaoDto.paraModelo() = Reacao(
     usuarios = usuarios.map { UsuarioReacao(it.usuarioId, it.nome, it.reagidoEm, it.avatarUrl) },
 )
 
-fun MensagemDto.paraModelo() = Mensagem(
+fun MensagemDto.paraModelo(): Mensagem = Mensagem(
     id = id,
     remetenteId = remetenteId,
     remetente = remetente,
@@ -104,6 +118,8 @@ fun MensagemDto.paraModelo() = Mensagem(
     reproduzida = reproduzida,
     conteudos = conteudos.sortedBy { it.ordem }.map { it.paraModelo() },
     reacoes = reacoes.map { it.paraModelo() },
+    postagem = postagem?.paraModelo(),
+    confirmacao = confirmacao?.paraModelo(),
 )
 
 fun DadosChamadaDto.paraModelo() = Chamada(

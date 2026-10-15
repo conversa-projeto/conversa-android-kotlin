@@ -58,6 +58,22 @@ enum class TipoReferencia(val codigo: Int) {
 }
 
 /** Mensagem citada (resposta) ou encaminhada; a cadeia vai até 5 níveis. */
+/** Postagem em grupo (MSG-22). [naoLidas] conta as respostas de outros que ainda não vi. */
+data class Postagem(val titulo: String?, val respostas: Int, val naoLidas: Int, val ultimas: List<Mensagem>)
+
+/** Confirmação de leitura (MSG-21): quem precisa confirmar ([destinatarios]) e quem já confirmou ([usuarios]). */
+data class ConfirmacaoLeitura(
+    val total: Int,
+    val confirmou: Boolean,
+    val podeConfirmar: Boolean,
+    val destinatarios: List<DestinatarioConfirmacao>,
+    val usuarios: List<ConfirmacaoUsuario>,
+)
+
+data class DestinatarioConfirmacao(val usuarioId: Long, val nome: String)
+
+data class ConfirmacaoUsuario(val usuarioId: Long, val nome: String, val avatarUrl: String?, val confirmadaEm: Instant?)
+
 data class MensagemResumida(
     val id: Long,
     val conversaId: Long,
@@ -107,6 +123,10 @@ data class Mensagem(
     val enviando: Boolean = false,
     /** O envio desistiu (erro definitivo): mostra "Reenviar"/"Apagar". */
     val falhou: Boolean = false,
+    /** Postagem em grupo (MSG-22): as respostas ficam embaixo dela, fora do fluxo do chat. */
+    val postagem: Postagem? = null,
+    /** Confirmação de leitura pedida por quem enviou (MSG-21). */
+    val confirmacao: ConfirmacaoLeitura? = null,
 ) {
     /** "Mensagem oculta" (antigo excluir): o conteúdo continua vindo, mas não é exibido. */
     val oculta: Boolean get() = excluidaEm != null

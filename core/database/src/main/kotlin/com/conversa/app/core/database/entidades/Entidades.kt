@@ -52,6 +52,10 @@ data class MensagemEntidade(
     val reproduzida: Boolean,
     val enviando: Boolean = false,
     val falhou: Boolean = false,
+    /** `postagem` do servidor (título, contagens e as 2 últimas respostas), em JSON. */
+    val postagemJson: String? = null,
+    /** `confirmacao` do servidor (lista e quem confirmou), em JSON. */
+    val confirmacaoJson: String? = null,
 )
 
 @Entity(

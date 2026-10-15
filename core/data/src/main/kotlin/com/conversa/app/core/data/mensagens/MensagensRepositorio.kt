@@ -13,6 +13,7 @@ import com.conversa.app.core.network.di.EscopoAplicacao
 import com.conversa.app.core.network.dto.IdDto
 import com.conversa.app.core.network.dto.MarcarStatusRequisicao
 import com.conversa.app.core.network.dto.ReacaoRequisicao
+import com.conversa.app.core.network.dto.VisualizarPostagemRequisicao
 import com.conversa.app.core.network.http.chamarApi
 import java.time.Clock
 import javax.inject.Inject
@@ -169,6 +170,29 @@ class MensagensRepositorio @Inject constructor(
         mensagemDao.marcarLidaPorMim(mensagemId)
         conversaDao.descontarNaoLida(conversaId)
         filaLida.send(conversaId to mensagemId)
+    }
+
+    /** Postagens (id, resposta mais recente) já marcadas nesta sessão: uma resposta nova pede de novo. */
+    private val postagensVistas = mutableSetOf<Pair<Long, Long>>()
+
+    /**
+     * Respostas de postagem (MSG-22, FC-316): ficam fora do fluxo do chat, mas contam nas não
+     * lidas da conversa. Quando a postagem aparece na tela com respostas novas, marca todas como
+     * vistas (`POST /postagem/visualizar`), desconta o contador na hora e relê a postagem.
+     * [ultimaResposta] (a mais recente das `ultimas`) separa um pedido do seguinte.
+     */
+    suspend fun visualizarPostagem(conversaId: Long, postagemId: Long, naoLidas: Int, ultimaResposta: Long) {
+        if (postagemId <= 0 || naoLidas <= 0) return
+        val chave = postagemId to ultimaResposta
+        val nova = synchronized(postagensVistas) { postagensVistas.add(chave) }
+        if (!nova) return
+        conversaDao.descontarNaoLidas(conversaId, naoLidas)
+        chamarApi { api.visualizarPostagem(VisualizarPostagemRequisicao(postagemId)) }
+            .onSuccess { recarregar(conversaId, postagemId) }
+            .onFailure {
+                synchronized(postagensVistas) { postagensVistas.remove(chave) }
+                Timber.d("Falha ao marcar a postagem como vista: %s", it.javaClass.simpleName)
+            }
     }
 
     private fun iniciarFila() {

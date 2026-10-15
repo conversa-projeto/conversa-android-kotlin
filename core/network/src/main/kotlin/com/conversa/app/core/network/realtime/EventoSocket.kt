@@ -59,6 +59,15 @@ sealed interface EventoSocket {
     /** 62 — alguém votou numa enquete. */
     data class EnqueteAtualizada(val enqueteId: Long, val conversaId: Long) : EventoSocket
 
+    /** 8 — alguém confirmou a leitura de uma mensagem que pede confirmação. */
+    data class ConfirmacaoLeitura(val conversaId: Long, val mensagemId: Long, val usuarioId: Long) : EventoSocket
+
+    /** 64 — resposta nova numa postagem. */
+    data class PostagemAtualizada(val conversaId: Long, val postagemId: Long, val usuarioId: Long) : EventoSocket
+
+    /** 65 — quem enviou passou a pedir confirmação de leitura numa mensagem já enviada. */
+    data class ConfirmacaoPedida(val conversaId: Long, val mensagemId: Long) : EventoSocket
+
     /** Tipo que o app ainda não conhece (o servidor evoluiu). */
     data class Desconhecido(val tipo: Int?, val json: String) : EventoSocket
 }
@@ -83,6 +92,9 @@ object TipoSocket {
     const val STATUS_USUARIO = 60
     const val NOVA_ATIVIDADE = 61
     const val ENQUETE_ATUALIZADA = 62
+    const val CONFIRMACAO_LEITURA = 8
+    const val POSTAGEM_ATUALIZADA = 64
+    const val CONFIRMACAO_PEDIDA = 65
 }
 
 /** Converte o texto recebido no socket em [EventoSocket]. Nunca lança exceção. */
@@ -141,6 +153,20 @@ object EventoSocketParser {
         TipoSocket.ENQUETE_ATUALIZADA -> EventoSocket.EnqueteAtualizada(
             enqueteId = obj.longo("enquete_id") ?: return null,
             conversaId = obj.longo("conversa_id") ?: return null,
+        )
+        TipoSocket.CONFIRMACAO_LEITURA -> EventoSocket.ConfirmacaoLeitura(
+            conversaId = obj.longo("conversa_id") ?: return null,
+            mensagemId = obj.longo("mensagem_id") ?: return null,
+            usuarioId = obj.longo("usuario_id") ?: return null,
+        )
+        TipoSocket.POSTAGEM_ATUALIZADA -> EventoSocket.PostagemAtualizada(
+            conversaId = obj.longo("conversa_id") ?: return null,
+            postagemId = obj.longo("postagem_id") ?: return null,
+            usuarioId = obj.longo("usuario_id") ?: return null,
+        )
+        TipoSocket.CONFIRMACAO_PEDIDA -> EventoSocket.ConfirmacaoPedida(
+            conversaId = obj.longo("conversa_id") ?: return null,
+            mensagemId = obj.longo("mensagem_id") ?: return null,
         )
         else -> null
     }

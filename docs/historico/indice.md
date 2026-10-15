@@ -38,6 +38,7 @@
 ## Mensagens (etapa 3)
 - 2026-10-07 · [Etapa 3 — regras do chat, carregar, ler e enviar](2026-10-07-06-etapa-3-regras-e-dados.md) — classificação e links do web, paginação, fila de leitura, envio com WorkManager; status do WS 3 só nas minhas; 159 testes
 - 2026-10-07 · [Etapa 3 — tela de chat, testada no emulador](2026-10-07-07-etapa-3-tela-de-chat.md) — `:feature:chat` (bolhas, Últimas, FABs, links, digitando, status, reenviar); app fechava por regex do ICU (corrigido + teste instrumentado); 164 testes
+- 2026-10-15 · [Respostas de postagem não prendem mais o contador](2026-10-15-05-postagem-contador.md) — DTOs/modelo/Room v4 da postagem e da confirmação; a postagem à vista marca as respostas como vistas (`POST /postagem/visualizar`); WS 64/8/65; ids do WS 3 fora do fluxo procurados uma vez; testado no emulador
 
 ## Anexos e mídia (etapa 4)
 - 2026-10-07 · [Etapa 4 — envio de anexos, URLs assinadas, token só na API e proxy de dev](2026-10-07-08-etapa-4-upload-e-proxy-dev.md) — `AnexosRepositorio` (SHA-256 em fluxo, dedup, URL vencida), `AutenticacaoInterceptor` só para `/api/`, `ferramentas/proxy-dev.mjs`; 171 testes
