@@ -4,7 +4,7 @@
 - **Tipo:** código
 - **Itens:** `TODO.md` 7.13 (2ª, 3ª e 4ª linhas); FC-317, FC-522; MSG-22, ENV-26
 - **Branch:** `reescrita`
-- **Commits:** (preencher)
+- **Commits:** `2033b39`
 
 ## Contexto
 O bloco 05 deste dia fez só a parte de dados da postagem (servidor `12cf0cf`, web `d202c06`/`e33ecba`): os DTOs, o Room v4 e o contador. A postagem ainda aparecia como uma mensagem comum. Faltavam três coisas do 7.13, iguais ao web (`BolhaPostagem.vue`, `MessageInput.vue`, `AnexoPopup.vue`):
