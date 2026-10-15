@@ -4,7 +4,7 @@
 - **Tipo:** código
 - **Itens:** `TODO.md` 2.x (as linhas 🆕 `769bd7d` "Chamadas (N)", `b8ea0c2` emoji ou imagem do grupo e `e33ecba` ícone de grupo); FC-218, FC-219, FC-217 (a parte de mostrar); CON-01, CON-15, GER-07
 - **Branch:** `reescrita`
-- **Commits:** (preencher)
+- **Commits:** `04c5c14`
 
 ## Contexto
 - **O que o servidor manda na lista** (`GET /conversas`): `chamada` (é o chat de uma ligação, `769bd7d`) e `emoji` (do grupo, `b8ea0c2`). A imagem do grupo vem em `avatar_url`, que o Android já lia.
