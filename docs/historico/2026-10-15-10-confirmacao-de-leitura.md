@@ -4,7 +4,7 @@
 - **Tipo:** código
 - **Itens:** `TODO.md` 3.8 (as duas linhas 🆕 `769bd7d`) e 7.1 (linha 🆕 `6d20ff7`/`e33ecba`); FC-521, FC-525; MSG-21, ENV-24, ENV-27
 - **Branch:** `reescrita`
-- **Commits:** (preencher)
+- **Commits:** `32de350`
 
 ## Contexto
 - **Servidor e web:** o servidor (`b8ea0c2`, `6d20ff7`) e o web (`769bd7d`, `e33ecba`) têm a confirmação de leitura:
