@@ -4,7 +4,7 @@
 - **Tipo:** correção
 - **Itens:** `TODO.md` 8.2 (as duas linhas 🆕) e 7.5 (destaque); FC-524; PES-01, MSG-06
 - **Branch:** `reescrita`
-- **Commits:** (preencher)
+- **Commits:** `923297f`
 
 ## Contexto
 - **No servidor `6d20ff7`:** `GET /pesquisar?conversa=X` passou a trazer também as mensagens dos chats das ligações feitas em X. Cada ligação com chat cria um grupo novo.
