@@ -4,7 +4,7 @@
 - **Tipo:** correção
 - **Itens:** `TODO.md` 8.7 (3ª linha); FC-724; CHA-25; contrato §9.14
 - **Branch:** `reescrita`
-- **Commits:** (preencher)
+- **Commits:** `936c3ee`
 
 ## Contexto
 O servidor `b8ea0c2` criou o `POST /chamada/chamar-novamente`. Ele faz o convidado que recusou, ou que deixou passar, voltar a pendente, e manda de novo o WS 51 para ele.
