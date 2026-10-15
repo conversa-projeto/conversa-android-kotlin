@@ -4,7 +4,7 @@
 - **Tipo:** correção
 - **Itens:** `TODO.md` 8.7 (2ª linha); FC-417; ENV-04
 - **Branch:** `reescrita`
-- **Commits:** (preencher)
+- **Commits:** `a7a6c8a`
 
 ## Contexto
 No web `d202c06`, o seletor passou a ter só o pacote "Noto" (55 animações, `noto/<nome>`), e os pacotes básico, rostos e coisas foram apagados.
