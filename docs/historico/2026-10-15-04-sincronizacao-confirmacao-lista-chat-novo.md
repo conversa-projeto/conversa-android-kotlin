@@ -4,7 +4,7 @@
 - **Tipo:** documentação
 - **Itens:** linhas 🆕 no `TODO.md`: 2.6, 2.10, 3.5, 3.8, 4.4, 4.11, 7.1, 7.13, 8.1, 8.2 e 8.7; FC-219, FC-420, FC-525, FC-526 e notas em FC-217, 317, 521, 524, 725 e 727; S11, S20 e S25
 - **Branch:** `reescrita`
-- **Commits:** (preencher)
+- **Commits:** `21747c8`
 - **Commits de origem** (pull `--ff-only` em 2026-10-15; 2 commits atrás em cada repositório):
   - **Servidor (`12cf0cf` → `e25c4db`):**
     - `6d20ff7` "Confirmação de leitura com lista e prazo, chat novo por ligação e pesquisa nos chats das ligações" (migração 043);
