@@ -29,6 +29,7 @@ import androidx.compose.foundation.gestures.awaitFirstDown
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.ColumnScope
 import androidx.compose.foundation.layout.IntrinsicSize
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
@@ -44,12 +45,14 @@ import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.text.BasicTextField
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.text.input.InputTransformation
 import androidx.compose.foundation.text.input.OutputTransformation
 import androidx.compose.foundation.text.input.TextFieldLineLimits
 import androidx.compose.foundation.text.input.TextFieldState
 import androidx.compose.foundation.text.input.clearText
+import androidx.compose.foundation.text.input.maxLength
 import androidx.compose.foundation.text.input.rememberTextFieldState
 import androidx.compose.foundation.text.input.setTextAndPlaceCursorAtEnd
 import androidx.compose.material.icons.Icons
@@ -61,6 +64,7 @@ import androidx.compose.material.icons.filled.Pause
 import androidx.compose.material.icons.filled.PlayArrow
 import androidx.compose.material.icons.filled.Stop
 import androidx.compose.material.icons.outlined.AttachFile
+import androidx.compose.material.icons.outlined.Campaign
 import androidx.compose.material.icons.outlined.Code
 import androidx.compose.material.icons.outlined.Delete
 import androidx.compose.material.icons.outlined.EmojiEmotions
@@ -100,6 +104,7 @@ import androidx.compose.ui.geometry.CornerRadius
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.SolidColor
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalDensity
@@ -174,6 +179,10 @@ internal fun Campo(
     respondendo: ReferenciaPendente? = null,
     agendadas: List<Mensagem> = emptyList(),
     grupo: Boolean = false,
+    /** "+" › "Postagem" (7.13): a faixa com o título. */
+    postando: Boolean = false,
+    /** "Responder à postagem" (7.13): a faixa "Respondendo à postagem de…". */
+    respondendoPostagem: Mensagem? = null,
 ) {
     // Estado do texto local e síncrono (o cursor não pula); sobrevive a girar a tela.
     val texto = rememberTextFieldState()
@@ -255,6 +264,8 @@ internal fun Campo(
         val atual = gravacao
         val comBarra = atual is EstadoGravacao.Pausada || (atual as? EstadoGravacao.Gravando)?.travada == true
         if (respondendo != null) BarraResposta(respondendo, acoes.aoCancelarResposta)
+        if (respondendoPostagem != null) BarraRespondendoPostagem(respondendoPostagem, acoes.aoCancelarPostagem)
+        if (postando) BarraPostagem(acoes.aoMudarTituloPostagem, acoes.aoCancelarPostagem)
         if (atual == EstadoGravacao.Parada) SugestoesDeMencao(texto, mencoes, acoes.contatosMencao)
         if (fila.isNotEmpty() && atual == EstadoGravacao.Parada) FilaAnexos(fila, acoes.aoRemoverAnexo)
         if (comBarra) {
@@ -274,6 +285,9 @@ internal fun Campo(
                 agendadas = agendadas.size,
                 aoVerAgendadas = { vendoAgendadas = true },
                 aoNovaVotacao = if (grupo) ({ criandoVotacao = true }) else null,
+                aoPostar = if (grupo) acoes.aoPostar else null,
+                // O servidor recusa a resposta de postagem agendada.
+                podeAgendar = respondendoPostagem == null,
             )
         }
     }
@@ -293,6 +307,89 @@ private fun BarraResposta(referencia: ReferenciaPendente, aoCancelar: () -> Unit
     } else {
         mensagem.remetente
     }
+    FaixaDoCampo(stringResource(R.string.cancelar_resposta), aoCancelar) {
+        Text(titulo, style = MaterialTheme.typography.labelMedium, color = MaterialTheme.colorScheme.primary, maxLines = 1)
+        Text(
+            textoDoResumo(resumoDaMensagem(mensagem)),
+            style = MaterialTheme.typography.bodySmall,
+            color = MaterialTheme.colorScheme.onSurfaceVariant,
+            maxLines = 1,
+            overflow = TextOverflow.Ellipsis,
+        )
+    }
+}
+
+/** "Responder à postagem" (7.13, web `e33ecba`): a próxima mensagem vai para baixo dela; o "×" desiste. */
+@Composable
+private fun BarraRespondendoPostagem(postagem: Mensagem, aoCancelar: () -> Unit) {
+    FaixaDoCampo(stringResource(R.string.nao_responder_a_postagem), aoCancelar) {
+        Text(
+            stringResource(R.string.respondendo_a_postagem_de, postagem.remetente),
+            style = MaterialTheme.typography.labelMedium,
+            color = MaterialTheme.colorScheme.primary,
+            maxLines = 1,
+        )
+        Text(
+            postagem.postagem?.titulo?.takeIf { it.isNotBlank() } ?: textoDoResumo(resumoDaMensagem(postagem)),
+            style = MaterialTheme.typography.bodySmall,
+            color = MaterialTheme.colorScheme.onSurfaceVariant,
+            maxLines = 1,
+            overflow = TextOverflow.Ellipsis,
+        )
+    }
+}
+
+/**
+ * "+" › "Postagem" (7.13): a próxima mensagem vira uma postagem do grupo, com "Título (opcional)"
+ * (até 150 caracteres). O título fica aqui, em estado local; o ViewModel recebe a cópia.
+ */
+@Composable
+private fun BarraPostagem(aoMudarTitulo: (String) -> Unit, aoCancelar: () -> Unit) {
+    val titulo = rememberTextFieldState()
+    LaunchedEffect(titulo) { snapshotFlow { titulo.text.toString() }.collect { aoMudarTitulo(it) } }
+    val descricao = stringResource(R.string.titulo_da_postagem)
+    FaixaDoCampo(stringResource(R.string.nao_postar), aoCancelar, icone = Icons.Outlined.Campaign) {
+        Text(
+            stringResource(R.string.postagem_faixa),
+            style = MaterialTheme.typography.labelMedium,
+            color = MaterialTheme.colorScheme.primary,
+            maxLines = 1,
+        )
+        BasicTextField(
+            state = titulo,
+            inputTransformation = InputTransformation.maxLength(LIMITE_TITULO_POSTAGEM),
+            lineLimits = TextFieldLineLimits.SingleLine,
+            textStyle = MaterialTheme.typography.bodyMedium.copy(
+                color = MaterialTheme.colorScheme.onSurface,
+                fontWeight = FontWeight.Medium,
+            ),
+            cursorBrush = SolidColor(MaterialTheme.colorScheme.primary),
+            keyboardOptions = KeyboardOptions(capitalization = KeyboardCapitalization.Sentences),
+            modifier = Modifier.fillMaxWidth().padding(top = 2.dp).semantics { contentDescription = descricao },
+            decorator = { campo ->
+                Box {
+                    if (titulo.text.isEmpty()) {
+                        Text(
+                            stringResource(R.string.titulo_opcional),
+                            style = MaterialTheme.typography.bodyMedium,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant,
+                        )
+                    }
+                    campo()
+                }
+            },
+        )
+    }
+}
+
+/** Faixa acima do campo (resposta, postagem): borda azul à esquerda, o conteúdo e o "×" (como o web). */
+@Composable
+private fun FaixaDoCampo(
+    descricaoFechar: String,
+    aoFechar: () -> Unit,
+    icone: androidx.compose.ui.graphics.vector.ImageVector? = null,
+    conteudo: @Composable ColumnScope.() -> Unit,
+) {
     Row(
         Modifier
             .fillMaxWidth()
@@ -302,18 +399,17 @@ private fun BarraResposta(referencia: ReferenciaPendente, aoCancelar: () -> Unit
         verticalAlignment = Alignment.CenterVertically,
     ) {
         Box(Modifier.width(3.dp).fillMaxHeight().background(MaterialTheme.colorScheme.primary))
-        Column(Modifier.weight(1f).padding(horizontal = 8.dp, vertical = 6.dp)) {
-            Text(titulo, style = MaterialTheme.typography.labelMedium, color = MaterialTheme.colorScheme.primary, maxLines = 1)
-            Text(
-                textoDoResumo(resumoDaMensagem(mensagem)),
-                style = MaterialTheme.typography.bodySmall,
-                color = MaterialTheme.colorScheme.onSurfaceVariant,
-                maxLines = 1,
-                overflow = TextOverflow.Ellipsis,
+        if (icone != null) {
+            Icon(
+                icone,
+                contentDescription = null,
+                tint = MaterialTheme.colorScheme.primary,
+                modifier = Modifier.padding(start = 8.dp).size(18.dp),
             )
         }
-        IconButton(onClick = aoCancelar) {
-            Icon(Icons.Filled.Close, contentDescription = stringResource(R.string.cancelar_resposta))
+        Column(Modifier.weight(1f).padding(horizontal = 8.dp, vertical = 6.dp), content = conteudo)
+        IconButton(onClick = aoFechar) {
+            Icon(Icons.Filled.Close, contentDescription = descricaoFechar)
         }
     }
 }
@@ -393,6 +489,8 @@ private fun LinhaDoCampo(
     agendadas: Int,
     aoNovaVotacao: (() -> Unit)?,
     aoVerAgendadas: () -> Unit,
+    aoPostar: (() -> Unit)?,
+    podeAgendar: Boolean,
 ) {
     Row(
         Modifier.fillMaxWidth().padding(horizontal = 8.dp, vertical = 6.dp),
@@ -400,7 +498,7 @@ private fun LinhaDoCampo(
         horizontalArrangement = Arrangement.spacedBy(4.dp),
     ) {
         Box(Modifier.heightIn(min = 48.dp), contentAlignment = Alignment.Center) {
-            if (segurando == null) BotaoAnexar(acoes, aoInserirCodigo, aoNovaVotacao) else Spacer(Modifier.width(8.dp))
+            if (segurando == null) BotaoAnexar(acoes, aoInserirCodigo, aoNovaVotacao, aoPostar) else Spacer(Modifier.width(8.dp))
         }
         Box(Modifier.weight(1f).heightIn(min = 48.dp), contentAlignment = Alignment.CenterStart) {
             if (segurando != null) {
@@ -449,8 +547,8 @@ private fun LinhaDoCampo(
                         .combinedClickable(
                             role = Role.Button,
                             onClickLabel = stringResource(R.string.enviar),
-                            onLongClickLabel = stringResource(R.string.agendar_mensagem),
-                            onLongClick = { menuAgendar = true },
+                            onLongClickLabel = if (podeAgendar) stringResource(R.string.agendar_mensagem) else null,
+                            onLongClick = if (podeAgendar) ({ menuAgendar = true }) else null,
                             onClick = { enviar(null) },
                         ),
                     contentAlignment = Alignment.Center,
@@ -733,7 +831,7 @@ private fun tempoGravacao(ms: Long): String {
  * acontecer depois, pelo WorkManager, com o app já fechado.
  */
 @Composable
-private fun BotaoAnexar(acoes: AcoesChat, aoInserirCodigo: () -> Unit, aoNovaVotacao: (() -> Unit)?) {
+private fun BotaoAnexar(acoes: AcoesChat, aoInserirCodigo: () -> Unit, aoNovaVotacao: (() -> Unit)?, aoPostar: (() -> Unit)?) {
     val contexto = LocalContext.current
     val avisos = LocalAvisos.current
     val escopo = rememberCoroutineScope()
@@ -830,6 +928,17 @@ private fun BotaoAnexar(acoes: AcoesChat, aoInserirCodigo: () -> Unit, aoNovaVot
                     onClick = {
                         menu = false
                         abrir()
+                    },
+                )
+            }
+            // Postagem (7.13) também só em grupo: a próxima mensagem vira a postagem.
+            aoPostar?.let { postar ->
+                DropdownMenuItem(
+                    text = { Text(stringResource(R.string.postagem)) },
+                    leadingIcon = { Icon(Icons.Outlined.Campaign, contentDescription = null) },
+                    onClick = {
+                        menu = false
+                        postar()
                     },
                 )
             }

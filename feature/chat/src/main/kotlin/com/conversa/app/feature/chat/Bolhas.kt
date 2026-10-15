@@ -132,6 +132,8 @@ data class AcoesBolha(
     val aoVerStatus: (Mensagem) -> Unit = {},
     /** A votação (7.12): ler, votar, encerrar e mudar a data final. */
     val enquetes: AcoesEnquete? = null,
+    /** A postagem (7.13): as respostas e o "Responder à postagem". */
+    val postagens: AcoesPostagem = AcoesPostagem(),
 )
 
 /**
@@ -160,7 +162,10 @@ fun LinhaMensagem(
         modifier = Modifier.fillMaxWidth().background(corDestaque).padding(horizontal = 8.dp, vertical = 2.dp),
         horizontalAlignment = if (propria) Alignment.End else Alignment.Start,
     ) {
-        if (mostrarRemetente) {
+        val tipo = classificarMensagem(mensagem)
+        // A postagem (7.13) diz de quem é no próprio cartão.
+        val postagem = tipo == TipoExibicao.POSTAGEM
+        if (mostrarRemetente && !postagem) {
             Text(
                 mensagem.remetente,
                 style = MaterialTheme.typography.labelMedium,
@@ -175,7 +180,8 @@ fun LinhaMensagem(
         DeslizarParaResponder(habilitado = comAcoes, aoResponder = { acoes.aoResponder(mensagem) }) {
             Box(
                 Modifier
-                    .widthIn(max = larguraMax)
+                    // A postagem ocupa a largura do chat, de quem quer que seja (web `e33ecba`).
+                    .then(if (postagem) Modifier.fillMaxWidth() else Modifier.widthIn(max = larguraMax))
                     .toqueLongo(comAcoes) { acoes.aoMenu(mensagem) }
                     // O toque longo e o deslizar são gestos: o TalkBack chega neles por estas ações.
                     .then(
@@ -198,7 +204,8 @@ fun LinhaMensagem(
                     ),
             ) {
                 CompositionLocalProvider(LocalAoVerStatus provides aoVerStatus) {
-                    when (classificarMensagem(mensagem)) {
+                    when (tipo) {
+                        TipoExibicao.POSTAGEM -> BolhaPostagem(mensagem, propria, acoes, progresso)
                         TipoExibicao.EMOJI -> BolhaEmoji(mensagem, propria)
                         TipoExibicao.FIGURINHA -> BolhaFigurinha(mensagem, propria)
                         TipoExibicao.CHAMADA -> BolhaChamada(mensagem, propria, acoes)
@@ -207,7 +214,7 @@ fun LinhaMensagem(
                         TipoExibicao.TEXTO_CURTO -> Fundo(propria) { TextoCurto(mensagem, propria, acoes) }
                         TipoExibicao.CODIGO -> Fundo(propria) { CorpoPadrao(mensagem, propria, acoes) }
                         TipoExibicao.IMAGEM -> BolhaImagem(mensagem, propria, progresso, acoes)
-                        else -> Fundo(propria) { CorpoPadrao(mensagem, propria, acoes, progresso) }
+                        else -> Fundo(propria) { CorpoPadrao(mensagem, propria, acoes, progresso = progresso) }
                     }
                 }
             }
@@ -258,9 +265,9 @@ private fun TextoCurto(mensagem: Mensagem, propria: Boolean, acoes: AcoesBolha) 
 
 /** Bolha padrão: citação (se houver), cada conteúdo e o rodapé embaixo à direita. */
 @Composable
-private fun CorpoPadrao(mensagem: Mensagem, propria: Boolean, acoes: AcoesBolha, progresso: Float? = null) {
+internal fun CorpoPadrao(mensagem: Mensagem, propria: Boolean, acoes: AcoesBolha, modifier: Modifier = Modifier, progresso: Float? = null) {
     val cor = corTexto(propria)()
-    Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
+    Column(modifier, verticalArrangement = Arrangement.spacedBy(4.dp)) {
         val separados = separarConteudosDaCitacao(mensagem)
         mensagem.referencia?.let { BlocoCitacao(it, separados.daCitacao, propria, cor, acoes) }
         separados.proprios.forEach { ConteudoNaBolha(mensagem, it, propria, cor, acoes) }
@@ -270,7 +277,7 @@ private fun CorpoPadrao(mensagem: Mensagem, propria: Boolean, acoes: AcoesBolha,
 }
 
 @Composable
-private fun ConteudoNaBolha(mensagem: Mensagem, conteudo: Conteudo, propria: Boolean, cor: Color, acoes: AcoesBolha) {
+internal fun ConteudoNaBolha(mensagem: Mensagem, conteudo: Conteudo, propria: Boolean, cor: Color, acoes: AcoesBolha) {
     when (conteudo.tipo) {
         TipoConteudo.TEXTO -> separarBlocosDeCodigo(conteudo.conteudo).forEach { parte ->
             when (parte) {

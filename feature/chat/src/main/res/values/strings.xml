@@ -254,6 +254,30 @@
     </plurals>
     <string name="pesquisa_nenhuma_com">Nenhuma mensagem com “%1$s”</string>
     <string name="no_chat_da_ligacao">no chat da ligação</string>
+    <!-- Postagem em grupo (7.13, web e33ecba: BolhaPostagem.vue, MessageInput.vue, AnexoPopup.vue) -->
+    <string name="postagem">Postagem</string>
+    <string name="nenhuma_resposta_ainda">Nenhuma resposta ainda</string>
+    <plurals name="postagem_respostas">
+        <item quantity="one">%1$d resposta</item>
+        <item quantity="many">%1$d respostas</item>
+        <item quantity="other">%1$d respostas</item>
+    </plurals>
+    <plurals name="postagem_novas">
+        <item quantity="one">%1$d nova</item>
+        <item quantity="many">%1$d novas</item>
+        <item quantity="other">%1$d novas</item>
+    </plurals>
+    <string name="ver_todas_as_respostas">Ver todas as %1$d</string>
+    <string name="mostrar_menos">Mostrar menos</string>
+    <string name="mensagem_apagada">Mensagem apagada</string>
+    <string name="responder_a_postagem">Responder à postagem</string>
+    <string name="respondendo_no_campo">Respondendo no campo de mensagem</string>
+    <string name="respondendo_a_postagem_de">Respondendo à postagem de %1$s</string>
+    <string name="nao_responder_a_postagem">Não responder à postagem</string>
+    <string name="postagem_faixa">Postagem: as respostas ficam embaixo dela</string>
+    <string name="titulo_opcional">Título (opcional)</string>
+    <string name="titulo_da_postagem">Título da postagem</string>
+    <string name="nao_postar">Não postar</string>
     <string name="voce">Você</string>
     <string name="fechar_pesquisa">Fechar pesquisa</string>
     <string name="acao_pesquisar">Pesquisar</string>

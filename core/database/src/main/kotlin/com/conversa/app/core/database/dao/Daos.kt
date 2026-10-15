@@ -85,9 +85,15 @@ interface ConversaDao {
 
 @Dao
 interface MensagemDao {
+    /** O fluxo do chat: sem as respostas de postagem (7.13), que ficam embaixo da postagem. */
     @Transaction
-    @Query("SELECT * FROM mensagem WHERE conversaId = :conversaId ORDER BY dataEfetiva, id")
+    @Query("SELECT * FROM mensagem WHERE conversaId = :conversaId AND postagemId IS NULL ORDER BY dataEfetiva, id")
     fun observarDaConversa(conversaId: Long): Flow<List<MensagemCompleta>>
+
+    /** Minhas respostas de postagem ainda na fila (7.13), da mais antiga à mais nova. */
+    @Transaction
+    @Query("SELECT * FROM mensagem WHERE conversaId = :conversaId AND postagemId IS NOT NULL ORDER BY inserida, id DESC")
+    fun observarRespostasLocais(conversaId: Long): Flow<List<MensagemCompleta>>
 
     @Transaction
     @Query("SELECT * FROM mensagem WHERE id = :id")

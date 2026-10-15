@@ -127,6 +127,8 @@ data class Mensagem(
     val postagem: Postagem? = null,
     /** Confirmação de leitura pedida por quem enviou (MSG-21). */
     val confirmacao: ConfirmacaoLeitura? = null,
+    /** Resposta de postagem (7.13): a postagem dela. Fica embaixo da postagem, fora do fluxo do chat. */
+    val postagemId: Long? = null,
 ) {
     /** "Mensagem oculta" (antigo excluir): o conteúdo continua vindo, mas não é exibido. */
     val oculta: Boolean get() = excluidaEm != null

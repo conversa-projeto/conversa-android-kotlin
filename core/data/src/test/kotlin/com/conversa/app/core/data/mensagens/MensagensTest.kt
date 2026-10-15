@@ -12,9 +12,12 @@ import com.conversa.app.core.data.paraEntidade
 import com.conversa.app.core.data.paraModelo
 import com.conversa.app.core.database.ConversaBanco
 import com.conversa.app.core.database.entidades.ConversaEntidade
+import com.conversa.app.core.model.Postagem
 import com.conversa.app.core.model.Sessao
 import com.conversa.app.core.model.TipoConteudo
+import com.conversa.app.core.model.TipoExibicao
 import com.conversa.app.core.model.TipoReferencia
+import com.conversa.app.core.model.classificarMensagem
 import com.conversa.app.core.network.api.ConversaApi
 import com.conversa.app.core.network.dto.ConteudoDto
 import com.conversa.app.core.network.dto.ConteudoEnvioDto
@@ -24,6 +27,7 @@ import com.conversa.app.core.network.dto.MensagemCriadaDto
 import com.conversa.app.core.network.dto.MensagemDto
 import com.conversa.app.core.network.dto.MensagemExcluidaDto
 import com.conversa.app.core.network.dto.PostagemDto
+import com.conversa.app.core.network.dto.PostagemEnvioDto
 import com.conversa.app.core.network.dto.ReacaoDto
 import com.conversa.app.core.network.dto.ReacaoRequisicao
 import com.conversa.app.core.network.dto.ReacaoResposta
@@ -320,6 +324,66 @@ class MensagensTest {
                 ),
             )
         }
+    }
+
+    // --- Postagem em grupo (7.13) ---
+
+    @Test
+    fun `postagem nova vai com o titulo e a otimista ja e uma postagem sem respostas`() = runTest {
+        val envio = envio()
+
+        val idLocal = envio.enviar(42, "Pauta no anexo", emptyList(), postagem = PostagemEnvio.Nova("Reunião"))
+
+        val otimista = banco.mensagemDao().buscar(idLocal)!!.paraModelo()
+        assertThat(otimista.postagem).isEqualTo(Postagem("Reunião", 0, 0, emptyList()))
+        assertThat(classificarMensagem(otimista)).isEqualTo(TipoExibicao.POSTAGEM)
+        coEvery { api.enviarMensagem(any()) } returns MensagemCriadaDto(id = 510, conversaId = 42)
+        coEvery { api.mensagens(42, 510, 0, 0) } throws java.io.IOException("sem rede")
+        envio.processarPendentes()
+        coVerify {
+            api.enviarMensagem(
+                EnviarMensagemRequisicao(42, listOf(ConteudoEnvioDto(1, 1, "Pauta no anexo")), postagem = PostagemEnvioDto("Reunião")),
+            )
+        }
+    }
+
+    @Test
+    fun `resposta de postagem fica embaixo dela ate sair, vai com postagem_id e rele a postagem`() = runTest {
+        val envio = envio()
+        val repo = repo()
+        val postagem = msg(104, "aviso").copy(postagem = PostagemDto("Aviso"))
+        banco.mensagemDao().salvarCompletas(listOf(postagem.paraEntidade()))
+
+        val idLocal = envio.enviar(42, "eu vou", emptyList(), postagem = PostagemEnvio.Resposta(104))
+
+        // Fora do fluxo do chat: só embaixo da postagem, enquanto sai.
+        assertThat(repo.observar(42).first().map { it.id }).containsExactly(104L)
+        assertThat(repo.observarRespostasLocais(42).first()[104L]!!.single().id).isEqualTo(idLocal)
+
+        val resposta = msg(511, "eu vou", remetente = 7).copy(postagemId = 104)
+        coEvery { api.enviarMensagem(any()) } returns MensagemCriadaDto(id = 511, conversaId = 42)
+        coEvery { api.mensagens(42, 104, 0, 0) } returns
+            listOf(postagem.copy(postagem = PostagemDto("Aviso", respostas = 1, ultimas = listOf(resposta))))
+        assertThat(envio.processarPendentes()).isEqualTo(ResultadoEnvio.CONCLUIDO)
+
+        coVerify { api.enviarMensagem(EnviarMensagemRequisicao(42, listOf(ConteudoEnvioDto(1, 1, "eu vou")), postagemId = 104)) }
+        assertThat(banco.mensagemDao().buscar(idLocal)).isNull()
+        // A resposta não vira linha do chat: chega nas últimas da postagem.
+        assertThat(banco.mensagemDao().buscar(511)).isNull()
+        assertThat(repo.observarRespostasLocais(42).first()).isEmpty()
+        val ultimas = repo.observar(42).first().single().postagem!!.ultimas
+        assertThat(ultimas.map { it.id to it.postagemId }).containsExactly(511L to 104L)
+    }
+
+    @Test
+    fun `ver todas as respostas vem do servidor, da mais antiga a mais nova, sem gravar no Room`() = runTest {
+        coEvery { api.respostasPostagem(104) } returns
+            listOf(msg(160, "primeira").copy(postagemId = 104), msg(161, "segunda").copy(postagemId = 104))
+
+        val respostas = repo().respostas(104).getOrThrow()
+
+        assertThat(respostas.map { it.id }).containsExactly(160L, 161L).inOrder()
+        assertThat(banco.mensagemDao().buscar(160)).isNull()
     }
 
     @Test

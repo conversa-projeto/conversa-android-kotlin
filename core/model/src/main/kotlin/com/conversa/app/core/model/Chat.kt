@@ -12,6 +12,9 @@ import java.time.ZoneId
 enum class TipoExibicao {
     OCULTA,
     CHAMADA,
+
+    /** Postagem de grupo (7.13): cartão da largura do chat, com as respostas embaixo. */
+    POSTAGEM,
     IMAGEM,
     ENQUETE,
     FIGURINHA,
@@ -33,6 +36,8 @@ fun classificarMensagem(mensagem: Mensagem): TipoExibicao {
         // Oculta vem antes de tudo: o conteúdo só aparece se a pessoa pedir.
         mensagem.oculta -> TipoExibicao.OCULTA
         unico?.tipo == TipoConteudo.CHAMADA -> TipoExibicao.CHAMADA
+        // Postagem com qualquer conteúdo, como o web (`classificarMensagem.ts`, `e33ecba`).
+        mensagem.postagem != null -> TipoExibicao.POSTAGEM
         unico?.tipo == TipoConteudo.IMAGEM && !temReferencia -> TipoExibicao.IMAGEM
         // Votação mesmo com referência (só o servidor cria e não se encaminha).
         unico?.tipo == TipoConteudo.ENQUETE -> TipoExibicao.ENQUETE

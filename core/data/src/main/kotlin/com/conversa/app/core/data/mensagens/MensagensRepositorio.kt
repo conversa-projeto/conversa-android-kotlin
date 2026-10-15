@@ -85,6 +85,16 @@ class MensagensRepositorio @Inject constructor(
         return Result.success(false)
     }
 
+    /** Minhas respostas de postagem ainda na fila (7.13), por postagem: a bolha mostra embaixo dela. */
+    fun observarRespostasLocais(conversaId: Long): Flow<Map<Long, List<Mensagem>>> =
+        mensagemDao.observarRespostasLocais(conversaId).map { lista ->
+            lista.map { it.paraModelo() }.groupBy { it.postagemId ?: 0 }
+        }
+
+    /** Todas as respostas de uma postagem ("Ver todas", 7.13), da mais antiga à mais nova. */
+    suspend fun respostas(postagemId: Long): Result<List<Mensagem>> =
+        chamarApi { api.respostasPostagem(postagemId) }.map { lista -> lista.map { it.paraEntidade().paraModelo() } }
+
     /** Uma mensagem do aparelho (a pendente do "Responder no privado", 7.6). */
     suspend fun buscar(mensagemId: Long): Mensagem? = mensagemDao.buscar(mensagemId)?.paraModelo()
 

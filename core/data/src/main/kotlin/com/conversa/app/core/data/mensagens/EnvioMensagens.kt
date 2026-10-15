@@ -33,6 +33,8 @@ import com.conversa.app.core.model.local
 import com.conversa.app.core.network.api.ConversaApi
 import com.conversa.app.core.network.dto.ConteudoEnvioDto
 import com.conversa.app.core.network.dto.EnviarMensagemRequisicao
+import com.conversa.app.core.network.dto.PostagemDto
+import com.conversa.app.core.network.dto.PostagemEnvioDto
 import com.conversa.app.core.network.dto.ReferenciaDto
 import com.conversa.app.core.network.dto.ReferenciaEnvioDto
 import com.conversa.app.core.network.http.ErroApi
@@ -94,6 +96,15 @@ data class PacoteEnvio(val corpo: EnviarMensagemRequisicao, val anexos: List<Ane
 /** Mensagem citada no envio: resposta (7.3) ou encaminhada (tipo 2, 7.6). */
 data class ReferenciaPendente(val tipo: TipoReferencia, val mensagem: Mensagem)
 
+/** Postagem de grupo (7.13): a mensagem vira uma postagem ou responde a uma. */
+sealed interface PostagemEnvio {
+    /** "+" › "Postagem", com título opcional. */
+    data class Nova(val titulo: String?) : PostagemEnvio
+
+    /** "Responder à postagem": vai para baixo dela, fora do fluxo do chat. */
+    data class Resposta(val postagemId: Long) : PostagemEnvio
+}
+
 /** O envio de um anexo não tem volta (sem acesso ao arquivo, grande demais, recusado). */
 private class FalhaDefinitiva : Exception()
 
@@ -136,6 +147,8 @@ class EnvioMensagens @Inject constructor(
      * encaminhada (7.6) leva antes os conteúdos da original (os identificadores, sem subir de
      * novo; votação não vai: o servidor recusa) e pode ir sem texto. Com [visivelEm] (7.10),
      * agendada: vai `visivel_em` em ISO UTC e a otimista já fica no fim, com o selo.
+     * Com [postagem] (7.13): a nova já aparece como postagem, sem respostas; a resposta vai com
+     * `postagem_id` e fica embaixo da postagem, fora do fluxo, até o servidor gravar.
      * Devolve o id local.
      */
     suspend fun enviar(
@@ -145,6 +158,7 @@ class EnvioMensagens @Inject constructor(
         referencia: ReferenciaPendente? = null,
         figurinha: String? = null,
         visivelEm: Instant? = null,
+        postagem: PostagemEnvio? = null,
     ): Long {
         val atual = sessao.sessao.value ?: error("Sem sessão")
         val agora = relogio.instant()
@@ -179,6 +193,8 @@ class EnvioMensagens @Inject constructor(
                 comFigurinha,
                 visivelEm = visivelEm?.toString(),
                 mensagemReferencia = referencia?.let { ReferenciaEnvioDto(it.tipo.codigo, it.mensagem.id) },
+                postagem = (postagem as? PostagemEnvio.Nova)?.let { PostagemEnvioDto(it.titulo) },
+                postagemId = (postagem as? PostagemEnvio.Resposta)?.postagemId,
             )
             val pacote = PacoteEnvio(corpo, pendentes)
             mensagemDao.salvarCompletas(
@@ -204,6 +220,10 @@ class EnvioMensagens @Inject constructor(
                             visualizada = false,
                             reproduzida = false,
                             enviando = true,
+                            postagemJson = (postagem as? PostagemEnvio.Nova)?.let {
+                                ConversaJson.encodeToString(PostagemDto.serializer(), PostagemDto(titulo = it.titulo))
+                            },
+                            postagemId = (postagem as? PostagemEnvio.Resposta)?.postagemId,
                         ),
                         conteudos =
                         encaminhados.mapIndexed { i, it ->
@@ -347,6 +367,14 @@ class EnvioMensagens @Inject constructor(
      * identificadores dos anexos no lugar dos `local:`.
      */
     private suspend fun trocarPelaReal(otimista: MensagemCompleta, idReal: Long, pacote: PacoteEnvio) {
+        // Resposta de postagem (7.13): não entra no fluxo. Relê a postagem, que traz as últimas respostas.
+        pacote.corpo.postagemId?.let { postagemId ->
+            chamarApi { api.mensagens(otimista.mensagem.conversaId, mensagemReferencia = postagemId) }
+                .getOrNull()?.firstOrNull { it.id == postagemId }
+                ?.let { mensagemDao.salvarCompletas(listOf(it.paraEntidade())) }
+            mensagemDao.remover(otimista.mensagem.id)
+            return
+        }
         val identificadores = pacote.anexos.associate { it.ordem to it.identificador }
         val real = chamarApi { api.mensagens(otimista.mensagem.conversaId, mensagemReferencia = idReal) }
             .getOrNull()?.firstOrNull { it.id == idReal }?.paraEntidade()

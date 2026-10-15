@@ -140,6 +140,16 @@ class ChatTest {
     }
 
     @Test
+    fun `postagem vem depois de oculta e chamada e antes de imagem, com qualquer conteudo`() {
+        val aviso = Postagem("Aviso", 0, 0, emptyList())
+        listOf(conteudo(TipoConteudo.IMAGEM), texto("oi"), texto("```ts\nx\n```"), conteudo(TipoConteudo.FIGURINHA, "a/b")).forEach {
+            assertThat(classificarMensagem(mensagem(it).copy(postagem = aviso))).isEqualTo(TipoExibicao.POSTAGEM)
+        }
+        assertThat(classificarMensagem(mensagem(texto("oi"), oculta = true).copy(postagem = aviso))).isEqualTo(TipoExibicao.OCULTA)
+        assertThat(classificarMensagem(mensagem(conteudo(TipoConteudo.CHAMADA)).copy(postagem = aviso))).isEqualTo(TipoExibicao.CHAMADA)
+    }
+
+    @Test
     fun `codigo sozinho e codigo com texto em volta`() {
         assertThat(classificarMensagem(mensagem(texto("```js\nconst a = 1\n```")))).isEqualTo(TipoExibicao.CODIGO)
         assertThat(classificarMensagem(mensagem(texto("veja:\n```js\nconst a = 1\n```")))).isEqualTo(TipoExibicao.PADRAO)

@@ -18,6 +18,7 @@ import com.conversa.app.core.data.conversas.ConversasRepositorio
 import com.conversa.app.core.data.enquetes.EnquetesRepositorio
 import com.conversa.app.core.data.mensagens.EnvioMensagens
 import com.conversa.app.core.data.mensagens.MensagensRepositorio
+import com.conversa.app.core.data.mensagens.PostagemEnvio
 import com.conversa.app.core.data.mensagens.ReferenciaPendente
 import com.conversa.app.core.data.notificacoes.ConversaEmTela
 import com.conversa.app.core.data.presenca.PresencaRepositorio
@@ -106,6 +107,10 @@ data class ChatUiState(
     val buscandoMensagem: Boolean = false,
     /** As conversas de que participo: a citação de uma encaminhada só abre a original se for uma delas. */
     val minhasConversas: Set<Long> = emptySet(),
+    /** "+" › "Postagem" (7.13): a próxima mensagem vira uma postagem do grupo (a faixa com o título). */
+    val postando: Boolean = false,
+    /** "Responder à postagem" (7.13): a próxima mensagem vai para baixo desta postagem. */
+    val respondendoPostagem: Mensagem? = null,
 ) {
     val grupo: Boolean get() = conversa?.tipo == TipoConversa.GRUPO
 }
@@ -204,9 +209,16 @@ private data class ExtrasDoCampo(
     val texto: String?,
     val foco: Boolean,
     val respondendo: ReferenciaPendente?,
+    val postagem: CampoPostagem,
     val salto: Salto,
     val minhas: Set<Long>,
 )
+
+/** A postagem no campo (7.13): criando uma ("+" › "Postagem") ou respondendo a uma, nunca os dois. */
+private data class CampoPostagem(val postando: Boolean = false, val respondendo: Mensagem? = null)
+
+/** Título da postagem: até 150 caracteres, como o web. */
+internal const val LIMITE_TITULO_POSTAGEM = 150
 
 /**
  * Áudio na conversa (ANX-10), lido só pelas bolhas de áudio: a posição muda várias
@@ -299,12 +311,22 @@ class ChatViewModel @Inject constructor(
     /** Chat da chamada recém-criado: abre com o cursor no campo, como o web (6.13). */
     private val focarCampo = MutableStateFlow(salvo.get<Boolean>("focar") == true)
     private val respondendo = MutableStateFlow<ReferenciaPendente?>(null)
+    private val campoPostagem = MutableStateFlow(CampoPostagem())
+
+    /** O título digitado na faixa da postagem: o campo guarda o texto (estado local); aqui só a cópia para o envio. */
+    private var tituloPostagem = ""
     private val salto = MutableStateFlow(Salto())
     private val minhasConversas = conversas.observarTodas().map { lista -> lista.mapTo(mutableSetOf()) { it.id } }
 
     private val extrasDoCampo =
-        combine(textoParaCampo, focarCampo, respondendo, salto, minhasConversas) { texto, foco, resposta, s, minhas ->
-            ExtrasDoCampo(texto, foco, resposta, s, minhas)
+        combine(textoParaCampo, focarCampo, combine(respondendo, campoPostagem, ::Pair), salto, minhasConversas) {
+                texto,
+                foco,
+                (resposta, postagem),
+                s,
+                minhas,
+            ->
+            ExtrasDoCampo(texto, foco, resposta, postagem, s, minhas)
         }
 
     /**
@@ -357,6 +379,8 @@ class ChatViewModel @Inject constructor(
             textoParaCampo = campo.texto,
             focarCampo = campo.foco,
             respondendo = campo.respondendo,
+            postando = campo.postagem.postando,
+            respondendoPostagem = campo.postagem.respondendo,
             irPara = campo.salto.irPara,
             destaque = campo.salto.destaque,
             buscandoMensagem = campo.salto.buscando,
@@ -483,23 +507,26 @@ class ChatViewModel @Inject constructor(
         // A encaminhada do "Responder no privado" pode ir sem texto: leva os conteúdos dela.
         val encaminhando = resposta?.tipo == TipoReferencia.ENCAMINHAMENTO
         if (limpo.isEmpty() && anexosNaFila.isEmpty() && !encaminhando) return
+        val postagem = pegarPostagem()
         viewModelScope.launch {
-            envio.enviar(conversaId, limpo, anexosNaFila, resposta, visivelEm = visivelEm)
+            envio.enviar(conversaId, limpo, anexosNaFila, resposta, visivelEm = visivelEm, postagem = postagem)
             fila.value = fila.value - anexosNaFila.toSet()
             if (respondendo.value == resposta) respondendo.value = null
             aoGravar()
             reiniciarDigitando()
-            eventos.enviar(EventoChat.RolarAoFim)
+            // A resposta de postagem fica embaixo dela, não no fim do chat.
+            if (postagem !is PostagemEnvio.Resposta) eventos.enviar(EventoChat.RolarAoFim)
         }
     }
 
     /** Figurinha (7.8): vai na hora, sozinha (como o web com o campo vazio) e como resposta, se houver uma pendente. */
     fun enviarFigurinha(id: String) {
+        val postagem = pegarPostagem()
         viewModelScope.launch {
             val resposta = respondendo.value
-            envio.enviar(conversaId, "", emptyList(), resposta, figurinha = id)
+            envio.enviar(conversaId, "", emptyList(), resposta, figurinha = id, postagem = postagem)
             if (respondendo.value == resposta) respondendo.value = null
-            eventos.enviar(EventoChat.RolarAoFim)
+            if (postagem !is PostagemEnvio.Resposta) eventos.enviar(EventoChat.RolarAoFim)
         }
     }
 
@@ -601,8 +628,60 @@ class ChatViewModel @Inject constructor(
     fun responder(mensagem: Mensagem) {
         if (!podeAbrirMenu(mensagem)) return
         respondendo.value = ReferenciaPendente(TipoReferencia.RESPOSTA, mensagem)
+        campoPostagem.update { it.copy(respondendo = null) }
         focarCampo.value = true
     }
+
+    // --- Postagem em grupo (7.13, MSG-22) ---
+
+    /** "+" › "Postagem" (só grupo): a próxima mensagem vira uma postagem, com título opcional. */
+    fun postar() {
+        tituloPostagem = ""
+        campoPostagem.value = CampoPostagem(postando = true)
+        focarCampo.value = true
+    }
+
+    /** O título digitado na faixa da postagem. */
+    fun tituloDaPostagem(titulo: String) {
+        tituloPostagem = titulo
+    }
+
+    /** O "×" da faixa: "Não postar" ou "Não responder à postagem". */
+    fun cancelarPostagem() {
+        campoPostagem.value = CampoPostagem()
+    }
+
+    /** "Responder à postagem" (web `e33ecba`): a próxima mensagem do campo, com qualquer conteúdo, vai para baixo dela. */
+    fun responderPostagem(postagem: Mensagem) {
+        if (postagem.id <= 0 || postagem.postagem == null) return
+        respondendo.value = null
+        campoPostagem.value = CampoPostagem(respondendo = postagem)
+        focarCampo.value = true
+    }
+
+    /** A postagem do próximo envio: sai do campo. */
+    private fun pegarPostagem(): PostagemEnvio? {
+        val atual = campoPostagem.value
+        if (atual == CampoPostagem()) return null
+        campoPostagem.value = CampoPostagem()
+        return when {
+            atual.respondendo != null -> PostagemEnvio.Resposta(atual.respondendo.id)
+            else -> PostagemEnvio.Nova(tituloPostagem.trim().take(LIMITE_TITULO_POSTAGEM).ifEmpty { null })
+        }
+    }
+
+    /** A bolha da postagem: minhas respostas na fila, as fotos dos membros, "Ver todas" e "Responder à postagem". */
+    val acoesPostagem = AcoesPostagem(
+        eu = eu,
+        pendentes = mensagens.observarRespostasLocais(
+            conversaId,
+        ).stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), emptyMap()),
+        respondendo = campoPostagem.map { it.respondendo?.id }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), null),
+        avatares = membros.map { lista -> lista.associate { it.usuarioId to it.avatarUrl } }
+            .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), emptyMap()),
+        respostas = mensagens::respostas,
+        aoResponder = ::responderPostagem,
+    )
 
     /** Contatos para a lista de menção do campo (7.7), como o web (todos os contatos). */
     val contatosMencao: StateFlow<List<com.conversa.app.core.model.Contato>> =
@@ -858,6 +937,7 @@ class ChatViewModel @Inject constructor(
         es = Dispatchers.IO,
         avisar = { eventos.enviar(it) },
         pegarResposta = { respondendo.value.also { respondendo.value = null } },
+        pegarPostagem = ::pegarPostagem,
     )
 
     /** Separado do [estado]: o tempo e o nível mudam 10 vezes por segundo e só o campo lê. */

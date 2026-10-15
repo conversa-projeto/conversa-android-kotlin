@@ -11,6 +11,7 @@ import com.conversa.app.core.data.contatos.ContatosRepositorio
 import com.conversa.app.core.data.conversas.ConversasRepositorio
 import com.conversa.app.core.data.mensagens.EnvioMensagens
 import com.conversa.app.core.data.mensagens.MensagensRepositorio
+import com.conversa.app.core.data.mensagens.PostagemEnvio
 import com.conversa.app.core.data.mensagens.ReferenciaPendente
 import com.conversa.app.core.data.presenca.PresencaRepositorio
 import com.conversa.app.core.media.EstadoAudio
@@ -19,6 +20,7 @@ import com.conversa.app.core.model.Conteudo
 import com.conversa.app.core.model.Conversa
 import com.conversa.app.core.model.ItemChat
 import com.conversa.app.core.model.Mensagem
+import com.conversa.app.core.model.Postagem
 import com.conversa.app.core.model.Sessao
 import com.conversa.app.core.model.TipoConteudo
 import com.conversa.app.core.model.TipoConversa
@@ -706,6 +708,74 @@ class ChatViewModelTest {
 
         coVerify { envio.enviar(42, "", emptyList(), ReferenciaPendente(TipoReferencia.ENCAMINHAMENTO, original)) }
         assertThat(vm.estado.value.respondendo).isNull()
+    }
+
+    // --- Postagem em grupo (7.13) ---
+
+    @Test
+    fun `postar manda a proxima como postagem com o titulo, uma vez so, e nao postar desiste`() = runTest {
+        val vm = criar()
+        advanceUntilIdle()
+
+        vm.postar()
+        vm.tituloDaPostagem("  Reunião de sexta  ")
+        advanceUntilIdle()
+        assertThat(vm.estado.value.postando).isTrue()
+        assertThat(vm.estado.value.focarCampo).isTrue()
+        vm.enviar("Pauta no anexo") { }
+        advanceUntilIdle()
+        coVerify { envio.enviar(42, "Pauta no anexo", emptyList(), null, postagem = PostagemEnvio.Nova("Reunião de sexta")) }
+        assertThat(vm.estado.value.postando).isFalse()
+
+        // Sem título vai nulo; o título longo é cortado em 150 (como o web).
+        vm.postar()
+        vm.enviar("sem título") { }
+        vm.postar()
+        vm.tituloDaPostagem("t".repeat(200))
+        vm.enviar("longo") { }
+        advanceUntilIdle()
+        coVerify { envio.enviar(42, "sem título", emptyList(), null, postagem = PostagemEnvio.Nova(null)) }
+        coVerify { envio.enviar(42, "longo", emptyList(), null, postagem = PostagemEnvio.Nova("t".repeat(150))) }
+
+        vm.postar()
+        vm.cancelarPostagem()
+        vm.enviar("comum") { }
+        advanceUntilIdle()
+        coVerify { envio.enviar(42, "comum", emptyList(), null, postagem = null) }
+    }
+
+    @Test
+    fun `responder a postagem troca a resposta comum, vai com a postagem e nao desce ao fim`() = runTest {
+        val vm = criar()
+        advanceUntilIdle()
+        val eventos = mutableListOf<EventoChat>()
+        backgroundScope.launch { vm.eventos.fluxo.collect { eventos += it } }
+        val postagem = mensagem(104, 8, lida = true).copy(postagem = Postagem("Aviso", 0, 0, emptyList()))
+
+        // A postagem ainda saindo não tem id no servidor.
+        vm.responderPostagem(postagem.copy(id = -5))
+        advanceUntilIdle()
+        assertThat(vm.estado.value.respondendoPostagem).isNull()
+
+        vm.responder(mensagem(9, 8, lida = true))
+        vm.responderPostagem(postagem)
+        advanceUntilIdle()
+        assertThat(vm.estado.value.respondendoPostagem).isEqualTo(postagem)
+        assertThat(vm.estado.value.respondendo).isNull()
+        assertThat(vm.estado.value.focarCampo).isTrue()
+
+        vm.enviarFigurinha("noto/coracao")
+        advanceUntilIdle()
+        coVerify { envio.enviar(42, "", emptyList(), null, figurinha = "noto/coracao", postagem = PostagemEnvio.Resposta(104)) }
+        assertThat(vm.estado.value.respondendoPostagem).isNull()
+        // A resposta fica embaixo da postagem: a tela não desce ao fim.
+        assertThat(eventos).isEmpty()
+
+        // Responder a uma mensagem comum tira a resposta à postagem.
+        vm.responderPostagem(postagem)
+        vm.responder(mensagem(9, 8, lida = true))
+        advanceUntilIdle()
+        assertThat(vm.estado.value.respondendoPostagem).isNull()
     }
 
     @Test

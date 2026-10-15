@@ -84,6 +84,7 @@ internal fun MensagemDto.paraEntidade() = MensagemCompleta(
         reproduzida = reproduzida,
         postagemJson = postagem?.let { ConversaJson.encodeToString(PostagemDto.serializer(), it) },
         confirmacaoJson = confirmacao?.let { ConversaJson.encodeToString(ConfirmacaoDto.serializer(), it) },
+        postagemId = postagemId,
     ),
     conteudos = conteudos.map {
         ConteudoEntidade(
@@ -132,6 +133,7 @@ fun MensagemCompleta.paraModelo() = Mensagem(
     confirmacao = mensagem.confirmacaoJson?.let { json ->
         runCatching { ConversaJson.decodeFromString(ConfirmacaoDto.serializer(), json).paraModelo() }.getOrNull()
     },
+    postagemId = mensagem.postagemId,
     conteudos = conteudos.sortedBy { it.ordem }.map {
         Conteudo(
             id = it.id,

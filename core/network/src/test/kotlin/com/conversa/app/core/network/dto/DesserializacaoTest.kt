@@ -192,6 +192,20 @@ class DesserializacaoTest {
     }
 
     @Test
+    fun `envio de postagem e de resposta a postagem usam os nomes do contrato`() {
+        val conteudos = listOf(ConteudoEnvioDto(1, 1, "oi"))
+        fun json(corpo: EnviarMensagemRequisicao) = ConversaJson.encodeToString(EnviarMensagemRequisicao.serializer(), corpo)
+
+        assertThat(json(EnviarMensagemRequisicao(42, conteudos, postagem = PostagemEnvioDto("Aviso"))))
+            .isEqualTo("""{"conversa_id":42,"conteudos":[{"ordem":1,"tipo":1,"conteudo":"oi"}],"postagem":{"titulo":"Aviso"}}""")
+        // Sem título: o servidor aceita o objeto vazio (`titulo` é opcional).
+        assertThat(json(EnviarMensagemRequisicao(42, conteudos, postagem = PostagemEnvioDto())))
+            .isEqualTo("""{"conversa_id":42,"conteudos":[{"ordem":1,"tipo":1,"conteudo":"oi"}],"postagem":{}}""")
+        assertThat(json(EnviarMensagemRequisicao(42, conteudos, postagemId = 104)))
+            .isEqualTo("""{"conversa_id":42,"conteudos":[{"ordem":1,"tipo":1,"conteudo":"oi"}],"postagem_id":104}""")
+    }
+
+    @Test
     fun `envio de mensagem com referencia usa os nomes do contrato`() {
         val corpo = EnviarMensagemRequisicao(
             conversaId = 42,

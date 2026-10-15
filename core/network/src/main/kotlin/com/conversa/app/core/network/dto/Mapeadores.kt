@@ -120,6 +120,7 @@ fun MensagemDto.paraModelo(): Mensagem = Mensagem(
     reacoes = reacoes.map { it.paraModelo() },
     postagem = postagem?.paraModelo(),
     confirmacao = confirmacao?.paraModelo(),
+    postagemId = postagemId,
 )
 
 fun DadosChamadaDto.paraModelo() = Chamada(

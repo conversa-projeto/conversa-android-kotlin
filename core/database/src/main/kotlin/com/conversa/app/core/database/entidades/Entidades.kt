@@ -56,6 +56,8 @@ data class MensagemEntidade(
     val postagemJson: String? = null,
     /** `confirmacao` do servidor (lista e quem confirmou), em JSON. */
     val confirmacaoJson: String? = null,
+    /** Resposta de postagem (7.13): só a minha, enquanto está na fila. Fica fora do fluxo do chat. */
+    val postagemId: Long? = null,
 )
 
 @Entity(

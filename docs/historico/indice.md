@@ -91,6 +91,7 @@
 - 2026-10-08 · [Etapa 7 — diagramas Mermaid](2026-10-08-36-etapa-7-mermaid.md) — mermaid 12.0.0 embutido (o mesmo do web, 1,87 MB no APK) num WebView isolado: ```mermaid e os de dentro do ```md viram diagrama; inválido fica como código
 - 2026-10-09 · [Esqueleto de carregamento no Markdown e no diagrama](2026-10-09-12-esqueleto-de-carregamento.md) — `EsqueletoCarregando` no `core:ui` (formas que pulsam com um brilho passando na diagonal, só tokens) no lugar do ```md e do diagrama até aparecerem
 - 2026-10-15 · [Figurinhas do pacote Noto](2026-10-15-03-figurinhas-noto.md) — as 55 do web nos assets, seletor só com o Noto e o crédito CC BY; os pacotes antigos ficam só para desenhar mensagens antigas; testado nos dois sentidos no emulador
+- 2026-10-15 · [Postagem em grupo: bolha, responder pelo campo e criar pelo "+"](2026-10-15-08-postagem-em-grupo.md) — cartão da largura do chat com título, contagens, "N novas", as 2 últimas e "Ver todas"; "Responder à postagem" leva ao campo (qualquer conteúdo, `postagem_id`); "+" › "Postagem" com título; Room v5 para a resposta na fila ficar fora do fluxo; testado no emulador com o B
 
 ## Atividades, pesquisa, perfil e configurações (etapa 8)
 - 2026-10-08 · [Etapa 8 — aba Atividades](2026-10-08-37-etapa-8-atividades.md) — módulo `:feature:atividades`: lista por dia com selos, prévias e "Nova", paginação, abrir marca como vistas e o WS 61 relê com a aba aberta; corrigido o POST de vistas (o OkHttp recusava POST sem corpo)

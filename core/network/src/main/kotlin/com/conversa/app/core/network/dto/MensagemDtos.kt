@@ -125,12 +125,20 @@ data class ConteudoEnvioDto(val ordem: Int, val tipo: Int, val conteudo: String?
 @Serializable
 data class ReferenciaEnvioDto(val tipo: Int, @SerialName("origem_mensagem_id") val origemMensagemId: Long)
 
+/** `postagem` do `PUT /mensagem` (7.13): a mensagem vira uma postagem do grupo, com título opcional. */
+@Serializable
+data class PostagemEnvioDto(val titulo: String? = null)
+
 @Serializable
 data class EnviarMensagemRequisicao(
     @SerialName("conversa_id") val conversaId: Long,
     val conteudos: List<ConteudoEnvioDto>,
     @SerialName("visivel_em") val visivelEm: String? = null,
     @SerialName("mensagem_referencia") val mensagemReferencia: ReferenciaEnvioDto? = null,
+    /** Postagem do grupo (7.13). */
+    val postagem: PostagemEnvioDto? = null,
+    /** Resposta a uma postagem (7.13): vai para baixo dela. O servidor recusa se for agendada. */
+    @SerialName("postagem_id") val postagemId: Long? = null,
 )
 
 /** Resposta de `PUT /mensagem`: a linha crua (usa `usuario_id`, sem conteúdos). */

@@ -280,6 +280,7 @@ fun ChatRotaTela(
                     aoVerMaisReacoes = { acoesDaMensagem.maisReacoes = it.id },
                     aoVerStatus = { acoesDaMensagem.statusDe = it },
                     enquetes = viewModel.acoesEnquete,
+                    postagens = viewModel.acoesPostagem,
                     aoResponder = viewModel::responder,
                     aoIrParaMensagem = viewModel::irParaMensagem,
                 ),
@@ -291,6 +292,9 @@ fun ChatRotaTela(
                 aoCampoFocado = viewModel::campoFocado,
                 aoCancelarResposta = viewModel::cancelarResposta,
                 aoEnviarFigurinha = viewModel::enviarFigurinha,
+                aoPostar = viewModel::postar,
+                aoMudarTituloPostagem = viewModel::tituloDaPostagem,
+                aoCancelarPostagem = viewModel::cancelarPostagem,
                 contatosMencao = viewModel.contatosMencao,
                 aoChegouNaMensagem = viewModel::chegouNaMensagem,
                 aoColarAnexos = viewModel::colarAnexos,
@@ -399,6 +403,12 @@ class AcoesChat(
     val aoCancelarResposta: () -> Unit = {},
     /** Figurinha escolhida (7.8): vai na hora. */
     val aoEnviarFigurinha: (String) -> Unit = {},
+    /** "+" › "Postagem" (7.13, só grupo). */
+    val aoPostar: () -> Unit = {},
+    /** O título digitado na faixa da postagem. */
+    val aoMudarTituloPostagem: (String) -> Unit = {},
+    /** O "×" da faixa da postagem ou da resposta a uma postagem. */
+    val aoCancelarPostagem: () -> Unit = {},
     val aoChegouNaMensagem: () -> Unit = {},
     /** Imagem colada no campo (teclado ou área de transferência). */
     val aoColarAnexos: (List<String>) -> Unit = {},
@@ -536,6 +546,8 @@ fun ChatTela(
                 respondendo = estado.respondendo,
                 agendadas = estado.agendadas,
                 grupo = estado.grupo,
+                postando = estado.postando,
+                respondendoPostagem = estado.respondendoPostagem,
             )
         },
     ) { margens ->
