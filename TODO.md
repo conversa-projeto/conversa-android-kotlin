@@ -533,6 +533,7 @@
 ## Etapa 5 — Notificações e push
 
 ### 5.1 Firebase (FC-600)
+> 🆕 2026-10-15: o app precisa funcionar **também sem FCM** (FCM opcional). As linhas desta etapa que dependem do Firebase esperam a decisão do `docs/adr/0002-push-opcional-sem-fcm.md` (5.9).
 - [ ] Criar o app Android no projeto Firebase (o mesmo do servidor) — ⛔ precisa do projeto Firebase do usuário (criar o app Android e baixar o `google-services.json` é feito no console dele); o servidor de dev também está sem FCM (`fcm_project_id` vazio)
 - [ ] Baixar o `google-services.json` para `app/` (fora do Git ou por variante) — ⛔ idem
 - [ ] Aplicar o plugin `com.google.gms.google-services` — ⛔ depende do `google-services.json`
@@ -569,11 +570,23 @@
 
 ### 5.7 Sem serviço permanente (FC-609, AND-07)
 - [x] Confirmar que não existe nenhum foreground service fora de chamada — o manifesto não declara nenhum serviço ✔ 199ce1b
-- [ ] Em segundo plano, depender só do FCM (as chamadas precisam de S1) — ⛔ depende do FCM (5.1); o WebSocket já desliga 10 s depois de ir para o segundo plano
+- [ ] Em segundo plano, depender só do FCM (as chamadas precisam de S1) — 🆕 2026-10-15: ⏸ revisto pela exigência de funcionar sem FCM (5.9, ADR 0002) — ⛔ depende do FCM (5.1); o WebSocket já desliga 10 s depois de ir para o segundo plano
 - [ ] **Teste:** app fechado + mensagem pelo web → notificação chega (com o aparelho em Doze: `adb shell dumpsys deviceidle force-idle`) — ⛔ depende do FCM (5.1)
 
 ### 5.8 Atalhos de conversa (FC-608)
 - [x] Publicar `ShortcutInfo` de longa duração para as conversas recentes (aparecem na seção "Conversas" do Android) — as 4 conversas recentes não arquivadas e cada conversa notificada; somem no logout ✔ 199ce1b
+
+
+### 5.9 🆕 Funcionar sem FCM (ADR 0002) — ⏸ aguardando a decisão (pedido de 2026-10-15)
+> Hoje, sem FCM, com o app em segundo plano ou fechado **nada chega** (nem mensagem nem chamada): o WebSocket desliga 10 s depois de sair da frente. Opções e perguntas no ADR 0002; recomendação: FCM ligado pelo servidor em tempo de execução (D) + conexão própria em segundo plano quando não houver FCM (A) + sincronização periódica de reserva (C).
+- [ ] Decidir: chamadas com o app fechado sem FCM são requisito? Notificação fixa aceitável? Distribuição (Play/APK)? Firebase por servidor ou fixo no APK? Mudanças no servidor (S1, S2, S18, S23)? UnifiedPush (S24)? — ⏸ decisão da pessoa
+- [ ] CI: compilar e rodar **sem** `google-services.json` e sem Google Play (já é verdade hoje; proteger com um teste)
+- [ ] `CanalDePush` no `core:data`: `SemPush` (hoje), `FcmPush` (D), `ConexaoEmSegundoPlano` (A); o resto do app só vê "chegou algo, sincronize" — ⏸ depois da decisão
+- [ ] Configurações › Notificações: mostrar **como** este aparelho recebe avisos ("Push do Google", "Conexão própria", "Só com o app aberto") e o que fazer em cada caso — ⏸ textos depois da decisão
+- [ ] (A) Serviço em primeiro plano `specialUse` com notificação fixa "Conectado ao Conversa", só sem FCM e com a chave ligada; pedir a isenção de otimização de bateria com explicação; WS 63 `ativo:false` em segundo plano — ⏸
+- [ ] (C) Sincronização periódica (WorkManager, 15 min) como rede de segurança: `SyncManager` + notificador — ⏸
+- [ ] (D) Firebase inicializado em tempo de execução com as opções vindas do servidor (S23); `PATCH /dispositivo {token_fcm}` no login e no `onNewToken`, `null` no logout — ⏸ depende do servidor
+- [ ] **Teste:** no Galaxy A25, com a tela apagada e Doze forçado (`adb shell dumpsys deviceidle force-idle`): mensagem e chamada chegam sem FCM; medir o atraso e a bateria em 8 h — ⏸
 
 ---
 

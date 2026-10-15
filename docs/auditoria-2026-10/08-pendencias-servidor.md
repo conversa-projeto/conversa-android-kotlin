@@ -154,6 +154,15 @@
 
 ---
 
+
+### S23 · Configuração do cliente Firebase por servidor 🆕 (2026-10-15, ADR 0002) — ⏸ depende da decisão
+- **Contexto:** o app precisa funcionar também sem FCM; com FCM, o melhor caminho é um APK só que liga o Firebase **em tempo de execução** com o projeto do servidor (a conta de serviço já está nos `parametros`).
+- **Pedido:** parâmetros públicos do cliente Android (por exemplo `fcm_android_app_id`, `fcm_api_key`, `fcm_sender_id`; o `fcm_project_id` já existe) expostos depois do login, por exemplo em `GET /recursos` (`{…, fcm: {projeto, app_id, chave, sender_id} | null}`).
+- **Sem isso:** o app teria de levar um `google-services.json` fixo, de um projeto só, e não serviria a instalações com outro projeto (ou sem nenhum).
+
+### S24 · UnifiedPush (push sem Google) 🆕 (2026-10-15, ADR 0002, opção B) — ⏸ só se for escolhida
+- **Pedido:** registrar por dispositivo o endereço UnifiedPush (`PATCH /dispositivo {push_endpoint}`) e, nas mensagens e nas chamadas, fazer o POST HTTP nesse endereço (como o `enviarPush` faz no FCM); opcionalmente um ntfy próprio no `docker-compose`.
+- **Observação:** o push de chamada (S1) vale para os dois canais.
 ## Prioridade sugerida no servidor
 
 | Ordem | Itens | Por quê |
