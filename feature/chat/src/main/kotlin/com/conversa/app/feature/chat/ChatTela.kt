@@ -582,7 +582,15 @@ fun ChatTela(
             }
             // "Ir para a mensagem" trazendo páginas antigas (7.5).
             if (estado.buscandoMensagem) LinearProgressIndicator(Modifier.fillMaxWidth().align(Alignment.TopCenter))
-            if (pesquisa.aberta) ResultadosPesquisa(pesquisa, acoes.aoAbrirResultado, Modifier.align(Alignment.TopCenter))
+            if (pesquisa.aberta) {
+                ResultadosPesquisa(
+                    pesquisa,
+                    estado.conversa?.id ?: 0,
+                    estado.eu,
+                    acoes.aoAbrirResultado,
+                    Modifier.align(Alignment.TopCenter),
+                )
+            }
             Column(Modifier.align(Alignment.BottomEnd).padding(16.dp), horizontalAlignment = Alignment.End) {
                 AnimatedVisibility(visible = haNovas, enter = fadeIn(), exit = fadeOut()) {
                     Surface(

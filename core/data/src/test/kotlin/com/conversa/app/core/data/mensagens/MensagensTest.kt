@@ -602,12 +602,13 @@ class MensagensTest {
     }
 
     @Test
-    fun `pesquisar devolve as mais recentes primeiro, so da conversa, sem gravar no Room`() = runTest {
+    fun `pesquisar devolve as mais recentes primeiro, inclusive do chat de uma ligacao, sem gravar no Room`() = runTest {
+        // A 5 é do chat de uma ligação feita nesta conversa (servidor 6d20ff7): não se filtra por conversa.
         coEvery { api.pesquisar("bolo", 42) } returns listOf(msg(3, "bolo de cenoura"), msg(9, "mais bolo"), msg(5).copy(conversaId = 7))
 
         val resultados = repo().pesquisar(" bolo ", 42).getOrThrow()
 
-        assertThat(resultados.map { it.id }).containsExactly(9L, 3L).inOrder()
+        assertThat(resultados.map { it.id }).containsExactly(9L, 5L, 3L).inOrder()
         assertThat(banco.mensagemDao().buscar(9)).isNull()
     }
 }

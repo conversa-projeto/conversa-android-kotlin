@@ -767,7 +767,7 @@
 - [x] Original em outra conversa → abrir aquela conversa (se participo) — `RotaChat(conversa, mensagem)`; de quem não participo a citação não é tocável ✔ 2a4cc59
 - [x] Erro → "Não foi possível localizar esta mensagem no contexto da conversa." — não achou, falhou a rede ou a conversa de origem não é minha (+ testes) ✔ 2a4cc59
 - [x] 🆕 `7322e83` Encaminhada de encaminhada (FC-520): dentro da citação, não repetir os conteúdos que a citação de baixo já mostra (`semCopiasDaReferencia`: uma cópia por `tipo:conteudo` igual) ✔ b7d6ef2
-- [ ] 🆕 `d202c06` Destaque ao ir para uma mensagem: faixa da largura toda, que aparece na hora, fica 1,5 s e some em 0,7 s (MSG-06, FC-524)
+- [x] 🆕 `d202c06` Destaque ao ir para uma mensagem: faixa da largura toda, que aparece na hora, fica 1,5 s e some em 0,7 s (MSG-06, FC-524) — aparece na hora, 1,5 s, some em 0,7 s; cinza (`onSurface` 15%)
 
 ### 7.6 Encaminhar, copiar e responder no privado (FC-506, FC-507, FC-512)
 - [x] Encaminhar: tela de destino (conversas exceto a de origem + contatos sem direta), com busca — folha "Encaminhar mensagem" (`EncaminharMensagem`, `destinosParaEncaminhar`, textos do web) (+ testes) ✔ 19add2b
@@ -868,8 +868,8 @@
 - [x] Global: "Pesquisar em todos os chats" → `GET /pesquisar?texto=&conversa=0` ✔ 28cef66
 - [x] Resultados agrupados por conversa: remetente, data `dd/MM/aa HH:mm`, trecho com o termo destacado ✔ 28cef66
 - [x] Estados "Pesquisando…" / "Nenhum resultado encontrado." ✔ 28cef66
-- [ ] 🆕 `d202c06` Painel de resultados novo: "N resultados para “termo”" / "Nenhuma mensagem com “termo”"; cada resultado com autor ("Você"), quando e o trecho com o termo destacado; do mais antigo ao mais novo (PES-01, FC-524)
-- [ ] 🆕 `6d20ff7`/`e33ecba` Resultados também dos chats das ligações feitas na conversa: tirar o filtro por `conversaId` do `MensagensRepositorio.pesquisar`, mostrar o selo "no chat da ligação" e abrir a conversa do resultado (`abrirResultado` passa a conversa aberta) (PES-01, FC-524)
+- [x] 🆕 `d202c06` Painel de resultados novo: "N resultados para “termo”" / "Nenhuma mensagem com “termo”"; cada resultado com autor ("Você"), quando e o trecho com o termo destacado; do mais antigo ao mais novo (PES-01, FC-524) — contagem (plural), "Nenhuma mensagem com “termo”", "Você", do mais antigo ao mais novo; a data segue `dd/MM/aa HH:mm`
+- [x] 🆕 `6d20ff7`/`e33ecba` Resultados também dos chats das ligações feitas na conversa: tirar o filtro por `conversaId` do `MensagensRepositorio.pesquisar`, mostrar o selo "no chat da ligação" e abrir a conversa do resultado (`abrirResultado` passa a conversa aberta) (PES-01, FC-524) — sem o filtro; selo "no chat da ligação"; `abrirResultado` abre a conversa da mensagem. No emulador: "abacaxi" na direta achou a mensagem do chat da ligação e abriu o grupo nela
 
 ### 8.3 Perfil (FC-802, AUT-06, AUT-07, AUT-08)
 - [x] Editar nome e e-mail → `PATCH /usuario {id, nome, email}` → "Dados atualizados com sucesso." ✔ 143d8d6

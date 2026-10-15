@@ -1,6 +1,8 @@
 package com.conversa.app.feature.chat
 
 import androidx.compose.animation.animateColorAsState
+import androidx.compose.animation.core.snap
+import androidx.compose.animation.core.tween
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
@@ -147,9 +149,11 @@ fun LinhaMensagem(
 ) {
     // Bolha ocupa no máximo 80% da largura da janela.
     val larguraMax = with(LocalDensity.current) { (LocalWindowInfo.current.containerSize.width * 0.8f).toDp() }
-    // Destaque depois do "ir para a mensagem" (7.5): a linha toda, por 1,2 s.
+    // Destaque depois do "ir para a mensagem" (7.5, web `d202c06`): faixa da largura toda, que
+    // aparece na hora, fica 1,5 s (o tempo está no ViewModel) e some em 0,7 s.
     val corDestaque by animateColorAsState(
-        if (destacada) MaterialTheme.colorScheme.primary.copy(alpha = 0.18f) else Color.Transparent,
+        if (destacada) MaterialTheme.colorScheme.onSurface.copy(alpha = 0.15f) else Color.Transparent,
+        animationSpec = if (destacada) snap() else tween(SAIDA_DESTAQUE_MS),
         label = "destaque",
     )
     Column(
@@ -573,3 +577,6 @@ internal fun textoDoResumo(resumo: ResumoCitacao): String = when (resumo) {
         else -> stringResource(R.string.conteudo_arquivo)
     }
 }
+
+/** O destaque do "ir para a mensagem" some em 0,7 s, como o web. */
+private const val SAIDA_DESTAQUE_MS = 700

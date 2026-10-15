@@ -1,6 +1,7 @@
 package com.conversa.app.feature.chat
 
 import androidx.activity.compose.BackHandler
+import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
@@ -32,6 +33,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.res.pluralStringResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.unit.dp
@@ -83,21 +85,47 @@ internal fun BarraPesquisa(acoes: AcoesChat) {
 }
 
 /**
- * Os resultados, por cima da conversa (mais recentes primeiro): quem mandou, a data e o trecho
- * com o termo destacado. O toque vai até a mensagem.
+ * Os resultados, por cima da conversa (como o `ChatHeader.vue` desde `e33ecba`): a contagem
+ * "N resultados para “termo”", do mais antigo ao mais novo; quem mandou ("Você" nas minhas), a
+ * data e o trecho com o termo destacado. Os dos chats das ligações feitas nesta conversa levam
+ * o selo "no chat da ligação". O toque vai até a mensagem, na conversa dela.
  */
 @Composable
-internal fun ResultadosPesquisa(pesquisa: PesquisaNaConversa, aoAbrir: (Mensagem) -> Unit, modifier: Modifier = Modifier) {
+internal fun ResultadosPesquisa(
+    pesquisa: PesquisaNaConversa,
+    conversaId: Long,
+    eu: Long,
+    aoAbrir: (Mensagem) -> Unit,
+    modifier: Modifier = Modifier,
+) {
     val resultados = pesquisa.resultados
     if (!pesquisa.buscando && resultados == null) return
     Surface(modifier.fillMaxWidth().heightIn(max = 360.dp), tonalElevation = 3.dp, shadowElevation = 4.dp) {
         when {
             pesquisa.buscando -> Aviso(stringResource(UiR.string.pesquisa_pesquisando))
-            resultados.isNullOrEmpty() -> Aviso(pesquisa.erro ?: stringResource(UiR.string.pesquisa_nenhum_resultado))
-            else -> LazyColumn {
-                items(resultados, key = { it.id }) { mensagem ->
-                    LinhaResultadoPesquisa(mensagem, pesquisa.termo, aoAbrir = { aoAbrir(mensagem) })
-                    HorizontalDivider(color = ConversaTema.cores.divisorLista)
+            pesquisa.erro != null -> Aviso(pesquisa.erro)
+            resultados.isNullOrEmpty() -> Aviso(stringResource(R.string.pesquisa_nenhuma_com, pesquisa.termo))
+            else -> Column {
+                Text(
+                    pluralStringResource(R.plurals.pesquisa_resultados_para, resultados.size, resultados.size, pesquisa.termo),
+                    style = MaterialTheme.typography.labelMedium,
+                    color = ConversaTema.cores.textoTerciario,
+                    modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp),
+                )
+                HorizontalDivider(color = ConversaTema.cores.divisorLista)
+                val voce = stringResource(R.string.voce)
+                val noChatDaLigacao = stringResource(R.string.no_chat_da_ligacao)
+                LazyColumn {
+                    items(resultados, key = { it.id }) { mensagem ->
+                        LinhaResultadoPesquisa(
+                            mensagem,
+                            pesquisa.termo,
+                            aoAbrir = { aoAbrir(mensagem) },
+                            autor = if (mensagem.remetenteId == eu) voce else mensagem.remetente,
+                            selo = noChatDaLigacao.takeIf { conversaId > 0 && mensagem.conversaId != conversaId },
+                        )
+                        HorizontalDivider(color = ConversaTema.cores.divisorLista)
+                    }
                 }
             }
         }

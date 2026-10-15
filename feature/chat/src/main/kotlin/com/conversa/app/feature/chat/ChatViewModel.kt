@@ -192,7 +192,7 @@ sealed interface EventoChat {
 
 /** O que o campo recebe além do texto digitado (junto, para o [ChatViewModel.estado] caber num `combine`). */
 /** Quanto tempo a mensagem fica destacada depois do "ir para a mensagem" (como o web). */
-private const val DESTAQUE_MS = 1_200L
+private const val DESTAQUE_MS = 1_500L
 
 /** Atraso para gravar o rascunho depois da última mudança (o web também espera um pouco). */
 private const val RASCUNHO_MS = 500L
@@ -684,7 +684,8 @@ class ChatViewModel @Inject constructor(
         _pesquisa.update { it.copy(termo = limpo, buscando = true, erro = null) }
         busca = viewModelScope.launch {
             mensagens.pesquisar(limpo, conversaId)
-                .onSuccess { lista -> _pesquisa.update { it.copy(buscando = false, resultados = lista) } }
+                // Como o web (`e33ecba`): do mais antigo ao mais novo.
+                .onSuccess { lista -> _pesquisa.update { it.copy(buscando = false, resultados = lista.reversed()) } }
                 .onFailure { falha ->
                     _pesquisa.update { it.copy(buscando = false, resultados = emptyList(), erro = falha.paraErroApi().mensagemAmigavel()) }
                 }
@@ -692,9 +693,10 @@ class ChatViewModel @Inject constructor(
     }
 
     /** Toque num resultado: fecha a pesquisa e vai até a mensagem (o mesmo caminho da citação, 7.5). */
+    /** O resultado pode ser do chat de uma ligação feita nesta conversa: abre a conversa dele. */
     fun abrirResultado(mensagem: Mensagem) {
         fecharPesquisa()
-        irParaMensagem(mensagem.id, conversaId)
+        irParaMensagem(mensagem.id, mensagem.conversaId)
     }
 
     fun irParaMensagem(mensagemId: Long, conversaDaMensagem: Long) {

@@ -35,6 +35,7 @@ import java.time.ZoneOffset
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.test.TestScope
@@ -218,6 +219,26 @@ class ChatViewModelTest {
         advanceUntilIdle()
         assertThat(vm.pesquisa.value.aberta).isFalse()
         coVerify { mensagens.trazerAte(42, 3) }
+    }
+
+    @Test
+    fun `pesquisa na conversa - do mais antigo ao mais novo, e o resultado do chat da ligacao abre aquela conversa`() = runTest {
+        val antiga = mensagem(3, 8, lida = true)
+        val doChatDaLigacao = mensagem(5, 8, lida = true).copy(conversaId = 77)
+        coEvery { mensagens.pesquisar("bolo", 42) } returns Result.success(listOf(doChatDaLigacao, antiga))
+        every { conversas.observar(77) } returns
+            flowOf(Conversa(77, TipoConversa.GRUPO, "Ana, Bruno", null, 0, 0, null, null, 0, null, null, null))
+        val vm = criar()
+        advanceUntilIdle()
+
+        vm.abrirPesquisa()
+        vm.pesquisar("bolo")
+        advanceUntilIdle()
+        assertThat(vm.pesquisa.value.resultados).containsExactly(antiga, doChatDaLigacao).inOrder()
+
+        vm.abrirResultado(doChatDaLigacao)
+        advanceUntilIdle()
+        assertThat(vm.eventos.fluxo.first()).isEqualTo(EventoChat.AbrirConversa(77, 5))
     }
 
     @Test
@@ -566,7 +587,7 @@ class ChatViewModelTest {
     }
 
     @Test
-    fun `ir para a mensagem desta conversa rola, destaca 1,2 s e some`() = runTest {
+    fun `ir para a mensagem desta conversa rola, destaca 1,5 s e some`() = runTest {
         coEvery { mensagens.trazerAte(42, 7) } returns Result.success(true)
         val vm = criar()
         advanceUntilIdle()
@@ -579,7 +600,7 @@ class ChatViewModelTest {
         vm.chegouNaMensagem()
         runCurrent()
         assertThat(vm.estado.value.irPara).isNull()
-        advanceTimeBy(1_100)
+        advanceTimeBy(1_400)
         assertThat(vm.estado.value.destaque).isEqualTo(7)
         advanceTimeBy(200)
         assertThat(vm.estado.value.destaque).isNull()

@@ -122,12 +122,13 @@ class MensagensRepositorio @Inject constructor(
      * mais recentes primeiro. Os resultados não vão para o Room: uma mensagem antiga solta ali
      * abriria um buraco na lista do chat (o "ir para a mensagem" traz o caminho todo).
      */
+    /**
+     * `GET /pesquisar` (mais recentes primeiro). Com [conversaId], o servidor (`6d20ff7`) traz
+     * também as mensagens dos chats das ligações feitas nela: não filtrar por conversa aqui.
+     */
     suspend fun pesquisar(texto: String, conversaId: Long = 0): Result<List<Mensagem>> =
         chamarApi { api.pesquisar(texto.trim(), conversaId) }.map { lista ->
-            lista.map { it.paraEntidade().paraModelo() }
-                // Como o web: se o servidor não filtrar pela conversa, filtra aqui.
-                .filter { conversaId == 0L || it.conversaId == conversaId }
-                .sortedByDescending { it.dataEfetiva }
+            lista.map { it.paraEntidade().paraModelo() }.sortedByDescending { it.dataEfetiva }
         }
 
     /** Detalhe do status (7.10, FC-513): `GET /mensagem/status/detalhe`, uma linha por destinatário, com datas. */

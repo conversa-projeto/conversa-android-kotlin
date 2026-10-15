@@ -246,6 +246,15 @@
     <string name="mais_opcoes">Mais opções</string>
     <string name="pesquisar_na_conversa">Pesquisar na conversa</string>
     <string name="pesquisar_nesta_conversa">Pesquisar nesta conversa</string>
+    <!-- Painel de resultados (web e33ecba, ChatHeader.vue) -->
+    <plurals name="pesquisa_resultados_para">
+        <item quantity="one">%1$d resultado para “%2$s”</item>
+        <item quantity="many">%1$d resultados para “%2$s”</item>
+        <item quantity="other">%1$d resultados para “%2$s”</item>
+    </plurals>
+    <string name="pesquisa_nenhuma_com">Nenhuma mensagem com “%1$s”</string>
+    <string name="no_chat_da_ligacao">no chat da ligação</string>
+    <string name="voce">Você</string>
     <string name="fechar_pesquisa">Fechar pesquisa</string>
     <string name="acao_pesquisar">Pesquisar</string>
     <!-- Anexos da conversa (8.6, ANX-13; textos da AnexosLista.vue, com acento) -->

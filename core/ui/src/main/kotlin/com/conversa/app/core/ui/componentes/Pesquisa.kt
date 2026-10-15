@@ -45,7 +45,16 @@ fun destacarTermo(texto: String, termo: String, fundo: Color): AnnotatedString =
  * `dd/MM/aa HH:mm` e o trecho com o termo destacado; sem texto, "Imagem", "Áudio" ou "Arquivo".
  */
 @Composable
-fun LinhaResultadoPesquisa(mensagem: Mensagem, termo: String, aoAbrir: () -> Unit, modifier: Modifier = Modifier) {
+fun LinhaResultadoPesquisa(
+    mensagem: Mensagem,
+    termo: String,
+    aoAbrir: () -> Unit,
+    modifier: Modifier = Modifier,
+    /** Quem mandou, como aparece (na conversa, "Você" para as minhas). */
+    autor: String = mensagem.remetente,
+    /** Selo ao lado do autor, ex.: "no chat da ligação". */
+    selo: String? = null,
+) {
     val fundo = MaterialTheme.colorScheme.primary.copy(alpha = 0.2f)
     val texto = textoParaPesquisa(mensagem)
     val semTexto = when (tipoParaPesquisa(mensagem)) {
@@ -62,12 +71,21 @@ fun LinhaResultadoPesquisa(mensagem: Mensagem, termo: String, aoAbrir: () -> Uni
     ) {
         Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
             Text(
-                mensagem.remetente,
+                autor,
                 style = MaterialTheme.typography.labelLarge,
                 maxLines = 1,
                 overflow = TextOverflow.Ellipsis,
-                modifier = Modifier.weight(1f),
+                modifier = Modifier.weight(1f, fill = selo == null),
             )
+            if (selo != null) {
+                Text(
+                    selo,
+                    style = MaterialTheme.typography.labelSmall,
+                    color = MaterialTheme.colorScheme.primary,
+                    maxLines = 1,
+                    modifier = Modifier.weight(1f),
+                )
+            }
             Text(
                 FORMATO_DATA_HORA.format(mensagem.dataEfetiva.atZone(ZoneId.systemDefault())),
                 style = MaterialTheme.typography.labelSmall,
