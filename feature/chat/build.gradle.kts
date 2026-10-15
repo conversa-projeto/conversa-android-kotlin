@@ -14,7 +14,6 @@ dependencies {
     // Ligar a partir da conversa (6.4).
     implementation(projects.feature.chamada)
     // "Mais emojis" no menu da mensagem (7.2).
-    implementation(libs.androidx.emoji2.emojipicker)
     // Figurinhas animadas (7.8): as mesmas animações Lottie do web, nos assets.
     implementation(libs.lottie.compose)
     implementation(libs.markdown.renderer.m3)

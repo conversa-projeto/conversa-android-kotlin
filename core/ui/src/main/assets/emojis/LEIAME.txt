@@ -1,0 +1,8 @@
+emojis/pt.json — catálogo do seletor de emojis (FC-418)
+
+Cópia do public/emojis/pt.json do conversa-web (commit d202c06), gerado lá por
+scripts/gerar-emojis.ts a partir do emojibase-data (licença MIT, https://emojibase.dev):
+nome e palavras-chave em português, categoria e versão do Unicode; sem tons de pele
+e sem bandeiras. Para atualizar, gere de novo no conversa-web e copie o arquivo.
+
+Formato: {"categorias":[{"id","nome","icone","emojis":[[emoji, nome, palavras-chave, versão]]}]}

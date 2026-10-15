@@ -72,8 +72,6 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import androidx.compose.ui.viewinterop.AndroidView
-import androidx.emoji2.emojipicker.EmojiPickerView
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.conversa.app.core.model.ItemChat
 import com.conversa.app.core.model.Mensagem
@@ -85,6 +83,7 @@ import com.conversa.app.core.model.TipoExibicao
 import com.conversa.app.core.model.classificarMensagem
 import com.conversa.app.core.model.podePedirConfirmacao
 import com.conversa.app.core.ui.componentes.Avatar
+import com.conversa.app.core.ui.componentes.SeletorEmojis
 import com.conversa.app.core.ui.tema.ConversaTema
 import java.time.Instant
 import java.time.LocalDate
@@ -395,17 +394,9 @@ internal fun horaDaReacao(em: Instant, zona: ZoneId = ZoneId.systemDefault(), ho
 private val HORA = DateTimeFormatter.ofPattern("HH:mm")
 private val DIA_HORA = DateTimeFormatter.ofPattern("dd/MM HH:mm")
 
-/** "Mais emojis": o seletor de emoji do Android (AndroidX). */
-@OptIn(ExperimentalMaterial3Api::class)
+/** "Mais emojis": o seletor como o do web (FC-418), sem tons de pele nem bandeiras. */
 @Composable
-fun SeletorDeEmoji(aoEscolher: (String) -> Unit, aoFechar: () -> Unit) {
-    ModalBottomSheet(onDismissRequest = aoFechar) {
-        AndroidView(
-            factory = { contexto -> EmojiPickerView(contexto).apply { setOnEmojiPickedListener { aoEscolher(it.emoji) } } },
-            modifier = Modifier.fillMaxWidth().height(380.dp),
-        )
-    }
-}
+fun SeletorDeEmoji(aoEscolher: (String) -> Unit, aoFechar: () -> Unit) = SeletorEmojis(aoEscolher, aoFechar)
 
 /**
  * Confirmação de ocultar (textos do web). A agendada que ainda não saiu vira "cancelar o envio",

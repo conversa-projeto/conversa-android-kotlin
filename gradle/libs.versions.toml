@@ -14,7 +14,6 @@ minSdk = "28"
 # AndroidX
 androidx-core = "1.19.1"
 androidx-activity = "1.13.0"
-androidx-emoji2 = "1.7.0"
 lottie = "6.7.1"
 markdownRenderer = "0.45.0"
 androidx-lifecycle = "2.11.0"
@@ -56,7 +55,6 @@ ktlint-gradle = "14.2.0"
 [libraries]
 androidx-core-ktx = { module = "androidx.core:core-ktx", version.ref = "androidx-core" }
 androidx-activity-compose = { module = "androidx.activity:activity-compose", version.ref = "androidx-activity" }
-androidx-emoji2-emojipicker = { module = "androidx.emoji2:emoji2-emojipicker", version.ref = "androidx-emoji2" }
 lottie-compose = { module = "com.airbnb.android:lottie-compose", version.ref = "lottie" }
 markdown-renderer-m3 = { module = "com.mikepenz:multiplatform-markdown-renderer-m3", version.ref = "markdownRenderer" }
 androidx-lifecycle-runtime-compose = { module = "androidx.lifecycle:lifecycle-runtime-compose", version.ref = "androidx-lifecycle" }

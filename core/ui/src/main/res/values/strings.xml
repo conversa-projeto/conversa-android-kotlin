@@ -29,4 +29,9 @@
     <string name="perfil_usuario_nao_informado">Não informado</string>
     <string name="perfil_usuario_ligar">Ligar</string>
     <string name="perfil_usuario_ver_anexos">Ver anexos</string>
+    <!-- Seletor de emojis (FC-418, web EmojiPicker.vue) -->
+    <string name="pesquisar_emoji">Pesquisar emoji</string>
+    <string name="emojis_recentes">Recentes</string>
+    <string name="emojis_carregando">Carregando os emojis…</string>
+    <string name="emojis_nenhum">Nenhum emoji encontrado</string>
 </resources>
