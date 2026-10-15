@@ -116,7 +116,7 @@ fun DadosChamadaDto.paraModelo() = Chamada(
     finalizada = finalizada,
     conversaChatId = conversaChatId,
     participantes = usuarios.map {
-        ParticipanteChamada(it.usuarioId, it.usuarioNome, StatusParticipante.de(it.status), it.entrouEm, it.saiuEm)
+        ParticipanteChamada(it.usuarioId, it.usuarioNome, StatusParticipante.de(it.status), it.entrouEm, it.saiuEm, it.recusouEm)
     },
 )
 

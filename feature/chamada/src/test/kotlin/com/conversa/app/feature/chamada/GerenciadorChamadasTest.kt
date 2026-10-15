@@ -473,6 +473,56 @@ class GerenciadorChamadasTest {
     }
 
     @Test
+    fun `chamar de novo - 51 depois de recusar toca de novo quando o servidor diz que fui chamado outra vez`() = runTest {
+        val g = criar()
+        tocando(g)
+        g.recusar()
+        runCurrent()
+        assertThat(g.estado.value.fase).isEqualTo(FaseChamada.INATIVO)
+
+        // O outro tocou em "Chamar de novo": pendente outra vez, com a recusa anterior registrada.
+        val recusada = remoto.dados.getValue(RECEBIDA)
+        remoto.dados[RECEBIDA] = recusada.copy(
+            status = StatusChamada.EM_ANDAMENTO,
+            participantes = recusada.participantes.map { if (it.usuarioId == EU) it.copy(status = PENDENTE, recusouEm = INICIO) else it },
+        )
+        evento(EventoSocket.ChamadaRecebida(RECEBIDA, OUTRO))
+
+        assertThat(g.estado.value.tocando).isTrue()
+        assertThat(g.estado.value.chamadaId).isEqualTo(RECEBIDA)
+    }
+
+    @Test
+    fun `51 repetido depois de recusar, sem recusa registrada no servidor, nao toca`() = runTest {
+        val g = criar()
+        tocando(g)
+        g.recusar()
+        runCurrent()
+
+        // O servidor ainda não processou a recusa (ou é o 51 da primeira vez, repetido).
+        evento(EventoSocket.ChamadaRecebida(RECEBIDA, OUTRO))
+
+        assertThat(g.estado.value.fase).isEqualTo(FaseChamada.INATIVO)
+    }
+
+    @Test
+    fun `chamar de novo numa chamada que ja acabou nao toca`() = runTest {
+        val g = criar()
+        tocando(g)
+        g.recusar()
+        runCurrent()
+        val recusada = remoto.dados.getValue(RECEBIDA)
+        remoto.dados[RECEBIDA] = recusada.copy(
+            status = StatusChamada.ENCERRADA,
+            participantes = recusada.participantes.map { if (it.usuarioId == EU) it.copy(status = PENDENTE, recusouEm = INICIO) else it },
+        )
+
+        evento(EventoSocket.ChamadaRecebida(RECEBIDA, OUTRO))
+
+        assertThat(g.estado.value.fase).isEqualTo(FaseChamada.INATIVO)
+    }
+
+    @Test
     fun `52 enquanto toca para de tocar`() = runTest {
         val g = criar()
         tocando(g)

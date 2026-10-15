@@ -50,6 +50,8 @@ data class ParticipanteChamada(
     val status: StatusParticipante,
     val entrouEm: Instant? = null,
     val saiuEm: Instant? = null,
+    /** Recusou ou deixou passar; continua preenchido depois de um "Chamar de novo" (contrato §9.14). */
+    val recusouEm: Instant? = null,
 )
 
 /** Dados da chamada (`PUT /chamada/iniciar`, `GET /chamada/dados`, contrato §9.3). */

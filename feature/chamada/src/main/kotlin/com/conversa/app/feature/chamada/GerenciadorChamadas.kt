@@ -110,6 +110,9 @@ class GerenciadorChamadas @Inject constructor(
     /** Chamadas que já acabaram aqui: um 51 atrasado ou uma pendente antiga não tocam de novo. */
     private val encerradas = ArrayDeque<Long>()
 
+    /** Das [encerradas], as que o servidor encerrou (52): estas nem o "Chamar de novo" reabre. */
+    private val finalizadas = ArrayDeque<Long>()
+
     /** Chamar uma vez (no `Application`). */
     fun iniciar() {
         if (iniciado) return
@@ -341,8 +344,10 @@ class GerenciadorChamadas @Inject constructor(
         val eu = eu() ?: return
         when (evento) {
             is EventoSocket.ChamadaRecebida -> recebida(evento.chamadaId, evento.usuarioId, eu)
-            is EventoSocket.ChamadaFinalizada ->
+            is EventoSocket.ChamadaFinalizada -> {
+                lembrar(finalizadas, evento.chamadaId)
                 if (_estado.value.chamadaId == evento.chamadaId) encerrar() else lembrarEncerrada(evento.chamadaId)
+            }
             is EventoSocket.UsuarioRecusou -> recusou(evento.chamadaId, evento.usuarioId, eu)
             is EventoSocket.UsuarioEntrou -> entrou(evento.chamadaId, evento.usuarioId, eu)
             is EventoSocket.UsuarioSaiu -> saiu(evento.chamadaId, evento.usuarioId, eu)
@@ -354,7 +359,10 @@ class GerenciadorChamadas @Inject constructor(
 
     /** 51 (ou pendente): toca, ou recusa sem tocar se estou ocupado (FC-708). */
     private suspend fun recebida(id: Long, de: Long, eu: Long) {
-        if (id in encerradas) return
+        if (id in encerradas) {
+            if (id in finalizadas || !chamadoDeNovo(id, eu)) return
+            encerradas.remove(id)
+        }
         val atual = _estado.value
         if (atual.chamadaId == id) {
             // Alguém foi adicionado à chamada em que já estou.
@@ -383,6 +391,19 @@ class GerenciadorChamadas @Inject constructor(
                 noTrabalho { tocar(id) }
             }
         }
+    }
+
+    /**
+     * "Chamar de novo" (FC-724, contrato §9.14): o servidor manda outro 51 de uma chamada que
+     * este aparelho já recusou ou deixou passar. Só toca de novo se fui mesmo chamado outra vez:
+     * o meu status voltou a pendente com a recusa anterior registrada (no 51 repetido da primeira
+     * vez, ou antes de o servidor processar a minha recusa, `recusou_em` ainda está vazio) e a
+     * chamada continua.
+     */
+    private suspend fun chamadoDeNovo(id: Long, eu: Long): Boolean {
+        val dados = tentar { remoto.dados(id) } ?: return false
+        val meu = dados.participantes.firstOrNull { it.usuarioId == eu } ?: return false
+        return !dados.status.final && meu.status == StatusParticipante.PENDENTE && meu.recusouEm != null
     }
 
     private suspend fun recusou(id: Long, quem: Long, eu: Long) {
@@ -727,10 +748,12 @@ class GerenciadorChamadas @Inject constructor(
         ativandoVideo = false
     }
 
-    private fun lembrarEncerrada(id: Long) {
-        if (id in encerradas) return
-        encerradas.addLast(id)
-        while (encerradas.size > MAX_ENCERRADAS) encerradas.removeFirst()
+    private fun lembrarEncerrada(id: Long) = lembrar(encerradas, id)
+
+    private fun lembrar(lista: ArrayDeque<Long>, id: Long) {
+        if (id in lista) return
+        lista.addLast(id)
+        while (lista.size > MAX_ENCERRADAS) lista.removeFirst()
     }
 
     private suspend inline fun <T> tentar(bloco: () -> T): T? = try {
