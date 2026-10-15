@@ -139,7 +139,19 @@ data class EnviarMensagemRequisicao(
     val postagem: PostagemEnvioDto? = null,
     /** Resposta a uma postagem (7.13): vai para baixo dela. O servidor recusa se for agendada. */
     @SerialName("postagem_id") val postagemId: Long? = null,
+    /** Pede confirmação de leitura (FC-521). */
+    @SerialName("pede_confirmacao") val pedeConfirmacao: Boolean? = null,
+    /** Quem precisa confirmar (sem a lista: todos os outros membros). */
+    @SerialName("confirmacao_usuarios") val confirmacaoUsuarios: List<Long>? = null,
 )
+
+/** `POST /mensagem/confirmar` (FC-521): corpo e resposta. */
+@Serializable
+data class MensagemIdDto(@SerialName("mensagem_id") val mensagemId: Long = 0)
+
+/** `POST /mensagem/pedir-confirmacao` (FC-525): sem [usuarios], todos os outros membros. */
+@Serializable
+data class PedirConfirmacaoRequisicao(@SerialName("mensagem_id") val mensagemId: Long, val usuarios: List<Long>? = null)
 
 /** Resposta de `PUT /mensagem`: a linha crua (usa `usuario_id`, sem conteúdos). */
 @Serializable

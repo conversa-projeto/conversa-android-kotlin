@@ -25,13 +25,16 @@ import com.conversa.app.core.database.entidades.ConteudoEntidade
 import com.conversa.app.core.database.entidades.EnvioPendenteEntidade
 import com.conversa.app.core.database.entidades.MensagemCompleta
 import com.conversa.app.core.database.entidades.MensagemEntidade
+import com.conversa.app.core.model.DestinatarioConfirmacao
 import com.conversa.app.core.model.Mensagem
 import com.conversa.app.core.model.PREFIXO_LOCAL
 import com.conversa.app.core.model.TipoConteudo
 import com.conversa.app.core.model.TipoReferencia
 import com.conversa.app.core.model.local
 import com.conversa.app.core.network.api.ConversaApi
+import com.conversa.app.core.network.dto.ConfirmacaoDto
 import com.conversa.app.core.network.dto.ConteudoEnvioDto
+import com.conversa.app.core.network.dto.DestinatarioConfirmacaoDto
 import com.conversa.app.core.network.dto.EnviarMensagemRequisicao
 import com.conversa.app.core.network.dto.PostagemDto
 import com.conversa.app.core.network.dto.PostagemEnvioDto
@@ -105,6 +108,12 @@ sealed interface PostagemEnvio {
     data class Resposta(val postagemId: Long) : PostagemEnvio
 }
 
+/**
+ * Confirmação de leitura pedida no envio (FC-521): [usuarios] nulo = todos os outros membros. Os
+ * [destinatarios] (com o nome) só servem para a otimista já mostrar "Aguardando confirmação".
+ */
+data class PedidoConfirmacao(val usuarios: List<Long>?, val destinatarios: List<DestinatarioConfirmacao>)
+
 /** O envio de um anexo não tem volta (sem acesso ao arquivo, grande demais, recusado). */
 private class FalhaDefinitiva : Exception()
 
@@ -148,7 +157,8 @@ class EnvioMensagens @Inject constructor(
      * novo; votação não vai: o servidor recusa) e pode ir sem texto. Com [visivelEm] (7.10),
      * agendada: vai `visivel_em` em ISO UTC e a otimista já fica no fim, com o selo.
      * Com [postagem] (7.13): a nova já aparece como postagem, sem respostas; a resposta vai com
-     * `postagem_id` e fica embaixo da postagem, fora do fluxo, até o servidor gravar.
+     * `postagem_id` e fica embaixo da postagem, fora do fluxo, até o servidor gravar. Com
+     * [confirmacao] (FC-521), vai `pede_confirmacao` (e a lista, se houver).
      * Devolve o id local.
      */
     suspend fun enviar(
@@ -159,6 +169,7 @@ class EnvioMensagens @Inject constructor(
         figurinha: String? = null,
         visivelEm: Instant? = null,
         postagem: PostagemEnvio? = null,
+        confirmacao: PedidoConfirmacao? = null,
     ): Long {
         val atual = sessao.sessao.value ?: error("Sem sessão")
         val agora = relogio.instant()
@@ -195,6 +206,8 @@ class EnvioMensagens @Inject constructor(
                 mensagemReferencia = referencia?.let { ReferenciaEnvioDto(it.tipo.codigo, it.mensagem.id) },
                 postagem = (postagem as? PostagemEnvio.Nova)?.let { PostagemEnvioDto(it.titulo) },
                 postagemId = (postagem as? PostagemEnvio.Resposta)?.postagemId,
+                pedeConfirmacao = confirmacao?.let { true },
+                confirmacaoUsuarios = confirmacao?.usuarios,
             )
             val pacote = PacoteEnvio(corpo, pendentes)
             mensagemDao.salvarCompletas(
@@ -224,6 +237,13 @@ class EnvioMensagens @Inject constructor(
                                 ConversaJson.encodeToString(PostagemDto.serializer(), PostagemDto(titulo = it.titulo))
                             },
                             postagemId = (postagem as? PostagemEnvio.Resposta)?.postagemId,
+                            confirmacaoJson = confirmacao?.let { pedido ->
+                                val destinatarios = pedido.destinatarios.map { DestinatarioConfirmacaoDto(it.usuarioId, it.nome) }
+                                ConversaJson.encodeToString(
+                                    ConfirmacaoDto.serializer(),
+                                    ConfirmacaoDto(total = destinatarios.size, destinatarios = destinatarios),
+                                )
+                            },
                         ),
                         conteudos =
                         encaminhados.mapIndexed { i, it ->

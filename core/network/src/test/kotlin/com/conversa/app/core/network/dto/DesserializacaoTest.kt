@@ -206,6 +206,24 @@ class DesserializacaoTest {
     }
 
     @Test
+    fun `confirmacao de leitura no envio e no pedir depois usa os nomes do contrato`() {
+        val conteudos = listOf(ConteudoEnvioDto(1, 1, "oi"))
+        fun json(corpo: EnviarMensagemRequisicao) = ConversaJson.encodeToString(EnviarMensagemRequisicao.serializer(), corpo)
+
+        assertThat(json(EnviarMensagemRequisicao(42, conteudos, pedeConfirmacao = true)))
+            .isEqualTo("""{"conversa_id":42,"conteudos":[{"ordem":1,"tipo":1,"conteudo":"oi"}],"pede_confirmacao":true}""")
+        assertThat(json(EnviarMensagemRequisicao(42, conteudos, pedeConfirmacao = true, confirmacaoUsuarios = listOf(8, 9))))
+            .isEqualTo(
+                """{"conversa_id":42,"conteudos":[{"ordem":1,"tipo":1,"conteudo":"oi"}],"pede_confirmacao":true,"confirmacao_usuarios":[8,9]}""",
+            )
+        // Sem a lista: todos os outros membros.
+        assertThat(ConversaJson.encodeToString(PedirConfirmacaoRequisicao.serializer(), PedirConfirmacaoRequisicao(5)))
+            .isEqualTo("""{"mensagem_id":5}""")
+        assertThat(ConversaJson.encodeToString(PedirConfirmacaoRequisicao.serializer(), PedirConfirmacaoRequisicao(5, listOf(8))))
+            .isEqualTo("""{"mensagem_id":5,"usuarios":[8]}""")
+    }
+
+    @Test
     fun `envio de mensagem com referencia usa os nomes do contrato`() {
         val corpo = EnviarMensagemRequisicao(
             conversaId = 42,

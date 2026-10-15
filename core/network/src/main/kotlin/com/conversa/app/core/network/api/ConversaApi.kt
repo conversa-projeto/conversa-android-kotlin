@@ -15,6 +15,7 @@ import com.conversa.app.core.network.dto.CadastroRequisicao
 import com.conversa.app.core.network.dto.ChamadaHistoricoDto
 import com.conversa.app.core.network.dto.ChamadaPendenteDto
 import com.conversa.app.core.network.dto.ChatChamadaDto
+import com.conversa.app.core.network.dto.ConfirmacaoDto
 import com.conversa.app.core.network.dto.ConfirmarAnexoDto
 import com.conversa.app.core.network.dto.ContatoDto
 import com.conversa.app.core.network.dto.ConversaCriadaDto
@@ -42,8 +43,10 @@ import com.conversa.app.core.network.dto.MembroDto
 import com.conversa.app.core.network.dto.MensagemCriadaDto
 import com.conversa.app.core.network.dto.MensagemDto
 import com.conversa.app.core.network.dto.MensagemExcluidaDto
+import com.conversa.app.core.network.dto.MensagemIdDto
 import com.conversa.app.core.network.dto.NovaMensagemDto
 import com.conversa.app.core.network.dto.ParametrosDto
+import com.conversa.app.core.network.dto.PedirConfirmacaoRequisicao
 import com.conversa.app.core.network.dto.PermissaoUsuarioDto
 import com.conversa.app.core.network.dto.PermissoesDto
 import com.conversa.app.core.network.dto.PrazoEnqueteRequisicao
@@ -182,6 +185,14 @@ interface ConversaApi {
     suspend fun visualizarPostagem(@Body corpo: VisualizarPostagemRequisicao): RespostasVistasDto
 
     /** Todas as respostas de uma postagem (até 100, da mais antiga para a mais nova). */
+    /** Confirma a leitura (idempotente); 403 se eu não estou na lista. */
+    @POST("mensagem/confirmar")
+    suspend fun confirmarLeitura(@Body corpo: MensagemIdDto): MensagemIdDto
+
+    /** Quem enviou passa a pedir confirmação (até 24 h depois do envio). */
+    @POST("mensagem/pedir-confirmacao")
+    suspend fun pedirConfirmacao(@Body corpo: PedirConfirmacaoRequisicao): ConfirmacaoDto
+
     @GET("postagem/respostas")
     suspend fun respostasPostagem(@Query("id") postagemId: Long): List<MensagemDto>
 

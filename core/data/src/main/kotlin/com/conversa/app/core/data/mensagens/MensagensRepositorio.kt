@@ -12,6 +12,8 @@ import com.conversa.app.core.network.api.ConversaApi
 import com.conversa.app.core.network.di.EscopoAplicacao
 import com.conversa.app.core.network.dto.IdDto
 import com.conversa.app.core.network.dto.MarcarStatusRequisicao
+import com.conversa.app.core.network.dto.MensagemIdDto
+import com.conversa.app.core.network.dto.PedirConfirmacaoRequisicao
 import com.conversa.app.core.network.dto.ReacaoRequisicao
 import com.conversa.app.core.network.dto.VisualizarPostagemRequisicao
 import com.conversa.app.core.network.http.chamarApi
@@ -94,6 +96,17 @@ class MensagensRepositorio @Inject constructor(
     /** Todas as respostas de uma postagem ("Ver todas", 7.13), da mais antiga à mais nova. */
     suspend fun respostas(postagemId: Long): Result<List<Mensagem>> =
         chamarApi { api.respostasPostagem(postagemId) }.map { lista -> lista.map { it.paraEntidade().paraModelo() } }
+
+    /**
+     * "Confirmar leitura" (FC-521): `POST /mensagem/confirmar` (idempotente) e relê a mensagem. O WS 8
+     * vai para os outros membros, não para mim.
+     */
+    suspend fun confirmarLeitura(conversaId: Long, mensagemId: Long): Result<Unit> =
+        chamarApi { api.confirmarLeitura(MensagemIdDto(mensagemId)) }.map { recarregar(conversaId, mensagemId) }
+
+    /** "Pedir confirmação de leitura" numa minha já enviada (FC-525); [usuarios] nulo = todos os outros membros. */
+    suspend fun pedirConfirmacao(conversaId: Long, mensagemId: Long, usuarios: List<Long>?): Result<Unit> =
+        chamarApi { api.pedirConfirmacao(PedirConfirmacaoRequisicao(mensagemId, usuarios)) }.map { recarregar(conversaId, mensagemId) }
 
     /** Uma mensagem do aparelho (a pendente do "Responder no privado", 7.6). */
     suspend fun buscar(mensagemId: Long): Mensagem? = mensagemDao.buscar(mensagemId)?.paraModelo()

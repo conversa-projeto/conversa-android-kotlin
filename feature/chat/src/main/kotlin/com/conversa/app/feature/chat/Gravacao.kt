@@ -4,6 +4,7 @@ import com.conversa.app.core.data.anexos.AnexoLocal
 import com.conversa.app.core.data.anexos.ArquivosLocais
 import com.conversa.app.core.data.mensagens.EnvioMensagens
 import com.conversa.app.core.data.mensagens.MensagensRepositorio
+import com.conversa.app.core.data.mensagens.PedidoConfirmacao
 import com.conversa.app.core.data.mensagens.PostagemEnvio
 import com.conversa.app.core.data.mensagens.ReferenciaPendente
 import com.conversa.app.core.media.GravadorAudio
@@ -59,6 +60,8 @@ class ControleGravacao(
     private val pegarResposta: () -> ReferenciaPendente? = { null },
     /** A postagem do campo (7.13): a gravação vira a postagem ou a resposta a uma. */
     private val pegarPostagem: () -> PostagemEnvio? = { null },
+    /** A confirmação de leitura pedida no campo (FC-521). */
+    private val pegarConfirmacao: () -> PedidoConfirmacao? = { null },
 ) {
     private val _estado = MutableStateFlow<EstadoGravacao>(EstadoGravacao.Parada)
     val estado: StateFlow<EstadoGravacao> = _estado.asStateFlow()
@@ -158,7 +161,7 @@ class ControleGravacao(
             withContext(es) { lista.forEach { it.delete() } }
             val anexo = AnexoLocal(arquivos.uriCompartilhado(final), final.name, final.length(), MIME, TipoConteudo.GRAVACAO_AUDIO)
             val postagem = pegarPostagem()
-            envio.enviar(conversaId, "", listOf(anexo), pegarResposta(), postagem = postagem)
+            envio.enviar(conversaId, "", listOf(anexo), pegarResposta(), postagem = postagem, confirmacao = pegarConfirmacao())
             if (postagem !is PostagemEnvio.Resposta) avisar(EventoChat.RolarAoFim)
         }
     }

@@ -33,6 +33,7 @@ import androidx.compose.material.icons.automirrored.outlined.Reply
 import androidx.compose.material.icons.outlined.AddReaction
 import androidx.compose.material.icons.outlined.ContentCopy
 import androidx.compose.material.icons.outlined.PersonOutline
+import androidx.compose.material.icons.outlined.TaskAlt
 import androidx.compose.material.icons.outlined.VisibilityOff
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.ExperimentalMaterial3Api
@@ -82,6 +83,7 @@ import com.conversa.app.core.model.Reacao
 import com.conversa.app.core.model.TipoConteudo
 import com.conversa.app.core.model.TipoExibicao
 import com.conversa.app.core.model.classificarMensagem
+import com.conversa.app.core.model.podePedirConfirmacao
 import com.conversa.app.core.ui.componentes.Avatar
 import com.conversa.app.core.ui.tema.ConversaTema
 import java.time.Instant
@@ -191,6 +193,8 @@ data class AcoesMenu(
     val aoMaisEmojis: () -> Unit,
     val aoCopiar: () -> Unit,
     val aoOcultar: () -> Unit,
+    /** "Pedir confirmação de leitura" numa minha já enviada (FC-525). */
+    val aoPedirConfirmacao: () -> Unit = {},
 )
 
 /** Toque longo na bolha (TODO 7.1): reações rápidas + "mais" e as ações (textos do web). */
@@ -236,6 +240,10 @@ fun MenuMensagem(mensagem: Mensagem, propria: Boolean, grupo: Boolean, acoes: Ac
         val temTexto = mensagem.conteudos.any { it.tipo == TipoConteudo.TEXTO || it.tipo == TipoConteudo.IMAGEM }
         if (temTexto) {
             ItemMenu(Icons.Outlined.ContentCopy, stringResource(R.string.copiar), onClick = acoes.aoCopiar)
+        }
+        // Até 24 h depois do envio, se ainda não pede (como o web).
+        if (propria && podePedirConfirmacao(mensagem, mensagem.remetenteId, Instant.now())) {
+            ItemMenu(Icons.Outlined.TaskAlt, stringResource(R.string.pedir_confirmacao_de_leitura), onClick = acoes.aoPedirConfirmacao)
         }
         if (propria && !mensagem.oculta) {
             ItemMenu(Icons.Outlined.VisibilityOff, stringResource(R.string.ocultar), perigo = true, onClick = acoes.aoOcultar)
@@ -438,6 +446,12 @@ class AcoesAbertas {
 
     /** Mensagem minha com o detalhe do status aberto (7.10). */
     var statusDe by mutableStateOf<Mensagem?>(null)
+
+    /** Minha mensagem do "Pedir confirmação de leitura", com o "Quem precisa confirmar" aberto (grupo). */
+    var pedindoConfirmacao by mutableStateOf<Mensagem?>(null)
+
+    /** Id da mensagem com quem confirmou e quem falta aberto. */
+    var confirmacaoDe by mutableStateOf<Long?>(null)
 }
 
 /**
@@ -481,6 +495,10 @@ internal fun AcoesDaMensagem(abertas: AcoesAbertas, estado: ChatUiState, viewMod
                 aoOcultar = {
                     abertas.menuDe = null
                     abertas.ocultando = mensagem
+                },
+                aoPedirConfirmacao = {
+                    abertas.menuDe = null
+                    if (estado.grupo) abertas.pedindoConfirmacao = mensagem else viewModel.pedirConfirmacaoDepois(mensagem, null)
                 },
             ),
             aoFechar = { abertas.menuDe = null },
@@ -535,6 +553,27 @@ internal fun AcoesDaMensagem(abertas: AcoesAbertas, estado: ChatUiState, viewMod
                 },
                 aoFechar = { abertas.maisReacoes = null },
             )
+        }
+    }
+    abertas.pedindoConfirmacao?.let { mensagem ->
+        val membros by viewModel.membrosDoGrupo.collectAsStateWithLifecycle()
+        QuemPrecisaConfirmar(
+            membros,
+            inicial = null,
+            textoConfirmar = stringResource(R.string.pedir_confirmacao),
+            aoEscolher = { usuarios ->
+                abertas.pedindoConfirmacao = null
+                viewModel.pedirConfirmacaoDepois(mensagem, usuarios)
+            },
+            aoFechar = { abertas.pedindoConfirmacao = null },
+        )
+    }
+    abertas.confirmacaoDe?.let { id ->
+        val confirmacao = atual(id)?.confirmacao
+        if (confirmacao == null) {
+            LaunchedEffect(Unit) { abertas.confirmacaoDe = null }
+        } else {
+            DetalheConfirmacao(confirmacao, aoFechar = { abertas.confirmacaoDe = null })
         }
     }
     abertas.statusDe?.let { inicial ->

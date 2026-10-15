@@ -12,6 +12,7 @@ import com.conversa.app.core.data.paraEntidade
 import com.conversa.app.core.data.paraModelo
 import com.conversa.app.core.database.ConversaBanco
 import com.conversa.app.core.database.entidades.ConversaEntidade
+import com.conversa.app.core.model.DestinatarioConfirmacao
 import com.conversa.app.core.model.Postagem
 import com.conversa.app.core.model.Sessao
 import com.conversa.app.core.model.TipoConteudo
@@ -19,6 +20,7 @@ import com.conversa.app.core.model.TipoExibicao
 import com.conversa.app.core.model.TipoReferencia
 import com.conversa.app.core.model.classificarMensagem
 import com.conversa.app.core.network.api.ConversaApi
+import com.conversa.app.core.network.dto.ConfirmacaoDto
 import com.conversa.app.core.network.dto.ConteudoDto
 import com.conversa.app.core.network.dto.ConteudoEnvioDto
 import com.conversa.app.core.network.dto.EnviarMensagemRequisicao
@@ -26,6 +28,8 @@ import com.conversa.app.core.network.dto.MarcarStatusRequisicao
 import com.conversa.app.core.network.dto.MensagemCriadaDto
 import com.conversa.app.core.network.dto.MensagemDto
 import com.conversa.app.core.network.dto.MensagemExcluidaDto
+import com.conversa.app.core.network.dto.MensagemIdDto
+import com.conversa.app.core.network.dto.PedirConfirmacaoRequisicao
 import com.conversa.app.core.network.dto.PostagemDto
 import com.conversa.app.core.network.dto.PostagemEnvioDto
 import com.conversa.app.core.network.dto.ReacaoDto
@@ -344,6 +348,59 @@ class MensagensTest {
                 ),
             )
         }
+    }
+
+    // --- Confirmação de leitura (FC-521, FC-525) ---
+
+    @Test
+    fun `pedir confirmacao no envio manda a lista e a otimista ja aguarda os destinatarios`() = runTest {
+        val envio = envio()
+        val pedido = PedidoConfirmacao(listOf(8), listOf(DestinatarioConfirmacao(8, "Bruno")))
+
+        val idLocal = envio.enviar(42, "leia", emptyList(), confirmacao = pedido)
+
+        val confirmacao = banco.mensagemDao().buscar(idLocal)!!.paraModelo().confirmacao!!
+        assertThat(confirmacao.total).isEqualTo(1)
+        assertThat(confirmacao.destinatarios.single().nome).isEqualTo("Bruno")
+        assertThat(confirmacao.usuarios).isEmpty()
+        coEvery { api.enviarMensagem(any()) } returns MensagemCriadaDto(id = 520, conversaId = 42)
+        coEvery { api.mensagens(42, 520, 0, 0) } throws java.io.IOException("sem rede")
+        envio.processarPendentes()
+        coVerify {
+            api.enviarMensagem(
+                EnviarMensagemRequisicao(
+                    42,
+                    listOf(ConteudoEnvioDto(1, 1, "leia")),
+                    pedeConfirmacao = true,
+                    confirmacaoUsuarios = listOf(8),
+                ),
+            )
+        }
+    }
+
+    @Test
+    fun `confirmar a leitura e pedir confirmacao depois chamam o servidor e releem a mensagem`() = runTest {
+        val repo = repo()
+        val pede = msg(300, "leia").copy(confirmacao = ConfirmacaoDto(total = 1, podeConfirmar = true))
+        banco.mensagemDao().salvarCompletas(listOf(pede.paraEntidade()))
+        coEvery { api.confirmarLeitura(MensagemIdDto(300)) } returns MensagemIdDto(300)
+        coEvery { api.mensagens(42, 300, 0, 0) } returns listOf(pede.copy(confirmacao = ConfirmacaoDto(total = 1, confirmou = true)))
+
+        assertThat(repo.confirmarLeitura(42, 300).isSuccess).isTrue()
+        assertThat(banco.mensagemDao().buscar(300)!!.paraModelo().confirmacao!!.confirmou).isTrue()
+
+        // Fora da lista: o 403 do servidor volta como falha.
+        coEvery { api.confirmarLeitura(MensagemIdDto(301)) } throws HttpException(
+            Response.error<Any>(403, """{"error":"Você não está entre quem precisa confirmar esta mensagem."}""".toResponseBody()),
+        )
+        assertThat(repo.confirmarLeitura(42, 301).isFailure).isTrue()
+
+        val minha = msg(302, "aviso", remetente = 7)
+        banco.mensagemDao().salvarCompletas(listOf(minha.paraEntidade()))
+        coEvery { api.pedirConfirmacao(PedirConfirmacaoRequisicao(302, null)) } returns ConfirmacaoDto(total = 2)
+        coEvery { api.mensagens(42, 302, 0, 0) } returns listOf(minha.copy(confirmacao = ConfirmacaoDto(total = 2)))
+        assertThat(repo.pedirConfirmacao(42, 302, null).isSuccess).isTrue()
+        assertThat(banco.mensagemDao().buscar(302)!!.paraModelo().confirmacao!!.total).isEqualTo(2)
     }
 
     // --- Postagem em grupo (7.13) ---

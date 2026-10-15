@@ -18,6 +18,7 @@ import com.conversa.app.core.data.conversas.ConversasRepositorio
 import com.conversa.app.core.data.enquetes.EnquetesRepositorio
 import com.conversa.app.core.data.mensagens.EnvioMensagens
 import com.conversa.app.core.data.mensagens.MensagensRepositorio
+import com.conversa.app.core.data.mensagens.PedidoConfirmacao
 import com.conversa.app.core.data.mensagens.PostagemEnvio
 import com.conversa.app.core.data.mensagens.ReferenciaPendente
 import com.conversa.app.core.data.notificacoes.ConversaEmTela
@@ -29,6 +30,7 @@ import com.conversa.app.core.media.GravadorAudio
 import com.conversa.app.core.media.PlayerAudio
 import com.conversa.app.core.model.AtividadeConversa
 import com.conversa.app.core.model.Conversa
+import com.conversa.app.core.model.DestinatarioConfirmacao
 import com.conversa.app.core.model.ItemChat
 import com.conversa.app.core.model.MembroConversa
 import com.conversa.app.core.model.Mensagem
@@ -111,6 +113,8 @@ data class ChatUiState(
     val postando: Boolean = false,
     /** "Responder à postagem" (7.13): a próxima mensagem vai para baixo desta postagem. */
     val respondendoPostagem: Mensagem? = null,
+    /** "+" › "Confirmar leitura" (FC-521): a próxima mensagem pede confirmação. */
+    val confirmacaoNoCampo: ConfirmacaoNoCampo? = null,
 ) {
     val grupo: Boolean get() = conversa?.tipo == TipoConversa.GRUPO
 }
@@ -193,6 +197,9 @@ sealed interface EventoChat {
 
     /** O `PUT /mensagem/reacao` falhou: "Não foi possível reagir" com o motivo. */
     data class ReagirFalhou(val motivo: String) : EventoChat
+
+    /** O `POST /mensagem/pedir-confirmacao` falhou (FC-525): "Não foi possível pedir a confirmação" com o motivo. */
+    data class PedirConfirmacaoFalhou(val motivo: String) : EventoChat
 }
 
 /** O que o campo recebe além do texto digitado (junto, para o [ChatViewModel.estado] caber num `combine`). */
@@ -210,12 +217,17 @@ private data class ExtrasDoCampo(
     val foco: Boolean,
     val respondendo: ReferenciaPendente?,
     val postagem: CampoPostagem,
+    val confirmacao: ConfirmacaoNoCampo?,
     val salto: Salto,
     val minhas: Set<Long>,
 )
 
 /** A postagem no campo (7.13): criando uma ("+" › "Postagem") ou respondendo a uma, nunca os dois. */
 private data class CampoPostagem(val postando: Boolean = false, val respondendo: Mensagem? = null)
+
+/** "+" › "Confirmar leitura" (FC-521): a próxima mensagem pede confirmação; [usuarios] nulo = todos os outros. */
+@Immutable
+data class ConfirmacaoNoCampo(val usuarios: List<Long>? = null)
 
 /** Título da postagem: até 150 caracteres, como o web. */
 internal const val LIMITE_TITULO_POSTAGEM = 150
@@ -312,6 +324,7 @@ class ChatViewModel @Inject constructor(
     private val focarCampo = MutableStateFlow(salvo.get<Boolean>("focar") == true)
     private val respondendo = MutableStateFlow<ReferenciaPendente?>(null)
     private val campoPostagem = MutableStateFlow(CampoPostagem())
+    private val confirmacaoNoCampo = MutableStateFlow<ConfirmacaoNoCampo?>(null)
 
     /** O título digitado na faixa da postagem: o campo guarda o texto (estado local); aqui só a cópia para o envio. */
     private var tituloPostagem = ""
@@ -319,14 +332,14 @@ class ChatViewModel @Inject constructor(
     private val minhasConversas = conversas.observarTodas().map { lista -> lista.mapTo(mutableSetOf()) { it.id } }
 
     private val extrasDoCampo =
-        combine(textoParaCampo, focarCampo, combine(respondendo, campoPostagem, ::Pair), salto, minhasConversas) {
+        combine(textoParaCampo, focarCampo, combine(respondendo, campoPostagem, confirmacaoNoCampo, ::Triple), salto, minhasConversas) {
                 texto,
                 foco,
-                (resposta, postagem),
+                (resposta, postagem, confirmacao),
                 s,
                 minhas,
             ->
-            ExtrasDoCampo(texto, foco, resposta, postagem, s, minhas)
+            ExtrasDoCampo(texto, foco, resposta, postagem, confirmacao, s, minhas)
         }
 
     /**
@@ -381,6 +394,7 @@ class ChatViewModel @Inject constructor(
             respondendo = campo.respondendo,
             postando = campo.postagem.postando,
             respondendoPostagem = campo.postagem.respondendo,
+            confirmacaoNoCampo = campo.confirmacao,
             irPara = campo.salto.irPara,
             destaque = campo.salto.destaque,
             buscandoMensagem = campo.salto.buscando,
@@ -508,8 +522,9 @@ class ChatViewModel @Inject constructor(
         val encaminhando = resposta?.tipo == TipoReferencia.ENCAMINHAMENTO
         if (limpo.isEmpty() && anexosNaFila.isEmpty() && !encaminhando) return
         val postagem = pegarPostagem()
+        val confirmacao = pegarConfirmacao()
         viewModelScope.launch {
-            envio.enviar(conversaId, limpo, anexosNaFila, resposta, visivelEm = visivelEm, postagem = postagem)
+            envio.enviar(conversaId, limpo, anexosNaFila, resposta, visivelEm = visivelEm, postagem = postagem, confirmacao = confirmacao)
             fila.value = fila.value - anexosNaFila.toSet()
             if (respondendo.value == resposta) respondendo.value = null
             aoGravar()
@@ -522,9 +537,10 @@ class ChatViewModel @Inject constructor(
     /** Figurinha (7.8): vai na hora, sozinha (como o web com o campo vazio) e como resposta, se houver uma pendente. */
     fun enviarFigurinha(id: String) {
         val postagem = pegarPostagem()
+        val confirmacao = pegarConfirmacao()
         viewModelScope.launch {
             val resposta = respondendo.value
-            envio.enviar(conversaId, "", emptyList(), resposta, figurinha = id, postagem = postagem)
+            envio.enviar(conversaId, "", emptyList(), resposta, figurinha = id, postagem = postagem, confirmacao = confirmacao)
             if (respondendo.value == resposta) respondendo.value = null
             if (postagem !is PostagemEnvio.Resposta) eventos.enviar(EventoChat.RolarAoFim)
         }
@@ -667,6 +683,57 @@ class ChatViewModel @Inject constructor(
         return when {
             atual.respondendo != null -> PostagemEnvio.Resposta(atual.respondendo.id)
             else -> PostagemEnvio.Nova(tituloPostagem.trim().take(LIMITE_TITULO_POSTAGEM).ifEmpty { null })
+        }
+    }
+
+    // --- Confirmação de leitura (FC-521, FC-525, MSG-21) ---
+
+    /** Membros do grupo, sem mim: o "Quem precisa confirmar". */
+    val membrosDoGrupo: StateFlow<List<MembroConversa>> = membros.map { lista -> lista.filter { it.usuarioId != eu } }
+        .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), emptyList())
+
+    /** "+" › "Confirmar leitura" (ou o "Pronto" do "Quem precisa confirmar"): [usuarios] nulo = todos. */
+    fun escolherConfirmacao(usuarios: List<Long>?) {
+        confirmacaoNoCampo.value = ConfirmacaoNoCampo(usuarios)
+    }
+
+    /** O "×" da faixa: "Não pedir confirmação". */
+    fun cancelarConfirmacao() {
+        confirmacaoNoCampo.value = null
+    }
+
+    /**
+     * A confirmação do próximo envio: sai do campo. Os destinatários (com o nome) vão só para a
+     * otimista mostrar "Aguardando confirmação": no grupo, os membros escolhidos; na direta, a outra pessoa.
+     */
+    private fun pegarConfirmacao(): PedidoConfirmacao? {
+        val pedido = confirmacaoNoCampo.value ?: return null
+        confirmacaoNoCampo.value = null
+        val conversa = estado.value.conversa
+        val destinatarios = if (conversa?.tipo == TipoConversa.GRUPO) {
+            membros.value.filter { it.usuarioId != eu && (pedido.usuarios == null || it.usuarioId in pedido.usuarios) }
+                .map { DestinatarioConfirmacao(it.usuarioId, it.nome) }
+        } else {
+            listOfNotNull(conversa?.destinatarioId?.let { DestinatarioConfirmacao(it, conversa.titulo) })
+        }
+        return PedidoConfirmacao(pedido.usuarios, destinatarios)
+    }
+
+    /** "Confirmar leitura" no chip da bolha. Falha: o motivo do servidor (ex.: "Você não está entre quem precisa confirmar…"). */
+    fun confirmarLeitura(mensagem: Mensagem) {
+        if (mensagem.id <= 0 || mensagem.confirmacao?.podeConfirmar != true) return
+        viewModelScope.launch {
+            mensagens.confirmarLeitura(conversaId, mensagem.id)
+                .onFailure { eventos.enviar(EventoChat.Erro(it.paraErroApi().mensagemAmigavel())) }
+        }
+    }
+
+    /** "Pedir confirmação de leitura" no menu (FC-525): [usuarios] nulo = todos os outros membros. */
+    fun pedirConfirmacaoDepois(mensagem: Mensagem, usuarios: List<Long>?) {
+        if (mensagem.id <= 0) return
+        viewModelScope.launch {
+            mensagens.pedirConfirmacao(conversaId, mensagem.id, usuarios)
+                .onFailure { eventos.enviar(EventoChat.PedirConfirmacaoFalhou(it.paraErroApi().mensagemAmigavel())) }
         }
     }
 
@@ -938,6 +1005,7 @@ class ChatViewModel @Inject constructor(
         avisar = { eventos.enviar(it) },
         pegarResposta = { respondendo.value.also { respondendo.value = null } },
         pegarPostagem = ::pegarPostagem,
+        pegarConfirmacao = ::pegarConfirmacao,
     )
 
     /** Separado do [estado]: o tempo e o nível mudam 10 vezes por segundo e só o campo lê. */

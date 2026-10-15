@@ -11,6 +11,7 @@ import com.conversa.app.core.data.contatos.ContatosRepositorio
 import com.conversa.app.core.data.conversas.ConversasRepositorio
 import com.conversa.app.core.data.mensagens.EnvioMensagens
 import com.conversa.app.core.data.mensagens.MensagensRepositorio
+import com.conversa.app.core.data.mensagens.PedidoConfirmacao
 import com.conversa.app.core.data.mensagens.PostagemEnvio
 import com.conversa.app.core.data.mensagens.ReferenciaPendente
 import com.conversa.app.core.data.presenca.PresencaRepositorio
@@ -708,6 +709,69 @@ class ChatViewModelTest {
 
         coVerify { envio.enviar(42, "", emptyList(), ReferenciaPendente(TipoReferencia.ENCAMINHAMENTO, original)) }
         assertThat(vm.estado.value.respondendo).isNull()
+    }
+
+    // --- Confirmação de leitura (FC-521, FC-525) ---
+
+    @Test
+    fun `confirmar leitura no campo vai so na proxima mensagem, com a outra pessoa da direta`() = runTest {
+        val vm = criar()
+        advanceUntilIdle()
+
+        vm.escolherConfirmacao(null)
+        advanceUntilIdle()
+        assertThat(vm.estado.value.confirmacaoNoCampo).isEqualTo(ConfirmacaoNoCampo(null))
+        vm.enviar("leia") { }
+        advanceUntilIdle()
+        coVerify {
+            envio.enviar(
+                42,
+                "leia",
+                emptyList(),
+                null,
+                confirmacao = PedidoConfirmacao(null, listOf(com.conversa.app.core.model.DestinatarioConfirmacao(8, "Bruno"))),
+            )
+        }
+        assertThat(vm.estado.value.confirmacaoNoCampo).isNull()
+
+        // "Não pedir confirmação" desiste.
+        vm.escolherConfirmacao(null)
+        vm.cancelarConfirmacao()
+        vm.enviar("depois") { }
+        advanceUntilIdle()
+        coVerify { envio.enviar(42, "depois", emptyList(), null, confirmacao = null) }
+    }
+
+    @Test
+    fun `confirmar leitura so com a caixa, e o erro do servidor vira aviso`() = runTest {
+        val vm = criar()
+        advanceUntilIdle()
+        val naLista = mensagem(9, 8, lida = true).copy(
+            confirmacao = com.conversa.app.core.model.ConfirmacaoLeitura(1, false, true, emptyList(), emptyList()),
+        )
+        coEvery { mensagens.confirmarLeitura(42, 9) } returns Result.failure(java.io.IOException("sem rede"))
+
+        // Sem a caixa (fora da lista, ou sem pedido): nada.
+        vm.confirmarLeitura(mensagem(10, 8, lida = true))
+        vm.confirmarLeitura(naLista)
+        advanceUntilIdle()
+
+        coVerify(exactly = 1) { mensagens.confirmarLeitura(any(), any()) }
+        assertThat(vm.eventos.fluxo.first()).isInstanceOf(EventoChat.Erro::class.java)
+    }
+
+    @Test
+    fun `pedir confirmacao depois manda a lista e a falha vira o aviso proprio`() = runTest {
+        val vm = criar()
+        advanceUntilIdle()
+        val minha = mensagem(9, 7, lida = true)
+        coEvery { mensagens.pedirConfirmacao(42, 9, listOf(8)) } returns Result.failure(java.io.IOException("sem rede"))
+
+        vm.pedirConfirmacaoDepois(minha, listOf(8))
+        advanceUntilIdle()
+
+        coVerify { mensagens.pedirConfirmacao(42, 9, listOf(8)) }
+        assertThat(vm.eventos.fluxo.first()).isInstanceOf(EventoChat.PedirConfirmacaoFalhou::class.java)
     }
 
     // --- Postagem em grupo (7.13) ---

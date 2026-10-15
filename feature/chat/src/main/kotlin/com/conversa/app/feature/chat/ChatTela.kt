@@ -223,6 +223,8 @@ fun ChatRotaTela(
             EventoChat.OcultarFalhou -> avisos.mostrarErro(naoOcultou)
             EventoChat.LimiteDeReacoes -> avisos.mostrarErro(limiteDeReacoes)
             is EventoChat.ReagirFalhou -> avisos.mostrarErro(recursos.getString(R.string.nao_foi_possivel_reagir, evento.motivo))
+            is EventoChat.PedirConfirmacaoFalhou ->
+                avisos.mostrarErro(recursos.getString(R.string.nao_foi_possivel_pedir_confirmacao, evento.motivo))
         }
     }
     // O áudio vai como fluxo: só as bolhas de áudio leem (ver LocalAudio).
@@ -281,6 +283,8 @@ fun ChatRotaTela(
                     aoVerStatus = { acoesDaMensagem.statusDe = it },
                     enquetes = viewModel.acoesEnquete,
                     postagens = viewModel.acoesPostagem,
+                    aoConfirmarLeitura = viewModel::confirmarLeitura,
+                    aoVerConfirmacao = { acoesDaMensagem.confirmacaoDe = it.id },
                     aoResponder = viewModel::responder,
                     aoIrParaMensagem = viewModel::irParaMensagem,
                 ),
@@ -295,6 +299,9 @@ fun ChatRotaTela(
                 aoPostar = viewModel::postar,
                 aoMudarTituloPostagem = viewModel::tituloDaPostagem,
                 aoCancelarPostagem = viewModel::cancelarPostagem,
+                aoEscolherConfirmacao = viewModel::escolherConfirmacao,
+                aoCancelarConfirmacao = viewModel::cancelarConfirmacao,
+                membrosDoGrupo = viewModel.membrosDoGrupo,
                 contatosMencao = viewModel.contatosMencao,
                 aoChegouNaMensagem = viewModel::chegouNaMensagem,
                 aoColarAnexos = viewModel::colarAnexos,
@@ -409,6 +416,11 @@ class AcoesChat(
     val aoMudarTituloPostagem: (String) -> Unit = {},
     /** O "×" da faixa da postagem ou da resposta a uma postagem. */
     val aoCancelarPostagem: () -> Unit = {},
+    /** "Confirmar leitura" (FC-521): quem precisa confirmar (nulo = todos). */
+    val aoEscolherConfirmacao: (List<Long>?) -> Unit = {},
+    val aoCancelarConfirmacao: () -> Unit = {},
+    /** Membros do grupo, sem mim: o "Quem precisa confirmar". */
+    val membrosDoGrupo: StateFlow<List<com.conversa.app.core.model.MembroConversa>> = MutableStateFlow(emptyList()),
     val aoChegouNaMensagem: () -> Unit = {},
     /** Imagem colada no campo (teclado ou área de transferência). */
     val aoColarAnexos: (List<String>) -> Unit = {},
@@ -548,6 +560,7 @@ fun ChatTela(
                 grupo = estado.grupo,
                 postando = estado.postando,
                 respondendoPostagem = estado.respondendoPostagem,
+                confirmacao = estado.confirmacaoNoCampo,
             )
         },
     ) { margens ->

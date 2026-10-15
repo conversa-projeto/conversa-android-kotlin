@@ -134,6 +134,10 @@ data class AcoesBolha(
     val enquetes: AcoesEnquete? = null,
     /** A postagem (7.13): as respostas e o "Responder à postagem". */
     val postagens: AcoesPostagem = AcoesPostagem(),
+    /** "Confirmar leitura" no chip da bolha (FC-521). */
+    val aoConfirmarLeitura: (Mensagem) -> Unit = {},
+    /** Quem confirmou e quem falta (toque no chip da confirmação). */
+    val aoVerConfirmacao: (Mensagem) -> Unit = {},
 )
 
 /**
@@ -217,6 +221,17 @@ fun LinhaMensagem(
                         else -> Fundo(propria) { CorpoPadrao(mensagem, propria, acoes, progresso = progresso) }
                     }
                 }
+            }
+        }
+        // Confirmação de leitura (FC-521), antes das reações, como no web.
+        if (!mensagem.oculta) {
+            mensagem.confirmacao?.let { confirmacao ->
+                ConfirmacaoNaBolha(
+                    confirmacao,
+                    aoConfirmar = { acoes.aoConfirmarLeitura(mensagem) },
+                    aoVerDetalhe = { acoes.aoVerConfirmacao(mensagem) },
+                    modifier = Modifier.padding(top = 2.dp, start = 4.dp, end = 4.dp),
+                )
             }
         }
         if (!mensagem.oculta) {

@@ -72,6 +72,7 @@ import androidx.compose.material.icons.outlined.Image
 import androidx.compose.material.icons.outlined.PhotoCamera
 import androidx.compose.material.icons.outlined.Poll
 import androidx.compose.material.icons.outlined.Schedule
+import androidx.compose.material.icons.outlined.TaskAlt
 import androidx.compose.material3.DropdownMenu
 import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.FilledIconButton
@@ -183,6 +184,8 @@ internal fun Campo(
     postando: Boolean = false,
     /** "Responder à postagem" (7.13): a faixa "Respondendo à postagem de…". */
     respondendoPostagem: Mensagem? = null,
+    /** "+" › "Confirmar leitura" (FC-521): a faixa; nulo = a próxima mensagem não pede. */
+    confirmacao: ConfirmacaoNoCampo? = null,
 ) {
     // Estado do texto local e síncrono (o cursor não pula); sobrevive a girar a tela.
     val texto = rememberTextFieldState()
@@ -193,6 +196,21 @@ internal fun Campo(
     // "Nova votação" (7.12): só em grupo, pelo "+".
     var criandoVotacao by rememberSaveable { mutableStateOf(false) }
     if (criandoVotacao) NovaVotacao(acoes.aoCriarVotacao, aoFechar = { criandoVotacao = false })
+    // "Quem precisa confirmar" (FC-521): só em grupo, pelo "+" ou pelo "Escolher" da faixa.
+    var escolhendoConfirmacao by rememberSaveable { mutableStateOf(false) }
+    if (escolhendoConfirmacao) {
+        val membros by acoes.membrosDoGrupo.collectAsStateWithLifecycle()
+        QuemPrecisaConfirmar(
+            membros,
+            inicial = confirmacao?.usuarios,
+            textoConfirmar = stringResource(R.string.pronto),
+            aoEscolher = { usuarios ->
+                escolhendoConfirmacao = false
+                acoes.aoEscolherConfirmacao(usuarios)
+            },
+            aoFechar = { escolhendoConfirmacao = false },
+        )
+    }
     var vendoAgendadas by rememberSaveable { mutableStateOf(false) }
     if (vendoAgendadas) MensagensAgendadas(agendadas, acoes.aoCancelarAgendada, aoFechar = { vendoAgendadas = false })
     var codigoAberto by rememberSaveable { mutableStateOf(false) }
@@ -266,6 +284,11 @@ internal fun Campo(
         if (respondendo != null) BarraResposta(respondendo, acoes.aoCancelarResposta)
         if (respondendoPostagem != null) BarraRespondendoPostagem(respondendoPostagem, acoes.aoCancelarPostagem)
         if (postando) BarraPostagem(acoes.aoMudarTituloPostagem, acoes.aoCancelarPostagem)
+        if (confirmacao != null) {
+            BarraConfirmacao(grupo, confirmacao.usuarios, aoEscolher = {
+                escolhendoConfirmacao = true
+            }, aoCancelar = acoes.aoCancelarConfirmacao)
+        }
         if (atual == EstadoGravacao.Parada) SugestoesDeMencao(texto, mencoes, acoes.contatosMencao)
         if (fila.isNotEmpty() && atual == EstadoGravacao.Parada) FilaAnexos(fila, acoes.aoRemoverAnexo)
         if (comBarra) {
@@ -288,6 +311,8 @@ internal fun Campo(
                 aoPostar = if (grupo) acoes.aoPostar else null,
                 // O servidor recusa a resposta de postagem agendada.
                 podeAgendar = respondendoPostagem == null,
+                // Em grupo, escolhe antes quem precisa confirmar (como o web).
+                aoConfirmarLeitura = { if (grupo) escolhendoConfirmacao = true else acoes.aoEscolherConfirmacao(null) },
             )
         }
     }
@@ -379,6 +404,24 @@ private fun BarraPostagem(aoMudarTitulo: (String) -> Unit, aoCancelar: () -> Uni
                 }
             },
         )
+    }
+}
+
+/** "+" › "Confirmar leitura" (FC-521): a próxima mensagem pede confirmação; em grupo, de todos ou de quem foi escolhido. */
+@Composable
+private fun BarraConfirmacao(grupo: Boolean, usuarios: List<Long>?, aoEscolher: () -> Unit, aoCancelar: () -> Unit) {
+    FaixaDoCampo(stringResource(R.string.nao_pedir_confirmacao), aoCancelar, icone = Icons.Outlined.TaskAlt) {
+        Row(verticalAlignment = Alignment.CenterVertically) {
+            Text(
+                textoDaFaixaConfirmacao(grupo, usuarios),
+                style = MaterialTheme.typography.bodySmall,
+                color = MaterialTheme.colorScheme.onSurface,
+                modifier = Modifier.weight(1f, fill = false),
+            )
+            if (grupo) {
+                androidx.compose.material3.TextButton(onClick = aoEscolher) { Text(stringResource(R.string.escolher)) }
+            }
+        }
     }
 }
 
@@ -491,6 +534,7 @@ private fun LinhaDoCampo(
     aoVerAgendadas: () -> Unit,
     aoPostar: (() -> Unit)?,
     podeAgendar: Boolean,
+    aoConfirmarLeitura: () -> Unit,
 ) {
     Row(
         Modifier.fillMaxWidth().padding(horizontal = 8.dp, vertical = 6.dp),
@@ -498,7 +542,13 @@ private fun LinhaDoCampo(
         horizontalArrangement = Arrangement.spacedBy(4.dp),
     ) {
         Box(Modifier.heightIn(min = 48.dp), contentAlignment = Alignment.Center) {
-            if (segurando == null) BotaoAnexar(acoes, aoInserirCodigo, aoNovaVotacao, aoPostar) else Spacer(Modifier.width(8.dp))
+            if (segurando ==
+                null
+            ) {
+                BotaoAnexar(acoes, aoInserirCodigo, aoNovaVotacao, aoPostar, aoConfirmarLeitura)
+            } else {
+                Spacer(Modifier.width(8.dp))
+            }
         }
         Box(Modifier.weight(1f).heightIn(min = 48.dp), contentAlignment = Alignment.CenterStart) {
             if (segurando != null) {
@@ -831,7 +881,13 @@ private fun tempoGravacao(ms: Long): String {
  * acontecer depois, pelo WorkManager, com o app já fechado.
  */
 @Composable
-private fun BotaoAnexar(acoes: AcoesChat, aoInserirCodigo: () -> Unit, aoNovaVotacao: (() -> Unit)?, aoPostar: (() -> Unit)?) {
+private fun BotaoAnexar(
+    acoes: AcoesChat,
+    aoInserirCodigo: () -> Unit,
+    aoNovaVotacao: (() -> Unit)?,
+    aoPostar: (() -> Unit)?,
+    aoConfirmarLeitura: () -> Unit,
+) {
     val contexto = LocalContext.current
     val avisos = LocalAvisos.current
     val escopo = rememberCoroutineScope()
@@ -942,6 +998,15 @@ private fun BotaoAnexar(acoes: AcoesChat, aoInserirCodigo: () -> Unit, aoNovaVot
                     },
                 )
             }
+            // Confirmar leitura (FC-521): a próxima mensagem pede confirmação.
+            DropdownMenuItem(
+                text = { Text(stringResource(R.string.confirmar_leitura)) },
+                leadingIcon = { Icon(Icons.Outlined.TaskAlt, contentDescription = null) },
+                onClick = {
+                    menu = false
+                    aoConfirmarLeitura()
+                },
+            )
         }
     }
 }

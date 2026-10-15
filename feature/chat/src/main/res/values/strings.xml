@@ -278,6 +278,33 @@
     <string name="titulo_opcional">Título (opcional)</string>
     <string name="titulo_da_postagem">Título da postagem</string>
     <string name="nao_postar">Não postar</string>
+    <!-- Confirmação de leitura (FC-521, FC-525; web MessageBubble.vue, MessageInput.vue, ConfirmacaoLeituraModal.vue, MensagemAcoes.vue) -->
+    <string name="confirmar_leitura">Confirmar leitura</string>
+    <string name="leitura_confirmada">Leitura confirmada</string>
+    <string name="aguardando_confirmacao">Aguardando confirmação</string>
+    <string name="confirmada_por_de">Confirmada por %1$d de %2$d</string>
+    <string name="confirmada_por">Confirmada por %1$d</string>
+    <string name="falta_confirmar">Falta confirmar</string>
+    <string name="confirmacao_de_leitura">Confirmação de leitura</string>
+    <string name="ver_confirmacoes">Ver quem confirmou</string>
+    <string name="quem_precisa_confirmar">Quem precisa confirmar</string>
+    <string name="filtrar_por_nome">Filtrar por nome</string>
+    <string name="todos_n">Todos (%1$d)</string>
+    <string name="carregando_participantes">Carregando participantes</string>
+    <string name="ninguem_com">Ninguém com “%1$s”</string>
+    <string name="pronto">Pronto</string>
+    <string name="pedir_confirmacao">Pedir confirmação</string>
+    <string name="pedir_confirmacao_de_leitura">Pedir confirmação de leitura</string>
+    <string name="nao_foi_possivel_pedir_confirmacao">Não foi possível pedir a confirmação: %1$s</string>
+    <string name="confirmacao_faixa">A mensagem vai pedir confirmação de leitura</string>
+    <string name="confirmacao_faixa_todos">A mensagem vai pedir confirmação de leitura de todos</string>
+    <plurals name="confirmacao_faixa_pessoas">
+        <item quantity="one">A mensagem vai pedir confirmação de leitura de %1$d pessoa</item>
+        <item quantity="many">A mensagem vai pedir confirmação de leitura de %1$d pessoas</item>
+        <item quantity="other">A mensagem vai pedir confirmação de leitura de %1$d pessoas</item>
+    </plurals>
+    <string name="escolher">Escolher</string>
+    <string name="nao_pedir_confirmacao">Não pedir confirmação</string>
     <string name="voce">Você</string>
     <string name="fechar_pesquisa">Fechar pesquisa</string>
     <string name="acao_pesquisar">Pesquisar</string>
