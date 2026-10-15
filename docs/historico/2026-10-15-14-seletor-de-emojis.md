@@ -4,7 +4,7 @@
 - **Tipo:** código
 - **Itens:** `TODO.md` 7.2 (linha 🆕 `d202c06` do seletor); FC-418; ENV-03, ENV-17
 - **Branch:** `reescrita`
-- **Commits:** (preencher)
+- **Commits:** `5d17a71`
 
 ## Contexto
 - **O que o web mudou** (`d202c06`): o seletor de emojis passou a usar um catálogo próprio (`public/emojis/pt.json`), sem tons de pele, bandeiras nem FE0F sobrando. Tem pesquisa em português sem acento, categorias e "Recentes" (até 32).
