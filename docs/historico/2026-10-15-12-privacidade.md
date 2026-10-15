@@ -4,7 +4,7 @@
 - **Tipo:** código
 - **Itens:** `TODO.md` 8.5 (linha 🆕 `769bd7d` da Privacidade); FC-810; CFG-09
 - **Branch:** `reescrita`
-- **Commits:** (preencher)
+- **Commits:** `ab62486`
 
 ## Contexto
 A presença nova (bloco 11) tem três chaves no servidor (`769bd7d`): aparecer offline, mostrar o visto por último e mostrar quando estou na conversa. O web as mostra em Configurações › Privacidade (`ConfiguracaoPrivacidade.vue`); o Android não tinha.

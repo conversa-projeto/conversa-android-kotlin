@@ -892,7 +892,7 @@
 - [x] `GET /usuario/permissoes` → mostrar Sistema (`parametros`) e Acessos (`permissoes`) só para quem tem (relido a cada abertura da aba e depois de mexer em Acessos) ✔ afd3269
 - [x] Sistema: `GET /parametros`; editar Firebase (ID do projeto, e-mail, chave — nunca exibida), forçar relay TURN, dias de gravação (0–36500), transcritor (URL, idioma); `PATCH /parametros` só com o que mudou ✔ afd3269
 - [x] Acessos: `GET /permissoes` → tabela usuário × permissão com busca; `PUT /permissao/usuario {usuario_id, codigo}`; `DELETE /permissao/usuario?usuario_id=&codigo=`; aviso de "modo aberto" (no celular, uma linha por usuário com uma caixa por permissão) ✔ afd3269
-- [x] 🆕 `769bd7d` Configurações › Privacidade: "Aparecer offline", "Mostrar o visto por último", "Mostrar quando estou na conversa" (textos do web; `GET /usuario/privacidade`, `PATCH /usuario`; com "Aparecer offline", as outras duas desabilitadas) (CFG-09, FC-810) — `PrivacidadeTela`; muda na hora e volta se o servidor recusar. No emulador, o C viu o A ficar offline e voltar ✔ (preencher)
+- [x] 🆕 `769bd7d` Configurações › Privacidade: "Aparecer offline", "Mostrar o visto por último", "Mostrar quando estou na conversa" (textos do web; `GET /usuario/privacidade`, `PATCH /usuario`; com "Aparecer offline", as outras duas desabilitadas) (CFG-09, FC-810) — `PrivacidadeTela`; muda na hora e volta se o servidor recusar. No emulador, o C viu o A ficar offline e voltar ✔ ab62486
 - [ ] 🆕 `769bd7d` Sistema › "Inteligência artificial" (endereço, modelo, token, "Testar conexão") — uso de administrador; avaliar se fica só no web (CFG-07, FC-812)
 
 ### 8.6 Anexos da conversa (FC-809, ANX-13)
