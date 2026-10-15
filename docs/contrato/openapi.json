@@ -50,7 +50,8 @@
                       }
                     ]
                   }
-                }
+                },
+                "additionalProperties": false
               }
             },
             "application/x-www-form-urlencoded": {
@@ -87,7 +88,8 @@
                       }
                     ]
                   }
-                }
+                },
+                "additionalProperties": false
               }
             },
             "multipart/form-data": {
@@ -124,7 +126,8 @@
                       }
                     ]
                   }
-                }
+                },
+                "additionalProperties": false
               }
             }
           }
@@ -564,7 +567,8 @@
                       "null"
                     ]
                   }
-                }
+                },
+                "additionalProperties": false
               }
             },
             "application/x-www-form-urlencoded": {
@@ -605,7 +609,8 @@
                       "null"
                     ]
                   }
-                }
+                },
+                "additionalProperties": false
               }
             },
             "multipart/form-data": {
@@ -646,7 +651,8 @@
                       "null"
                     ]
                   }
-                }
+                },
+                "additionalProperties": false
               }
             }
           }
@@ -1649,6 +1655,21 @@
                   "pede_confirmacao": {
                     "type": "boolean"
                   },
+                  "confirmacao_usuarios": {
+                    "type": "array",
+                    "items": {
+                      "anyOf": [
+                        {
+                          "format": "integer",
+                          "default": 0,
+                          "type": "string"
+                        },
+                        {
+                          "type": "integer"
+                        }
+                      ]
+                    }
+                  },
                   "postagem": {
                     "type": "object",
                     "properties": {
@@ -1681,7 +1702,8 @@
                       }
                     ]
                   }
-                }
+                },
+                "additionalProperties": false
               }
             },
             "application/x-www-form-urlencoded": {
@@ -1795,6 +1817,21 @@
                   "pede_confirmacao": {
                     "type": "boolean"
                   },
+                  "confirmacao_usuarios": {
+                    "type": "array",
+                    "items": {
+                      "anyOf": [
+                        {
+                          "format": "integer",
+                          "default": 0,
+                          "type": "string"
+                        },
+                        {
+                          "type": "integer"
+                        }
+                      ]
+                    }
+                  },
                   "postagem": {
                     "type": "object",
                     "properties": {
@@ -1827,7 +1864,8 @@
                       }
                     ]
                   }
-                }
+                },
+                "additionalProperties": false
               }
             },
             "multipart/form-data": {
@@ -1941,6 +1979,21 @@
                   "pede_confirmacao": {
                     "type": "boolean"
                   },
+                  "confirmacao_usuarios": {
+                    "type": "array",
+                    "items": {
+                      "anyOf": [
+                        {
+                          "format": "integer",
+                          "default": 0,
+                          "type": "string"
+                        },
+                        {
+                          "type": "integer"
+                        }
+                      ]
+                    }
+                  },
                   "postagem": {
                     "type": "object",
                     "properties": {
@@ -1973,7 +2026,8 @@
                       }
                     ]
                   }
-                }
+                },
+                "additionalProperties": false
               }
             }
           }
@@ -2131,7 +2185,8 @@
                       }
                     ]
                   }
-                }
+                },
+                "additionalProperties": false
               }
             },
             "application/x-www-form-urlencoded": {
@@ -2166,7 +2221,8 @@
                       }
                     ]
                   }
-                }
+                },
+                "additionalProperties": false
               }
             },
             "multipart/form-data": {
@@ -2201,7 +2257,8 @@
                       }
                     ]
                   }
-                }
+                },
+                "additionalProperties": false
               }
             }
           }
@@ -2246,7 +2303,8 @@
                       }
                     ]
                   }
-                }
+                },
+                "additionalProperties": false
               }
             },
             "application/x-www-form-urlencoded": {
@@ -2281,7 +2339,8 @@
                       }
                     ]
                   }
-                }
+                },
+                "additionalProperties": false
               }
             },
             "multipart/form-data": {
@@ -2316,7 +2375,8 @@
                       }
                     ]
                   }
-                }
+                },
+                "additionalProperties": false
               }
             }
           }
@@ -2605,6 +2665,127 @@
           }
         },
         "operationId": "postApiMensagemConfirmar"
+      }
+    },
+    "/api/mensagem/pedir-confirmacao": {
+      "post": {
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": [
+                  "mensagem_id"
+                ],
+                "properties": {
+                  "mensagem_id": {
+                    "anyOf": [
+                      {
+                        "format": "integer",
+                        "default": 0,
+                        "type": "string"
+                      },
+                      {
+                        "type": "integer"
+                      }
+                    ]
+                  },
+                  "usuarios": {
+                    "type": "array",
+                    "items": {
+                      "anyOf": [
+                        {
+                          "format": "integer",
+                          "default": 0,
+                          "type": "string"
+                        },
+                        {
+                          "type": "integer"
+                        }
+                      ]
+                    }
+                  }
+                }
+              }
+            },
+            "application/x-www-form-urlencoded": {
+              "schema": {
+                "type": "object",
+                "required": [
+                  "mensagem_id"
+                ],
+                "properties": {
+                  "mensagem_id": {
+                    "anyOf": [
+                      {
+                        "format": "integer",
+                        "default": 0,
+                        "type": "string"
+                      },
+                      {
+                        "type": "integer"
+                      }
+                    ]
+                  },
+                  "usuarios": {
+                    "type": "array",
+                    "items": {
+                      "anyOf": [
+                        {
+                          "format": "integer",
+                          "default": 0,
+                          "type": "string"
+                        },
+                        {
+                          "type": "integer"
+                        }
+                      ]
+                    }
+                  }
+                }
+              }
+            },
+            "multipart/form-data": {
+              "schema": {
+                "type": "object",
+                "required": [
+                  "mensagem_id"
+                ],
+                "properties": {
+                  "mensagem_id": {
+                    "anyOf": [
+                      {
+                        "format": "integer",
+                        "default": 0,
+                        "type": "string"
+                      },
+                      {
+                        "type": "integer"
+                      }
+                    ]
+                  },
+                  "usuarios": {
+                    "type": "array",
+                    "items": {
+                      "anyOf": [
+                        {
+                          "format": "integer",
+                          "default": 0,
+                          "type": "string"
+                        },
+                        {
+                          "type": "integer"
+                        }
+                      ]
+                    }
+                  }
+                }
+              }
+            }
+          }
+        },
+        "operationId": "postApiMensagemPedir-confirmacao"
       }
     },
     "/api/mensagem/reacao": {

@@ -1,6 +1,6 @@
 # 08 — Pendências no servidor (`conversa`) que afetam o Android
 
-**Data:** 2026-10-06 (🆕 S17–S22 em 2026-10-13, servidor em `12cf0cf`) · **Origem:** leitura de `conversa/src/*.ts` durante a auditoria (detalhes e linhas no doc 01).
+**Data:** 2026-10-06 (🆕 S17–S22 em 2026-10-13, servidor em `12cf0cf`; 🆕 S11 e S20 revistas e S25 em 2026-10-15, servidor em `e25c4db`) · **Origem:** leitura de `conversa/src/*.ts` durante a auditoria (detalhes e linhas no doc 01).
 
 > **Nenhuma alteração foi feita no servidor.** Esta lista serve para planejar o trabalho no repositório `conversa`. Itens marcados como **bloqueante** impedem uma funcionalidade P0 do Android.
 
@@ -80,6 +80,7 @@
 - Além disso, quem liga precisa se incluir em `usuarios`, e iniciar uma chamada só consigo mesmo dá **500 "Chamada não encontrada!"** (`notificacoes.ts:33-35`).
 - Ao terminar porque o último participante saiu, **não sai o evento 52**.
 - **Proposta:** separar `midia` (1 áudio / 2 vídeo) de `modo` (direta/grupo), incluir o criador automaticamente e emitir o 52 em todo encerramento.
+- 🆕 2026-10-15 (`6d20ff7`): `POST /chamada/video` passou a gravar `tipo = 2` numa chamada `tipo = 1` (`chamadas.ts`, `ativarVideo`), para o resumo e o histórico dizerem "vídeo". Como o mesmo campo decide a regra de status, a chamada **troca de regra no meio**: com 3+ pessoas, a primeira saída ou recusa deixa de encerrá-la (doc 01 §9.4). A rota só confere a participação, então também muda o `tipo` de uma chamada já encerrada (o histórico muda; o resumo já gravado não). Reforça a proposta de separar `midia` de `modo`.
 
 ### S12 · Contrato publicado
 
@@ -135,11 +136,15 @@
 - **Hoje:** `alterarConversa` (`conversas.ts`) grava `avatar_anexo_id` direto. Id inexistente → **500** com a mensagem de FK do Postgres; o tipo do anexo (imagem) e o `upload_status` também não são conferidos.
 - **Proposta:** conferir que o anexo existe, é tipo 2 e está concluído; responder 400/404 em português. Mesmo caso da S7.
 
-### S20 · Chat da chamada reaproveitado deixa de fora quem não é membro da conversa 🆕 (2026-10-13, `a40fd47`)
+### S20 · Chat da chamada reaproveitado deixa de fora quem não é membro da conversa 🆕 (2026-10-13, `a40fd47`) — 🆕 quase toda resolvida em `6d20ff7`
 
-- **Hoje:** `PUT /chamada/chat` (`chamadas.ts`, `chatChamada`) reaproveita a conversa da ligação quando todos os participantes com status 3/4/5 e quem pediu já são membros dela. Mas o WS 57 `{acao:"chat", conversa_id}` vai a **todos** os participantes (qualquer status), inclusive quem foi adicionado à chamada e não é membro da origem (ex.: ainda tocando). E `incluirNoChatChamada` não inclui ninguém quando `conversa_chat_id = conversa_id`, então quem entra depois **não ganha acesso**: abrir o chat dá **403**. `GET /chamada/dados` também devolve esse `conversa_chat_id` sem filtro.
+- **Hoje** (🆕 valia de `a40fd47` a `6d20ff7`; situação atual na nota de 2026-10-15 abaixo): `PUT /chamada/chat` (`chamadas.ts`, `chatChamada`) reaproveita a conversa da ligação quando todos os participantes com status 3/4/5 e quem pediu já são membros dela. Mas o WS 57 `{acao:"chat", conversa_id}` vai a **todos** os participantes (qualquer status), inclusive quem foi adicionado à chamada e não é membro da origem (ex.: ainda tocando). E `incluirNoChatChamada` não inclui ninguém quando `conversa_chat_id = conversa_id`, então quem entra depois **não ganha acesso**: abrir o chat dá **403**. `GET /chamada/dados` também devolve esse `conversa_chat_id` sem filtro.
 - **Efeito:** no web e no Android, o painel da chamada aponta para um chat que essa pessoa não consegue abrir nem usar.
 - **Proposta:** ao reaproveitar, mandar o `{acao:"chat"}` só aos membros da origem; para os outros, ou criar o grupo "Chamada: …" (regra antiga) ou incluí-los na origem só se for grupo (nunca numa conversa direta).
+- 🆕 2026-10-15 — **quase toda resolvida em `6d20ff7`**: o chat voltou a ser um **grupo novo** (agora com o nome só com os nomes dos participantes, sem "Chamada: "), também em ligação feita numa conversa direta ou num grupo comum; quem entra depois é incluído e recebe WS 40 (doc 01 §9.12).
+  - **Ainda acontece** num caso só: ligação feita **dentro do chat de outra ligação**, com todos os participantes com status 3/4/5 e quem pediu já membros desse chat. Aí o chat é reaproveitado, e quem foi adicionado à chamada e não é membro (ex.: ainda tocando) continua recebendo o `{acao:"chat"}`, não é incluído ao entrar e leva 403; `GET /chamada/dados` continua sem filtro.
+  - Ligações cujo chat foi resolvido entre `a40fd47` e `6d20ff7` continuam apontando para a direta/grupo de origem (dado já gravado).
+  - Proposta restante: neste caso, incluir no chat (é sempre um grupo criado para chamada) quem entra depois, como já se faz com o grupo novo, ou mandar o `{acao:"chat"}` só aos membros.
 
 ### S21 · Resumo por IA só na memória 🆕 (2026-10-13, `b8ea0c2`)
 
@@ -163,6 +168,16 @@
 ### S24 · UnifiedPush (push sem Google) 🆕 (2026-10-15, ADR 0002, opção B) — ⏸ só se for escolhida
 - **Pedido:** registrar por dispositivo o endereço UnifiedPush (`PATCH /dispositivo {push_endpoint}`) e, nas mensagens e nas chamadas, fazer o POST HTTP nesse endereço (como o `enviarPush` faz no FCM); opcionalmente um ntfy próprio no `docker-compose`.
 - **Observação:** o push de chamada (S1) vale para os dois canais.
+
+### S25 · Confirmação de leitura com lista: arestas 🆕 (2026-10-15, `6d20ff7`)
+
+- **Hoje** (`mensagens.ts`, `pedirConfirmacao`, `confirmacaoDaMensagem`; doc 01 §10.14):
+  1. **WS 65 de agendada antes de sair:** `POST /mensagem/pedir-confirmacao` aceita mensagem agendada (o prazo conta de `visivel_em`) e manda o WS 65 a **todos** os membros na hora, com a lista de nomes, embora os outros ainda não vejam a mensagem. Os outros avisos de agendada (WS 2, WS 3, WS 61) esperam a mensagem sair.
+  2. **`pode_confirmar` em mensagem oculta:** o objeto `confirmacao` continua sendo montado para mensagem com `excluida_em`, e `pode_confirmar` vem `true` para quem está na lista e não confirmou; mas `POST /mensagem/confirmar` responde 400 `Esta mensagem não pede confirmação de leitura.`
+  3. **Quem sai da conversa fica na lista:** `mensagem_confirmacao_destinatario` não é mexida quando alguém sai (`DELETE /conversa/usuario`). A pessoa continua em `destinatarios` e em `total`, mas não pode mais confirmar (403 `Acesso negado!`): o "x de y" daquela mensagem nunca fecha.
+- **Efeito:** clientes mostram um botão que dá erro (item 2) e uma contagem que não se completa (item 3); o item 1 avisa sobre uma mensagem que o cliente ainda não tem (o Android ignora id desconhecido).
+- **Proposta:** (1) numa agendada, mandar o WS 65 só ao autor e deixar os outros receberem a `confirmacao` quando a mensagem sair; (2) `pode_confirmar = false` com `excluida_em`; (3) ao sair da conversa, tirar a pessoa das listas de mensagens ainda não confirmadas por ela (ou não contá-la em `total`).
+
 ## Prioridade sugerida no servidor
 
 | Ordem | Itens | Por quê |
@@ -170,5 +185,5 @@
 | 1 | S1, S2, 🆕 S18 | Sem eles, o Android não toca nem notifica de forma confiável |
 | 2 | S4, 🆕 S22 | Segurança (ouvir chamadas e baixar anexos alheios; presença em conversa alheia) |
 | 3 | S3, S13, 🆕 S17 | Qualidade das notificações, do contador de não lidas e da sessão no celular |
-| 4 | S7, S8, S9, S11, 🆕 S19, S20 | Robustez para todos os clientes |
-| 5 | S5, S6, S10, S12, S14, S15, S16, 🆕 S21 | Higiene e evolução |
+| 4 | S7, S8, S9, S11, 🆕 S19, S20 (🆕 2026-10-15: só o caso do chat de outra ligação) | Robustez para todos os clientes |
+| 5 | S5, S6, S10, S12, S14, S15, S16, 🆕 S21, 🆕 S25 | Higiene e evolução |

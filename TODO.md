@@ -293,6 +293,7 @@
 - [ ] **Teste:** comparar lado a lado com o web (8 casos do CON-01) — ⛔ o web não está rodando nesta máquina; as regras do CON-01 têm teste unitário (`ListaConversasTest`, `ConversasViewModelTest`) e foram vistas no emulador
 - [ ] 🆕 `769bd7d` Seção recolhível "Chamadas (N)" no fim da lista, antes de "Arquivadas": conversas com `chamada:true` não fixadas nem arquivadas; com termo no filtro, tudo junto (CON-01, FC-218)
 - [ ] 🆕 `b8ea0c2` Emoji ou imagem do grupo no lugar da inicial em todos os avatares de grupo (`emoji`, `avatar_url`) (CON-15, GER-07, FC-217)
+- [ ] 🆕 `e33ecba` Ícone de pessoas com a descrição "Conversa em grupo" no lugar da etiqueta "Grupo" (CON-01, FC-219)
 
 ### 2.7 Filtro e "Nova conversa" (FC-206, CON-02)
 - [x] Campo de busca: filtra por título e prévia — sem acento e sem maiúscula (`conversaCombina`)
@@ -330,6 +331,7 @@
 - [x] Sair do grupo: `DELETE /conversa/usuario?id=<meu conversa_usuario_id>` — com confirmação de perigo; volta à lista
 - [x] 🆕 `eaa8bac` Tocar no avatar/nome do grupo no cabeçalho do chat abre os dados do grupo (no web, o painel "Dados do grupo"; no Android, a tela "Membros do grupo"); os anexos do grupo entram nessa tela com o 8.6 — avatar e nome clicáveis só em grupo (ação "Membros do grupo" para o TalkBack); testado no emulador ✔ fffcc10
 - [ ] 🆕 `769bd7d` Imagem ou emoji do grupo na tela do grupo: "Imagem" (recorte 256 px JPEG, upload tipo 2, `PATCH /conversa {id, avatar_anexo_id, emoji:null}`), "Emoji" (`{avatar_anexo_id:null, emoji}`), "Remover"; um tira o outro (CON-15, FC-217)
+- [ ] 🆕 `e33ecba` Imagem ou emoji já ao criar o grupo ("Criando..."); `PATCH /conversa` depois de incluir os membros (CON-07, FC-217)
 
 ### 2.11 Presença e conexão (FC-213, FC-214, PRE-01, GER-02)
 - [x] `PresencaRepository`: conjunto de ids online a partir de `GET /contatos/online` + WS 60 `{usuario_id, online}` — `PresencaRepositorio` (+ teste)
@@ -385,7 +387,7 @@
 - [x] Grupo: lista de participantes com a duração ou o status
 - [x] Cores: verde (encerrada), vermelho (recusada/perdida); sem status de entrega — ícone verde (`chamadaRecebida`) / vermelho (`chamadaPerdida`), cores do FMX; sem status de entrega
 - [x] Toque → ligar de novo (mesmo tipo) — 🔄 toque chama `aoLigar` (hoje só o aviso; liga de verdade na etapa 6) — concluído depois (conferido em 2026-10-09): liga de verdade (6.4) ✔ cf43b1f
-- [ ] 🆕 `964ed72` "Ver chat da chamada" / "Esconder o chat da chamada" na bolha da ligação com `chat_chamada_id`: o chat só leitura ("Ninguém escreveu no chat da chamada.", "Abrir o chat completo") (CHA-26, FC-727)
+- [ ] 🆕 `964ed72` "Ver chat da chamada" / "Esconder o chat da chamada" na bolha da ligação com `chat_chamada_id`: o chat só leitura ("Ninguém escreveu no chat da chamada.", "Abrir o chat completo") (CHA-26, FC-727) — 🆕 `e33ecba`: os conteúdos como no chat (imagem com visualizador, áudio, arquivo, figurinha)
 
 ### 3.6 Separadores e hora (FC-306, MSG-02)
 - [x] Separador de dia ("seg., 05/10/2026" ou "Hoje"/"Ontem") — "Hoje"/"Ontem"/"qua., 07/10/2026"; dia pela data efetiva
@@ -410,8 +412,8 @@
 - [x] WS 3 `{grupo:conversaId, mensagens:"12,13"}` → `GET /mensagem/status?conversa=&mensagem=12,13` → atualizar `recebida`/`visualizada`/`reproduzida`/`excluida_em` — `SyncManager`; **corrigido**: o status dessa rota é o agregado de todos os destinatários, então só é aplicado nas minhas mensagens (`atualizarStatusDaMinha`); ocultar vale para todas (+ teste no `SyncManagerTest` e no `BancoTest`)
 - [x] Se algum id do WS 3 não está carregado e a conversa está aberta → recarregar — `SyncManager`: id do WS 3 fora do cache → busca as seguintes da conversa (sempre, não só com a conversa aberta). Necessário para o resumo de chamada, que só chega por WS 3 (+ teste)
 - [x] **Teste:** ler no web → o ✓✓ do celular fica azul sem recarregar — no emulador com um 2º cliente (Node, conta B) lendo as mensagens: ✓✓ ficou azul sozinho
-- [ ] 🆕 `769bd7d` Confirmação de leitura na bolha: quem recebe marca "Confirmar leitura" → "Leitura confirmada" (`POST /mensagem/confirmar`); quem enviou vê "Aguardando confirmação" / "Confirmada por N de T" / "Confirmada por N" e a lista de quem confirmou; WS 8 (MSG-21, FC-521)
-- [ ] 🆕 `769bd7d` Pedir confirmação: "+" › "Confirmar leitura", faixa "A mensagem vai pedir confirmação de leitura" com X "Não pedir confirmação"; vale só para a próxima mensagem (`pede_confirmacao:true`) (ENV-24, FC-521)
+- [ ] 🆕 `769bd7d` Confirmação de leitura na bolha: quem recebe marca "Confirmar leitura" → "Leitura confirmada" (`POST /mensagem/confirmar`); quem enviou vê "Aguardando confirmação" / "Confirmada por N de T" / "Confirmada por N" e a lista de quem confirmou; WS 8 (MSG-21, FC-521) — 🆕 `6d20ff7`/`e33ecba`: a caixa só para quem está na lista (`pode_confirmar`); a dica com "Falta confirmar" (`destinatarios`); WS 65
+- [ ] 🆕 `769bd7d` Pedir confirmação: "+" › "Confirmar leitura", faixa "A mensagem vai pedir confirmação de leitura" com X "Não pedir confirmação"; vale só para a próxima mensagem (`pede_confirmacao:true`) (ENV-24, FC-521) — 🆕 `e33ecba`: em grupo, o modal "Quem precisa confirmar" ("Filtrar por nome", "Todos (N)", "Pronto") e a faixa com " de todos"/" de N pessoas" e "Escolher" (`confirmacao_usuarios`)
 
 ### 3.9 Linha "Últimas", FABs e links (FC-310, FC-311, MSG-03, MSG-05, MSG-11)
 - [x] Linha "Últimas" antes da primeira não lida (posição fixada ao abrir; fica até sair da conversa) — decidida uma vez só depois da 1ª carga; não pula enquanto lê (+ teste). **Corrigido no emulador**: a tela se posicionava antes da decisão quando o Room já tinha mensagens
@@ -471,6 +473,7 @@
 - [x] Vídeo na bolha: primeiro quadro + ícone de play — `VideoNaBolha` + `QuadroVideo`/`FetcherQuadroVideo` (`MediaMetadataRetriever` pela URL assinada, lê por partes; o quadro fica no cache de disco do Coil; URL vencida tenta de novo; arquivo local enquanto envia). No emulador: vídeo gravado da tela, enviado pela galeria e recebido do B ✔ 0168bd6
 - [x] Vídeo no visualizador: Media3 com controles — `ReprodutorVideo` (`:core:media`, `PlayerView` do `media3-ui`): toca só na página visível, solta o player ao sair, pega o foco de áudio (o áudio da conversa pausa). No emulador: o vídeo de 6 s do B tocou pela URL assinada ✔ 0168bd6
 - [x] Ações do visualizador: compartilhar, baixar — "Abrir com…", "Compartilhar" (baixa para o cache e abre o compartilhar do Android) e "Baixar" (Downloads/Conversa). Testado no emulador ✔ 45f269f
+- [ ] 🆕 `e33ecba` Zoom no ponto da pinça (hoje amplia em torno do centro) (ANX-04, FC-420)
 
 ### 4.5 Áudio (FC-405, ANX-10)
 - [x] `PlayerUnico` (Media3): só um áudio toca por vez — `PlayerAudio`/`PlayerMedia3` (singleton, foco de áudio, pausa ao desconectar o fone, posição a cada 200 ms); a chave é conversa:mensagem:ordem. No emulador: tocar o segundo para o primeiro ✔ 1ceaad0
@@ -527,6 +530,7 @@
 - [ ] Completo: envio na ordem; cada texto vira tipo 1; linhas vazias entre peças descartadas; menção `@[Nome](id)` dentro do texto
 - [ ] Figurinha e gravação com o campo vazio vão na hora; com algo escrito, entram como peça
 - [ ] **Teste:** enviar [texto, imagem, texto, figurinha] e conferir a mesma ordem no web
+- [ ] 🆕 `e33ecba` Código como peça no campo ("Inserir na mensagem"; colar mais de 10 linhas abre a janela) — ⛔ depende da decisão FC-416 (ENV-28, FC-526)
 
 ---
 
@@ -729,6 +733,7 @@
 - [x] Toque longo na bolha → barra de reações 👍 ❤️ 😂 😮 😢 👏 🔥 + "mais" ✔ 52d6d03
 - [x] Itens: Responder; Responder no privado (grupo e mensagem de outro); Encaminhar; Copiar; Ocultar (minha e não oculta) — Copiar e Ocultar prontos ✔ 52d6d03; Responder pronto ✔ cdfb8cf; Encaminhar e Responder no privado entram com 7.6 — Responder no privado e Encaminhar no bloco do 7.6 ✔ 19add2b
 - [x] Não abrir para chamada, oculta ou mensagem ainda sem id real ✔ 52d6d03
+- [ ] 🆕 `6d20ff7`/`e33ecba` "Pedir confirmação de leitura" no toque longo (minha mensagem salva, não oculta, que ainda não pede, até 24 h); em grupo, o modal "Quem precisa confirmar" com "Pedir confirmação"; `POST /mensagem/pedir-confirmacao`; erro "Não foi possível pedir a confirmação" (ENV-27, FC-525)
 
 ### 7.2 Reações (FC-501, ENV-17)
 - [x] `PUT /mensagem/reacao {mensagem_id, emoji}` → `{mensagem_id, emoji, acao:"add"|"remove"}` (toggle), otimista ✔ 52d6d03
@@ -836,8 +841,8 @@
 
 ### 7.13 🆕 Postagens em grupo (FC-317, FC-522, MSG-22, ENV-26) — servidor `12cf0cf`, web `d202c06`
 - [ ] DTO e rotas: `postagem {titulo, respostas, nao_lidas, ultimas}` na mensagem; `GET /postagem/respostas?id=`, `POST /postagem/visualizar {postagem_id}`; WS 64 (o mínimo, para o contador, vem antes, no 8.7)
-- [ ] Bolha de postagem: "Postagem · <remetente>" (ou "Você"), título, conteúdos, "Nenhuma resposta ainda" / "1 resposta" / "N respostas", selo "N novas", as 2 últimas respostas, "Ver todas as N" / "Mostrar menos"; resposta apagada = "Mensagem apagada"; classificação depois de Excluída e Chamada, antes de Imagem
-- [ ] Responder embaixo: campo "Responder à postagem" (só texto), `PUT /mensagem {…, postagem_id}`, recarregar as respostas e a lista
+- [ ] Bolha de postagem: "Postagem · <remetente>" (ou "Você"), título, conteúdos, "Nenhuma resposta ainda" / "1 resposta" / "N respostas", selo "N novas", as 2 últimas respostas, "Ver todas as N" / "Mostrar menos"; resposta apagada = "Mensagem apagada"; classificação depois de Excluída e Chamada, antes de Imagem — 🆕 `e33ecba`: na largura toda do chat, com o "⋯" dentro do cartão e o avatar em cada resposta
+- [ ] Responder embaixo: campo "Responder à postagem" (só texto), `PUT /mensagem {…, postagem_id}`, recarregar as respostas e a lista — 🆕 `e33ecba`: **mudou**: o botão "Responder à postagem" leva ao campo do chat (faixa "Respondendo à postagem de <remetente>" com × "Não responder à postagem"); vai qualquer conteúdo com `postagem_id`
 - [ ] Criar: "+" › "Postagem" (só grupo), faixa "Postagem: as respostas ficam embaixo dela" com "Título (opcional)" (até 150) e X "Não postar"; a próxima mensagem vira a postagem (`postagem:{titulo}`)
 - [ ] **Teste:** postar e responder dos dois lados (web e Android); o contador zera; a notificação de resposta chega (5.4)
 
@@ -856,6 +861,7 @@
 - [x] Badge: `GET /atividades/novas` → `{quantidade}` ao conectar e a cada WS 61 (`99+`) ✔ 84a6ec3
 - [x] Abrir a aba → `POST /atividades/vistas` → zerar o badge (itens seguem marcados como "Nova" enquanto aberta) ✔ 84a6ec3
 - [x] Vazio: "Nenhuma atividade ainda." / "Reações, respostas, menções e chamadas perdidas aparecem aqui." ✔ 84a6ec3
+- [ ] 🆕 `e25c4db` Resposta ou menção já lida no chat deixa de contar como nova (o servidor manda o WS 61 ao ler): conferir que o contador cai e reler a lista guardada (ATV-01)
 
 ### 8.2 Pesquisa (FC-801, PES-01, PES-02)
 - [x] Na conversa: ícone de busca → campo (no Android, "⋮" → "Pesquisar na conversa", para não apertar os ícones de ligar) → `GET /pesquisar?texto=&conversa=<id>` → resultados (mais recentes primeiro) → ir para a mensagem ✔ 28cef66
@@ -863,6 +869,7 @@
 - [x] Resultados agrupados por conversa: remetente, data `dd/MM/aa HH:mm`, trecho com o termo destacado ✔ 28cef66
 - [x] Estados "Pesquisando…" / "Nenhum resultado encontrado." ✔ 28cef66
 - [ ] 🆕 `d202c06` Painel de resultados novo: "N resultados para “termo”" / "Nenhuma mensagem com “termo”"; cada resultado com autor ("Você"), quando e o trecho com o termo destacado; do mais antigo ao mais novo (PES-01, FC-524)
+- [ ] 🆕 `6d20ff7`/`e33ecba` Resultados também dos chats das ligações feitas na conversa: tirar o filtro por `conversaId` do `MensagensRepositorio.pesquisar`, mostrar o selo "no chat da ligação" e abrir a conversa do resultado (`abrirResultado` passa a conversa aberta) (PES-01, FC-524)
 
 ### 8.3 Perfil (FC-802, AUT-06, AUT-07, AUT-08)
 - [x] Editar nome e e-mail → `PATCH /usuario {id, nome, email}` → "Dados atualizados com sucesso." ✔ 143d8d6
@@ -899,7 +906,7 @@
 - [ ] Postagens: as respostas ficam fora do fluxo, mas contam nas não lidas e viram a prévia da lista — no emulador, depois de abrir o grupo, ficou "1 não lida" para sempre. Ler `postagem` no DTO, `POST /postagem/visualizar {postagem_id}` quando a postagem aparece, tratar o WS 64 e não reconsultar em laço os ids do WS 3 que são respostas (FC-316)
 - [x] Figurinhas: o web passou a usar só o pacote "Noto" (55, `noto/<nome>`) e apagou básico/rostos/coisas — hoje as do web aparecem no Android como "Figurinha", e as do Android no web. Embutir o pacote Noto nos assets (3,7 MB), seletor só com ele e o crédito "Animated Noto Emoji © Google, CC BY 4.0"; manter os assets antigos para desenhar mensagens antigas (FC-417, ENV-04) — `PACOTE_NOTO` gerado do web; seletor só com ele e o crédito; os antigos ficam em `PACOTES_ANTIGOS` (mensagens antigas continuam animadas). No emulador: `noto/festejando` do B apareceu animada; o seletor mandou `noto/legal` ✔ a7a6c8a
 - [x] "Chamar de novo" do web não toca no Android: o WS 51 de uma chamada que o aparelho já recusou ou perdeu é ignorado (`encerradas` no `GerenciadorChamadas`) — conferir `GET /chamada/dados` e tocar se o meu status voltou a 1 com a chamada em andamento (+ teste) (FC-724) — `chamadoDeNovo`: toca só com o meu status pendente, `recusou_em` preenchido e a chamada em andamento; as encerradas pelo 52 nem consultam (+ 3 testes) ✔ 936c3ee
-- [ ] Chat da chamada reaproveitado: `PUT /chamada/chat` pode devolver a conversa de origem (até a direta); quem não é membro dela recebe o WS 57 `chat` e 403 ao abrir — conferir que o Android abre a conversa de origem e avisa no 403 em vez de falhar calado (FC-725, CHA-18, CHA-24)
+- [ ] Chat da chamada reaproveitado: `PUT /chamada/chat` pode devolver a conversa de origem (até a direta); quem não é membro dela recebe o WS 57 `chat` e 403 ao abrir — conferir que o Android abre a conversa de origem e avisa no 403 em vez de falhar calado (FC-725, CHA-18, CHA-24) — 🆕 2026-10-15: o servidor `6d20ff7` voltou a criar um grupo novo por ligação (sem "Chamada: "), e só reaproveita dentro do chat de outra ligação; sobra conferir que o app abre o `conversa_id` que vier (e ajustar a fixture "Chamada: Ana, Bruno" do `ChatViewModelTest`)
 - [ ] **Teste:** no emulador contra o web: a postagem com resposta zera o contador; figurinha Noto nos dois sentidos; o "Chamar de novo" do web toca no Android; o chat de uma chamada 1:1 abre a própria conversa
 
 ### 8.8 🆕 Recursos de IA (FC-419, FC-811, FC-523, CON-14, ENV-25, GER-08) — `769bd7d`, `05507a0`, `f798e9c`

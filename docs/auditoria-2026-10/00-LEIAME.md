@@ -8,9 +8,11 @@
 > 🆕 **Atualização 2026-10-08 (noite):** incorporados os commits do web `7322e83` (agendadas fora do chat, num relógio ao lado do microfone com a lista; rascunho por conversa; encaminhada de encaminhada sem repetir conteúdo; toque longo abre o menu completo) e `e8d82cb` (campo de mensagem no Tiptap; "mais emojis" nas reações rápidas). O do servidor, `779c8ed`, só mexe no script de desenvolvimento: o contrato segue com **69 rotas**. Funcionalidades do web: **137** (+ENV-23, rascunho). Novos FC-519 e FC-520.
 >
 > 🆕 **Atualização 2026-10-13:** incorporados os commits do servidor `b8ea0c2` (presença ativo/ausente/offline, confirmação de leitura, resumo por IA, imagem/emoji do grupo, chamar de novo, `GET /recursos`; migrações 037–041), `ea7e974` (interno), `ea02f57` (sugestão de texto), `a40fd47` (o chat da chamada reaproveita a conversa de origem) e `12cf0cf` (postagens em grupo com respostas; migração 042), e os do web `769bd7d`, `05507a0`, `f798e9c`, `964ed72` e `d202c06` (os mesmos recursos, chamada de vídeo em aba própria, chat da ligação expandido, seletor com todos os emojis, figurinhas só do pacote Noto, pesquisa nova). Agora são **81 rotas** (+12) e **150 funcionalidades** (+13: CON-14, CON-15, MSG-21, MSG-22, ENV-24–26, CHA-25, CHA-26, PRE-02, PRE-03, CFG-09, GER-08). **Três mudanças quebram o app novo** (TODO 8.7): as respostas de postagem prendem o contador de não lidas (FC-316), as figurinhas Noto não se entendem com as do Android (FC-417) e o "Chamar de novo" não toca no Android (FC-724). Novos FC-215–218, 316–317, 417–419, 521–524, 610, 724–728 e 810–812.
+>
+> 🆕 **Atualização 2026-10-15:** servidor `6d20ff7` (confirmação de leitura com lista e prazo: `POST /mensagem/pedir-confirmacao`, WS 65, migração 043; **o chat da ligação voltou a ser um grupo novo**, sem "Chamada: "; áudio que ganha vídeo vira vídeo; pesquisa nos chats das ligações) e `e25c4db` (atividade já lida deixa de contar), e web `e33ecba` (confirmação com lista, código como peça no campo, postagem na largura do chat, criar grupo com imagem/emoji) e `8b43965` (temas prontos, cores dos balões, seletor de emoji mais rápido). Agora são **82 rotas** e **153 funcionalidades** (+ENV-27, ENV-28, CFG-10 ➖). Novos FC-219, FC-420, FC-525 e FC-526. Também em 2026-10-15: a investigação para o app funcionar sem FCM (ADR 0002, decisão pendente).
 
 **Escopo:** `conversa-android-kotlin` (branch `novo`, último commit `e3e2a65` em 2026-04-26) comparado a
-`conversa` (servidor, HEAD `7f670c3` → 🆕 `8031fa5` → 🆕 `5cad911` → 🆕 `779c8ed` → 🆕 `12cf0cf`) e `conversa-web` (HEAD `bfb79d8` → 🆕 `39d06f9` → 🆕 `785bdef` → 🆕 `e8d82cb` → 🆕 `d202c06`), de 2026-10-06 a 2026-10-08 (🆕 sincronizado de novo em 2026-10-13).
+`conversa` (servidor, HEAD `7f670c3` → 🆕 `8031fa5` → 🆕 `5cad911` → 🆕 `779c8ed` → 🆕 `12cf0cf` → 🆕 `e25c4db`) e `conversa-web` (HEAD `bfb79d8` → 🆕 `39d06f9` → 🆕 `785bdef` → 🆕 `e8d82cb` → 🆕 `d202c06` → 🆕 `8b43965`), de 2026-10-06 a 2026-10-08 (🆕 sincronizado de novo em 2026-10-13).
 **Método:** leitura integral do código dos três repositórios, do histórico Git do servidor desde abril (Delphi → Node → Bun/Elysia) e build real do Android (`assembleDebug`, sucesso, JDK 21 do Android Studio). Nenhum código foi alterado; só esta pasta foi criada.
 
 ---
@@ -20,11 +22,11 @@
 | # | Arquivo | Para que serve |
 |---|---|---|
 | 00 | `00-LEIAME.md` | Este índice, o resumo executivo e a **decisão recomendada** |
-| 01 | `01-contrato-servidor-atual.md` | **Fonte da verdade** do contrato atual do servidor: 67 rotas (🆕 81 em 2026-10-13), WebSocket, FCM, anexos/MinIO, chamadas/MediaMTX, gravação, permissões, parâmetros e 46 "pegadinhas" para clientes |
+| 01 | `01-contrato-servidor-atual.md` | **Fonte da verdade** do contrato atual do servidor: 67 rotas (🆕 82 em 2026-10-15), WebSocket, FCM, anexos/MinIO, chamadas/MediaMTX, gravação, permissões, parâmetros e 46 "pegadinhas" para clientes |
 | 02 | `02-mudancas-servidor-desde-abril.md` | O que mudou no servidor desde a última versão do Android, endpoint por endpoint, com as **quebras confirmadas** |
-| 03 | `03-inventario-web.md` | As **136 funcionalidades** (🆕 150 em 2026-10-13) do cliente web (IDs AUT/CON/MSG/ENV/ANX/PES/CHA/SIP/NOT/PRE/ATV/CFG/GER), textos de UI e detalhes de WebRTC: é o checklist de paridade |
+| 03 | `03-inventario-web.md` | As **136 funcionalidades** (🆕 153 em 2026-10-15) do cliente web (IDs AUT/CON/MSG/ENV/ANX/PES/CHA/SIP/NOT/PRE/ATV/CFG/GER), textos de UI e detalhes de WebRTC: é o checklist de paridade |
 | 04 | `04-auditoria-android.md` | Auditoria interna do app Android: estado do repo, build, arquitetura, **57 problemas** (#1–#57) com severidade e arquivo:linha, e avaliação "evoluir x recomeçar" |
-| 05 | `05-matriz-paridade.md` | Cruzamento das 136 funcionalidades (🆕 150) do web com o estado no Android (o que existe, o que está quebrado, o que falta) |
+| 05 | `05-matriz-paridade.md` | Cruzamento das 136 funcionalidades (🆕 153) do web com o estado no Android (o que existe, o que está quebrado, o que falta) |
 | 06 | `06-fila-de-correcoes.md` | **A fila de trabalho**, priorizada e numerada (FC-xxx), com dependências e critério de pronto |
 | 07 | `07-plano-nova-base.md` | Arquitetura proposta para o app novo, estrutura de módulos, bibliotecas, fases e o que transplantar do código atual |
 | 08 | `08-pendencias-servidor.md` | Problemas e lacunas **no servidor** encontrados durante a auditoria e que bloqueiam ou afetam o Android |
