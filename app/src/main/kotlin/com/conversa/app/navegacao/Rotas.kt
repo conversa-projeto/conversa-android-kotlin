@@ -65,6 +65,10 @@ data object RotaSobre
 @Serializable
 data object RotaNotificacoes
 
+/** Privacidade (FC-810): aparecer offline, visto por último e "nesta conversa". */
+@Serializable
+data object RotaPrivacidade
+
 /** Permissões (8.5): notificações, microfone, câmera, tela cheia e bateria. */
 @Serializable
 data object RotaPermissoes

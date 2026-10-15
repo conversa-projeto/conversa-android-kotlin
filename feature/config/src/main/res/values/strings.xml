@@ -50,6 +50,18 @@
     <string name="sobre_licencas">Licenças de código aberto</string>
     <string name="config_notificacoes">Notificações</string>
     <string name="config_notificacoes_resumo">Mensagens, chamadas e avisos do sistema</string>
+    <!-- Privacidade (FC-810, web ConfiguracaoPrivacidade.vue e ProfileSettingsModal.vue) -->
+    <string name="privacidade_titulo">Privacidade</string>
+    <string name="privacidade_resumo">Status, visto por último e aparecer offline</string>
+    <string name="privacidade_carregando">Carregando…</string>
+    <string name="privacidade_status">Status</string>
+    <string name="privacidade_status_texto">Os contatos veem você ativo com o Conversa aberto e em uso, ausente quando ele está escondido ou parado há 5 minutos. Valem para todos os seus aparelhos e mudam na hora.</string>
+    <string name="privacidade_offline">Aparecer offline</string>
+    <string name="privacidade_offline_descricao">Para os outros você fica offline, sem visto por último nem a conversa aberta.</string>
+    <string name="privacidade_visto">Mostrar o visto por último</string>
+    <string name="privacidade_visto_descricao">Quando você esteve ativo pela última vez, para quem tem conversa com você.</string>
+    <string name="privacidade_na_conversa">Mostrar quando estou na conversa</string>
+    <string name="privacidade_na_conversa_descricao">Quem está na conversa vê que você está com ela aberta.</string>
     <string name="config_permissoes">Permissões</string>
     <string name="config_permissoes_resumo">Notificações, microfone, câmera e bateria</string>
     <!-- Permissões (8.5, CFG-04) -->

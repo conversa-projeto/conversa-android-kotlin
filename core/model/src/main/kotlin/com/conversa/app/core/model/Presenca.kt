@@ -29,6 +29,9 @@ enum class EstadoPresenca {
 /** Como um contato aparece: o estado e o "visto por último" (só se a pessoa mostra). */
 data class PresencaContato(val estado: EstadoPresenca, val vistoEm: Instant? = null)
 
+/** Privacidade da presença (CFG-09): o padrão do servidor é mostrar tudo e não aparecer offline. */
+data class Privacidade(val mostrarVistoEm: Boolean = true, val mostrarNaConversa: Boolean = true, val aparecerOffline: Boolean = false)
+
 /** O estado de [usuarioId] (offline se não está no mapa). */
 fun Map<Long, PresencaContato>.estadoDe(usuarioId: Long?): EstadoPresenca =
     usuarioId?.let { this[it]?.estado } ?: EstadoPresenca.OFFLINE

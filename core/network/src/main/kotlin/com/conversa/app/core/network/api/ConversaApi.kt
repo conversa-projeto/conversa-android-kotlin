@@ -51,6 +51,7 @@ import com.conversa.app.core.network.dto.PermissaoUsuarioDto
 import com.conversa.app.core.network.dto.PermissoesDto
 import com.conversa.app.core.network.dto.PrazoEnqueteRequisicao
 import com.conversa.app.core.network.dto.PresencaContatoDto
+import com.conversa.app.core.network.dto.PrivacidadeDto
 import com.conversa.app.core.network.dto.QuantidadeDto
 import com.conversa.app.core.network.dto.ReacaoRequisicao
 import com.conversa.app.core.network.dto.ReacaoResposta
@@ -108,6 +109,10 @@ interface ConversaApi {
 
     @PATCH("usuario")
     suspend fun alterarUsuario(@Body corpo: AlterarUsuarioRequisicao): UsuarioDto
+
+    /** "Aparecer offline", "Mostrar o visto por último" e "Mostrar quando estou na conversa" (FC-810). */
+    @GET("usuario/privacidade")
+    suspend fun privacidade(): PrivacidadeDto
 
     @DELETE("usuario")
     suspend fun excluirUsuario(@Query("id") id: Long): UsuarioDto

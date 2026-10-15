@@ -19,6 +19,7 @@ import androidx.compose.material.icons.outlined.AdminPanelSettings
 import androidx.compose.material.icons.outlined.Call
 import androidx.compose.material.icons.outlined.Dns
 import androidx.compose.material.icons.outlined.Info
+import androidx.compose.material.icons.outlined.Lock
 import androidx.compose.material.icons.outlined.Notifications
 import androidx.compose.material.icons.outlined.Palette
 import androidx.compose.material.icons.outlined.Tune
@@ -58,6 +59,7 @@ class AcoesConfiguracoes(
     val aoTrocarServidor: () -> Unit = {},
     val aoAbrirSobre: () -> Unit = {},
     val aoAbrirNotificacoes: () -> Unit = {},
+    val aoAbrirPrivacidade: () -> Unit = {},
     val aoAbrirPermissoes: () -> Unit = {},
     val aoAbrirChamadas: () -> Unit = {},
     val aoAbrirSistema: () -> Unit = {},
@@ -73,6 +75,7 @@ fun ConfiguracoesRotaTela(
     aoTrocarServidor: () -> Unit,
     aoAbrirSobre: () -> Unit,
     aoAbrirNotificacoes: () -> Unit,
+    aoAbrirPrivacidade: () -> Unit,
     aoAbrirPermissoes: () -> Unit,
     aoAbrirChamadas: () -> Unit,
     aoAbrirSistema: () -> Unit,
@@ -88,6 +91,7 @@ fun ConfiguracoesRotaTela(
             aoTrocarServidor = aoTrocarServidor,
             aoAbrirSobre = aoAbrirSobre,
             aoAbrirNotificacoes = aoAbrirNotificacoes,
+            aoAbrirPrivacidade = aoAbrirPrivacidade,
             aoAbrirPermissoes = aoAbrirPermissoes,
             aoAbrirChamadas = aoAbrirChamadas,
             aoAbrirSistema = aoAbrirSistema,
@@ -131,6 +135,12 @@ internal fun ConfiguracoesTela(estado: ConfiguracoesUiState, acoes: AcoesConfigu
                 stringResource(R.string.config_notificacoes),
                 stringResource(R.string.config_notificacoes_resumo),
                 acoes.aoAbrirNotificacoes,
+            )
+            Item(
+                Icons.Outlined.Lock,
+                stringResource(R.string.privacidade_titulo),
+                stringResource(R.string.privacidade_resumo),
+                acoes.aoAbrirPrivacidade,
             )
             Item(
                 Icons.Outlined.Call,

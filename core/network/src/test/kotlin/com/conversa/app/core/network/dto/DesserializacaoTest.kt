@@ -192,6 +192,19 @@ class DesserializacaoTest {
     }
 
     @Test
+    fun `privacidade vai so com a chave que mudou`() {
+        assertThat(ConversaJson.encodeToString(AlterarUsuarioRequisicao.serializer(), AlterarUsuarioRequisicao(7, aparecerOffline = true)))
+            .isEqualTo("""{"id":7,"aparecer_offline":true}""")
+        assertThat(
+            ConversaJson.decodeFromString(
+                PrivacidadeDto.serializer(),
+                """{"mostrar_visto_em":false,"mostrar_na_conversa":true,"aparecer_offline":false}""",
+            ),
+        )
+            .isEqualTo(PrivacidadeDto(mostrarVistoEm = false))
+    }
+
+    @Test
     fun `envio de postagem e de resposta a postagem usam os nomes do contrato`() {
         val conteudos = listOf(ConteudoEnvioDto(1, 1, "oi"))
         fun json(corpo: EnviarMensagemRequisicao) = ConversaJson.encodeToString(EnviarMensagemRequisicao.serializer(), corpo)

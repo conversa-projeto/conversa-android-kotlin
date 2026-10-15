@@ -3,6 +3,7 @@ package com.conversa.app.core.data.perfil
 import com.conversa.app.core.data.SessaoRepositorio
 import com.conversa.app.core.data.anexos.AnexosRepositorio
 import com.conversa.app.core.data.anexos.FonteArquivo
+import com.conversa.app.core.model.Privacidade
 import com.conversa.app.core.model.Sessao
 import com.conversa.app.core.model.TipoConteudo
 import com.conversa.app.core.network.api.ConversaApi
@@ -40,6 +41,30 @@ class PerfilRepositorio @Inject constructor(
     val sessao: StateFlow<Sessao?> = sessoes.sessao
 
     private fun atual(): Sessao = checkNotNull(sessoes.sessao.value) { "Sem sessão" }
+
+    /** A privacidade da presença (FC-810). */
+    suspend fun privacidade(): Result<Privacidade> = chamarApi { api.privacidade() }.map {
+        Privacidade(mostrarVistoEm = it.mostrarVistoEm, mostrarNaConversa = it.mostrarNaConversa, aparecerOffline = it.aparecerOffline)
+    }
+
+    /** `PATCH /usuario` só com a chave que mudou (as outras vão nulas e o JSON não as leva). */
+    suspend fun alterarPrivacidade(
+        aparecerOffline: Boolean? = null,
+        mostrarVistoEm: Boolean? = null,
+        mostrarNaConversa: Boolean? = null,
+    ): Result<Unit> {
+        val sessao = atual()
+        return chamarApi {
+            api.alterarUsuario(
+                AlterarUsuarioRequisicao(
+                    sessao.usuarioId,
+                    aparecerOffline = aparecerOffline,
+                    mostrarVistoEm = mostrarVistoEm,
+                    mostrarNaConversa = mostrarNaConversa,
+                ),
+            )
+        }.map { }
+    }
 
     suspend fun alterarDados(nome: String, email: String): Result<Unit> {
         val sessao = atual()

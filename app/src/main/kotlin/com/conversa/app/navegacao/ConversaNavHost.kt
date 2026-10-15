@@ -24,6 +24,7 @@ import com.conversa.app.feature.config.ConfiguracoesRotaTela
 import com.conversa.app.feature.config.NotificacoesRotaTela
 import com.conversa.app.feature.config.PerfilRotaTela
 import com.conversa.app.feature.config.PermissoesRotaTela
+import com.conversa.app.feature.config.PrivacidadeRotaTela
 import com.conversa.app.feature.config.QualidadeChamadasRotaTela
 import com.conversa.app.feature.config.SistemaRotaTela
 import com.conversa.app.feature.config.SobreRotaTela
@@ -109,6 +110,7 @@ fun ConversaNavHost(destinoInicial: Any, principal: MainViewModel) {
                         aoTrocarServidor = { nav.navigate(RotaServidor(podeVoltar = true)) },
                         aoAbrirSobre = { nav.navigate(RotaSobre) },
                         aoAbrirNotificacoes = { nav.navigate(RotaNotificacoes) },
+                        aoAbrirPrivacidade = { nav.navigate(RotaPrivacidade) },
                         aoAbrirPermissoes = { nav.navigate(RotaPermissoes) },
                         aoAbrirChamadas = { nav.navigate(RotaQualidadeChamadas) },
                         aoAbrirSistema = { nav.navigate(RotaSistema) },
@@ -164,6 +166,7 @@ fun ConversaNavHost(destinoInicial: Any, principal: MainViewModel) {
         }
         composable<RotaSobre> { SobreRotaTela(aoVoltar = { nav.popBackStack() }) }
         composable<RotaNotificacoes> { NotificacoesRotaTela(aoVoltar = { nav.popBackStack() }) }
+        composable<RotaPrivacidade> { PrivacidadeRotaTela(aoVoltar = { nav.popBackStack() }) }
         composable<RotaPermissoes> { PermissoesRotaTela(aoVoltar = { nav.popBackStack() }) }
         composable<RotaQualidadeChamadas> { QualidadeChamadasRotaTela(aoVoltar = { nav.popBackStack() }) }
         composable<RotaSistema> { SistemaRotaTela(aoVoltar = { nav.popBackStack() }) }

@@ -82,6 +82,18 @@ data class AlterarUsuarioRequisicao(
     val email: String? = null,
     val telefone: JsonElement? = null,
     @SerialName("avatar_anexo_id") val avatarAnexoId: JsonElement? = null,
+    /** Privacidade (FC-810, servidor `769bd7d`): vai só a chave que mudou. */
+    @SerialName("mostrar_visto_em") val mostrarVistoEm: Boolean? = null,
+    @SerialName("mostrar_na_conversa") val mostrarNaConversa: Boolean? = null,
+    @SerialName("aparecer_offline") val aparecerOffline: Boolean? = null,
+)
+
+/** `GET /usuario/privacidade`. */
+@Serializable
+data class PrivacidadeDto(
+    @SerialName("mostrar_visto_em") val mostrarVistoEm: Boolean = true,
+    @SerialName("mostrar_na_conversa") val mostrarNaConversa: Boolean = true,
+    @SerialName("aparecer_offline") val aparecerOffline: Boolean = false,
 )
 
 @Serializable
