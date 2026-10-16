@@ -4,7 +4,7 @@
 - **Tipo:** código
 - **Itens:** `TODO.md` 3.5 (linha 🆕 `964ed72` da bolha) e 6.x (linha 🆕 `964ed72` do histórico); FC-727; CHA-26
 - **Branch:** `reescrita`
-- **Commits:** (preencher)
+- **Commits:** `e773a8e`
 
 ## Contexto
 - **O servidor** (`964ed72`): manda o chat de cada ligação para quem é membro dele: `chat_chamada_id` no conteúdo da mensagem da ligação e `conversa_chat_id` no histórico.
