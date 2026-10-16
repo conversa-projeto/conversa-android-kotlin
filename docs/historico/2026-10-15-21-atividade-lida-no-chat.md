@@ -4,7 +4,7 @@
 - **Tipo:** código
 - **Itens:** `TODO.md` 8.1 (linha 🆕 `e25c4db`); ATV-01
 - **Branch:** `reescrita`
-- **Commits:** (preencher)
+- **Commits:** `a2af7f6`
 
 ## Contexto
 - **O servidor** (`e25c4db`): resposta ou menção cuja mensagem o usuário já leu no chat deixa de contar em `GET /atividades/novas` e vem com `nova: false` em `GET /atividades`. Ao ler uma dessas mensagens, ele manda o WS 61 ao próprio usuário.

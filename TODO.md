@@ -861,7 +861,7 @@
 - [x] Badge: `GET /atividades/novas` → `{quantidade}` ao conectar e a cada WS 61 (`99+`) ✔ 84a6ec3
 - [x] Abrir a aba → `POST /atividades/vistas` → zerar o badge (itens seguem marcados como "Nova" enquanto aberta) ✔ 84a6ec3
 - [x] Vazio: "Nenhuma atividade ainda." / "Reações, respostas, menções e chamadas perdidas aparecem aqui." ✔ 84a6ec3
-- [x] 🆕 `e25c4db` Resposta ou menção já lida no chat deixa de contar como nova (o servidor manda o WS 61 ao ler): conferir que o contador cai e reler a lista guardada (ATV-01) — com a aba fechada, o WS 61 relê a primeira página se há lista guardada (+ teste). No emulador: resposta do B → contador 2; o A leu no chat → 1, e a resposta ficou sem "Nova" ✔ HASH
+- [x] 🆕 `e25c4db` Resposta ou menção já lida no chat deixa de contar como nova (o servidor manda o WS 61 ao ler): conferir que o contador cai e reler a lista guardada (ATV-01) — com a aba fechada, o WS 61 relê a primeira página se há lista guardada (+ teste). No emulador: resposta do B → contador 2; o A leu no chat → 1, e a resposta ficou sem "Nova" ✔ a2af7f6
 
 ### 8.2 Pesquisa (FC-801, PES-01, PES-02)
 - [x] Na conversa: ícone de busca → campo (no Android, "⋮" → "Pesquisar na conversa", para não apertar os ícones de ligar) → `GET /pesquisar?texto=&conversa=<id>` → resultados (mais recentes primeiro) → ir para a mensagem ✔ 28cef66
