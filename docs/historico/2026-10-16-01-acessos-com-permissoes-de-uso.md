@@ -4,7 +4,7 @@
 - **Tipo:** código
 - **Itens:** `TODO.md` 8.5 (linha 🆕 `ef13c22`/`9c6e8a6` dos Acessos); FC-813; CFG-08
 - **Branch:** `reescrita`
-- **Commits:** (preencher)
+- **Commits:** `91d5681`
 
 ## Contexto
 - **O servidor** (`ef13c22`) passou de 2 para **32 permissões**: 6 de administração e 26 de uso, marcadas com `uso` no `GET /permissoes`.
