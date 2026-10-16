@@ -3,10 +3,12 @@ package com.conversa.app.core.database
 import android.content.Context
 import androidx.room.AutoMigration
 import androidx.room.Database
+import androidx.room.RenameColumn
 import androidx.room.Room
 import androidx.room.RoomDatabase
 import androidx.room.TypeConverter
 import androidx.room.TypeConverters
+import androidx.room.migration.AutoMigrationSpec
 import com.conversa.app.core.database.dao.AtividadeDao
 import com.conversa.app.core.database.dao.ChamadaHistoricoDao
 import com.conversa.app.core.database.dao.ContatoDao
@@ -54,7 +56,7 @@ class Conversores {
         SyncEstadoEntidade::class,
         RascunhoEntidade::class,
     ],
-    version = 7,
+    version = 8,
     exportSchema = true,
     // 2: ordem das reações (a do servidor), para o "+N" esconder as mesmas que o web.
     // 3: rascunho por conversa (FC-519).
@@ -62,6 +64,7 @@ class Conversores {
     // 5: a postagem da resposta na fila (7.13), para ela ficar fora do fluxo do chat.
     // 6: emoji do grupo e "chat de ligação" na conversa (FC-217, FC-218).
     // 7: o chat da ligação no conteúdo da mensagem da ligação (FC-727).
+    // 8: atividade "pendente" no lugar de "nova" (servidor `ef13c22`).
     autoMigrations = [
         AutoMigration(from = 1, to = 2),
         AutoMigration(from = 2, to = 3),
@@ -69,6 +72,7 @@ class Conversores {
         AutoMigration(from = 4, to = 5),
         AutoMigration(from = 5, to = 6),
         AutoMigration(from = 6, to = 7),
+        AutoMigration(from = 7, to = 8, spec = Migracao7Para8::class),
     ],
 )
 @TypeConverters(Conversores::class)
@@ -118,3 +122,7 @@ object BancoModulo {
 
     @Provides fun rascunhoDao(banco: ConversaBanco) = banco.rascunhoDao()
 }
+
+/** A coluna `nova` da atividade vira `pendente` (o servidor trocou o campo em `ef13c22`). */
+@RenameColumn(tableName = "atividade", fromColumnName = "nova", toColumnName = "pendente")
+class Migracao7Para8 : AutoMigrationSpec

@@ -8,6 +8,7 @@ import com.conversa.app.core.model.Mensagem
 import com.conversa.app.core.model.StatusDestinatario
 import com.conversa.app.core.model.alternarReacao
 import com.conversa.app.core.model.emojiAceito
+import com.conversa.app.core.model.reacoesDeOutros
 import com.conversa.app.core.network.api.ConversaApi
 import com.conversa.app.core.network.di.EscopoAplicacao
 import com.conversa.app.core.network.dto.IdDto
@@ -15,6 +16,7 @@ import com.conversa.app.core.network.dto.MarcarStatusRequisicao
 import com.conversa.app.core.network.dto.MensagemIdDto
 import com.conversa.app.core.network.dto.PedirConfirmacaoRequisicao
 import com.conversa.app.core.network.dto.ReacaoRequisicao
+import com.conversa.app.core.network.dto.ReacoesVistasRequisicao
 import com.conversa.app.core.network.dto.VisualizarPostagemRequisicao
 import com.conversa.app.core.network.http.chamarApi
 import java.time.Clock
@@ -202,6 +204,25 @@ class MensagensRepositorio @Inject constructor(
         mensagemDao.marcarLidaPorMim(mensagemId)
         conversaDao.descontarNaoLida(conversaId)
         filaLida.send(conversaId to mensagemId)
+    }
+
+    /** Minhas mensagens (id, reações de outros) já avisadas como vistas: uma reação nova avisa de novo. */
+    private val reacoesAvisadas = mutableSetOf<Pair<Long, Int>>()
+
+    /**
+     * Minhas mensagens com reação de outra pessoa que apareceram na tela (servidor `ef13c22`, como
+     * o web): as atividades dessas reações deixam de estar pendentes (`POST /atividades/reacoes-vistas`).
+     * Uma vez por quantidade de reações; se falhar, avisa de novo na próxima vez que aparecerem.
+     */
+    suspend fun reacoesVistas(minhas: List<Mensagem>) {
+        val chaves = minhas.mapNotNull { m -> reacoesDeOutros(m).takeIf { it > 0 && m.id > 0 }?.let { m.id to it } }
+            .filter { synchronized(reacoesAvisadas) { reacoesAvisadas.add(it) } }
+        if (chaves.isEmpty()) return
+        chamarApi { api.concluirReacoesVistas(ReacoesVistasRequisicao(chaves.map { it.first })) }
+            .onFailure {
+                synchronized(reacoesAvisadas) { reacoesAvisadas.removeAll(chaves.toSet()) }
+                Timber.d("Falha ao avisar as reações vistas: %s", it.javaClass.simpleName)
+            }
     }
 
     /** Postagens (id, resposta mais recente) já marcadas nesta sessão: uma resposta nova pede de novo. */

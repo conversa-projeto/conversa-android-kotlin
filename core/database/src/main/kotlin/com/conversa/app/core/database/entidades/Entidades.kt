@@ -135,7 +135,7 @@ data class AtividadeEntidade(
     @PrimaryKey val id: Long,
     val tipo: Int,
     val criadoEm: Instant?,
-    val nova: Boolean,
+    val pendente: Boolean,
     val autorId: Long?,
     val autorNome: String?,
     val autorAvatarUrl: String?,

@@ -20,7 +20,7 @@ class AtividadesTest {
         conversaDescricao: String? = "Bia",
         emoji: String? = null,
     ) = Atividade(
-        id = id, tipo = tipo, criadoEm = criadoEm, nova = false, autorId = 2, autorNome = "Bia", autorAvatarUrl = null,
+        id = id, tipo = tipo, criadoEm = criadoEm, pendente = false, autorId = 2, autorNome = "Bia", autorAvatarUrl = null,
         conversaId = 9, conversaTipo = conversaTipo, conversaDescricao = conversaDescricao, mensagemId = 5,
         conteudoTipo = conteudoTipo, texto = texto, chamadaId = null, chamadaTipo = null, emoji = emoji,
     )

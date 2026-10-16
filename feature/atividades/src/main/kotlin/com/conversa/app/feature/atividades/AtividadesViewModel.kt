@@ -30,7 +30,7 @@ private data class Carga(val carregando: Boolean = true, val mais: Boolean = fal
 
 /**
  * Aba Atividades (8.1, FC-800): a lista vem do Room (o repositório relê do servidor ao abrir
- * a aba e marca como vistas); perto do fim, as anteriores.
+ * a aba); perto do fim, as anteriores. Cada atividade fica pendente até concluir (servidor `ef13c22`).
  */
 @HiltViewModel
 class AtividadesViewModel @Inject constructor(private val atividades: AtividadesRepositorio) : ViewModel() {
@@ -50,8 +50,13 @@ class AtividadesViewModel @Inject constructor(private val atividades: Atividades
         }
     }
 
-    /** A aba saiu da tela: o que chegar volta a contar no badge. */
+    /** A aba saiu da tela. */
     fun fechar() = atividades.fechar()
+
+    /** "Marcar como concluída", ou o toque na chamada perdida. */
+    fun concluir(atividade: Atividade) {
+        viewModelScope.launch { atividades.concluir(atividade) }
+    }
 
     /** Perto do fim da lista: as anteriores à última. */
     fun carregarMais() {

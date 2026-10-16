@@ -138,3 +138,6 @@ data class Mensagem(
     /** Data usada para ordenar: `coalesce(visivel_em, inserida)`. */
     val dataEfetiva: Instant get() = visivelEm ?: inserida
 }
+
+/** Quantas reações de outras pessoas a mensagem tem (a minha não conta). */
+fun reacoesDeOutros(mensagem: Mensagem): Int = mensagem.reacoes.sumOf { it.quantidade - if (it.reagiu) 1 else 0 }

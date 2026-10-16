@@ -79,6 +79,6 @@ class MigracoesTest {
     }
 
     private companion object {
-        const val VERSAO_ATUAL = 7
+        const val VERSAO_ATUAL = 8
     }
 }

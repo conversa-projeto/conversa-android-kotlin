@@ -217,6 +217,9 @@ interface AtividadeDao {
     @Query("SELECT COUNT(*) FROM atividade")
     suspend fun quantas(): Int
 
+    @Query("UPDATE atividade SET pendente = 0 WHERE id = :id")
+    suspend fun concluir(id: Long)
+
     @Upsert
     suspend fun salvar(atividades: List<AtividadeEntidade>)
 

@@ -20,6 +20,7 @@ import com.conversa.app.core.model.TipoExibicao
 import com.conversa.app.core.model.TipoReferencia
 import com.conversa.app.core.model.classificarMensagem
 import com.conversa.app.core.network.api.ConversaApi
+import com.conversa.app.core.network.dto.ConcluidasDto
 import com.conversa.app.core.network.dto.ConfirmacaoDto
 import com.conversa.app.core.network.dto.ConteudoDto
 import com.conversa.app.core.network.dto.ConteudoEnvioDto
@@ -35,6 +36,7 @@ import com.conversa.app.core.network.dto.PostagemEnvioDto
 import com.conversa.app.core.network.dto.ReacaoDto
 import com.conversa.app.core.network.dto.ReacaoRequisicao
 import com.conversa.app.core.network.dto.ReacaoResposta
+import com.conversa.app.core.network.dto.ReacoesVistasRequisicao
 import com.conversa.app.core.network.dto.ReferenciaEnvioDto
 import com.conversa.app.core.network.dto.RespostasVistasDto
 import com.conversa.app.core.network.dto.SucessoDto
@@ -348,6 +350,24 @@ class MensagensTest {
                 ),
             )
         }
+    }
+
+    // --- Reações vistas (servidor ef13c22: atividade pendente até concluir) ---
+
+    @Test
+    fun `reacoes vistas avisa uma vez por quantidade e de novo se falhar`() = runTest {
+        coEvery { api.concluirReacoesVistas(any()) } throws IOException("sem rede") andThen ConcluidasDto(1)
+        val minha = msg(900, remetente = 1).copy(reacoes = listOf(ReacaoDto("👍", quantidade = 2, reagiu = true))).paraModelo()
+        val semDeOutros = msg(901, remetente = 1).copy(reacoes = listOf(ReacaoDto("👍", quantidade = 1, reagiu = true))).paraModelo()
+        val r = repo()
+
+        r.reacoesVistas(listOf(minha, semDeOutros))
+        r.reacoesVistas(listOf(minha))
+        r.reacoesVistas(listOf(minha))
+        // Mais uma reação: avisa de novo.
+        r.reacoesVistas(listOf(minha.copy(reacoes = minha.reacoes.map { it.copy(quantidade = 3) })))
+
+        coVerify(exactly = 3) { api.concluirReacoesVistas(ReacoesVistasRequisicao(listOf(900))) }
     }
 
     // --- Chat da ligação só leitura (FC-727) ---

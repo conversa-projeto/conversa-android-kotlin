@@ -46,6 +46,7 @@ import com.conversa.app.core.model.atividadeDaConversa
 import com.conversa.app.core.model.local
 import com.conversa.app.core.model.montarItensChat
 import com.conversa.app.core.model.podeReagir
+import com.conversa.app.core.model.reacoesDeOutros
 import com.conversa.app.core.model.separarAgendadas
 import com.conversa.app.core.network.http.mensagemAmigavel
 import com.conversa.app.core.network.http.paraErroApi
@@ -478,8 +479,11 @@ class ChatViewModel @Inject constructor(
         val paraLer = visiveis.filter { it.remetenteId != eu && !it.visualizada && it.id > 0 }
         // Postagem à vista com respostas novas: as respostas (fora do fluxo) também contam como lidas (FC-316).
         val postagens = visiveis.filter { (it.postagem?.naoLidas ?: 0) > 0 }
-        if (paraLer.isEmpty() && postagens.isEmpty()) return
+        // Minhas mensagens com reação de outra pessoa: a atividade da reação deixa de estar pendente.
+        val minhasComReacao = visiveis.filter { it.remetenteId == eu && reacoesDeOutros(it) > 0 }
+        if (paraLer.isEmpty() && postagens.isEmpty() && minhasComReacao.isEmpty()) return
         viewModelScope.launch {
+            if (minhasComReacao.isNotEmpty()) mensagens.reacoesVistas(minhasComReacao)
             paraLer.forEach { mensagens.marcarLida(conversaId, it.id) }
             postagens.forEach { mensagem ->
                 val postagem = mensagem.postagem ?: return@forEach

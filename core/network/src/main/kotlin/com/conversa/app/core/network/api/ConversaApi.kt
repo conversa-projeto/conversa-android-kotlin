@@ -15,6 +15,7 @@ import com.conversa.app.core.network.dto.CadastroRequisicao
 import com.conversa.app.core.network.dto.ChamadaHistoricoDto
 import com.conversa.app.core.network.dto.ChamadaPendenteDto
 import com.conversa.app.core.network.dto.ChatChamadaDto
+import com.conversa.app.core.network.dto.ConcluidasDto
 import com.conversa.app.core.network.dto.ConfirmacaoDto
 import com.conversa.app.core.network.dto.ConfirmarAnexoDto
 import com.conversa.app.core.network.dto.ContatoDto
@@ -55,6 +56,7 @@ import com.conversa.app.core.network.dto.PrivacidadeDto
 import com.conversa.app.core.network.dto.QuantidadeDto
 import com.conversa.app.core.network.dto.ReacaoRequisicao
 import com.conversa.app.core.network.dto.ReacaoResposta
+import com.conversa.app.core.network.dto.ReacoesVistasRequisicao
 import com.conversa.app.core.network.dto.RecursosDto
 import com.conversa.app.core.network.dto.RecusarChamadaRequisicao
 import com.conversa.app.core.network.dto.RespostasVistasDto
@@ -344,6 +346,14 @@ interface ConversaApi {
     /** O OkHttp recusa POST sem corpo: vai `{}` (o servidor não lê o corpo). */
     @POST("atividades/vistas")
     suspend fun marcarAtividadesVistas(@Body corpo: JsonObject = JsonObject(emptyMap())): VistasDto
+
+    /** Servidor `ef13c22`: conclui à mão (ou ao abrir a chamada perdida); WS 61 nas outras abas. */
+    @POST("atividade/concluir")
+    suspend fun concluirAtividade(@Body corpo: IdDto): SucessoDto
+
+    /** Servidor `ef13c22`: as reações recebidas nessas mensagens deixam de estar pendentes. */
+    @POST("atividades/reacoes-vistas")
+    suspend fun concluirReacoesVistas(@Body corpo: ReacoesVistasRequisicao): ConcluidasDto
 
     // --- SIP ---
 

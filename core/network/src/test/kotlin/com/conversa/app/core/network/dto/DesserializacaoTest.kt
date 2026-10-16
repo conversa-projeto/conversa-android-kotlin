@@ -152,7 +152,7 @@ class DesserializacaoTest {
     fun atividades() {
         val atividade = de<List<AtividadeDto>>("atividades").single().paraModelo()
         assertThat(atividade.emoji).isEqualTo("😂")
-        assertThat(atividade.nova).isTrue()
+        assertThat(atividade.pendente).isTrue()
     }
 
     @Test

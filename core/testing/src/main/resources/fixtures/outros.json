@@ -14,7 +14,7 @@
     "iceTransportPolicy": "all"
   },
   "atividades": [ {
-    "id": 33, "tipo": 1, "criado_em": "2026-10-06T12:00:00.000Z", "nova": true,
+    "id": 33, "tipo": 1, "criado_em": "2026-10-06T12:00:00.000Z", "pendente": true,
     "autor_id": 8, "autor_nome": "Bruno Lima",
     "conversa_id": 42, "conversa_tipo": 1, "conversa_descricao": null,
     "mensagem_id": 101, "conteudo_tipo": 1, "texto": "bom dia",

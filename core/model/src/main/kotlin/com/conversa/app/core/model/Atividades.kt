@@ -43,12 +43,13 @@ fun agruparAtividades(
     return grupos
 }
 
-/** O selo no canto do avatar: o emoji da reação, "↩" (resposta), "@" (menção) ou "✆" (chamada perdida). */
+/** O selo no canto do avatar: o emoji da reação, "↩" (resposta), "@" (menção), "✆" (chamada perdida) ou "✓" (confirmação). */
 fun Atividade.textoDoSelo(): String = when (tipo) {
     TipoAtividade.REACAO -> emoji?.takeIf { it.isNotBlank() } ?: "❤️"
     TipoAtividade.RESPOSTA -> "↩"
     TipoAtividade.MENCAO -> "@"
     TipoAtividade.CHAMADA_PERDIDA -> "✆"
+    TipoAtividade.CONFIRMACAO -> "✓"
     TipoAtividade.DESCONHECIDO -> "•"
 }
 

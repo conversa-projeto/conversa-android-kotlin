@@ -19,7 +19,8 @@ data class AtividadeDto(
     val id: Long,
     val tipo: Int,
     @SerialName("criado_em") val criadoEm: Instant? = null,
-    val nova: Boolean = false,
+    /** Servidor `ef13c22`: substitui o `nova` (o que chegou desde a última visita à aba). */
+    val pendente: Boolean = false,
     @SerialName("autor_id") val autorId: Long? = null,
     @SerialName("autor_nome") val autorNome: String? = null,
     @SerialName("autor_avatar_url") val autorAvatarUrl: String? = null,
@@ -36,6 +37,13 @@ data class AtividadeDto(
 
 @Serializable
 data class QuantidadeDto(val quantidade: Int = 0)
+
+/** `POST /atividades/reacoes-vistas`: as minhas mensagens com reação que apareceram na tela. */
+@Serializable
+data class ReacoesVistasRequisicao(val mensagens: List<Long>)
+
+@Serializable
+data class ConcluidasDto(val concluidas: Int = 0)
 
 @Serializable
 data class VistasDto(@SerialName("vistas_em") val vistasEm: Instant? = null)

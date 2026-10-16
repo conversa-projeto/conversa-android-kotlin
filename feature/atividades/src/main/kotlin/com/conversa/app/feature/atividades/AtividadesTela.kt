@@ -7,6 +7,7 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.offset
@@ -18,8 +19,11 @@ import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Check
 import androidx.compose.material.icons.outlined.Notifications
 import androidx.compose.material3.CircularProgressIndicator
+import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -89,10 +93,13 @@ fun AtividadesRotaTela(
     AtividadesTela(
         estado = estado,
         aoAbrir = { atividade ->
+            // A chamada perdida conclui ao abrir; as outras concluem sozinhas ou à mão (como o web).
+            if (atividade.tipo == TipoAtividade.CHAMADA_PERDIDA) viewModel.concluir(atividade)
             val conversa = atividade.conversaId ?: return@AtividadesTela
             val mensagem = atividade.mensagemId
             if (mensagem != null && mensagem > 0) aoAbrirMensagem(conversa, mensagem) else aoAbrirConversa(conversa)
         },
+        aoConcluir = viewModel::concluir,
         aoTentarDeNovo = viewModel::abrir,
         aoChegarPertoDoFim = viewModel::carregarMais,
         modifier = modifier,
@@ -103,6 +110,7 @@ fun AtividadesRotaTela(
 internal fun AtividadesTela(
     estado: AtividadesUiState,
     aoAbrir: (Atividade) -> Unit,
+    aoConcluir: (Atividade) -> Unit,
     aoTentarDeNovo: () -> Unit,
     aoChegarPertoDoFim: () -> Unit,
     modifier: Modifier = Modifier,
@@ -121,13 +129,18 @@ internal fun AtividadesTela(
                 descricao = stringResource(R.string.nenhuma_atividade_texto),
                 icone = Icons.Outlined.Notifications,
             )
-            else -> ListaAtividades(estado, aoAbrir, aoChegarPertoDoFim)
+            else -> ListaAtividades(estado, aoAbrir, aoConcluir, aoChegarPertoDoFim)
         }
     }
 }
 
 @Composable
-private fun ListaAtividades(estado: AtividadesUiState, aoAbrir: (Atividade) -> Unit, aoChegarPertoDoFim: () -> Unit) {
+private fun ListaAtividades(
+    estado: AtividadesUiState,
+    aoAbrir: (Atividade) -> Unit,
+    aoConcluir: (Atividade) -> Unit,
+    aoChegarPertoDoFim: () -> Unit,
+) {
     val grupos = remember(estado.atividades) { agruparAtividades(estado.atividades, Instant.now()) }
     val lista = rememberLazyListState()
     val pertoDoFim by remember {
@@ -140,7 +153,7 @@ private fun ListaAtividades(estado: AtividadesUiState, aoAbrir: (Atividade) -> U
     LazyColumn(state = lista, modifier = Modifier.fillMaxSize()) {
         grupos.forEach { (dia, itens) ->
             stickyHeader(key = "dia-$dia") { TituloDoDia(dia) }
-            items(itens, key = { it.id }) { LinhaAtividade(it, aoAbrir = { aoAbrir(it) }) }
+            items(itens, key = { it.id }) { LinhaAtividade(it, aoAbrir = { aoAbrir(it) }, aoConcluir = { aoConcluir(it) }) }
         }
         if (estado.carregandoMais) {
             item(key = "mais") {
@@ -170,16 +183,17 @@ private fun TituloDoDia(dia: DiaAtividade) {
 }
 
 @Composable
-private fun LinhaAtividade(atividade: Atividade, aoAbrir: () -> Unit) {
+private fun LinhaAtividade(atividade: Atividade, aoAbrir: () -> Unit, aoConcluir: () -> Unit) {
     val primaria = MaterialTheme.colorScheme.primary
-    val rotuloNova = stringResource(R.string.nova)
+    val rotuloPendente = stringResource(R.string.pendente)
     Row(
         Modifier
             .fillMaxWidth()
-            // Nova: fundo levemente azul (a primária com transparência), como o web.
-            .background(if (atividade.nova) primaria.copy(alpha = 0.08f) else MaterialTheme.colorScheme.surface)
-            .clickable(enabled = atividade.conversaId != null, onClick = aoAbrir)
-            .padding(horizontal = 16.dp, vertical = 10.dp),
+            // Pendente: fundo levemente azul (a primária com transparência) até concluir, como o web.
+            .background(if (atividade.pendente) primaria.copy(alpha = 0.08f) else MaterialTheme.colorScheme.surface)
+            // A chamada perdida, mesmo sem conversa, conclui ao tocar.
+            .clickable(enabled = atividade.conversaId != null || atividade.tipo == TipoAtividade.CHAMADA_PERDIDA, onClick = aoAbrir)
+            .padding(start = 16.dp, top = 10.dp, bottom = 10.dp),
         horizontalArrangement = Arrangement.spacedBy(12.dp),
     ) {
         Box {
@@ -225,9 +239,25 @@ private fun LinhaAtividade(atividade: Atividade, aoAbrir: () -> Unit) {
                     color = ConversaTema.cores.textoTerciario,
                 )
             }
-            if (atividade.nova) {
-                Box(Modifier.size(8.dp).clip(CircleShape).background(primaria).semantics { contentDescription = rotuloNova })
+            if (atividade.pendente) {
+                Box(Modifier.size(8.dp).clip(CircleShape).background(primaria).semantics { contentDescription = rotuloPendente })
             }
+        }
+        // "Marcar como concluída" (servidor `ef13c22`); concluída, o espaço fica para alinhar as linhas.
+        if (atividade.pendente) {
+            val rotulo = stringResource(
+                if (atividade.tipo == TipoAtividade.CONFIRMACAO) R.string.marcar_concluida_sem_confirmar else R.string.marcar_concluida,
+            )
+            IconButton(onClick = aoConcluir) {
+                Icon(
+                    Icons.Filled.Check,
+                    contentDescription = rotulo,
+                    tint = ConversaTema.cores.textoTerciario,
+                    modifier = Modifier.size(20.dp),
+                )
+            }
+        } else {
+            Spacer(Modifier.size(48.dp))
         }
     }
 }
@@ -239,6 +269,7 @@ private fun Selo(atividade: Atividade, modifier: Modifier = Modifier) {
     val (fundo, texto) = when (atividade.tipo) {
         TipoAtividade.RESPOSTA, TipoAtividade.MENCAO -> MaterialTheme.colorScheme.primary to MaterialTheme.colorScheme.onPrimary
         TipoAtividade.CHAMADA_PERDIDA -> cores.chamadaEncerrar to MaterialTheme.colorScheme.onPrimary
+        TipoAtividade.CONFIRMACAO -> cores.chamadaAtender to MaterialTheme.colorScheme.onPrimary
         else -> MaterialTheme.colorScheme.surface to MaterialTheme.colorScheme.onSurface
     }
     Box(
@@ -253,7 +284,13 @@ private fun Selo(atividade: Atividade, modifier: Modifier = Modifier) {
             atividade.textoDoSelo(),
             color = texto,
             fontSize = 10.sp,
-            fontWeight = if (atividade.tipo == TipoAtividade.MENCAO) FontWeight.Bold else null,
+            fontWeight = if (atividade.tipo == TipoAtividade.MENCAO ||
+                atividade.tipo == TipoAtividade.CONFIRMACAO
+            ) {
+                FontWeight.Bold
+            } else {
+                null
+            },
         )
     }
 }
@@ -265,6 +302,7 @@ private fun descricaoDa(atividade: Atividade): String = when (atividade.tipo) {
     TipoAtividade.MENCAO -> stringResource(R.string.mencionou)
     TipoAtividade.CHAMADA_PERDIDA ->
         stringResource(if (atividade.chamadaTipo == TipoChamada.VIDEO) R.string.ligou_video_perdida else R.string.ligou_perdida)
+    TipoAtividade.CONFIRMACAO -> stringResource(R.string.pediu_confirmacao)
     TipoAtividade.DESCONHECIDO -> ""
 }
 

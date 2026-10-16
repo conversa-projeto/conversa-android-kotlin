@@ -8,6 +8,9 @@ enum class TipoAtividade(val codigo: Int) {
     RESPOSTA(2),
     MENCAO(3),
     CHAMADA_PERDIDA(4),
+
+    /** Pediram a confirmação de leitura de uma mensagem (servidor `ef13c22`). */
+    CONFIRMACAO(5),
     DESCONHECIDO(-1),
     ;
 
@@ -20,7 +23,11 @@ data class Atividade(
     val id: Long,
     val tipo: TipoAtividade,
     val criadoEm: Instant?,
-    val nova: Boolean,
+    /**
+     * Pendente até ser concluída (servidor `ef13c22`): sozinha (leu a resposta ou a menção,
+     * confirmou a leitura, viu a reação, abriu a chamada perdida) ou à mão.
+     */
+    val pendente: Boolean,
     val autorId: Long?,
     val autorNome: String?,
     val autorAvatarUrl: String?,
