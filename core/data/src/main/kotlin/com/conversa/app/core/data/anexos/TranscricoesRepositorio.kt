@@ -1,5 +1,6 @@
 package com.conversa.app.core.data.anexos
 
+import com.conversa.app.core.data.sistema.RecursosRepositorio
 import com.conversa.app.core.database.dao.MensagemDao
 import com.conversa.app.core.model.StatusTranscricao
 import com.conversa.app.core.network.api.ConversaApi
@@ -13,8 +14,11 @@ import javax.inject.Singleton
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.combine
+import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 
@@ -22,8 +26,8 @@ import kotlinx.coroutines.launch
  * Transcrição de áudio (TODO 4.8, ANX-12, contrato §8.6). É por anexo: o resultado vai
  * para o Room em todas as mensagens com o mesmo identificador, e a tela lê da mensagem.
  * - [transcrever]: `PUT /anexo/transcricao`; processando → consulta a cada 3 s (como o web);
- * - servidor sem transcritor (400): [desligada] = true e os botões somem até o fim da
- *   sessão (até existir a pendência S10, que diria isso antes de tentar);
+ * - servidor sem transcritor: [desligada] = true e os botões somem. Vem do `GET /recursos`
+ *   (FC-419, [RecursosRepositorio]) e, enquanto ele não chega, do 400 ao pedir (até o fim da sessão);
  * - erro do transcritor (status 3): o motivo fica em [erros].
  */
 @Singleton
@@ -31,9 +35,12 @@ class TranscricoesRepositorio @Inject constructor(
     private val api: ConversaApi,
     private val mensagemDao: MensagemDao,
     @EscopoAplicacao private val escopo: CoroutineScope,
+    recursos: RecursosRepositorio,
 ) {
     private val _desligada = MutableStateFlow(false)
-    val desligada: StateFlow<Boolean> = _desligada.asStateFlow()
+    val desligada: StateFlow<Boolean> = combine(_desligada, recursos.recursos) { recusou, servidor ->
+        recusou || servidor?.transcricao == false
+    }.stateIn(escopo, SharingStarted.Eagerly, false)
 
     private val _erros = MutableStateFlow<Map<String, String>>(emptyMap())
 

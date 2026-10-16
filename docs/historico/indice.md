@@ -55,6 +55,7 @@
 - 2026-10-08 · [Etapa 4 — receber compartilhamento de outros apps](2026-10-08-04-etapa-4-receber-compartilhamento.md) — "Conversa" no compartilhar do Android, "Enviar para…", itens copiados para o cache, só `content://` de outro app; 205 testes
 - 2026-10-08 · [Etapa 4 — visualizador de PDF](2026-10-08-05-etapa-4-visualizador-pdf.md) — `PdfRenderer` sob demanda, zoom, "Página X de Y", Baixar/Abrir com…; 205 testes
 - 2026-10-08 · [Etapa 4 — colar imagem, HTML e economia de dados](2026-10-08-06-etapa-4-colar-html-economia.md) — campo em `TextFieldState` com `contentReceiver`, HTML com outro app, "Toque para carregar" com conexão lenta/economia; 211 testes
+- 2026-10-15 · [`GET /recursos`: "Transcrever" só com transcritor](2026-10-15-16-recursos-do-servidor.md) — `RecursosRepositorio` lê `{transcricao, ia}` a cada sessão; sem transcritor, o botão some desde a abertura (antes só depois do 400); testado no emulador contra o servidor de dev
 
 ## Notificações e push (etapa 5)
 - 2026-10-08 · [Etapa 5 — notificação de mensagem, canais, permissão e atalhos (sem o push)](2026-10-08-07-etapa-5-notificacoes-sem-push.md) — MessagingStyle por conversa com Responder/Marcar como lida, regra do web (som na frente, notificação em segundo plano), some ao ler/arquivar/abrir, atalhos; Firebase ⛔ (precisa do usuário); 214 testes

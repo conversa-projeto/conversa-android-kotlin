@@ -12,8 +12,10 @@ import com.conversa.app.core.network.dto.TranscricaoDto
 import com.google.common.truth.Truth.assertThat
 import io.mockk.coEvery
 import io.mockk.coVerify
+import io.mockk.every
 import io.mockk.mockk
 import java.time.Instant
+import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.test.TestScope
 import kotlinx.coroutines.test.advanceTimeBy
 import kotlinx.coroutines.test.runCurrent
@@ -50,7 +52,13 @@ class TranscricoesRepositorioTest {
     @After
     fun fechar() = banco.close()
 
-    private fun TestScope.repositorio() = TranscricoesRepositorio(api, banco.mensagemDao(), backgroundScope)
+    private val recursos = MutableStateFlow<com.conversa.app.core.model.Recursos?>(null)
+    private val repoRecursos = mockk<com.conversa.app.core.data.sistema.RecursosRepositorio> {
+        every { recursos } returns
+            this@TranscricoesRepositorioTest.recursos
+    }
+
+    private fun TestScope.repositorio() = TranscricoesRepositorio(api, banco.mensagemDao(), backgroundScope, repoRecursos)
 
     /** Duas mensagens com o mesmo áudio (encaminhado) e uma com outro. */
     private suspend fun salvarAudios() {
@@ -105,6 +113,21 @@ class TranscricoesRepositorioTest {
     }
 
     @Test
+    fun `GET recursos sem transcritor desliga os botoes antes de pedir, e com ele liga`() = runTest {
+        val repo = repositorio()
+        runCurrent()
+        assertThat(repo.desligada.value).isFalse()
+
+        recursos.value = com.conversa.app.core.model.Recursos(transcricao = false, ia = false)
+        runCurrent()
+        assertThat(repo.desligada.value).isTrue()
+
+        recursos.value = com.conversa.app.core.model.Recursos(transcricao = true, ia = false)
+        runCurrent()
+        assertThat(repo.desligada.value).isFalse()
+    }
+
+    @Test
     fun `servidor sem transcritor desliga os botoes`() = runTest {
         salvarAudios()
         coEvery { api.transcrever(any()) } throws HttpException(
@@ -113,10 +136,12 @@ class TranscricoesRepositorioTest {
         val repo = repositorio()
 
         assertThat(repo.transcrever("h2").isFailure).isTrue()
+        runCurrent()
         assertThat(repo.desligada.value).isTrue()
         assertThat(repo.pedindo.value).isEmpty()
 
         repo.limpar()
+        runCurrent()
         assertThat(repo.desligada.value).isFalse()
     }
 

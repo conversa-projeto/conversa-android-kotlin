@@ -10,6 +10,10 @@ import kotlinx.serialization.UseSerializers
 
 // Atividades, permissões, parâmetros e SIP (contrato §12, §13, §14).
 
+/** `GET /recursos` (servidor `769bd7d`): o transcritor e a IA configurados. */
+@Serializable
+data class RecursosDto(val transcricao: Boolean = false, val ia: Boolean = false)
+
 @Serializable
 data class AtividadeDto(
     val id: Long,

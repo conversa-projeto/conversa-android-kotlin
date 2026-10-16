@@ -55,6 +55,7 @@ import com.conversa.app.core.network.dto.PrivacidadeDto
 import com.conversa.app.core.network.dto.QuantidadeDto
 import com.conversa.app.core.network.dto.ReacaoRequisicao
 import com.conversa.app.core.network.dto.ReacaoResposta
+import com.conversa.app.core.network.dto.RecursosDto
 import com.conversa.app.core.network.dto.RecusarChamadaRequisicao
 import com.conversa.app.core.network.dto.RespostasVistasDto
 import com.conversa.app.core.network.dto.SipDto
@@ -320,6 +321,10 @@ interface ConversaApi {
 
     @DELETE("permissao/usuario")
     suspend fun retirarPermissao(@Query("usuario_id") usuarioId: Long, @Query("codigo") codigo: String): PermissaoUsuarioDto
+
+    /** O que o servidor tem ligado: transcritor e IA (GER-08). */
+    @GET("recursos")
+    suspend fun recursos(): RecursosDto
 
     @GET("parametros")
     suspend fun parametros(): ParametrosDto

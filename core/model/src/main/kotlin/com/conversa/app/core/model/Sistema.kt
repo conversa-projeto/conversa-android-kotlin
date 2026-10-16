@@ -80,3 +80,6 @@ fun Acessos.comPermissao(usuarioId: Long, codigo: String, concedida: Boolean): A
     },
     modoAberto = modoAberto && !(concedida && codigo == CodigoPermissao.PERMISSOES),
 )
+
+/** O que o servidor tem ligado (`GET /recursos`, GER-08): o transcritor e a IA. */
+data class Recursos(val transcricao: Boolean, val ia: Boolean)
