@@ -4,7 +4,7 @@
 - **Tipo:** código
 - **Itens:** `TODO.md` 8.8 (duas linhas do resumo); FC-811; CON-14
 - **Branch:** `reescrita`
-- **Commits:** (preencher)
+- **Commits:** `110f742`
 
 ## Contexto
 - **O servidor** (`b8ea0c2`, contrato §13.5) resume a conversa por IA em segundo plano. `POST /conversa/resumo {conversa_id, periodo}` devolve um id, e `GET /conversa/resumo?id=` consulta até `concluido` ou `erro`. O pedido vale 30 min, só na memória da API.
