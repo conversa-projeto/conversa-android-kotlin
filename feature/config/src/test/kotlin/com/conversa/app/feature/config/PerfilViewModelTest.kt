@@ -1,6 +1,7 @@
 package com.conversa.app.feature.config
 
 import android.net.Uri
+import com.conversa.app.core.data.anexos.PreparadorAvatar
 import com.conversa.app.core.data.perfil.PerfilRepositorio
 import com.conversa.app.core.model.Sessao
 import com.conversa.app.core.network.http.ErroApi
@@ -30,7 +31,7 @@ class PerfilViewModelTest {
         every { this@mockk.sessao } returns this@PerfilViewModelTest.sessao
         coEvery { urlDaFoto("foto") } returns Result.success("https://s/foto")
     }
-    private val preparador = mockk<PreparadorFotoDePerfil>()
+    private val preparador = mockk<PreparadorAvatar>()
     private var agora = Instant.parse("2026-10-09T12:00:00Z")
     private val relogio = object : Clock() {
         override fun getZone() = ZoneOffset.UTC

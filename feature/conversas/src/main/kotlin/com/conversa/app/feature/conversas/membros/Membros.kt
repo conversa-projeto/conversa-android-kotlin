@@ -1,5 +1,6 @@
 package com.conversa.app.feature.conversas.membros
 
+import android.net.Uri
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Row
@@ -45,7 +46,10 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewModelScope
 import com.conversa.app.core.data.SessaoRepositorio
 import com.conversa.app.core.data.contatos.ContatosRepositorio
+import com.conversa.app.core.data.conversas.AvatarDoGrupo
+import com.conversa.app.core.data.conversas.AvatarGrupo
 import com.conversa.app.core.data.conversas.ConversasRepositorio
+import com.conversa.app.core.data.conversas.ImagemIlegivelException
 import com.conversa.app.core.data.presenca.PresencaRepositorio
 import com.conversa.app.core.model.Contato
 import com.conversa.app.core.model.MembroConversa
@@ -61,6 +65,7 @@ import com.conversa.app.core.ui.estado.EventosUnicos
 import com.conversa.app.core.ui.estado.TextoUi
 import com.conversa.app.core.ui.estado.resolver
 import com.conversa.app.feature.conversas.R
+import com.conversa.app.feature.conversas.grupo.EscolhaAvatarGrupo
 import dagger.hilt.android.lifecycle.HiltViewModel
 import javax.inject.Inject
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -89,6 +94,10 @@ data class MembrosUiState(
     val saindo: Boolean = false,
     /** Quem está com o grupo aberto agora: " · nesta conversa" (PRE-03, web `PainelGrupo.vue`). */
     val presentes: Set<Long> = emptySet(),
+    /** Imagem e emoji do grupo (FC-217). */
+    val avatarUrl: String? = null,
+    val emoji: String? = null,
+    val alterandoAvatar: Boolean = false,
 ) {
     val podeRenomear: Boolean get() = nome.isNotBlank() && nome.trim() != nomeOriginal && !renomeando
 }
@@ -111,14 +120,25 @@ class MembrosViewModel @Inject constructor(
     contatos: ContatosRepositorio,
     sessao: SessaoRepositorio,
     private val presenca: PresencaRepositorio,
+    private val avatar: AvatarDoGrupo,
 ) : ViewModel() {
     private val conversaId: Long = checkNotNull(salvo["conversaId"])
     private val formulario = MutableStateFlow(MembrosUiState(euId = sessao.sessao.value?.usuarioId ?: 0))
     val eventos = EventosUnicos<EventoMembros>()
 
-    val estado: StateFlow<MembrosUiState> = combine(formulario, contatos.observarOutros(), presenca.presentes) { f, pessoas, presentes ->
+    val estado: StateFlow<MembrosUiState> = combine(
+        formulario,
+        contatos.observarOutros(),
+        presenca.presentes,
+        conversas.observar(conversaId),
+    ) { f, pessoas, presentes, conversa ->
         val dentro = f.membros.map { it.usuarioId }.toSet()
-        f.copy(candidatos = pessoas.filter { it.id !in dentro }, presentes = presentes[conversaId].orEmpty())
+        f.copy(
+            candidatos = pessoas.filter { it.id !in dentro },
+            presentes = presentes[conversaId].orEmpty(),
+            avatarUrl = conversa?.avatarUrl,
+            emoji = conversa?.emoji,
+        )
     }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), formulario.value)
 
     init {
@@ -142,6 +162,24 @@ class MembrosViewModel @Inject constructor(
     }
 
     fun alterarNome(texto: String) = formulario.update { it.copy(nome = texto.take(LIMITE_NOME)) }
+
+    // --- Imagem ou emoji do grupo (FC-217) ---
+
+    fun trocarImagem(uri: Uri) = alterarAvatar { avatar.enviarImagem(uri).map { AvatarGrupo.Imagem(it) } }
+
+    fun trocarEmoji(emoji: String) = alterarAvatar { Result.success(AvatarGrupo.Emoji(emoji)) }
+
+    fun removerAvatar() = alterarAvatar { Result.success(null) }
+
+    private fun alterarAvatar(escolher: suspend () -> Result<AvatarGrupo?>) {
+        if (formulario.value.alterandoAvatar) return
+        viewModelScope.launch {
+            formulario.update { it.copy(alterandoAvatar = true) }
+            val resultado = escolher().fold({ avatar.alterar(conversaId, it) }, { Result.failure(it) })
+            formulario.update { it.copy(alterandoAvatar = false) }
+            resultado.onFailure { falha -> eventos.enviar(EventoMembros.Aviso(textoDaFalhaDoAvatar(falha))) }
+        }
+    }
 
     fun renomear() {
         val atual = formulario.value
@@ -228,6 +266,18 @@ fun MembrosRotaTela(aoSair: () -> Unit, aoVoltar: () -> Unit, aoVerAnexos: () ->
             estado.erroCarga != null -> EstadoErro(estado.erroCarga!!, viewModel::carregar, Modifier.padding(margens))
             estado.semAcesso -> EstadoErro(stringResource(R.string.membros_sem_acesso), null, Modifier.padding(margens))
             else -> LazyColumn(Modifier.fillMaxSize().padding(margens)) {
+                item(key = "avatar") {
+                    EscolhaAvatarGrupo(
+                        nome = estado.nomeOriginal,
+                        url = estado.avatarUrl,
+                        emoji = estado.emoji,
+                        salvando = estado.alterandoAvatar,
+                        aoImagem = viewModel::trocarImagem,
+                        aoEmoji = viewModel::trocarEmoji,
+                        aoRemover = viewModel::removerAvatar,
+                        modifier = Modifier.padding(start = 16.dp, end = 16.dp, top = 16.dp),
+                    )
+                }
                 item(key = "nome") {
                     Row(
                         modifier = Modifier.fillMaxWidth().padding(16.dp),
@@ -351,3 +401,11 @@ fun MembrosRotaTela(aoSair: () -> Unit, aoVoltar: () -> Unit, aoVerAnexos: () ->
         )
     }
 }
+
+/** O aviso de quando a imagem ou o emoji do grupo não muda (como o web: o motivo, ou a imagem que não abre). */
+internal fun textoDaFalhaDoAvatar(falha: Throwable): TextoUi =
+    if (falha is ImagemIlegivelException) {
+        TextoUi.Recurso(R.string.grupo_imagem_ilegivel)
+    } else {
+        TextoUi.Literal(falha.paraErroApi().mensagemAmigavel())
+    }

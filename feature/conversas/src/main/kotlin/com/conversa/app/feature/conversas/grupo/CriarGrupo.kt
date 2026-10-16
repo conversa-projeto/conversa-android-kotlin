@@ -1,5 +1,6 @@
 package com.conversa.app.feature.conversas.grupo
 
+import android.net.Uri
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -41,6 +42,8 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewModelScope
 import com.conversa.app.core.data.contatos.ContatosRepositorio
+import com.conversa.app.core.data.conversas.AvatarDoGrupo
+import com.conversa.app.core.data.conversas.AvatarGrupo
 import com.conversa.app.core.data.conversas.ConversasRepositorio
 import com.conversa.app.core.model.avatarDoContato
 import com.conversa.app.core.model.contatoCombina
@@ -53,6 +56,7 @@ import com.conversa.app.core.ui.estado.TextoUi
 import com.conversa.app.core.ui.estado.resolver
 import com.conversa.app.feature.conversas.R
 import com.conversa.app.feature.conversas.lista.ItemContato
+import com.conversa.app.feature.conversas.membros.textoDaFalhaDoAvatar
 import dagger.hilt.android.lifecycle.HiltViewModel
 import javax.inject.Inject
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -71,6 +75,9 @@ data class CriarGrupoUiState(
     val selecionados: Set<Long> = emptySet(),
     val criando: Boolean = false,
     val erro: TextoUi? = null,
+    /** Imagem (prévia local; só sobe ao criar) ou emoji do grupo (FC-217). */
+    val imagem: Uri? = null,
+    val emoji: String? = null,
 )
 
 private data class Formulario(
@@ -79,6 +86,8 @@ private data class Formulario(
     val selecionados: Set<Long> = emptySet(),
     val criando: Boolean = false,
     val erro: TextoUi? = null,
+    val imagem: Uri? = null,
+    val emoji: String? = null,
 )
 
 /**
@@ -86,7 +95,11 @@ private data class Formulario(
  * `PUT /conversa {tipo:2}` e inclui cada marcado **e o criador**; depois abre o grupo.
  */
 @HiltViewModel
-class CriarGrupoViewModel @Inject constructor(private val conversas: ConversasRepositorio, contatos: ContatosRepositorio) : ViewModel() {
+class CriarGrupoViewModel @Inject constructor(
+    private val conversas: ConversasRepositorio,
+    contatos: ContatosRepositorio,
+    private val avatar: AvatarDoGrupo,
+) : ViewModel() {
     private val formulario = MutableStateFlow(Formulario())
     val aoCriar = EventosUnicos<Long>()
 
@@ -104,6 +117,8 @@ class CriarGrupoViewModel @Inject constructor(private val conversas: ConversasRe
             selecionados = f.selecionados,
             criando = f.criando,
             erro = f.erro,
+            imagem = f.imagem,
+            emoji = f.emoji,
         )
     }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), CriarGrupoUiState())
 
@@ -114,6 +129,13 @@ class CriarGrupoViewModel @Inject constructor(private val conversas: ConversasRe
     fun alternar(id: Long) = formulario.update {
         it.copy(selecionados = if (id in it.selecionados) it.selecionados - id else it.selecionados + id, erro = null)
     }
+
+    /** Imagem ou emoji do grupo (FC-217): um tira o outro; a imagem só sobe ao criar. */
+    fun escolherImagem(uri: Uri) = formulario.update { it.copy(imagem = uri, emoji = null) }
+
+    fun escolherEmoji(emoji: String) = formulario.update { it.copy(emoji = emoji, imagem = null) }
+
+    fun limparAvatar() = formulario.update { it.copy(imagem = null, emoji = null) }
 
     fun criar() {
         val atual = formulario.value
@@ -129,10 +151,21 @@ class CriarGrupoViewModel @Inject constructor(private val conversas: ConversasRe
         }
         viewModelScope.launch {
             formulario.update { it.copy(criando = true, erro = null) }
+            // Como o web: a imagem sobe antes; a imagem ou o emoji vão no grupo depois dos membros.
+            val escolhido = when {
+                atual.imagem != null -> avatar.enviarImagem(atual.imagem).map { AvatarGrupo.Imagem(it) }
+                atual.emoji != null -> Result.success(AvatarGrupo.Emoji(atual.emoji))
+                else -> Result.success(null)
+            }.getOrElse { falha ->
+                formulario.update { it.copy(criando = false, erro = textoDaFalhaDoAvatar(falha)) }
+                return@launch
+            }
             conversas.criarGrupo(atual.nome, atual.selecionados)
-                .onSuccess {
+                .onSuccess { id ->
+                    // O grupo já existe: se só a imagem ou o emoji falhar, ele abre assim mesmo.
+                    escolhido?.let { avatar.alterar(id, it) }
                     formulario.update { f -> f.copy(criando = false) }
-                    aoCriar.enviar(it)
+                    aoCriar.enviar(id)
                 }
                 .onFailure { falha ->
                     formulario.update { it.copy(criando = false, erro = TextoUi.Literal(falha.paraErroApi().mensagemAmigavel())) }
@@ -177,6 +210,16 @@ fun CriarGrupoRotaTela(
         },
     ) { margens ->
         Column(Modifier.fillMaxSize().padding(margens).imePadding()) {
+            EscolhaAvatarGrupo(
+                nome = nome,
+                url = estado.imagem?.toString(),
+                emoji = estado.emoji,
+                salvando = estado.criando,
+                aoImagem = viewModel::escolherImagem,
+                aoEmoji = viewModel::escolherEmoji,
+                aoRemover = viewModel::limparAvatar,
+                modifier = Modifier.padding(start = 16.dp, end = 16.dp, top = 8.dp),
+            )
             OutlinedTextField(
                 value = nome,
                 onValueChange = {

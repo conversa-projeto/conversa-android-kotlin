@@ -4,6 +4,7 @@ import android.net.Uri
 import androidx.compose.runtime.Immutable
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.conversa.app.core.data.anexos.PreparadorAvatar
 import com.conversa.app.core.data.perfil.PerfilRepositorio
 import com.conversa.app.core.model.ErroSenha
 import com.conversa.app.core.model.dadosDoPerfilValidos
@@ -53,7 +54,7 @@ private data class Andamento(
 @HiltViewModel
 class PerfilViewModel @Inject constructor(
     private val perfil: PerfilRepositorio,
-    private val preparador: PreparadorFotoDePerfil,
+    private val preparador: PreparadorAvatar,
     relogio: Clock,
 ) : ViewModel() {
     private val andamento = MutableStateFlow(Andamento())

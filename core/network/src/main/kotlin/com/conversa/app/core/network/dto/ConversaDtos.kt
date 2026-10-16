@@ -7,6 +7,7 @@ import java.time.Instant
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.UseSerializers
+import kotlinx.serialization.json.JsonElement
 
 // Conversas e membros (contrato §11).
 
@@ -44,7 +45,14 @@ data class ConversaCriadaDto(
 )
 
 @Serializable
-data class AlterarConversaRequisicao(val id: Long, val descricao: String)
+data class AlterarConversaRequisicao(
+    val id: Long,
+    val descricao: String? = null,
+    /** Imagem do grupo (FC-217); [nuloExplicito] tira. */
+    @SerialName("avatar_anexo_id") val avatarAnexoId: JsonElement? = null,
+    /** Emoji do grupo; [nuloExplicito] tira. */
+    val emoji: JsonElement? = null,
+)
 
 @Serializable
 data class FixadasDto(val conversas: List<Long>)

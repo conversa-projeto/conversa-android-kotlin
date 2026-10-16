@@ -80,4 +80,10 @@
     <!-- Lista (🆕 web 769bd7d/e33ecba): a seção dos chats de ligação e o ícone de grupo -->
     <string name="chamadas_n">Chamadas (%1$d)</string>
     <string name="conversa_em_grupo">Conversa em grupo</string>
+    <!-- Imagem ou emoji do grupo (FC-217, web PainelGrupo.vue e CreateGroupModal.vue) -->
+    <string name="grupo_imagem">Imagem</string>
+    <string name="grupo_emoji">Emoji</string>
+    <string name="grupo_remover_avatar">Remover</string>
+    <string name="grupo_salvando_avatar">Salvando…</string>
+    <string name="grupo_imagem_ilegivel">Não foi possível ler a imagem.</string>
 </resources>

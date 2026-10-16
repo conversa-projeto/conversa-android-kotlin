@@ -2,7 +2,7 @@ package com.conversa.app.core.data.perfil
 
 import com.conversa.app.core.data.SessaoRepositorio
 import com.conversa.app.core.data.anexos.AnexosRepositorio
-import com.conversa.app.core.data.anexos.FonteArquivo
+import com.conversa.app.core.data.anexos.ImagemEmMemoria
 import com.conversa.app.core.model.Privacidade
 import com.conversa.app.core.model.Sessao
 import com.conversa.app.core.model.TipoConteudo
@@ -11,20 +11,10 @@ import com.conversa.app.core.network.dto.AlterarSenhaRequisicao
 import com.conversa.app.core.network.dto.AlterarUsuarioRequisicao
 import com.conversa.app.core.network.http.chamarApi
 import com.conversa.app.core.network.json.nuloExplicito
-import java.io.ByteArrayInputStream
 import javax.inject.Inject
 import javax.inject.Singleton
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.serialization.json.JsonPrimitive
-
-/** A foto de perfil já recortada (JPEG em memória), como arquivo para o envio de anexos. */
-private class FotoDePerfil(private val jpeg: ByteArray) : FonteArquivo {
-    override val nome = "avatar.jpg"
-    override val tamanho = jpeg.size.toLong()
-    override val mime = "image/jpeg"
-
-    override fun abrir() = ByteArrayInputStream(jpeg)
-}
 
 /**
  * Perfil do usuário logado (8.3, FC-802, AUT-06/07/08), como o `ProfileSettingsModal.vue`:
@@ -78,7 +68,7 @@ class PerfilRepositorio @Inject constructor(
     /** Sobe a foto ([jpeg], já 256×256) e a põe no perfil. */
     suspend fun trocarFoto(jpeg: ByteArray): Result<Unit> {
         val sessao = atual()
-        val anexo = anexos.enviar(FotoDePerfil(jpeg), TipoConteudo.IMAGEM).getOrElse { return Result.failure(it) }
+        val anexo = anexos.enviar(ImagemEmMemoria(jpeg), TipoConteudo.IMAGEM).getOrElse { return Result.failure(it) }
         return chamarApi { api.alterarUsuario(AlterarUsuarioRequisicao(sessao.usuarioId, avatarAnexoId = JsonPrimitive(anexo.id))) }
             .map { sessoes.salvar(atual().copy(avatarIdentificador = anexo.identificador)) }
     }

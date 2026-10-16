@@ -205,6 +205,24 @@ class DesserializacaoTest {
     }
 
     @Test
+    fun `imagem ou emoji do grupo manda os dois campos, um deles nulo`() {
+        fun json(corpo: AlterarConversaRequisicao) = ConversaJson.encodeToString(AlterarConversaRequisicao.serializer(), corpo)
+
+        assertThat(
+            json(
+                AlterarConversaRequisicao(
+                    3,
+                    avatarAnexoId = kotlinx.serialization.json.JsonPrimitive(12),
+                    emoji = com.conversa.app.core.network.json.nuloExplicito,
+                ),
+            ),
+        )
+            .isEqualTo("""{"id":3,"avatar_anexo_id":12,"emoji":null}""")
+        // Renomear continua só com a descrição.
+        assertThat(json(AlterarConversaRequisicao(3, "Novo nome"))).isEqualTo("""{"id":3,"descricao":"Novo nome"}""")
+    }
+
+    @Test
     fun `privacidade vai so com a chave que mudou`() {
         assertThat(ConversaJson.encodeToString(AlterarUsuarioRequisicao.serializer(), AlterarUsuarioRequisicao(7, aparecerOffline = true)))
             .isEqualTo("""{"id":7,"aparecer_offline":true}""")

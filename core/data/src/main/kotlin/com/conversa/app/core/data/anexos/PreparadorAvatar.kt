@@ -1,4 +1,4 @@
-package com.conversa.app.feature.config
+package com.conversa.app.core.data.anexos
 
 import android.content.Context
 import android.graphics.Bitmap
@@ -14,11 +14,11 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 
 /**
- * Prepara a foto escolhida como o web (`redimensionarImagem`): o quadrado do meio, reduzido a
+ * Prepara a foto de perfil ou a imagem do grupo (FC-217) como o web (`redimensionarImagem`): o quadrado do meio, reduzido a
  * 256×256, em JPEG 85%. O `ImageDecoder` já gira pela orientação do EXIF; fotos grandes são
  * lidas reduzidas para não estourar a memória. Nulo = não deu para ler a imagem.
  */
-class PreparadorFotoDePerfil @Inject constructor(@ApplicationContext private val contexto: Context) {
+class PreparadorAvatar @Inject constructor(@ApplicationContext private val contexto: Context) {
     suspend fun preparar(uri: Uri): ByteArray? = withContext(Dispatchers.Default) {
         runCatching {
             val fonte = ImageDecoder.createSource(contexto.contentResolver, uri)
