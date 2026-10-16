@@ -214,6 +214,9 @@ interface AtividadeDao {
     @Query("SELECT * FROM atividade ORDER BY id DESC")
     fun observarTodas(): Flow<List<AtividadeEntidade>>
 
+    @Query("SELECT COUNT(*) FROM atividade")
+    suspend fun quantas(): Int
+
     @Upsert
     suspend fun salvar(atividades: List<AtividadeEntidade>)
 

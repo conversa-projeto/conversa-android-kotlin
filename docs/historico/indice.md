@@ -116,6 +116,7 @@
 - 2026-10-09 · [Etapa 8 — anexos da conversa](2026-10-09-08-etapa-8-anexos-da-conversa.md) — "Ver anexos" (perfil e grupo): filtros, grade de imagens, lista, "Abrir mensagem", "Baixar", 60 por página; imagem e vídeo no visualizador do chat; a etapa 8 fecha
 - 2026-10-15 · [Pesquisa na conversa com os chats das ligações, painel novo e destaque em faixa](2026-10-15-07-pesquisa-chats-das-ligacoes.md) — sem o filtro que descartava os chats das ligações; selo "no chat da ligação" e o toque abre aquela conversa; contagem, "Você", ordem do web; destaque de 1,5 s que some em 0,7 s; testado no emulador
 - 2026-10-15 · [Configurações › Privacidade](2026-10-15-12-privacidade.md) — "Aparecer offline", "Mostrar o visto por último" e "Mostrar quando estou na conversa" (textos do web); `GET /usuario/privacidade` e `PATCH /usuario` só com a chave; offline desabilita as outras; testado no emulador com o C ouvindo o WS 60
+- 2026-10-15 · [Resposta ou menção lida no chat deixa de contar como nova](2026-10-15-21-atividade-lida-no-chat.md) — o WS 61 com a aba fechada relê também a lista guardada; no emulador o contador caiu ao ler a resposta e ela ficou sem "Nova"
 
 ## Extras — SIP, compartilhar tela (etapa 9)
 _(nada ainda)_

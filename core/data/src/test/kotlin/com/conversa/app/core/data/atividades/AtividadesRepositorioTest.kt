@@ -78,4 +78,20 @@ class AtividadesRepositorioTest {
         repo.aoReceberAviso()
         assertThat(repo.novas.value).isEqualTo(4)
     }
+
+    @Test
+    fun `aviso com a aba fechada rele a lista guardada e a resposta lida perde o Nova`() = runTest {
+        val repo = AtividadesRepositorio(api, banco.atividadeDao())
+        coEvery { api.atividades(0, 30) } returns pagina(10, 3)
+        repo.carregar()
+        // A resposta 10 foi lida no chat: o servidor manda o WS 61 e ela não é mais nova (e25c4db).
+        coEvery { api.atividadesNovas() } returns QuantidadeDto(2)
+        coEvery { api.atividades(0, 30) } returns pagina(10, 3).map { if (it.id == 10L) it.copy(nova = false) else it }
+
+        repo.aoReceberAviso()
+
+        assertThat(repo.novas.value).isEqualTo(2)
+        assertThat(repo.observar().first().first { it.id == 10L }.nova).isFalse()
+        coVerify(exactly = 0) { api.marcarAtividadesVistas() }
+    }
 }

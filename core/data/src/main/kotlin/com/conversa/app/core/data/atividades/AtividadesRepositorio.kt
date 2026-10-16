@@ -60,9 +60,19 @@ class AtividadesRepositorio @Inject constructor(private val api: ConversaApi, pr
         aberta = false
     }
 
-    /** WS 61: com a aba aberta, recarrega e marca como vistas; fechada, só o contador. */
+    /**
+     * WS 61: com a aba aberta, recarrega e marca como vistas; fechada, o contador e, se já há
+     * lista guardada, a primeira página de novo. O aviso também vem quando uma resposta ou menção
+     * é lida no chat (servidor `e25c4db`, ATV-01): ela deixa de ser "Nova", e a lista guardada
+     * acompanha, sem mostrar a marca velha ao abrir a aba.
+     */
     suspend fun aoReceberAviso() {
-        if (aberta) abrir() else atualizarNovas()
+        if (aberta) {
+            abrir()
+            return
+        }
+        atualizarNovas()
+        if (dao.quantas() > 0) carregar()
     }
 
     /** Saiu da conta (o banco é limpo à parte). */
