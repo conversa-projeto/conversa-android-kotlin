@@ -63,6 +63,7 @@
 ## Notificações e push (etapa 5)
 - 2026-10-08 · [Etapa 5 — notificação de mensagem, canais, permissão e atalhos (sem o push)](2026-10-08-07-etapa-5-notificacoes-sem-push.md) — MessagingStyle por conversa com Responder/Marcar como lida, regra do web (som na frente, notificação em segundo plano), some ao ler/arquivar/abrir, atalhos; Firebase ⛔ (precisa do usuário); 214 testes
 - 2026-10-15 · [Notificação de resposta a postagem](2026-10-15-09-notificacao-resposta-postagem.md) — WS 64 de outra pessoa → "<nome> respondeu a uma postagem" na notificação da conversa (mesma regra das mensagens); "Marcar como lida"/"Responder" também marcam as respostas (`POST /postagem/visualizar`); testado no emulador
+- 2026-10-15 · [Avatar na notificação de mensagem](2026-10-15-25-avatar-na-notificacao.md) — o atalho da conversa com a foto, o emoji ou a inicial, e o `Person` com a foto de quem mandou; no emulador, o 🎂 do "Aniversario" e a foto de um grupo
 
 ## Chamadas (etapa 6)
 - 2026-10-08 · [Etapa 6 — módulos de chamada e a máquina de estados](2026-10-08-08-etapa-6-maquina-de-estados-chamada.md) — `:core:webrtc` (interface `MidiaChamada`) e `:feature:chamada` (`GerenciadorChamadas`): fases, eventos 51–57, pendentes, regras do web (ocupado, 30 s, 25 s, 55 sem 52…), monitor de 4 s; 51 testes com eventos duplicados e fora de ordem

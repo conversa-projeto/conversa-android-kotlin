@@ -558,7 +558,7 @@
 ### 5.4 Notificação de mensagem (FC-602, FC-603, NOT-01, NOT-02)
 - [ ] Push `data {titulo, mensagem, conversa}` → sincronizar (`SyncManager`) → montar a notificação — 🔄 sincronizar → montar já funciona: o `SyncManager.novasDeOutros` avisa as conversas com mensagem nova de outra pessoa e o `NotificadorMensagens` monta a notificação (testado no emulador com o app em segundo plano, dentro dos 10 s em que o WebSocket ainda fica ligado); falta o push (⛔ 5.1)
 - [x] MessagingStyle por conversa, com id de notificação = id da conversa (sem colisão) — tag "conversa" + id; montada das não lidas do Room (até 7); grupo com título; categoria mensagem; aparece como "conversa" no Android (atalho) ✔ 199ce1b
-- [ ] Título = nome do remetente/grupo; avatar como ícone grande; corpo resumido ("Imagem", "Gravação de áudio", "Figurinha", "Arquivo"…) — 🔄 título e corpo prontos (`resumoDaMensagem`, a mesma regra da citação/web); falta o avatar (hoje o Android mostra a inicial)
+- [x] Título = nome do remetente/grupo; avatar como ícone grande; corpo resumido ("Imagem", "Gravação de áudio", "Figurinha", "Arquivo"…) — título e corpo (`resumoDaMensagem`, a mesma regra da citação/web); avatar: `IconesDeAvatar` põe no atalho da conversa a foto, o emoji ou a inicial, e no `Person` a foto de quem mandou. No emulador: o 🎂 do "Aniversario" e a foto de um grupo na notificação ✔ HASH
 - [x] Com o app aberto (via WS): não notificar se a conversa está aberta na tela — `decidirAviso` (regra do web): na frente com a conversa na tela, nada; na frente em outra tela, só o som; em segundo plano, a notificação (+ teste). `ConversaEmTela` marcada pelo `ON_RESUME`/`ON_PAUSE` do chat. No emulador: com o app na lista, nenhuma notificação ✔ 199ce1b
 - [x] Nunca notificar conversas arquivadas — `decidirAviso` (+ teste) ✔ 199ce1b
 - [x] Toque → deep link para a conversa — `conversa://chat/{id}` na `MainActivity`. No emulador: o toque abriu a conversa na mensagem ✔ 199ce1b
@@ -966,6 +966,6 @@
 
 ## Revisão periódica
 - [ ] Marcar o que foi feito neste TODO (com o commit) — última vez: 2026-10-15 (fechadas as linhas do `:core:webrtc`, dos módulos de feature e do teste de migração; antes, 2026-10-09)
-- [ ] Atualizar `docs/auditoria-2026-10/05-matriz-paridade.md` — última vez: 2026-10-15 (coluna "Nova base" e placar: 131 de 153 prontas)
+- [ ] Atualizar `docs/auditoria-2026-10/05-matriz-paridade.md` — última vez: 2026-10-15 (coluna "Nova base" e placar: 132 de 153 prontas)
 - [ ] Ver se o servidor mudou: `git -C ../conversa log --since="1 week ago" --oneline`; se mudou o contrato → atualizar o doc 01 e as fixtures — última vez: 2026-10-15 (nada depois de `e25c4db`)
 - [ ] Ver se o web ganhou funcionalidade nova: `git -C ../conversa-web log --since="1 week ago" --oneline` → acrescentar aqui — última vez: 2026-10-15 (nada depois de `8b43965`)

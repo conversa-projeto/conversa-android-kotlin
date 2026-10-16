@@ -211,3 +211,6 @@ internal val ConversaCoresEscuro = ConversaCoresClaro.copy(
 )
 
 val LocalConversaCores = staticCompositionLocalOf { ConversaCoresClaro }
+
+/** As cores do tema fora do Compose (ex.: o ícone de avatar da notificação, que o sistema desenha). */
+fun coresDoTema(escuro: Boolean): ConversaCores = if (escuro) ConversaCoresEscuro else ConversaCoresClaro

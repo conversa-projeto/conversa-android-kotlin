@@ -45,6 +45,7 @@ import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.launchIn
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.onEach
+import kotlinx.coroutines.withTimeoutOrNull
 
 /** O que fazer com uma mensagem nova de outra pessoa (NOT-01/NOT-02, como o web). */
 enum class AvisoMensagem { NOTIFICAR, SOM, NADA }
@@ -81,10 +82,14 @@ class NotificadorMensagens @Inject constructor(
     private val contatos: ContatosRepositorio,
     private val primeiroPlano: MonitorPrimeiroPlano,
     private val emTela: ConversaEmTela,
+    private val icones: IconesDeAvatar,
     @EscopoAplicacao private val escopo: CoroutineScope,
 ) {
     private val gerenciador = NotificationManagerCompat.from(contexto)
     private var ultimoSomMs = 0L
+
+    /** Fotos dos membros de cada grupo (id → URL) e quando foram lidas: as URLs vencem em 10 min. */
+    private val fotosDosMembros = mutableMapOf<Long, Pair<Long, Map<Long, String?>>>()
 
     /** Respostas de postagem já avisadas, por conversa: ficam na notificação até ela sumir. */
     private val respostasAvisadas = mutableMapOf<Long, MutableList<Linha>>()
@@ -189,6 +194,8 @@ class NotificadorMensagens @Inject constructor(
     /** Fim da sessão: notificações e atalhos de conversa somem (podem ser de outra conta). */
     fun limpar() {
         synchronized(respostasAvisadas) { respostasAvisadas.clear() }
+        synchronized(fotosDosMembros) { fotosDosMembros.clear() }
+        icones.limpar()
         gerenciador.cancelAll()
         ShortcutManagerCompat.removeAllDynamicShortcuts(contexto)
         runCatching {
@@ -205,19 +212,26 @@ class NotificadorMensagens @Inject constructor(
         gerenciador.activeNotifications.filter { it.tag == TAG }.map { it.id.toLong() }.toSet()
     }.getOrDefault(emptySet())
 
-    private fun mostrar(conversa: Conversa, linhas: List<Linha>) {
+    private suspend fun mostrar(conversa: Conversa, linhas: List<Linha>) {
         if (!podeNotificar()) return
         val grupo = conversa.tipo == TipoConversa.GRUPO
         val eu = Person.Builder().setName(contexto.getString(R.string.notificacao_voce)).setKey("eu").build()
         val estilo = NotificationCompat.MessagingStyle(eu).setGroupConversation(grupo)
         if (grupo) estilo.conversationTitle = conversa.titulo
+        // NOT-02: a foto de quem mandou (na direta, a da conversa); sem foto, o sistema desenha a inicial.
+        val fotos = if (grupo) fotosDosMembros(conversa.id) else emptyMap()
         linhas.forEach { linha ->
-            val pessoa = Person.Builder().setName(linha.nome).setKey("u${linha.usuarioId}").build()
+            val url = if (grupo) fotos[linha.usuarioId] else conversa.avatarUrl
+            val pessoa = Person.Builder().setName(linha.nome).setKey("u${linha.usuarioId}")
+                .setIcon(icones.daPessoa(linha.usuarioId, url))
+                .build()
             estilo.addMessage(linha.texto, linha.quando, pessoa)
         }
-        val atalho = publicarAtalho(conversa)
+        // O avatar grande do Android 11+ vem do atalho da conversa: a foto, o emoji ou a inicial.
+        val atalho = publicarAtalho(conversa, icones.daConversa(conversa))
         val notificacao = NotificationCompat.Builder(contexto, CanaisNotificacao.MENSAGENS)
             .setSmallIcon(R.drawable.ic_notificacao)
+            .apply { if (Build.VERSION.SDK_INT < Build.VERSION_CODES.R) setLargeIcon(icones.fotoGuardada(conversa)) }
             .setStyle(estilo)
             .setShortcutId(atalho)
             .setCategory(NotificationCompat.CATEGORY_MESSAGE)
@@ -247,13 +261,28 @@ class NotificadorMensagens @Inject constructor(
         )
     }
 
-    /** Atalho de longa duração da conversa (FC-608): exigido para a notificação ser "conversa" no Android 11+. */
-    private fun publicarAtalho(conversa: Conversa): String {
+    /** Fotos dos membros do grupo, lidas de novo a cada [VALIDADE_FOTOS_MS]; sem rede, as últimas (ou nenhuma). */
+    private suspend fun fotosDosMembros(conversaId: Long): Map<Long, String?> {
+        val agora = System.currentTimeMillis()
+        val guardadas = synchronized(fotosDosMembros) { fotosDosMembros[conversaId] }
+        if (guardadas != null && agora - guardadas.first < VALIDADE_FOTOS_MS) return guardadas.second
+        val membros = withTimeoutOrNull(ESPERA_MEMBROS_MS) { conversas.membros(conversaId).getOrNull() }
+            ?: return guardadas?.second.orEmpty()
+        val fotos = membros.associate { it.usuarioId to it.avatarUrl }
+        synchronized(fotosDosMembros) { fotosDosMembros[conversaId] = agora to fotos }
+        return fotos
+    }
+
+    /**
+     * Atalho de longa duração da conversa (FC-608): exigido para a notificação ser "conversa" no Android 11+.
+     * O [icone] é o avatar da conversa (NOT-02); sem ele, o guardado ou o desenho, sem ir à rede.
+     */
+    private fun publicarAtalho(conversa: Conversa, icone: IconCompat = icones.guardadoDaConversa(conversa)): String {
         val id = "conversa-${conversa.id}"
         val atalho = ShortcutInfoCompat.Builder(contexto, id)
             .setShortLabel(conversa.titulo)
             .setLongLived(true)
-            .setIcon(IconCompat.createWithResource(contexto, R.mipmap.ic_launcher))
+            .setIcon(icone)
             .setIntent(intencaoDaConversa(conversa.id))
             .build()
         runCatching { ShortcutManagerCompat.pushDynamicShortcut(contexto, atalho) }
@@ -322,5 +351,7 @@ class NotificadorMensagens @Inject constructor(
         private const val TEMPO_RESPOSTA_VISIVEL_MS = 2_000L
         private const val ATALHOS_RECENTES = 4
         private const val INTERVALO_SOM_MS = 1_500L
+        private const val VALIDADE_FOTOS_MS = 5 * 60_000L
+        private const val ESPERA_MEMBROS_MS = 3_000L
     }
 }

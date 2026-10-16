@@ -94,16 +94,16 @@ A coluna **Fase** indica em que fase do plano da nova base (doc 07) a funcionali
 | PES | 2 | 2 | 0 | 0 | 0 | 0 |
 | CHA | 26 | 24 | 0 | 0 | 2 | 0 |
 | SIP | 5 | 0 | 0 | 0 | 5 | 0 |
-| NOT | 6 | 4 | 1 | 1 | 0 | 0 |
+| NOT | 6 | 5 | 0 | 1 | 0 | 0 |
 | PRE | 3 | 3 | 0 | 0 | 0 | 0 |
 | ATV | 3 | 3 | 0 | 0 | 0 | 0 |
 | CFG | 10 | 6 | 1 | 0 | 1 | 2 |
 | GER | 8 | 6 | 1 | 0 | 0 | 1 |
-| **Total** | **153** | **131** | **4** | **3** | **11** | **4** |
+| **Total** | **153** | **132** | **3** | **3** | **11** | **4** |
 
 > Requisitos exclusivos do Android (AND, fora da contagem): 16 — 13 ✅, 2 🟡, 1 ⛔, 0 ⬜, 0 ➖.
 >
-> **Leitura:** 🆕 (2026-10-15, fim do dia) 131 de 153 funcionalidades estão prontas na nova base, e 4 estão em parte. As três quebras da sincronização com o servidor `12cf0cf` (o contador preso pelas respostas de postagem, as figurinhas Noto e o "Chamar de novo" que não tocava) foram corrigidas no 8.7, e as funcionalidades novas do servidor e do web foram feitas, menos as de IA (CON-14, ENV-25, CFG-07), que dependem do servidor de IA.
+> **Leitura:** 🆕 (2026-10-15, fim do dia) 132 de 153 funcionalidades estão prontas na nova base, e 3 estão em parte. As três quebras da sincronização com o servidor `12cf0cf` (o contador preso pelas respostas de postagem, as figurinhas Noto e o "Chamar de novo" que não tocava) foram corrigidas no 8.7, e as funcionalidades novas do servidor e do web foram feitas, menos as de IA (CON-14, ENV-25, CFG-07), que dependem do servidor de IA.
 > - **Bloqueadas (⛔):** dependem de algo fora do app: o push (Firebase, NOT-04) ou a decisão do campo rico (FC-416).
 > - **Por fazer (⬜):** a etapa 9 (SIP, compartilhar tela, Bubbles), as funções de IA (CON-14, ENV-25) e um item P3 fora do TODO.
 > - **Falta conferir:** as células com "falta conferir" ou "em aparelho" estão prontas, mas esperam um teste que o emulador não permite.
@@ -279,7 +279,7 @@ A coluna **Fase** indica em que fase do plano da nova base (doc 07) a funcionali
 | ID | Funcionalidade | Legado | Nova base | Situação / evidência (legado) | Adaptação Android | Fase | Prio |
 |---|---|---|---|---|---|---|---|
 | NOT-01 | Som de mensagem (exceto conversa aberta e arquivadas) | 🟡 | ✅ 5.4 · com o app aberto ou até 10 s em segundo plano; fechado, depende do push (NOT-04) | Toca; não respeita as arquivadas (não existem) | Canal de notificação; supressão na conversa aberta | F5 | P0 |
-| NOT-02 | Notificação por conversa (agrupada, avatar, resposta direta) | 🔴 | 🟡 5.4 · falta o avatar como ícone; em segundo plano, depende do push (NOT-04) | Com o payload real, tudo cai na "conversa 0" (#14) | MessagingStyle + RemoteInput + atalhos de conversa (Conversation shortcuts) — 🆕 `d202c06`: notificação "<nome> respondeu a uma postagem" (WS 64) | F5 | P0 |
+| NOT-02 | Notificação por conversa (agrupada, avatar, resposta direta) | 🔴 | ✅ 5.4 · 🆕 avatar na notificação `HASH` · em segundo plano, depende do push (NOT-04) | Com o payload real, tudo cai na "conversa 0" (#14) | MessagingStyle + RemoteInput + atalhos de conversa (Conversation shortcuts) — 🆕 `d202c06`: notificação "<nome> respondeu a uma postagem" (WS 64) | F5 | P0 |
 | NOT-03 | Fechar a notificação ao ler ou arquivar | ⬜ | ✅ 5.6, 2.8, 3.8 · `199ce1b` | — | Cancelar por `conversa_id` | F5 | P1 |
 | NOT-04 | Push em segundo plano (FCM) | 🔴 | ⛔ 5.1 · precisa do projeto Firebase (`google-services.json`); para chamadas, também do S1 no servidor | Inoperante (#5) e formato divergente (Q7) | `google-services.json`, plugin, `data {titulo, mensagem, conversa}` | F5 | P0 |
 | NOT-05 | Notificação de chamada | 🟡 | ✅ 6.5 · `ceeec72` · com o app fechado, depende do push (NOT-04) | CallStyle existe; atender quebrado (#3); toque calado (#7) | Core-Telecom + CallStyle | F6 | P0 |
