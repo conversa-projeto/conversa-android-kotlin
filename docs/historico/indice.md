@@ -123,6 +123,7 @@
 - 2026-10-15 · [Configurações › Privacidade](2026-10-15-12-privacidade.md) — "Aparecer offline", "Mostrar o visto por último" e "Mostrar quando estou na conversa" (textos do web); `GET /usuario/privacidade` e `PATCH /usuario` só com a chave; offline desabilita as outras; testado no emulador com o C ouvindo o WS 60
 - 2026-10-15 · [Resposta ou menção lida no chat deixa de contar como nova](2026-10-15-21-atividade-lida-no-chat.md) — o WS 61 com a aba fechada relê também a lista guardada; no emulador o contador caiu ao ler a resposta e ela ficou sem "Nova"
 - 2026-10-15 · [Atividades pendentes até concluir](2026-10-15-27-atividades-pendentes.md) — servidor `ef13c22`: `pendente` no lugar de `nova` (Room v8), contador de pendentes, "Marcar como concluída", reações vistas no chat e o tipo 5 (pedido de confirmação); testado no emulador
+- 2026-10-16 · [Acessos com as permissões de uso](2026-10-16-01-acessos-com-permissoes-de-uso.md) — as 32 permissões em grupos, como o web: cada pessoa se abre ("Administração", "N de M"), com os nomes curtos e as próprias marcadas travadas; testado no emulador
 
 ## Extras — SIP, compartilhar tela (etapa 9)
 _(nada ainda)_

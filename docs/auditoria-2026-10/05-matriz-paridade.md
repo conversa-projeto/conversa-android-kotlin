@@ -99,13 +99,13 @@ A coluna **Fase** indica em que fase do plano da nova base (doc 07) a funcionali
 | NOT | 6 | 5 | 0 | 1 | 0 | 0 |
 | PRE | 3 | 3 | 0 | 0 | 0 | 0 |
 | ATV | 5 | 5 | 0 | 0 | 0 | 0 |
-| CFG | 14 | 5 | 2 | 0 | 5 | 2 |
+| CFG | 14 | 6 | 1 | 0 | 5 | 2 |
 | GER | 10 | 6 | 1 | 0 | 1 | 2 |
-| **Total** | **163** | **130** | **7** | **3** | **17** | **6** |
+| **Total** | **163** | **131** | **6** | **3** | **17** | **6** |
 
 > Requisitos exclusivos do Android (AND, fora da contagem): 16 — 13 ✅, 2 🟡, 1 ⛔, 0 ⬜, 0 ➖.
 >
-> **Leitura:** 🆕 (2026-10-15, depois do servidor `ef13c22` e do web `9c6e8a6`) 130 de 163 funcionalidades estão prontas na nova base, e 7 estão em parte. A sincronização trouxe 10 funcionalidades (bots, permissões de uso, administração e atividades pendentes); a quebra das atividades (`nova` → `pendente`) já foi corrigida (`2219208`). Ficaram em parte o cadastro fechado (AUT-02), a duração e a onda do áudio (ANX-10, ANX-11) e a tela de Acessos com as 32 permissões (CFG-08).
+> **Leitura:** 🆕 (2026-10-15, depois do servidor `ef13c22` e do web `9c6e8a6`) 131 de 163 funcionalidades estão prontas na nova base, e 6 estão em parte. A sincronização trouxe 10 funcionalidades (bots, permissões de uso, administração e atividades pendentes); a quebra das atividades (`nova` → `pendente`) já foi corrigida (`2219208`). Ficaram em parte o cadastro fechado (AUT-02), a duração e a onda do áudio (ANX-10, ANX-11); a tela de Acessos com as 32 permissões (CFG-08) já voltou a ✅.
 > - **Bloqueadas (⛔):** dependem de algo fora do app: o push (Firebase, NOT-04) ou a decisão do campo rico (FC-416).
 > - **Por fazer (⬜):** a etapa 9 (SIP, compartilhar tela, Bubbles), as funções de IA (CON-14, ENV-25), as permissões de uso (GER-09), os bots (CON-16), a administração de usuários, bots, ferramentas e conhecimento (CFG-11…14, a avaliar) e um item P3 fora do TODO.
 > - **Falta conferir:** as células com "falta conferir" ou "em aparelho" estão prontas, mas esperam um teste que o emulador não permite.
@@ -318,7 +318,7 @@ A coluna **Fase** indica em que fase do plano da nova base (doc 07) a funcionali
 | CFG-05 | Cores personalizadas | ➖ | ➖ só as cores do `cores.md`; a etapa 9 lista "cor de destaque" para avaliar | — | Avaliar: cor primária/Material You. Não replicar o editor completo | F8 | P3 |
 | CFG-06 | Qualidade das chamadas | ⬜ | ✅ 8.5 · `705ee2e` · vale a partir da próxima chamada | — | = CHA-20 | F7 | P2 |
 | CFG-07 | Sistema — parâmetros do servidor (permissão `parametros`) | ⬜ | 🟡 8.5 · `afd3269` · 🆕 falta a seção "Inteligência artificial" (FC-812, avaliar) | — | Tela administrativa (FCM, TURN, gravações, transcritor) — 🆕 `769bd7d`: seção "Inteligência artificial" (endereço, modelo, token, "Testar conexão") | F7 | P2 |
-| CFG-08 | Acessos — permissões (permissão `permissoes`) | ⬜ | 🟡 8.5 · `afd3269` · 🆕 `ef13c22`: com 32 permissões a linha de caixas passa da tela (FC-813) | — | Tela administrativa usuário × permissão | F7 | P2 |
+| CFG-08 | Acessos — permissões (permissão `permissoes`) | ⬜ | ✅ 8.5 · `afd3269` · 🆕 com as 32 permissões em grupos, como o web, `HASH` | — | Tela administrativa usuário × permissão | F7 | P2 |
 | CFG-09 🆕 | Privacidade ("Aparecer offline", "Mostrar o visto por último", "Mostrar quando estou na conversa") | ⬜ | ✅ 8.5 · `ab62486` | — | Tela nova com os textos do web; `GET /usuario/privacidade`, `PATCH /usuario` — 🆕 `769bd7d` | F7 | P2 |
 | CFG-10 🆕 | Temas prontos (Padrão, Teams, WhatsApp, Messenger) e cores dos balões | ➖ | ➖ | — | Não se aplica: o Android usa só as cores do FMX (`docs/design/cores.md`) — 🆕 `8b43965` | — | — |
 | CFG-11 🆕 | Usuários: cadastrar pessoas e bots (permissão `usuarios`) | ⬜ | ⬜ 8.5 · avaliar | — | `PUT /usuario/novo`; uso de administrador: avaliar se fica só no web, como a FC-812 — 🆕 `9c6e8a6` | F7 | P3 |

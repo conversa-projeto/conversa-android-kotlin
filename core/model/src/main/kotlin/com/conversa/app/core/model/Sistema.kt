@@ -10,6 +10,95 @@ object CodigoPermissao {
 
     /** "Acessos": conceder e retirar permissões. */
     const val PERMISSOES = "permissoes"
+
+    // Administração e uso do app (servidor `ef13c22`); os de uso o servidor confere em cada rota.
+    const val BOTS = "bots"
+    const val USUARIOS = "usuarios"
+    const val FERRAMENTAS = "ferramentas"
+    const val CONHECIMENTO = "conhecimento"
+    const val EMOJI = "emoji"
+    const val FIGURINHA = "figurinha"
+    const val IMAGEM = "imagem"
+    const val VIDEO = "video"
+    const val AUDIO = "audio"
+    const val ARQUIVO = "arquivo"
+    const val RESPONDER = "responder"
+    const val ENCAMINHAR = "encaminhar"
+    const val REAGIR = "reagir"
+    const val POSTAGEM = "postagem"
+    const val VOTACAO = "votacao"
+    const val CONFIRMACAO = "confirmacao"
+    const val AGENDAR = "agendar"
+    const val GRUPO = "grupo"
+    const val CHAMADA_AUDIO = "chamada_audio"
+    const val CHAMADA_VIDEO = "chamada_video"
+    const val COMPARTILHAR_TELA = "compartilhar_tela"
+    const val TELEFONIA = "telefonia"
+    const val OCULTAR = "ocultar"
+    const val NOME = "nome"
+    const val EMAIL = "email"
+    const val AVATAR = "avatar"
+    const val SENHA = "senha"
+    const val PRIVACIDADE = "privacidade"
+    const val CORES = "cores"
+    const val CONFIG_CHAMADAS = "config_chamadas"
+}
+
+/** Os grupos da tela de Acessos, na ordem do web (`utils/permissoesUso.ts`). */
+enum class GrupoPermissao(val codigos: List<String>) {
+    ADMINISTRACAO(emptyList()),
+    ENVIAR(
+        listOf(
+            CodigoPermissao.EMOJI,
+            CodigoPermissao.FIGURINHA,
+            CodigoPermissao.IMAGEM,
+            CodigoPermissao.VIDEO,
+            CodigoPermissao.AUDIO,
+            CodigoPermissao.ARQUIVO,
+        ),
+    ),
+    MENSAGENS(
+        listOf(
+            CodigoPermissao.RESPONDER,
+            CodigoPermissao.ENCAMINHAR,
+            CodigoPermissao.REAGIR,
+            CodigoPermissao.AGENDAR,
+            CodigoPermissao.CONFIRMACAO,
+            CodigoPermissao.OCULTAR,
+        ),
+    ),
+    GRUPOS(listOf(CodigoPermissao.GRUPO, CodigoPermissao.POSTAGEM, CodigoPermissao.VOTACAO)),
+    CHAMADAS(
+        listOf(CodigoPermissao.CHAMADA_AUDIO, CodigoPermissao.CHAMADA_VIDEO, CodigoPermissao.COMPARTILHAR_TELA, CodigoPermissao.TELEFONIA),
+    ),
+    CONFIGURACOES(
+        listOf(
+            CodigoPermissao.NOME,
+            CodigoPermissao.EMAIL,
+            CodigoPermissao.AVATAR,
+            CodigoPermissao.SENHA,
+            CodigoPermissao.PRIVACIDADE,
+            CodigoPermissao.CORES,
+            CodigoPermissao.CONFIG_CHAMADAS,
+        ),
+    ),
+
+    /** De uso, mas que o app ainda não conhece (o servidor criou depois). */
+    OUTRAS(emptyList()),
+}
+
+/**
+ * Como o web: a administração primeiro (as que não são de uso), depois as de uso nos grupos
+ * delas; uma de uso que nenhum grupo conhece vai para "Outras". Grupos vazios não aparecem.
+ */
+fun gruposDePermissoes(permissoes: List<PermissaoSistema>): List<Pair<GrupoPermissao, List<PermissaoSistema>>> {
+    val deUso = permissoes.filter { it.uso }.associateBy { it.codigo }
+    val conhecidos = GrupoPermissao.entries.flatMap { it.codigos }.toSet()
+    return buildList {
+        add(GrupoPermissao.ADMINISTRACAO to permissoes.filterNot { it.uso })
+        GrupoPermissao.entries.filter { it.codigos.isNotEmpty() }.forEach { grupo -> add(grupo to grupo.codigos.mapNotNull { deUso[it] }) }
+        add(GrupoPermissao.OUTRAS to permissoes.filter { it.uso && it.codigo !in conhecidos })
+    }.filter { it.second.isNotEmpty() }
 }
 
 /** Parâmetros do servidor (`GET /parametros`). A chave privada do Firebase nunca vem: só se está configurada. */
@@ -59,12 +148,22 @@ fun alteracaoDosParametros(original: ParametrosSistema, editado: ParametrosSiste
     return alteracao.takeIf { it != AlteracaoParametros() }
 }
 
-data class PermissaoSistema(val codigo: String, val descricao: String)
+/** [uso]: permissão de uso do app (enviar, chamar…); as outras são de administração (servidor `ef13c22`). */
+data class PermissaoSistema(val codigo: String, val descricao: String, val uso: Boolean = false)
 
 data class UsuarioAcessos(val id: Long, val nome: String, val login: String, val permissoes: Set<String>)
 
 /** `GET /permissoes`: o que cada permissão libera, quem tem o quê, e se ninguém tem "Acessos" ainda. */
 data class Acessos(val permissoes: List<PermissaoSistema>, val usuarios: List<UsuarioAcessos>, val modoAberto: Boolean)
+
+/** "N de M": quantas das permissões da tela a pessoa tem. */
+fun Acessos.quantasDe(usuario: UsuarioAcessos): Int = permissoes.count { it.codigo in usuario.permissoes }
+
+/** O selo "Administração": tem alguma das que não são de uso. */
+fun Acessos.temAdministracao(usuario: UsuarioAcessos): Boolean = permissoes.any { !it.uso && it.codigo in usuario.permissoes }
+
+/** As próprias, marcadas, ficam travadas: o servidor não deixa retirar (responde 400). */
+fun UsuarioAcessos.propriaMarcada(eu: Long, codigo: String): Boolean = id == eu && codigo in permissoes
 
 /** "Buscar usuário": por nome ou login, sem diferenciar maiúsculas. */
 fun filtrarUsuarios(usuarios: List<UsuarioAcessos>, termo: String): List<UsuarioAcessos> {

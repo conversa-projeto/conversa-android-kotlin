@@ -49,7 +49,7 @@ data class ConcluidasDto(val concluidas: Int = 0)
 data class VistasDto(@SerialName("vistas_em") val vistasEm: Instant? = null)
 
 @Serializable
-data class PermissaoDto(val codigo: String, val descricao: String = "")
+data class PermissaoDto(val codigo: String, val descricao: String = "", val uso: Boolean = false)
 
 @Serializable
 data class UsuarioPermissoesDto(val id: Long, val nome: String, val login: String = "", val permissoes: List<String> = emptyList())

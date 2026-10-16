@@ -65,4 +65,46 @@ class SistemaTest {
 
         assertThat(comAcessos.comPermissao(2, CodigoPermissao.PARAMETROS, concedida = false).usuarios[1].permissoes).isEmpty()
     }
+
+    @Test
+    fun `grupos da tela de Acessos como o web, com Outras para a de uso desconhecida`() {
+        val permissoes = listOf(
+            PermissaoSistema("parametros", "Ver e alterar"),
+            PermissaoSistema("chamada_video", "Fazer chamadas de vídeo", uso = true),
+            PermissaoSistema("imagem", "Enviar imagens", uso = true),
+            PermissaoSistema("emoji", "Enviar emojis", uso = true),
+            PermissaoSistema("permissoes", "Conceder e retirar"),
+            PermissaoSistema("nova_do_servidor", "Algo novo", uso = true),
+        )
+
+        val grupos = gruposDePermissoes(permissoes)
+
+        assertThat(grupos.map { it.first })
+            .containsExactly(GrupoPermissao.ADMINISTRACAO, GrupoPermissao.ENVIAR, GrupoPermissao.CHAMADAS, GrupoPermissao.OUTRAS).inOrder()
+        assertThat(grupos[0].second.map { it.codigo }).containsExactly("parametros", "permissoes").inOrder()
+        // Dentro do grupo, a ordem do web (emoji antes de imagem), não a do servidor.
+        assertThat(grupos[1].second.map { it.codigo }).containsExactly("emoji", "imagem").inOrder()
+        assertThat(grupos[3].second.map { it.codigo }).containsExactly("nova_do_servidor")
+    }
+
+    @Test
+    fun `N de M, selo de administracao e as proprias marcadas travadas`() {
+        val permissoes =
+            listOf(
+                PermissaoSistema("parametros", ""),
+                PermissaoSistema("imagem", "", uso = true),
+                PermissaoSistema("audio", "", uso = true),
+            )
+        val ana = UsuarioAcessos(1, "Ana", "ana", setOf("imagem", "audio"))
+        val bia = UsuarioAcessos(2, "Bia", "bia", setOf("parametros", "codigo_que_saiu"))
+        val tela = Acessos(permissoes, listOf(ana, bia), modoAberto = false)
+
+        assertThat(tela.quantasDe(ana)).isEqualTo(2)
+        assertThat(tela.quantasDe(bia)).isEqualTo(1)
+        assertThat(tela.temAdministracao(ana)).isFalse()
+        assertThat(tela.temAdministracao(bia)).isTrue()
+        assertThat(ana.propriaMarcada(eu = 1, codigo = "imagem")).isTrue()
+        assertThat(ana.propriaMarcada(eu = 1, codigo = "parametros")).isFalse()
+        assertThat(bia.propriaMarcada(eu = 1, codigo = "parametros")).isFalse()
+    }
 }
