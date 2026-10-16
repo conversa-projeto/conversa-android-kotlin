@@ -4,7 +4,7 @@
 - **Tipo:** código
 - **Itens:** `TODO.md` 6.13 (linha 🆕 `769bd7d` dos convidados fora da chamada); FC-726; CHA-25
 - **Branch:** `reescrita`
-- **Commits:** (preencher)
+- **Commits:** `15844e4`
 
 ## Contexto
 - **O servidor** (`b8ea0c2`, contrato §9.14): `POST /chamada/chamar-novamente {chamada_id, usuario_id}` toca de novo para quem recusou ou deixou tocar sem atender, com a chamada em andamento, e devolve os dados da chamada.
