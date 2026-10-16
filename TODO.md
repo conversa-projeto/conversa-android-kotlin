@@ -271,6 +271,7 @@
 - [x] Respeitar os limites (nome 100, login 50, e-mail 100) — o campo para de aceitar texto no limite; validação de e-mail e senha ≥ 4 (como o web)
 - [x] E-mail duplicado (500 do Postgres hoje) → "E-mail já cadastrado" — `EmailJaCadastradoException` → "E-mail já cadastrado."
 - [x] Sucesso → "Conta criada com sucesso!" → voltar ao Login com o usuário preenchido — volta ao login com o usuário preenchido e o aviso no Snackbar (sem a espera de 1,5 s do web)
+- [ ] 🆕 `ef13c22` Cadastro fechado pelo administrador: `GET /cadastro` → `{aberto}` (rota pública) antes de mostrar "Não tem conta? Criar conta"; fechado, o link some (o `PUT /usuario` responde 403) (AUT-02, FC-220)
 
 ### 2.5 Navegação principal
 - [x] NavHost com rotas tipadas: Servidor, Login, Cadastro, Principal, Chat(conversaId, mensagemId?), Membros, Perfil, Visualizador, Configurações… — 🔄 `navegacao/Rotas.kt`: Servidor, Login, Cadastro, Principal, Chat, NovaConversa, CriarGrupo, Membros; Perfil e Visualizador entram nas etapas 4 e 8 — concluído depois (conferido em 2026-10-09): Perfil (`RotaPerfil`) veio no 8.3; o visualizador é um diálogo dentro do chat ✔ 143d8d6
@@ -319,6 +320,7 @@
 - [x] → `PUT /conversa/usuario {conversa_id, usuario_id:contato}` — ordem conferida em `ConversasRepositorioTest`; no emulador a conversa nasceu com os 2 membros
 - [x] → `GET /conversas` → abrir o chat — abre o chat (provisório até a etapa 3)
 - [x] Falha no meio → mostrar o erro (e registrar a conversa órfã no log); depende de S8 para ficar atômico — erro no Snackbar; `Timber.w` com o id da conversa incompleta
+- [ ] 🆕 `ef13c22`/`9c6e8a6` Bots de IA: ler `bot` nos contatos e na conversa; pílula "Bot" no cabeçalho da direta; não oferecer ligação para bot; tirar o bot da lista de quem precisa confirmar (o bot nunca marca `recebida`) (CON-16, FC-221)
 
 ### 2.10 Grupos (FC-211, FC-212, CON-07, CON-08)
 - [x] Tela "Criar grupo": "Nome do grupo", busca, checkboxes de contatos — `CriarGrupo.kt`
@@ -491,6 +493,7 @@
 - [x] Durante a gravação: `POST /conversa/gravando {id}` a cada 2,5 s — também pausada (a gravação continua aberta, como no web) (+ teste); no emulador o B recebeu o WS 5 a cada 2,5 s ✔ 399bae5
 - [x] Receber o WS 5 → "Gravando áudio…" em vermelho (prioridade sobre o "digitando") — no cabeçalho (texto e pontos em `gravandoAudio`); a lista de conversas não mostra, igual ao web ✔ 399bae5
 - [x] Permissão de microfone pedida na hora, com um launcher só para isso (#32) — `RECORD_AUDIO` no manifesto, pedida ao apertar o microfone; negada: "Sem permissão para usar o microfone…" ✔ 399bae5
+- [ ] 🆕 `ef13c22` Duração e onda do áudio: mandar `duracao` (s) e `intensidade` (até 200 picos de 0 a 100; o web usa 48) no `PUT /anexo` da gravação e do áudio escolhido; ler os dois nos conteúdos e mostrar a duração antes de tocar e a onda no player, sem baixar o áudio (ANX-10, ANX-11, FC-421)
 
 ### 4.7 Arquivos e download (FC-407, ANX-09)
 - [x] Bolha de arquivo: ícone pela extensão, nome, tamanho, "Baixar"/"Abrir" — `LinhaArquivo`: ícone, nome, "Abrir" e o botão "Baixar"; vídeo com "Baixar vídeo" embaixo (como o web). O tamanho não vem na mensagem (só no anexo): fica sem, para não fazer uma chamada por arquivo ✔ 45f269f
@@ -896,6 +899,8 @@
 - [x] Acessos: `GET /permissoes` → tabela usuário × permissão com busca; `PUT /permissao/usuario {usuario_id, codigo}`; `DELETE /permissao/usuario?usuario_id=&codigo=`; aviso de "modo aberto" (no celular, uma linha por usuário com uma caixa por permissão) ✔ afd3269
 - [x] 🆕 `769bd7d` Configurações › Privacidade: "Aparecer offline", "Mostrar o visto por último", "Mostrar quando estou na conversa" (textos do web; `GET /usuario/privacidade`, `PATCH /usuario`; com "Aparecer offline", as outras duas desabilitadas) (CFG-09, FC-810) — `PrivacidadeTela`; muda na hora e volta se o servidor recusar. No emulador, o C viu o A ficar offline e voltar ✔ ab62486
 - [ ] 🆕 `769bd7d` Sistema › "Inteligência artificial" (endereço, modelo, token, "Testar conexão") — uso de administrador; avaliar se fica só no web (CFG-07, FC-812)
+- [ ] 🆕 `ef13c22`/`9c6e8a6` Acessos com as permissões de uso: são 32 (6 de administração + 26 de uso, `uso` no `GET /permissoes`); a linha de caixas por pessoa passa da tela. Como o web: lista de pessoas que se abre ("Administração", "N de M"), com os grupos Administração, Enviar, Mensagens, Grupos, Chamadas, Configurações e Outras e os nomes curtos; as próprias permissões marcadas ficam travadas ("Você não pode retirar as próprias permissões") (CFG-08, FC-813)
+- [ ] 🆕 `9c6e8a6` Usuários, Bots, Ferramentas e Conhecimento (administração): avaliar se ficam só no web, junto da FC-812 (CFG-11…14, FC-815)
 
 ### 8.6 Anexos da conversa (FC-809, ANX-13)
 - [x] A partir do perfil ou do grupo: "Ver anexos" (🆕 `eaa8bac`: no web, os anexos ficam dentro do painel do grupo) — folha do perfil (lista e cabeçalho) e item nos dados do grupo ✔ 95b9bb5
@@ -917,6 +922,13 @@
 - [ ] Guardar o último resumo de cada conversa no aparelho (Room) e retomar a consulta se estava processando; linha "Resumo de dd/MM às HH:MM · período · N mensagens" (CON-14)
 - [ ] Sugestão de texto (`POST /ia/sugestao`, 600 ms parado, ≥ 3 caracteres, cursor no fim): no celular, chip de sugestão acima do teclado em vez do Tab; chave "Sugerir a continuação ao digitar" na Privacidade, preferência do aparelho (ENV-25) — baixa prioridade
 - [ ] **Teste:** com um servidor de IA configurado no Sistema do servidor de dev — ⛔ mexe nos parâmetros do servidor: pedir antes
+
+### 8.9 🆕 Permissões de uso (GER-09, FC-814) — servidor `ef13c22`, web `9c6e8a6`
+- [ ] Ler as próprias permissões (`GET /usuario/permissoes`, 32 códigos) ao entrar e no WS que avisar mudança; guardar na sessão
+- [ ] Esconder ou travar o que a pessoa não pode, como o web (`utils/permissoesUso.ts`): enviar emoji, figurinha, imagem, vídeo, áudio e arquivo; responder, encaminhar, reagir, agendar, pedir confirmação, ocultar; criar grupo, postagem, votação; chamada de áudio, de vídeo (e ligar o vídeo); nome, e-mail, avatar, senha e privacidade
+- [ ] Mostrar a mensagem do 403 ("Você não tem permissão para: …"): hoje o envio só marca "falhou" e ligar o vídeo abre a câmera e o aviso aos outros falha em silêncio
+- [ ] Perfil: mandar só as chaves que mudaram (hoje "Salvar" manda nome e e-mail juntos e exigiria as duas permissões)
+- [ ] **Teste:** retirar pelo web uma permissão de uso da conta B e conferir no app que o botão some e o 403 aparece com o motivo
 
 ---
 

@@ -1,8 +1,8 @@
 # Contrato atual do servidor Conversa (referência para o cliente Android Kotlin)
 
-> Auditoria de 2026-10-06. Fonte: repositório `conversa` (servidor Bun + Elysia), último commit lido 🆕 **`e25c4db`** ("Atividade de resposta ou menção já lida no chat deixa de contar como nova", 2026-10-14 20:40), atualizado a partir de `7f670c3`, em 2026-10-13 de `5cad911`/`779c8ed` (este só mexe no `bin/iniciar-desenvolvimento.bat`) e, 🆕 em 2026-10-15, de `12cf0cf` (commits `6d20ff7` e `e25c4db`). Migrações aplicadas até a versão 🆕 **43** (`migracoes/000.sql` … `043.sql`). Mudanças desde `7f670c3` estão marcadas com 🆕 (quando não é o `8031fa5`, o commit vem junto) e resumidas na §20.
+> Auditoria de 2026-10-06. Fonte: repositório `conversa` (servidor Bun + Elysia), último commit lido 🆕 **`ef13c22`** ("Bots de IA com ferramentas e base de conhecimento, permissões de uso e cadastro pelo administrador", 2026-10-15 22:42), atualizado a partir de `7f670c3`, em 2026-10-13 de `5cad911`/`779c8ed` (este só mexe no `bin/iniciar-desenvolvimento.bat`), em 2026-10-15 de `12cf0cf` (commits `6d20ff7` e `e25c4db`) e, 🆕 em 2026-10-15 (noite), de `e25c4db` (commit `ef13c22`). Migrações aplicadas até a versão 🆕 **52** (`migracoes/000.sql` … `052.sql`). Mudanças desde `7f670c3` estão marcadas com 🆕 (quando não é o `8031fa5`, o commit vem junto) e resumidas na §20.
 >
-> 🆕 Números de linha: as citações `arquivo:linha` sem 🆕 foram lidas em `7f670c3`/`5cad911`. Os commits de outubro (`b8ea0c2` … `e25c4db`) deslocaram as linhas de `rotas.ts`, `mensagens.ts`, `websocket.ts`, `chamadas.ts`, `conversas.ts`, `usuarios.ts`, `parametros.ts` e 🆕 `atividades.ts`; nas partes novas, a referência é pelo nome da função.
+> 🆕 Números de linha: as citações `arquivo:linha` sem 🆕 foram lidas em `7f670c3`/`5cad911`. Os commits de outubro (`b8ea0c2` … `e25c4db`) deslocaram as linhas de `rotas.ts`, `mensagens.ts`, `websocket.ts`, `chamadas.ts`, `conversas.ts`, `usuarios.ts`, `parametros.ts` e 🆕 `atividades.ts`; 🆕 o `ef13c22` deslocou de novo `rotas.ts`, `mensagens.ts`, `atividades.ts`, `usuarios.ts`, `permissoes.ts`, `chamadas.ts`, `conversas.ts`, `parametros.ts`, `esquemas.ts` e `docker-compose.yml`. Nas partes novas, a referência é pelo nome da função.
 >
 > Todas as referências `arquivo:linha` são relativas à raiz do repositório do servidor (`C:\Users\danie\Desktop\GIT\conversa-projeto\conversa`). Quando algo vem do cliente web de referência (`conversa-web`), isso é dito explicitamente: o servidor não define, a página é que usa assim.
 >
@@ -45,10 +45,13 @@
 | `minio` | quay.io/minio/minio | 9000 (S3), 9001 (console) | `127.0.0.1:9000`, `127.0.0.1:9001` | Armazenamento dos anexos. Credenciais geradas em `/dados/minio-usuario` e `/dados/minio-senha` | `docker-compose.yml:52-79` |
 | `coturn` | coturn/coturn | 3478/tcp | `3478:3478/tcp` (pública) | TURN só TCP, sem TLS (TLS na borda em produção). IP fixo `172.30.0.10` na rede `conversa-rtc` | `docker-compose.yml:86-110`, `bin/coturn/turnserver.conf` |
 | `mediamtx` | `bin/mediamtx/Dockerfile` (bluenviron/mediamtx:1.16.2) | 8889 (WebRTC HTTP), 8189/udp (mídia, interna) | `127.0.0.1:8889` | Servidor WebRTC (WHIP/WHEP) e gravação das chamadas. IP fixo `172.30.0.20` | `docker-compose.yml:116-130`, `bin/mediamtx/mediamtx.docker.yml` |
-| `api` | Bun + Elysia | 8080 (HTTP + WebSocket) | `127.0.0.1:8080` | API REST em `/api` e WebSocket em `/ws/` | `docker-compose.yml:134-160`, `src/servidor.ts:31` |
+| 🆕 `ef13c22` `qdrant` | qdrant/qdrant:v1.13.6 | 6333 (HTTP) | `127.0.0.1:6333` | Banco de vetores da **base de conhecimento dos bots** (§13.9): os trechos dos documentos com os embeddings. A API grava e busca por HTTP (`CONVERSA_QDRANT`); o painel fica em `/dashboard`. O cliente não fala com ele | `docker-compose.yml:136-146` (em `ef13c22`) |
+| `api` | Bun + Elysia | 8080 (HTTP + WebSocket) | `127.0.0.1:8080` | API REST em `/api` e WebSocket em `/ws/`. 🆕 `ef13c22`: depende também do `qdrant` (`service_started`) | `docker-compose.yml:134-160`, `src/servidor.ts:31` |
 | `nginx` | nginx:1.28-alpine | 443 (dev) / 80 (prod) | `${CONVERSA_PORTA:-443}` | Ponto de entrada único | `docker-compose.yml:165-183`, `bin/nginx/nginx.conf` |
 
-Volumes: `pgdata` (banco), `minio` (anexos), `conversa-dados` (`/dados`: pepper das senhas, credenciais do MinIO, segredo do TURN), `conversa-gravacoes` (`/gravacoes`) — `docker-compose.yml:193-201`.
+Volumes: ~~`pgdata` (banco), `minio` (anexos)~~ 🆕 `ef13c22`: `conversa-postgres` (banco), `conversa-minio` (anexos), `conversa-qdrant` (trechos da base de conhecimento; dá para refazer com "Reindexar tudo"), `conversa-dados` (`/dados`: pepper das senhas, credenciais do MinIO, segredo do TURN), `conversa-gravacoes` (`/gravacoes`) — 🆕 `docker-compose.yml:212-222` (em `ef13c22`).
+- 🆕 `ef13c22` **Instalação antiga** (volumes `pgdata` e `minio`): o `bin\renomear-volumes.bat` (rodar uma vez, **antes** de subir a versão nova) derruba os containers, copia `pgdata` → `conversa-postgres` e `minio` → `conversa-minio`, confere a cópia (arquivos e bytes) e só então apaga os antigos. Se o volume novo já tem dados, não copia e mantém o antigo (`SETUP.md`, passo 4).
+- 🆕 Consequência para o desenvolvimento: subir o `docker-compose.yml` novo **sem** o script cria um banco e um MinIO **vazios** (as contas de teste do emulador somem até rodar o script).
 
 ### 1.2 URLs públicas (tudo na mesma origem, via nginx)
 
@@ -71,7 +74,7 @@ Todas as URLs são relativas à origem que o cliente usou (ex.: `https://192.168
 - **Desenvolvimento**: o nginx escuta em **443 com TLS** usando `bin/cert/cert.pem`/`key.pem`, gerados pelo `bin/setup-cert.bat` com **mkcert** (`bin/nginx/desenvolvimento/servidor.conf:1-7`, `SETUP.md:52`). HTTP na 443 recebe redirect 301 para HTTPS. O Android precisa confiar na CA raiz do mkcert (ex.: `network_security_config` com CA do usuário/da app em build de debug). A página vem do Vite.
 - **Produção**: o nginx escuta em **80 sem TLS**; uma borda (nginx externo) termina o TLS e repassa com `X-Forwarded-Proto: https` (`bin/nginx/producao/servidor.conf`, `SETUP.md:101-130`). Para chamadas, a borda também precisa de uma porta TCP pública com TLS repassada para `:3478` (`CONVERSA_TURN_PORTA`, ex.: 8443) — `SETUP.md:91-95`.
 - O protocolo usado nas URLs geradas vem de `X-Forwarded-Proto` (padrão `https` se ausente) — `src/contexto.ts:10`. O nginx passa `$proto_original` (`bin/nginx/nginx.conf:35-38`, `:93`).
-- Variáveis de ambiente da API: `CONVERSA_SERVER`, `CONVERSA_PORT`, `CONVERSA_DATABASE`, `CONVERSA_USERNAME`, `CONVERSA_PASSWORD`, `CONVERSA_PORTA_HTTP` (8080), `CONVERSA_S3_INTERNO`, `CONVERSA_TURN_PORTA`, `CONVERSA_DADOS` (`/dados`), `CONVERSA_GRAVACOES` (`/gravacoes`) — `src/configuracao.ts:57-86`.
+- Variáveis de ambiente da API: `CONVERSA_SERVER`, `CONVERSA_PORT`, `CONVERSA_DATABASE`, `CONVERSA_USERNAME`, `CONVERSA_PASSWORD`, `CONVERSA_PORTA_HTTP` (8080), `CONVERSA_S3_INTERNO`, `CONVERSA_TURN_PORTA`, `CONVERSA_DADOS` (`/dados`), `CONVERSA_GRAVACOES` (`/gravacoes`) — `src/configuracao.ts:57-86`. 🆕 `ef13c22`: + `CONVERSA_QDRANT` (padrão `http://127.0.0.1:6333`; no compose, `http://qdrant:6333`) — `configuracao.ts` (`definirAmbiente`).
 
 ### 1.4 Como a API trata cada requisição
 
@@ -115,6 +118,7 @@ Erros (todos `{ "error": "..." }`):
 | Status | `error` | Quando |
 |---|---|---|
 | 401 | `Usuário não encontrado!` | login inexistente — `src/usuarios.ts:31-33` |
+| 401 🆕 `ef13c22` | `Bot não entra pelo login.` | o login é de um **bot** (§13.7); conferido antes da senha — `usuarios.ts` (`login`, `ehBot`) |
 | 401 | `Senha incorreta!` | `src/usuarios.ts:38-40` |
 | 401 | `Seção Encerrada!` (sic) | dispositivo com `ativo=false` — `src/usuarios.ts:62-64` (nenhuma rota desativa dispositivo hoje) |
 | 400 | mensagem de validação | campo faltando/tipo errado (§3) |
@@ -156,7 +160,21 @@ Regras:
 
 Resposta: a linha `usuario` inteira **sem** `senha`: `{ id, nome, login, email, telefone, avatar_anexo_id, criado_em, criado_por, atividades_vistas_em }` (`src/usuarios.ts:105-106`, `src/comum.ts:47-50`). **Não** devolve token: é preciso chamar `/api/login` depois.
 
-Cadastro é público e qualquer um pode se cadastrar (não há convite nem aprovação).
+~~Cadastro é público e qualquer um pode se cadastrar (não há convite nem aprovação).~~ 🆕 `ef13c22` (`usuarios.ts`, `incluirUsuario`, `criarConta`):
+- O cadastro pela tela de login só funciona com o parâmetro `cadastro_aberto` ligado (padrão: ligado, migração 048). Fechado → **403** `O cadastro está fechado: peça a um administrador para criar sua conta.` (depois da validação do esquema e antes das regras de login e senha).
+- Antes de mostrar "Cadastre-se", consulte `GET /api/cadastro` (§2.6).
+- A conta nova ganha **todas as permissões de uso** (§13.1), mesmo fora do modo aberto (`concederPermissoesUso`).
+
+### 2.6 🆕 Cadastro aberto ou fechado e cadastro pelo administrador (`ef13c22`)
+
+**`GET /api/cadastro`** (pública, sem token) — `parametros.ts` (`cadastroSistema`). → `{ "aberto": true|false }` = parâmetro `cadastro_aberto` (`'0'` fecha; qualquer outro valor abre). O web só mostra "Cadastre-se" com `aberto: true`. Não há evento quando muda: consulte ao abrir a tela de login.
+
+**`PUT /api/usuario/novo`** (token; permissão de administração `usuarios`, senão 403 `Acesso negado!`) — `usuarios.ts` (`cadastrarUsuario`). Funciona **mesmo com o cadastro fechado**.
+- Corpo: `{ "nome": string, "login"?: string, "email"?: string, "telefone"?: string|null, "senha"?: string, "avatar_anexo_id"?: int|null, "bot"?: bool, "instrucoes"?: string }`.
+- **Pessoa** (`bot` ausente ou `false`): `nome`, `login`, `email` e `senha` obrigatórios (vazios → 400 `Preencha nome, login, e-mail e senha.`); mesmas regras do cadastro (`Login já cadastrado!`, senha de 4 a 72; e-mail repetido continua dando 500). Ganha todas as permissões de uso.
+- **Bot** (`bot: true`): só `nome` e `instrucoes`; cria o bot como `PUT /bot` (§13.7) — exige a IA configurada (400) e instruções de 1 a 8000 caracteres (400).
+- `avatar_anexo_id`: id numérico de um anexo **tipo 2** (imagem) já enviado (§8.2); outro tipo ou inexistente → 400 `Avatar inválido: envie uma imagem.` (diferente do `PATCH /usuario`, que não confere).
+- Resposta: `{ "id": int, "nome": string, "login": string, "bot": bool }` (não é a linha inteira; sem token).
 
 ---
 
@@ -167,6 +185,7 @@ Tratador global: `src/app.ts:57-77`. **Todo erro é JSON `{ "error": "<mensagem 
 | Origem | Status | Mensagem |
 |---|---|---|
 | `ErroHttp` lançado pelo código | 400/401/403/404/409 | mensagem específica (`src/erros.ts:13-19`) |
+| 🆕 `ef13c22` Falta de permissão | 403 | permissão **de uso**: `Você não tem permissão para: <descrição da permissão em minúsculas>.` (ex.: `Você não tem permissão para: enviar imagens.`); permissão de administração: `Acesso negado!` — `permissoes.ts` (`validarPermissoes`). Com várias faltando, vem só a primeira (ordem do `permissao.id`). Lista em §13.1 |
 | Validação de esquema (TypeBox) | 400 | `Campo "x" é obrigatório e não foi informado!` / `O valor de "x" deve ser do tipo integer!` / `Valor inválido em "x": ...` / `Dados inválidos em "body"` — `src/app.ts:25-39` |
 | Rota inexistente | 404 | `Rota GET:/api/xyz não encontrada` |
 | JSON malformado | 400 | `Corpo da requisição inválido!` (o teste aceita qualquer string) |
@@ -181,24 +200,26 @@ Validação (`src/esquemas.ts:1-14`):
 
 ## 4. Tabela de TODAS as rotas REST
 
-Prefixo `/api` em todas (`src/rotas.ts:28`). "Token" = exige `Authorization: Bearer`. Total: 🆕 **82 rotas** em `src/rotas.ts` (2 públicas + 80 autenticadas; as 5 de enquete 🆕 estão como 65–69 e as 13 de outubro 🆕 `b8ea0c2`/`ea02f57`/`12cf0cf`/`6d20ff7` como 70–82, na ordem dos commits), mais a documentação `/api/docs` e `/api/docs/json` (públicas, do plugin OpenAPI) e o WebSocket `/ws/`. Linhas que mudaram de comportamento em outubro têm 🆕 e o commit no `#`.
+Prefixo `/api` em todas (`src/rotas.ts:28`). "Token" = exige `Authorization: Bearer`. Total: ~~82 rotas (2 públicas + 80 autenticadas)~~ 🆕 `ef13c22`: **109 rotas** em `src/rotas.ts` (**3 públicas + 106 autenticadas**; as 5 de enquete 🆕 estão como 65–69, as 13 de outubro 🆕 `b8ea0c2`/`ea02f57`/`12cf0cf`/`6d20ff7` como 70–82, na ordem dos commits, e as 27 do 🆕 `ef13c22` como 83–109, na ordem de `rotas.ts`), mais a documentação `/api/docs` e `/api/docs/json` (públicas, do plugin OpenAPI) e o WebSocket `/ws/`. Linhas que mudaram de comportamento em outubro têm 🆕 e o commit no `#`.
+
+🆕 `ef13c22` **Permissões de uso:** a partir deste commit, várias rotas do chat respondem **403** quando falta ao usuário a permissão de uso correspondente (coluna "Permissão / regra"; lista completa em §13.1). Fora do modo aberto, toda conta tem todas as de uso até um administrador retirar; bots começam só com `emoji`, `responder` e `reagir`.
 
 Legenda de efeitos: **WS n** = evento WebSocket tipo n (§6.4); **FCM** = push.
 
 | # | Método | Caminho | Auth | Query | Corpo | Resposta (resumo) | Permissão / regra | Efeitos | Ref. rota |
 |---|---|---|---|---|---|---|---|---|---|
-| 1 | POST | `/login` | pública | – | `login`, `senha`, `dispositivo_id?` | usuário + `dispositivo` + `token` | – | cria dispositivo | `rotas.ts:33` |
-| 2 | PUT | `/usuario` | pública | – | `nome`, `login`, `email`, `telefone?`, `senha` | linha usuário sem senha | – | – | `rotas.ts:38` |
-| 3 | POST | `/alterar-senha` | token | – | `senha_atual`, `senha` | `{}` | senha atual correta (400 se errada) | – | `rotas.ts:46` |
+| 1 🆕 `ef13c22` | POST | `/login` | pública | – | `login`, `senha`, `dispositivo_id?` | usuário + `dispositivo` + `token` | 🆕 bot → 401 `Bot não entra pelo login.` | cria dispositivo | `rotas.ts:33` |
+| 2 🆕 `ef13c22` | PUT | `/usuario` | pública | – | `nome`, `login`, `email`, `telefone?`, `senha` | linha usuário sem senha | 🆕 cadastro fechado → 403 (§2.5) | 🆕 concede todas as permissões de uso | `rotas.ts:38` |
+| 3 🆕 `ef13c22` | POST | `/alterar-senha` | token | – | `senha_atual`, `senha` | `{}` | 🆕 permissão `senha` (403); senha atual correta (400 se errada) | – | `rotas.ts:46` |
 | 4 | PATCH | `/dispositivo` | token | – | `id`, `nome?`, `modelo?`, `versao_so?`, `plataforma?`, `token_fcm?` | linha dispositivo | dono do dispositivo (403) | – | `rotas.ts:51` |
 | 5 | PUT | `/dispositivo/usuario` | token | `dispositivo_id` | – | linha `dispositivo_usuario` | dono (403) | – | `rotas.ts:53` |
-| 6 🆕 `b8ea0c2` | PATCH | `/usuario` | token | – | `id`, `nome?`, `email?`, `telefone?`, `avatar_anexo_id?`, 🆕 `mostrar_visto_em?`, `mostrar_na_conversa?`, `aparecer_offline?` (bool) | linha usuário sem senha (🆕 com `visto_em` e as 3 preferências) | só o próprio (`id` = token, 403) | 🆕 preferência de presença vale na hora (WS 60/63, §15) | `rotas.ts:56` |
-| 7 | DELETE | `/usuario` | token | `id` | – | linha usuário excluída sem senha | só o próprio (403); com histórico 409 | apaga dispositivos | `rotas.ts:58` |
+| 6 🆕 `b8ea0c2` `ef13c22` | PATCH | `/usuario` | token | – | `id`, `nome?`, `email?`, `telefone?`, `avatar_anexo_id?`, 🆕 `mostrar_visto_em?`, `mostrar_na_conversa?`, `aparecer_offline?` (bool) | linha usuário sem senha (🆕 com `visto_em` e as 3 preferências) | só o próprio (`id` = token, 403); 🆕 `ef13c22` uma permissão por chave **enviada**: `nome` → `nome`; `email` ou `telefone` → `email`; `avatar_anexo_id` → `avatar`; as 3 de presença → `privacidade` (403, §5.1) | 🆕 preferência de presença vale na hora (WS 60/63, §15) | `rotas.ts:56` |
+| 7 🆕 `ef13c22` | DELETE | `/usuario` | token | `id` | – | linha usuário excluída sem senha | só o próprio (403); com histórico 409 | apaga dispositivos (🆕 e permissões, numa transação: com 409 nada sai) | `rotas.ts:58` |
 | 8 | PUT | `/usuario/contato` | token | `relacionamento_id` | – | linha `usuario_contato` | – | – | `rotas.ts:60` |
 | 9 | DELETE | `/usuario/contato` | token | `id` | – | linha excluída | dono do contato (403) | – | `rotas.ts:63` |
-| 10 | GET | `/usuario/contatos` | token | – | – | `[{id,nome,login,email,telefone}]` de **todos** os usuários | – | – | `rotas.ts:65` |
+| 10 🆕 `ef13c22` | GET | `/usuario/contatos` | token | – | – | `[{id,nome,login,email,telefone}]` de **todos** os usuários — 🆕 `+ bot: bool` no fim; bots excluídos ficam de fora | – | – | `rotas.ts:65` |
 | 11 🆕 `b8ea0c2` | GET | `/contatos/online` | token | – | – | `number[]` (ids online) — 🆕 pela presença **visível** (ativo ou ausente; quem aparece offline fica de fora) | – | – | `rotas.ts:67` |
-| 12 | PUT | `/conversa` | token | – | `descricao?`, `tipo?` | linha conversa | – | criador vira membro | `rotas.ts:71` |
+| 12 🆕 `ef13c22` | PUT | `/conversa` | token | – | `descricao?`, `tipo?` | linha conversa | 🆕 `tipo: 2` pede `grupo` (403); direta não pede nada | criador vira membro | `rotas.ts:71` |
 | 13 🆕 `b8ea0c2` | PATCH | `/conversa` | token | – | `id`, `descricao?` (🆕 opcional), 🆕 `avatar_anexo_id?: int\|null`, 🆕 `emoji?: string\|null` | linha conversa (🆕 com `avatar_anexo_id`, `emoji`) | membro (403); 🆕 imagem/emoji só em grupo (400) | 🆕 **WS 40** aos outros membros | `rotas.ts:73` |
 | 14 | DELETE | `/conversa` | token | `id` | – | linha excluída | membro (403) | ver §11.6 (na prática 500) | `rotas.ts:75` |
 | 15 🆕 `b8ea0c2` | GET | `/conversas` | token | – | – | lista de conversas (§11.2) — 🆕 com `emoji`, `chamada` e imagem do grupo em `avatar_url` | – | – | `rotas.ts:77` |
@@ -209,49 +230,49 @@ Legenda de efeitos: **WS n** = evento WebSocket tipo n (§6.4); **FCM** = push.
 | 20 | DELETE | `/conversa/usuario` | token | `id` (= `conversa_usuario.id`) | – | linha excluída | só a própria participação (403) | – | `rotas.ts:90` |
 | 21 | POST | `/conversa/digitando` | token | – | `id` (conversa) | `{}` | membro (403) | **WS 4** aos outros membros | `rotas.ts:92` |
 | 22 | POST | `/conversa/gravando` | token | – | `id` (conversa) | `{}` | membro (403) | **WS 5** aos outros membros | `rotas.ts:97` |
-| 23 🆕 `b8ea0c2` `12cf0cf` `6d20ff7` | PUT | `/mensagem` | token | – | `conversa_id`, `visivel_em?`, `conteudos[]`, `mensagem_referencia?`, 🆕 `pede_confirmacao?: bool`, 🆕 `6d20ff7` `confirmacao_usuarios?: int[]` (quem precisa confirmar; sem a lista, todos os outros membros), 🆕 `postagem?: {titulo?: string\|null}` (título ≤ 150), 🆕 `postagem_id?: int\|null` | linha mensagem (+`mensagem_referencia`) — 🆕 com `pede_confirmacao`, `postagem`, `postagem_titulo`, `postagem_id` | membro (403); 🆕 postagem só em grupo e regras da resposta (400, §10.15); 🆕 `6d20ff7` lista de confirmação fora dos membros ou vazia (400, §10.14) | **WS 2**, **FCM**, **WS 61** (resposta/menção); agendada só ao sair; 🆕 resposta de postagem: **WS 64** aos outros membros + atividade | `rotas.ts:104` |
-| 24 | DELETE | `/mensagem` | token | `id` | – | `{id, conversa_id, excluida_em}` ou linha apagada | só o autor (403) | **WS 3** aos outros, **WS 61** | `rotas.ts:106` |
-| 25 🆕 `12cf0cf` | GET | `/mensagens` | token | `conversa`, `mensagemreferencia=0`, `mensagensprevias=0`, `mensagensseguintes=0` | – | `MensagemResposta[]` (§10.2) — 🆕 **sem** as respostas de postagem | membro (403) | marca **recebida** (🆕 inclusive respostas de postagem) + **WS 3** aos outros | `rotas.ts:108` |
+| 23 🆕 `b8ea0c2` `12cf0cf` `6d20ff7` | PUT | `/mensagem` | token | – | `conversa_id`, `visivel_em?`, `conteudos[]`, `mensagem_referencia?`, 🆕 `pede_confirmacao?: bool`, 🆕 `6d20ff7` `confirmacao_usuarios?: int[]` (quem precisa confirmar; sem a lista, todos os outros membros), 🆕 `postagem?: {titulo?: string\|null}` (título ≤ 150), 🆕 `postagem_id?: int\|null` | linha mensagem (+`mensagem_referencia`) — 🆕 com `pede_confirmacao`, `postagem`, `postagem_titulo`, `postagem_id` | membro (403); 🆕 postagem só em grupo e regras da resposta (400, §10.15); 🆕 `ef13c22` permissões de uso pelo conteúdo e pelas opções (403, §10.3); 🆕 `6d20ff7` lista de confirmação fora dos membros ou vazia (400, §10.14) | **WS 2**, **FCM**, **WS 61** (resposta/menção); agendada só ao sair; 🆕 resposta de postagem: **WS 64** aos outros membros + atividade; 🆕 `ef13c22` atividade **tipo 5** (+ WS 61) a quem precisa confirmar; chama os **bots** da conversa (§13.7) | `rotas.ts:104` |
+| 24 🆕 `ef13c22` | DELETE | `/mensagem` | token | `id` | – | `{id, conversa_id, excluida_em}` ou linha apagada | só o autor (403); 🆕 permissão `ocultar` (403) | **WS 3** aos outros, **WS 61** | `rotas.ts:106` |
+| 25 🆕 `12cf0cf` `ef13c22` | GET | `/mensagens` | token | `conversa`, `mensagemreferencia=0`, `mensagensprevias=0`, `mensagensseguintes=0` | – | `MensagemResposta[]` (§10.2) — 🆕 **sem** as respostas de postagem; 🆕 `ef13c22` `conteudos[]` com `duracao` e `intensidade` | membro (403) | marca **recebida** (🆕 inclusive respostas de postagem) + **WS 3** aos outros | `rotas.ts:108` |
 | 26 🆕 `e25c4db` | POST | `/mensagem/visualizar` | token | – | `conversa`, `mensagem` | `{sucesso:true}` | membro (403) | **WS 3** aos outros; 🆕 **WS 61** ao próprio usuário se marcou agora uma mensagem com atividade de resposta/menção ligada a ela (§12) | `rotas.ts:111` |
 | 27 | POST | `/mensagem/reproduzir` | token | – | `conversa`, `mensagem` | `{sucesso:true}` | membro (403) | **WS 3** aos outros | `rotas.ts:114` |
 | 28 | GET | `/mensagem/status` | token | `conversa`, `mensagem` (CSV de ids) | – | `[{conversa_id,mensagem_id,recebida,visualizada,reproduzida,excluida_em}]` | membro (403) | – | `rotas.ts:117` |
 | 29 | GET | `/mensagem/status/detalhe` | token | `id` | – | `[{usuario_id,nome,recebida,visualizada,reproduzida}]` (datas) | só o autor (403); 404 | – | `rotas.ts:120` |
 | 30 | GET | `/mensagens/novas` | token | `desde=''` (ISO) | – | `[{conversa_id,mensagem_id,ate}]` | – | – | `rotas.ts:123` |
 | 31 🆕 `12cf0cf` `6d20ff7` | GET | `/pesquisar` | token | `conversa=0`, `texto=''` | – | `MensagemResposta[]` — 🆕 sem respostas de postagem; 🆕 `6d20ff7` com `conversa` > 0, também mensagens dos **chats das ligações** feitas nela (outro `conversa_id`, §10.11) | só conversas do usuário | – | `rotas.ts:127` |
-| 32 | PUT | `/mensagem/reacao` | token | – | `mensagem_id`, `emoji` | `{mensagem_id, emoji, acao}` | membro (403); 404 | **WS 7** aos outros, **WS 61** ao autor | `rotas.ts:130` |
+| 32 🆕 `ef13c22` | PUT | `/mensagem/reacao` | token | – | `mensagem_id`, `emoji` | `{mensagem_id, emoji, acao}` | membro (403); 404; 🆕 permissão `reagir` (403), **também para tirar** a própria reação | **WS 7** aos outros, **WS 61** ao autor | `rotas.ts:130` |
 | 33 | GET | `/anexo/existe` | token | `identificador` | – | `{existe:false}` ou `{existe:true,id,identificador,tipo,tamanho,upload_status}` | **nenhuma** | – | `rotas.ts:134` |
 | 34 | GET | `/anexo` | token | `identificador` | – | `{url}` (GET assinado, 600 s) | **nenhuma** | pode marcar upload concluído | `rotas.ts:136` |
-| 35 | PUT | `/anexo` | token | – | `identificador`, `tipo`, `nome?`, `extensao?`, `tamanho` | §8.2 | – | cria registro | `rotas.ts:138` |
+| 35 🆕 `ef13c22` | PUT | `/anexo` | token | – | `identificador`, `tipo`, `nome?`, `extensao?`, `tamanho`, 🆕 `duracao?: number\|null` (0..86400 s), `intensidade?: int[]\|null` (até 200 valores de 0 a 100) | §8.2 | – | cria registro; 🆕 áudio (4/5): grava duração e intensidade em `anexo_audio` (§8.4) | `rotas.ts:138` |
 | 36 | POST | `/anexo/confirmar` | token | `identificador` | – | `{confirmado:true, upload_status:1}` | – | – | `rotas.ts:140` |
 | 37 | GET | `/anexos` | token | `conversa=0`, `autor=0`, `direcao=''`, `tipos=''`, `antes=0`, `limite=0` | – | lista de anexos (§8.5) | conversa: membro (403) | – | `rotas.ts:142` |
 | 38 | GET | `/anexo/transcricao` | token | `identificador` | – | `{status,texto,erro}` | áudio (4/5) em conversa do usuário (403) | – | `rotas.ts:146` |
 | 39 | PUT | `/anexo/transcricao` | token | – | `identificador` | `{status,texto,erro}` | idem; 400 se transcritor não configurado | inicia job em 2º plano | `rotas.ts:149` |
-| 40 | PUT | `/chamada/iniciar` | token | – | `tipo?`, `conversa_id?`, `usuarios:[{id}]` | dados da chamada (§9.3) | – | **WS 51** aos convidados | `rotas.ts:154` |
+| 40 🆕 `ef13c22` | PUT | `/chamada/iniciar` | token | – | `tipo?`, `conversa_id?`, `usuarios:[{id}]` | dados da chamada (§9.3) | 🆕 `tipo` 1 pede `chamada_audio`, `tipo` 2 pede `chamada_video` (403); sem `tipo`, com 3+ em `usuarios` (contando quem liga) vale 2 | **WS 51** aos convidados | `rotas.ts:154` |
 | 41 | POST | `/chamada/cancelar` | token | – | `id` | `{id}` | participante (404) | status 6, resumo, chamada perdida, **WS 52** | `rotas.ts:156` |
 | 42 🆕 `a40fd47` | POST | `/chamada/entrar` | token | – | `id` | `{id}` | participante (404) | **WS 54** (outros + próprio), entra no chat (WS 40 a si) — 🆕 só quando o chat é um grupo criado para a chamada; na conversa reaproveitada não inclui ninguém (§9.12; 🆕 `6d20ff7`: reaproveitamento só acontece em ligação feita dentro do chat de outra ligação) | `rotas.ts:158` |
 | 43 | POST | `/chamada/recusar` | token | – | `id`, `nao_atendeu?` | `{id}` | participante (404) | **WS 53** (outros + próprio), resumo, chamada perdida | `rotas.ts:160` |
 | 44 | POST | `/chamada/sair` | token | – | `id` | `{id}` | participante (404) | **WS 55**, resumo | `rotas.ts:163` |
 | 45 | PUT | `/chamada/usuario` | token | – | `chamada_id`, `usuario_id` | `{id}` | participante (404) | **WS 51** a todos menos quem adicionou | `rotas.ts:165` |
 | 46 | POST | `/chamada/finalizar` | token | – | `id` | `{id}` | participante (404) | status 4, resumo, chamada perdida, **WS 52** | `rotas.ts:168` |
-| 47 | GET | `/usuario/permissoes` | token | – | – | `string[]` | – | – | `rotas.ts:170` |
-| 48 | GET | `/permissoes` | token | – | – | `{permissoes, usuarios, modo_aberto}` | `permissoes` (403) | – | `rotas.ts:172` |
+| 47 🆕 `ef13c22` | GET | `/usuario/permissoes` | token | – | – | `string[]` — 🆕 inclui os códigos **de uso** (§13.1) | – | – | `rotas.ts:170` |
+| 48 🆕 `ef13c22` | GET | `/permissoes` | token | – | – | `{permissoes, usuarios, modo_aberto}` — 🆕 `permissoes[]` com `uso: bool`; bots excluídos fora de `usuarios` | `permissoes` (403) | – | `rotas.ts:172` |
 | 49 | PUT | `/permissao/usuario` | token | – | `usuario_id`, `codigo` | `{usuario_id, codigo}` | `permissoes` (403); 404 | – | `rotas.ts:174` |
-| 50 | DELETE | `/permissao/usuario` | token | `usuario_id`, `codigo` | – | `{usuario_id, codigo}` | `permissoes` (403); 400 último | – | `rotas.ts:177` |
-| 51 🆕 `b8ea0c2` | GET | `/parametros` | token | – | – | §13.2 (🆕 `ia_url`, `ia_modelo`, `ia_token_configurado`) | `parametros` (403) | – | `rotas.ts:180` |
-| 52 🆕 `b8ea0c2` | PATCH | `/parametros` | token | – | §13.2 (🆕 `ia_url?`, `ia_modelo?`, `ia_token?` — o token só é gravado, nunca volta) | §13.2 | `parametros` (403) | recarrega config | `rotas.ts:182` |
-| 53 🆕 `e25c4db` | GET | `/atividades` | token | `antes=0`, `limite=30` (1..100) | – | `Atividade[]` (§12) — 🆕 `nova: false` também para resposta/menção já lida no chat | – | – | `rotas.ts:184` |
-| 54 🆕 `e25c4db` | GET | `/atividades/novas` | token | – | – | `{quantidade}` — 🆕 sem contar resposta/menção já lida no chat (§12) | – | – | `rotas.ts:186` |
-| 55 | POST | `/atividades/vistas` | token | – | – | `{vistas_em}` | – | – | `rotas.ts:188` |
+| 50 🆕 `ef13c22` | DELETE | `/permissao/usuario` | token | `usuario_id`, `codigo` | – | `{usuario_id, codigo}` | `permissoes` (403); 400 último; 🆕 400 `Você não pode retirar as próprias permissões.` | – | `rotas.ts:177` |
+| 51 🆕 `b8ea0c2` `ef13c22` | GET | `/parametros` | token | – | – | §13.2 (🆕 `ia_url`, `ia_modelo`, `ia_token_configurado`; 🆕 `ef13c22` `cadastro_aberto`, `ia_modelo_embeddings`) | `parametros` (403) | – | `rotas.ts:180` |
+| 52 🆕 `b8ea0c2` `ef13c22` | PATCH | `/parametros` | token | – | §13.2 (🆕 `ia_url?`, `ia_modelo?`, `ia_token?` — o token só é gravado, nunca volta; 🆕 `ef13c22` `cadastro_aberto?: bool`, `ia_modelo_embeddings?`) | §13.2 | `parametros` (403) | recarrega config | `rotas.ts:182` |
+| 53 🆕 `e25c4db` `ef13c22` | GET | `/atividades` | token | `antes=0`, `limite=30` (1..100) | – | `Atividade[]` (§12) — ~~🆕 `nova: false` também para resposta/menção já lida no chat~~ 🆕 `ef13c22`: a chave `nova` **saiu**; no lugar dela vem **`pendente`** (§12); tipo **5** (confirmação pedida) | – | – | `rotas.ts:184` |
+| 54 🆕 `e25c4db` `ef13c22` | GET | `/atividades/novas` | token | – | – | `{quantidade}` — ~~🆕 sem contar resposta/menção já lida no chat (§12)~~ 🆕 `ef13c22`: quantas estão **pendentes**, só de conversas em que o usuário ainda é membro (§12) | – | – | `rotas.ts:186` |
+| 55 🆕 `ef13c22` | POST | `/atividades/vistas` | token | – | – | `{vistas_em}` | – | ~~zera o contador~~ 🆕 só grava `atividades_vistas_em`: **não mexe mais** no contador nem em `pendente` (§12) | `rotas.ts:188` |
 | 56 🆕 `a40fd47` `6d20ff7` | PUT | `/chamada/chat` | token | – | `id` (chamada) | `{conversa_id}` — ~~🆕 pode ser a própria conversa da ligação (até uma direta)~~ 🆕 `6d20ff7`: quase sempre um **grupo novo** (nome = nomes dos participantes, sem `Chamada: `); só reaproveita a origem quando a ligação foi feita dentro do chat de outra ligação | participante (404) | se criou o grupo: **WS 40** + **WS 57** `{acao:'chat'}`; 🆕 se reaproveitou a conversa: só **WS 57** `{acao:'chat'}` (§9.12) | `rotas.ts:190` |
 | 57 | GET | `/chamada/dados` | token | `id` | – | dados da chamada (§9.3) | participante (404) | – | `rotas.ts:192` |
 | 58 | GET | `/chamadas/pendentes` | token | – | – | chamadas tocando para o usuário (§9.6) | – | – | `rotas.ts:194` |
 | 59 🆕 `a40fd47` | GET | `/chamadas` | token | `participante=0`, `de=''`, `ate=''` | – | histórico (§9.7) — 🆕 com `conversa_chat_id` | – | – | `rotas.ts:196` |
-| 60 🆕 `6d20ff7` | POST | `/chamada/video` | token | – | `id` | `{}` | participante (404) | **WS 56** aos outros participantes; 🆕 grava `chamada.tipo = 2` se era 1 (áudio que ganhou vídeo vira vídeo na mensagem e no histórico, §9.2) | `rotas.ts:198` |
+| 60 🆕 `6d20ff7` `ef13c22` | POST | `/chamada/video` | token | – | `id` | `{}` | participante (404); 🆕 `ef13c22` permissão `chamada_video` (403, depois do 404) | **WS 56** aos outros participantes; 🆕 grava `chamada.tipo = 2` se era 1 (áudio que ganhou vídeo vira vídeo na mensagem e no histórico, §9.2) | `rotas.ts:198` |
 | 61 | GET | `/ice` | token | – | – | `{iceServers, iceTransportPolicy}` | – | – | `rotas.ts:203` |
-| 62 | GET | `/sip` | token | – | – | linha `sip` ou `{}` | – | – | `rotas.ts:207` |
-| 63 | PUT | `/sip` | token | – | §14 | linha `sip` | – | – | `rotas.ts:209` |
-| 64 | PATCH | `/sip` | token | – | `id` + campos | linha `sip` | dono (403) | – | `rotas.ts:211` |
-| 65 🆕 | PUT | `/enquete` | token | – | `conversa_id`, `pergunta` (≤ 300), `opcoes: string[]` (2–12, cada ≤ 200), `multipla: bool` | mensagem criada + `enquete_id` | membro; **só grupo** (400) | cria a mensagem tipo 8 (WS 2, push, WS 3 como uma mensagem normal) | `rotas.ts` (`8031fa5`), `enquetes.ts:12-45` |
+| 62 🆕 `ef13c22` | GET | `/sip` | token | – | – | linha `sip` ou `{}` — 🆕 `{}` também sem a permissão `telefonia` | – | – | `rotas.ts:207` |
+| 63 🆕 `ef13c22` | PUT | `/sip` | token | – | §14 | linha `sip` | 🆕 `telefonia` (403) | – | `rotas.ts:209` |
+| 64 🆕 `ef13c22` | PATCH | `/sip` | token | – | `id` + campos | linha `sip` | dono (403); 🆕 `telefonia` (403) | – | `rotas.ts:211` |
+| 65 🆕 (`8031fa5`) 🆕 `ef13c22` | PUT | `/enquete` | token | – | `conversa_id`, `pergunta` (≤ 300), `opcoes: string[]` (2–12, cada ≤ 200), `multipla: bool` | mensagem criada + `enquete_id` | membro; 🆕 `ef13c22` `votacao` (403); **só grupo** (400) | cria a mensagem tipo 8 (WS 2, push, WS 3 como uma mensagem normal) | `rotas.ts` (`8031fa5`), `enquetes.ts:12-45` |
 | 66 🆕 | GET | `/enquete` | token | `id` | – | `Enquete` (§10.13) | membro da conversa (403); 404 | – | `enquetes.ts:54-78` |
 | 67 🆕 | POST | `/enquete/votar` | token | – | `enquete_id`, `opcoes: int[]` (≤ 12; vazio tira o voto) | `Enquete` (§10.13) | membro; escolha única aceita 1 (400) | **WS 62** a **todos** os membros (inclusive quem votou) | `enquetes.ts:82-116` |
 | 68 🆕 `5cad911` | POST | `/enquete/encerrar` | token | – | `enquete_id` | `Enquete` (§10.13) | quem criou a votação **ou** quem criou o grupo (403); já encerrada (400) | **WS 62** a todos os membros | `enquetes.ts` (`encerrarEnquete`) |
@@ -259,18 +280,45 @@ Legenda de efeitos: **WS n** = evento WebSocket tipo n (§6.4); **FCM** = push.
 | 70 🆕 `b8ea0c2` | GET | `/contatos/presenca` | token | – | – | `[{usuario_id, estado: 'ativo'\|'ausente'\|'offline', visto_em}]` (§15.1) | contatos de conversa direta; `visto_em` só de quem mostra | – | `usuarios.ts` (`contatosPresenca`) |
 | 71 🆕 `b8ea0c2` | GET | `/usuario/privacidade` | token | – | – | `{mostrar_visto_em, mostrar_na_conversa, aparecer_offline}` | o próprio usuário | – | `usuarios.ts` (`privacidade`) |
 | 72 🆕 `b8ea0c2` | GET | `/conversa/presentes` | token | `conversa` | – | `number[]`: outros membros com a conversa aberta agora (§15.2) | membro (403) | – | `conversas.ts` (`presentesConversa`) |
-| 73 🆕 `b8ea0c2` `6d20ff7` | POST | `/mensagem/confirmar` | token | – | `mensagem_id` | `{mensagem_id}` | 404; membro (403); mensagem sem pedido ou do próprio autor (400); 🆕 `6d20ff7` fora da lista de quem precisa confirmar (403) | **WS 8** aos outros membros, só na 1ª confirmação (§10.14) | `mensagens.ts` (`confirmarLeitura`) |
+| 73 🆕 `b8ea0c2` `6d20ff7` `ef13c22` | POST | `/mensagem/confirmar` | token | – | `mensagem_id` | `{mensagem_id}` | 404; membro (403); mensagem sem pedido ou do próprio autor (400); 🆕 `6d20ff7` fora da lista de quem precisa confirmar (403) | **WS 8** aos outros membros, só na 1ª confirmação (§10.14); 🆕 `ef13c22` na 1ª confirmação, **WS 61** ao próprio usuário se ele tinha a atividade tipo 5 dessa mensagem (ela deixa de ser pendente) | `mensagens.ts` (`confirmarLeitura`) |
 | 74 🆕 `b8ea0c2` | POST | `/chamada/chamar-novamente` | token | – | `chamada_id`, `usuario_id` | dados da chamada (§9.3) | participante (404); alvo recusou/não atendeu e chamada 1 ou 3 (400) | alvo volta a 1; **WS 51** ao alvo; **WS 57** `{acao:'participantes'}` aos outros (§9.14) | `chamadas.ts` (`chamarNovamente`) |
-| 75 🆕 `b8ea0c2` | GET | `/recursos` | token | – | – | `{transcricao: bool, ia: bool}` (§13.3) | qualquer usuário logado | – | `parametros.ts` (`recursosSistema`) |
+| 75 🆕 `b8ea0c2` `ef13c22` | GET | `/recursos` | token | – | – | `{transcricao: bool, ia: bool}` (§13.3) — 🆕 `ef13c22` `+ conhecimento: bool` | qualquer usuário logado | – | `parametros.ts` (`recursosSistema`) |
 | 76 🆕 `b8ea0c2` | POST | `/parametros/ia/testar` | token | – | `url`, `modelo`, `token?` | `{ok, resposta, erro, milissegundos}` (§13.4) | `parametros` (403); URL inválida (400) | chama o servidor de IA (até 60 s) | `parametros.ts` (`testarIa`) |
 | 77 🆕 `b8ea0c2` | POST | `/conversa/resumo` | token | – | `conversa_id`, `periodo: '24h'\|'7d'\|'30d'\|'recentes'` | `Resumo` (§13.5) | membro (403); IA desligada (400) | gera em segundo plano (memória, 30 min) | `resumos.ts` (`pedirResumo`) |
 | 78 🆕 `b8ea0c2` | GET | `/conversa/resumo` | token | `id` (uuid) | – | `Resumo` (§13.5) | só quem pediu; vencido/inexistente (404) | – | `resumos.ts` (`consultarResumo`) |
 | 79 🆕 `ea02f57` | POST | `/ia/sugestao` | token | – | `conversa_id`, `texto` (≤ 4000) | `{sugestao}` (§13.6) | membro (403); IA desligada (400) | – | `sugestoes.ts` (`sugerirTexto`) |
 | 80 🆕 `12cf0cf` | GET | `/postagem/respostas` | token | `id` (da postagem) | – | `MensagemResposta[]`: até 100 respostas, mais antiga primeiro (§10.15) | membro (403); não é postagem (404) | – (não marca recebida) | `mensagens.ts` (`respostasPostagem`) |
 | 81 🆕 `12cf0cf` | POST | `/postagem/visualizar` | token | – | `postagem_id` | `{vistas: int}` (§10.15) | membro (403); não é postagem (404) | marca as respostas como recebidas/visualizadas; **WS 3** aos outros se alguma mudou; 🆕 `e25c4db` **WS 61** ao próprio usuário se alguma tinha atividade de resposta/menção ligada (§12) | `mensagens.ts` (`visualizarPostagem`) |
-| 82 🆕 `6d20ff7` | POST | `/mensagem/pedir-confirmacao` | token | – | `mensagem_id`, `usuarios?: int[]` | objeto `confirmacao` (§10.2) de quem pediu | 404; membro (403); só quem enviou (403); oculta, já pede, fora do prazo de **24 h** ou lista inválida (400) — §10.14 | **WS 65** a **todos** os membros (inclusive quem pediu), cada um com a `confirmacao` calculada para si | `mensagens.ts` (`pedirConfirmacao`) |
+| 82 🆕 `6d20ff7` `ef13c22` | POST | `/mensagem/pedir-confirmacao` | token | – | `mensagem_id`, `usuarios?: int[]` | objeto `confirmacao` (§10.2) de quem pediu | 404; membro (403); só quem enviou (403); 🆕 `ef13c22` permissão `confirmacao` (403); oculta, já pede, fora do prazo de **24 h** ou lista inválida (400) — §10.14 | **WS 65** a **todos** os membros (inclusive quem pediu), cada um com a `confirmacao` calculada para si; 🆕 `ef13c22` atividade **tipo 5** (+ WS 61) a quem precisa confirmar | `mensagens.ts` (`pedirConfirmacao`) |
+| 83 🆕 `ef13c22` | GET | `/cadastro` | **pública** | – | – | `{aberto: bool}` (§2.6) | – | – | `parametros.ts` (`cadastroSistema`) |
+| 84 🆕 `ef13c22` | PUT | `/usuario/novo` | token | – | `nome`, `login?`, `email?`, `telefone?`, `senha?`, `avatar_anexo_id?`, `bot?: bool`, `instrucoes?` | `{id, nome, login, bot}` (§2.6) | `usuarios` (403); campos faltando ou avatar que não é imagem (400); bot sem IA ou sem instruções (400) | pessoa: todas as permissões de uso; bot: §13.7 | `usuarios.ts` (`cadastrarUsuario`) |
+| 85 🆕 `ef13c22` | GET | `/bots` | token | – | – | `Bot[]` (§13.7): todos com `permissoes`; só os próprios com `bots` | `permissoes` ou `bots` (403) | – | `bots.ts` (`listarBots`) |
+| 86 🆕 `ef13c22` | PUT | `/bot` | token | – | `nome`, `instrucoes` | `Bot` | `bots` (403); IA desligada, nome fora de 1..60 ou instruções fora de 1..8000 (400) | cria o usuário bot | `bots.ts` (`criarBot`, `incluirBot`) |
+| 87 🆕 `ef13c22` | PATCH | `/bot` | token | – | `id`, `nome?`, `instrucoes?`, `ativo?: bool` | `Bot` | quem criou (com `bots`) ou quem tem `permissoes` (403 `Só quem criou o bot o edita.`); 404 | – | `bots.ts` (`alterarBot`) |
+| 88 🆕 `ef13c22` | DELETE | `/bot` | token | `id` | – | `{id, apagado: bool}` | idem | sai dos grupos (sem WS 40); sem histórico apaga de vez, com histórico marca `excluido_em` (§13.7) | `bots.ts` (`excluirBot`) |
+| 89 🆕 `ef13c22` | PUT | `/bot/ferramentas` | token | – | `id`, `ferramentas: int[]` (≤ 100) | `Bot` | idem; ferramenta inexistente (400) | troca a lista | `bots.ts` (`definirFerramentasBot`) |
+| 90 🆕 `ef13c22` | PUT | `/bot/conhecimento` | token | – | `id`, `bases: int[]` (≤ 100) | `Bot` | idem; base inexistente (400) | troca a lista | `bots.ts` (`definirConhecimentoBot`) |
+| 91 🆕 `ef13c22` | GET | `/conhecimento/bases` | token | – | – | `[{id, nome, descricao, documentos, trechos}]` (§13.9) | `conhecimento` (403) | – | `conhecimento.ts` (`listarBases`) |
+| 92 🆕 `ef13c22` | GET | `/conhecimento/disponiveis` | token | – | – | `[{id, nome, descricao}]` | `bots`, `permissoes` ou `conhecimento` (403) | – | `conhecimento.ts` (`basesDisponiveis`) |
+| 93 🆕 `ef13c22` | PUT | `/conhecimento/base` | token | – | `nome` (1..100), `descricao?` | base (`documentos: 0`, `trechos: 0`) | `conhecimento` (403); nome repetido (400) | – | `conhecimento.ts` (`incluirBase`) |
+| 94 🆕 `ef13c22` | PATCH | `/conhecimento/base` | token | – | `id`, `nome`, `descricao?` | base | `conhecimento` (403); 404; nome repetido (400) | – | `conhecimento.ts` (`alterarBase`) |
+| 95 🆕 `ef13c22` | DELETE | `/conhecimento/base` | token | `id` | – | `{id}` | `conhecimento` (403); 404 | apaga os documentos e os trechos no Qdrant | `conhecimento.ts` (`excluirBase`) |
+| 96 🆕 `ef13c22` | GET | `/conhecimento/documentos` | token | `base` | – | `[{id, base_id, nome, caracteres, trechos, status, erro, criado_em}]` | `conhecimento` (403) | – | `conhecimento.ts` (`listarDocumentos`) |
+| 97 🆕 `ef13c22` | PUT | `/conhecimento/documento` | token | – | `base_id`, `nome`, `texto` | documento (`status: 1`) | `conhecimento` (403); base desligada, sem texto ou grande demais (400); 404 | indexa em segundo plano (sem evento) | `conhecimento.ts` (`incluirDocumento`) |
+| 98 🆕 `ef13c22` | DELETE | `/conhecimento/documento` | token | `id` | – | `{id}` | `conhecimento` (403); 404 | apaga os trechos no Qdrant | `conhecimento.ts` (`excluirDocumento`) |
+| 99 🆕 `ef13c22` | POST | `/conhecimento/buscar` | token | – | `bases: int[]` (1..100), `pergunta`, `limite?` (1..20, padrão 5) | `[{documento, texto, nota}]` | `conhecimento` (403) | chama o servidor de IA (embeddings) | `conhecimento.ts` (`testarBusca`) |
+| 100 🆕 `ef13c22` | POST | `/conhecimento/reindexar` | token | – | – | `{documentos: int}` | `conhecimento` (403); base desligada (400) | apaga a coleção e indexa tudo de novo | `conhecimento.ts` (`reindexarTudo`) |
+| 101 🆕 `ef13c22` | GET | `/ferramentas` | token | – | – | `Ferramenta[]` (§13.8; dos cabeçalhos, só os nomes) | `ferramentas` (403) | – | `ferramentas.ts` (`listarFerramentas`) |
+| 102 🆕 `ef13c22` | GET | `/ferramentas/disponiveis` | token | – | – | `[{id, nome, descricao}]` das ativas | `bots`, `permissoes` ou `ferramentas` (403) | – | `ferramentas.ts` (`ferramentasDisponiveis`) |
+| 103 🆕 `ef13c22` | PUT | `/ferramenta` | token | – | §13.8 | `Ferramenta` | `ferramentas` (403); nome, URL ou parâmetros inválidos (400) | – | `ferramentas.ts` (`incluirFerramenta`) |
+| 104 🆕 `ef13c22` | PATCH | `/ferramenta` | token | – | `id` + §13.8 | `Ferramenta` | `ferramentas` (403); 404; 400 | – | `ferramentas.ts` (`alterarFerramenta`) |
+| 105 🆕 `ef13c22` | DELETE | `/ferramenta` | token | `id` | – | `{id}` | `ferramentas` (403); 404 | desliga dos bots (cascade) | `ferramentas.ts` (`excluirFerramenta`) |
+| 106 🆕 `ef13c22` | POST | `/ferramenta/testar` | token | – | `id`, `argumentos: {}` | `{ok, status, resposta, erro, milissegundos}` | `ferramentas` (403); 404 | chama a API externa (até 20 s) | `ferramentas.ts` (`testarFerramenta`) |
+| 107 🆕 `ef13c22` | PUT | `/bot/permissoes` | token | – | `id`, `permissoes: string[]` (≤ 50, só de uso) | `Bot` | como `PATCH /bot`; código que não é de uso (400); quem não tem `permissoes` só libera o que ele mesmo tem (403) | troca as permissões de uso do bot | `bots.ts` (`definirPermissoesBot`) |
+| 108 🆕 `ef13c22` | POST | `/atividade/concluir` | token | – | `id` (atividade) | `{sucesso: true}` (sempre; id alheio ou inexistente não dá erro) | só a própria | conclui à mão; **WS 61** a si se mudou (§12) | `atividades.ts` (`concluirAtividade`) |
+| 109 🆕 `ef13c22` | POST | `/atividades/reacoes-vistas` | token | – | `mensagens: int[]` (≤ 200) | `{concluidas: int}` | só as próprias | conclui as atividades de **reação** dessas mensagens; **WS 61** a si se concluiu alguma (§12) | `atividades.ts` (`concluirReacoesVistas`) |
 
-Todas as rotas de `src/rotas.ts` estão na tabela acima; nenhuma foi omitida (🆕 conferido em `e25c4db`: 82 chamadas `.get/.post/.put/.patch/.delete`).
+Todas as rotas de `src/rotas.ts` estão na tabela acima; nenhuma foi omitida (~~🆕 conferido em `e25c4db`: 82 chamadas `.get/.post/.put/.patch/.delete`~~ 🆕 conferido em `ef13c22`: **109** chamadas `.get/.post/.put/.patch/.delete`, 27 a mais que as 82 de `e25c4db`).
 
 ---
 
@@ -278,19 +326,27 @@ Todas as rotas de `src/rotas.ts` estão na tabela acima; nenhuma foi omitida (�
 
 ### 5.1 Usuário
 
-**`POST /api/alterar-senha`** — `src/usuarios.ts:68-74`. Corpo `{ "senha_atual": string, "senha": string }`. 400 `Senha atual incorreta!` (`src/autorizacao.ts:61-68`); 400 `Senha inválida!` se `senha` > 72. **Não** confere o mínimo de 4 caracteres aqui. Resposta `{}`. O token continua válido.
+**`POST /api/alterar-senha`** — `src/usuarios.ts:68-74`. Corpo `{ "senha_atual": string, "senha": string }`. 400 `Senha atual incorreta!` (`src/autorizacao.ts:61-68`); 400 `Senha inválida!` se `senha` > 72. **Não** confere o mínimo de 4 caracteres aqui. Resposta `{}`. O token continua válido. 🆕 `ef13c22`: a rota chama `trocarSenha`, que antes confere a permissão de uso **`senha`** → 403 `Você não tem permissão para: trocar a própria senha.` (`usuarios.ts`, `trocarSenha`).
 
 **`PATCH /api/usuario`** — `src/usuarios.ts:110-116`. Corpo `{ "id": int, "nome"?: string, "email"?: string, "telefone"?: string|null, "avatar_anexo_id"?: int|null }` (`src/esquemas.ts:37`). `id` precisa ser o do token (403 `Acesso negado!`). Só grava os campos enviados; sem nenhum, devolve a linha atual. Resposta: linha `usuario` sem `senha`. Sem evento WebSocket (os outros só veem a mudança ao recarregar listas).
 - Avatar: enviar o anexo (tipo 2, §8) e depois `avatar_anexo_id` = **id numérico** do anexo.
 - 🆕 `b8ea0c2` Privacidade da presença: o corpo aceita também `mostrar_visto_em?`, `mostrar_na_conversa?` e `aparecer_offline?` (booleanos; `null` não é aceito). A resposta passa a trazer `visto_em`, `mostrar_visto_em`, `mostrar_na_conversa` e `aparecer_offline`. Se o usuário tem socket aberto, a preferência vale na hora: os contatos e o próprio usuário recebem WS 60 se o estado visível mudou, e os membros das conversas que deixam de aparecer recebem WS 63 `aberta:false` (§15).
+- 🆕 `ef13c22` **Uma permissão de uso por campo** (`usuarios.ts`, `alterarUsuario`), conferida pela **presença da chave** no corpo, não por mudança de valor:
+  - `nome` → `nome`;
+  - `email` ou `telefone` → `email` (o telefone vai com o e-mail);
+  - `avatar_anexo_id` → `avatar`;
+  - `mostrar_visto_em`, `mostrar_na_conversa` ou `aparecer_offline` → `privacidade`.
+  - Falta qualquer uma → 403 `Você não tem permissão para: …` e **nada** é gravado. Mande só as chaves que mudaram: um "Salvar" com nome e e-mail juntos precisa das duas permissões.
 
 🆕 `b8ea0c2` **`GET /api/usuario/privacidade`** — `usuarios.ts` (`privacidade`). → `{ "mostrar_visto_em": true, "mostrar_na_conversa": true, "aparecer_offline": false }` (padrões da migração 040). Para a tela de configurações.
 
 🆕 `b8ea0c2` **`GET /api/contatos/presenca`** — `usuarios.ts` (`contatosPresenca`). Uma linha por pessoa com quem o usuário tem **conversa direta (tipo 1)**: `[{ "usuario_id": 8, "estado": "ativo"|"ausente"|"offline", "visto_em": "<ISO>"|null }]`. `estado` é o visível (quem escolheu aparecer offline vem `offline`); `visto_em` vem do banco e é `null` para quem não mostra o visto por último. Não traz o próprio usuário. Ver §15.1.
 
-**`DELETE /api/usuario?id=`** — `src/usuarios.ts:118-131`. Só a própria conta. Apaga `dispositivo_usuario` e `dispositivo` do usuário; se houver histórico (mensagens, conversas, chamadas...), **409** `A conta tem histórico e não pode ser excluída!`.
+**`DELETE /api/usuario?id=`** — `src/usuarios.ts:118-131`. Só a própria conta. Apaga `dispositivo_usuario` e `dispositivo` do usuário; se houver histórico (mensagens, conversas, chamadas...), **409** `A conta tem histórico e não pode ser excluída!`. 🆕 `ef13c22`: apaga também as permissões (`permissao_usuario`), tudo numa transação: com 409, nada sai (antes os dispositivos saíam mesmo com 409).
 
-**`GET /api/usuario/contatos`** — `src/usuarios.ts:142-144`. Devolve **todos os usuários do sistema** (inclusive o próprio), `[{ id, nome, login, email, telefone }]`, ordenado por `id`. **Sem avatar.** Não usa a tabela `usuario_contato`.
+**`GET /api/usuario/contatos`** — `src/usuarios.ts:142-144`. Devolve **todos os usuários do sistema** (inclusive o próprio), `[{ id, nome, login, email, telefone }]`, ordenado por `id`. **Sem avatar.** Não usa a tabela `usuario_contato`. 🆕 `ef13c22` (`usuarios.ts`, `contatos`): cada item ganha **`bot: bool`** no fim (`[{ id, nome, login, email, telefone, bot }]`); os bots aparecem como contatos comuns (login `bot-…`, e-mail `…@bot.conversa`), e os bots **excluídos** com histórico ficam de fora. É a única rota que marca quem é bot (§13.7).
+
+🆕 `ef13c22` **`PUT /api/usuario/novo`** — cadastro pelo administrador (pessoa ou bot). Ver §2.6.
 
 **`PUT /api/usuario/contato?relacionamento_id=`** / **`DELETE /api/usuario/contato?id=`** — `src/usuarios.ts:133-140`. Mantêm a tabela `usuario_contato` (contatos salvos). **Não há rota para listar** os contatos salvos. O PUT não valida duplicidade nem existência (FK inválida = 500).
 
@@ -313,6 +369,9 @@ Ver §13, §12, §14.
 
 ### 5.7 🆕 IA (resumo e sugestão), recursos
 Ver §13.3–§13.6.
+
+### 5.8 🆕 Bots de IA, ferramentas externas e base de conhecimento (`ef13c22`)
+Ver §13.7–§13.9. Cadastro pelo administrador: §2.6.
 
 ---
 
@@ -347,6 +406,8 @@ Erros de leitura (`src/websocket.ts:60-68`):
 > Atenção: o `tipo: 9` **não existe** no enum `TipoMensagemSocket`.
 
 ### 6.4 Enum `TipoMensagemSocket` (`src/websocket.ts:4-22`; 🆕 em `12cf0cf`, `:4-29`; 🆕 em `e25c4db`, `:4-31`)
+
+> 🆕 `ef13c22`: **nenhum tipo novo**; o `websocket.ts` não mudou. Mudaram só os gatilhos de tipos que já existiam: o **61** sai em mais situações (atividades pendentes, §12) e o **4** ("digitando") também vem de **bots** enquanto pensam (§13.7). Mensagens de bots geram WS 2, 3 e 61 como as de qualquer pessoa.
 
 | Nome | Valor | Direção |
 |---|---|---|
@@ -396,7 +457,7 @@ Todos são enviados a **todas as conexões abertas** do usuário destinatário (
 | 0 | `{"tipo":0,"message":string}` | Falha no login do socket | `websocket.ts:86` |
 | 2 | `{"tipo":2,"titulo":string,"mensagem":string}` | Nova mensagem (imediata em `PUT /mensagem`, ou agendada quando amadurece) para **cada outro membro** da conversa. `titulo` = nome completo do remetente; `mensagem` = texto resumido (§7.2). **Não traz `conversa_id` nem `mensagem_id`**: o cliente deve chamar `GET /api/mensagens/novas` (como o web faz). Pode chegar **duplicado** (§19) | `websocket.ts:134-136`, `notificacoes.ts:52-76` |
 | 3 | `{"tipo":3,"grupo":<conversa_id>,"mensagens":"12,13,14"}` | Mudança de status de mensagens (`mensagens` é **string CSV**). Dispara: ao listar `/mensagens` (recebidas → aos outros membros), `visualizar`/`reproduzir` (aos outros), exclusão de mensagem (aos outros), agendada amadurecendo (aos outros), resumo de chamada inserido (a **todos** os membros, inclusive o autor). Cliente: chamar `GET /api/mensagem/status`; se algum id é desconhecido, recarregar mensagens. 🆕 `12cf0cf`: os ids podem ser de **respostas de postagem**, que não estão no fluxo (vêm ao listar `/mensagens`, que marca recebidas também as respostas, e em `POST /postagem/visualizar`): id desconhecido **não** quer dizer que falta mensagem no fluxo (§10.15) | `websocket.ts:138-140`, `notificacoes.ts:43-49` |
-| 4 | `{"tipo":4,"conversa_id":int,"usuario_id":int}` | Alguém chamou `POST /conversa/digitando`; vai aos outros membros. Não há evento de "parou" | `websocket.ts:142-144`, `conversas.ts:237-240` |
+| 4 | `{"tipo":4,"conversa_id":int,"usuario_id":int}` | Alguém chamou `POST /conversa/digitando`; vai aos outros membros. Não há evento de "parou". 🆕 `ef13c22`: também um **bot** que está montando a resposta (`usuario_id` = o bot), na hora e a cada **3 s** até responder ou falhar (pode levar minutos) | `websocket.ts:142-144`, `conversas.ts:237-240`, 🆕 `bots.ts` (`responder`) |
 | 5 | `{"tipo":5,"conversa_id":int,"usuario_id":int}` | `POST /conversa/gravando` | idem |
 | 7 | `{"tipo":7,"conversa_id":int,"mensagem_id":int,"usuario_id":int,"emoji":string,"acao":"add"\|"remove"}` | Reação alternada; aos outros membros da conversa | `websocket.ts:146-148`, `mensagens.ts:748-752` |
 | 8 🆕 `b8ea0c2` | `{"tipo":8,"conversa_id":int,"mensagem_id":int,"usuario_id":int,"nome":string,"confirmada_em":"<ISO>"}` | Alguém confirmou a leitura de uma mensagem que pede confirmação (`POST /mensagem/confirmar`). `usuario_id`/`nome` (completo) = quem confirmou. Vai a **todos os outros membros** (inclusive o autor), **só na primeira** confirmação daquela pessoa (repetir não reenvia) | `websocket.ts` (`notificarConfirmacao`), `mensagens.ts` (`confirmarLeitura`) |
@@ -409,7 +470,7 @@ Todos são enviados a **todas as conexões abertas** do usuário destinatário (
 | 56 | `{"tipo":56,"chamada_id":int,"usuario_id":int}` | `POST /chamada/video`: aos outros participantes. 🆕 `6d20ff7`: a mesma rota grava `chamada.tipo = 2` (§9.2); o evento não traz o tipo — quem precisar relê `GET /chamada/dados` | `chamadas.ts:302-305`, 🆕 `chamadas.ts` (`ativarVideo`) |
 | 57 | `{"tipo":57,"chamada_id":int,"usuario_id":int,"dados":{...}}` | Repasse de sinal (§9.11) ou aviso do servidor: `{acao:"chat",conversa_id}` (🆕 `a40fd47`: também quando o chat é a própria conversa da ligação — 🆕 `6d20ff7`: só se ela é o chat de outra ligação) e 🆕 `b8ea0c2` `{acao:"participantes"}` (alguém foi chamado de novo: reler `GET /chamada/dados`), este a todos os participantes menos quem chamou e o alvo, em qualquer status | `websocket.ts:156-158,213-215`, 🆕 `chamadas.ts` (`chamarNovamente`) |
 | 60 | ~~`{"tipo":60,"usuario_id":int,"online":bool}`~~ 🆕 `b8ea0c2` `{"tipo":60,"usuario_id":int,"online":bool,"estado":"ativo"\|"ausente"\|"offline","visto_em":"<ISO>"\|null}` | 🆕 Dispara a **cada mudança do estado visível** (ativo ↔ ausente ↔ offline), não só na primeira/última conexão. Vai a quem tem conversa direta (tipo 1) com ele **e ao próprio usuário** (todas as conexões dele). `online` = `estado != 'offline'`. `visto_em` só vem preenchido quando a mudança é **saída do ativo** e a pessoa mostra o visto por último; nos outros casos vem `null` (que **não** apaga o valor conhecido). Também é mandado à conexão que acabou de fazer login (§6.2). Detalhes em §15.1 | 🆕 `websocket.ts` (`atualizarPresenca`, `notificarContatosStatus`) |
-| 61 | `{"tipo":61}` | Atividade nova ou removida para o usuário; recarregar `/atividades/novas`. 🆕 `e25c4db`: também quando o **próprio usuário** lê no chat uma mensagem com atividade de resposta/menção ligada a ela (`POST /mensagem/visualizar` que marcou agora, ou `POST /postagem/visualizar` que marcou alguma resposta) — o contador diminui sem `POST /atividades/vistas` (§12). `GET /mensagens` não dispara (só marca recebida) | `websocket.ts:151-153`, `atividades.ts`, 🆕 `atividades.ts` (`avisarAtividadesLidas`) |
+| 61 | `{"tipo":61}` | Atividade nova ou removida para o usuário; recarregar `/atividades/novas`. 🆕 `e25c4db`: também quando o **próprio usuário** lê no chat uma mensagem com atividade de resposta/menção ligada a ela (`POST /mensagem/visualizar` que marcou agora, ou `POST /postagem/visualizar` que marcou alguma resposta) — o contador diminui sem `POST /atividades/vistas` (§12). `GET /mensagens` não dispara (só marca recebida). 🆕 `ef13c22` — também ao próprio usuário quando uma atividade **deixa de estar pendente**: `POST /atividade/concluir` que concluiu; `POST /atividades/reacoes-vistas` que concluiu alguma; `POST /mensagem/confirmar` (1ª vez) com atividade tipo 5 daquela mensagem. E a quem **precisa confirmar**, quando ganha a atividade tipo 5 (`PUT /mensagem` com `pede_confirmacao`, que numa agendada só avisa quando ela sai, ou `POST /mensagem/pedir-confirmacao`, que avisa na hora) | `websocket.ts:151-153`, `atividades.ts`, 🆕 `atividades.ts` (`avisarAtividadesLidas`; 🆕 `ef13c22` `concluirAtividade`, `concluirReacoesVistas`, `avisarConfirmacaoFeita`) |
 | 62 🆕 | `{"tipo":62,"enquete_id":int,"conversa_id":int}` | Alguém votou (ou tirou o voto) numa enquete — ou, 🆕 `5cad911`, a votação foi encerrada ou teve a data final mudada; vai a todos os membros da conversa, inclusive outras abas/aparelhos de quem votou. O cliente relê `GET /enquete?id=` só se a bolha está carregada | `websocket.ts` (`notificarEnquete`), `enquetes.ts:110-114` |
 | 63 🆕 `b8ea0c2` | `{"tipo":63,"conversa_id":int,"usuario_id":int,"aberta":bool}` | `usuario_id` abriu (`true`) ou saiu (`false`) da conversa — inclusive porque a conexão ficou inativa, fechou ou a pessoa passou a esconder a conversa aberta. Vai aos **outros membros** daquela conversa. Não vem de quem desligou `mostrar_na_conversa` ou aparece offline. Estado inicial: `GET /conversa/presentes` (§15.2) | `websocket.ts` (`notificarNaConversa`) |
 | 64 🆕 `12cf0cf` | `{"tipo":64,"conversa_id":int,"postagem_id":int,"usuario_id":int}` | Resposta nova numa postagem (`usuario_id` = quem respondeu). Vai a **todos os outros membros** da conversa. Cliente: reler a postagem (o resumo `postagem` vem em `GET /mensagens?mensagemreferencia=<postagem_id>`; as respostas em `GET /postagem/respostas`). A resposta também gera WS 2 e push como mensagem comum (§10.15) | `websocket.ts` (`notificarPostagem`), `mensagens.ts` (`registrarRespostaPostagem`) |
@@ -450,7 +511,9 @@ Para cada outro membro da conversa, para cada dispositivo com `ativo = true` e `
 
 🆕 `12cf0cf`: resposta de postagem é mensagem comum para o push e o WS 2 (mesmo título e texto), embora não apareça no fluxo da conversa (§10.15).
 
-**Não há push para**: chamadas recebidas, chamadas perdidas, reações, menções/atividades, inclusão em conversa, status. Chamada só chega por WebSocket (tipo 51) — ver §19.
+🆕 `ef13c22`: mensagem de **bot** é mensagem comum para o push e o WS 2 (título = nome do bot). O bot não tem dispositivo nem socket, então nunca recebe push.
+
+**Não há push para**: chamadas recebidas, chamadas perdidas, reações, menções/atividades (🆕 inclusive o pedido de confirmação, atividade tipo 5), inclusão em conversa, status. Chamada só chega por WebSocket (tipo 51) — ver §19.
 
 Falhas de push são ignoradas silenciosamente (`.catch(() => {})`), inclusive token inválido; o servidor **não limpa** tokens inválidos.
 
@@ -521,6 +584,10 @@ Tabela `anexo`: `id`, `identificador` varchar(64), `tipo`, `tamanho` int8, `nome
    { "identificador": "<sha256>", "tipo": 2, "nome": "foto.jpg", "extensao": "jpg", "tamanho": 123456 }
    ```
    `nome` e `extensao` são `string|null` opcionais (vazio vira `null`). `tamanho` em bytes, máximo **1 GiB** (`1024*1024*1024`) → senão 400 `Arquivo muito grande!` (`src/anexos.ts:30,59-61`).
+   🆕 `ef13c22` — **dados do áudio** (`anexos.ts`, `gravarDadosAudio`; esquema `incluirAnexo`): o corpo aceita também `"duracao": number|null` (segundos, 0 a 86400; gravado com 2 casas) e `"intensidade": int[]|null` (picos de 0 a 100 ao longo do áudio, para desenhar a onda; no máximo 200 valores). Fora disso → 400 de validação.
+   - Só vale para `tipo` 4 ou 5 e com pelo menos um dos dois preenchido; nos outros tipos é ignorado.
+   - Grava em `anexo_audio` (§8.6) **antes** de ver se o anexo existe. O primeiro valor fica: um envio seguinte do mesmo `identificador` só preenche o que faltava.
+   - O servidor **não mede** nada: quem envia calcula. A resposta não muda.
    Respostas (`src/anexos.ts:58-81`):
    - Novo: `{"existe":false,"id":<number>,"upload_url":"https://<host>/storage/<bucket>/conversa/AAAA/MM/DD/<identificador>?X-Amz-...","upload_status":0}` — `upload_url` é **PUT pré-assinado válido por 300 s**.
    - Já existente: `{"existe":true,"id":"<string!>","upload_url":"<URL GET pré-assinada, 600 s>"}` — **`id` vem como string** e **não** vem `upload_status`; a URL é de **download**, não de upload. Se o anexo existente estiver pendente/falho, o cliente não tem como reenviar (ver §19).
@@ -542,7 +609,9 @@ Caminho do objeto no bucket: `conversa/AAAA/MM/DD/<identificador>` com a data do
 
 ### 8.4 Miniaturas e metadados
 
-**Não existem.** O servidor não gera thumbnail, não guarda largura/altura/duração/mime. O cliente baixa o arquivo inteiro (ou gera miniatura localmente). O tipo de mídia deve ser inferido por `tipo` + `extensao` do conteúdo da mensagem.
+**Não existem.** O servidor não gera thumbnail, não guarda largura/altura/~~duração~~/mime. O cliente baixa o arquivo inteiro (ou gera miniatura localmente). O tipo de mídia deve ser inferido por `tipo` + `extensao` do conteúdo da mensagem.
+
+🆕 `ef13c22` — **exceção: áudio.** Para conteúdos tipo 4 e 5, o servidor guarda a **duração** e a **intensidade** (onda) que o cliente mandou no `PUT /anexo` (§8.2) e as devolve em cada conteúdo das mensagens (`duracao`, `intensidade`, §10.2). Se ninguém mandou, vêm `null`: o cliente mede ao tocar, como antes. Imagem e vídeo continuam sem metadados.
 
 ### 8.5 Galeria — `GET /api/anexos`
 
@@ -561,6 +630,7 @@ Resposta: `[{ "anexo_id": int, "identificador": str, "nome": str|null, "extensao
 - **Não há evento WebSocket** ao concluir: o cliente faz polling do GET (o teste usa 250 ms; sugerido 2–3 s).
 - A transcrição é por anexo (`identificador`), compartilhada por todas as conversas onde o áudio aparece, e vem embutida nas mensagens (`transcricao_status`, `transcricao` — §10.2).
 - Internamente a API envia o áudio ao "transcritor-api" (`POST {url}/jobs` multipart com `file`, `language`, `diarization=false`, `alignment=false`; polling `GET /jobs/{id}` a cada 2 s; download `GET /jobs/{id}/download?formato=txt`) — `src/transcricoes.ts:103-157`. O cliente não fala com o transcritor.
+- 🆕 `ef13c22` (migração 045): a tabela `anexo_transcricao` virou **`anexo_audio`**, uma linha por áudio, com a transcrição e os dados do áudio (`duracao`, `intensidade`, §8.2). As colunas da transcrição ganharam o prefixo `transcricao_`, e o status ficou **nulo** enquanto ninguém pede a transcrição (a linha pode existir só com a duração). **Para o cliente nada muda**: `GET`/`PUT /anexo/transcricao` continuam com `{status, texto, erro}`, e status nulo sai como **0** (`transcricoes.ts`, `resposta`); nas mensagens, `transcricao_status` também sai 0.
 
 ---
 
@@ -584,7 +654,7 @@ Código: `src/chamadas.ts`. Testes: `tests/chamadas.test.ts`, `tests/atividades.
 
 | Ação | Rota / corpo | Efeito no banco | Eventos | Ref. |
 |---|---|---|---|---|
-| Iniciar | `PUT /api/chamada/iniciar` `{ "tipo"?: 1\|2, "conversa_id"?: int\|null, "usuarios": [{"id": int}, ...] }` | Cria `chamada` (status 1). Para cada item de `usuarios`: se for o próprio → status 3 (entrou), senão status 1. **O chamador deve incluir a si mesmo em `usuarios`** (senão não é participante e todas as ações respondem 404). `conversa_id` ≤ 0 vira `null` | WS 51 a todos os participantes menos o criador | `chamadas.ts:88-110` |
+| Iniciar | `PUT /api/chamada/iniciar` `{ "tipo"?: 1\|2, "conversa_id"?: int\|null, "usuarios": [{"id": int}, ...] }` | Cria `chamada` (status 1). Para cada item de `usuarios`: se for o próprio → status 3 (entrou), senão status 1. **O chamador deve incluir a si mesmo em `usuarios`** (senão não é participante e todas as ações respondem 404). `conversa_id` ≤ 0 vira `null`. 🆕 `ef13c22`: antes de criar, confere a permissão pelo `tipo` (o enviado ou o padrão): 1 → `chamada_audio`, 2 → `chamada_video` (403 `Você não tem permissão para: fazer chamadas de áudio.` / `… de vídeo e ligar o vídeo na chamada.`) | WS 51 a todos os participantes menos o criador | `chamadas.ts:88-110`, 🆕 `chamadas.ts` (`iniciarChamada`) |
 | Atender | `POST /api/chamada/entrar` `{ "id" }` | participante → 3 e `entrou_em` (só se ainda não entrou); recalcula status (§9.4) | WS 54 aos outros **e a si mesmo**; se o chat da chamada existe, entra no grupo e recebe WS 40 | `chamadas.ts:199-212` |
 | Recusar | `POST /api/chamada/recusar` `{ "id", "nao_atendeu"?: bool }` | participante → 2 (só se ainda não entrou). Chamada → 2 se todos menos um recusaram. `nao_atendeu: true` (tocou até o fim, recusado automaticamente pelo app) registra evento 8 e **atividade de chamada perdida** | WS 53 aos outros **e a si mesmo** | `chamadas.ts:164-197` |
 | Sair | `POST /api/chamada/sair` `{ "id" }` | participante → 4 e `saiu_em`; recalcula status | WS 55 aos outros. **Não** envia 52 mesmo que a chamada termine | `chamadas.ts:214-225` |
@@ -592,10 +662,12 @@ Código: `src/chamadas.ts`. Testes: `tests/chamadas.test.ts`, `tests/atividades.
 | Finalizar | `POST /api/chamada/finalizar` `{ "id" }` | chamada → 4 + `finalizada` (qualquer participante) | WS 52 aos outros | `chamadas.ts:293-300` |
 | Adicionar pessoa | `PUT /api/chamada/usuario` `{ "chamada_id", "usuario_id" }` | novo participante status 1 (não confere duplicidade: repetir = linha duplicada) | WS 51 a todos menos quem adicionou | `chamadas.ts:283-291` |
 | 🆕 Chamar de novo | `POST /api/chamada/chamar-novamente` `{ "chamada_id", "usuario_id" }` | quem recusou/não atendeu volta a status 1 (evento 3) | WS 51 só ao alvo; WS 57 `{acao:'participantes'}` aos outros (§9.14) | `chamadas.ts` (`chamarNovamente`, `b8ea0c2`) |
-| Anunciar vídeo | `POST /api/chamada/video` `{ "id" }` | ~~–~~ 🆕 `6d20ff7`: `chamada.tipo` 1 → **2** (só se era 1; repetir não muda nada). O resumo (§9.8), o histórico (§9.7) e `/chamada/dados` passam a dizer vídeo. Só confere a participação, não o status: chamar depois de encerrada também muda o `tipo` no histórico, mas o resumo já gravado fica como estava | WS 56 aos outros (o web oferece "Apenas assistir") | `chamadas.ts:302-305`, 🆕 `chamadas.ts` (`ativarVideo`) |
+| Anunciar vídeo | `POST /api/chamada/video` `{ "id" }` | 🆕 `ef13c22`: pede a permissão `chamada_video` (403, conferida depois da participação). ~~–~~ 🆕 `6d20ff7`: `chamada.tipo` 1 → **2** (só se era 1; repetir não muda nada). O resumo (§9.8), o histórico (§9.7) e `/chamada/dados` passam a dizer vídeo. Só confere a participação, não o status: chamar depois de encerrada também muda o `tipo` no histórico, mas o resumo já gravado fica como estava | WS 56 aos outros (o web oferece "Apenas assistir") | `chamadas.ts:302-305`, 🆕 `chamadas.ts` (`ativarVideo`) |
 | Chat da chamada | `PUT /api/chamada/chat` `{ "id" }` | §9.12 | §9.12 | `chamadas.ts:230-266` |
 
 Todas as ações exigem que o usuário seja participante (qualquer status) — senão **404 `Chamada não encontrada!`** (não 403) — `src/chamadas.ts:70-82`. Todas respondem `{ "id": <chamada> }` (exceto iniciar, chat, video e 🆕 chamar-novamente, que devolve os dados da chamada).
+
+🆕 `ef13c22` — **permissões nas chamadas:** só **iniciar** (`chamada_audio`/`chamada_video`, pelo `tipo`) e **ligar o vídeo** (`chamada_video`) são conferidos. Atender, recusar, sair, adicionar pessoa, chamar de novo e o chat da chamada não pedem permissão. `compartilhar_tela` existe, mas o servidor não confere (a tela vai pelo MediaMTX e pelo sinal 57; só o cliente esconde o botão). Um **bot** pode ser convidado (é um usuário comum), mas nunca atende: toca até o cliente desistir e vira chamada perdida para ele (§13.7).
 
 `notificarMembrosChamada` lança erro (→ **500 `Chamada não encontrada!`**) se não há nenhum outro participante (ex.: iniciar só consigo mesmo) — `src/notificacoes.ts:33-35`.
 
@@ -812,7 +884,8 @@ Uma mensagem tem **vários conteúdos** (lista ordenada por `ordem`), ex.: image
 - `remetente` = **só o primeiro nome** (`substring(trim(nome) from '^([^ ]+)')`). Para nome completo, cruzar `remetente_id` com contatos/membros.
 - `mensagem_referencia` e `reacoes` **só aparecem quando existem** (chaves ausentes, não `null`).
 - `mensagem_referencia.mensagem` é uma `MensagemResumida` (`id`, `conversa_id`, `remetente`, `inserida`, `excluida_em`, `conteudos`, `mensagem_referencia?`) — cadeia de até **5 níveis** (`src/mensagens.ts:478-499`). Pode faltar `mensagem` se a referenciada não existir mais. A referenciada pode ser de **outra conversa** (encaminhamento) e aparece mesmo que o usuário não participe dela.
-- `conteudos[]`: sempre `id`, `ordem`, `tipo`, `conteudo`, `nome`, `extensao`, `transcricao_status`, `transcricao`; para tipos 1/6/7/8, `nome`/`extensao` = `""` e `transcricao_status` = 0. Para 2–5 `nome`/`extensao` vêm do anexo (vazio se nulo) e transcrição de `anexo_transcricao`.
+- `conteudos[]`: sempre `id`, `ordem`, `tipo`, `conteudo`, `nome`, `extensao`, `transcricao_status`, `transcricao`; para tipos 1/6/7/8, `nome`/`extensao` = `""` e `transcricao_status` = 0. Para 2–5 `nome`/`extensao` vêm do anexo (vazio se nulo) e transcrição de ~~`anexo_transcricao`~~ 🆕 `anexo_audio` (§8.6).
+  - 🆕 `ef13c22` — mais duas chaves **sempre presentes**, depois de `transcricao` (e antes de `chat_chamada_id`, quando houver): **`duracao`** (`number|null`, segundos com até 2 casas, ex.: `44.95`) e **`intensidade`** (`int[]|null`, picos de 0 a 100 para a onda). Vêm preenchidas só em áudio (tipos 4/5) cujo envio mandou esses dados (§8.2); em todo o resto, `null` (`mensagens.ts`, `carregarConteudos`). Valem também nas citações (`mensagem_referencia.mensagem.conteudos`), em `/pesquisar` e em `/postagem/respostas`. Exemplo: `{ "id": 556, "ordem": 1, "tipo": 5, "conteudo": "<sha256>", "nome": "audio.webm", "extensao": "webm", "transcricao_status": 0, "transcricao": "", "duracao": 44.95, "intensidade": [0, 12, 100, 37] }`.
   - **Conteúdo de anexo cujo `identificador` não existe na tabela `anexo` é omitido** (inner join — `src/mensagens.ts:436-437`).
 - Status (`src/mensagens.ts:560-610`): para o **remetente**, `recebida/visualizada/reproduzida` = **todos** os destinatários; para os demais, só o **próprio** status. Se não há linhas de status (conversa só com o autor, ou mensagem anterior à entrada do usuário na conversa), os três vêm **`true`** (0 === 0).
 - `reacoes[].usuarios[].nome` = nome completo; `avatar_url` assinado por 600 s ou `null`. Ordem das reações: primeira reação de cada emoji.
@@ -852,7 +925,15 @@ Corpo (`src/esquemas.ts:50-57`):
   1. `Postagem só existe em grupo.` — `postagem` ou `postagem_id` em conversa que não é grupo;
   2. `Resposta de postagem não pode ser outra postagem nem agendada.` — `postagem_id` junto com `postagem` ou `visivel_em`;
   3. `Postagem não encontrada.` — `postagem_id` não é uma postagem **desta conversa**, visível e não oculta;
-  4. 🆕 `6d20ff7` `Escolha quem precisa confirmar entre os membros da conversa.` — `pede_confirmacao: true` com `confirmacao_usuarios` vazia ou com alguém que não é outro membro.
+  4. 🆕 `ef13c22` **403 por falta de permissão de uso** (ver abaixo);
+  5. 🆕 `6d20ff7` (era o 4) `Escolha quem precisa confirmar entre os membros da conversa.` — `pede_confirmacao: true` com `confirmacao_usuarios` vazia ou com alguém que não é outro membro.
+- 🆕 `ef13c22` **Permissões de uso do `PUT /mensagem`** (`mensagens.ts`, `permissoesMensagem`). O servidor junta as permissões que a mensagem pede e responde 403 com a primeira que falta (§3):
+  - `mensagem_referencia` com `origem_mensagem_id` > 0: `tipo` 1 → `responder`; `tipo` 2 → `encaminhar` e **só ela** (encaminhar não confere mais nada: nem os conteúdos, nem agendar, postagem ou confirmação);
+  - `postagem` (criar postagem) → `postagem` (responder a uma postagem com `postagem_id` não pede nada);
+  - `pede_confirmacao: true` → `confirmacao`;
+  - `visivel_em` preenchido → `agendar`;
+  - por conteúdo: texto (1) com qualquer caractere `\p{Extended_Pictographic}` → `emoji` (pega também `©`, `®`, `™` e algumas setas); imagem (2) → `imagem`; áudio (4/5) → `audio`; figurinha (7) → `figurinha`; arquivo (3) → `video` se a extensão do anexo (ou do nome) for `mp4`, `webm`, `ogg`, `mov`, `m4v` ou `mkv`, senão `arquivo` (identificador que não está na tabela `anexo` também conta como `arquivo`);
+  - chamada (6) não pede nada.
 
 Resposta (`src/mensagens.ts:185-227`): a linha `mensagem` crua + referência:
 ```json
@@ -861,7 +942,7 @@ Resposta (`src/mensagens.ts:185-227`): a linha `mensagem` crua + referência:
 ```
 Formato **diferente** do `MensagemResposta` (usa `usuario_id`, não tem `conteudos` nem status). Para exibir, o cliente usa o que enviou ou recarrega. 🆕 A linha crua agora termina com `pede_confirmacao`, `postagem`, `postagem_titulo`, `postagem_id` (colunas novas, nessa ordem).
 
-Efeitos: cria `mensagem_status` para cada outro membro; registra atividades (resposta → autor da original, se na mesma conversa; menções → membros mencionados; quem é respondido e mencionado recebe só a resposta) com WS 61; WS 2 + push (§7) se não agendada. 🆕 `12cf0cf` Resposta de postagem: além disso, atividade "resposta" para quem postou e quem já respondeu, e WS 64 aos outros membros (§10.15).
+Efeitos: cria `mensagem_status` para cada outro membro; registra atividades (resposta → autor da original, se na mesma conversa; menções → membros mencionados; quem é respondido e mencionado recebe só a resposta) com WS 61; WS 2 + push (§7) se não agendada. 🆕 `12cf0cf` Resposta de postagem: além disso, atividade "resposta" para quem postou e quem já respondeu, e WS 64 aos outros membros (§10.15). 🆕 `ef13c22`: com `pede_confirmacao`, cada um que precisa confirmar ganha a **atividade tipo 5** (§12); e, se não é agendada (ou quando a agendada sai), os **bots** da conversa que foram chamados respondem em segundo plano (§13.7).
 
 ### 10.4 Listar / paginar — `GET /api/mensagens`
 
@@ -914,7 +995,7 @@ Efeito colateral: marca como **recebidas** todas as mensagens pendentes do usuá
 
 ### 10.9 Excluir / ocultar — `DELETE /api/mensagem?id=`
 
-`src/mensagens.ts:285-321`, `migracoes/031.sql`. Só o autor (403), a qualquer momento.
+`src/mensagens.ts:285-321`, `migracoes/031.sql`. Só o autor (403), a qualquer momento. 🆕 `ef13c22`: depois da regra do autor, pede a permissão de uso **`ocultar`** (403 `Você não tem permissão para: ocultar as próprias mensagens.`), inclusive para apagar uma agendada que ainda não saiu.
 - Mensagem já visível: **exclusão lógica** — grava `excluida_em = now()` e `excluida_por`; resposta `{ "id", "conversa_id", "excluida_em" }`. Repetir não muda a data. Apaga atividades ligadas (WS 61) e envia WS 3 aos outros.
 - Agendada que ainda não saiu: **apagada fisicamente** (com referências, status, reações; 🆕 `6d20ff7`: e a lista de quem precisa confirmar). Resposta: linha da mensagem apagada + `"conteudo"` (linha de `mensagem_conteudo`).
 - **Representação de mensagem oculta hoje**: a mensagem continua em `/mensagens` com `excluida_em` preenchido **e com `conteudos` completos (o texto original)** e reações. Cabe ao cliente esconder o conteúdo e mostrar "Mensagem oculta". Também: `/conversas` mostra `ultima_mensagem_texto = "Mensagem oculta"`; `/pesquisar` não acha; referências (`mensagem_referencia.mensagem.excluida_em`) trazem a marca; `/mensagem/status` traz `excluida_em`; `/anexos` continua listando os anexos dela.
@@ -939,13 +1020,14 @@ Resposta: uma linha por conversa que tenha mensagem **de outra pessoa**, já vis
 
 ### 10.12 Reações — `PUT /api/mensagem/reacao`
 
-`src/mensagens.ts:722-755`. Corpo `{ "mensagem_id": int, "emoji": string }`. Alterna: se o usuário já reagiu com esse emoji, remove; senão adiciona. Um usuário pode ter vários emojis na mesma mensagem — 🆕 `d4435db`: **no máximo 5 emojis diferentes por pessoa** na mesma mensagem; o 6º → 400 `Você já reagiu com 5 emojis nesta mensagem.` (tirar um emoji continua livre). Resposta `{ "mensagem_id", "emoji", "acao": "add"|"remove" }`. 404 `Mensagem não encontrada!`; 403 se não é membro. `emoji` > 10 caracteres (code points) → 500. Efeitos: WS 7 aos outros membros; atividade de reação para o autor da mensagem (se não for ele mesmo) com WS 61.
+`src/mensagens.ts:722-755`. Corpo `{ "mensagem_id": int, "emoji": string }`. Alterna: se o usuário já reagiu com esse emoji, remove; senão adiciona. Um usuário pode ter vários emojis na mesma mensagem — 🆕 `d4435db`: **no máximo 5 emojis diferentes por pessoa** na mesma mensagem; o 6º → 400 `Você já reagiu com 5 emojis nesta mensagem.` (tirar um emoji continua livre). Resposta `{ "mensagem_id", "emoji", "acao": "add"|"remove" }`. 404 `Mensagem não encontrada!`; 403 se não é membro. `emoji` > 10 caracteres (code points) → 500. Efeitos: WS 7 aos outros membros; atividade de reação para o autor da mensagem (se não for ele mesmo) com WS 61. 🆕 `ef13c22`: depois do 404 e do 403 de membro, pede a permissão **`reagir`** (403) — **também para tirar** uma reação própria. A atividade de reação fica pendente até o autor ver a mensagem (`POST /atividades/reacoes-vistas`, §12).
 
 ---
 
 ### 10.13 Enquetes (votação em grupo) 🆕 — commit `8031fa5`, migração `035.sql`
 
 - **Só em conversas de grupo** (`tipo = 2`); em direta → 400 `Votação só pode ser criada em grupos.`
+- 🆕 `ef13c22` Criar pede a permissão de uso **`votacao`** (403 `Você não tem permissão para: criar votações em grupos.`), conferida depois do 403 de membro e antes do "só grupo". Votar, encerrar e mudar o prazo não pedem permissão.
 - **Criar** — `PUT /api/enquete`:
 
   ```json
@@ -1022,11 +1104,13 @@ Resposta: uma linha por conversa que tenha mensagem **de outra pessoa**, já vis
   1. 404 `Mensagem não encontrada!`;
   2. 403 `Acesso negado!` — não é membro da conversa;
   3. 403 `Só quem enviou pede confirmação de leitura.`;
+  - 🆕 `ef13c22` 403 `Você não tem permissão para: pedir confirmação de leitura.` — falta a permissão de uso `confirmacao` (entre o 3 e o 4);
   4. 400 `Mensagem apagada.` — mensagem oculta (`excluida_em`);
   5. 400 `Esta mensagem já pede confirmação de leitura.` — o pedido é um só: não dá para pedir de novo nem mudar a lista;
   6. 400 `A confirmação de leitura só pode ser pedida até 24 horas depois do envio.` — prazo: `coalesce(visivel_em, inserida)` + **24 h** (numa agendada, conta a partir da hora marcada para sair; antes de sair, está sempre no prazo);
   7. 400 `Escolha quem precisa confirmar entre os membros da conversa.` — mesma regra de `confirmacao_usuarios` (§10.3); sem `usuarios`, a lista é de todos os outros membros **no momento do pedido** (não do envio).
-  - Efeitos: grava `pede_confirmacao = true` e a lista (numa transação) e manda **WS 65** `{conversa_id, mensagem_id, usuario_id, confirmacao}` a **todos** os membros da conversa, **inclusive quem pediu**, cada um com a `confirmacao` calculada para si (§6.6). Sem push, sem atividade, sem WS 2/3. Numa agendada que ainda não saiu, os outros recebem o WS 65 de uma mensagem que ainda não veem (S25 do doc 08).
+  - Efeitos: grava `pede_confirmacao = true` e a lista (numa transação) e manda **WS 65** `{conversa_id, mensagem_id, usuario_id, confirmacao}` a **todos** os membros da conversa, **inclusive quem pediu**, cada um com a `confirmacao` calculada para si (§6.6). Sem push, ~~sem atividade,~~ sem WS 2/3. Numa agendada que ainda não saiu, os outros recebem o WS 65 de uma mensagem que ainda não veem (S25 do doc 08).
+  - 🆕 `ef13c22` Cria a **atividade tipo 5** para cada um da lista, com a data **de agora** (mesmo numa agendada que ainda não saiu), e manda WS 61 a eles (§12, S25 do doc 08).
 - **Confirmar** — `POST /api/mensagem/confirmar {mensagem_id}` → `{ "mensagem_id": int }` (`mensagens.ts`, `confirmarLeitura`). Erros, nesta ordem:
   1. 404 `Mensagem não encontrada!`;
   2. 403 `Acesso negado!` — não é membro da conversa;
@@ -1035,7 +1119,9 @@ Resposta: uma linha por conversa que tenha mensagem **de outra pessoa**, já vis
   5. 🆕 `6d20ff7` 403 `Você não está entre quem precisa confirmar esta mensagem.` — o usuário não está na lista (`destinatarios`).
 - **Idempotente:** confirmar de novo devolve 200 e não muda nada (`on conflict do nothing`); não há como desfazer.
 - **WS 8** `{conversa_id, mensagem_id, usuario_id, nome, confirmada_em}` só na **primeira** confirmação daquela pessoa, a **todos os outros membros** (inclusive o autor). Quem confirmou não recebe, nem nos outros aparelhos dele (eles só veem ao recarregar).
-- **Não mexe** em `recebida`/`visualizada` (não substitui `POST /mensagem/visualizar`) e não gera atividade nem push.
+- **Não mexe** em `recebida`/`visualizada` (não substitui `POST /mensagem/visualizar`) e não gera atividade nem push. 🆕 `ef13c22`: a atividade tipo 5 de quem confirmou deixa de ser pendente (e ele recebe WS 61, na 1ª confirmação).
+- 🆕 `ef13c22` **Atividade "pediu confirmação" (tipo 5):** cada um que precisa confirmar ganha uma atividade (`autor_id` = quem enviou, `mensagem_id` = a mensagem), no envio (`PUT /mensagem`; numa agendada, com `criado_em = visivel_em`, só aparece quando ela sai) ou no pedido depois (`pedir-confirmacao`, com a data de agora). Fica **pendente até confirmar**; concluir à mão (`POST /atividade/concluir`) tira do contador, mas **não** confirma a leitura (`pode_confirmar` continua `true`). Ocultar a mensagem apaga essas atividades.
+- 🆕 `ef13c22` **Bots na lista:** sem `confirmacao_usuarios`, a lista é de todos os outros membros, **inclusive bots** — e um bot nunca confirma (o "x de y" não fecha; S27 do doc 08). Para evitar, mande a lista sem os bots (`bot: true` em `/usuario/contatos`).
 - ~~Quem entrou no grupo depois do envio não tem linha de status, não conta em `total`, mas pode confirmar (o servidor não confere).~~ 🆕 `6d20ff7`: **só quem está na lista confirma** (403 para os outros). Quem entrou no grupo depois do envio não está nela — salvo se o pedido foi feito depois da entrada, por `pedir-confirmacao` (sem `usuarios`, ou com ela na lista). Confirmações dadas antes da 043 por quem não estava na lista continuam em `usuarios` (aparecem "a mais", fora de `destinatarios`).
 - 🆕 `6d20ff7` Quem **sai** da conversa continua na lista (conta em `total` e aparece em `destinatarios`), mas não consegue mais confirmar (403 `Acesso negado!`): o "x de y" dessa mensagem não se completa (S25 do doc 08).
 - Excluir (ocultar) a mensagem mantém as confirmações (🆕 e a lista); apagar uma agendada apaga as confirmações (🆕 e a lista) junto.
@@ -1043,7 +1129,7 @@ Resposta: uma linha por conversa que tenha mensagem **de outra pessoa**, já vis
 ### 10.15 Postagens em grupo 🆕 — commit `12cf0cf`, migração `042.sql`
 
 - **Não é tipo de conteúdo:** a postagem é uma mensagem comum (qualquer conteúdo) com `postagem = true` e título opcional (`postagem_titulo`). As respostas são mensagens comuns com `postagem_id` = id da postagem.
-- **Criar a postagem:** `PUT /mensagem` com `postagem: {titulo?}` — só em grupo (400 `Postagem só existe em grupo.`). Pode ser agendada, citar outra mensagem, pedir confirmação. Gera WS 2, push e atividades como uma mensagem comum.
+- **Criar a postagem:** `PUT /mensagem` com `postagem: {titulo?}` — só em grupo (400 `Postagem só existe em grupo.`). Pode ser agendada, citar outra mensagem, pedir confirmação. Gera WS 2, push e atividades como uma mensagem comum. 🆕 `ef13c22`: pede a permissão de uso `postagem` (403); **responder** a uma postagem (`postagem_id`) não pede permissão (§10.3).
 - **Responder:** `PUT /mensagem` com `postagem_id` (§10.3). Regras: só em grupo; não pode ser postagem nem agendada; a postagem precisa ser **desta conversa**, estar visível e **não oculta** (postagem oculta não recebe resposta nova → 400 `Postagem não encontrada.`). O servidor não impede `mensagem_referencia` nem `pede_confirmacao` numa resposta.
 - **Efeitos da resposta** (`mensagens.ts`, `registrarRespostaPostagem`):
   - WS 2 e push como qualquer mensagem (§7.1);
@@ -1094,7 +1180,7 @@ Não existe conceito de **administrador** de grupo: qualquer membro renomeia, ad
 ```
 - 🆕 `b8ea0c2` Ordem real das chaves: `id, descricao, tipo, inserida, nome, destinatario_id, mensagem_id, ultima_mensagem, ultima_mensagem_texto, mensagens_sem_visualizar, emoji, fixada_ordem, arquivada_em, chamada, avatar_url` (`conversas.ts`, `conversas`; o `avatar_url` é posto no fim por `comAvatarUrl`).
 - `descricao`: descrição da conversa (trim); se vazia/nula, o nome do destinatário (só para tipo 1).
-- `nome`, `destinatario_id`: só em conversas **tipo 1** (o outro membro; se o usuário está sozinho, ele mesmo). Em grupos vêm `null`.
+- `nome`, `destinatario_id`: só em conversas **tipo 1** (o outro membro; se o usuário está sozinho, ele mesmo). Em grupos vêm `null`. 🆕 `ef13c22`: o outro membro pode ser um **bot** (§13.7); a lista não diz — cruze `destinatario_id` com `bot: true` de `/usuario/contatos`. Bot excluído com histórico continua na conversa direta (com o nome), mas some dos contatos.
 - `avatar_url`: em conversa **tipo 1**, o avatar do outro membro; ~~**Grupos não têm avatar.**~~ 🆕 `b8ea0c2`: em **grupo**, a imagem do grupo (`conversa.avatar_anexo_id`), ou `null`.
 - 🆕 `b8ea0c2` `emoji`: emoji do grupo (texto com um único grafema) ou `null`. Com imagem e emoji, o web mostra a imagem; sem nenhum, a inicial do nome.
 - 🆕 `b8ea0c2` `chamada`: `true` quando a conversa é o **grupo criado como chat de uma chamada** (`chamada.conversa_chat_id` aponta para ela). 🆕 `a40fd47`: `false` quando o chat reaproveitou a conversa da ligação (`conversa_chat_id = conversa_id`) — a conversa continua uma conversa comum. 🆕 `6d20ff7`: como o chat passou a ser **sempre um grupo novo** (salvo ligação feita dentro do chat de outra ligação, que já é `chamada: true`), praticamente todo chat de chamada vem com `chamada: true`; só as diretas/grupos reaproveitados entre `a40fd47` e `6d20ff7` ficam `false`. O nome do grupo novo é só a lista de nomes (`Ana, Bruno`), sem o prefixo `Chamada: ` — o `chamada` é a única marca confiável (§9.12). O web põe essas conversas numa seção "Chamadas" da lista, salvo se estiverem fixadas ou arquivadas (`conversa-web/src/components/ChatSidebar.vue:286-292`).
@@ -1107,7 +1193,7 @@ Não existe conceito de **administrador** de grupo: qualquer membro renomeia, ad
 
 ### 11.3 Criar — `PUT /api/conversa`
 
-`src/conversas.ts:39-44`. Corpo `{ "descricao"?: string|null, "tipo"?: int }` (tipo padrão 1 no banco; não validado). O criador entra como membro. Resposta: `{ "id", "descricao", "tipo", "inserida", "criado_por" }` (🆕 `b8ea0c2`: + `avatar_anexo_id`, `emoji`, nulos; imagem e emoji só por `PATCH /conversa`). **Nenhum evento** é enviado na criação.
+`src/conversas.ts:39-44`. Corpo `{ "descricao"?: string|null, "tipo"?: int }` (tipo padrão 1 no banco; não validado). 🆕 `ef13c22`: `tipo: 2` (grupo) pede a permissão de uso **`grupo`** (403 `Você não tem permissão para: criar grupos.`); conversa direta (ou sem `tipo`) não pede nada. O chat da chamada (§9.12) é criado pelo servidor e não passa por essa regra. O criador entra como membro. Resposta: `{ "id", "descricao", "tipo", "inserida", "criado_por" }` (🆕 `b8ea0c2`: + `avatar_anexo_id`, `emoji`, nulos; imagem e emoji só por `PATCH /conversa`). **Nenhum evento** é enviado na criação.
 
 Fluxo (como o web/teste): criar e depois `PUT /api/conversa/usuario` para cada membro. O servidor **não deduplica conversas diretas**: antes de criar uma tipo 1, procurar em `/conversas` uma com `tipo=1` e `destinatario_id` = contato.
 
@@ -1153,9 +1239,16 @@ Fluxo (como o web/teste): criar e depois `PUT /api/conversa/usuario` para cada m
 
 ## 12. Atividades
 
-Código: `src/atividades.ts`, `migracoes/033.sql`. Testes: `tests/atividades.test.ts`.
+Código: `src/atividades.ts`, `migracoes/033.sql` (🆕 e `044.sql`). Testes: `tests/atividades.test.ts`.
 
-Tipos (`src/atividades.ts:8-13`): 1 Reação, 2 Resposta, 3 Menção, 4 Chamada perdida.
+> 🆕 `ef13c22` — **a atividade passou a ser uma pendência**, não mais "nova até abrir a tela". Resumo do que mudou (detalhes nos itens com 🆕 abaixo):
+> - `GET /atividades` não traz mais `nova`; traz **`pendente`**.
+> - `GET /atividades/novas` conta as **pendentes**.
+> - `POST /atividades/vistas` **não zera mais** o contador.
+> - Tipo novo **5** (pediram a confirmação de leitura).
+> - Rotas novas para concluir: `POST /atividade/concluir` e `POST /atividades/reacoes-vistas`.
+
+Tipos (`src/atividades.ts:8-13`): 1 Reação, 2 Resposta, 3 Menção, 4 Chamada perdida, 🆕 `ef13c22` **5 Confirmação** (pediram a ele a confirmação de leitura de uma mensagem; §10.14).
 
 Quando são criadas (nunca para o próprio autor):
 - Reação: para o autor da mensagem reagida; some quando a reação é retirada.
@@ -1163,13 +1256,14 @@ Quando são criadas (nunca para o próprio autor):
 - Menção: para cada membro mencionado (exceto quem já recebeu a de resposta).
 - Chamada perdida: §9.13.
 - 🆕 `12cf0cf` Resposta de **postagem**: atividade **tipo 2** para quem postou e para quem já respondeu (menos o autor da resposta), com `mensagem_id` = **id da postagem** — então `texto` e `conteudo_tipo` são os da **postagem**, não os da resposta. Uma atividade por resposta. Menção ou citação **dentro** da resposta geram as atividades normais (3 ou 2) apontando para a **resposta**, que está fora do fluxo: para levar até ela, abrir a postagem e as respostas (§10.15), não `GET /mensagens?mensagemreferencia=`.
+- 🆕 `ef13c22` Confirmação (5): para cada um que precisa confirmar a leitura, no envio com `pede_confirmacao` ou no `POST /mensagem/pedir-confirmacao`; `autor_id` = quem enviou, `mensagem_id` = a mensagem.
 - Mensagem excluída: todas as atividades dela são apagadas.
-- Agendada: a atividade nasce com `criado_em = visivel_em` e só aparece/conta depois disso.
+- Agendada: a atividade nasce com `criado_em = visivel_em` e só aparece/conta depois disso. 🆕 Exceção: a tipo 5 criada por `pedir-confirmacao` numa agendada nasce com a data de agora (S25 do doc 08).
 
 `GET /api/atividades?antes=<id>&limite=30` (limite 1..100; `antes` = `id` da última atividade da página anterior) — `src/atividades.ts:103-153`. Mais recentes primeiro. Só de conversas em que o usuário ainda é membro (ou sem conversa):
 ```json
 [ {
-  "id": 33, "tipo": 1, "criado_em": "...", "nova": true,
+  "id": 33, "tipo": 1, "criado_em": "...", "pendente": true,
   "autor_id": 8, "autor_nome": "Bruno Lima",
   "conversa_id": 42, "conversa_tipo": 1, "conversa_descricao": null,
   "mensagem_id": 101, "conteudo_tipo": 1, "texto": "bom dia",
@@ -1177,19 +1271,32 @@ Quando são criadas (nunca para o próprio autor):
   "autor_avatar_url": null
 } ]
 ```
+- 🆕 `ef13c22`: no exemplo, `"pendente": true` substituiu ~~`"nova": true`~~ (ordem das chaves igual: `id, tipo, criado_em, pendente, autor_id, autor_nome, conversa_id, conversa_tipo, conversa_descricao, mensagem_id, conteudo_tipo, texto, chamada_id, chamada_tipo, emoji, autor_avatar_url`).
 - `mensagem_id`: na reação, a mensagem **do usuário** que recebeu a reação; na resposta/menção, a mensagem **nova do autor** (🆕 exceto na resposta de postagem: a postagem).
 - `texto`: primeiro conteúdo tipo 1 da mensagem, numa linha, menções viram `@Nome`, cortado em 120 caracteres com `…`; `null` se não há texto. `conteudo_tipo` = tipo do primeiro conteúdo.
 - `conversa_descricao`: descrição trimada ou `null` (em conversa direta sem descrição, montar com `autor_nome`).
-- `nova`: criada depois de `usuario.atividades_vistas_em` — 🆕 `e25c4db` **e não "lida no chat"** (`atividades.ts`, `atividadeLida`). Só vale para **resposta (2) e menção (3)** com `mensagem_id`:
+- ~~`nova`: criada depois de `usuario.atividades_vistas_em` — 🆕 `e25c4db` **e não "lida no chat"** (`atividades.ts`, `atividadeLida`).~~ 🆕 `ef13c22`: a chave **`nova` saiu** da resposta. A regra de "lida no chat" do `e25c4db`, abaixo, continua valendo, agora dentro de `pendente`. Só vale para **resposta (2) e menção (3)** com `mensagem_id`:
   - em geral, a atividade fica lida quando o usuário já **visualizou** a mensagem `mensagem_id` (`mensagem_status.visualizada` não nula — ou seja, `POST /mensagem/visualizar`, ou `POST /postagem/visualizar` para menção dentro de uma resposta de postagem; `GET /mensagens` só marca recebida);
   - resposta de **postagem** (`mensagem_id` = postagem e o autor da atividade tem resposta nela): lida quando **não há** resposta desse autor na postagem, não oculta, ainda não visualizada pelo usuário (`POST /postagem/visualizar` resolve todas de uma vez);
-  - reação (1) e chamada perdida (4) continuam só pela data.
-  - A atividade lida **continua na lista**, só com `nova: false`. `atividades_vistas_em` não muda.
+  - ~~reação (1) e chamada perdida (4) continuam só pela data.~~
+  - ~~A atividade lida **continua na lista**, só com `nova: false`. `atividades_vistas_em` não muda.~~
+- 🆕 `ef13c22` **`pendente`** (bool, no lugar de `nova`, mesma posição: depois de `criado_em`) — `atividades.ts` (`atividadePendente`). Pendente = **não concluída** (`atividade.concluida_em` nula, migração 044) **e** não resolvida pelo próprio evento:
+  - **reação (1):** só sai concluindo — `POST /atividades/reacoes-vistas` com a mensagem reagida (quando o usuário vê a própria mensagem com a reação) ou `POST /atividade/concluir`;
+  - **resposta (2) e menção (3):** sai quando lida no chat (regra acima) ou concluindo à mão;
+  - **chamada perdida (4):** só sai concluindo à mão (o comentário do servidor prevê concluir "ao abrir a chamada perdida");
+  - **confirmação (5):** sai quando o usuário **confirma** a leitura daquela mensagem (`mensagem_confirmacao`), ou concluindo à mão (que não confirma);
+  - a data (`atividades_vistas_em`) **não conta mais**. Na migração 044, as que já tinham sido vistas (criadas até `atividades_vistas_em`) entraram concluídas.
+  - Concluída ou lida, a atividade **continua na lista**, com `pendente: false`.
 - `id` é bigint convertido para número.
 
-`GET /api/atividades/novas` → `{ "quantidade": int }` — 🆕 `e25c4db`: mesma regra (não conta resposta/menção lida no chat). Então o contador **pode diminuir sozinho**, sem `POST /atividades/vistas`.
-`POST /api/atividades/vistas` (sem corpo) → `{ "vistas_em": date }`; zera o contador.
-WS 61 `{tipo:61}` avisa mudança (nova ou removida). 🆕 `e25c4db`: também quando o usuário lê no chat uma mensagem com atividade de resposta/menção dele ligada a ela (`avisarAtividadesLidas`): `POST /mensagem/visualizar` que marcou agora, ou `POST /postagem/visualizar` que marcou alguma resposta (vale a mensagem ou a postagem dela). Vai a todas as conexões do próprio usuário (inclusive a que leu) e sai mesmo que a atividade já não fosse nova; o cliente só relê `/atividades/novas` (e a lista, se aberta).
+`GET /api/atividades/novas` → `{ "quantidade": int }` — ~~🆕 `e25c4db`: mesma regra (não conta resposta/menção lida no chat). Então o contador **pode diminuir sozinho**, sem `POST /atividades/vistas`.~~ 🆕 `ef13c22`: quantas atividades estão **pendentes**, já visíveis (`criado_em` ≤ agora) e de conversas em que o usuário **ainda é membro** (antes o contador contava também as de conversas que ele deixou). O contador diminui sozinho quando o evento resolve a pendência e só zera quando todas forem resolvidas ou concluídas.
+`POST /api/atividades/vistas` (sem corpo) → `{ "vistas_em": date }`; ~~zera o contador~~ 🆕 `ef13c22`: só grava `usuario.atividades_vistas_em`. **Não mexe** no contador nem em `pendente`: abrir a tela de atividades não conclui nada (o teste do servidor diz "abrir a tela não conclui").
+
+🆕 `ef13c22` **`POST /api/atividade/concluir`** `{ "id": <atividade> }` → `{ "sucesso": true }` (`atividades.ts`, `concluirAtividade`). Conclui à mão uma atividade **do próprio usuário**. Responde 200 mesmo se o id não existe, é de outra pessoa ou já estava concluída (nesses casos não muda nada). Se concluiu agora, WS 61 ao próprio usuário. Não confirma leitura nem marca mensagem como vista.
+
+🆕 `ef13c22` **`POST /api/atividades/reacoes-vistas`** `{ "mensagens": [int, …] }` (até 200) → `{ "concluidas": int }` (`atividades.ts`, `concluirReacoesVistas`). Conclui as atividades de **reação** (tipo 1) do usuário cujas `mensagem_id` estão na lista — ou seja, as reações que **as mensagens dele** receberam até agora. Uso: quando o chat mostra na tela mensagens próprias com reações. Lista vazia → `{concluidas: 0}`. Se concluiu alguma, WS 61 ao próprio usuário. Mensagem de outra pessoa não conclui nada.
+
+WS 61 `{tipo:61}` avisa mudança (nova ou removida). 🆕 `e25c4db`: também quando o usuário lê no chat uma mensagem com atividade de resposta/menção dele ligada a ela (`avisarAtividadesLidas`): `POST /mensagem/visualizar` que marcou agora, ou `POST /postagem/visualizar` que marcou alguma resposta (vale a mensagem ou a postagem dela). Vai a todas as conexões do próprio usuário (inclusive a que leu) e sai mesmo que a atividade já não fosse nova; o cliente só relê `/atividades/novas` (e a lista, se aberta). 🆕 `ef13c22`: também ao concluir (as duas rotas acima), ao confirmar a leitura com atividade tipo 5 ligada e a quem ganha uma tipo 5 (§6.6).
 
 ---
 
@@ -1204,20 +1311,67 @@ Tabelas `permissao` (`codigo`, `descricao`) e `permissao_usuario` — `migracoes
 | `parametros` | Ver e alterar as configurações do sistema | `GET/PATCH /api/parametros` |
 | `permissoes` | Conceder e retirar permissões dos usuários | `GET /api/permissoes`, `PUT/DELETE /api/permissao/usuario` |
 
+🆕 `ef13c22` — **mais 4 de administração** (coluna `uso = false`):
+
+| Código | Descrição (banco) | Libera | Migração |
+|---|---|---|---|
+| `bots` | Criar bots de IA e editar os próprios | `GET /bots` (só os seus), `PUT /bot`, editar/excluir os que criou; listas de ferramentas e bases disponíveis | 047 |
+| `usuarios` | Cadastrar usuários e bots | `PUT /usuario/novo` (§2.6) | 048 |
+| `ferramentas` | Cadastrar as ferramentas externas dos bots | rotas `/ferramenta*` (§13.8) | 051 |
+| `conhecimento` | Cuidar das bases de conhecimento dos bots | rotas `/conhecimento/*` (§13.9) | 052 |
+
+Quem tem `permissoes` também cuida de **todos** os bots (listar, editar, excluir, liberar qualquer permissão de uso).
+
+🆕 `ef13c22` — **permissões de uso** (migrações 046, 048 e 049; coluna nova `permissao.uso = true`): o que cada pessoa pode fazer no chat. O servidor confere em cada rota (403 com `Você não tem permissão para: <descrição>.`, §3):
+
+| Código | Descrição (banco) | Onde o servidor confere |
+|---|---|---|
+| `emoji` | Enviar emojis no texto das mensagens | `PUT /mensagem`: texto com `\p{Extended_Pictographic}` (§10.3) |
+| `figurinha` | Enviar figurinhas | `PUT /mensagem`: conteúdo 7 |
+| `imagem` | Enviar imagens | `PUT /mensagem`: conteúdo 2 |
+| `video` | Enviar vídeos | `PUT /mensagem`: conteúdo 3 com extensão de vídeo |
+| `audio` | Enviar áudios e gravações de voz | `PUT /mensagem`: conteúdo 4 ou 5 |
+| `arquivo` | Enviar arquivos (documentos e outros) | `PUT /mensagem`: conteúdo 3 que não é vídeo |
+| `responder` | Responder mensagens | `PUT /mensagem` com referência tipo 1 |
+| `encaminhar` | Encaminhar mensagens | `PUT /mensagem` com referência tipo 2 (dispensa as outras) |
+| `reagir` | Reagir às mensagens com emoji | `PUT /mensagem/reacao` (pôr e tirar) |
+| `postagem` | Fazer postagens em grupos | `PUT /mensagem` com `postagem` |
+| `votacao` | Criar votações em grupos | `PUT /enquete` |
+| `confirmacao` | Pedir confirmação de leitura | `PUT /mensagem` com `pede_confirmacao`; `POST /mensagem/pedir-confirmacao` |
+| `agendar` | Agendar mensagens | `PUT /mensagem` com `visivel_em` |
+| `grupo` | Criar grupos | `PUT /conversa` com `tipo: 2` |
+| `chamada_audio` | Fazer chamadas de áudio | `PUT /chamada/iniciar` com `tipo` 1 |
+| `chamada_video` | Fazer chamadas de vídeo e ligar o vídeo na chamada | `PUT /chamada/iniciar` com `tipo` 2; `POST /chamada/video` |
+| `compartilhar_tela` | Compartilhar a tela nas chamadas | **não conferida** no servidor (só o cliente) |
+| `telefonia` | Usar a telefonia (SIP) | `GET /sip` (devolve `{}`), `PUT`/`PATCH /sip` (§14) |
+| `ocultar` | Ocultar as próprias mensagens | `DELETE /mensagem` |
+| `nome` | Alterar o próprio nome (era `perfil`, renomeada na 049) | `PATCH /usuario` com `nome` |
+| `email` | Alterar o próprio e-mail e telefone | `PATCH /usuario` com `email` ou `telefone` |
+| `avatar` | Alterar o próprio avatar | `PATCH /usuario` com `avatar_anexo_id` |
+| `senha` | Trocar a própria senha | `POST /alterar-senha` |
+| `privacidade` | Alterar as opções de privacidade | `PATCH /usuario` com as preferências de presença |
+| `cores` | Mudar as cores do app | **não conferida** (fica no navegador; só o cliente) |
+| `config_chamadas` | Mudar as configurações de chamada (áudio, vídeo e tela) | **não conferida** (só o cliente) |
+
+- **Quem tem o quê:** as contas que já existiam ganharam todas as de uso nas migrações 046, 048 e 049. Conta nova (cadastro ou `PUT /usuario/novo`) ganha todas (`concederPermissoesUso`). Bot novo começa só com `emoji`, `responder` e `reagir` — e só as que quem o criou tem (§13.7).
+- **Modo aberto** continua igual: enquanto ninguém tem `permissoes`, todos podem tudo (inclusive as de uso e as de administração novas).
+- **Ninguém retira as próprias permissões:** `DELETE /permissao/usuario` com `usuario_id` = o próprio → 400 `Você não pode retirar as próprias permissões.` (`permissoes.ts`, `retirarPermissao`). Outra pessoa com `permissoes` precisa fazer.
+- **Para o cliente:** leia `GET /usuario/permissoes` depois do login (e ao voltar ao app) para esconder o que a pessoa não pode fazer. Não há evento quando um administrador muda as permissões: trate o 403 com a mensagem do servidor.
+
 **Modo aberto** (`src/permissoes.ts:12-23`): enquanto **ninguém** tem `permissoes`, todos os usuários têm todas as permissões. A primeira concessão de `permissoes` fecha o modo. Não é possível retirar `permissoes` do último que a tem (400 `Ao menos uma pessoa precisa poder gerenciar as permissões.`).
 
 Rotas:
-- `GET /api/usuario/permissoes` → `["parametros","permissoes"]` (os códigos do próprio usuário; todos no modo aberto). Use para mostrar/ocultar telas.
-- `GET /api/permissoes` → `{ "permissoes": [{codigo, descricao}], "usuarios": [{ id, nome, login, permissoes: string[] }], "modo_aberto": bool }` (usuários ordenados por nome).
+- `GET /api/usuario/permissoes` → `["parametros","permissoes"]` (os códigos do próprio usuário; todos no modo aberto). Use para mostrar/ocultar telas. 🆕 `ef13c22`: inclui os códigos de uso e os de administração novos, em ordem do `permissao.id` (ex.: `["emoji","figurinha",…,"avatar"]` para uma conta comum).
+- `GET /api/permissoes` → `{ "permissoes": [{codigo, descricao}], "usuarios": [{ id, nome, login, permissoes: string[] }], "modo_aberto": bool }` (usuários ordenados por nome). 🆕 `ef13c22`: cada item de `permissoes` ganha **`uso: bool`** (`{codigo, descricao, uso}`), para a tela separar uso de administração; `usuarios` inclui os bots (ligados ou desligados) e deixa de fora os bots excluídos.
 - `PUT /api/permissao/usuario` corpo `{ "usuario_id", "codigo" }` → `{ usuario_id, codigo }` (idempotente). 404 `Permissão não encontrada!` / `Usuário não encontrado!`.
-- `DELETE /api/permissao/usuario?usuario_id=&codigo=` → `{ usuario_id, codigo }`.
-- Sem permissão: 403 `Acesso negado!`.
+- `DELETE /api/permissao/usuario?usuario_id=&codigo=` → `{ usuario_id, codigo }`. 🆕 `ef13c22`: 400 para as próprias (acima).
+- Sem permissão: 403 `Acesso negado!` (🆕 para as de administração; as de uso têm a mensagem com a descrição, §3).
 
 ### 13.2 Parâmetros (tabela `parametros`: `nome`, `valor` texto)
 
 | Nome | Significado | Exposto em `GET /parametros` | Alterável por `PATCH` | Origem |
 |---|---|---|---|---|
-| `versao` | versão das migrações aplicadas (🆕 hoje `43`) | não | não | `src/migracoes.ts` |
+| `versao` | versão das migrações aplicadas (~~🆕 hoje `43`~~ 🆕 `ef13c22`: hoje `52`) | não | não | `src/migracoes.ts` |
 | `jwt_token` | segredo do JWT (gerado se vazio/padrão) | **nunca** | não | `015.sql`, `configuracao.ts:151-158` |
 | `fcm_project_id` | Firebase project id | sim | sim | `015.sql` |
 | `fcm_client_email` | e-mail da conta de serviço (precisa ter `@`) | sim | sim | `015.sql` |
@@ -1230,17 +1384,20 @@ Rotas:
 | `ia_url` 🆕 | endereço do servidor de IA no padrão OpenAI, com ou sem `/v1` (vazio = desligado; http/https) | sim | sim | `041.sql` (`b8ea0c2`) |
 | `ia_modelo` 🆕 | nome do modelo (vazio = desligado) | sim | sim | `041.sql` |
 | `ia_token` 🆕 | token `Bearer` do servidor de IA (opcional) | só `ia_token_configurado: bool` | sim (só gravação) | `041.sql` |
+| `cadastro_aberto` 🆕 `ef13c22` | `'1'` (padrão) = cadastro pela tela de login aberto; `'0'` = só o administrador cadastra (§2.6) | como bool | sim (bool) | `048.sql` |
+| `ia_modelo_embeddings` 🆕 `ef13c22` | modelo de embeddings no mesmo servidor de IA (`POST <ia_url>/v1/embeddings`); vazio desliga a base de conhecimento (§13.9) | sim | sim | `052.sql` |
 
 Removidos por migrações: `s3_endpoint`, `s3_accesskey`, `s3_secretkey`, `turn_url`, `turn_secret` (`024–026.sql`).
 
-`GET /api/parametros` → `{ "fcm_project_id", "fcm_client_email", "fcm_private_key_configurada": bool, "turn_forcar_relay": bool, "transcritor_url", "transcritor_idioma", "gravacao_dias": number, "s3_bucket" }` (`src/parametros.ts:11-25`) — 🆕 `b8ea0c2`: + `"ia_url", "ia_modelo", "ia_token_configurado": bool` no fim. O `ia_token` **nunca** volta.
-`PATCH /api/parametros` com qualquer subconjunto de `{ fcm_project_id?, fcm_client_email?, fcm_private_key?, turn_forcar_relay?: bool, transcritor_url?, transcritor_idioma?, gravacao_dias?: int }` (🆕 + `ia_url?`, `ia_token?`, `ia_modelo?`; todos com `trim()`, padrão `''`) → mesmo formato do GET. Aplica na hora, sem reiniciar (`src/parametros.ts:57-77`). Erros 400 com explicação (ver `src/parametros.ts:29-54`; 🆕 `Endereço do servidor de IA inválido (use http:// ou https://).`).
+`GET /api/parametros` → `{ "fcm_project_id", "fcm_client_email", "fcm_private_key_configurada": bool, "turn_forcar_relay": bool, "transcritor_url", "transcritor_idioma", "gravacao_dias": number, "s3_bucket" }` (`src/parametros.ts:11-25`) — 🆕 `b8ea0c2`: + `"ia_url", "ia_modelo", "ia_token_configurado": bool` no fim. O `ia_token` **nunca** volta. 🆕 `ef13c22`: + `"cadastro_aberto": bool, "ia_modelo_embeddings"` no fim.
+`PATCH /api/parametros` com qualquer subconjunto de `{ fcm_project_id?, fcm_client_email?, fcm_private_key?, turn_forcar_relay?: bool, transcritor_url?, transcritor_idioma?, gravacao_dias?: int }` (🆕 + `ia_url?`, `ia_token?`, `ia_modelo?`; todos com `trim()`, padrão `''`; 🆕 `ef13c22` + `cadastro_aberto?: bool`, `ia_modelo_embeddings?`) → mesmo formato do GET. Aplica na hora, sem reiniciar (`src/parametros.ts:57-77`). Erros 400 com explicação (ver `src/parametros.ts:29-54`; 🆕 `Endereço do servidor de IA inválido (use http:// ou https://).`).
 
 ### 13.3 🆕 Recursos ligados — `GET /api/recursos` (`b8ea0c2`)
 
-`parametros.ts` (`recursosSistema`). Para **qualquer usuário logado** (sem permissão): `{ "transcricao": bool, "ia": bool }`.
+`parametros.ts` (`recursosSistema`). Para **qualquer usuário logado** (sem permissão): `{ "transcricao": bool, "ia": bool }` — 🆕 `ef13c22`: `{ "transcricao": bool, "ia": bool, "conhecimento": bool }`.
 - `transcricao` = `transcritor_url` preenchido.
 - `ia` = `ia_url` **e** `ia_modelo` preenchidos (o token é opcional).
+- 🆕 `ef13c22` `conhecimento` = `ia` **e** `ia_modelo_embeddings` preenchido (base de conhecimento dos bots ligada, §13.9). Só interessa a telas de administração.
 - Não diz se o servidor de IA ou o transcritor respondem; só se estão configurados. Muda na hora com `PATCH /parametros` (não há evento: reler ao abrir telas que dependem disso). Cobre parte da S10 do doc 08.
 
 ### 13.4 🆕 Servidor de IA e teste — `POST /api/parametros/ia/testar` (`b8ea0c2`, `ea7e974`)
@@ -1280,6 +1437,50 @@ Removidos por migrações: `s3_endpoint`, `s3_accesskey`, `s3_secretkey`, `turn_
 - **Cancelamento:** se o cliente aborta a requisição HTTP, o servidor cancela o pedido à IA. Na prática, cancelar a chamada anterior a cada tecla.
 - Contexto enviado à IA: as últimas 20 partes de texto (tipo 1, não ocultas) da conversa, até 300 caracteres cada, com o primeiro nome do autor; respostas de postagem também entram.
 
+### 13.7 🆕 Bots de IA (`ef13c22`, migrações 047 e 050)
+
+`bots.ts`. Um bot é um **usuário comum** (linha em `usuario` + linha em `bot` com as instruções). Ele conversa pelas mesmas rotinas e com as mesmas permissões de uso de uma pessoa. Não entra pelo login.
+
+**Para o cliente do chat (o que aparece):**
+- **Contatos:** aparece em `GET /usuario/contatos` com `bot: true`, login `bot-<nome>-<6 hex>` e e-mail `<login>@bot.conversa`. Nenhuma outra rota marca bot (`/conversas`, `/conversa/usuarios`, `MensagemResposta`, atividades): cruze pelo id.
+- **Quando responde** (`aoNovaMensagem`, `botsChamados`), depois de cada mensagem que sai (na hora, ou agendada quando sai), se a IA está configurada e o bot está ligado e é membro:
+  - na **conversa direta** com ele: a toda mensagem;
+  - em **grupo**: quando é **mencionado** (`@[Nome](id)`) ou quando **respondem** (citação tipo 1) a uma mensagem dele;
+  - nunca a mensagem de outro bot.
+- **Enquanto pensa:** manda "digitando" (**WS 4** com `usuario_id` = bot) na hora e a cada 3 s. Cada pedido à IA tem limite de 2 min e até 5 rodadas de ferramentas: a resposta pode levar minutos.
+- **Marca como vista** a mensagem que o chamou (`visualizada`, com WS 3 aos outros membros). Só essa: ele **nunca marca `recebida`** e não lê as outras (em grupo, as mensagens que não o chamam ficam sem recebida/vista por ele; S27 do doc 08).
+- **A resposta** é uma mensagem comum do bot (WS 2, push, WS 3, atividades): na direta, sem citar; em grupo, citando a mensagem que o chamou (se o bot tem `responder`). Se quem chamou estava respondendo a uma **postagem**, o bot responde na postagem (`postagem_id`). Mensagens que chegam enquanto ele pensa viram **uma** resposta só, à mais nova.
+- **Ferramentas do chat** (function calling), cada uma só com a permissão de uso do bot: `reagir` (só acrescenta), `responder_mensagem`, `enviar_figurinha` (pacote `noto`), `encaminhar_mensagem`, `criar_votacao` (só em grupo), `buscar_mensagens` (sempre), `consultar_conhecimento` (com base ligada, §13.9) e as **externas** ligadas a ele (§13.8). Os efeitos chegam ao cliente como de qualquer pessoa (WS 7, mensagens, votação).
+- **Sem a permissão `emoji`**, o texto vai **sem os emojis** (em vez de dar 403).
+- **Falha** (IA fora do ar, tempo esgotado…): o bot manda na conversa `Não consegui responder a esta mensagem: <motivo>` (até 300 caracteres), citando a mensagem que ficou sem resposta. Sem IA configurada, ele simplesmente não responde.
+- **Presença:** nunca conecta o WebSocket — sempre `offline`. **Chamadas:** pode ser convidado, mas nunca atende (§9.2).
+
+**Cadastro e administração** (telas de administração; o celular provavelmente não usa):
+- Objeto `Bot` (`linhasBots`): `{ "id", "usuario_id", "nome", "login", "instrucoes", "ativo": bool, "criado_por", "criado_por_nome", "permissoes": string[] (só as de uso), "ferramentas": int[], "bases": int[] }`, em ordem de nome. `id` é o id do **bot**; `usuario_id`, o do usuário.
+- `GET /bots`: quem tem `permissoes` vê todos; quem tem `bots`, só os que criou; os outros, 403.
+- `PUT /bot {nome, instrucoes}` (permissão `bots`): exige a IA configurada (400 `IA não configurada: …`); `nome` de 1 a 60 caracteres e `instrucoes` de 1 a 8000 (400). Cria o usuário (senha aleatória que ninguém sabe) e libera `emoji`, `responder` e `reagir` **que quem criou tiver**. Também por `PUT /usuario/novo` com `bot: true` (§2.6).
+- `PATCH /bot {id, nome?, instrucoes?, ativo?}`, `PUT /bot/permissoes {id, permissoes}`, `PUT /bot/ferramentas {id, ferramentas}`, `PUT /bot/conhecimento {id, bases}`: só quem criou (com `bots`) ou quem tem `permissoes` (404 `Bot não encontrado!`; 403 `Só quem criou o bot o edita.`). As listas **substituem** as anteriores. Em `/bot/permissoes`, só códigos de uso (400 `Permissão de uso inválida: x`), e quem não tem `permissoes` só libera o que ele mesmo tem (403 `Você só libera para o bot o que você mesmo pode fazer.`).
+- `DELETE /bot?id=` → `{ "id", "apagado": bool }`. Apaga os status de entrega e as atividades do bot, tira-o dos **grupos** (sem WS 40) e das permissões. Sem histórico: apaga o bot e o usuário de vez (`apagado: true`). Com histórico (mensagens, reações…): o usuário fica, para o que ele escreveu continuar com o nome; o bot é marcado `excluido_em` e desligado (`apagado: false`), **continua nas conversas diretas** e some dos contatos, de `/permissoes` e de `/bots`.
+
+### 13.8 🆕 Ferramentas externas dos bots (`ef13c22`, migração 051)
+
+`ferramentas.ts`. APIs HTTP com JSON que o administrador (permissão `ferramentas`) cadastra e liga bot a bot. O modelo chama pelo nome; o **servidor** faz o pedido. Só administração; o cliente do chat não usa.
+- Objeto `Ferramenta`: `{ "id", "nome", "descricao", "metodo": "GET"|"POST", "url", "parametros": [{nome, tipo: "string"|"number"|"boolean", descricao, obrigatorio}], "ativo", "cabecalhos": string[] }` — dos cabeçalhos voltam **só os nomes**; os valores (tokens) nunca saem do servidor.
+- Corpo de `PUT`/`PATCH /ferramenta`: `{ nome, descricao, metodo, url, cabecalhos: [{nome, valor: string|null}] (≤ 30), parametros: [...] (≤ 30), ativo? }` (+ `id` no PATCH). Cabeçalho com valor vazio/nulo mantém o valor salvo; cabeçalho que não vem sai.
+- Regras (400): `nome` em `^[a-z][a-z0-9_]{1,59}$`, único e diferente das ferramentas do chat (`reagir`, `responder_mensagem`, …); `descricao` obrigatória; `url` http/https; parâmetros com nome válido e sem repetir; todo `{marcador}` da URL precisa ser um parâmetro.
+- Chamada: parâmetros marcados na URL vão nela; o resto vai na consulta (GET) ou no corpo JSON (POST). Tempo-limite 20 s; resposta cortada em 8000 caracteres.
+- `POST /ferramenta/testar {id, argumentos}` → `{ "ok": bool, "status": int, "resposta": string, "erro": string, "milissegundos": int }` (sempre 200, como o teste da IA).
+- `GET /ferramentas/disponiveis` → `[{id, nome, descricao}]` das ativas, para quem tem `bots`, `permissoes` ou `ferramentas` (escolher na tela do bot).
+
+### 13.9 🆕 Base de conhecimento dos bots (`ef13c22`, migração 052)
+
+`conhecimento.ts`, `ia.ts` (`gerarEmbeddings`). Documentos de texto que o bot consulta pela ferramenta `consultar_conhecimento` (RAG). Só administração (permissão `conhecimento`); o cliente do chat não usa.
+- Liga com `ia_url` + `ia_modelo_embeddings` (`GET /recursos` → `conhecimento`). Embeddings em `POST <ia_url>/v1/embeddings` (com prefixos próprios para modelos `nomic-embed` e `e5`); os trechos e vetores ficam no **Qdrant** (§1.1), numa coleção só; o texto inteiro fica no Postgres, para reindexar.
+- **Bases:** `{ "id", "nome", "descricao", "documentos": int, "trechos": int }`; `nome` de 1 a 100, único sem diferenciar maiúsculas (400). Excluir a base apaga os documentos e os trechos.
+- **Documentos:** `PUT /conhecimento/documento {base_id, nome, texto}` — o **texto** já extraído (o web extrai de `.txt`, `.md`, `.pdf` e `.docx`), até 2 milhões de caracteres no servidor. Atenção: o nginx corta o corpo JSON em **1 MB** (§1.2), então documentos maiores levam 413 do nginx antes de chegar à API. Resposta: `{ "id", "base_id", "nome", "caracteres", "trechos", "status": 1|2|3, "erro", "criado_em" }` (1 processando, 2 pronto, 3 erro).
+- **Indexação** em segundo plano, um documento por vez: trechos de ~1000 caracteres com 150 de sobra do anterior, embeddings em lotes de 32. **Sem evento** ao terminar: a tela relê `GET /conhecimento/documentos?base=`.
+- `POST /conhecimento/buscar {bases, pergunta, limite?}` → `[{ "documento": nome, "texto": trecho, "nota": 0..1 }]` (os trechos que o bot receberia). `POST /conhecimento/reindexar` → `{ "documentos": n }` (apaga a coleção e indexa tudo; necessário ao trocar o modelo de embeddings).
+
 ---
 
 ## 14. SIP
@@ -1288,9 +1489,9 @@ Código: `src/sip.ts`, `migracoes/016.sql`. Um ramal por usuário (índice únic
 
 Campos da tabela `sip`: `id`, `usuario_id`, `sip_user` varchar(100), `auth_user` varchar(100) nulo, `sip_password` texto, `display_name` varchar(100) nulo, `domain` varchar(150), `ws_server` varchar(255), `ativo` bool (padrão true), `criado_em`, `criado_por`.
 
-- `GET /api/sip` → linha completa (inclui **`sip_password` em texto puro**) ou `{}` se não há ramal.
-- `PUT /api/sip` corpo `{ "sip_user", "auth_user"?: str|null, "sip_password", "display_name"?: str|null, "domain", "ws_server", "ativo"?: bool }` → linha criada; `usuario_id` sempre do token (campo enviado é ignorado). Segundo PUT do mesmo usuário → **500** (unique).
-- `PATCH /api/sip` corpo `{ "id", ...campos opcionais }` → linha alterada; só o dono (403).
+- `GET /api/sip` → linha completa (inclui **`sip_password` em texto puro**) ou `{}` se não há ramal. 🆕 `ef13c22`: também `{}` para quem **não tem a permissão de uso `telefonia`**, mesmo com ramal cadastrado (não dá para distinguir de "sem ramal"; confira `GET /usuario/permissoes`).
+- `PUT /api/sip` corpo `{ "sip_user", "auth_user"?: str|null, "sip_password", "display_name"?: str|null, "domain", "ws_server", "ativo"?: bool }` → linha criada; `usuario_id` sempre do token (campo enviado é ignorado). Segundo PUT do mesmo usuário → **500** (unique). 🆕 `ef13c22`: sem `telefonia` → 403 `Você não tem permissão para: usar a telefonia (sip).`
+- `PATCH /api/sip` corpo `{ "id", ...campos opcionais }` → linha alterada; só o dono (403). 🆕 `ef13c22`: e `telefonia` (403).
 - O servidor só guarda a configuração; o registro SIP (ex.: SIP sobre WebSocket em `ws_server`) é feito pelo cliente direto no PBX.
 
 ---
@@ -1323,6 +1524,7 @@ Código: `src/websocket.ts` (`presencaReal`, `presencaVisivel`, `atualizarPresen
 - **Estado inicial:** `GET /api/contatos/presenca` → `[{usuario_id, estado, visto_em}]` (contatos de conversa direta; não inclui o próprio usuário — o próprio estado chega pelo WS 60 do login). `GET /api/contatos/online` continua existindo e devolve os ids com estado visível ≠ `offline`.
 - **Em memória, por processo:** estados, preferências carregadas e "o que já foi avisado" ficam em `Map`s do processo da API; não há tabela de presença nem sincronização entre processos. Reiniciar a API zera tudo (os clientes reconectam e aparecem ativos de novo).
 - **Push:** a presença **não** mudou a regra do push — continua bloqueado se houver **qualquer** socket aberto, ausente ou "aparecendo offline" (§7.1, S18 do doc 08).
+- 🆕 `ef13c22` **Bots** nunca conectam o WebSocket: aparecem sempre `offline`, sem `visto_em` (§13.7).
 - **Para o Android:** quem nunca manda o 63 fica **ativo enquanto o socket estiver aberto**, inclusive em segundo plano. Mandar `{tipo:63, ativo:false, conversa_id:null}` ao ir para segundo plano (ou após inatividade, como os 5 min do web) e `{tipo:63, ativo:true, conversa_id:<aberta>}` ao voltar. Fechar o socket ao ir para segundo plano continua sendo o único jeito de voltar a receber push.
 
 ### 15.2 🆕 Quem está com a conversa aberta (`b8ea0c2`)
@@ -1342,7 +1544,7 @@ Código: `src/websocket.ts` (`presencaReal`, `presencaVisivel`, `atualizarPresen
 
 ## 16. Modelo de dados (tabelas)
 
-Resumo das tabelas do schema `public` (migrações 000–🆕043):
+Resumo das tabelas do schema `public` (migrações 000–~~🆕043~~ 🆕 `ef13c22`: 052):
 
 | Tabela | Colunas principais | Observações |
 |---|---|---|
@@ -1360,14 +1562,20 @@ Resumo das tabelas do schema `public` (migrações 000–🆕043):
 | `mensagem_status` | PK(`conversa_id`,`usuario_id`,`mensagem_id`), `recebida`, `visualizada`, `reproduzida` | uma linha por destinatário |
 | `reacao` | `id`, `mensagem_id`, `usuario_id`, `emoji`(10) | único (msg, usuário, emoji) |
 | `anexo` | §8.1 | |
-| `anexo_transcricao` | `identificador`(único), `status`, `texto`, `idioma`, `job_id`, `erro`(500), `atualizado_em` | |
+| ~~`anexo_transcricao`~~ 🆕 `anexo_audio` | `identificador`(único), ~~`status`, `texto`, `idioma`, `job_id`, `erro`(500)~~ 🆕 `transcricao_status` (**nulo** enquanto ninguém pede), `transcricao`, `transcricao_idioma`, `transcricao_job_id`, `transcricao_erro`(500), `atualizado_em`; 🆕 `duracao` numeric(10,2), `intensidade` int2[] | 🆕 `045.sql` (`ef13c22`): renomeada; uma linha por áudio, com a transcrição e os dados do envio (§8.2, §8.6) |
 | `chamada` | `id`, `tipo`, `status`, `iniciada`, `finalizada`, `conversa_id`, `criado_em`, `criado_por`, `conversa_chat_id` | 🆕 `037.sql`: índice `chamada_conversa_chat_id_idx` (para `chamada` em `/conversas`); 🆕 `a40fd47`: `conversa_chat_id` pode ser igual a `conversa_id` (🆕 `6d20ff7`: em ligação nova, só quando a origem é o chat de outra ligação); 🆕 `6d20ff7`: `tipo` passa de 1 a 2 em `POST /chamada/video` |
 | `chamada_usuario` | `id`, `chamada_id`, `usuario_id`, `status`, `adicionado_por`, `adicionado_em`, `entrou_em`, `saiu_em`, `recusou_em` | `recusou_em` nunca é gravado (vem do evento) |
 | `chamada_evento` | `id`, `chamada_id`, `usuario_id`, `tipo`, `criado_em`, `criado_por` | |
-| `atividade` | `id` bigserial, `usuario_id`, `tipo` int2, `autor_id`, `conversa_id`, `mensagem_id`, `chamada_id`, `emoji`, `criado_em` | |
-| `permissao`, `permissao_usuario` | §13.1 | |
+| `atividade` | `id` bigserial, `usuario_id`, `tipo` int2, `autor_id`, `conversa_id`, `mensagem_id`, `chamada_id`, `emoji`, `criado_em`; 🆕 `044.sql`: `concluida_em` timestamp nulo | 🆕 `ef13c22`: tipo 5 (confirmação); pendente até concluir (§12). A 044 concluiu as já vistas |
+| `permissao`, `permissao_usuario` | §13.1; 🆕 `046.sql`: `permissao.uso` bool (false) | 🆕 `ef13c22`: 26 de uso + 6 de administração (§13.1) |
+| `bot` 🆕 | `id`, `usuario_id`→usuario (único), `instrucoes` text, `ativo` bool (true), `criado_em`, `criado_por`; 🆕 `050.sql`: `excluido_em` timestamp nulo | `047.sql` (`ef13c22`), §13.7 |
+| `ferramenta` 🆕 | `id`, `nome`(60, único), `descricao`, `metodo`(`GET`/`POST`), `url`, `cabecalhos` jsonb, `parametros` jsonb, `ativo`, `criado_em`, `criado_por` | `051.sql` (`ef13c22`), §13.8 |
+| `bot_ferramenta` 🆕 | `id`, `bot_id`, `ferramenta_id` (único pelos dois; cascade) | `051.sql` |
+| `conhecimento_base` 🆕 | `id`, `nome`(100, único), `descricao`, `criado_em`, `criado_por` | `052.sql` (`ef13c22`), §13.9 |
+| `conhecimento_documento` 🆕 | `id`, `base_id` (cascade), `nome`(255), `texto`, `trechos`, `status` int2 (1 processando, 2 pronto, 3 erro), `erro`, `criado_em`, `criado_por` | `052.sql` |
+| `bot_conhecimento` 🆕 | `id`, `bot_id`, `base_id` (único pelos dois; cascade) | `052.sql` |
 | `sip` | §14 | |
-| `parametros` | `id`, `nome`(50, único), `valor`(5000) | 🆕 `041.sql`: `ia_url`, `ia_token`, `ia_modelo` (vazios) |
+| `parametros` | `id`, `nome`(50, único), `valor`(5000) | 🆕 `041.sql`: `ia_url`, `ia_token`, `ia_modelo` (vazios); 🆕 `048.sql`: `cadastro_aberto` (`'1'`); 🆕 `052.sql`: `ia_modelo_embeddings` (vazio) |
 | `enquete` 🆕 | `id`, `conversa_id`, `mensagem_id`, `pergunta`(300), `multipla`, `criado_em`, `criado_por`; 🆕 `036.sql`: `encerra_em`, `encerrada_em`, `encerrada_por` | `035.sql`, `036.sql` |
 | `enquete_opcao` 🆕 | `id`, `enquete_id`, `ordem`, `texto`(200) | |
 | `enquete_voto` 🆕 | `id`, `enquete_id`, `opcao_id`, `usuario_id`, `criado_em`; único (`opcao_id`,`usuario_id`) | |
@@ -1375,7 +1583,7 @@ Resumo das tabelas do schema `public` (migrações 000–🆕043):
 
 Todas as colunas `timestamp` (sem fuso) guardam UTC; `visivel_em` é `timestamptz`.
 
-🆕 Fora do banco (só na memória do processo da API): o estado de presença e as conversas abertas (§15) e os resumos por IA (§13.5).
+🆕 Fora do banco (só na memória do processo da API): o estado de presença e as conversas abertas (§15) e os resumos por IA (§13.5). 🆕 `ef13c22`: também a fila dos bots (o que cada bot está respondendo, §13.7) e a fila de indexação dos documentos (§13.9) — reiniciar a API perde o que estava em andamento. Os trechos com os vetores ficam no **Qdrant** (volume `conversa-qdrant`).
 
 ---
 
@@ -1388,7 +1596,7 @@ Todas as colunas `timestamp` (sem fuso) guardam UTC; `visivel_em` é `timestampt
 | `VerificacaoAnexos` | 120 s | confirma uploads pendentes já no MinIO; marca falho após 15 min |
 | `LimpezaGravacoes` | 3600 s | apaga gravações mais antigas que `gravacao_dias` |
 
-Atraso máximo para uma agendada "sair": ~60 s após `visivel_em`.
+Atraso máximo para uma agendada "sair": ~60 s após `visivel_em`. 🆕 `ef13c22`: quando ela sai, o `AgendadorMensagens` também chama os bots da conversa (§13.7). Nenhuma tarefa periódica nova; as respostas dos bots e a indexação da base de conhecimento rodam em segundo plano, disparadas pelas rotas.
 
 ---
 
@@ -1405,7 +1613,7 @@ Atraso máximo para uma agendada "sair": ~60 s após `visivel_em`.
 9. **Anexos**: SHA-256, `PUT /anexo` → PUT na URL → `POST /anexo/confirmar?identificador=`; download via `GET /anexo` com cache por identificador; miniaturas locais.
 10. **Transcrição**: `PUT` + polling do `GET`.
 11. **Chamadas**: tocar ao receber WS 51 (e consultar `/chamadas/pendentes` ao abrir o app); timeout de 30 s com `nao_atendeu:true`; WHIP/WHEP com TURN relay TCP/TLS e H264; reagir a 52/53/54/55/56/57; resumo tipo 6; histórico; chat da chamada; tela/ponteiro.
-12. **Atividades**: lista paginada, contador, marcar vistas, WS 61. 🆕 `e25c4db`: usar o `nova` e o `/atividades/novas` do servidor (resposta/menção lida no chat deixa de ser nova e o contador cai sozinho); reler o contador no WS 61 que chega depois de visualizar mensagens.
+12. **Atividades**: lista paginada, contador, ~~marcar vistas~~, WS 61. 🆕 `e25c4db`: usar o ~~`nova`~~ e o `/atividades/novas` do servidor (resposta/menção lida no chat deixa de ser nova e o contador cai sozinho); reler o contador no WS 61 que chega depois de visualizar mensagens. 🆕 `ef13c22`: ler **`pendente`** (não existe mais `nova`); abrir a aba **não** zera o contador (`/atividades/vistas` não conta mais); concluir à mão (`POST /atividade/concluir`, inclusive ao abrir uma chamada perdida); mandar `POST /atividades/reacoes-vistas` com as próprias mensagens reagidas que aparecem no chat; tratar o tipo **5** ("pediu confirmação de leitura", resolvido ao confirmar).
 13. **Presença**: `/contatos/online` + WS 60 (🆕 ampliada no item 18); digitando/gravando (HTTP + WS 4/5 com expiração local).
 14. **Perfil**: alterar nome/e-mail/telefone/avatar, senha; exclusão de conta (409).
 15. **Configurações administrativas** (opcional no Android): permissões e parâmetros conforme `/usuario/permissoes`.
@@ -1418,6 +1626,11 @@ Atraso máximo para uma agendada "sair": ~60 s após `visivel_em`.
 22. 🆕 `12cf0cf` **Postagens em grupo**: criar (`postagem:{titulo}`), bolha com título, contagem, não lidas e 2 últimas respostas; tela das respostas (`GET /postagem/respostas`), responder (`postagem_id`), marcar vistas (`POST /postagem/visualizar`), WS 64; contar e mostrar respostas que chegam por `/conversas`, `/mensagens/novas`, WS 2/push e atividades sem esperar vê-las no fluxo.
 23. 🆕 **IA** (opcional, se `GET /recursos` diz `ia: true`): resumo da conversa (POST + polling do GET) e sugestão de texto com cancelamento; configuração `ia_*` e teste para administradores.
 24. 🆕 **Figurinhas**: trocar o catálogo pelo pacote `noto` (55, com o crédito CC BY 4.0) e mostrar "Figurinha" para ids antigos (`basico/`, `rostos/`, `coisas/`).
+25. 🆕 `ef13c22` **Permissões de uso**: ler `GET /usuario/permissoes` no login e ao voltar ao app; esconder ou desabilitar o que falta (emoji, figurinha, anexos por tipo, responder, encaminhar, reagir, postagem, votação, confirmação, agendar, criar grupo, chamadas de áudio/vídeo, compartilhar tela, ocultar, nome, e-mail/telefone, avatar, senha, privacidade); mostrar a mensagem do 403 quando o servidor recusar; no perfil, mandar só as chaves que mudaram.
+26. 🆕 `ef13c22` **Cadastro**: consultar `GET /cadastro` antes de oferecer "Cadastre-se"; tratar 403 de cadastro fechado.
+27. 🆕 `ef13c22` **Áudio**: ler `duracao` e `intensidade` dos conteúdos (duração e onda sem baixar o arquivo); opcional: mandar os dois no `PUT /anexo` ao enviar gravações e áudios.
+28. 🆕 `ef13c22` **Bots**: marcar bots na lista de contatos/conversas (por `bot: true` de `/usuario/contatos`); "digitando" demorado do bot; não oferecer ligação para bot; tirar bots da lista padrão de confirmação de leitura.
+29. 🆕 `ef13c22` (opcional, administração) cadastro de pessoas e bots (`PUT /usuario/novo`), bots, ferramentas e base de conhecimento — telas do web.
 
 ---
 
@@ -1441,7 +1654,7 @@ Atraso máximo para uma agendada "sair": ~60 s após `visivel_em`.
 
 ### Campos nulos e ausentes
 13. `mensagem_referencia` e `reacoes` **ausentes** (não `null`) quando não existem. 🆕 O mesmo vale para `confirmacao`, `postagem` e `conteudos[].chat_chamada_id`.
-14. `conteudos[].nome/extensao/transcricao` vêm `""` (não `null`) em texto; `conteudo` nunca `null` na resposta (vira `""`).
+14. `conteudos[].nome/extensao/transcricao` vêm `""` (não `null`) em texto; `conteudo` nunca `null` na resposta (vira `""`). 🆕 `ef13c22`: já `duracao` e `intensidade` vêm sempre, como **`null`** fora de áudio (ou em áudio sem esses dados).
 15. `/sip` sem ramal → `{}` (objeto vazio). `PATCH /dispositivo` sem campos → eco do corpo.
 16. `/chamadas/pendentes` converte `conversa_id` nulo em **0**; `/chamadas` e `/chamada/dados` não (e `/chamada/dados` nem tem `conversa_id`).
 17. `alterada` sempre `null` (sem edição). Status 5 de chamada/participante nunca ocorre.
@@ -1475,7 +1688,7 @@ Atraso máximo para uma agendada "sair": ~60 s após `visivel_em`.
 43. Erros sempre `{ "error": "..." }`; mensagens em português e com acentos — não usar o texto como chave lógica (exceto quando documentado, ex.: `Upload ainda não foi concluído`).
 44. WebSocket: ~~login sem confirmação~~ 🆕 `b8ea0c2`: o login é confirmado indiretamente por um WS 60 sobre o próprio usuário (na primeira conexão chegam dois, §6.2); `tipo 9` fora do enum; token expirado não derruba a conexão; `/ws` sem barra final não funciona.
 45. Certificado de desenvolvimento é mkcert — configurar confiança no build de debug.
-46. Não existe: refresh de token, logout, edição de mensagem, listagem de agendadas, administradores de grupo, miniaturas, evento de saída de membro, evento de fim de transcrição. 🆕 `b8ea0c2`: **passaram a existir** imagem/emoji de grupo (§11.5), estado "ausente" e "visto por último" (§15.1) — os itens "avatar de grupo" e "status ausente/visto por último" saíram desta lista. Também não há evento de fim do resumo por IA (polling, §13.5).
+46. Não existe: refresh de token, logout, edição de mensagem, listagem de agendadas, administradores de grupo, miniaturas, evento de saída de membro, evento de fim de transcrição. 🆕 `b8ea0c2`: **passaram a existir** imagem/emoji de grupo (§11.5), estado "ausente" e "visto por último" (§15.1) — os itens "avatar de grupo" e "status ausente/visto por último" saíram desta lista. Também não há evento de fim do resumo por IA (polling, §13.5). 🆕 `ef13c22`: nem evento quando o administrador muda as permissões de alguém (§13.1) ou quando termina a indexação de um documento (§13.9).
 47. 🆕 Enquete (tipo 8) não pode ser enviada por `PUT /mensagem` nem encaminhada (400); a criação é só por `PUT /enquete`, e só em grupo.
 48. 🆕 `POST /enquete/votar` **substitui** o voto (não é toggle de uma opção): mande sempre a lista completa das opções marcadas.
 49. 🆕 `d4435db` Reações: no máximo **5 emojis diferentes por pessoa** na mesma mensagem (o 6º → 400). Confira antes da reação otimista, como o web.
@@ -1502,7 +1715,25 @@ Atraso máximo para uma agendada "sair": ~60 s após `visivel_em`.
 68. 🆕 `6d20ff7` `pode_confirmar` não olha se a mensagem foi ocultada: pode vir `true` numa mensagem oculta, e confirmar dá 400. Quem saiu da conversa continua em `destinatarios`/`total` e nunca mais confirma.
 69. 🆕 `6d20ff7` `GET /pesquisar?conversa=X` pode trazer resultados com **`conversa_id` ≠ X** (chats das ligações feitas em X). Agrupar/abrir pelo `conversa_id` de cada resultado.
 70. 🆕 `6d20ff7` `POST /chamada/video` muda `tipo` de 1 para 2 **de vez** (não volta a 1) e, com ele, a regra de status (§9.4). Numa chamada já encerrada também muda: o histórico passa a dizer vídeo, o resumo já gravado não. Não guarde o `tipo` lido no início da chamada como verdade; releia `/chamada/dados` se precisar.
-71. 🆕 `e25c4db` Atividade de resposta/menção pode passar de `nova: true` a `false` **sem** `POST /atividades/vistas` (o usuário leu no chat, inclusive em outro aparelho). Não mantenha o "nova" localmente: releia `/atividades/novas` (e a lista) a cada WS 61 — que agora também chega logo depois de o próprio app chamar `POST /mensagem/visualizar` ou `POST /postagem/visualizar`.
+71. 🆕 `e25c4db` Atividade de resposta/menção pode passar de `nova: true` a `false` **sem** `POST /atividades/vistas` (o usuário leu no chat, inclusive em outro aparelho). Não mantenha o "nova" localmente: releia `/atividades/novas` (e a lista) a cada WS 61 — que agora também chega logo depois de o próprio app chamar `POST /mensagem/visualizar` ou `POST /postagem/visualizar`. (🆕 `ef13c22`: leia `pendente` no lugar de `nova`; a regra de reler a cada WS 61 continua — pegadinha 72.)
+
+### 🆕 Bots, permissões de uso e atividades pendentes (`ef13c22`)
+72. 🆕 `ef13c22` **`GET /atividades` não tem mais `nova`**: a chave virou **`pendente`**, com outro sentido (pendência até concluir, §12). Um DTO que lê `nova` com valor padrão recebe sempre o padrão, sem erro. E `POST /atividades/vistas` **não zera mais** o contador: o número só cai quando cada atividade é resolvida (lida no chat, confirmada) ou concluída (`/atividade/concluir`, `/atividades/reacoes-vistas`).
+73. 🆕 `ef13c22` Tipo de atividade **5** (pediram a confirmação de leitura) é novo. Trate tipos desconhecidos sem quebrar. A tipo 5 só deixa de ser pendente com a **confirmação** (ou concluída à mão, que não confirma).
+74. 🆕 `ef13c22` Reação (1) e chamada perdida (4) **nunca** deixam de ser pendentes sozinhas: o cliente precisa chamar `POST /atividades/reacoes-vistas` (com as próprias mensagens reagidas que mostrou) ou `POST /atividade/concluir`. Sem isso, o contador só cresce.
+75. 🆕 `ef13c22` **403 novos, por falta de permissão de uso**, também para quem é membro, autor ou dono: `PUT /mensagem`, `DELETE /mensagem`, `PUT /mensagem/reacao`, `PUT /conversa` (grupo), `PUT /enquete`, `POST /mensagem/pedir-confirmacao`, `PUT /chamada/iniciar`, `POST /chamada/video`, `PATCH /usuario`, `POST /alterar-senha`, `PUT`/`PATCH /sip`. A mensagem (`Você não tem permissão para: …`) é para mostrar ao usuário; o 403 **não** é sessão expirada. Envio otimista precisa desfazer a bolha.
+76. 🆕 `ef13c22` `PATCH /usuario` confere a permissão de cada **chave enviada**, mesmo que o valor não mude: mandar nome e e-mail juntos exige `nome` **e** `email`; `telefone` conta como `email`. Mande só o que mudou.
+77. 🆕 `ef13c22` A permissão `emoji` vale para **qualquer** caractere `\p{Extended_Pictographic}` no texto — inclusive `©`, `®`, `™` e algumas setas. Quem não tem `emoji` leva 403 por um "©". Não vale para reações, título de postagem, pergunta/opções de votação nem emoji de grupo.
+78. 🆕 `ef13c22` Tirar a própria reação também pede `reagir`; ocultar (e apagar agendada) pede `ocultar`. Quem perde a permissão fica sem desfazer.
+79. 🆕 `ef13c22` Encaminhar (`mensagem_referencia.tipo = 2`) pede **só** `encaminhar`: não confere os conteúdos (que vêm do cliente), nem agendar, postagem ou confirmação (S28 do doc 08).
+80. 🆕 `ef13c22` Vídeo × arquivo é decidido pela **extensão do anexo** (`mp4`, `webm`, `ogg`, `mov`, `m4v`, `mkv` → `video`; o resto → `arquivo`). Um `.ogg` de áudio enviado como arquivo (tipo 3) pede `video`.
+81. 🆕 `ef13c22` `PUT /chamada/iniciar` **sem `tipo`** com 3+ pessoas em `usuarios` vale `tipo = 2` e pede `chamada_video`, mesmo que a ideia fosse áudio. Mande sempre o `tipo`.
+82. 🆕 `ef13c22` `GET /sip` devolve `{}` tanto "sem ramal" quanto "sem permissão `telefonia`".
+83. 🆕 `ef13c22` **Bots são usuários comuns**: estão em `/usuario/contatos` (só ali com `bot: true`), podem ser o `destinatario_id` de uma conversa direta, mandam mensagens, reações, figurinhas e votações, e "digitam" (WS 4) por minutos. Nunca ficam online, nunca atendem chamada, nunca marcam `recebida` e só marcam `visualizada` a mensagem que os chamou — então, em grupo com bot, o status agregado do remetente (`recebida`/`visualizada`) **não fecha** (S27 do doc 08).
+84. 🆕 `ef13c22` Pedir confirmação de leitura **sem lista** num grupo com bot põe o bot em `destinatarios`, e ele nunca confirma ("x de y" não fecha). Mande `confirmacao_usuarios` sem os bots.
+85. 🆕 `ef13c22` Login de bot → 401 `Bot não entra pelo login.` (como login errado, não sessão expirada).
+86. 🆕 `ef13c22` Cadastro fechado: `PUT /usuario` → **403** (não 400). Consulte `GET /cadastro` (pública) antes de mostrar a tela.
+87. 🆕 `ef13c22` `conteudos[].duracao` é decimal (ex.: `44.95`), em segundos; `intensidade` tem até 200 valores de 0 a 100. Os dois são do **primeiro** envio daquele arquivo (o servidor não mede e não corrige); podem vir `null` num áudio enviado por um cliente que não os manda.
 
 ---
 
@@ -1523,3 +1754,4 @@ Atraso máximo para uma agendada "sair": ~60 s após `visivel_em`.
 | 2026-10-13 🆕 | Web `d202c06` (não é do servidor) | Figurinhas: só o pacote `noto` (55), pacotes antigos apagados. §10.6 |
 | 2026-10-15 🆕 | `6d20ff7` — "Confirmação de leitura com lista e prazo, chat novo por ligação e pesquisa nos chats das ligações" (2026-10-13) | **1 rota nova** (82: `POST /mensagem/pedir-confirmacao`, até 24 h, uma vez; total **82**); `confirmacao_usuarios` em `PUT /mensagem` (+ erro 400); `confirmacao` com `pode_confirmar` e `destinatarios`, `total` = tamanho da lista; `POST /mensagem/confirmar` → 403 fora da lista; **WS 65** `ConfirmacaoPedida`. `PUT /chamada/chat` **volta a criar grupo novo** (nome = nomes dos participantes, sem `Chamada: `) e só reaproveita a origem quando a ligação foi feita dentro do chat de outra ligação (revê `a40fd47`). `POST /chamada/video` grava `tipo = 2`. `GET /pesquisar?conversa=X` inclui os chats das ligações feitas em X. Migração `043` (`mensagem_confirmacao_destinatario`). §4, §6, §9.1–§9.4, §9.7, §9.8, §9.12, §10.2, §10.3, §10.11, §10.14, §11.2, §16, pegadinhas 61, 63, 66–70 |
 | 2026-10-15 🆕 | `e25c4db` — "Atividade de resposta ou menção já lida no chat deixa de contar como nova" (2026-10-14) | `nova` em `GET /atividades` e a contagem de `GET /atividades/novas` deixam de fora resposta/menção cuja mensagem o usuário já visualizou (resposta de postagem: sem resposta do autor por ler); **WS 61** também depois de `POST /mensagem/visualizar` e `POST /postagem/visualizar` que marcaram mensagem com atividade ligada. Sem rota nova. §4, §6.6, §10.5, §10.15, §12, pegadinha 71 |
+| 2026-10-15 (noite) 🆕 | `ef13c22` — "Bots de IA com ferramentas e base de conhecimento, permissões de uso e cadastro pelo administrador" (2026-10-15) | **27 rotas novas** (83–109; total **109**: 3 públicas + 106 autenticadas): `GET /cadastro` (pública), `PUT /usuario/novo`, 7 de bots, 10 de base de conhecimento, 6 de ferramentas externas, `POST /atividade/concluir` e `POST /atividades/reacoes-vistas`. **Permissões de uso** (26 códigos; 403 com a descrição em `PUT /mensagem`, `DELETE /mensagem`, reação, grupo, votação, confirmação, chamadas, perfil, senha e SIP) e 4 de administração novas (`bots`, `usuarios`, `ferramentas`, `conhecimento`); ninguém retira as próprias (400). **Atividades**: `nova` → **`pendente`** (pendência até concluir), tipo **5** (confirmação pedida), `POST /atividades/vistas` não zera mais, contador só de conversas em que ainda é membro. **Áudio**: `PUT /anexo` aceita `duracao`/`intensidade`; `conteudos[]` ganham as duas chaves. **Cadastro**: `cadastro_aberto` (403 no `PUT /usuario` fechado). **Bots de IA**: usuários comuns que respondem na direta, quando mencionados ou respondidos; `bot` em `/usuario/contatos`; login de bot → 401. Parâmetros `cadastro_aberto` e `ia_modelo_embeddings`; `GET /recursos` com `conhecimento`. Sem tipo de WebSocket novo (WS 61 e 4 com gatilhos novos). Docker: serviço `qdrant` e volumes `conversa-postgres`/`conversa-minio`/`conversa-qdrant` (`bin\renomear-volumes.bat`). Migrações `044`–`052`. §1, §2.1, §2.5–§2.6, §3, §4, §5.1, §6, §7.1, §8, §9.2, §10.2–§10.3, §10.9, §10.12–§10.15, §11, §12, §13.1–§13.3, §13.7–§13.9, §14, §15.1, §16–§18, pegadinhas 14, 46, 72–87 |

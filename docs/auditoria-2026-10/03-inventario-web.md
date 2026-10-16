@@ -1,6 +1,6 @@
 # 03 — Inventário de funcionalidades e comportamento do cliente web (conversa-web)
 
-> Auditoria de 2026-10-06. Fonte: `C:\Users\danie\Desktop\GIT\conversa-projeto\conversa-web` no commit `bfb79d8` (2026-10-06, "Abas Sistema e Acessos nas configurações; Equipes sai da barra"), **atualizado com `39d06f9`** (2026-10-06 21:22, "Campo de mensagem rico, votação em grupo e chat completo na chamada"). Itens novos ou alterados por esse commit estão marcados com 🆕; o resumo está na §10. **Atualizado de novo em 2026-10-08** com `eaa8bac` e `785bdef` (2026-10-07 20:30 e 20:41): as marcações citam o commit (🆕 `eaa8bac`) e o resumo está na §11. Depois vieram `7322e83` e `e8d82cb` (§12, total 137). **Atualizado de novo em 2026-10-13** até o commit **`d202c06`** (2026-10-11 18:00, "Postagens em grupo, todos os emojis, figurinhas Noto e pesquisa nova"), com `769bd7d`, `05507a0`, `f798e9c`, `964ed72` e `d202c06` (servidor até `12cf0cf`): 13 IDs novos, total **150**; as marcações citam o commit (🆕 `769bd7d`) e o resumo está na §13. **Atualizado de novo em 2026-10-15** até o commit **`8b43965`** (2026-10-14 20:39, "Temas prontos, balões com cores próprias, seletor de emoji rápido e ajustes"), com `e33ecba` e `8b43965` (servidor até `e25c4db`, com `6d20ff7`): 3 IDs novos, total **153**; as marcações citam o commit (🆕 `e33ecba`) e o resumo está na §14. Foram lidos `CLAUDE.md`, `README.md`, todo o `src/`, `chat-popup.html`, `public/firebase-messaging-sw.js`, `package.json`, `vite.config.ts`, os nomes dos testes em `tests/unit/` (589 casos) e o `git show --stat` de todos os commits desde 2026-09-12.
+> Auditoria de 2026-10-06. Fonte: `C:\Users\danie\Desktop\GIT\conversa-projeto\conversa-web` no commit `bfb79d8` (2026-10-06, "Abas Sistema e Acessos nas configurações; Equipes sai da barra"), **atualizado com `39d06f9`** (2026-10-06 21:22, "Campo de mensagem rico, votação em grupo e chat completo na chamada"). Itens novos ou alterados por esse commit estão marcados com 🆕; o resumo está na §10. **Atualizado de novo em 2026-10-08** com `eaa8bac` e `785bdef` (2026-10-07 20:30 e 20:41): as marcações citam o commit (🆕 `eaa8bac`) e o resumo está na §11. Depois vieram `7322e83` e `e8d82cb` (§12, total 137). **Atualizado de novo em 2026-10-13** até o commit **`d202c06`** (2026-10-11 18:00, "Postagens em grupo, todos os emojis, figurinhas Noto e pesquisa nova"), com `769bd7d`, `05507a0`, `f798e9c`, `964ed72` e `d202c06` (servidor até `12cf0cf`): 13 IDs novos, total **150**; as marcações citam o commit (🆕 `769bd7d`) e o resumo está na §13. **Atualizado de novo em 2026-10-15** até o commit **`8b43965`** (2026-10-14 20:39, "Temas prontos, balões com cores próprias, seletor de emoji rápido e ajustes"), com `e33ecba` e `8b43965` (servidor até `e25c4db`, com `6d20ff7`): 3 IDs novos, total **153**; as marcações citam o commit (🆕 `e33ecba`) e o resumo está na §14. **Atualizado de novo em 2026-10-15 (noite)** com o commit **`9c6e8a6`** (2026-10-15 22:42, "Bots de IA com ferramentas e base de conhecimento, permissões de uso e cadastro pelo administrador"; servidor até `ef13c22`): 10 IDs novos, total **163**; as marcações citam o commit (🆕 `9c6e8a6`) e o resumo está na §15. Foram lidos `CLAUDE.md`, `README.md`, todo o `src/`, `chat-popup.html`, `public/firebase-messaging-sw.js`, `package.json`, `vite.config.ts`, os nomes dos testes em `tests/unit/` (589 casos) e o `git show --stat` de todos os commits desde 2026-09-12.
 >
 > Objetivo: servir de **checklist de paridade** para o app Android (`conversa-android-kotlin`). Cada funcionalidade tem um ID (ex.: `MSG-07`) para ser marcada como "feito / parcial / falta" na comparação com o Android.
 >
@@ -24,6 +24,7 @@
 12. [🆕 Atualização de 2026-10-08 (noite) — commits `7322e83` e `e8d82cb`](#12-atualização-de-2026-10-08-noite--commits-7322e83-e-e8d82cb)
 13. [🆕 Atualização de 2026-10-13 — commits `769bd7d` a `d202c06`](#13-atualização-de-2026-10-13--commits-769bd7d-a-d202c06)
 14. [🆕 Atualização de 2026-10-15 — commits `e33ecba` e `8b43965`](#14-atualização-de-2026-10-15--commits-e33ecba-e-8b43965)
+15. [🆕 Atualização de 2026-10-15 (noite) — commit `9c6e8a6`](#15-atualização-de-2026-10-15-noite--commit-9c6e8a6)
 
 ---
 
@@ -45,6 +46,7 @@
 | Código | highlight.js (sob demanda) + CodeMirror 6 (janela de código) | `composables/useCodeHighlight.ts`, `components/CodigoModal.vue` |
 | Markdown / diagramas | `marked` + `DOMPurify`, `mermaid` (securityLevel strict) | `composables/useMarkdown.ts`, `composables/useMermaid.ts` |
 | PDF | `pdfjs-dist` 6 | `components/VisualizadorPdf.vue` |
+| 🆕 `9c6e8a6` Arquivos do Office | `@silurus/ooxml` 0.88.0 (leitor em Rust/WASM, desenho em canvas); fontes substitutas em `public/fontes/office` (sem Google Fonts) | `components/VisualizadorOffice.vue`, `utils/fontesOffice.ts` |
 | Figurinhas | `lottie-web` (build `lottie_light`, só SVG) | `utils/figurinhas.ts`, `components/FigurinhaLottie.vue` |
 | VoIP | `sip.js` 0.21 | `src/stores/sip.ts` |
 | Chamadas | WebRTC nativo contra MediaMTX (WHIP publica / WHEP assina) | `src/stores/call.ts` |
@@ -66,13 +68,13 @@ https://HOST
 
 | Store | Responsabilidade | Persistência |
 |---|---|---|
-| `auth` (`stores/auth.ts`) | token, usuário, `dispositivoId`, URL do avatar resolvida, permissões do sistema (`permissoes`, `temPermissao`) | `localStorage`: `conversa.token`, `conversa.user` (JSON), `conversa.deviceId`, `conversa.apiBase` |
+| `auth` (`stores/auth.ts`) | token, usuário, `dispositivoId`, URL do avatar resolvida, permissões do sistema (`permissoes`, `temPermissao`); 🆕 `9c6e8a6` `pode(codigo)` para as permissões de uso (verdadeiro até a lista chegar, GER-09) | `localStorage`: `conversa.token`, `conversa.user` (JSON), `conversa.deviceId`, `conversa.apiBase` |
 | `chat` (`stores/chat.ts`) | contatos, conversas, mensagens por conversa, conversa ativa, resposta pendente, digitando/gravando, online, WebSocket, polling, cursor de sincronização, buscas; 🆕 `769bd7d` presença (`presencas`: estado e visto por último; `presentesPorConversa`), confirmação pendente (`pedirConfirmacao`); 🆕 `d202c06` postagem pendente (`postagemPendente`) e respostas por postagem; 🆕 `e33ecba` quem precisa confirmar (`confirmacaoUsuarios`, `null` = todos) e a postagem que está sendo respondida pelo campo (`postagemRespondendo`) | memória (não persiste mensagens) |
 | `call` (`stores/call.ts`) | estado da chamada (`inativo`/`chamando`/`recebendo`/`ativa`/`encerrando`), peers WHIP/WHEP, mídia local, tela, ponteiros, chat da chamada | memória |
 | `sip` (`stores/sip.ts`) | config do ramal, UserAgent/Registerer sip.js, sessão, tons | memória |
-| `atividades` (`stores/atividades.ts`) | lista paginada, contador de novas, tela aberta | memória |
+| `atividades` (`stores/atividades.ts`) | lista paginada, contador de novas, tela aberta; 🆕 `9c6e8a6` o contador (`novas`) passa a contar as **pendentes**, `marcarVistas` saiu e entrou `concluir(id)` (ATV-02, ATV-04) | memória |
 
-Estados globais fora do Pinia (composables singleton): tema (`useTheme`, chave `theme` = `dark`/`light`), cores personalizadas (`useCoresPersonalizadas`, chave própria no localStorage, por tema; 🆕 `8b43965` por cima do tema pronto escolhido, chave `conversa.temaCores`, CFG-10), qualidade das chamadas (`useConfigChamada`, chave `conversa.chamada`), uploads ativos (`useUploadProgress`), áudio tocando (`useAudioManager`), relógio compartilhado (`useAgora`), conexão lenta (`useConexao`). 🆕 `769bd7d`…`d202c06`: recursos do servidor (`useRecursos`, GER-08), sugestão da IA (`useSugestaoIa`, chave `conversa.sugestoesIa`), catálogo e recentes de emojis (`useEmojis`, chave `conversa.emojisRecentes`), aba própria da chamada (`useAbaChamada`). IndexedDB: rascunhos (ENV-23) e o último resumo de cada conversa (banco `conversa-resumos`, CON-14).
+Estados globais fora do Pinia (composables singleton): tema (`useTheme`, chave `theme` = `dark`/`light`), cores personalizadas (`useCoresPersonalizadas`, chave própria no localStorage, por tema; 🆕 `8b43965` por cima do tema pronto escolhido, chave `conversa.temaCores`, CFG-10), qualidade das chamadas (`useConfigChamada`, chave `conversa.chamada`), uploads ativos (`useUploadProgress`), áudio tocando (`useAudioManager`), relógio compartilhado (`useAgora`), conexão lenta (`useConexao`). 🆕 `769bd7d`…`d202c06`: recursos do servidor (`useRecursos`, GER-08), sugestão da IA (`useSugestaoIa`, chave `conversa.sugestoesIa`), catálogo e recentes de emojis (`useEmojis`, chave `conversa.emojisRecentes`), aba própria da chamada (`useAbaChamada`). 🆕 `9c6e8a6`: `useRecursos` ganha `conhecimento`; barra de navegação oculta no computador (chave `conversa.menuOculto`, GER-10). IndexedDB: rascunhos (ENV-23) e o último resumo de cada conversa (banco `conversa-resumos`, CON-14).
 
 ### 1.3 Como fala com a API (Eden)
 
@@ -128,7 +130,7 @@ Arquivos: `App.vue#iniciarSessao`, `services/eden.ts`, `stores/auth.ts` (commit 
 `conversaApi.ts#uploadAnexo(tipo, nome, extensao, blob, onProgress)`:
 1. `identificador = sha256(blob)` (hex, blocos de 2 MB).
 2. `GET /anexo/existe?identificador=` → se a resposta tem `id`, o arquivo já existe: progresso 100%, devolve `{id, identificador}` sem subir nada.
-3. `PUT /anexo {identificador, tipo, nome, extensao, tamanho}` → `{id, upload_url}`.
+3. `PUT /anexo {identificador, tipo, nome, extensao, tamanho}` → `{id, upload_url}`. 🆕 `9c6e8a6` (servidor `ef13c22`) Áudio (tipos 4 e 5) leva também **`duracao`** (segundos, até 86400) e **`intensidade`** (48 picos de 0 a 100, até 200 itens), medidos no navegador antes do envio (`utils/dadosAudio.ts#medirAudio`, que decodifica o arquivo; acima de 30 MB, ou se a decodificação falha, vai sem). O servidor grava na `anexo_audio` (migração 045, uma linha por identificador; o mesmo áudio enviado de novo só completa o que faltava). Ver ANX-10.
 4. `PUT upload_url` (XHR, corpo = arquivo) com progresso.
 5. A mensagem leva no conteúdo o **identificador** (não o id).
 
@@ -136,7 +138,7 @@ Para exibir: `GET /anexo?identificador=` → `{url}` (pré-assinada; validade li
 
 ### 1.8 Carregamento sob demanda
 
-Chunks manuais no Vite: `sipjs`, `framework`, `highlightjs`, `markdown`, `lottie`, `vendor-utils` (hash-wasm), `codemirror`. Componentes assíncronos: `SipDialerModal`, `SipIncomingCallModal`, `CodigoModal`, `AgendarMensagemModal`, `VisualizadorPdf`, `VisualizadorHtml`. Irrelevante para o Android, mas indica o que é "pesado" e opcional.
+Chunks manuais no Vite: `sipjs`, `framework`, `highlightjs`, `markdown`, `lottie`, `vendor-utils` (hash-wasm), `codemirror`. Componentes assíncronos: `SipDialerModal`, `SipIncomingCallModal`, `CodigoModal`, `AgendarMensagemModal`, `VisualizadorPdf`, `VisualizadorHtml`; 🆕 `9c6e8a6` `VisualizadorOffice` (um chunk por formato, cada um com o seu `.wasm`, sem CDN). Irrelevante para o Android, mas indica o que é "pesado" e opcional.
 
 ---
 
@@ -151,7 +153,7 @@ Não há vue-router. A URL é sincronizada manualmente com `history.pushState/re
 | `/` ou `/chat` | Chat sem conversa aberta | painel lateral aberto |
 | `/chat/:conversaId` | Chat com conversa aberta | deep link aplicado após `iniciarSessao` |
 | `/anexos`, `/anexos/:conversaId` | Página de anexos | |
-| `/config/:aba` | Configurações | `aba` ∈ `usuario, privacidade, dispositivos, permissoes, voip, cores, chamadas, sistema, acessos` (inválida → `usuario`; 🆕 `769bd7d` `privacidade`) |
+| `/config/:aba` | Configurações | `aba` ∈ `usuario, privacidade, dispositivos, permissoes, voip, cores, chamadas, sistema, acessos` (inválida → `usuario`; 🆕 `769bd7d` `privacidade`; 🆕 `9c6e8a6` `bots, usuarios, ferramentas, conhecimento`) |
 | `/chamadas` | Histórico de chamadas | |
 | `/atividades` | Atividades | |
 | `/ramal` | (válida no parser; o item da barra abre o discador em vez de navegar) | |
@@ -169,12 +171,14 @@ Desktop: barra vertical à esquerda. Celular (< 768 px): barra horizontal no rod
 |---|---|---|---|
 | 1 | Avatar do usuário (ou inicial) | seção `config` | tooltip "Configurações"; se a imagem falha, re-resolve a URL; 🆕 `769bd7d` bolinha do **próprio** status (verde/amarela/cinza), tooltip "Para os outros você aparece ativo/ausente/offline" (PRE-02) |
 | 2 | Chat | seção `chat` | — |
-| 3 | Atividades | seção `atividades` | badge com `atividades.novas` (`99+` acima de 99) |
+| 3 | Atividades | seção `atividades` | badge com `atividades.novas` (`99+` acima de 99); 🆕 `9c6e8a6` conta as **pendentes** (ATV-02) |
 | 4 | Chamadas | seção `chamadas` | — |
 | 5 | Anexos | seção `anexos` | — |
-| 6 | Ramal | **abre o discador SIP** (não muda de seção) | só aparece se `sip.sipDisponivel` (config ativa); bolinha verde = registrado, amarela = conectando, vermelha = erro |
+| 6 | Ramal | **abre o discador SIP** (não muda de seção) | só aparece se `sip.sipDisponivel` (config ativa); bolinha verde = registrado, amarela = conectando, vermelha = erro; 🆕 `9c6e8a6` sem a permissão `telefonia` o `GET /sip` volta `{}` e o item some (GER-09) |
 
 "Equipes" foi **removido** da barra em `bfb79d8`. Qualquer outra seção cai na tela "Em desenvolvimento".
+
+🆕 `9c6e8a6` **Barra oculta (só computador, GER-10):** no pé da barra vertical, o botão "Ocultar menu" a esconde; oculta, fica uma aba fina no pé da borda esquerda, "Mostrar menu", que a traz de volta (com um ponto vermelho se há atividades pendentes). A escolha fica no navegador (`conversa.menuOculto`). A barra do rodapé do celular não muda.
 
 ### 2.3 Layout da seção Chat (`App.vue`)
 
@@ -206,8 +210,10 @@ Desktop: barra vertical à esquerda. Celular (< 768 px): barra horizontal no rod
 | `AgendarMensagemModal` | botão relógio "Agendar mensagem" (aparece com conteúdo) | data + hora |
 | `MencaoDropdown` | digitar `@` | até 6 contatos |
 | `BarraGravacao` | microfone | gravação de áudio |
-| `ImageViewerModal` | clique em imagem/vídeo (chat, fila, anexos) | visualizador com galeria |
+| `ImageViewerModal` | clique em imagem/vídeo (chat, fila, anexos) | visualizador com galeria; 🆕 `9c6e8a6` o vídeo toca no `PlayerVideo` completo (ANX-04) |
+| 🆕 `9c6e8a6` `PlayerVideo` | vídeo na bolha e no visualizador | player próprio: play/pausa, barra, tempo, baixar, tela cheia; no visualizador também volume até 200% e velocidade (ANX-05, ANX-04) |
 | `VisualizadorPdf`, `VisualizadorHtml` | botão "Abrir" em anexo PDF/HTML | 🆕 `8b43965` o de HTML tem "Ver fonte" / "Ver página" (ANX-07) |
+| 🆕 `9c6e8a6` `VisualizadorOffice` | botão "Abrir" em `.docx`, `.xlsx`, `.pptx` (chat) ou clique na página de Anexos | documento desenhado em canvas, com páginas/slides e zoom (ANX-16) |
 | `IncomingCallModal` | evento 51 | atender / recusar / atender só assistindo |
 | `VideoUpgradeModal` | evento 56 | Apenas assistir / Transmitir também |
 | `AddUserToCallModal` (App) e modal interno do `CallWindow` | botão "Adicionar usuário" | contatos fora da chamada |
@@ -231,11 +237,17 @@ Título "Configuracoes" / "Preferencias da conta". Lista de abas à esquerda (ce
 | 🆕 `769bd7d` `privacidade` | Privacidade | Status, visto por último e aparecer offline | todos (CFG-09) |
 | `dispositivos` | Dispositivos | Sessao atual e perifericos locais | todos |
 | `permissoes` | Permissoes | Notificacoes, microfone e camera | todos |
-| `voip` | Voip | Configuracao SIP do usuario | todos |
-| `cores` | Cores | Cores do sistema, salvas neste navegador | todos |
-| `chamadas` | Chamadas | Qualidade do áudio, vídeo e tela | todos |
+| `voip` | Voip | Configuracao SIP do usuario | todos; 🆕 `9c6e8a6` só com a permissão de uso `telefonia` |
+| `cores` | Cores | Cores do sistema, salvas neste navegador | todos; 🆕 `9c6e8a6` só com a permissão de uso `cores` |
+| `chamadas` | Chamadas | Qualidade do áudio, vídeo e tela | todos; 🆕 `9c6e8a6` só com a permissão de uso `config_chamadas` |
 | `sistema` | Sistema | Configurações que valem para todos | só com permissão `parametros` |
 | `acessos` | Acessos | Quem pode mexer no sistema e nas permissões | só com permissão `permissoes` |
+| 🆕 `9c6e8a6` `usuarios` | Usuários | Cadastrar pessoas e bots | só com permissão `usuarios` (CFG-11) |
+| 🆕 `9c6e8a6` `ferramentas` | Ferramentas | APIs externas que os bots podem chamar | só com permissão `ferramentas` (CFG-13) |
+| 🆕 `9c6e8a6` `conhecimento` | Conhecimento | Documentos que os bots consultam | só com permissão `conhecimento` (CFG-14) |
+| 🆕 `9c6e8a6` `bots` | Bots | Bots de IA: instruções e o que cada um pode fazer | com permissão `bots` **ou** `permissoes` (CFG-12) |
+
+🆕 `9c6e8a6` A ordem é: as abas de todos (filtradas pelas permissões de uso), depois Sistema, Acessos, Usuários, Ferramentas, Conhecimento e Bots. As de uso (`telefonia`, `cores`, `config_chamadas`) usam `auth.pode` (aparecem até a lista de permissões chegar); as de administração usam `auth.temPermissao`.
 
 Regra: link direto para aba restrita sem a permissão volta para `usuario` **depois** de as permissões carregarem. Fechar as configurações volta ao chat com a lista aberta e força reconexão do SIP (`sip.inicializarSessao(true)`).
 
@@ -252,11 +264,17 @@ Legenda dos campos: **Comportamento** (o que o usuário vê/faz), **API/WS** (ro
 - API: `POST /login {login, senha, dispositivo_id?}` → `{id, nome, email, telefone, avatar_url, avatar_identificador, token, dispositivo:{id,...}}` (sem o campo `login`; o cliente guarda o que foi digitado, `trim()`).
 - Arquivos: `components/LoginForm.vue`, `stores/auth.ts#login`.
 - Regras: `dispositivo_id` salvo é reenviado para reaproveitar o dispositivo; resposta sem token → erro "Resposta de login invalida: token ausente".
+- 🆕 `9c6e8a6` (servidor `ef13c22`) **Cadastro fechado:** ao montar, a tela chama `GET /cadastro` (público, sem token) → `{aberto}`; com `aberto: false` o link "Não tem conta? Criar conta" **some**. Sem resposta (erro, servidor antigo), o link fica (o servidor recusa o cadastro se estiver fechado). Ver AUT-02 e CFG-07.
+- 🆕 `9c6e8a6` (servidor) Conta de **bot** não entra pelo login: 401 "Bot não entra pelo login." (CON-16).
 
 **AUT-02 Cadastro**
 - Comportamento: "Crie sua conta" com Nome, Usuário, E-mail, Senha (`minlength=4` no HTML), botão "Cadastrar"/"Cadastrando..."; sucesso mostra "Conta criada com sucesso!" e volta ao login após 1,5 s. Link "Já tem conta? Entrar".
 - API: `PUT /usuario {nome, login, email, senha}`.
 - Arquivos: `components/RegisterForm.vue`.
+- 🆕 `9c6e8a6` (servidor `ef13c22`) **O cadastro pode estar fechado** (parâmetro `cadastro_aberto`, CFG-07):
+  - fechado, o login não oferece "Criar conta" (AUT-01) e o `PUT /usuario` responde **403** "O cadastro está fechado: peça a um administrador para criar sua conta.";
+  - quem tem a permissão `usuarios` cria contas pela aba Usuários (CFG-11), mesmo com o cadastro fechado;
+  - conta nova (pelo login ou pelo administrador) **começa com todas as permissões de uso** (GER-09).
 
 **AUT-03 Início de sessão resiliente** — ver §1.5 (401 → login; outro erro → mantém login e tenta a cada 5 s com toast "(tentando de novo...)"). Testes: `tests/unit/App.test.ts`.
 
@@ -270,20 +288,24 @@ Legenda dos campos: **Comportamento** (o que o usuário vê/faz), **API/WS** (ro
 - Comportamento: seção "Dados do usuario" — Nome, Email, botão "Salvar dados"; mensagens "Preencha nome e email." / "Dados atualizados com sucesso.".
 - API: `PATCH /usuario {id, nome, email}` (o tipo aceita também `telefone`, mas a tela não edita telefone).
 - Arquivos: `ProfileSettingsModal.vue#salvarPerfil`.
+- 🆕 `9c6e8a6` **Permissões de uso `nome` e `email`** (GER-09): sem a permissão, o campo fica desabilitado, com o `title` "Você não tem permissão para mudar o nome" / "Você não tem permissão para mudar o e-mail"; sem as duas, o botão "Salvar dados" some. O `PATCH /usuario` leva **só os campos que a pessoa pode mudar**. O servidor confere cada campo (`email` vale também para `telefone`) e responde 403 "Você não tem permissão para: alterar o próprio nome." / "… alterar o próprio e-mail e telefone.".
 
 **AUT-07 Alterar senha**
 - Comportamento: "Senha atual", "Nova senha", "Confirmar nova senha", botão "Salvar senha".
 - Validações no cliente: todos preenchidos ("Preencha todos os campos de senha."), nova ≥ 6 ("A nova senha deve ter pelo menos 6 caracteres."), confirmação igual ("A confirmacao da senha nao confere."). Sucesso: "Senha alterada com sucesso." e limpa os campos.
 - API: `POST /alterar-senha {senha_atual, senha}` (o servidor confere a atual).
+- 🆕 `9c6e8a6` Sem a permissão de uso `senha` (GER-09), a seção "Senha" inteira some; o servidor responde 403 "Você não tem permissão para: trocar a própria senha.".
 
 **AUT-08 Avatar (foto de perfil)**
 - Comportamento: "Foto de perfil" — "Alterar foto" ("Enviando...") / "Remover"; prévia local + % de progresso sobre o avatar.
 - Processamento: recorte quadrado central, 256×256, JPEG qualidade 0,85 (`utils/imageResize.ts`), nome `avatar.jpg`.
 - API: upload (§1.7, tipo 2) → `PATCH /usuario {id, avatar_anexo_id}` → `GET /anexo?identificador=` para a URL. Remover: `PATCH /usuario {id, avatar_anexo_id: null}`.
 - Regra: URL do avatar expira; ao falhar a `<img>` chama `auth.renovarAvatarExpirado(url)` (renova no máximo a cada 30 s, só se a URL que falhou for a atual).
+- 🆕 `9c6e8a6` Sem a permissão de uso `avatar` (GER-09), no lugar de "Alterar foto" / "Remover" aparece "Você não tem permissão para mudar o avatar."; o servidor responde 403 "Você não tem permissão para: alterar o próprio avatar." ao `PATCH /usuario` com `avatar_anexo_id`. Vale só para o avatar da pessoa (a imagem do grupo, CON-15, não pede).
 
 **AUT-09 Permissões do sistema do usuário logado**
 - API: `GET /usuario/permissoes` → `string[]` (códigos `parametros`, `permissoes`). Só controla visibilidade das abas Sistema/Acessos; o servidor confere em cada rota.
+- 🆕 `9c6e8a6` A lista passa a ter **32 códigos**: 6 de administração (`parametros`, `permissoes`, `bots`, `usuarios`, `ferramentas`, `conhecimento`) e 26 de uso do app (GER-09). No **modo aberto** (ninguém tem `permissoes`) o servidor devolve todos. As de administração continuam em `auth.temPermissao`; as de uso vão por `auth.pode`, que é verdadeiro enquanto a lista não chegou.
 
 **AUT-10 Ver perfil de outro usuário** (`UserInfoModal.vue`)
 - Abre ao clicar no avatar da conversa **direta** (lista ou cabeçalho). Mostra foto/inicial, nome, Email, Telefone ("Nao informado" se vazio) e botão **"Ver anexos"** que leva a `/anexos/:conversaId`.
@@ -331,6 +353,7 @@ Legenda dos campos: **Comportamento** (o que o usuário vê/faz), **API/WS** (ro
   - a imagem **só sobe ao criar** (até lá, só a prévia local); "Cancelar" descarta;
   - botão **"Criar"** → **"Criando..."** (desabilitado enquanto cria); erro na caixa do modal (mensagem do servidor ou "Erro ao criar grupo").
   - Ordem das chamadas: (com imagem) recorte/redução `redimensionarImagem` e upload tipo 2 `avatar.jpg` (§1.7) → `PUT /conversa {descricao, tipo:2}` → `PUT /conversa/usuario` de cada membro (em paralelo) → `PATCH /conversa {id, avatar_anexo_id, emoji: null}` (imagem) ou `{id, avatar_anexo_id: null, emoji}` (emoji) → `GET /conversas` → abre o grupo. Sem imagem nem emoji, não há o `PATCH`.
+- 🆕 `9c6e8a6` Sem a permissão de uso `grupo` (GER-09), o botão "Novo grupo" da lista some; o servidor responde 403 "Você não tem permissão para: criar grupos." ao `PUT /conversa` com `tipo: 2` (a conversa direta não pede).
 
 **CON-08 Gerenciar membros do grupo** (`GroupMembersModal.vue`) — 🆕 `eaa8bac`: o modal virou o painel **"Dados do grupo"** (`PainelGrupo.vue`), aberto pelo avatar do grupo no cabeçalho ou pelo botão "Participantes e anexos", com os anexos da conversa embaixo (§11)
 - "Membros do grupo": campo "Nome do grupo" + "Renomear" (habilitado só se mudou; "Salvando..."); lista de membros com "Remover" (não aparece para si mesmo; "Removendo..."); "Adicionar participante" com select "Selecionar usuario" (contatos fora do grupo) + "Adicionar" ("Adicionando..."). Mensagens: "Grupo renomeado com sucesso.", "Participante adicionado com sucesso.", "Participante removido com sucesso.".
@@ -344,6 +367,8 @@ Legenda dos campos: **Comportamento** (o que o usuário vê/faz), **API/WS** (ro
 - Botões (escondidos durante chamada ou chamada recebida): "Chamada de voz", "Chamada de video", "Compartilhar tela"; em grupo "Gerenciar membros"; pesquisa na conversa (desktop: campo inline; celular: botão que abre painel "Pesquisar nesta conversa").
 - 🆕 `769bd7d` **Direta:** subtítulo de presença abaixo do título — "nesta conversa" (cor primária), "ativo agora", "ausente" ou "visto por último …" (PRE-03); some enquanto a pessoa digita/grava. Bolinha verde/amarela no avatar (PRE-01). **Grupo:** emoji no lugar da inicial (CON-15).
 - 🆕 `769bd7d` Botão **"Resumir conversa"** (ícone de brilhos), depois de "Compartilhar tela" e antes do de participantes, **só com a IA ligada** (`recursos.ia`, GER-08); aparece também durante chamada. Abre o diálogo do resumo (CON-14), que fecha ao trocar de conversa.
+- 🆕 `9c6e8a6` **Marca "Bot"** ao lado do título, numa pílula, com o `title` "Responde com a IA": só na conversa **direta** com um contato que tem `bot: true` (CON-11, CON-16). O título passou a ficar num `<span>` que corta com "…", para a marca caber.
+- 🆕 `9c6e8a6` **Botões por permissão** (GER-09): "Chamada de voz" só com `chamada_audio`; "Chamada de video" só com `chamada_video`; "Compartilhar tela" só com `chamada_video` **e** `compartilhar_tela`.
 
 **CON-10 Abrir conversa em nova janela (popup)**
 - Botão "Abrir em nova janela" em cada item da lista → `window.open('/chat-popup.html?conversa=<id>', 'chat-popup-<id>', 900×700 centralizada)`.
@@ -351,6 +376,7 @@ Legenda dos campos: **Comportamento** (o que o usuário vê/faz), **API/WS** (ro
 
 **CON-11 Contatos**
 - API: `GET /usuario/contatos` → `Contato[]` (`id, nome, login, email, telefone, avatar_url?`). Regra de avatar usada em várias telas: a lista de contatos pode não trazer foto → usa o `avatar_url` da conversa direta com o contato; o próprio usuário usa o avatar do perfil.
+- 🆕 `9c6e8a6` (servidor `ef13c22`) Cada contato ganha **`bot: boolean`** (é um bot de IA, CON-16). Bot **excluído** que já conversou (`bot.excluido_em`) some dos contatos (e da tela Acessos); as conversas diretas com ele ficam, com o nome dele.
 
 **CON-12 Deep link, histórico e âncora** — §2.1. Clique em notificação abre a conversa e **recarrega as mensagens** antes (as em memória não têm as que chegaram fechada).
 
@@ -373,6 +399,22 @@ Legenda dos campos: **Comportamento** (o que o usuário vê/faz), **API/WS** (ro
 - Imagem: recorte e redução como no avatar do usuário (`redimensionarImagem`), upload tipo 2 com o nome `avatar.jpg` (§1.7) e `PATCH /conversa {id, avatar_anexo_id, emoji: null}`. Emoji: `PATCH /conversa {id, avatar_anexo_id: null, emoji}`. Remover: os dois `null`. **Um tira o outro.** Depois recarrega `GET /conversas`.
 - Erros na caixa do painel: "Erro ao alterar a imagem do grupo" / "Erro ao enviar a imagem do grupo" (ou a mensagem do servidor).
 - Onde aparece: o emoji entra no lugar da inicial na lista (CON-01), no cabeçalho (CON-09), no painel e na página de Anexos (GER-07); a imagem vem em `avatar_url` da conversa.
+
+**CON-16 🆕 `9c6e8a6` Conversa com um bot de IA** (`ChatHeader.vue`; servidor `ef13c22`, `src/bots.ts`, migrações 047 e 050)
+- **O que é:** um bot é um **usuário comum** (tabela `bot`), criado pelo administrador (CFG-11, CFG-12), com instruções de personalidade e do que faz. Aparece nos contatos com `bot: true` (CON-11) e conversa por mensagens comuns: no cliente não há rota nem evento novo.
+- **Na tela:** a única diferença visível no chat é a pílula **"Bot"** (`title` "Responde com a IA") ao lado do nome, no cabeçalho da conversa **direta** com ele (CON-09). Lista, "Nova conversa" e grupos não mostram a marca.
+- **Quando ele responde** (servidor, em segundo plano, só com a IA ligada, GER-08):
+  - na conversa **direta**, a toda mensagem;
+  - num **grupo**, quando é **mencionado** (`@[Nome](id)`) ou quando **respondem a uma mensagem dele**;
+  - nunca a outro bot; bot desligado ou excluído não responde;
+  - mensagens que chegam enquanto ele pensa viram **uma resposta só**, à mais nova.
+- **Como ele responde:**
+  - marca a mensagem como **visualizada** e manda o **"digitando"** (WS 4) a cada 3 s enquanto pensa (o cliente mostra como de qualquer pessoa, ENV-15);
+  - a resposta é uma mensagem comum: na direta sem citação; no grupo **citando** a mensagem que o chamou;
+  - pode também reagir, responder citando, mandar figurinha Noto, encaminhar, criar votação e buscar mensagens (ferramentas do servidor), cada uma só com a **permissão de uso** dele (GER-09; nasce com `emoji`, `responder` e `reagir`, se quem criou as tem);
+  - se falha (servidor de IA fora do ar, demora), manda na conversa, citando a mensagem: **"Não consegui responder a esta mensagem: <motivo>"** (ou "…mensagem." sem motivo).
+- **Login:** conta de bot não entra pelo login (401 "Bot não entra pelo login.", AUT-01).
+- **Excluído:** sai dos grupos, dos contatos e das telas e não responde mais; as conversas diretas com ele e o que ele escreveu ficam, com o nome dele (bot sem histórico é apagado de vez).
 
 ### 3.3 MSG — Mensagens: exibição e leitura
 
@@ -494,6 +536,7 @@ Hora (`HH:MM`) dentro da bolha (`MensagemStatus.vue`), posição conforme varian
   - **Passar o mouse** no chip (caixa ou contagem) lista quem confirmou (foto, nome, horário) e, embaixo, **"Falta confirmar"** com o nome de cada destinatário que ainda não confirmou.
   - Confirmar sem estar na lista: o servidor responde **403** "Você não está entre quem precisa confirmar esta mensagem.". Ao confirmar, `pode_confirmar` vira `false` localmente.
   - **WS 65** (`ConfirmacaoPedida`) `{conversa_id, mensagem_id, usuario_id, confirmacao}`: a confirmação foi pedida depois do envio (ENV-27); cada membro recebe a **sua** visão (`pode_confirmar` próprio) e o web troca o `confirmacao` da mensagem em memória. Sem som nem notificação.
+- 🆕 `9c6e8a6` (servidor `ef13c22`) **Atividade do pedido:** cada pessoa da lista ganha uma atividade **"pediu que você confirme a leitura"** (tipo 5, ATV-01), pendente até confirmar. Confirmar (`POST /mensagem/confirmar`) a conclui e o servidor manda o **WS 61** a quem confirmou, para o contador cair (ATV-02).
 
 **MSG-22 🆕 `d202c06` Bolha de postagem com respostas embaixo** (`BolhaPostagem.vue`, store `chat`) — 🆕 `e33ecba`: cartão na largura do chat; a resposta é escrita no **campo de mensagem**, com qualquer conteúdo; foto de quem respondeu (ver o fim do item)
 - Classificação: `mensagem.postagem` (`{titulo, respostas, nao_lidas, ultimas: Mensagem[]}`) → `Postagem` (MSG-07). As respostas **não entram no fluxo** da conversa nem na pesquisa (servidor): ficam só no cartão.
@@ -521,6 +564,11 @@ Hora (`HH:MM`) dentro da bolha (`MensagemStatus.vue`), posição conforme varian
 - API: `PUT /mensagem {conversa_id, conteudos:[{ordem, tipo, conteudo}], mensagem_referencia?:{tipo, origem_mensagem_id}, visivel_em?: ISO}` → `{id, conversa_id, usuario_id}`.
 - 🆕 Campos opcionais novos no mesmo `PUT /mensagem`: `pede_confirmacao: true` (`769bd7d`, ENV-24), `postagem: {titulo: string | null}` (`d202c06`, cria uma postagem, ENV-26) e `postagem_id` (`d202c06`, resposta a uma postagem, MSG-22). Só vão quando usados. 🆕 `e33ecba` (servidor `6d20ff7`) **`confirmacao_usuarios?: number[]`** junto de `pede_confirmacao`: quem precisa confirmar (ENV-24); sem a lista, todos os outros membros. Lista vazia ou com quem não é membro → 400 "Escolha quem precisa confirmar entre os membros da conversa.".
 - Regras: texto `trim()`; pode enviar só a resposta (sem texto) — ver ENV-07. Após enviar, rola ao fim e recarrega a lista de conversas.
+- 🆕 `9c6e8a6` **Enviar com um trecho antigo carregado** (`useScrollManager.ts#rolarParaFinalAoEnviar`; no app, no popup e no chat completo da chamada): depois de ir até uma mensagem antiga (MSG-06), a lista não tem as mais recentes e a enviada ficaria no fim desse trecho. Ao enviar, o web **recarrega as 80 recentes** (a que está sendo enviada fica) e só então rola ao fim.
+- 🆕 `9c6e8a6` (servidor `ef13c22`) **Permissões de uso no `PUT /mensagem`** (GER-09): o servidor confere o que a mensagem pede e responde 403 "Você não tem permissão para: <descrição>." (por exemplo "… enviar imagens."):
+  - texto com emoji (`\p{Extended_Pictographic}`) → `emoji`; imagem (2) → `imagem`; áudio (4 e 5) → `audio`; figurinha (7) → `figurinha`; arquivo (3) → `video` ou `arquivo`, pela extensão do anexo (`mp4, webm, ogg, mov, m4v, mkv` = vídeo);
+  - resposta (`mensagem_referencia.tipo` 1) → `responder`; `postagem` → `postagem`; `pede_confirmacao` → `confirmacao`; `visivel_em` → `agendar`;
+  - **encaminhada** (`mensagem_referencia.tipo` 2, inclusive o "Responder no privado") pede **só** `encaminhar`: os conteúdos são de outra mensagem.
 
 **ENV-02 Atalhos de emoji no texto** (`utils/emojiAtalhos.ts`)
 - `:)`/`:-)`→🙂, `:D`/`:-D`→😃, `xD`/`XD`→😆, `;)`/`;-)`→😉, `:(`/`:-(`→🙁, `:'(`→😢, `:P`/`:p`→😛, `:O`/`:o`→😮, `:|`→😐, `:/`→😕, `:*`→😘, `<3`→❤️, `\o/`→🙌.
@@ -535,6 +583,7 @@ Hora (`HH:MM`) dentro da bolha (`MensagemStatus.vue`), posição conforme varian
 - **Suporte do sistema** (`utils/suporteEmoji.ts`): desenha num canvas um emoji representante de cada versão do Unicode (16, 15.1, 15, 14, 13.1, 13, 12, 11) e esconde os emojis de versão mais nova que a primeira que aparece colorida; se o teste falha, mostra tudo.
 - O mesmo componente serve ao campo de mensagem (com a aba "Figurinhas", ENV-04), ao "Mais emojis" das reações (ENV-17) e ao emoji do grupo (CON-15). 🆕 `e33ecba` Também ao emoji do grupo novo (CON-07).
 - 🆕 `8b43965` **Desempenho:** os botões de cada categoria só são criados quando ela chega perto da vista (`IntersectionObserver`, margem de 300 px) e, depois de aberto, as demais uma por vez nos intervalos livres (`requestIdleCallback`); até lá a categoria ocupa a mesma altura (linhas de 8, 38 px cada). A primeira abertura não trava mais. Sem mudança visível.
+- 🆕 `9c6e8a6` **Permissões de uso** (GER-09) no botão "Emoji" do campo: sem `emoji` **e** sem `figurinha`, o botão some; sem `emoji` e com `figurinha`, o seletor abre **só na aba "Figurinhas"**, sem as abas em cima (prop `soFigurinhas`). Os atalhos de texto (ENV-02) continuam virando emoji; o servidor recusa o envio com 403 "Você não tem permissão para: enviar emojis no texto das mensagens." (ENV-01).
 
 **ENV-04 Figurinhas (Lottie)** — 🆕 com o campo **vazio** a figurinha é enviada na hora, sozinha; com algo escrito ela **entra no campo** no ponto do cursor e vai junto, na ordem (ENV-21)
 - Aba "Figurinhas" no seletor do campo de mensagem (abre sempre em "Emojis"). Pacotes: **Básico** (coracao, sorriso, risada, estrela, feito, festa, sono, pontinhos), **Rostos** (piscadinha, apaixonado, beijo, legal, surpreso, triste, bravo), **Coisas** (joinha, fogo, coracao-partido, presente, bolo, balao, cafe, sol, chuva).
@@ -544,6 +593,7 @@ Hora (`HH:MM`) dentro da bolha (`MensagemStatus.vue`), posição conforme varian
 - 🆕 `d202c06` **Só o pacote "Noto"**: os pacotes Básico, Rostos e Coisas (e `scripts/gerar-figurinhas.ts`) foram **apagados**. O pacote `noto` (emojis animados do Google em Lottie, `utils/figurinhasNoto.ts`, baixado por `scripts/baixar-figurinhas-noto.ts`) tem **55 figurinhas** `noto/<nome>`: chorando-de-rir, rolando-de-rir, sorriso, ufa, piscadinha, apaixonado, cheio-de-amor, beijinho, legal, deslumbrado, festejando, abraco, ops, pensando, desconfiado, revirando-os-olhos, de-cabeca-para-baixo, envergonhado, por-favorzinho, triste, chorando, bravo, assustado, cabeca-explodindo, bocejando, dormindo, doente, morri, palhaco, fantasma, joinha, negativo, palmas, aleluia, por-favor, tchau, forca, combinado, paz, de-olho, coracao, coracao-partido, fogo, cem, brilhos, festa, confete, presente, bolo, foguete, ideia, raio, arco-iris, cafe, brinde (nomes amigáveis no catálogo, ex.: "Chorando de rir", "Abraço", "Arco-íris").
 - 🆕 `d202c06` Na aba "Figurinhas", o título do pacote "Noto" vem com o crédito que a licença pede, como link para a CC BY 4.0: **"Animated Noto Emoji © Google, CC BY 4.0"**. Grade de 4 colunas, 64 px.
 - 🆕 `d202c06` Figurinha de pacote apagado (`basico/…`, `rostos/…`, `coisas/…`) não carrega mais e aparece como o texto **"Figurinha"**; `nomeFigurinha()` também devolve "Figurinha" para id desconhecido.
+- 🆕 `9c6e8a6` A aba "Figurinhas" passa a ter **a mesma altura** da de emojis (342 px: pesquisa 45 + categorias 37 + lista 260), para o seletor não mudar de tamanho ao trocar de aba. Ela só aparece com a permissão de uso `figurinha`; sem `emoji`, é a única (ENV-03, GER-09).
 
 **ENV-05 Menções no campo**
 - Digitar `@` + texto abre lista com até 6 contatos (nome/login); ↑/↓ navegam, Enter/Tab confirmam, Esc fecha; clique também. Insere `@Nome` destacado no campo (camada de realce atrás do textarea); no envio vira `@[Nome](id)`. Texto colado com `@[Nome](id)` é convertido para `@Nome` com o id guardado. "@Ana" não casa com "@Anabela".
@@ -590,10 +640,12 @@ Hora (`HH:MM`) dentro da bolha (`MensagemStatus.vue`), posição conforme varian
 - Botão "Agendar mensagem" (aparece com conteúdo). Modal "Agendar mensagem": "Data" (calendário próprio `DateInput`) e "Hora" (`HH:MM`); padrão **amanhã 08:00**.
 - Validações: "Data/hora inválida", "O envio deve ser no mínimo 5 minutos no futuro", "O envio não pode ser mais de 1 ano no futuro". Botões "Cancelar" / "Agendar".
 - Envia o conteúdo atual (texto + fila) com `visivel_em` em ISO (UTC). O autor vê a mensagem na hora com o selo (MSG-17); destinatários só depois.
+- 🆕 `9c6e8a6` O botão "Agendar mensagem" só aparece com a permissão de uso `agendar` (GER-09); o servidor recusa `visivel_em` sem ela (403).
 
 **ENV-14 Cancelar mensagem agendada** — 🆕 `7322e83`: agora pela lista "Mensagens agendadas" do relógio (§12), com a mesma confirmação
 - Na própria mensagem ainda futura, a ação "Ocultar" vira confirmação "Cancelar mensagem agendada" / "Ela não será enviada." / "Cancelar envio" / "Voltar".
 - API: `DELETE /mensagem?id=` — para agendada não enviada a resposta **não** traz `excluida_em` e a mensagem é removida da lista.
+- 🆕 `9c6e8a6` (servidor `ef13c22`) **Pegadinha:** o `DELETE /mensagem` confere a permissão de uso `ocultar` **antes** de ver se a mensagem é agendada; sem ela, cancelar a agendada também dá 403 "Você não tem permissão para: ocultar as próprias mensagens.". O web não esconde o "Cancelar" da lista de agendadas.
 
 **ENV-15 Digitando** (`stores/chat.ts`)
 - Envio: ao digitar texto não vazio, `POST /conversa/digitando {id: conversaId}`, no máximo 1 a cada 2,5 s (o último é adiado, não perdido). Ao enviar texto, reseta o throttle.
@@ -612,12 +664,15 @@ Hora (`HH:MM`) dentro da bolha (`MensagemStatus.vue`), posição conforme varian
 - 🆕 `eaa8bac` **Limite:** até **5 emojis diferentes por pessoa** na mesma mensagem. O web confere antes da reação otimista e mostra o diálogo "Não foi possível reagir" / "Você já reagiu com 5 emojis nesta mensagem." (o servidor confere de novo). Na bolha, **5 chips à mostra** e o resto num chip **"+N"** (destacado se eu reagi em algum); passar o mouse lista os demais (emoji, contagem, nomes) e clicar num deles alterna.
 - WS tipo 7 `{conversa_id, mensagem_id, emoji, acao, usuario_id}` — `acao === 'remove'` remove; outro valor adiciona.
 - Mensagem oculta não mostra reações.
+- 🆕 `9c6e8a6` Sem a permissão de uso `reagir` (GER-09), o menu de ações perde as duas linhas de reações rápidas (e o "Mais emojis") e o Ctrl + clique direito não abre nada. Os chips embaixo da bolha continuam clicáveis: o servidor responde 403 "Você não tem permissão para: reagir às mensagens com emoji." e o web mostra o diálogo "Não foi possível reagir".
+- 🆕 `9c6e8a6` (servidor) A reação vira atividade de quem recebeu, pendente até ele **ver a própria mensagem na tela** (ATV-05).
 
 **ENV-18 Ocultar mensagem** (ex-"Excluir", commit `51a0cd7`)
 - Ação "Ocultar" só nas **próprias** mensagens não ocultas, **sem prazo**. Confirmação: título "Ocultar mensagem", texto "Ela continua na conversa, marcada como oculta.", botão "Ocultar" (perigo; foco inicial em "Cancelar").
 - API: `DELETE /mensagem?id=` → com `excluida_em` (mensagem fica marcada em todas as listas em memória; recarrega `GET /conversas` para a prévia) ou sem (agendada → removida).
 - Erro: aviso "Não foi possível ocultar".
 - Os demais participantes recebem via WS 3 (MSG-10).
+- 🆕 `9c6e8a6` "Ocultar" só aparece com a permissão de uso `ocultar` (GER-09); o servidor responde 403 "Você não tem permissão para: ocultar as próprias mensagens." (vale também para cancelar a agendada, ENV-14).
 
 **ENV-19 Copiar**
 - Ação "Copiar": se o menu foi aberto por clique direito **numa imagem**, copia aquela imagem; **no texto**, copia o texto; pelo botão (sem alvo): se a mensagem tem imagem copia a primeira imagem, senão todos os textos unidos por `\n`.
@@ -628,6 +683,14 @@ Hora (`HH:MM`) dentro da bolha (`MensagemStatus.vue`), posição conforme varian
 - Itens, nesta ordem: reações rápidas; **Responder**; **Responder no privado** (grupo e mensagem de outro); **Encaminhar**; **Copiar**; **Ocultar** (própria e não oculta).
 - 🆕 `e33ecba` Item novo **"Pedir confirmação de leitura"** (ícone de ✓ num círculo) **depois de "Copiar" e antes de "Ocultar"**: só na **minha** mensagem salva (id > 0), não oculta, que **ainda não pede** confirmação, já enviada (`visivel_em ?? inserida` não futura) e há **menos de 24 h** (ENV-27).
 - 🆕 `e33ecba` Na **postagem** (MSG-22), que ocupa a largura do chat, o botão ⋯ fica **dentro do cartão**, no canto de cima à direita, e o menu abre alinhado pela direita.
+- 🆕 `9c6e8a6` **Itens por permissão de uso** (GER-09):
+  - reações rápidas e "Mais emojis": `reagir`;
+  - "Responder": `responder`;
+  - "Responder no privado": `responder` **e** `encaminhar`;
+  - "Encaminhar": `encaminhar`;
+  - "Pedir confirmação de leitura": `confirmacao` (além das regras de ENV-27);
+  - "Ocultar": `ocultar`;
+  - "Copiar" não pede permissão.
 
 (ENV-21 e ENV-22 estão na §10; ENV-23 na §12.)
 
@@ -640,6 +703,7 @@ Hora (`HH:MM`) dentro da bolha (`MensagemStatus.vue`), posição conforme varian
   - a faixa vira **"A mensagem vai pedir confirmação de leitura de todos"** / **"… de 1 pessoa"** / **"… de N pessoas"** com o link **"Escolher"**, que reabre o modal com a escolha atual (só em grupo; na direta a faixa fica como antes);
   - no envio: com todos marcados vai só `pede_confirmacao: true` (quem entrar no grupo antes do envio também entra na lista); com parte, também **`confirmacao_usuarios: [ids]`**. Trocar de conversa limpa a escolha;
   - a mensagem otimista nasce com `confirmacao {total: N, confirmou: false, pode_confirmar: false, destinatarios: […], usuarios: []}`, montada com os participantes já carregados.
+- 🆕 `9c6e8a6` O item "Confirmar leitura" do "+" só aparece com a permissão de uso `confirmacao` (GER-09). Cada pessoa da lista ganha a atividade **"pediu que você confirme a leitura"** (ATV-01); a de mensagem agendada nasce com o horário de envio e só aparece quando ela sai.
 
 **ENV-25 🆕 `f798e9c` Sugestão de texto da IA** (`composables/useSugestaoIa.ts`, `editor/sugestao.ts`)
 - Liga quando: a IA do servidor está ligada (`recursos.ia`, GER-08) **e** a preferência local está ligada (`localStorage['conversa.sugestoesIa'] !== '0'`; padrão ligada; muda em Configurações › Privacidade, CFG-09).
@@ -651,6 +715,7 @@ Hora (`HH:MM`) dentro da bolha (`MensagemStatus.vue`), posição conforme varian
 - Entrada: botão "+" → **"Postagem"** (só em grupo, depois de "Votação").
 - Marca a **próxima mensagem enviada** como postagem: acima do campo, a faixa **"Postagem: as respostas ficam embaixo dela"** com o campo de título (placeholder **"Título (opcional)"**, máx. **150** caracteres) e o × "Não postar". Trocar de conversa desliga.
 - No envio: `PUT /mensagem {…, postagem: {titulo}}` com o título `trim()` ou `null`; a mensagem otimista já é um cartão de postagem sem respostas (MSG-22). O servidor só aceita postagem em grupo.
+- 🆕 `9c6e8a6` "Postagem" só aparece com a permissão de uso `postagem` (GER-09); o servidor responde 403 "Você não tem permissão para: fazer postagens em grupos.". Responder a uma postagem não pede essa permissão.
 
 **ENV-27 🆕 `e33ecba` Pedir confirmação de leitura depois do envio** (`MensagemAcoes.vue`, `MessageList.vue`, `ConfirmacaoLeituraModal.vue`, `chat.pedirConfirmacaoDepois`; servidor `6d20ff7`)
 - Entrada: menu de ações da mensagem → **"Pedir confirmação de leitura"** (ENV-20), só na **minha** mensagem **salva** (id > 0), **não oculta**, que **ainda não pede** confirmação, já enviada e há **menos de 24 h** (`visivel_em ?? inserida`).
@@ -658,6 +723,7 @@ Hora (`HH:MM`) dentro da bolha (`MensagemStatus.vue`), posição conforme varian
 - API: **`POST /mensagem/pedir-confirmacao {mensagem_id, usuarios?: number[]}`** → `ConfirmacaoLeitura` como quem enviou a vê (`{total, confirmou, pode_confirmar, destinatarios, usuarios}`); o web põe na mensagem, que passa a mostrar o chip "Aguardando confirmação" (MSG-21).
 - Erros do servidor: 404 "Mensagem não encontrada!"; 403 "Só quem enviou pede confirmação de leitura."; 400 "Mensagem apagada.", "Esta mensagem já pede confirmação de leitura.", "A confirmação de leitura só pode ser pedida até 24 horas depois do envio." e "Escolha quem precisa confirmar entre os membros da conversa.". O web mostra o diálogo **"Não foi possível pedir a confirmação"** com a mensagem do servidor (fallback "Erro ao pedir a confirmação").
 - Tempo real: o servidor manda o **WS 65** (`ConfirmacaoPedida`) a **todos os membros** da conversa (inclusive às outras abas de quem pediu), cada um com a sua visão de `confirmacao` (MSG-21).
+- 🆕 `9c6e8a6` (servidor `ef13c22`) O item do menu só aparece com a permissão de uso `confirmacao` (o servidor responde 403 "Você não tem permissão para: pedir confirmação de leitura."). Pedir depois também cria a atividade "pediu que você confirme a leitura" para cada pessoa da lista (ATV-01).
 
 **ENV-28 🆕 `e33ecba` Código como peça no campo** (`editor/PecaCodigo.vue`, `editor/pecas.ts#Codigo/blocoDeCodigo`, `CodigoModal.vue`, `MessageInput.vue`)
 - Entrada: "+" › "Código" ou texto colado com mais de 10 linhas (ENV-09) abre a janela **"Inserir código"**; **"Inserir na mensagem"** (ou **Ctrl/Cmd+Enter**) põe o código no campo como uma **peça** no ponto do cursor, numa linha própria (como as de anexo, ENV-21). "Enviar" continua mandando o código sozinho, na hora (ENV-10).
@@ -684,8 +750,15 @@ Hora (`HH:MM`) dentro da bolha (`MensagemStatus.vue`), posição conforme varian
 - Teclas: Esc fecha, ←/→ navegam (exceto com o player em foco), +/=/− zoom, Ctrl+C copia.
 - Overlay "Carregando imagem"/"Carregando vídeo".
 - 🆕 `e33ecba` **Zoom no ponteiro:** a roda do mouse amplia/reduz mantendo parado o ponto que está **sob o ponteiro** (antes, o deslocamento só era escalado em torno do centro); os botões −/+ e as teclas continuam usando o centro do que está à vista (`useImageViewer.ts#ajustarZoomImagem`, com o foco).
+- 🆕 `9c6e8a6` **Vídeo no player próprio** (`PlayerVideo.vue`, modo completo), no lugar dos controles nativos: começa tocando; barra de progresso com arraste, "Pausar" / "Reproduzir", tempo **"mm:ss / mm:ss"** ("--:--" enquanto não sabe a duração); **volume de 0 a 200%** ("Silenciar" / "Ativar som", barra "Volume" com uma marca no meio; acima de 100% a barra e o número ficam vermelhos, com ganho do Web Audio); **"Velocidade"** com 0,25x, 0,5x, 0,75x, 1x, 1,25x, 1,5x, 1,75x, 2x, 2,5x e 3x; **"Baixar vídeo"**; "Tela cheia" / "Sair da tela cheia". Um clique toca ou pausa; dois cliques entram ou saem da tela cheia. A barra aparece ao mexer o mouse e some 2,5 s depois.
 
-**ANX-05 Vídeo na conversa** — prévia com o primeiro quadro (`url#t=0.1`) e ícone de play; clique abre no visualizador; botão "Baixar video".
+**ANX-05 Vídeo na conversa** — prévia com o primeiro quadro (`url#t=0.1`) e ícone de play; clique abre no visualizador; botão "Baixar video". 🆕 `9c6e8a6`: o vídeo **toca na própria bolha** (fim do item).
+- 🆕 `9c6e8a6` **Player na bolha** (`PlayerVideo.vue`, `MessageContent.vue`), na mesma caixa de 420×236 px:
+  - parado, o botão central "Reproduzir vídeo"; um clique toca ou pausa ali mesmo; dois cliques, tela cheia;
+  - barra embaixo (aparece ao mexer o mouse): progresso com arraste, "Pausar" / "Reproduzir", **"mm:ss / mm:ss"**, **"Baixar vídeo"**, **"Abrir no visualizador"** (pausa e abre o ANX-04) e "Tela cheia";
+  - o link "Baixar video" embaixo da prévia **saiu** (virou o botão da barra);
+  - enviando (arquivo local), sem "Baixar vídeo" nem "Abrir no visualizador";
+  - volume e velocidade só no visualizador.
 
 **ANX-06 Visualizador de PDF** (`VisualizadorPdf.vue`)
 - Botão "Abrir" em anexos `.pdf`. Páginas em canvas renderizadas sob demanda (perto da área visível), 100% = largura da tela (240–900 px); zoom 50%–300% passo 25%; botão "%" volta a ajustar à largura; indicador "página / total"; "Baixar"; "Fechar (Esc)". Mensagens "Carregando PDF..." / "Não foi possível abrir o PDF. Tente baixar o arquivo.".
@@ -704,12 +777,19 @@ Hora (`HH:MM`) dentro da bolha (`MensagemStatus.vue`), posição conforme varian
 - Apenas **um áudio toca por vez** (`useAudioManager`).
 - Áudio recebido **não ouvido** tem o botão verde; o primeiro play chama `POST /mensagem/reproduzir {conversa, mensagem}` (uma vez).
 - Em bolha só de áudio, a hora/status fica dentro do player.
+- 🆕 `9c6e8a6` (servidor `ef13c22`) **Onda e duração sem baixar o áudio** (`OndaAudio.vue`, `useAudioPlayer.ts`):
+  - o conteúdo de áudio (tipos 4 e 5) traz **`duracao`** (segundos, `number | null`) e **`intensidade`** (picos de 0 a 100, `number[] | null`), gravados no envio (§1.7); a mensagem otimista já nasce com eles;
+  - com `intensidade`, a barra vira a **onda**: uma barra por pico (altura mínima de 12%), com 2 px entre elas e 28 px de altura; as já tocadas ficam na cor de destaque; o arraste (seek) continua;
+  - a **duração aparece antes de tocar**; tocando ou parado no meio, o texto vira **"atual / total"** (ex.: "00:05 / 00:12"; sem o total, só o atual);
+  - áudio antigo, sem esses dados: barra simples; quando o player aparece na tela (com 200 px de folga), o web **busca só a duração**, sem tocar nem mostrar carregando;
+  - gravação WebM do navegador não traz a duração no arquivo: o web pula para o fim para descobrir e volta ao começo (desiste em 10 s). A duração gravada no envio prevalece sobre a do elemento.
 
 **ANX-11 Gravação de áudio** — 🆕 com o campo **vazio** a gravação é enviada na hora; com algo escrito ela **entra no campo** como peça e vai junto (ENV-21) (`useAudioRecording.ts`, `BarraGravacao.vue`, `MessageInput.vue`)
 - Exige contexto seguro ("Para gravar áudio por navegador, use HTTPS (ou localhost).") e `MediaRecorder` ("Gravação de áudio não suportada neste navegador.").
 - **Pressionar e segurar** o microfone ≥ 300 ms e soltar sobre o botão → para e **envia direto**. **Clique curto** (ou arrastar para fora do botão) → modo travado com a barra de gravação.
 - Barra: "Descartar", ponto vermelho + tempo `m:ss`, forma de onda animada; "Pausar gravação" / "Continuar gravação"; pausado: "Ouvir gravação"/"Parar preview" com barra de progresso clicável (seek); "Enviar áudio".
 - Arquivo: `audio-<timestamp>.webm|ogg` (mime do `MediaRecorder`), conteúdo **tipo 5**.
+- 🆕 `9c6e8a6` O botão "Gravar áudio" só aparece com a permissão de uso `audio` (GER-09). A gravação (e qualquer áudio anexado) vai com `duracao` e `intensidade` medidas no navegador (§1.7, ANX-10).
 
 **ANX-12 Transcrição de áudio** (`TranscricaoAudio.vue`)
 - Abaixo de áudios (tipo 4 e 5) já enviados. Estados (`StatusTranscricao`): 0 Nenhuma → botão "Transcrever"; 1 Processando → "Transcrevendo..." com consulta a cada 3 s; 2 Concluída → texto (ou "(nenhuma fala reconhecida)"); 3 Erro → botão "Não foi possível transcrever. Tentar de novo" + mensagem de erro.
@@ -721,7 +801,7 @@ Hora (`HH:MM`) dentro da bolha (`MensagemStatus.vue`), posição conforme varian
 - Sem conversa selecionada: campo "Buscar contato ou grupo..." e "Selecione um contato ou grupo para ver os anexos"; resultados com avatar, etiqueta "Grupo", prévia; "Nenhum resultado".
 - Com conversa: chip da conversa com "Limpar selecao"; filtros de direção **Todos / Enviados / Recebidos** e de tipo **Todos / Imagens / Arquivos / Audios / Gravacoes**.
 - Imagens em grade (lazy, "Erro" se falhar) com ações "Abrir mensagem" e "Baixar"; demais em lista: ícone/miniatura, nome ("Sem nome"), tamanho · data (hoje `HH:MM`, senão `dd/MM/aa`) · (sem conversa: nome da conversa), autor; ações "Abrir mensagem", "Baixar" e player nativo para áudios.
-- Clique: imagem/vídeo → visualizador com a galeria dos itens carregados; HTML → visualizador isolado; outro arquivo → abre a URL.
+- Clique: imagem/vídeo → visualizador com a galeria dos itens carregados; HTML → visualizador isolado; outro arquivo → abre a URL. 🆕 `9c6e8a6` `.docx`, `.xlsx` e `.pptx` → visualizador do Office (ANX-16).
 - Paginação infinita: carrega mais quando faltam 80% da altura visível.
 - API: `GET /anexos?conversa=&autor=&direcao=(enviados|recebidos|'')&tipos=2,3,4,5&antes=<anexo_id>&limite=60` → `AnexoItem[]` (`anexo_id, identificador, nome, extensao, tamanho, criado_em, tipo, mensagem_id, conversa_id, conversa_descricao, autor_id, autor_nome, url` — URL assinada com validade de 600 s).
 - Entrada também pelo botão "Ver anexos" do perfil (AUT-10).
@@ -729,6 +809,13 @@ Hora (`HH:MM`) dentro da bolha (`MensagemStatus.vue`), posição conforme varian
 **ANX-14 URLs assinadas e renovação** — §1.7 (`useAttachments.ts`). Imagens com erro chamam `renovarAnexoUrl` (injeção `provide/inject`).
 
 **ANX-15 Pré-visualização de imagem antes de enviar** (`ImagePreviewModal.vue`, `useImagePreview.ts`) — "Pré-visualização da imagem", "Cancelar"/"Enviar imagem", Enter confirma, Esc fecha. **Sem gatilho atual** (o evento `open-image-preview` não é emitido; imagens vão para a fila). Ver Anexo B.
+
+**ANX-16 🆕 `9c6e8a6` Visualizador de arquivos do Office** (`VisualizadorOffice.vue`, `utils/fontesOffice.ts`, `utils/formatters.ts#formatoOffice`)
+- Entrada: botão **"Abrir"** nos anexos **`.docx`, `.xlsx` e `.pptx`** do chat (como PDF e HTML, ANX-06/ANX-07) e o clique no item na página de Anexos (ANX-13). Os formatos antigos (`.doc`, `.xls`, `.ppt`) continuam só com "Download".
+- Desenho: a biblioteca `@silurus/ooxml` lê o arquivo (Rust/WASM, num worker) e **desenha em canvas**: nada do arquivo (scripts, links, formulários) roda na página. Word e PowerPoint rolam página a página (ou slide a slide), mostrando as primeiras enquanto pagina o resto; o Excel mostra as abas, com os controles da biblioteca.
+- Fontes: as substitutas (Carlito no lugar da Calibri, Caladea no da Cambria e as do Google que a biblioteca conhece) ficam em `public/fontes/office`; antes de desenhar, o web lê no ZIP as fontes que o documento usa e carrega só essas. Sem Google Fonts nem CDN.
+- Barra de cima: o nome do arquivo; no Word e no PowerPoint, **"Página anterior"** / **"Próxima página"** (**"Slide anterior"** / **"Próximo slide"**), o campo **"Ir para a página"** / **"Ir para o slide"** com "/ N" ("…" e o `title` "Ainda contando as páginas" enquanto pagina), e, em tela larga, **"Diminuir zoom"**, o %, **"Aumentar zoom"**, **"Página inteira"** (padrão) e **"Ajustar à largura"**; sempre **"Baixar"** e **"Fechar (Esc)"**. Ctrl + roda (ou pinça) também amplia.
+- Estados: **"Baixando arquivo..."**, **"Preparando o documento..."**; erro **"Não foi possível abrir o arquivo. Tente baixar."**.
 
 ### 3.6 PES — Pesquisa
 
@@ -759,9 +846,11 @@ Arquivos centrais: `stores/call.ts`, `CallWindow.vue`, `components/CallBar.vue`,
 - Não inicia se já existe chamada ("Ja existe uma chamada em andamento").
 - Som de chamando (`/chamando.mp3`, loop) até alguém atender. Se o navegador bloquear autoplay, toca no primeiro clique/tecla.
 - 🆕 `8b43965` Começando **com a tela** (CHA-02): se a pessoa **fecha a escolha da tela sem escolher** (`NotAllowedError`), a chamada simplesmente não começa (o estado volta ao inicial), **sem mensagem de erro**.
+- 🆕 `9c6e8a6` (servidor `ef13c22`) **Permissões de uso** (GER-09): "Chamada de voz" só com `chamada_audio`; "Chamada de video" só com `chamada_video` (CON-09). O `PUT /chamada/iniciar` confere pelo tipo (sem `tipo`, 2 participantes = áudio) e responde 403 "Você não tem permissão para: fazer chamadas de áudio." / "… fazer chamadas de vídeo e ligar o vídeo na chamada.". Atender não pede permissão.
 
 **CHA-02 Iniciar compartilhando a tela** — botão "Compartilhar tela" no cabeçalho: chamada de **vídeo** com a tela no lugar da câmera + microfone (+ som do sistema misturado, CHA-15).
 - 🆕 `964ed72` No **celular** (tela < 768 px ou só toque) a janela da chamada **não tem** "Compartilhar tela" (os navegadores de celular não compartilham tela; CHA-11). O botão "Compartilhar tela" do **cabeçalho** da conversa, porém, continua aparecendo no celular (lacuna do web; o `ChatHeader` não confere o aparelho).
+- 🆕 `9c6e8a6` Pede as permissões de uso `chamada_video` **e** `compartilhar_tela` (GER-09): sem elas, o botão do cabeçalho e o "Compartilhar tela" da janela da chamada somem. **Só o cliente confere** `compartilhar_tela` (a tela não passa pela API).
 
 **CHA-03 Chamada recebida**
 - WS 51 `{chamada_id, usuario_id}` → `GET /chamada/dados?id=` → estado `recebendo`, toca `/toque.mp3` em loop, notificação do sistema "Chamada recebida" / "<nome> está ligando (Vídeo|Áudio)" (`tag: conversa-chamada`, `requireInteraction`), modal:
@@ -799,6 +888,7 @@ Arquivos centrais: `stores/call.ts`, `CallWindow.vue`, `components/CallBar.vue`,
 - Tiles: nome ("<eu> (você)"); sem vídeo → iniciais; erro de conexão em faixa vermelha (`erroMsg`, ex.: "Erro ao conectar com <nome>: …"; 404 de WHEP não vira erro, tenta de novo).
 - 🆕 `964ed72` **Celular** (tela < 768 px ou só toque): sem o botão "Compartilhar tela"; o "Minimizar" chama-se **"Voltar ao chat"** (deixa a chamada na barra do topo, CHA-13). Na **aba própria** do computador (CHA-13) não há "Minimizar".
 - 🆕 `769bd7d` A grade também tem os tiles dos convidados fora da chamada (CHA-25), que contam no número de colunas.
+- 🆕 `9c6e8a6` "Compartilhar tela" só com a permissão de uso `compartilhar_tela` (GER-09, CHA-02).
 
 **CHA-12 Modos de exibição** (só vídeo, janela não flutuante) — **Grade** ("Todos os participantes lado a lado"), **Destaque** ("Um participante grande e os demais na lateral"), **Tela única** ("Só um participante, ocupando toda a área", setas "Participante anterior"/"Proximo participante"). Clique num tile destaca; clique no destaque volta à grade. Grade: 1 col (1), 2 col (2–4), 3 col (≤6), 4 col (mais). Se o destacado sai em tela única, o pedido fica pendente e volta quando ele reconectar.
 
@@ -828,6 +918,7 @@ Arquivos centrais: `stores/call.ts`, `CallWindow.vue`, `components/CallBar.vue`,
   - cada assinatura (WHEP) é **trocada só quando a nova está pronta**; o áudio segue pela antiga enquanto isso;
   - "Apenas assistir" já abre a câmera **desligada** (dá para ligar depois);
   - quem recebe o WS 56 **sempre reassina na hora** quem republicou (para voltar a ouvi-lo, e ver se já está em vídeo); só então pergunta, se ainda está em áudio.
+- 🆕 `9c6e8a6` (servidor `ef13c22`) O botão "Vídeo" da `CallBar` (`title` "Ativar vídeo") só aparece com a permissão de uso `chamada_video` (GER-09); o `POST /chamada/video` responde 403 sem ela. Aceitar com "Transmitir também" no modal não chama essa rota.
 - 🆕 `6d20ff7` (servidor) **A chamada passa a ser de vídeo:** o `POST /chamada/video` também troca o tipo da chamada de áudio (1) para vídeo (2). A mensagem da ligação (MSG-13, gravada no fim) e o histórico (CHA-22) mostram "vídeo"; os dados da chamada (`GET /chamada/dados`) também.
 
 **CHA-17 Ponteiro remoto** (commit `20d5b73`)
@@ -861,6 +952,7 @@ Arquivos centrais: `stores/call.ts`, `CallWindow.vue`, `components/CallBar.vue`,
 - Clique abre a conversa da chamada; botão "Ligar novamente" inicia nova chamada do mesmo tipo com os mesmos participantes. Vazio: "Nenhuma chamada" / "Nenhuma chamada perdida".
 - 🆕 `964ed72` O item ganha `conversa_chat_id` (o chat da ligação, só para quem é membro dele e só quando não é a conversa da ligação). Com ele, aparece um botão de balão com o título **"Ver chat da chamada"** / **"Esconder o chat da chamada"**, que abre **embaixo do item** o chat da ligação só para leitura (CHA-26); "Abrir o chat completo" abre a conversa.
 - 🆕 `e33ecba` As imagens do chat da ligação aberto aqui abrem no visualizador do app (CHA-26). 🆕 `6d20ff7` (servidor) Chamada de áudio que ganhou vídeo aparece como **"Video"** (CHA-16).
+- 🆕 `9c6e8a6` "Ligar novamente" só aparece com a permissão de uso do tipo da chamada (`chamada_video` ou `chamada_audio`, GER-09).
 
 **CHA-23 Áudio remoto estável** — o áudio de cada participante toca num `HTMLAudioElement` criado pela store (vive a chamada inteira); os `<video>` são sempre mudos. Evita perder áudio ao alternar janela flutuante/tela cheia. "Áudio de saída" muta esses elementos.
 
@@ -885,6 +977,7 @@ Arquivos centrais: `stores/call.ts`, `CallWindow.vue`, `components/CallBar.vue`,
 - "Configuracao de ramal" (etiqueta "Asterisk / VueSIP"): "Ramal SIP", "Usuario de autenticacao", "Senha SIP", "Nome de exibicao", "Dominio SIP", "Servidor WebSocket" (ex. `wss://pbx.exemplo.com:8089/ws`), checkbox "Configuracao SIP ativa para este usuario".
 - Validação: "Preencha ao menos ramal, senha SIP, dominio e servidor WebSocket.". Botão "Criar configuracao SIP" / "Salvar configuracao SIP"; "Nenhuma alteracao para salvar."; mensagens de sucesso.
 - API: `GET /sip` → `SipConfig` ou `{}` (sem ramal → null); `PUT /sip {sip_user, auth_user, sip_password, display_name, domain, ws_server, ativo}`; `PATCH /sip {id, ...só o que mudou}`.
+- 🆕 `9c6e8a6` (servidor `ef13c22`) **Permissão de uso `telefonia`** (GER-09): sem ela, a aba Voip some (§2.5), o `GET /sip` devolve `{}` (o ramal não registra e o item "Ramal" da barra some, SIP-02) e `PUT`/`PATCH /sip` respondem 403 "Você não tem permissão para: usar a telefonia (sip).".
 
 **SIP-02 Registro automático**
 - No início da sessão, ao montar a lista e ao fechar as Configurações (forçando reconexão): carrega `GET /sip`; se `ativo` → pede permissão de microfone, cria `UserAgent` (`sip:<sip_user>@<domain>`, transporte `ws_server`, auth `auth_user||sip_user` + senha, display name), `Registerer.register()`, espera até 10 s ("O ramal SIP nao concluiu o registro a tempo."). Inativo → encerra.
@@ -949,26 +1042,50 @@ Arquivos centrais: `stores/call.ts`, `CallWindow.vue`, `components/CallBar.vue`,
 ### 3.11 ATV — Atividades (commit `39d5af1`)
 
 **ATV-01 Tela de atividades** (`AtividadesPage.vue`, `stores/atividades.ts`)
-- Título "Atividades". Vazio: "Nenhuma atividade ainda." / "Reações, respostas, menções e chamadas perdidas aparecem aqui.".
-- Agrupadas por "Hoje"/"Ontem"/`dd/MM/aaaa`. Item: avatar de quem fez com selo no canto (emoji da reação; "↩" resposta; "@" menção; "✆" chamada perdida), "**<autor>** <descrição>", "em <grupo>" (só em grupo), prévia entre aspas (texto ou "Imagem"/"Arquivo"/"Áudio"/"Figurinha"; não para chamada), hora `HH:MM`, bolinha "Nova".
-- Descrições: Reação "reagiu <emoji> à sua mensagem"; Resposta "respondeu sua mensagem"; Menção "mencionou você"; Chamada perdida "ligou (chamada perdida)" ou "ligou (chamada de vídeo perdida)".
+- Título "Atividades". Vazio: "Nenhuma atividade ainda." / ~~"Reações, respostas, menções e chamadas perdidas aparecem aqui."~~ (🆕 `9c6e8a6` texto novo no fim do item).
+- Agrupadas por "Hoje"/"Ontem"/`dd/MM/aaaa`. Item: avatar de quem fez com selo no canto (emoji da reação; "↩" resposta; "@" menção; "✆" chamada perdida; 🆕 `9c6e8a6` "✓" pedido de confirmação), "**<autor>** <descrição>", "em <grupo>" (só em grupo), prévia entre aspas (texto ou "Imagem"/"Arquivo"/"Áudio"/"Figurinha"; não para chamada), hora `HH:MM`, ~~bolinha "Nova"~~ 🆕 `9c6e8a6` bolinha "Pendente".
+- Descrições: Reação "reagiu <emoji> à sua mensagem"; Resposta "respondeu sua mensagem"; Menção "mencionou você"; Chamada perdida "ligou (chamada perdida)" ou "ligou (chamada de vídeo perdida)"; 🆕 `9c6e8a6` Confirmação (tipo 5) "pediu que você confirme a leitura".
 - Clique: com `mensagem_id` → abre a conversa na mensagem (MSG-06); sem (chamada perdida) → abre a conversa.
 - Paginação: ao chegar a 200 px do fim, `GET /atividades?antes=<id da última>&limite=30`; fim quando volta < 30.
-- API: `GET /atividades?antes=0&limite=30` → `Atividade[]` (`id, tipo (1 Reacao, 2 Resposta, 3 Mencao, 4 ChamadaPerdida), criado_em, nova, autor_id, autor_nome, autor_avatar_url, conversa_id, conversa_tipo, conversa_descricao, mensagem_id, conteudo_tipo, texto, chamada_id, chamada_tipo, emoji`).
-- 🆕 `e25c4db` (servidor; o web não mudou) **`nova` desconta o que já foi lido no chat:** resposta e menção cuja mensagem eu **já visualizei** voltam com `nova: false` (perdem a bolinha "Nova"), mesmo depois da última abertura da tela. Resposta de **postagem** (que aponta para a postagem, MSG-22) fica lida quando não há resposta daquela pessoa **sem ler** na postagem. Reação e chamada perdida seguem só pela abertura da tela (`atividades_vistas_em`).
+- API: `GET /atividades?antes=0&limite=30` → `Atividade[]` (`id, tipo (1 Reacao, 2 Resposta, 3 Mencao, 4 ChamadaPerdida; 🆕 `9c6e8a6` 5 Confirmacao), criado_em, ~~nova~~ 🆕 `9c6e8a6` pendente, autor_id, autor_nome, autor_avatar_url, conversa_id, conversa_tipo, conversa_descricao, mensagem_id, conteudo_tipo, texto, chamada_id, chamada_tipo, emoji`).
+- 🆕 `e25c4db` (servidor; o web não mudou) **`nova` desconta o que já foi lido no chat:** resposta e menção cuja mensagem eu **já visualizei** voltam com `nova: false` (perdem a bolinha "Nova"), mesmo depois da última abertura da tela. Resposta de **postagem** (que aponta para a postagem, MSG-22) fica lida quando não há resposta daquela pessoa **sem ler** na postagem. Reação e chamada perdida seguem só pela abertura da tela (`atividades_vistas_em`). **🆕 `9c6e8a6`: `nova` deixou de existir — ver o item seguinte.**
+- 🆕 `9c6e8a6` (servidor `ef13c22`, migração 044) **Pendente até concluir**, no lugar de "nova até abrir a tela":
+  - ~~`nova` (chegou depois da última abertura da tela)~~ → **`pendente: boolean`**: a atividade fica pendente até ser **concluída**. A abertura da tela não conclui nada;
+  - cada tipo conclui sozinho: **reação** ao ver a própria mensagem na tela (ATV-05); **resposta e menção** ao ler a mensagem (a regra do `e25c4db`); **pedido de confirmação** ao confirmar a leitura (MSG-21); **chamada perdida** ao abri-la na tela (ATV-04); e qualquer uma **à mão**, pelo ✓ (ATV-04);
+  - na migração, as que a pessoa já tinha visto na tela entram concluídas;
+  - o item pendente fica destacado (fundo na cor principal) e com a bolinha de `title` **"Pendente"** (era "Nova").
+- 🆕 `9c6e8a6` **Tipo novo 5, `Confirmacao`:** alguém pediu que eu confirme a leitura de uma mensagem (ENV-24, ENV-27). Descrição **"pediu que você confirme a leitura"**, selo **"✓"** (verde), prévia como as outras; o clique abre a conversa na mensagem.
+- 🆕 `9c6e8a6` Texto do vazio: ~~"Reações, respostas, menções e chamadas perdidas aparecem aqui."~~ → **"Reações, respostas, menções, pedidos de confirmação de leitura e chamadas perdidas aparecem aqui."**
+- 🆕 `9c6e8a6` (servidor) O **contador** (ATV-02) passa a contar só atividades de conversas de que a pessoa **ainda participa**, como a lista já fazia (a chamada perdida sem conversa também conta).
 
 **ATV-02 Contador de novas**
 - Badge no item Atividades da barra (`99+`). Fonte: `GET /atividades/novas` → `{quantidade}` ao conectar o WS e a cada WS 61.
-- Abrir a tela: carrega a lista e `POST /atividades/vistas` → `{vistas_em}`, zera o contador; os itens continuam destacados como "nova" enquanto a tela está aberta. Com a tela aberta, WS 61 recarrega e marca como visto; fechada, só atualiza o contador.
+- ~~Abrir a tela: carrega a lista e `POST /atividades/vistas` → `{vistas_em}`, zera o contador; os itens continuam destacados como "nova" enquanto a tela está aberta. Com a tela aberta, WS 61 recarrega e marca como visto; fechada, só atualiza o contador.~~ 🆕 `9c6e8a6`: abrir não zera mais; com a tela aberta, o WS 61 recarrega a lista e o contador; fechada, só o contador (fim do item).
 - 🆕 `e25c4db` (servidor) **O contador desconta o que já foi lido:** `GET /atividades/novas` não conta resposta/menção já visualizada (mesma regra do ATV-01). E o servidor manda o **WS 61 também quando a pessoa lê** (`POST /mensagem/visualizar` ou `POST /postagem/visualizar`) uma mensagem ou resposta de postagem que tem atividade de resposta/menção ligada: o contador cai em todas as abas e aparelhos, sem abrir a tela. O web não mudou (o WS 61 já relê o contador).
+- 🆕 `9c6e8a6` (servidor `ef13c22`) **O contador é o de pendentes:**
+  - `GET /atividades/novas` → `{quantidade}` conta as **pendentes** (ATV-01), não mais as chegadas depois da última abertura da tela;
+  - abrir a tela **não zera**: o web carrega a lista e relê o contador (`Promise.all([carregar(), atualizarNovas()])`); ~~`POST /atividades/vistas`~~ **não é mais chamado** pelo web (a rota continua no servidor, mas não muda mais o contador);
+  - o servidor manda o **WS 61** também ao concluir à mão (ATV-04), ao ver reações (ATV-05) e ao confirmar uma leitura pedida (MSG-21), para o número acompanhar em todas as abas e aparelhos.
 
 **ATV-03 Geração de "chamada perdida" pelo cliente** — toda recusa automática (30 s sem resposta, ocupado, pendente antiga > 25 s) envia `nao_atendeu: true` em `POST /chamada/recusar`, o que o servidor transforma em atividade de chamada perdida. **O Android precisa fazer o mesmo.**
 
+**ATV-04 🆕 `9c6e8a6` Concluir a atividade** (`AtividadesPage.vue`, `stores/atividades.ts#concluir`; servidor `ef13c22`)
+- **À mão:** cada item **pendente** tem, à direita, um botão redondo com ✓, `aria-label` **"Marcar como concluída"** e `title` **"Marcar como concluída"** (no pedido de confirmação: **"Marcar como concluída (a leitura continua sem confirmar)"**). Item já concluído fica com o espaço vazio no lugar do botão.
+- **Chamada perdida:** concluída **ao ser aberta** (o clique no item conclui e abre a conversa).
+- API: **`POST /atividade/concluir {id}`** → `{sucesso: true}`. Só conclui a do próprio usuário que ainda não foi concluída; quando conclui, o servidor manda o WS 61 (as outras abas e aparelhos releem o contador).
+- No web: só chama se o item está pendente na lista; depois marca `pendente = false` e desconta 1 do contador.
+- Concluir o pedido de confirmação **não confirma** a leitura (a caixa "Confirmar leitura" da mensagem continua, MSG-21).
+
+**ATV-05 🆕 `9c6e8a6` Reação vista na tela conclui a atividade** (`useScrollManager.ts#validarMensagensCompletamenteVisiveis`; servidor `ef13c22`)
+- No mesmo laço que marca as visualizadas (MSG-04), **só com a janela focada**: cada **mensagem minha** salva (id > 0) com reação **de outra pessoa** (soma das contagens menos a minha) que tem **qualquer parte à vista** entra na lista.
+- API: **`POST /atividades/reacoes-vistas {mensagens: number[]}`** (até 200) → `{concluidas}`: conclui as atividades de reação dessas mensagens criadas até agora; se concluiu alguma, o servidor manda o WS 61.
+- Cada mensagem é avisada **uma vez por quantidade** de reações de outros (chave `id:quantidade`): reação nova na mesma mensagem avisa de novo. Se o pedido falha, avisa de novo na próxima vez que ela aparecer.
+
 ### 3.12 CFG — Configurações, personalização e administração
 
-**CFG-01 Abas e navegação** — §2.5 (celular: lista de abas → sub-tela com botão voltar). 🆕 `769bd7d` Aba nova **Privacidade** (`/config/privacidade`), a segunda da lista, logo depois de Usuario (CFG-09).
+**CFG-01 Abas e navegação** — §2.5 (celular: lista de abas → sub-tela com botão voltar). 🆕 `769bd7d` Aba nova **Privacidade** (`/config/privacidade`), a segunda da lista, logo depois de Usuario (CFG-09). 🆕 `9c6e8a6` Abas novas de administração **Usuários**, **Ferramentas**, **Conhecimento** e **Bots** (CFG-11 a CFG-14), no fim; Voip, Cores e Chamadas passam a depender das permissões de uso `telefonia`, `cores` e `config_chamadas` (GER-09).
 
-**CFG-02 Tema escuro** — botão na aba Usuário ("Tema claro"/"Tema escuro"); padrão segue `prefers-color-scheme`; persistido em `theme`. Também aplicado no popup.
+**CFG-02 Tema escuro** — botão na aba Usuário ("Tema claro"/"Tema escuro"); padrão segue `prefers-color-scheme`; persistido em `theme`. Também aplicado no popup. 🆕 `9c6e8a6` O botão só aparece com a permissão de uso `cores` (GER-09; só o cliente confere).
 
 **CFG-03 Dispositivos** — "Sessao atual" (etiqueta "Ativo"): Dispositivo, Modelo, Sistema, Plataforma (detectados localmente); "Dispositivos de midia" com "Atualizar lista" (enumera microfones, câmeras, saídas; etiquetas "Padrao"/"Comunicacao"). Sem API (não lista os outros dispositivos do usuário no servidor).
 
@@ -998,11 +1115,20 @@ Arquivos centrais: `stores/call.ts`, `CallWindow.vue`, `components/CallBar.vue`,
   - **"Token"** com a situação "(configurado)" / "(será removido)" / "(sem token)"; campo de senha com placeholder "Deixe em branco para manter o atual" (com token) ou "Só se o servidor pedir (Ollama não pede)" (sem); dica "O token salvo nunca é mostrado." e o link "Remover o token" / "Manter o token";
   - botão **"Testar conexão"** ("Testando..."; habilitado com endereço e modelo preenchidos) — testa o que está na tela, antes de salvar (token em branco usa o salvo); resultado em verde `Funcionando (1.2 s): "<resposta>"` (segundos com uma casa e ponto decimal) ou o erro em vermelho.
   - API: `GET /parametros` ganha `ia_url, ia_modelo, ia_token_configurado` (o token nunca volta); `PATCH /parametros` aceita `ia_url, ia_modelo, ia_token` (`''` remove o token); `POST /parametros/ia/testar {url, modelo, token?}` → `{ok, resposta, erro, milissegundos}`. Depois de salvar, o web relê `GET /recursos` (GER-08).
+- 🆕 `9c6e8a6` (servidor `ef13c22`) Seção nova **"Cadastro"**, a primeira depois do aviso: caixa **"Permitir que as pessoas se cadastrem"** — "Desligado, a tela de entrada não oferece o cadastro: só quem tem a permissão Usuários cria contas, na aba Usuários." Campo `cadastro_aberto` (padrão ligado; parâmetro `'1'`/`'0'`, migração 048). Ver AUT-01, AUT-02 e CFG-11.
+- 🆕 `9c6e8a6` Na seção "Inteligência artificial", depois de "Modelo": **"Modelo de embeddings"** (placeholder "nomic-embed-text, text-embedding-3-small..."; dica "Para a base de conhecimento dos bots, no mesmo servidor. Vazio desliga a base. Trocou de modelo: use "Reindexar tudo" em Conhecimento."). Campo `ia_modelo_embeddings` (CFG-14).
+- 🆕 `9c6e8a6` API: `GET /parametros` e `PATCH /parametros` ganham `cadastro_aberto` (boolean) e `ia_modelo_embeddings` (texto).
 
 **CFG-08 Acessos — permissões** (`ConfiguracaoAcessos.vue`, permissão `permissoes`)
 - "Modo aberto" (ninguém tem Acessos): aviso de que todos podem mexer; marcar Acessos para alguém encerra o modo.
-- "O que cada permissão libera" (nomes: `parametros` → "Sistema", `permissoes` → "Acessos"), busca "Buscar usuário" (nome/login), tabela usuário × permissão com checkboxes ("(você)").
+- ~~"O que cada permissão libera" (nomes: `parametros` → "Sistema", `permissoes` → "Acessos"), busca "Buscar usuário" (nome/login), tabela usuário × permissão com checkboxes ("(você)").~~ (🆕 `9c6e8a6` refeita: ver o fim do item.)
 - API: `GET /permissoes` → `{permissoes:[{codigo, descricao}], usuarios:[{id, nome, login, permissoes:[]}], modo_aberto}`; `PUT /permissao/usuario {usuario_id, codigo}`; `DELETE /permissao/usuario?usuario_id=&codigo=`. Recusa do servidor mostra o motivo e a caixa volta. Após cada mudança recarrega as próprias permissões (abas visíveis acompanham).
+- 🆕 `9c6e8a6` (servidor `ef13c22`) **Tela refeita para as permissões de uso** (GER-09):
+  - ~~a seção "O que cada permissão libera" e a tabela usuário × permissão~~ saíram. No lugar, o texto "Abra uma pessoa para ver e mudar o que ela pode fazer: a administração do sistema e o uso do chat. Conta nova começa com todas as de uso. Ninguém retira as próprias permissões: outra pessoa com Acessos precisa fazer isso.";
+  - cada pessoa é uma linha que **abre e fecha** (`aria-expanded`): nome ("(você)"), login, a pílula **"Administração"** (com os nomes no `title`) se tem alguma de administração, e **"N de T"** permissões;
+  - aberta, as caixas em grupos: **"Administração"**, **"Enviar"**, **"Mensagens"**, **"Grupos"**, **"Chamadas"**, **"Configurações"** (e "Outras", para código de uso que o web não conhece), com os nomes curtos de `utils/permissoesUso.ts` (§6.2) e a descrição do servidor no `title`;
+  - as **próprias** marcadas ficam **travadas**, com o `title` "Você não pode retirar as próprias permissões"; o servidor responde 400 "Você não pode retirar as próprias permissões." ao `DELETE /permissao/usuario` com o próprio id;
+  - `GET /permissoes` traz **`uso: boolean`** em cada permissão (separa as de uso das de administração) e não traz os bots excluídos; a busca "Buscar usuário" continua (nome ou login).
 
 **CFG-09 🆕 `769bd7d` Aba Configurações › Privacidade** (`ConfiguracaoPrivacidade.vue`; seção de IA desde `f798e9c`)
 - Rota `/config/privacidade`; aba "Privacidade" / "Status, visto por último e aparecer offline"; para todos. "Carregando..." enquanto lê.
@@ -1013,12 +1139,50 @@ Arquivos centrais: `stores/call.ts`, `CallWindow.vue`, `components/CallBar.vue`,
   Com "Aparecer offline" marcada, as outras duas ficam desabilitadas.
 - API: `GET /usuario/privacidade` → `{mostrar_visto_em, mostrar_na_conversa, aparecer_offline}`; cada clique salva na hora com `PATCH /usuario {id, <chave>: valor}` (otimista; erro volta a caixa e mostra a mensagem, fallback "Erro ao salvar a privacidade"; erro ao ler: "Erro ao carregar a privacidade"). O servidor aplica na hora a todos os aparelhos.
 - 🆕 `f798e9c` Seção **"Inteligência artificial"**, só com a IA ligada no servidor (GER-08): caixa **"Sugerir a continuação ao digitar"** — "Depois de uma pausa, a IA sugere em cinza como continuar a mensagem: Tab aceita, Esc descarta. Para isso, o que você digita e as últimas mensagens da conversa vão para o servidor de IA do sistema. Vale só neste navegador." Salva no `localStorage` (`conversa.sugestoesIa` = `1`/`0`; padrão ligada) — ENV-25.
+- 🆕 `9c6e8a6` Sem a permissão de uso `privacidade` (GER-09), aparece no topo "Você não tem permissão para mudar a privacidade." e **todas as caixas** ficam desabilitadas (inclusive a da sugestão da IA, que é só do navegador). O servidor responde 403 "Você não tem permissão para: alterar as opções de privacidade." ao `PATCH /usuario` com as três chaves.
 
 **CFG-10 🆕 `8b43965` Temas prontos** (`ConfiguracaoCores.vue`, `utils/temasPredefinidos.ts`, `useCoresPersonalizadas.ts`, `style.css`)
 - Em Configurações › Cores, uma seção nova no topo, **"Tema"**, com o texto **"Cores prontas para os temas claro e escuro. Escolher um tema apaga as cores ajustadas abaixo."** e quatro botões: **"Padrão"**, **"Teams"**, **"WhatsApp"**, **"Messenger"** (grade de 2 colunas; 5 em tela larga). Cada um tem uma amostra nas cores do tema, no claro ou escuro atual (fundo `surface-100` com duas pílulas, `surface-200` e `primary-600`); o escolhido fica com a borda na cor principal (`aria-pressed`).
 - O que cada tema troca: a **cor principal** (`--color-primary-50…900`) e, em alguns, os **fundos** (`--color-surface-base`, `-50…-400`) e os **balões**. Padrão: nada (o `style.css`). Teams: principal; no escuro, também fundos e balão recebido. WhatsApp: principal e fundos; no claro, **enviada verde-clara com texto escuro** e recebida branca. Messenger: principal e o **degradê** nos balões enviados (`--gradiente-enviada`, preso à tela, muda de cor conforme a mensagem sobe); no escuro, também fundos e recebida.
 - **Balões com variáveis próprias** (`style.css`): `--bolha-enviada` (padrão = `primary-600`), `--bolha-enviada-texto` (branco), `-suave` (ícones e controles; `primary-100`), `-destaque` (links e progresso; `primary-100`), `-sucesso` (`success-300`), `-perigo` (`danger-300`) e `--bolha-recebida` (`surface-300`; no escuro `surface-200`). Sem tema, o visual é o de antes. No escuro, textos e bordas com `primary-600/700` ganharam um tom claro (`dark:text-primary-400`…), para não sumirem quando o tema escurece esses tons.
 - Guardado **por navegador** no `localStorage`, chave **`conversa.temaCores`** (id `padrao`, `teams`, `whatsapp`, `messenger`; inválido ou ausente → `padrao`); vale para claro e escuro. Os ajustes à mão (CFG-05) ficam por cima; escolher um tema os apaga. Sem API.
+- 🆕 `9c6e8a6` A aba Cores inteira (CFG-05 e CFG-10) só aparece com a permissão de uso `cores` (GER-09; só o cliente confere).
+
+**CFG-11 🆕 `9c6e8a6` Aba Configurações › Usuários** (`ConfiguracaoUsuarios.vue`; permissão de administração `usuarios`; servidor `ef13c22`)
+- Texto: "Crie contas para pessoas ou bots, mesmo com o cadastro pela tela de entrada fechado (em Sistema). Conta nova começa com todas as permissões de uso; o bot, só com o básico. Ajuste depois em Acessos (e o bot também em Bots)."
+- Botão **"Novo usuário"** abre o formulário **"Novo usuário"**:
+  - foto: avatar de 64 px (prévia ou inicial, "?" sem nome), **"Escolher foto"** / **"Trocar foto"** e **"Remover"**; a foto passa por `redimensionarImagem` e **só sobe ao criar** (upload tipo 2 `avatar.jpg`);
+  - caixa **"É um bot de IA"** — "Responde com a IA; não entra pelo login, então não tem login, e-mail nem senha."; com a IA desligada, o aviso "A IA está desligada: configure o servidor de IA em Sistema para criar bots.";
+  - **"Nome"** (até 60); pessoa: **"Login"**, **"E-mail"** e **"Senha"** ("Entre 4 e 72 caracteres. A pessoa pode trocar depois, se tiver a permissão."); bot: **"Instruções (personalidade e o que ele faz)"** (até 8000);
+  - **"Cancelar"** e **"Criar"** ("Criando..."), habilitado com tudo preenchido (senha ≥ 4; bot só com a IA ligada).
+- Sucesso: **"Conta de <nome> criada (login <login>)."** ou **"Bot <nome> criado."**; erro na caixa vermelha (fallback "Erro ao criar o usuário").
+- Lista embaixo: campo **"Buscar usuário"** (nome ou login) e cada usuário com nome, login e a pílula **"Bot"**; "Nenhum usuário encontrado.". A lista vem de `GET /usuario/contatos`.
+- API: **`PUT /usuario/novo {nome, login?, email?, senha?, telefone?, avatar_anexo_id?, bot?, instrucoes?}`** → `{id, nome, login, bot}`. Pessoa: 400 "Preencha nome, login, e-mail e senha." / "Login já cadastrado!"; bot: 400 "IA não configurada: defina o endereço e o modelo nas configurações do sistema."; avatar que não é imagem: 400 "Avatar inválido: envie uma imagem.". O login do bot é gerado (`bot-<nome>-<6 caracteres>`).
+
+**CFG-12 🆕 `9c6e8a6` Aba Configurações › Bots** (`ConfiguracaoBots.vue`; permissão de administração `bots`, ou `permissoes`, que vê e edita todos; servidor `src/bots.ts`, migrações 047 e 050)
+- Texto: "Cada bot é um usuário do chat que responde com a IA. Ele aparece nos contatos: na conversa direta responde a toda mensagem; num grupo, quando é mencionado (@Nome) ou quando respondem a uma mensagem dele. O que ele pode fazer segue as permissões de uso dele." Com a IA desligada: "A IA está desligada: os bots não respondem e não dá para criar novos. Configure o servidor de IA em Sistema."
+- Lista: inicial, nome, pílula **"Ligado"** / **"Desligado"**, login e " · criado por <nome>" (quando foi outra pessoa), botão **"Editar"**; vazio "Nenhum bot ainda.". Botão **"Novo bot"** (só com `bots`; desabilitado sem IA).
+- Formulário (**"Novo bot"** ou **"Editar <nome>"**): **"Nome"** (até 60, placeholder "Ex.: Assistente de Compras"), **"Instruções (personalidade e o que ele faz)"** (até 8000, contador "N / 8000"). Editando, também:
+  - **"Ligado (desligado, não responde a ninguém)"**;
+  - **"O que ele pode fazer"** — as permissões de uso nos grupos de §6.2, que **mudam na hora** (`PUT /bot/permissoes`); quem tem `permissoes` libera qualquer uma, os outros só as que eles mesmos têm ("Você não tem esta permissão" no `title`; o servidor responde 403 "Você só libera para o bot o que você mesmo pode fazer.");
+  - **"Bases de conhecimento"** (CFG-14) e **"Ferramentas externas"** (CFG-13), caixas que mudam na hora; vazias: "Nenhuma base cadastrada." / "Nenhuma ferramenta cadastrada.";
+  - **"Excluir bot"**, com a confirmação de perigo "Excluir <nome>?" / "Ele sai de todas as conversas, some dos contatos e não responde mais. O que ele já escreveu continua nas conversas. Não dá para desfazer." / "Excluir".
+- Botões **"Cancelar"** e **"Criar bot"** / **"Salvar"** ("Salvando...").
+- API: `GET /bots`, `PUT /bot {nome, instrucoes}`, `PATCH /bot {id, nome?, instrucoes?, ativo?}`, `DELETE /bot?id=` → `{id, apagado}`, `PUT /bot/permissoes {id, permissoes}`, `PUT /bot/ferramentas {id, ferramentas}`, `PUT /bot/conhecimento {id, bases}`, `GET /ferramentas/disponiveis` e `GET /conhecimento/disponiveis` (§4.1). O bot nasce com `emoji`, `responder` e `reagir` (as que quem criou tem). Como ele age no chat: CON-16.
+
+**CFG-13 🆕 `9c6e8a6` Aba Configurações › Ferramentas** (`ConfiguracaoFerramentas.vue`; permissão de administração `ferramentas`; servidor `src/ferramentas.ts`, migração 051)
+- APIs HTTP com JSON que os bots podem chamar. Texto: "APIs que os bots podem chamar para buscar informação de fora do chat (uma base de conhecimento, um sistema da empresa). A IA decide quando usar pela descrição. Ligue cada ferramenta nos bots que devem usá-la, em Bots. Os valores dos cabeçalhos (tokens) ficam só no servidor: nunca voltam para esta tela nem vão para a IA."
+- Formulário (**"Nova ferramenta"** / **"Editar <nome>"**): **"Nome"** (minúsculas, números e `_`), **"Descrição"**, **"Método"** (GET/POST), **"Endereço"** (`{parametro}` vira o valor), **"Cabeçalhos"** (nome e valor; salvo: "Salvo: deixe vazio para manter"; "+ Cabeçalho"), **"Parâmetros"** (nome, tipo "texto"/"número"/"sim/não", descrição, "obrigatório"; "+ Parâmetro"), **"Ligada (desligada, nenhum bot a usa)"**; "Excluir" (confirmação "Excluir <nome>?" / "Os bots que usam esta ferramenta deixam de usar. Não dá para desfazer."), "Cancelar", "Criar" / "Salvar".
+- **"Testar"** (só editando): campos com os parâmetros salvos e o botão "Testar" ("Chamando..."); resultado "Respondeu <status> · N ms" (ou o erro) e a resposta.
+- Lista com o nome, **"Ligada"** / **"Desligada"**, "<método> <endereço>" e "Editar"; vazio "Nenhuma ferramenta ainda."; botão "Nova ferramenta". No servidor, 20 s por chamada e resposta cortada em 8 mil caracteres.
+
+**CFG-14 🆕 `9c6e8a6` Aba Configurações › Conhecimento** (`ConfiguracaoConhecimento.vue`, `utils/textoDocumento.ts`; permissão de administração `conhecimento`; servidor `src/conhecimento.ts`, migração 052, Qdrant)
+- Bases de documentos que os bots consultam (RAG). Texto: "Documentos que os bots consultam para responder (políticas, manuais, perguntas frequentes). Cada documento é quebrado em trechos e indexado com a IA; o bot recebe os trechos mais parecidos com a pergunta e diz de qual documento vieram. Ligue as bases em cada bot, em Bots. Formatos: …". Sem o modelo de embeddings (CFG-07): "A base de conhecimento está desligada: defina o servidor de IA e o modelo de embeddings em Sistema para enviar documentos." (`recursos.conhecimento`, GER-08).
+- Bases: lista com nome, descrição ("Sem descrição") e "N documentos · N trechos"; **"Nova base"** ("Nome", "Descrição", "Criar base"); a base aberta tem "Nome", "Descrição", "Salvar" e **"Excluir base"**.
+- **"Documentos"**: **"Enviar documentos"** (`.txt`, `.md`, `.markdown`, `.csv`, `.pdf`, `.docx`; o **texto sai no navegador** — pdf.js e o XML do Word — e vai para `PUT /conhecimento/documento`; "Lendo N..."); cada documento com "N caracteres · N trechos" (ou o erro), a situação **"Indexando"** / **"Pronto"** / **"Erro"** e "Excluir"; vazio "Nenhum documento nesta base.".
+- **"Testar busca"**: "Os trechos que o bot receberia para esta pergunta.", campo e "Buscar" ("Buscando..."); cada trecho com "<documento> · semelhança 0.NN" (duas casas, com ponto) e o texto; "Nada encontrado.".
+- **"Trocou o modelo de embeddings?"** — "Os trechos precisam ser indexados de novo com o modelo novo, em todas as bases." e **"Reindexar tudo"**.
+- No servidor: trechos de ~1000 caracteres, embeddings no servidor de IA, busca no Qdrant; o bot com a base ganha a ferramenta `consultar_conhecimento` (5 trechos).
 
 ### 3.13 GER — Comportamentos gerais de UX
 
@@ -1029,7 +1193,47 @@ Arquivos centrais: `stores/call.ts`, `CallWindow.vue`, `components/CallBar.vue`,
 **GER-05 Menu de contexto nativo bloqueado** — exceto em campos de texto/conteúdo editável (clique direito abre os menus do app).
 **GER-06 Seções não implementadas** — tela "Em desenvolvimento".
 **GER-07 Avatares com fallback** — inicial do nome (primeira "letra" real, inclusive emoji); imagens que falham somem e fica a inicial. 🆕 `769bd7d`: num grupo com `emoji` (CON-15), o fallback é o **emoji do grupo** (em fonte maior) no lugar da inicial — lista, cabeçalho, painel do grupo e página de Anexos.
-**GER-08 🆕 `769bd7d` Recursos do servidor** (`composables/useRecursos.ts`) — `GET /recursos` → `{transcricao, ia}` diz o que está ligado no servidor (transcritor e servidor de IA configurados). Lido uma vez por janela, no primeiro uso (falha → tenta de novo no próximo uso; até lá, os dois `false`), e de novo depois de salvar a aba Sistema (CFG-07). Controla: botão "Transcrever" (ANX-12), botão "Resumir conversa" (CON-09/CON-14), a sugestão ao digitar (ENV-25) e a seção de IA da aba Privacidade (CFG-09).
+**GER-08 🆕 `769bd7d` Recursos do servidor** (`composables/useRecursos.ts`) — `GET /recursos` → `{transcricao, ia}` diz o que está ligado no servidor (transcritor e servidor de IA configurados). Lido uma vez por janela, no primeiro uso (falha → tenta de novo no próximo uso; até lá, os dois `false`), e de novo depois de salvar a aba Sistema (CFG-07). Controla: botão "Transcrever" (ANX-12), botão "Resumir conversa" (CON-09/CON-14), a sugestão ao digitar (ENV-25) e a seção de IA da aba Privacidade (CFG-09). 🆕 `9c6e8a6` (servidor `ef13c22`) Ganha **`conhecimento`** (IA configurada **e** modelo de embeddings definido): liga o envio de documentos e a busca da aba Conhecimento (CFG-14). A `ia` também diz se os bots respondem e se dá para criar bots (CFG-11, CFG-12, CON-16).
+
+**GER-09 🆕 `9c6e8a6` Permissões de uso** (`utils/permissoesUso.ts`, `stores/auth.ts#pode`; servidor `ef13c22`, `src/permissoes.ts`, migrações 046, 048 e 049)
+- **O que é:** além das de administração, cada pessoa tem permissões do **uso do app**, marcadas por quem tem Acessos (CFG-08) ou, para bots, em Bots (CFG-12). Conta nova (cadastro ou administrador) começa com **todas**; quem já tinha conta recebeu todas na migração; o bot começa só com `emoji`, `responder` e `reagir`.
+- **No cliente:** `auth.pode(codigo)` esconde ou trava o que a pessoa não pode. Enquanto `GET /usuario/permissoes` não chegou, `pode` é **verdadeiro** (mostra tudo; o servidor recusa o que não pode). No modo aberto o servidor devolve todas.
+- **No servidor:** cada rota confere (fora do modo aberto) e responde **403 "Você não tem permissão para: <descrição em minúsculas>."** (as de administração continuam com "Acesso negado!"). Três **só o cliente confere**: `compartilhar_tela`, `cores` e `config_chamadas` (não passam pela API).
+- **Os 26 códigos**, nos grupos da tela (nome curto do web → descrição do servidor → o que muda):
+
+| Grupo | Código | Nome no web | Descrição (servidor) | Web esconde ou trava | Servidor confere |
+|---|---|---|---|---|---|
+| Enviar | `emoji` | Emojis no texto | Enviar emojis no texto das mensagens | aba "Emojis" do seletor (ENV-03) | `PUT /mensagem` com texto que tem emoji |
+| Enviar | `figurinha` | Figurinhas | Enviar figurinhas | aba "Figurinhas" (ENV-04) | `PUT /mensagem` tipo 7 |
+| Enviar | `imagem` | Imagens | Enviar imagens | arquivo de imagem no campo (ENV-21) | tipo 2 |
+| Enviar | `video` | Vídeos | Enviar vídeos | arquivo de vídeo no campo | tipo 3 com extensão de vídeo |
+| Enviar | `audio` | Áudios e gravações | Enviar áudios e gravações de voz | microfone (ANX-11), arquivo de áudio | tipos 4 e 5 |
+| Enviar | `arquivo` | Arquivos | Enviar arquivos (documentos e outros) | outros arquivos; "Arquivo" do "+" some sem nenhuma das quatro | tipo 3 sem extensão de vídeo |
+| Mensagens | `responder` | Responder | Responder mensagens | "Responder" e "Responder no privado" (ENV-20) | `mensagem_referencia.tipo` 1 |
+| Mensagens | `encaminhar` | Encaminhar | Encaminhar mensagens | "Encaminhar" e "Responder no privado" | `mensagem_referencia.tipo` 2 (só ela) |
+| Mensagens | `reagir` | Reagir | Reagir às mensagens com emoji | reações rápidas e "Mais emojis" (ENV-17) | `PUT /mensagem/reacao` |
+| Mensagens | `agendar` | Agendar mensagens | Agendar mensagens | "Agendar mensagem" (ENV-13) | `visivel_em` no `PUT /mensagem` |
+| Mensagens | `confirmacao` | Pedir confirmação de leitura | Pedir confirmação de leitura | "Confirmar leitura" do "+" e do menu (ENV-24, ENV-27) | `pede_confirmacao`; `POST /mensagem/pedir-confirmacao` |
+| Mensagens | `ocultar` | Ocultar mensagens | Ocultar as próprias mensagens | "Ocultar" (ENV-18) | `DELETE /mensagem` (também a agendada, ENV-14) |
+| Grupos | `grupo` | Criar grupos | Criar grupos | "Novo grupo" (CON-07) | `PUT /conversa` tipo 2 |
+| Grupos | `postagem` | Postagens | Fazer postagens em grupos | "Postagem" do "+" (ENV-26) | `postagem` no `PUT /mensagem` (responder a uma não pede) |
+| Grupos | `votacao` | Votações | Criar votações em grupos | "Votação" do "+" (ENV-22) | `PUT /enquete` |
+| Chamadas | `chamada_audio` | Chamadas de áudio | Fazer chamadas de áudio | "Chamada de voz", "Ligar novamente" (CHA-01, CHA-22) | `PUT /chamada/iniciar` tipo 1 |
+| Chamadas | `chamada_video` | Chamadas de vídeo | Fazer chamadas de vídeo e ligar o vídeo na chamada | "Chamada de video", "Compartilhar tela" do cabeçalho, "Vídeo" da `CallBar` (CHA-16) | `PUT /chamada/iniciar` tipo 2; `POST /chamada/video` |
+| Chamadas | `compartilhar_tela` | Compartilhar a tela | Compartilhar a tela nas chamadas | "Compartilhar tela" do cabeçalho e da janela (CHA-02) | — (só o cliente) |
+| Chamadas | `telefonia` | Telefonia (SIP) | Usar a telefonia (SIP) | aba Voip; o ramal (SIP-01) | `GET /sip` → `{}`; `PUT`/`PATCH /sip` |
+| Configurações | `nome` | Mudar o nome | Alterar o próprio nome | campo "Nome" (AUT-06) | `nome` no `PATCH /usuario` |
+| Configurações | `email` | Mudar o e-mail e telefone | Alterar o próprio e-mail e telefone | campo "Email" | `email` ou `telefone` no `PATCH /usuario` |
+| Configurações | `avatar` | Mudar o avatar | Alterar o próprio avatar | "Alterar foto" / "Remover" (AUT-08) | `avatar_anexo_id` no `PATCH /usuario` |
+| Configurações | `senha` | Trocar a senha | Trocar a própria senha | seção "Senha" (AUT-07) | `POST /alterar-senha` |
+| Configurações | `privacidade` | Mudar a privacidade | Alterar as opções de privacidade | aba Privacidade travada (CFG-09) | chaves de privacidade no `PATCH /usuario` |
+| Configurações | `cores` | Mudar as cores | Mudar as cores do app | aba Cores; botão de tema (CFG-02) | — (só o cliente) |
+| Configurações | `config_chamadas` | Configurações de chamada | Mudar as configurações de chamada (áudio, vídeo e tela) | aba Chamadas (CFG-06) | — (só o cliente) |
+
+- **Arquivos no campo** (`MessageInput.vue#inserirArquivos`): cada arquivo pede a sua (imagem pelo mime `image/`, áudio por `audio/`, vídeo por `video/` ou extensão, o resto `arquivo`). Os barrados não entram e aparece acima do campo "Você não tem permissão para enviar <tipos>." (ex.: "Você não tem permissão para enviar imagens, vídeos.").
+- O que **não** pede permissão: texto sem emoji, "Copiar", atender chamada, adicionar à chamada, a imagem ou o emoji do grupo (CON-15), responder a uma postagem.
+
+**GER-10 🆕 `9c6e8a6` Ocultar a barra de navegação** (`NavBar.vue`; só computador) — §2.2: botão "Ocultar menu" no pé da barra; oculta, a aba "Mostrar menu" na borda esquerda, com um ponto vermelho se há atividades pendentes; guardado em `conversa.menuOculto` (`'1'`/`'0'`). No celular a barra do rodapé não muda.
 
 ### Contagem
 
@@ -1052,7 +1256,8 @@ Arquivos centrais: `stores/call.ts`, `CallWindow.vue`, `components/CallBar.vue`,
 | 🆕 Novo em `7322e83` | ENV-23 | 1 |
 | 🆕 Novos em `769bd7d`…`d202c06` | PRE-02, PRE-03, CFG-09, ENV-24, MSG-21, CON-14, ENV-25, GER-08, CON-15, CHA-25, CHA-26, ENV-26, MSG-22 | 13 |
 | 🆕 Novos em `e33ecba`…`8b43965` | ENV-27, ENV-28, CFG-10 | 3 |
-| **Total** | | **153** |
+| 🆕 Novos em `9c6e8a6` | CON-16, ANX-16, ATV-04, ATV-05, CFG-11, CFG-12, CFG-13, CFG-14, GER-09, GER-10 | 10 |
+| **Total** | | **163** |
 
 ---
 
@@ -1065,16 +1270,16 @@ Fonte única: `src/services/conversaApi.ts` (+ `eden.ts`). "Params" = query stri
 | # | Método | Rota | Params / Body | Resposta (campos usados) | Usado em |
 |---|---|---|---|---|---|
 | 1 | POST | `/login` | body `{login, senha, dispositivo_id?}` (sem token) | `{id, nome, email, telefone, avatar_url, avatar_identificador, token, dispositivo:{id, nome, modelo, versao_so, plataforma, ativo}}` | AUT-01 |
-| 2 | PUT | `/usuario` | body `{nome, login, email, senha}` (sem token) | `{id, nome, login, email}` | AUT-02 |
+| 2 | PUT | `/usuario` | body `{nome, login, email, senha}` (sem token) | `{id, nome, login, email}` (🆕 `9c6e8a6` **403** "O cadastro está fechado: peça a um administrador para criar sua conta." com `cadastro_aberto` desligado) | AUT-02 |
 | 3 | PATCH | `/dispositivo` | body `{id, nome?, modelo?, versao_so?, plataforma?, token_fcm?}` | — | AUT-04 |
-| 4 | POST | `/alterar-senha` | body `{senha_atual, senha}` | — | AUT-07 |
-| 5 | PATCH | `/usuario` | body `{id, nome?, email?, telefone?, avatar_anexo_id?: number\|null}`; 🆕 `769bd7d` também `mostrar_visto_em?, mostrar_na_conversa?, aparecer_offline?` | — | AUT-06, AUT-08, CFG-09 |
-| 6 | GET | `/usuario/contatos` | — | `Contato[]` | CON-11 |
+| 4 | POST | `/alterar-senha` | body `{senha_atual, senha}` | — (🆕 `9c6e8a6` 403 sem a permissão de uso `senha`) | AUT-07 |
+| 5 | PATCH | `/usuario` | body `{id, nome?, email?, telefone?, avatar_anexo_id?: number\|null}`; 🆕 `769bd7d` também `mostrar_visto_em?, mostrar_na_conversa?, aparecer_offline?` | — (🆕 `9c6e8a6` cada campo pede a sua permissão de uso: `nome`, `email` (também `telefone`), `avatar`, `privacidade`; 403 sem ela) | AUT-06, AUT-08, CFG-09 |
+| 6 | GET | `/usuario/contatos` | — | `Contato[]` (🆕 `9c6e8a6` + `bot: boolean`; sem os bots excluídos) | CON-11, CON-16 |
 | 7 | GET | ~~`/contatos/online`~~ → 🆕 `769bd7d` `/contatos/presenca` | — | ~~`number[]`~~ → `[{usuario_id, estado: 'ativo'\|'ausente'\|'offline', visto_em}]` | PRE-01 |
-| 8 | GET | `/usuario/permissoes` | — | `string[]` | AUT-09 |
+| 8 | GET | `/usuario/permissoes` | — | `string[]` (🆕 `9c6e8a6` até 32 códigos: 6 de administração e 26 de uso) | AUT-09, GER-09 |
 | 9 | GET | `/conversas` | — | `Conversa[]` | CON-01 |
 | 10 | GET | `/conversa/usuarios` | `conversa` | `[{id, usuario_id, nome, avatar_url}]` | CON-08, CHA-01; 🆕 `e33ecba` ENV-24/ENV-27 (modal "Quem precisa confirmar"), MSG-22 (foto nas respostas) |
-| 11 | PUT | `/conversa` | body `{descricao, tipo}` (1 direta, 2 grupo) | `{id, ...}` | CON-06, CON-07 |
+| 11 | PUT | `/conversa` | body `{descricao, tipo}` (1 direta, 2 grupo) | `{id, ...}` (🆕 `9c6e8a6` grupo pede a permissão de uso `grupo`) | CON-06, CON-07 |
 | 12 | PATCH | `/conversa` | body `{id, descricao}`; 🆕 `769bd7d` ou `{id, avatar_anexo_id: number\|null, emoji: string\|null}` | — | CON-08, CON-15; 🆕 `e33ecba` CON-07 (imagem/emoji ao criar, depois dos `PUT /conversa/usuario`) |
 | 13 | PUT | `/conversa/usuario` | body `{conversa_id, usuario_id}` | `{id, conversa_id, usuario_id}` | CON-06/07/08 |
 | 14 | DELETE | `/conversa/usuario` | `id` (= id do vínculo conversa_usuario) | — | CON-08 |
@@ -1082,24 +1287,24 @@ Fonte única: `src/services/conversaApi.ts` (+ `eden.ts`). "Params" = query stri
 | 16 | PATCH | `/conversa/arquivada` | body `{conversa, arquivada}` | `{id, arquivada}` | CON-04 |
 | 17 | POST | `/conversa/digitando` | body `{id}` | — | ENV-15 |
 | 18 | POST | `/conversa/gravando` | body `{id}` | — | ENV-16 |
-| 19 | GET | `/mensagens` | `conversa, mensagemreferencia, mensagensprevias, mensagensseguintes` | `Mensagem[]` | MSG-01, MSG-06, CHA-18 |
+| 19 | GET | `/mensagens` | `conversa, mensagemreferencia, mensagensprevias, mensagensseguintes` | `Mensagem[]` (🆕 `9c6e8a6` conteúdos de áudio com `duracao` e `intensidade`, ANX-10) | MSG-01, MSG-06, CHA-18 |
 | 20 | GET | `/mensagens/novas` | `desde` (ISO ou '') | `[{conversa_id, mensagem_id, ate}]` | §1.4 |
-| 21 | PUT | `/mensagem` | body `{conversa_id, conteudos:[{ordem, tipo, conteudo}], mensagem_referencia?:{tipo, origem_mensagem_id}, visivel_em?}`; 🆕 `pede_confirmacao?: true` (`769bd7d`), `postagem?: {titulo}` e `postagem_id?` (`d202c06`), `confirmacao_usuarios?: number[]` (`e33ecba`, servidor `6d20ff7`) | `{id, conversa_id, usuario_id}` | ENV-01/04/06/07/08/13, CHA-18, ENV-24, ENV-26, ENV-28, MSG-22 |
-| 22 | DELETE | `/mensagem` | `id` | `{..., excluida_em?}` | ENV-14, ENV-18 |
-| 23 | PUT | `/mensagem/reacao` | body `{mensagem_id, emoji}` | `{mensagem_id, emoji, acao}` | ENV-17 |
+| 21 | PUT | `/mensagem` | body `{conversa_id, conteudos:[{ordem, tipo, conteudo}], mensagem_referencia?:{tipo, origem_mensagem_id}, visivel_em?}`; 🆕 `pede_confirmacao?: true` (`769bd7d`), `postagem?: {titulo}` e `postagem_id?` (`d202c06`), `confirmacao_usuarios?: number[]` (`e33ecba`, servidor `6d20ff7`) | `{id, conversa_id, usuario_id}` (🆕 `9c6e8a6` 403 sem as permissões de uso que a mensagem pede, ENV-01) | ENV-01/04/06/07/08/13, CHA-18, ENV-24, ENV-26, ENV-28, MSG-22, GER-09 |
+| 22 | DELETE | `/mensagem` | `id` | `{..., excluida_em?}` (🆕 `9c6e8a6` pede `ocultar`, também para cancelar a agendada) | ENV-14, ENV-18 |
+| 23 | PUT | `/mensagem/reacao` | body `{mensagem_id, emoji}` | `{mensagem_id, emoji, acao}` (🆕 `9c6e8a6` pede `reagir`) | ENV-17 |
 | 24 | POST | `/mensagem/visualizar` | body `{conversa, mensagem}` | `{sucesso}` | MSG-04 |
 | 25 | POST | `/mensagem/reproduzir` | body `{conversa, mensagem}` | `{sucesso}` | ANX-10 |
 | 26 | GET | `/mensagem/status` | `conversa, mensagem` (ids separados por vírgula) | `[{conversa_id, mensagem_id, recebida, visualizada, reproduzida, excluida_em}]` | MSG-10 |
 | 27 | GET | `/mensagem/status/detalhe` | `id` | `[{usuario_id, nome, recebida, visualizada, reproduzida}]` (datas) | MSG-09 |
 | 28 | GET | `/pesquisar` | `texto, conversa` (0 = todas) | `Mensagem[]`; 🆕 `6d20ff7` com `conversa > 0`, também as mensagens dos **chats das ligações feitas nela** (de que a pessoa é membro): `conversa_id` diferente do pedido | PES-01/02 |
 | 29 | GET | `/anexo/existe` | `identificador` | `{id}` ou objeto sem `id` | §1.7 |
-| 30 | PUT | `/anexo` | body `{identificador, tipo, nome, extensao, tamanho}` | `{id, upload_url}` | §1.7 |
+| 30 | PUT | `/anexo` | body `{identificador, tipo, nome, extensao, tamanho}`; 🆕 `9c6e8a6` áudio também `duracao?, intensidade?` | `{id, upload_url}` | §1.7, ANX-10 |
 | — | PUT | `<upload_url>` (MinIO, fora da API, sem Bearer) | corpo binário | 2xx | §1.7 |
 | 31 | GET | `/anexo` | `identificador` | `{url}` | ANX-*, AUT-08 |
 | 32 | GET | `/anexo/transcricao` | `identificador` | `{status, texto, erro}` | ANX-12 |
 | 33 | PUT | `/anexo/transcricao` | body `{identificador}` | `{status, texto, erro}` | ANX-12 |
 | 34 | GET | `/anexos` | `conversa, autor, direcao, tipos (csv), antes, limite` (0/'' = sem filtro) | `AnexoItem[]` | ANX-13 |
-| 35 | PUT | `/chamada/iniciar` | body `{tipo, usuarios:[{id}], conversa_id?}` | `Chamada` | CHA-01 |
+| 35 | PUT | `/chamada/iniciar` | body `{tipo, usuarios:[{id}], conversa_id?}` | `Chamada` (🆕 `9c6e8a6` pede `chamada_audio` ou `chamada_video`, pelo tipo) | CHA-01 |
 | 36 | POST | `/chamada/cancelar` | body `{id}` | `{id}` | CHA-09 |
 | 37 | POST | `/chamada/entrar` | body `{id}` | `{id}` | CHA-04 |
 | 38 | POST | `/chamada/recusar` | body `{id, nao_atendeu?: true}` | `{id}` | CHA-05/06/08, ATV-03 |
@@ -1108,25 +1313,25 @@ Fonte única: `src/services/conversaApi.ts` (+ `eden.ts`). "Params" = query stri
 | 41 | GET | `/chamada/dados` | `id` | `Chamada {id, iniciada, finalizada, tipo, status, criado_em, criado_por, conversa_chat_id, usuarios:[{usuario_id, usuario_nome, status, adicionado_por, adicionado_por_nome, adicionado_em, entrou_em, saiu_em, recusou_em}]}` | CHA-* |
 | 42 | PUT | `/chamada/chat` | body `{id}` | `{conversa_id}` (🆕 `6d20ff7` grupo novo com o nome dos participantes; só reaproveita o chat de outra ligação) | CHA-18 |
 | 43 | PUT | `/chamada/usuario` | body `{chamada_id, usuario_id}` | `{id}` | CHA-14 |
-| 44 | POST | `/chamada/video` | body `{id}` | — (🆕 `6d20ff7` também troca o tipo da chamada para vídeo) | CHA-15/16 |
+| 44 | POST | `/chamada/video` | body `{id}` | — (🆕 `6d20ff7` também troca o tipo da chamada para vídeo; 🆕 `9c6e8a6` pede `chamada_video`) | CHA-15/16 |
 | 45 | GET | `/chamadas/pendentes` | — | `ChamadaPendente[]` | CHA-08 |
 | 46 | GET | `/chamadas` | `participante, de, ate` | `ChamadaHistoricoItem[]` (🆕 `964ed72` com `conversa_chat_id`) | CHA-22, CHA-26 |
 | 47 | GET | `/ice` | — | `{iceServers: RTCIceServer[], iceTransportPolicy}` | §5, SIP-05 |
-| 48 | GET | `/sip` | — | `SipConfig` ou `{}` | SIP-01/02 |
-| 49 | PUT | `/sip` | body `{sip_user, auth_user, sip_password, display_name, domain, ws_server, ativo}` | `SipConfig` | SIP-01 |
-| 50 | PATCH | `/sip` | body `{id, ...campos}` | — | SIP-01 |
-| 51 | GET | `/atividades` | `antes, limite` | `Atividade[]` | ATV-01 |
-| 52 | GET | `/atividades/novas` | — | `{quantidade}` | ATV-02 |
-| 53 | POST | `/atividades/vistas` | — | `{vistas_em}` | ATV-02 |
-| 54 | GET | `/permissoes` | — | `PermissoesSistema` | CFG-08 |
+| 48 | GET | `/sip` | — | `SipConfig` ou `{}` (🆕 `9c6e8a6` `{}` também sem a permissão `telefonia`) | SIP-01/02 |
+| 49 | PUT | `/sip` | body `{sip_user, auth_user, sip_password, display_name, domain, ws_server, ativo}` | `SipConfig` (🆕 `9c6e8a6` pede `telefonia`) | SIP-01 |
+| 50 | PATCH | `/sip` | body `{id, ...campos}` | — (🆕 `9c6e8a6` pede `telefonia`) | SIP-01 |
+| 51 | GET | `/atividades` | `antes, limite` | `Atividade[]` (🆕 `9c6e8a6` ~~`nova`~~ → `pendente`; tipo 5) | ATV-01 |
+| 52 | GET | `/atividades/novas` | — | `{quantidade}` (🆕 `9c6e8a6` as pendentes, só de conversas de que participa) | ATV-02 |
+| 53 | POST | `/atividades/vistas` | — | `{vistas_em}` (🆕 `9c6e8a6` o web não chama mais; não muda o contador) | ATV-02 |
+| 54 | GET | `/permissoes` | — | `PermissoesSistema` (🆕 `9c6e8a6` cada permissão com `uso: boolean`; sem os bots excluídos) | CFG-08 |
 | 55 | PUT | `/permissao/usuario` | body `{usuario_id, codigo}` | `{usuario_id, codigo}` | CFG-08 |
-| 56 | DELETE | `/permissao/usuario` | `usuario_id, codigo` | `{usuario_id, codigo}` | CFG-08 |
-| 57 | GET | `/parametros` | — | `ParametrosSistema` (🆕 `769bd7d` + `ia_url, ia_modelo, ia_token_configurado`) | CFG-07 |
-| 58 | PATCH | `/parametros` | body `AlteracaoParametros` (🆕 `769bd7d` + `ia_url?, ia_modelo?, ia_token?`) | `ParametrosSistema` | CFG-07 |
+| 56 | DELETE | `/permissao/usuario` | `usuario_id, codigo` | `{usuario_id, codigo}` (🆕 `9c6e8a6` 400 "Você não pode retirar as próprias permissões." com o próprio id) | CFG-08 |
+| 57 | GET | `/parametros` | — | `ParametrosSistema` (🆕 `769bd7d` + `ia_url, ia_modelo, ia_token_configurado`; 🆕 `9c6e8a6` + `cadastro_aberto, ia_modelo_embeddings`) | CFG-07 |
+| 58 | PATCH | `/parametros` | body `AlteracaoParametros` (🆕 `769bd7d` + `ia_url?, ia_modelo?, ia_token?`; 🆕 `9c6e8a6` + `cadastro_aberto?, ia_modelo_embeddings?`) | `ParametrosSistema` | CFG-07 |
 | 59 🆕 | GET | `/conversa/presentes` | `conversa` | `number[]` (quem está com a conversa aberta) | PRE-03 (`769bd7d`) |
 | 60 🆕 | GET | `/usuario/privacidade` | — | `{mostrar_visto_em, mostrar_na_conversa, aparecer_offline}` | CFG-09 (`769bd7d`) |
 | 61 🆕 | POST | `/mensagem/confirmar` | body `{mensagem_id}` | — (🆕 `6d20ff7` **403** "Você não está entre quem precisa confirmar esta mensagem." para quem está fora da lista) | MSG-21 (`769bd7d`) |
-| 62 🆕 | GET | `/recursos` | — | `{transcricao, ia}` | GER-08 (`769bd7d`) |
+| 62 🆕 | GET | `/recursos` | — | `{transcricao, ia}` (🆕 `9c6e8a6` + `conhecimento`) | GER-08 (`769bd7d`) |
 | 63 🆕 | POST | `/parametros/ia/testar` | body `{url, modelo, token?}` | `{ok, resposta, erro, milissegundos}` | CFG-07 (`769bd7d`) |
 | 64 🆕 | POST | `/conversa/resumo` | body `{conversa_id, periodo: '24h'\|'7d'\|'30d'\|'recentes'}` | `ResumoConversa` | CON-14 (`769bd7d`) |
 | 65 🆕 | GET | `/conversa/resumo` | `id` | `ResumoConversa {id, conversa_id, periodo, status, mensagens, assuntos:[{titulo, resumo, pendencias, mensagens}], erro}` | CON-14 (`769bd7d`) |
@@ -1134,11 +1339,38 @@ Fonte única: `src/services/conversaApi.ts` (+ `eden.ts`). "Params" = query stri
 | 67 🆕 | POST | `/ia/sugestao` | body `{conversa_id, texto}` (cancelável) | `{sugestao}` | ENV-25 (`f798e9c`) |
 | 68 🆕 | GET | `/postagem/respostas` | `id` (da postagem) | `Mensagem[]` | MSG-22 (`d202c06`) |
 | 69 🆕 | POST | `/postagem/visualizar` | body `{postagem_id}` | — | MSG-22 (`d202c06`) |
-| 70 🆕 | POST | `/mensagem/pedir-confirmacao` | body `{mensagem_id, usuarios?: number[]}` (sem `usuarios`: todos os outros membros) | `ConfirmacaoLeitura {total, confirmou, pode_confirmar, destinatarios, usuarios}` (como quem enviou a vê); erros 404/403/400 em ENV-27 | ENV-27 (`e33ecba`, servidor `6d20ff7`) |
+| 70 🆕 | POST | `/mensagem/pedir-confirmacao` | body `{mensagem_id, usuarios?: number[]}` (sem `usuarios`: todos os outros membros) | `ConfirmacaoLeitura {total, confirmou, pode_confirmar, destinatarios, usuarios}` (como quem enviou a vê); erros 404/403/400 em ENV-27; 🆕 `9c6e8a6` pede `confirmacao` | ENV-27 (`e33ecba`, servidor `6d20ff7`) |
+| 71 🆕 | GET | `/cadastro` | — (**público**, sem token) | `{aberto}` | AUT-01, AUT-02 (`9c6e8a6`) |
+| 72 🆕 | PUT | `/usuario/novo` | body `{nome, login?, email?, senha?, telefone?, avatar_anexo_id?, bot?, instrucoes?}` (permissão `usuarios`) | `{id, nome, login, bot}` | CFG-11 (`9c6e8a6`) |
+| 73 🆕 | POST | `/atividade/concluir` | body `{id}` | `{sucesso}` (WS 61 se concluiu) | ATV-04 (`9c6e8a6`) |
+| 74 🆕 | POST | `/atividades/reacoes-vistas` | body `{mensagens: number[]}` (até 200) | `{concluidas}` (WS 61 se concluiu alguma) | ATV-05 (`9c6e8a6`) |
+| 75 🆕 | GET | `/bots` | — (`bots`: os que criou; `permissoes`: todos) | `Bot[] {id, usuario_id, nome, login, instrucoes, ativo, criado_por, criado_por_nome, permissoes, ferramentas, bases}` | CFG-12 (`9c6e8a6`) |
+| 76 🆕 | PUT | `/bot` | body `{nome, instrucoes}` (`bots`; IA ligada) | `Bot` | CFG-12 (`9c6e8a6`) |
+| 77 🆕 | PATCH | `/bot` | body `{id, nome?, instrucoes?, ativo?}` | `Bot` | CFG-12 (`9c6e8a6`) |
+| 78 🆕 | DELETE | `/bot` | `id` | `{id, apagado}` (`apagado: false` = ficou marcado como excluído, por ter histórico) | CFG-12 (`9c6e8a6`) |
+| 79 🆕 | PUT | `/bot/permissoes` | body `{id, permissoes: string[]}` (só as de uso) | `Bot` | CFG-12 (`9c6e8a6`) |
+| 80 🆕 | PUT | `/bot/ferramentas` | body `{id, ferramentas: number[]}` | `Bot` | CFG-12 (`9c6e8a6`) |
+| 81 🆕 | PUT | `/bot/conhecimento` | body `{id, bases: number[]}` | `Bot` | CFG-12 (`9c6e8a6`) |
+| 82 🆕 | GET | `/ferramentas` | — (`ferramentas`) | `FerramentaExterna[] {id, nome, descricao, metodo, url, cabecalhos: string[] (só os nomes), parametros, ativo}` | CFG-13 (`9c6e8a6`) |
+| 83 🆕 | GET | `/ferramentas/disponiveis` | — (`bots`, `permissoes` ou `ferramentas`) | `[{id, nome, descricao}]` (só as ligadas) | CFG-12 (`9c6e8a6`) |
+| 84 🆕 | PUT | `/ferramenta` | body `{nome, descricao, metodo, url, cabecalhos:[{nome, valor}], parametros:[{nome, tipo, descricao, obrigatorio}], ativo?}` | `FerramentaExterna` | CFG-13 (`9c6e8a6`) |
+| 85 🆕 | PATCH | `/ferramenta` | body `{id, …}` (cabeçalho com `valor: null` mantém o salvo) | `FerramentaExterna` | CFG-13 (`9c6e8a6`) |
+| 86 🆕 | DELETE | `/ferramenta` | `id` | `{id}` | CFG-13 (`9c6e8a6`) |
+| 87 🆕 | POST | `/ferramenta/testar` | body `{id, argumentos}` | `{ok, status, resposta, erro, milissegundos}` | CFG-13 (`9c6e8a6`) |
+| 88 🆕 | GET | `/conhecimento/bases` | — (`conhecimento`) | `[{id, nome, descricao, documentos, trechos}]` | CFG-14 (`9c6e8a6`) |
+| 89 🆕 | GET | `/conhecimento/disponiveis` | — (`bots`, `permissoes` ou `conhecimento`) | `[{id, nome, descricao}]` | CFG-12 (`9c6e8a6`) |
+| 90 🆕 | PUT | `/conhecimento/base` | body `{nome, descricao?}` | base | CFG-14 (`9c6e8a6`) |
+| 91 🆕 | PATCH | `/conhecimento/base` | body `{id, nome, descricao?}` | base | CFG-14 (`9c6e8a6`) |
+| 92 🆕 | DELETE | `/conhecimento/base` | `id` | `{id}` | CFG-14 (`9c6e8a6`) |
+| 93 🆕 | GET | `/conhecimento/documentos` | `base` | `[{id, base_id, nome, caracteres, trechos, status (1 Processando, 2 Pronto, 3 Erro), erro, criado_em}]` | CFG-14 (`9c6e8a6`) |
+| 94 🆕 | PUT | `/conhecimento/documento` | body `{base_id, nome, texto}` (o texto já extraído no navegador) | documento | CFG-14 (`9c6e8a6`) |
+| 95 🆕 | DELETE | `/conhecimento/documento` | `id` | `{id}` | CFG-14 (`9c6e8a6`) |
+| 96 🆕 | POST | `/conhecimento/buscar` | body `{bases: number[], pergunta, limite?}` | `[{documento, texto, nota}]` | CFG-14 (`9c6e8a6`) |
+| 97 🆕 | POST | `/conhecimento/reindexar` | — | `{documentos}` | CFG-14 (`9c6e8a6`) |
 
-As rotas da votação (`GET/PUT/PATCH /enquete`, `POST /enquete/votar`, `POST /enquete/encerrar`) estão em ENV-22 e MSG-20 (§10), fora desta tabela.
+As rotas da votação (`GET/PUT/PATCH /enquete`, `POST /enquete/votar`, `POST /enquete/encerrar`) estão em ENV-22 e MSG-20 (§10), fora desta tabela. 🆕 `9c6e8a6` O `PUT /enquete` pede a permissão de uso `votacao` (GER-09). As rotas 72 e 75 a 97 são de administração (cadastro de usuários e bots, CFG-11 a CFG-14); no celular ficam fora do escopo (§7).
 
-Fora da API: `POST /webrtc/<caminho>/whip` e `POST /webrtc/<caminho>/whep` (MediaMTX, `Content-Type: application/sdp`, sem Bearer) — §5; `GET /figurinhas/<pacote>/<nome>.json` (estático da página; 🆕 `d202c06` só `noto/<nome>`); 🆕 `d202c06` `GET /emojis/pt.json` (catálogo do seletor, ENV-03); 🆕 `964ed72` `/chamada.html` (aba da chamada, CHA-13; 🆕 `e33ecba` janela popup); `/notification.mp3`, `/toque.mp3`, `/chamando.mp3`, `/logo.png` (estáticos).
+Fora da API: `POST /webrtc/<caminho>/whip` e `POST /webrtc/<caminho>/whep` (MediaMTX, `Content-Type: application/sdp`, sem Bearer) — §5; `GET /figurinhas/<pacote>/<nome>.json` (estático da página; 🆕 `d202c06` só `noto/<nome>`); 🆕 `d202c06` `GET /emojis/pt.json` (catálogo do seletor, ENV-03); 🆕 `964ed72` `/chamada.html` (aba da chamada, CHA-13; 🆕 `e33ecba` janela popup); `/notification.mp3`, `/toque.mp3`, `/chamando.mp3`, `/logo.png` (estáticos); 🆕 `9c6e8a6` `/fontes/office/*.woff2` e `fontes.css` (fontes do visualizador do Office, ANX-16).
 
 ### 4.2 Eventos WebSocket
 
@@ -1158,7 +1390,7 @@ Enum: `TipoEventoSocket` em `src/types/api.ts`. Mensagens são JSON.
 |---|---|---|---|
 | 2 | NovaMensagem | (nenhum) | `GET /mensagens/novas?desde=cursor` → notificações, lista, conversa ativa (§1.4) |
 | 3 | StatusMensagem | `grupo` (conversa), `mensagens` ("1,2,3") | `GET /mensagem/status` → atualiza recebida/visualizada/reproduzida/excluida_em; recarrega conversas |
-| 4 | Digitando | `conversa_id, usuario_id` | indicador 4 s |
+| 4 | Digitando | `conversa_id, usuario_id` | indicador 4 s; 🆕 `9c6e8a6` (servidor) o bot de IA manda a cada 3 s enquanto pensa (CON-16) |
 | 5 | GravandoAudio | `conversa_id, usuario_id` | indicador 4 s |
 | 7 | ReacaoMensagem | `conversa_id, mensagem_id, emoji, acao ('remove' ou outro), usuario_id` | atualiza a reação localmente (só se a mensagem está em memória) |
 | 8 🆕 `769bd7d` | ConfirmacaoLeitura | `conversa_id, mensagem_id, usuario_id, nome, confirmada_em` | acrescenta quem confirmou (só se a mensagem está em memória) — MSG-21 |
@@ -1171,7 +1403,7 @@ Enum: `TipoEventoSocket` em `src/types/api.ts`. Mensagens são JSON.
 | 56 | VideoAtivado | `chamada_id, usuario_id` | CHA-16 |
 | 57 | SinalChamada | `chamada_id, usuario_id, dados` | `dados.acao`: `'tela'` `{ativa}` · `'ponteiro'` `{alvo, x, y}` (x/y null = saiu) · `'chat'` `{conversa_id}` · 🆕 `769bd7d` `'participantes'` (relê `GET /chamada/dados`, CHA-25); ignora o próprio e de outra chamada |
 | 60 | StatusUsuario | `usuario_id, online`; 🆕 `769bd7d` + `estado` (`ativo`/`ausente`/`offline`), `visto_em` (só quando muda) | presença (PRE-01); também chega com o **meu** id (PRE-02) |
-| 61 | NovaAtividade | — | ATV-02; 🆕 `e25c4db` (servidor) chega também quando **eu leio** uma mensagem ou resposta de postagem com atividade de resposta/menção ligada (`POST /mensagem/visualizar`, `POST /postagem/visualizar`), para o contador cair em todas as abas e aparelhos |
+| 61 | NovaAtividade | — | ATV-02; 🆕 `e25c4db` (servidor) chega também quando **eu leio** uma mensagem ou resposta de postagem com atividade de resposta/menção ligada (`POST /mensagem/visualizar`, `POST /postagem/visualizar`), para o contador cair em todas as abas e aparelhos; 🆕 `9c6e8a6` (servidor `ef13c22`) e também ao concluir à mão (`POST /atividade/concluir`), ao ver reações (`POST /atividades/reacoes-vistas`), e ao confirmar uma leitura pedida (`POST /mensagem/confirmar`); como toda atividade nova, a do pedido de confirmação (tipo 5) também avisa. O contador agora é o de **pendentes** (ATV-02) |
 | 62 | EnqueteAtualizada | `enquete_id` | relê `GET /enquete` se a enquete está na tela — MSG-20 (§10; faltava nesta tabela) |
 | 63 🆕 `769bd7d` | Presenca | `conversa_id, usuario_id, aberta` | põe/tira a pessoa de quem está com a conversa aberta (PRE-03) |
 | 64 🆕 `d202c06` | PostagemAtualizada | `conversa_id, postagem_id, usuario_id` | recarrega conversas, relê as respostas da postagem em memória, som e notificação (MSG-22, NOT-02) |
@@ -1260,7 +1492,7 @@ ativa --(sair | 52 | último outro saiu | recusa em direta)--> encerrando --> in
 | Confirmação de cancelar agendada | título "Cancelar mensagem agendada", texto "Ela não será enviada.", botões "Voltar" / "Cancelar envio" |
 | Erro ao ocultar | título "Não foi possível ocultar" |
 | Erro ao baixar | título "Não foi possível baixar" |
-| Menu de ações | "Responder", "Responder no privado", "Encaminhar", "Copiar", 🆕 `e33ecba` "Pedir confirmação de leitura", "Ocultar"; reações 👍 ❤️ 😂 😮 / 😢 👏 🔥 + "Mais emojis" |
+| Menu de ações | "Responder", "Responder no privado", "Encaminhar", "Copiar", 🆕 `e33ecba` "Pedir confirmação de leitura", "Ocultar"; reações 👍 ❤️ 😂 😮 / 😢 👏 🔥 + "Mais emojis" (🆕 `9c6e8a6` cada item some sem a sua permissão de uso, ENV-20) |
 | Selo de agendada | "Agendada para hoje 14:30" / "Agendada para amanhã 08:00" / "Agendada para 12/10 08:00" |
 | Indicador não lidas | "Últimas" |
 | Botão flutuante | "Há novas mensagens"; botão "Ir para o final" |
@@ -1273,7 +1505,7 @@ ativa --(sair | 52 | último outro saiu | recusa em direta)--> encerrando --> in
 | Código | "Copiar"/"Copiado!", "Expandir código"/"Recolher código", "Visualizar"/"Código" |
 | 🆕 Janela e peça de código (`e33ecba`) | janela "Inserir código" / "Editar código", placeholder "Cole ou escreva seu código aqui...", botões "Cancelar", "Inserir na mensagem", "Enviar" / "Salvar"; peça "<linguagem> · 1 linha" / "<linguagem> · N linhas" (sem linguagem "texto"), "Editar código", "Remover código", prévia com "…" depois da 4ª linha |
 | Transcrição | "Transcrever", "Transcrevendo...", "(nenhuma fala reconhecida)", "Não foi possível transcrever. Tentar de novo" |
-| Arquivo | "Abrir" (PDF/HTML), "Download", "Baixar video", "Toque para abrir" / "Toque para carregar"; 🆕 `8b43965` HTML "Ver fonte" / "Ver página" |
+| Arquivo | "Abrir" (PDF/HTML; 🆕 `9c6e8a6` também Office), "Download", ~~"Baixar video"~~ (🆕 `9c6e8a6` virou o botão "Baixar vídeo" do player), "Toque para abrir" / "Toque para carregar"; 🆕 `8b43965` HTML "Ver fonte" / "Ver página" |
 | Agendar | "Agendar mensagem", "Data", "Hora", "Cancelar", "Agendar"; erros "Data/hora inválida", "O envio deve ser no mínimo 5 minutos no futuro", "O envio não pode ser mais de 1 ano no futuro" |
 | Resumos de conteúdo | notificação: "Imagem", "Gravacao de audio", "Audio", "Figurinha", "Arquivo"; resposta/encaminhar (`resumoMensagem`): texto, "Imagem", "Áudio", "Arquivo"; código: "Código (linguagem)" |
 | 🆕 Menu "+" | "Arquivo", "Código", "Votação" (grupo), "Postagem" (grupo), "Confirmar leitura" |
@@ -1285,6 +1517,12 @@ ativa --(sair | 52 | último outro saiu | recusa em direta)--> encerrando --> in
 | 🆕 Emojis | "Pesquisar emoji", "Recentes", "Carinhas e emoções", "Pessoas e corpo", "Animais e natureza", "Comida e bebida", "Viagens e lugares", "Atividades", "Objetos", "Símbolos", "Nenhum emoji encontrado", "Carregando os emojis..."; figurinhas: pacote "Noto", crédito "Animated Noto Emoji © Google, CC BY 4.0" |
 | 🆕 Pesquisa na conversa | "N resultado para “termo”" / "N resultados para “termo”" / "Nenhuma mensagem com “termo”"; autor "Você" nas minhas; 🆕 `e33ecba` selo "no chat da ligação" |
 | 🆕 Transcrição | "Transcrever" só com o transcritor configurado (GER-08) |
+| 🆕 Áudio (`9c6e8a6`) | duração antes de tocar; tocando ou parado no meio "00:05 / 00:12" (`mm:ss`; "--:--" sem duração) |
+| 🆕 Vídeo (`9c6e8a6`) | "Reproduzir vídeo", "Pausar" / "Reproduzir", "mm:ss / mm:ss", "Baixar vídeo", "Abrir no visualizador", "Tela cheia" / "Sair da tela cheia"; no visualizador também "Silenciar" / "Ativar som", "Volume" (0% a 200%), "Velocidade" (0,25x … 3x) |
+| 🆕 Office (`9c6e8a6`) | "Abrir" em `.docx/.xlsx/.pptx`; "Página anterior" / "Próxima página" ("Slide anterior" / "Próximo slide"), "Ir para a página" / "Ir para o slide", "Ainda contando as páginas", "Diminuir zoom", "Aumentar zoom", "Página inteira", "Ajustar à largura", "Baixar", "Fechar (Esc)"; "Baixando arquivo...", "Preparando o documento...", "Não foi possível abrir o arquivo. Tente baixar." |
+| 🆕 Permissões de uso no campo (`9c6e8a6`) | "Você não tem permissão para enviar <tipos>." (tipos: "imagens", "vídeos", "áudios", "arquivos", separados por vírgula) |
+| 🆕 Recusa do servidor (`9c6e8a6`) | "Você não tem permissão para: <descrição em minúsculas>." (descrições em GER-09; ex.: "Você não tem permissão para: enviar imagens.") |
+| 🆕 Bot (`9c6e8a6`) | pílula "Bot" (`title` "Responde com a IA") no cabeçalho da direta; falha do bot na conversa "Não consegui responder a esta mensagem: <motivo>" |
 
 ### 6.2 Conversas, chamadas, atividades
 
@@ -1301,6 +1539,19 @@ ativa --(sair | 52 | último outro saiu | recusa em direta)--> encerrando --> in
 - 🆕 `8b43965` Cores: seção "Tema", "Cores prontas para os temas claro e escuro. Escolher um tema apaga as cores ajustadas abaixo.", "Padrão", "Teams", "WhatsApp", "Messenger".
 - 🆕 Chamada: "Chamando...", "Não atendeu", "Chamar de novo"; etapas "Abrindo a câmera...", "Enviando o vídeo...", "Recebendo o vídeo dos participantes..."; "Voltar ao chat" (celular); chat da ligação "Ver chat da chamada" / "Esconder o chat da chamada", "Carregando o chat...", "Ninguém escreveu no chat da chamada.", "Abrir o chat completo". 🆕 `6d20ff7` O grupo do chat da ligação se chama com os nomes dos participantes ("Ana, Bruno"), sem "Chamada: ".
 - 🆕 Privacidade: "Status", "Aparecer offline", "Mostrar o visto por último", "Mostrar quando estou na conversa", "Inteligência artificial", "Sugerir a continuação ao digitar" (descrições em CFG-09). Sistema › IA: "Endereço", "Modelo", "Token", "Testar conexão" / "Testando..." (CFG-07).
+- 🆕 `9c6e8a6` Atividades: vazio "Reações, respostas, menções, pedidos de confirmação de leitura e chamadas perdidas aparecem aqui."; tipo 5 "pediu que você confirme a leitura" (selo "✓"); bolinha "Pendente"; botão "Marcar como concluída" (no pedido de confirmação, `title` "Marcar como concluída (a leitura continua sem confirmar)").
+- 🆕 `9c6e8a6` Login: "Não tem conta? Criar conta" só com o cadastro aberto; cadastro fechado (servidor) "O cadastro está fechado: peça a um administrador para criar sua conta."; bot no login "Bot não entra pelo login.".
+- 🆕 `9c6e8a6` Perfil sem permissão: "Você não tem permissão para mudar o nome" / "Você não tem permissão para mudar o e-mail" (`title` do campo), "Você não tem permissão para mudar o avatar."; Privacidade "Você não tem permissão para mudar a privacidade.".
+- 🆕 `9c6e8a6` Nomes curtos das permissões (`utils/permissoesUso.ts`), por grupo:
+  - **Administração:** "Sistema", "Acessos", "Bots", "Usuários", "Ferramentas", "Conhecimento";
+  - **Enviar:** "Emojis no texto", "Figurinhas", "Imagens", "Vídeos", "Áudios e gravações", "Arquivos";
+  - **Mensagens:** "Responder", "Encaminhar", "Reagir", "Agendar mensagens", "Pedir confirmação de leitura", "Ocultar mensagens";
+  - **Grupos:** "Criar grupos", "Postagens", "Votações";
+  - **Chamadas:** "Chamadas de áudio", "Chamadas de vídeo", "Compartilhar a tela", "Telefonia (SIP)";
+  - **Configurações:** "Mudar o nome", "Mudar o e-mail e telefone", "Mudar o avatar", "Trocar a senha", "Mudar a privacidade", "Mudar as cores", "Configurações de chamada".
+- 🆕 `9c6e8a6` Acessos: "Abra uma pessoa para ver e mudar o que ela pode fazer: a administração do sistema e o uso do chat. Conta nova começa com todas as de uso. Ninguém retira as próprias permissões: outra pessoa com Acessos precisa fazer isso.", pílula "Administração", "N de T", `title` "Você não pode retirar as próprias permissões"; servidor "Você não pode retirar as próprias permissões.".
+- 🆕 `9c6e8a6` Sistema: seção "Cadastro", "Permitir que as pessoas se cadastrem"; IA "Modelo de embeddings" (textos em CFG-07). Abas de administração "Usuários", "Ferramentas", "Conhecimento", "Bots" (textos em CFG-11 a CFG-14).
+- 🆕 `9c6e8a6` Barra do computador: "Ocultar menu" / "Mostrar menu" (GER-10).
 
 ### 6.3 Regras de comportamento críticas
 
@@ -1322,6 +1573,10 @@ ativa --(sair | 52 | último outro saiu | recusa em direta)--> encerrando --> in
 16. 🆕 **Recursos do servidor**: Transcrever, Resumir e a sugestão só aparecem com `GET /recursos` dizendo que estão ligados (GER-08).
 17. 🆕 `e33ecba` **Confirmação de leitura com lista**: a caixa "Confirmar leitura" só aparece com `confirmacao.pode_confirmar` (o servidor recusa com 403 quem está fora da lista); os demais, inclusive quem enviou, veem a contagem. Pedir depois do envio só na própria mensagem, até 24 h (ENV-27, MSG-21).
 18. 🆕 `6d20ff7` **Chat da ligação é um grupo próprio** (salvo a ligação feita dentro do chat de outra ligação): não tratar a conversa da ligação como o chat dela (CHA-18).
+19. 🆕 `9c6e8a6` **Permissões de uso:** esconder ou travar o que a pessoa não pode (GER-09), com a lista de `GET /usuario/permissoes`; até ela chegar, mostrar tudo. O servidor confere de qualquer jeito e responde 403 "Você não tem permissão para: …" — mostrar essa mensagem. `compartilhar_tela`, `cores` e `config_chamadas` **só o cliente confere**.
+20. 🆕 `9c6e8a6` **Atividade pendente até concluir:** abrir a tela não zera o contador; a reação conclui ao ver a própria mensagem na tela (`POST /atividades/reacoes-vistas`), a chamada perdida ao abri-la, e qualquer uma pelo ✓ (`POST /atividade/concluir`). O campo é `pendente`, não mais `nova` (ATV-01, ATV-04, ATV-05).
+21. 🆕 `9c6e8a6` **Cadastro pode estar fechado:** perguntar `GET /cadastro` (público) antes de oferecer "Criar conta" (AUT-01).
+22. 🆕 `9c6e8a6` **Áudio com duração e onda:** mandar `duracao` e `intensidade` (48 picos de 0 a 100) no `PUT /anexo` dos tipos 4 e 5, e mostrar a duração e a onda vindas do conteúdo sem baixar o áudio (ANX-10).
 
 ---
 
@@ -1374,6 +1629,12 @@ ativa --(sair | 52 | último outro saiu | recusa em direta)--> encerrando --> in
 | 🆕 Modal "Quem precisa confirmar" (ENV-24/ENV-27, `e33ecba`) | — | Folha (bottom sheet) ou diálogo com busca, "Todos (N)" e caixas; mesmos textos |
 | 🆕 Peça de código no campo (ENV-28, `e33ecba`) | Campo simplificado (FC-416) | Um "chip"/cartão de código na faixa de anexos acima do campo, com a prévia, editar e remover; no envio, cada código vira um conteúdo tipo 1 com a cerca, na ordem decidida pelo FC-416 |
 | 🆕 Ícone de grupo com `aria-label` (CON-01, `e33ecba`) | — | Ícone de pessoas com `contentDescription` "Conversa em grupo" no lugar da etiqueta |
+| 🆕 Visualizador do Office (ANX-16, `9c6e8a6`; `@silurus/ooxml` em WASM) | O Android abre os arquivos com outro app (`abrirComOutroApp`) | **Não se aplica**: `.docx`, `.xlsx` e `.pptx` continuam abrindo com outro app (ou baixando), como o HTML |
+| 🆕 Player de vídeo próprio (ANX-04/ANX-05, `9c6e8a6`) | O Media3 (`PlayerView`) já tem play/pausa, barra e tempo | No visualizador, acrescentar a **velocidade** (`setPlaybackSpeed`, as mesmas opções) e o **"Baixar vídeo"**; volume acima de 100% é opcional (`LoudnessEnhancer`). Tocar dentro da bolha é opcional: no celular o toque já abre o visualizador |
+| 🆕 Onda do áudio medida no navegador (ANX-10, `9c6e8a6`; `AudioContext.decodeAudioData`) | Sem `AudioContext` | Gravação: ler o pico durante a gravação (`MediaRecorder.getMaxAmplitude()`; o `GravadorMediaRecorder` do `:core:media` usa `MediaRecorder`) e reduzir a **48 picos de 0 a 100**, relativos ao maior; duração pelo próprio gravador. Áudio escolhido: duração por `MediaMetadataRetriever`; a onda pode ir sem (`intensidade` é opcional) ou por decodificação (`MediaExtractor`/`MediaCodec`). Desenho: barras no `Canvas` do Compose |
+| 🆕 Botão ✓ "Marcar como concluída" (ATV-04, `9c6e8a6`) | — | Botão à direita de cada item pendente (como no web); deslizar o item para concluir é opcional |
+| 🆕 Barra de navegação oculta (GER-10, `9c6e8a6`) | Navegação inferior | **Não se aplica** |
+| 🆕 Abas Usuários, Bots, Ferramentas e Conhecimento (CFG-11 a CFG-14, `9c6e8a6`) | O Android já tem Sistema e Acessos (8.5) | **Fora do escopo do celular** (administração pelo computador); avaliar só se for pedido. O que vale no celular é a conversa com o bot (CON-16) |
 
 ---
 
@@ -1447,6 +1708,7 @@ Commit **`39d06f9`** — "Campo de mensagem rico, votação em grupo e chat comp
 - Mensagem só de texto: igual ao antes (ENV-01).
 - 🆕 `769bd7d`/`f798e9c`/`d202c06`: o `PUT /mensagem` pode levar `pede_confirmacao` (ENV-24), `postagem` (ENV-26) e `postagem_id` (MSG-22); acima do campo podem aparecer as faixas de confirmação de leitura e de postagem; Ctrl/Cmd+Enter volta a enviar (ENV-12); a sugestão da IA aparece em cinza depois do cursor (ENV-25).
 - 🆕 `e33ecba`: nova peça **`codigo`** (`PecaCodigo`): o código inserido pela janela fica no campo como bloco, com prévia, "Editar código" e "Remover código", e vai como um conteúdo tipo 1 próprio, com a cerca (ENV-28). Nova faixa acima do campo **"Respondendo à postagem de <remetente>"** (× "Não responder à postagem"): a próxima mensagem, com qualquer conteúdo, vai com `postagem_id` (MSG-22). A faixa da confirmação, em grupo, ganha " de todos" / " de N pessoas" e "Escolher", e o envio pode levar `confirmacao_usuarios` (ENV-24).
+- 🆕 `9c6e8a6`: cada arquivo que entra no campo (seletor, colar, arrastar) pede a sua **permissão de uso** (`imagem`, `video`, `audio` ou `arquivo`, GER-09); os barrados não entram e aparece acima do campo "Você não tem permissão para enviar <tipos>.". No "+", "Arquivo" some sem nenhuma das quatro; "Votação", "Postagem" e "Confirmar leitura" somem sem `votacao`, `postagem` e `confirmacao`. Áudio entra no envio com `duracao` e `intensidade` (§1.7).
 - **Figurinha** (ENV-04) e **gravação** (ANX-11) com o campo **vazio** são enviadas na hora, sozinhas; com algo escrito, entram como peça.
 - **Emoji** entra no ponto do cursor (o cursor é guardado quando o campo perde o foco).
 - **Placeholder:** "Digite uma mensagem". Altura máxima de 40% da tela, com rolagem.
@@ -1466,6 +1728,7 @@ Commit **`39d06f9`** — "Campo de mensagem rico, votação em grupo e chat comp
 - 🆕 `785bdef` **Data final (opcional):** checkbox "Definir data final" / "Depois dela ninguém vota mais. Dá para mudar ou encerrar antes pela votação." → campo de data e hora (sugestão: amanhã, na próxima hora cheia). Erros: "Informe a data e a hora", "A data final precisa estar no futuro", "A data final não pode passar de 1 ano"; com erro, "Criar votação" fica desabilitado. Vai como `encerra_em` (ISO).
   - Depois de criar, o web recarrega as mensagens e as conversas.
   - Erros do servidor aparecem na caixa vermelha: só grupo, opções repetidas etc.
+- 🆕 `9c6e8a6` "Votação" só aparece no "+" com a permissão de uso `votacao` (GER-09); o `PUT /enquete` responde 403 "Você não tem permissão para: criar votações em grupos.".
 
 ### MSG-20 🆕 Bolha de votação (`BolhaEnquete.vue`, store `enquetes.ts`)
 
@@ -1718,4 +1981,83 @@ Dois commits do web, de 2026-10-13 e 2026-10-14, que acompanham os do servidor *
 - **MSG-03:** o Android não tem a regra 5 (perto do fim, sempre rola até a nova, `ChatTela.kt`), o que já bate com o comportamento novo quando a "Últimas" está fora da tela; se a regra for feita, só com a linha à vista.
 - **ENV-03:** sem mudança (o seletor do Android é o `EmojiPickerView`; continua valendo a normalização da §13).
 - **CFG-05:** não se aplica (cores do FMX).
-- **ATV-01 / ATV-02:** nada a mudar no código: o Android relê `GET /atividades/novas` a cada WS 61 (`AtividadesRepositorio.aoReceberAviso`), então o badge passa a cair sozinho quando a resposta ou menção é lida no chat, e o `nova` da lista vem do servidor. Conferir no teste manual (ler uma menção no chat e ver o badge cair).
+- **ATV-01 / ATV-02:** nada a mudar no código: o Android relê `GET /atividades/novas` a cada WS 61 (`AtividadesRepositorio.aoReceberAviso`), então o badge passa a cair sozinho quando a resposta ou menção é lida no chat, e o `nova` da lista vem do servidor. Conferir no teste manual (ler uma menção no chat e ver o badge cair). (🆕 `9c6e8a6`: `nova` virou `pendente`, §15.)
+
+## 15. Atualização de 2026-10-15 (noite) — commit `9c6e8a6`
+
+Um commit do web, de 2026-10-15 22:42, que acompanha o do servidor **`ef13c22`** (mesmo título; migrações 044 a 052; o Qdrant entra no `docker-compose` para a base de conhecimento). Há **10 IDs novos** e o total passa de 153 para **163**. Os textos foram conferidos no código do web (`git diff 8b43965..9c6e8a6`, `CLAUDE.md` §8) e as regras no servidor (`git diff e25c4db..ef13c22`).
+- Não há evento WebSocket novo nem mudança no push.
+- Os testes novos do web (12 arquivos em `tests/unit/`) ficam fora do escopo do Android.
+- O estado do Android citado abaixo é o do `5c14417` (2026-10-15), que já traz as atividades pendentes (`2219208`).
+
+### Commits
+- **`9c6e8a6`** (2026-10-15 22:42) — "Bots de IA com ferramentas e base de conhecimento, permissões de uso e cadastro pelo administrador":
+  - permissões de uso por pessoa, conferidas no cliente (`auth.pode`) e no servidor;
+  - cadastro que o administrador fecha, e a aba Usuários para criar pessoas e bots;
+  - bots de IA (aba Bots), ferramentas externas (aba Ferramentas) e base de conhecimento (aba Conhecimento);
+  - atividades pendentes até concluir, com o tipo novo "pedido de confirmação";
+  - onda e duração do áudio gravadas no envio; player de vídeo próprio; visualizador de Word, Excel e PowerPoint;
+  - enviar com um trecho antigo na tela recarrega as recentes; barra de navegação que se oculta no computador.
+- Servidor **`ef13c22`**: migrações 044 (`atividade.concluida_em`), 045 (`anexo_transcricao` vira `anexo_audio`, com `duracao` e `intensidade`), 046, 048 e 049 (permissões de uso e `cadastro_aberto`), 047 e 050 (bots), 051 (ferramentas) e 052 (conhecimento). Volumes do Docker com o prefixo `conversa-` (`bin\renomear-volumes.bat`).
+
+### IDs novos (10)
+- **CON-16** — conversa com um bot de IA (pílula "Bot" no cabeçalho da direta; o bot responde como um usuário). **Vale para o celular.**
+- **ANX-16** — visualizador de arquivos do Office (`.docx`, `.xlsx`, `.pptx`). Só web (não se aplica: o Android abre com outro app).
+- **ATV-04** — concluir a atividade à mão ("Marcar como concluída") e a chamada perdida ao abrir. **Vale para o celular.**
+- **ATV-05** — reação vista na tela conclui a atividade (`POST /atividades/reacoes-vistas`). **Vale para o celular.**
+- **CFG-11** — aba Usuários: cadastrar pessoas e bots. Administração (web).
+- **CFG-12** — aba Bots. Administração (web).
+- **CFG-13** — aba Ferramentas. Administração (web).
+- **CFG-14** — aba Conhecimento. Administração (web).
+- **GER-09** — permissões de uso (esconder ou travar o que a pessoa não pode; 403 do servidor). **Vale para o celular.**
+- **GER-10** — ocultar a barra de navegação no computador. Só web.
+
+### IDs alterados
+- **ATV-01** — ~~`nova`~~ → `pendente`; tipo 5 "pediu que você confirme a leitura" (selo "✓"); texto do vazio novo; bolinha "Pendente".
+- **ATV-02** — o contador é o de pendentes (só de conversas de que a pessoa participa); abrir a tela não zera; ~~`POST /atividades/vistas`~~ fora de uso; WS 61 também ao concluir, ao ver reações e ao confirmar.
+- **MSG-21 / ENV-24 / ENV-27** — o pedido de confirmação cria a atividade tipo 5 para cada pessoa da lista; confirmar a conclui; "Confirmar leitura" e "Pedir confirmação de leitura" pedem `confirmacao`.
+- **AUT-01 / AUT-02** — "Não tem conta? Criar conta" só com o cadastro aberto (`GET /cadastro`); `PUT /usuario` com 403 quando fechado; conta nova com todas as permissões de uso; bot não entra pelo login.
+- **AUT-06 / AUT-07 / AUT-08 / AUT-09** — nome, e-mail, senha e avatar por permissão de uso; 32 códigos em `GET /usuario/permissoes`.
+- **CON-07 / CON-09 / CON-11** — "Novo grupo" pede `grupo`; pílula "Bot" e botões de chamada por permissão no cabeçalho; `bot` nos contatos.
+- **ENV-01 / ENV-21** — permissões no `PUT /mensagem`; arquivos barrados no campo; enviar com trecho antigo recarrega as recentes.
+- **ENV-03 / ENV-04** — emoji e figurinha por permissão (seletor só com figurinhas); aba Figurinhas com a mesma altura.
+- **ENV-13 / ENV-14 / ENV-17 / ENV-18 / ENV-20 / ENV-22 / ENV-26** — agendar, ocultar (também cancelar a agendada), reagir, responder, encaminhar, votação e postagem por permissão; a reação vira atividade pendente até ser vista.
+- **ANX-04 / ANX-05** — `PlayerVideo`: o vídeo toca na bolha; no visualizador, volume até 200% e velocidade; "Baixar video" virou botão do player.
+- **ANX-10 / ANX-11 / §1.7** — `duracao` e `intensidade` no `PUT /anexo` e nos conteúdos; onda, duração antes de tocar e "atual / total"; microfone pede `audio`.
+- **ANX-13** — `.docx`, `.xlsx` e `.pptx` abrem no visualizador do Office.
+- **CHA-01 / CHA-02 / CHA-11 / CHA-16 / CHA-22** — ligar, compartilhar a tela, ligar o vídeo e "Ligar novamente" por permissão; 403 no `PUT /chamada/iniciar` e no `POST /chamada/video`.
+- **SIP-01** — aba Voip e ramal pedem `telefonia`; `GET /sip` → `{}` sem ela.
+- **CFG-01 / CFG-02 / CFG-07 / CFG-08 / CFG-09 / CFG-10** — abas novas e abas de todos por permissão; tema pede `cores`; Sistema com "Cadastro" e "Modelo de embeddings"; Acessos refeita (linha por pessoa, grupos, próprias travadas); Privacidade travada sem `privacidade`; Cores pede `cores`.
+- **GER-08** — `GET /recursos` com `conhecimento`.
+- §1.1 (Office), §1.2 (estado), §1.7 (upload de áudio), §1.8, §2.1, §2.2 (barra oculta, Ramal), §2.4 (`PlayerVideo`, `VisualizadorOffice`), §2.5 (abas), §4.1 (rotas 2, 4, 5, 6, 8, 11, 19, 21, 22, 23, 30, 35, 44, 48–54, 56–58, 62, 70 e as novas 71–97), §4.2 (eventos 4 e 61), §6 (textos e regras 19–22), §7 (adaptações novas) e a contagem.
+
+### O que muda para o Android
+**IDs novos**
+- **CON-16:** ler `bot` no `ContatoDto` (hoje sem o campo) e mostrar a pílula "Bot" (com a descrição "Responde com a IA") ao lado do nome no cabeçalho da conversa direta. O resto já funciona: as respostas do bot, o "digitando" (WS 4 a cada 3 s) e o aviso de falha chegam como mensagens e eventos comuns.
+- **ATV-04 / ATV-05:** **já feitos** no `2219208` ("Marcar como concluída", a chamada perdida conclui ao tocar, `POST /atividades/reacoes-vistas` uma vez por quantidade). Conferir no teste manual: reagir pelo web a uma mensagem do Android, abrir a conversa no Android e ver o badge cair.
+- **GER-09:** o Android já carrega `GET /usuario/permissoes` (`SistemaRepositorio.minhasPermissoes`), mas só para as telas Sistema e Acessos. Falta:
+  - uma função como o `pode` do web (verdadeira até a lista chegar) e esconder pelo código: o menu do toque longo (reações, Responder, Responder no privado, Encaminhar, Pedir confirmação, Ocultar), os itens do "+", o microfone, o botão de emoji e a aba de figurinhas, "Agendar", os botões de ligar e de ligar o vídeo, "Compartilhar tela", "Ligar novamente", "Novo grupo", os campos do perfil, a senha, a privacidade e a qualidade das chamadas;
+  - barrar o anexo sem permissão ao entrar na fila, com "Você não tem permissão para enviar <tipos>.";
+  - mostrar a mensagem do 403 ("Você não tem permissão para: …") onde o servidor recusar (envio, reação, ocultar, chamada);
+  - **pegadinha:** sem `ocultar`, cancelar a agendada também dá 403.
+- **ANX-16, CFG-11 a CFG-14, GER-10:** não se aplicam ao celular (§7).
+
+**IDs alterados**
+- **ATV-01 / ATV-02 / MSG-21 / ENV-24 / ENV-27:** **já feitos** no `2219208` (`pendente`, tipo 5 com o selo "✓", contador de pendentes sem `POST /atividades/vistas`). O WS 61 que chega ao confirmar já é tratado (o Android relê o contador a cada 61).
+- **AUT-01 / AUT-02:** chamar `GET /cadastro` (rota pública, como o login) na tela de login e esconder "Não tem conta? Criar conta" (`LoginTela.kt`) com `aberto: false`; sem resposta, mostrar. No cadastro, o 403 vira a mensagem do servidor.
+- **AUT-06 / AUT-07 / AUT-08 / CFG-09:** no perfil e na privacidade, travar ou esconder pelas permissões `nome`, `email`, `avatar`, `senha` e `privacidade` (textos de §6.2) e mandar no `PATCH /usuario` só o que pode mudar.
+- **CFG-08:** **Achado:** `feature/config/.../AcessosTela.kt` põe, em cada usuário, **uma caixa por permissão numa `Row` sem rolagem**, e lista todas em "O que cada permissão libera"; o `nomeDaPermissao` só conhece `parametros` e `permissoes`. Com 32 permissões a linha estoura a largura e as de uso aparecem com o código cru (`chamada_audio`). Refazer como o web: uma linha por pessoa que abre, a pílula "Administração", "N de T", os grupos e os nomes curtos de §6.2, as próprias travadas (o servidor recusa com 400). Ler `uso` no `PermissaoDto` (hoje `{codigo, descricao}`).
+- **CFG-07:** na tela Sistema, a caixa "Permitir que as pessoas se cadastrem" (`cadastro_aberto`). "Modelo de embeddings" só se a seção de IA for feita (FC-812).
+- **CFG-01 / CFG-02 / CFG-06:** esconder "Qualidade das chamadas" sem `config_chamadas` e a escolha do tema sem `cores` (só o cliente confere essas duas).
+- **CON-07 / CON-09 / CON-11:** "Novo grupo" só com `grupo`; botões de chamada por permissão; `bot` no DTO (CON-16).
+- **ENV-01:** o servidor passa a recusar pelo conteúdo (emoji no texto, imagem, áudio etc.): mostrar o 403 na mensagem que falhou. Sobre rolar ao enviar: no Android a lista vem do Room, onde as recentes continuam depois de ir a uma mensagem antiga; conferir no teste manual que, depois de ir a uma mensagem antiga, enviar leva ao fim com a enviada.
+- **ENV-03 / ENV-04:** sem `emoji`, o seletor abre só nas figurinhas; sem `figurinha`, sem a aba; sem os dois, sem o botão.
+- **ANX-10 / ANX-11 / §1.7:** ler `duracao` e `intensidade` no `ConteudoDto` (hoje sem os campos) e mostrar a duração antes de tocar (hoje ela só aparece depois que o player carrega o áudio), "atual / total" e a onda; no envio, mandar `duracao` e `intensidade` no `IncluirAnexoRequisicao` (hoje `{identificador, tipo, nome, extensao, tamanho}`) para a gravação e o áudio anexado (§7). Sem isso, o áudio do Android aparece no web com a barra simples.
+- **ANX-04 / ANX-05:** opcional: velocidade e "Baixar vídeo" no visualizador (§7). Tocar na bolha não é necessário no celular.
+- **ANX-13:** não se aplica (o Android abre o Office com outro app).
+- **CHA-01 / CHA-02 / CHA-11 / CHA-16 / CHA-22:** esconder pelos códigos `chamada_audio`, `chamada_video` e `compartilhar_tela`.
+  - Ligar: o `GerenciadorChamadas.ligar` já encerra e avisa (`AvisoChamada.Falhou`) quando o `PUT /chamada/iniciar` falha; conferir que o 403 aparece com o texto do servidor.
+  - Ligar o vídeo: o `ativarVideo` abre a câmera e só depois anuncia (`tentar { remoto.anunciarVideo(id) }`, falha ignorada, como no web). Sem `chamada_video`, o servidor recusa o anúncio e os outros não ficam sabendo: **o botão precisa sumir** antes.
+- **SIP-01:** na etapa 9, `GET /sip` → `{}` sem `telefonia` (o ramal não aparece).
+- **GER-08:** `RecursosDto` pode ganhar `conhecimento`, mas o celular não usa; `ia` passa a dizer também se os bots respondem.
+- **§4.2:** WS 61 em mais situações e WS 4 do bot: nada a mudar (o Android já trata os dois).

@@ -1,6 +1,6 @@
 # 08 — Pendências no servidor (`conversa`) que afetam o Android
 
-**Data:** 2026-10-06 (🆕 S17–S22 em 2026-10-13, servidor em `12cf0cf`; 🆕 S11 e S20 revistas e S25 em 2026-10-15, servidor em `e25c4db`) · **Origem:** leitura de `conversa/src/*.ts` durante a auditoria (detalhes e linhas no doc 01).
+**Data:** 2026-10-06 (🆕 S17–S22 em 2026-10-13, servidor em `12cf0cf`; 🆕 S11 e S20 revistas e S25 em 2026-10-15, servidor em `e25c4db`; 🆕 S26–S30 e notas em S4, S7, S10, S11, S12, S19 e S25 em 2026-10-15 (noite), servidor em `ef13c22`) · **Origem:** leitura de `conversa/src/*.ts` durante a auditoria (detalhes e linhas no doc 01).
 
 > **Nenhuma alteração foi feita no servidor.** Esta lista serve para planejar o trabalho no repositório `conversa`. Itens marcados como **bloqueante** impedem uma funcionalidade P0 do Android.
 
@@ -40,6 +40,8 @@
 2. **MediaMTX (`/webrtc/call-<id>-u-<uid>/whep`)** não exige autenticação nem participação. Os caminhos são previsíveis (ids sequenciais), então é possível **ouvir chamadas alheias**.
    - Proposta: autenticação HTTP do MediaMTX (`authMethod: http` apontando para a API, ou JWT) com um token de chamada emitido em `/chamada/entrar`/`/chamada/iniciar`. Os clientes mandam `Authorization: Bearer` no WHIP/WHEP.
 3. **`mensagem_referencia`** não checa o acesso à mensagem referenciada (doc 01 §10.3). Isso permite citar ou encaminhar o conteúdo de conversas de que o usuário não participa.
+   - 🆕 2026-10-15 (`ef13c22`): agora isso também **dribla as permissões de uso** — ver S28, item 1.
+4. 🆕 2026-10-15 (`ef13c22`): **ferramentas externas dos bots** fazem o servidor chamar qualquer endereço http(s), inclusive a rede interna — ver S29.
 
 ### S5 · Figurinhas não são servidas pelo servidor de produção
 
@@ -57,6 +59,7 @@
 
 - E-mail duplicado no cadastro, segundo `PUT /sip`, strings acima do limite da coluna (nome 100, login 50, dispositivo 50/15, extensão 10, emoji 10…) e FKs inválidas viram **500** com o texto do Postgres (doc 01 §3, pegadinha 42).
 - **Proposta:** validar o tamanho no `esquemas.ts` (`maxLength`) e mapear `unique_violation` → **409** e `foreign_key_violation` → **400/404**, com mensagens em português. O Android passa a mostrar mensagens corretas sem precisar adivinhar.
+- 🆕 2026-10-15 (`ef13c22`): o cadastro pelo administrador (`PUT /usuario/novo`) usa a mesma rotina do cadastro (`criarConta`): e-mail repetido continua dando **500**. As rotas novas de bots, ferramentas e base de conhecimento já validam tamanho e duplicidade com 400 em português.
 
 ### S8 · Criação de conversa não atômica
 
@@ -73,6 +76,7 @@
 - O cliente não sabe se a transcrição está configurada (`transcritor_url`), e só administradores leem `/parametros`.
 - **Proposta:** `GET /api/recursos` (para qualquer usuário logado) → `{transcricao:boolean, sip:boolean, gravacao:boolean, versao_api:"…"}`.
 - 🆕 2026-10-13: **parcialmente atendida** em `b8ea0c2`: `GET /api/recursos` existe, para qualquer usuário logado, e devolve `{transcricao, ia}` (doc 01 §13.3). Ainda faltam `versao_api` (e `sip`/`gravacao`, se fizerem sentido).
+- 🆕 2026-10-15 (`ef13c22`): `GET /recursos` ganhou `conhecimento` (base de conhecimento dos bots), e surgiu `GET /api/cadastro` **público** (`{aberto}`), que a tela de login pode usar antes do login. `versao_api` continua faltando; com a mudança incompatível de `GET /atividades` (S26), ela fica mais necessária.
 
 ### S11 · Ambiguidade do `tipo` da chamada
 
@@ -81,6 +85,7 @@
 - Ao terminar porque o último participante saiu, **não sai o evento 52**.
 - **Proposta:** separar `midia` (1 áudio / 2 vídeo) de `modo` (direta/grupo), incluir o criador automaticamente e emitir o 52 em todo encerramento.
 - 🆕 2026-10-15 (`6d20ff7`): `POST /chamada/video` passou a gravar `tipo = 2` numa chamada `tipo = 1` (`chamadas.ts`, `ativarVideo`), para o resumo e o histórico dizerem "vídeo". Como o mesmo campo decide a regra de status, a chamada **troca de regra no meio**: com 3+ pessoas, a primeira saída ou recusa deixa de encerrá-la (doc 01 §9.4). A rota só confere a participação, então também muda o `tipo` de uma chamada já encerrada (o histórico muda; o resumo já gravado não). Reforça a proposta de separar `midia` de `modo`.
+- 🆕 2026-10-15 (`ef13c22`): as permissões de chamada também seguem esse `tipo` (`chamadas.ts`, `iniciarChamada`): 1 pede `chamada_audio` e 2 pede `chamada_video`. Sem `tipo`, 3+ pessoas em `usuarios` valem `tipo = 2`, então quem só tem `chamada_audio` leva 403 numa chamada de áudio em grupo se o cliente não mandar o `tipo`. Mais um motivo para separar `midia` de `modo`.
 
 ### S12 · Contrato publicado
 
@@ -93,6 +98,7 @@
   - Declarar `response` nos esquemas das rotas.
   - Um `CHANGELOG-API.md` no servidor.
   - Versão da API no login ou em `/recursos`.
+- 🆕 2026-10-15 (`ef13c22`): o commit trocou uma chave de resposta (`nova` → `pendente` em `GET /atividades`) sem versão nem aviso, e o OpenAPI não pega isso porque as respostas não têm esquema (S26). É o caso que esta pendência queria evitar.
 
 ### S13 · JWT sem renovação
 
@@ -135,6 +141,7 @@
 
 - **Hoje:** `alterarConversa` (`conversas.ts`) grava `avatar_anexo_id` direto. Id inexistente → **500** com a mensagem de FK do Postgres; o tipo do anexo (imagem) e o `upload_status` também não são conferidos.
 - **Proposta:** conferir que o anexo existe, é tipo 2 e está concluído; responder 400/404 em português. Mesmo caso da S7.
+- 🆕 2026-10-15 (`ef13c22`): o cadastro pelo administrador (`PUT /usuario/novo`, `cadastrarUsuario`) já confere o avatar (existe e é tipo 2 → senão 400 `Avatar inválido: envie uma imagem.`). `PATCH /conversa` e `PATCH /usuario` continuam sem conferir; a mesma checagem serviria nos dois.
 
 ### S20 · Chat da chamada reaproveitado deixa de fora quem não é membro da conversa 🆕 (2026-10-13, `a40fd47`) — 🆕 quase toda resolvida em `6d20ff7`
 
@@ -175,15 +182,64 @@
   1. **WS 65 de agendada antes de sair:** `POST /mensagem/pedir-confirmacao` aceita mensagem agendada (o prazo conta de `visivel_em`) e manda o WS 65 a **todos** os membros na hora, com a lista de nomes, embora os outros ainda não vejam a mensagem. Os outros avisos de agendada (WS 2, WS 3, WS 61) esperam a mensagem sair.
   2. **`pode_confirmar` em mensagem oculta:** o objeto `confirmacao` continua sendo montado para mensagem com `excluida_em`, e `pode_confirmar` vem `true` para quem está na lista e não confirmou; mas `POST /mensagem/confirmar` responde 400 `Esta mensagem não pede confirmação de leitura.`
   3. **Quem sai da conversa fica na lista:** `mensagem_confirmacao_destinatario` não é mexida quando alguém sai (`DELETE /conversa/usuario`). A pessoa continua em `destinatarios` e em `total`, mas não pode mais confirmar (403 `Acesso negado!`): o "x de y" daquela mensagem nunca fecha.
-- **Efeito:** clientes mostram um botão que dá erro (item 2) e uma contagem que não se completa (item 3); o item 1 avisa sobre uma mensagem que o cliente ainda não tem (o Android ignora id desconhecido).
-- **Proposta:** (1) numa agendada, mandar o WS 65 só ao autor e deixar os outros receberem a `confirmacao` quando a mensagem sair; (2) `pode_confirmar = false` com `excluida_em`; (3) ao sair da conversa, tirar a pessoa das listas de mensagens ainda não confirmadas por ela (ou não contá-la em `total`).
+  4. 🆕 2026-10-15 (`ef13c22`) **Atividade tipo 5 de agendada antes de sair:** `pedirConfirmacao` cria a atividade "pediu confirmação" de cada destinatário com a data **de agora** (`atividadesConfirmacao(..., null)`), mesmo numa agendada que ainda não saiu (no envio com `pede_confirmacao`, ela nasce com `visivel_em` e só aparece depois). Como `GET /atividades` monta `texto` e `conteudo_tipo` com o conteúdo da mensagem, o destinatário **lê o texto da agendada antes da hora** na tela de atividades, e o contador sobe por uma mensagem que ele não acha no chat.
+- **Efeito:** clientes mostram um botão que dá erro (item 2) e uma contagem que não se completa (item 3); o item 1 avisa sobre uma mensagem que o cliente ainda não tem (o Android ignora id desconhecido); 🆕 o item 4 vaza o texto da agendada e cria uma pendência que o destinatário não resolve até a mensagem sair.
+- **Proposta:** (1) numa agendada, mandar o WS 65 só ao autor e deixar os outros receberem a `confirmacao` quando a mensagem sair; (2) `pode_confirmar = false` com `excluida_em`; (3) ao sair da conversa, tirar a pessoa das listas de mensagens ainda não confirmadas por ela (ou não contá-la em `total`); 🆕 (4) em `pedirConfirmacao`, criar a atividade com `criado_em = coalesce(visivel_em, agora)`, como já faz o envio.
+
+### S26 · Atividades: `nova` virou `pendente` sem compatibilidade 🆕 (2026-10-15, `ef13c22`)
+
+- **Hoje** (`atividades.ts`, `atividades`, `atividadesNovas`, `marcarAtividadesVistas`; doc 01 §12):
+  1. `GET /atividades` deixou de mandar a chave `nova` e passou a mandar `pendente`, com outro sentido (pendência até concluir, não "nova desde a última visita").
+  2. `POST /atividades/vistas` continua respondendo 200 e gravando `atividades_vistas_em`, mas **não tem mais efeito** no contador nem na lista.
+  3. Reação (1) e chamada perdida (4) só deixam de ser pendentes por rotas novas (`/atividades/reacoes-vistas`, `/atividade/concluir`).
+  4. `POST /atividade/concluir` responde `{sucesso: true}` mesmo para id inexistente ou de outra pessoa.
+- **Efeito:** um cliente feito para o contrato anterior (o Android de hoje) **não quebra no parse**, mas: não mostra nenhuma atividade como nova (a chave sumiu); abrir a aba não zera mais o número; e reações e chamadas perdidas acumulam no contador para sempre. O usuário vê um número que não consegue zerar.
+- **Proposta:** durante a transição, mandar `nova` junto com `pendente` (ex.: `nova = pendente`) e documentar a mudança num `CHANGELOG-API.md` (S12); avaliar se `POST /atividades/vistas` deve concluir reações e chamadas perdidas vistas (o comportamento antigo do "abrir a aba"); responder 404 em `/atividade/concluir` com id alheio, para o cliente perceber o erro.
+
+### S27 · Bots no status de entrega, na confirmação e nas chamadas 🆕 (2026-10-15, `ef13c22`)
+
+- **Hoje** (`bots.ts`, `responder`, `botsChamados`; `mensagens.ts`, `destinatariosConfirmacao`):
+  1. **Status de entrega:** o bot é membro e ganha linha em `mensagem_status` como qualquer um, mas nunca chama `GET /mensagens`: **nunca marca `recebida`**, e só marca `visualizada` a mensagem que o chamou. Para o remetente, `recebida`/`visualizada` é o agregado de todos os destinatários (doc 01 §10.2), então **em grupo com bot nenhuma mensagem chega a "recebida por todos"**; na direta com o bot, a mensagem fica "vista" sem ter sido "recebida". `GET /mensagem/status/detalhe` mostra o bot sem datas.
+  2. **Confirmação de leitura:** sem `confirmacao_usuarios`, a lista é de todos os outros membros, **inclusive bots**. O bot ganha a atividade tipo 5 e nunca confirma: o "x de y" não fecha.
+  3. **Chamadas:** dá para ligar para um bot ou convidá-lo. Ele nunca atende: a chamada toca até o cliente desistir e o bot ganha uma "chamada perdida" que ninguém vê.
+  4. **Marcação:** só `GET /usuario/contatos` diz quem é bot (`bot: true`). `GET /conversas`, `GET /conversa/usuarios`, `MensagemResposta` e as atividades não dizem; o cliente cruza ids.
+  5. **Excluir bot** tira o bot dos grupos sem WS 40: os outros membros só veem a saída ao recarregar.
+- **Efeito:** tiques de entrega errados em todo grupo com bot; confirmações que não fecham; ligação que não serve para nada.
+- **Proposta:** (1) o bot marcar `recebida` (e `visualizada`) de toda mensagem da conversa ao responder, ou o agregado ignorar bots; (2) deixar bots fora da lista padrão de confirmação (e recusar bot em `confirmacao_usuarios`); (3) recusar bot em `PUT /chamada/iniciar` e `PUT /chamada/usuario` (400); (4) mandar `bot` (ou `destinatario_bot`) em `/conversas` e `/conversa/usuarios`; (5) WS 40 ao tirar o bot dos grupos.
+
+### S28 · Permissões de uso: arestas 🆕 (2026-10-15, `ef13c22`)
+
+- **Hoje** (`mensagens.ts`, `permissoesMensagem`; `usuarios.ts`, `alterarUsuario`; `permissoes.ts`):
+  1. **Encaminhar dribla as outras permissões:** com `mensagem_referencia.tipo = 2`, o servidor só confere `encaminhar` e volta. Mas os conteúdos vêm **do cliente**, não da mensagem original, e a referência não é conferida (S4, item 3). Quem não tem `imagem`, `arquivo`, `agendar`, `postagem` ou `confirmacao` consegue tudo isso marcando a mensagem como "encaminhada" de qualquer id.
+  2. **`emoji` pega mais que emoji:** a checagem é `\p{Extended_Pictographic}`, que inclui `©`, `®`, `™` e algumas setas. E deixa de fora o título da postagem, a pergunta e as opções da votação e o emoji do grupo.
+  3. **Desfazer pede a permissão:** tirar a própria reação pede `reagir`; ocultar a própria mensagem (e apagar a própria agendada) pede `ocultar`.
+  4. **`PATCH /usuario` confere pela chave enviada**, não pela mudança: um cliente que manda nome e e-mail juntos precisa das duas, mesmo mudando só um.
+  5. **Não conferidas no servidor:** `compartilhar_tela`, `cores` e `config_chamadas` (só o cliente esconde). Para `compartilhar_tela` isso permite compartilhar a tela mesmo sem a permissão.
+  6. **Vídeo pela extensão:** `ogg` conta como vídeo (um áudio `.ogg` enviado como arquivo pede `video`); anexo desconhecido conta como `arquivo`.
+  7. **Sem aviso:** não há evento quando um administrador muda as permissões de alguém; o cliente só descobre no 403 ou ao reler `GET /usuario/permissoes`.
+- **Efeito:** o item 1 anula as permissões de conteúdo para quem conhece a API; os itens 2–4 dão 403 em situações que o usuário não entende; o item 7 deixa botões aparecendo até o 403.
+- **Proposta:** (1) no encaminhamento, copiar os conteúdos da mensagem original no servidor (e conferir o acesso a ela) em vez de aceitar os do cliente, e conferir `agendar`/`postagem`/`confirmacao` também no encaminhamento; (2) usar uma checagem de emoji de verdade (`\p{Emoji_Presentation}` ou `\p{Extended_Pictographic}` sem os símbolos de texto) e conferir também título, votação e emoji do grupo; (3) liberar o "desfazer" sem a permissão; (4) conferir só os campos que mudam; (5) conferir `compartilhar_tela` no sinal `{acao:'tela'}` (WS 57); (6) tirar `ogg` da lista de vídeo; (7) um WS (por exemplo 61 ou um tipo novo) ao mudar as permissões da pessoa.
+
+### S29 · Ferramentas externas: o servidor chama qualquer endereço 🆕 (2026-10-15, `ef13c22`)
+
+- **Hoje** (`ferramentas.ts`, `conferir`, `chamarFerramenta`): a URL só precisa ser http ou https. O servidor faz o pedido de dentro da rede do Docker, então alcança `http://postgres:5432`, `http://minio:9000`, `http://qdrant:6333` (sem autenticação), `http://api:8080` e `127.0.0.1` — e devolve até 8000 caracteres da resposta em `POST /ferramenta/testar`. Exige a permissão `ferramentas`, mas, no **modo aberto** (doc 01 §13.1), qualquer conta tem todas as permissões.
+- **Efeito:** quem cadastra ferramentas lê e altera os serviços internos (o Qdrant, por exemplo, aceita apagar coleções por HTTP). Um bot com a ferramenta ligada também pode ser induzido a chamá-la.
+- **Proposta:** recusar endereços internos e privados (nomes do compose, `localhost`, 10/8, 172.16/12, 192.168/16, 169.254/16) depois de resolver o DNS, ou ter uma lista de domínios permitidos nos parâmetros.
+
+### S30 · Base de conhecimento: limite do documento e indexação sem aviso 🆕 (2026-10-15, `ef13c22`)
+
+- **Hoje** (`conhecimento.ts`, `incluirDocumento`, `indexar`):
+  1. O servidor aceita documento de até **2 milhões de caracteres**, mas o nginx corta o corpo JSON em **1 MB** (`client_max_body_size 1m` em `/api/`). Documentos acima de ~1 MB levam **413 do nginx** (HTML, não `{error}`).
+  2. A indexação roda em segundo plano, numa fila só da memória, sem evento ao terminar (a tela relê a lista). Reiniciar a API no meio deixa o documento em "processando" para sempre, até "Reindexar tudo".
+- **Efeito:** só administração (o celular não usa): mensagem de erro ruim para documentos grandes e documentos presos em "processando".
+- **Proposta:** (1) aumentar o `client_max_body_size` só para `/api/conhecimento/documento`, ou baixar o limite do servidor para o que passa no nginx (com 400 em português); (2) ao subir a API, recolocar na fila os documentos com status 1; avisar o fim por WebSocket.
 
 ## Prioridade sugerida no servidor
 
 | Ordem | Itens | Por quê |
 |---|---|---|
 | 1 | S1, S2, 🆕 S18 | Sem eles, o Android não toca nem notifica de forma confiável |
-| 2 | S4, 🆕 S22 | Segurança (ouvir chamadas e baixar anexos alheios; presença em conversa alheia) |
-| 3 | S3, S13, 🆕 S17 | Qualidade das notificações, do contador de não lidas e da sessão no celular |
-| 4 | S7, S8, S9, S11, 🆕 S19, S20 (🆕 2026-10-15: só o caso do chat de outra ligação) | Robustez para todos os clientes |
-| 5 | S5, S6, S10, S12, S14, S15, S16, 🆕 S21, 🆕 S25 | Higiene e evolução |
+| 2 | S4, 🆕 S22, 🆕 `ef13c22` S29, S28 (item 1) | Segurança (ouvir chamadas e baixar anexos alheios; presença em conversa alheia; 🆕 servidor chamando a rede interna; encaminhamento driblando as permissões) |
+| 3 | S3, S13, 🆕 S17, 🆕 `ef13c22` S26 | Qualidade das notificações, do contador de não lidas (🆕 e do de atividades) e da sessão no celular |
+| 4 | S7, S8, S9, S11, 🆕 S19, S20 (🆕 2026-10-15: só o caso do chat de outra ligação), 🆕 `ef13c22` S27, S28 (itens 2–7) | Robustez para todos os clientes |
+| 5 | S5, S6, S10, S12, S14, S15, S16, 🆕 S21, 🆕 S25, 🆕 `ef13c22` S30 | Higiene e evolução |

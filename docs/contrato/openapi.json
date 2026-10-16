@@ -463,6 +463,11 @@
         "operationId": "deleteApiUsuario"
       }
     },
+    "/api/cadastro": {
+      "get": {
+        "operationId": "getApiCadastro"
+      }
+    },
     "/api/alterar-senha": {
       "post": {
         "requestBody": {
@@ -567,8 +572,7 @@
                       "null"
                     ]
                   }
-                },
-                "additionalProperties": false
+                }
               }
             },
             "application/x-www-form-urlencoded": {
@@ -609,8 +613,7 @@
                       "null"
                     ]
                   }
-                },
-                "additionalProperties": false
+                }
               }
             },
             "multipart/form-data": {
@@ -651,8 +654,7 @@
                       "null"
                     ]
                   }
-                },
-                "additionalProperties": false
+                }
               }
             }
           }
@@ -682,6 +684,181 @@
           }
         ],
         "operationId": "putApiDispositivoUsuario"
+      }
+    },
+    "/api/usuario/novo": {
+      "put": {
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": [
+                  "nome"
+                ],
+                "properties": {
+                  "nome": {
+                    "type": "string"
+                  },
+                  "login": {
+                    "type": "string"
+                  },
+                  "email": {
+                    "type": "string"
+                  },
+                  "telefone": {
+                    "nullable": true,
+                    "type": [
+                      "string",
+                      "null"
+                    ]
+                  },
+                  "senha": {
+                    "type": "string"
+                  },
+                  "avatar_anexo_id": {
+                    "nullable": true,
+                    "anyOf": [
+                      {
+                        "anyOf": [
+                          {
+                            "format": "integer",
+                            "default": 0,
+                            "type": "string"
+                          },
+                          {
+                            "type": "integer"
+                          }
+                        ]
+                      },
+                      {
+                        "type": "null"
+                      }
+                    ]
+                  },
+                  "bot": {
+                    "type": "boolean"
+                  },
+                  "instrucoes": {
+                    "type": "string"
+                  }
+                }
+              }
+            },
+            "application/x-www-form-urlencoded": {
+              "schema": {
+                "type": "object",
+                "required": [
+                  "nome"
+                ],
+                "properties": {
+                  "nome": {
+                    "type": "string"
+                  },
+                  "login": {
+                    "type": "string"
+                  },
+                  "email": {
+                    "type": "string"
+                  },
+                  "telefone": {
+                    "nullable": true,
+                    "type": [
+                      "string",
+                      "null"
+                    ]
+                  },
+                  "senha": {
+                    "type": "string"
+                  },
+                  "avatar_anexo_id": {
+                    "nullable": true,
+                    "anyOf": [
+                      {
+                        "anyOf": [
+                          {
+                            "format": "integer",
+                            "default": 0,
+                            "type": "string"
+                          },
+                          {
+                            "type": "integer"
+                          }
+                        ]
+                      },
+                      {
+                        "type": "null"
+                      }
+                    ]
+                  },
+                  "bot": {
+                    "type": "boolean"
+                  },
+                  "instrucoes": {
+                    "type": "string"
+                  }
+                }
+              }
+            },
+            "multipart/form-data": {
+              "schema": {
+                "type": "object",
+                "required": [
+                  "nome"
+                ],
+                "properties": {
+                  "nome": {
+                    "type": "string"
+                  },
+                  "login": {
+                    "type": "string"
+                  },
+                  "email": {
+                    "type": "string"
+                  },
+                  "telefone": {
+                    "nullable": true,
+                    "type": [
+                      "string",
+                      "null"
+                    ]
+                  },
+                  "senha": {
+                    "type": "string"
+                  },
+                  "avatar_anexo_id": {
+                    "nullable": true,
+                    "anyOf": [
+                      {
+                        "anyOf": [
+                          {
+                            "format": "integer",
+                            "default": 0,
+                            "type": "string"
+                          },
+                          {
+                            "type": "integer"
+                          }
+                        ]
+                      },
+                      {
+                        "type": "null"
+                      }
+                    ]
+                  },
+                  "bot": {
+                    "type": "boolean"
+                  },
+                  "instrucoes": {
+                    "type": "string"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "operationId": "putApiUsuarioNovo"
       }
     },
     "/api/usuario/contato": {
@@ -1702,8 +1879,7 @@
                       }
                     ]
                   }
-                },
-                "additionalProperties": false
+                }
               }
             },
             "application/x-www-form-urlencoded": {
@@ -1864,8 +2040,7 @@
                       }
                     ]
                   }
-                },
-                "additionalProperties": false
+                }
               }
             },
             "multipart/form-data": {
@@ -2026,8 +2201,7 @@
                       }
                     ]
                   }
-                },
-                "additionalProperties": false
+                }
               }
             }
           }
@@ -2185,8 +2359,7 @@
                       }
                     ]
                   }
-                },
-                "additionalProperties": false
+                }
               }
             },
             "application/x-www-form-urlencoded": {
@@ -2221,8 +2394,7 @@
                       }
                     ]
                   }
-                },
-                "additionalProperties": false
+                }
               }
             },
             "multipart/form-data": {
@@ -2257,8 +2429,7 @@
                       }
                     ]
                   }
-                },
-                "additionalProperties": false
+                }
               }
             }
           }
@@ -2303,8 +2474,7 @@
                       }
                     ]
                   }
-                },
-                "additionalProperties": false
+                }
               }
             },
             "application/x-www-form-urlencoded": {
@@ -2339,8 +2509,7 @@
                       }
                     ]
                   }
-                },
-                "additionalProperties": false
+                }
               }
             },
             "multipart/form-data": {
@@ -2375,8 +2544,7 @@
                       }
                     ]
                   }
-                },
-                "additionalProperties": false
+                }
               }
             }
           }
@@ -2958,6 +3126,39 @@
                         "type": "integer"
                       }
                     ]
+                  },
+                  "duracao": {
+                    "nullable": true,
+                    "minimum": 0,
+                    "maximum": 86400,
+                    "type": [
+                      "number",
+                      "null"
+                    ]
+                  },
+                  "intensidade": {
+                    "nullable": true,
+                    "maxItems": 200,
+                    "type": [
+                      "array",
+                      "null"
+                    ],
+                    "items": {
+                      "minimum": 0,
+                      "maximum": 100,
+                      "anyOf": [
+                        {
+                          "format": "integer",
+                          "default": 0,
+                          "type": "string"
+                        },
+                        {
+                          "minimum": 0,
+                          "maximum": 100,
+                          "type": "integer"
+                        }
+                      ]
+                    }
                   }
                 }
               }
@@ -3011,6 +3212,39 @@
                         "type": "integer"
                       }
                     ]
+                  },
+                  "duracao": {
+                    "nullable": true,
+                    "minimum": 0,
+                    "maximum": 86400,
+                    "type": [
+                      "number",
+                      "null"
+                    ]
+                  },
+                  "intensidade": {
+                    "nullable": true,
+                    "maxItems": 200,
+                    "type": [
+                      "array",
+                      "null"
+                    ],
+                    "items": {
+                      "minimum": 0,
+                      "maximum": 100,
+                      "anyOf": [
+                        {
+                          "format": "integer",
+                          "default": 0,
+                          "type": "string"
+                        },
+                        {
+                          "minimum": 0,
+                          "maximum": 100,
+                          "type": "integer"
+                        }
+                      ]
+                    }
                   }
                 }
               }
@@ -3064,6 +3298,39 @@
                         "type": "integer"
                       }
                     ]
+                  },
+                  "duracao": {
+                    "nullable": true,
+                    "minimum": 0,
+                    "maximum": 86400,
+                    "type": [
+                      "number",
+                      "null"
+                    ]
+                  },
+                  "intensidade": {
+                    "nullable": true,
+                    "maxItems": 200,
+                    "type": [
+                      "array",
+                      "null"
+                    ],
+                    "items": {
+                      "minimum": 0,
+                      "maximum": 100,
+                      "anyOf": [
+                        {
+                          "format": "integer",
+                          "default": 0,
+                          "type": "string"
+                        },
+                        {
+                          "minimum": 0,
+                          "maximum": 100,
+                          "type": "integer"
+                        }
+                      ]
+                    }
                   }
                 }
               }
@@ -4685,6 +4952,1750 @@
         "operationId": "deleteApiPermissaoUsuario"
       }
     },
+    "/api/bots": {
+      "get": {
+        "operationId": "getApiBots"
+      }
+    },
+    "/api/bot": {
+      "put": {
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": [
+                  "nome",
+                  "instrucoes"
+                ],
+                "properties": {
+                  "nome": {
+                    "type": "string"
+                  },
+                  "instrucoes": {
+                    "type": "string"
+                  }
+                }
+              }
+            },
+            "application/x-www-form-urlencoded": {
+              "schema": {
+                "type": "object",
+                "required": [
+                  "nome",
+                  "instrucoes"
+                ],
+                "properties": {
+                  "nome": {
+                    "type": "string"
+                  },
+                  "instrucoes": {
+                    "type": "string"
+                  }
+                }
+              }
+            },
+            "multipart/form-data": {
+              "schema": {
+                "type": "object",
+                "required": [
+                  "nome",
+                  "instrucoes"
+                ],
+                "properties": {
+                  "nome": {
+                    "type": "string"
+                  },
+                  "instrucoes": {
+                    "type": "string"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "operationId": "putApiBot"
+      },
+      "patch": {
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": [
+                  "id"
+                ],
+                "properties": {
+                  "id": {
+                    "anyOf": [
+                      {
+                        "format": "integer",
+                        "default": 0,
+                        "type": "string"
+                      },
+                      {
+                        "type": "integer"
+                      }
+                    ]
+                  },
+                  "nome": {
+                    "type": "string"
+                  },
+                  "instrucoes": {
+                    "type": "string"
+                  },
+                  "ativo": {
+                    "type": "boolean"
+                  }
+                }
+              }
+            },
+            "application/x-www-form-urlencoded": {
+              "schema": {
+                "type": "object",
+                "required": [
+                  "id"
+                ],
+                "properties": {
+                  "id": {
+                    "anyOf": [
+                      {
+                        "format": "integer",
+                        "default": 0,
+                        "type": "string"
+                      },
+                      {
+                        "type": "integer"
+                      }
+                    ]
+                  },
+                  "nome": {
+                    "type": "string"
+                  },
+                  "instrucoes": {
+                    "type": "string"
+                  },
+                  "ativo": {
+                    "type": "boolean"
+                  }
+                }
+              }
+            },
+            "multipart/form-data": {
+              "schema": {
+                "type": "object",
+                "required": [
+                  "id"
+                ],
+                "properties": {
+                  "id": {
+                    "anyOf": [
+                      {
+                        "format": "integer",
+                        "default": 0,
+                        "type": "string"
+                      },
+                      {
+                        "type": "integer"
+                      }
+                    ]
+                  },
+                  "nome": {
+                    "type": "string"
+                  },
+                  "instrucoes": {
+                    "type": "string"
+                  },
+                  "ativo": {
+                    "type": "boolean"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "operationId": "patchApiBot"
+      },
+      "delete": {
+        "parameters": [
+          {
+            "name": "id",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "anyOf": [
+                {
+                  "format": "integer",
+                  "default": 0,
+                  "type": "string"
+                },
+                {
+                  "type": "integer"
+                }
+              ]
+            }
+          }
+        ],
+        "operationId": "deleteApiBot"
+      }
+    },
+    "/api/bot/ferramentas": {
+      "put": {
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": [
+                  "id",
+                  "ferramentas"
+                ],
+                "properties": {
+                  "id": {
+                    "anyOf": [
+                      {
+                        "format": "integer",
+                        "default": 0,
+                        "type": "string"
+                      },
+                      {
+                        "type": "integer"
+                      }
+                    ]
+                  },
+                  "ferramentas": {
+                    "maxItems": 100,
+                    "type": "array",
+                    "items": {
+                      "anyOf": [
+                        {
+                          "format": "integer",
+                          "default": 0,
+                          "type": "string"
+                        },
+                        {
+                          "type": "integer"
+                        }
+                      ]
+                    }
+                  }
+                }
+              }
+            },
+            "application/x-www-form-urlencoded": {
+              "schema": {
+                "type": "object",
+                "required": [
+                  "id",
+                  "ferramentas"
+                ],
+                "properties": {
+                  "id": {
+                    "anyOf": [
+                      {
+                        "format": "integer",
+                        "default": 0,
+                        "type": "string"
+                      },
+                      {
+                        "type": "integer"
+                      }
+                    ]
+                  },
+                  "ferramentas": {
+                    "maxItems": 100,
+                    "type": "array",
+                    "items": {
+                      "anyOf": [
+                        {
+                          "format": "integer",
+                          "default": 0,
+                          "type": "string"
+                        },
+                        {
+                          "type": "integer"
+                        }
+                      ]
+                    }
+                  }
+                }
+              }
+            },
+            "multipart/form-data": {
+              "schema": {
+                "type": "object",
+                "required": [
+                  "id",
+                  "ferramentas"
+                ],
+                "properties": {
+                  "id": {
+                    "anyOf": [
+                      {
+                        "format": "integer",
+                        "default": 0,
+                        "type": "string"
+                      },
+                      {
+                        "type": "integer"
+                      }
+                    ]
+                  },
+                  "ferramentas": {
+                    "maxItems": 100,
+                    "type": "array",
+                    "items": {
+                      "anyOf": [
+                        {
+                          "format": "integer",
+                          "default": 0,
+                          "type": "string"
+                        },
+                        {
+                          "type": "integer"
+                        }
+                      ]
+                    }
+                  }
+                }
+              }
+            }
+          }
+        },
+        "operationId": "putApiBotFerramentas"
+      }
+    },
+    "/api/bot/conhecimento": {
+      "put": {
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": [
+                  "id",
+                  "bases"
+                ],
+                "properties": {
+                  "id": {
+                    "anyOf": [
+                      {
+                        "format": "integer",
+                        "default": 0,
+                        "type": "string"
+                      },
+                      {
+                        "type": "integer"
+                      }
+                    ]
+                  },
+                  "bases": {
+                    "maxItems": 100,
+                    "type": "array",
+                    "items": {
+                      "anyOf": [
+                        {
+                          "format": "integer",
+                          "default": 0,
+                          "type": "string"
+                        },
+                        {
+                          "type": "integer"
+                        }
+                      ]
+                    }
+                  }
+                }
+              }
+            },
+            "application/x-www-form-urlencoded": {
+              "schema": {
+                "type": "object",
+                "required": [
+                  "id",
+                  "bases"
+                ],
+                "properties": {
+                  "id": {
+                    "anyOf": [
+                      {
+                        "format": "integer",
+                        "default": 0,
+                        "type": "string"
+                      },
+                      {
+                        "type": "integer"
+                      }
+                    ]
+                  },
+                  "bases": {
+                    "maxItems": 100,
+                    "type": "array",
+                    "items": {
+                      "anyOf": [
+                        {
+                          "format": "integer",
+                          "default": 0,
+                          "type": "string"
+                        },
+                        {
+                          "type": "integer"
+                        }
+                      ]
+                    }
+                  }
+                }
+              }
+            },
+            "multipart/form-data": {
+              "schema": {
+                "type": "object",
+                "required": [
+                  "id",
+                  "bases"
+                ],
+                "properties": {
+                  "id": {
+                    "anyOf": [
+                      {
+                        "format": "integer",
+                        "default": 0,
+                        "type": "string"
+                      },
+                      {
+                        "type": "integer"
+                      }
+                    ]
+                  },
+                  "bases": {
+                    "maxItems": 100,
+                    "type": "array",
+                    "items": {
+                      "anyOf": [
+                        {
+                          "format": "integer",
+                          "default": 0,
+                          "type": "string"
+                        },
+                        {
+                          "type": "integer"
+                        }
+                      ]
+                    }
+                  }
+                }
+              }
+            }
+          }
+        },
+        "operationId": "putApiBotConhecimento"
+      }
+    },
+    "/api/conhecimento/bases": {
+      "get": {
+        "operationId": "getApiConhecimentoBases"
+      }
+    },
+    "/api/conhecimento/disponiveis": {
+      "get": {
+        "operationId": "getApiConhecimentoDisponiveis"
+      }
+    },
+    "/api/conhecimento/base": {
+      "put": {
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": [
+                  "nome"
+                ],
+                "properties": {
+                  "nome": {
+                    "type": "string"
+                  },
+                  "descricao": {
+                    "type": "string"
+                  }
+                }
+              }
+            },
+            "application/x-www-form-urlencoded": {
+              "schema": {
+                "type": "object",
+                "required": [
+                  "nome"
+                ],
+                "properties": {
+                  "nome": {
+                    "type": "string"
+                  },
+                  "descricao": {
+                    "type": "string"
+                  }
+                }
+              }
+            },
+            "multipart/form-data": {
+              "schema": {
+                "type": "object",
+                "required": [
+                  "nome"
+                ],
+                "properties": {
+                  "nome": {
+                    "type": "string"
+                  },
+                  "descricao": {
+                    "type": "string"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "operationId": "putApiConhecimentoBase"
+      },
+      "patch": {
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": [
+                  "id",
+                  "nome"
+                ],
+                "properties": {
+                  "id": {
+                    "anyOf": [
+                      {
+                        "format": "integer",
+                        "default": 0,
+                        "type": "string"
+                      },
+                      {
+                        "type": "integer"
+                      }
+                    ]
+                  },
+                  "nome": {
+                    "type": "string"
+                  },
+                  "descricao": {
+                    "type": "string"
+                  }
+                }
+              }
+            },
+            "application/x-www-form-urlencoded": {
+              "schema": {
+                "type": "object",
+                "required": [
+                  "id",
+                  "nome"
+                ],
+                "properties": {
+                  "id": {
+                    "anyOf": [
+                      {
+                        "format": "integer",
+                        "default": 0,
+                        "type": "string"
+                      },
+                      {
+                        "type": "integer"
+                      }
+                    ]
+                  },
+                  "nome": {
+                    "type": "string"
+                  },
+                  "descricao": {
+                    "type": "string"
+                  }
+                }
+              }
+            },
+            "multipart/form-data": {
+              "schema": {
+                "type": "object",
+                "required": [
+                  "id",
+                  "nome"
+                ],
+                "properties": {
+                  "id": {
+                    "anyOf": [
+                      {
+                        "format": "integer",
+                        "default": 0,
+                        "type": "string"
+                      },
+                      {
+                        "type": "integer"
+                      }
+                    ]
+                  },
+                  "nome": {
+                    "type": "string"
+                  },
+                  "descricao": {
+                    "type": "string"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "operationId": "patchApiConhecimentoBase"
+      },
+      "delete": {
+        "parameters": [
+          {
+            "name": "id",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "anyOf": [
+                {
+                  "format": "integer",
+                  "default": 0,
+                  "type": "string"
+                },
+                {
+                  "type": "integer"
+                }
+              ]
+            }
+          }
+        ],
+        "operationId": "deleteApiConhecimentoBase"
+      }
+    },
+    "/api/conhecimento/documentos": {
+      "get": {
+        "parameters": [
+          {
+            "name": "base",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "anyOf": [
+                {
+                  "format": "integer",
+                  "default": 0,
+                  "type": "string"
+                },
+                {
+                  "type": "integer"
+                }
+              ]
+            }
+          }
+        ],
+        "operationId": "getApiConhecimentoDocumentos"
+      }
+    },
+    "/api/conhecimento/documento": {
+      "put": {
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": [
+                  "base_id",
+                  "nome",
+                  "texto"
+                ],
+                "properties": {
+                  "base_id": {
+                    "anyOf": [
+                      {
+                        "format": "integer",
+                        "default": 0,
+                        "type": "string"
+                      },
+                      {
+                        "type": "integer"
+                      }
+                    ]
+                  },
+                  "nome": {
+                    "type": "string"
+                  },
+                  "texto": {
+                    "type": "string"
+                  }
+                }
+              }
+            },
+            "application/x-www-form-urlencoded": {
+              "schema": {
+                "type": "object",
+                "required": [
+                  "base_id",
+                  "nome",
+                  "texto"
+                ],
+                "properties": {
+                  "base_id": {
+                    "anyOf": [
+                      {
+                        "format": "integer",
+                        "default": 0,
+                        "type": "string"
+                      },
+                      {
+                        "type": "integer"
+                      }
+                    ]
+                  },
+                  "nome": {
+                    "type": "string"
+                  },
+                  "texto": {
+                    "type": "string"
+                  }
+                }
+              }
+            },
+            "multipart/form-data": {
+              "schema": {
+                "type": "object",
+                "required": [
+                  "base_id",
+                  "nome",
+                  "texto"
+                ],
+                "properties": {
+                  "base_id": {
+                    "anyOf": [
+                      {
+                        "format": "integer",
+                        "default": 0,
+                        "type": "string"
+                      },
+                      {
+                        "type": "integer"
+                      }
+                    ]
+                  },
+                  "nome": {
+                    "type": "string"
+                  },
+                  "texto": {
+                    "type": "string"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "operationId": "putApiConhecimentoDocumento"
+      },
+      "delete": {
+        "parameters": [
+          {
+            "name": "id",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "anyOf": [
+                {
+                  "format": "integer",
+                  "default": 0,
+                  "type": "string"
+                },
+                {
+                  "type": "integer"
+                }
+              ]
+            }
+          }
+        ],
+        "operationId": "deleteApiConhecimentoDocumento"
+      }
+    },
+    "/api/conhecimento/buscar": {
+      "post": {
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": [
+                  "bases",
+                  "pergunta"
+                ],
+                "properties": {
+                  "bases": {
+                    "minItems": 1,
+                    "maxItems": 100,
+                    "type": "array",
+                    "items": {
+                      "anyOf": [
+                        {
+                          "format": "integer",
+                          "default": 0,
+                          "type": "string"
+                        },
+                        {
+                          "type": "integer"
+                        }
+                      ]
+                    }
+                  },
+                  "pergunta": {
+                    "type": "string"
+                  },
+                  "limite": {
+                    "minimum": 1,
+                    "maximum": 20,
+                    "anyOf": [
+                      {
+                        "format": "integer",
+                        "default": 0,
+                        "type": "string"
+                      },
+                      {
+                        "minimum": 1,
+                        "maximum": 20,
+                        "type": "integer"
+                      }
+                    ]
+                  }
+                }
+              }
+            },
+            "application/x-www-form-urlencoded": {
+              "schema": {
+                "type": "object",
+                "required": [
+                  "bases",
+                  "pergunta"
+                ],
+                "properties": {
+                  "bases": {
+                    "minItems": 1,
+                    "maxItems": 100,
+                    "type": "array",
+                    "items": {
+                      "anyOf": [
+                        {
+                          "format": "integer",
+                          "default": 0,
+                          "type": "string"
+                        },
+                        {
+                          "type": "integer"
+                        }
+                      ]
+                    }
+                  },
+                  "pergunta": {
+                    "type": "string"
+                  },
+                  "limite": {
+                    "minimum": 1,
+                    "maximum": 20,
+                    "anyOf": [
+                      {
+                        "format": "integer",
+                        "default": 0,
+                        "type": "string"
+                      },
+                      {
+                        "minimum": 1,
+                        "maximum": 20,
+                        "type": "integer"
+                      }
+                    ]
+                  }
+                }
+              }
+            },
+            "multipart/form-data": {
+              "schema": {
+                "type": "object",
+                "required": [
+                  "bases",
+                  "pergunta"
+                ],
+                "properties": {
+                  "bases": {
+                    "minItems": 1,
+                    "maxItems": 100,
+                    "type": "array",
+                    "items": {
+                      "anyOf": [
+                        {
+                          "format": "integer",
+                          "default": 0,
+                          "type": "string"
+                        },
+                        {
+                          "type": "integer"
+                        }
+                      ]
+                    }
+                  },
+                  "pergunta": {
+                    "type": "string"
+                  },
+                  "limite": {
+                    "minimum": 1,
+                    "maximum": 20,
+                    "anyOf": [
+                      {
+                        "format": "integer",
+                        "default": 0,
+                        "type": "string"
+                      },
+                      {
+                        "minimum": 1,
+                        "maximum": 20,
+                        "type": "integer"
+                      }
+                    ]
+                  }
+                }
+              }
+            }
+          }
+        },
+        "operationId": "postApiConhecimentoBuscar"
+      }
+    },
+    "/api/conhecimento/reindexar": {
+      "post": {
+        "operationId": "postApiConhecimentoReindexar"
+      }
+    },
+    "/api/ferramentas": {
+      "get": {
+        "operationId": "getApiFerramentas"
+      }
+    },
+    "/api/ferramentas/disponiveis": {
+      "get": {
+        "operationId": "getApiFerramentasDisponiveis"
+      }
+    },
+    "/api/ferramenta": {
+      "put": {
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": [
+                  "nome",
+                  "descricao",
+                  "metodo",
+                  "url",
+                  "cabecalhos",
+                  "parametros"
+                ],
+                "properties": {
+                  "nome": {
+                    "type": "string"
+                  },
+                  "descricao": {
+                    "type": "string"
+                  },
+                  "metodo": {
+                    "type": "string",
+                    "enum": [
+                      "GET",
+                      "POST"
+                    ]
+                  },
+                  "url": {
+                    "type": "string"
+                  },
+                  "cabecalhos": {
+                    "maxItems": 30,
+                    "type": "array",
+                    "items": {
+                      "type": "object",
+                      "required": [
+                        "nome"
+                      ],
+                      "properties": {
+                        "nome": {
+                          "type": "string"
+                        },
+                        "valor": {
+                          "nullable": true,
+                          "type": [
+                            "string",
+                            "null"
+                          ]
+                        }
+                      }
+                    }
+                  },
+                  "parametros": {
+                    "maxItems": 30,
+                    "type": "array",
+                    "items": {
+                      "type": "object",
+                      "required": [
+                        "nome",
+                        "tipo",
+                        "descricao",
+                        "obrigatorio"
+                      ],
+                      "properties": {
+                        "nome": {
+                          "type": "string"
+                        },
+                        "tipo": {
+                          "type": "string",
+                          "enum": [
+                            "string",
+                            "number",
+                            "boolean"
+                          ]
+                        },
+                        "descricao": {
+                          "type": "string"
+                        },
+                        "obrigatorio": {
+                          "type": "boolean"
+                        }
+                      }
+                    }
+                  },
+                  "ativo": {
+                    "type": "boolean"
+                  }
+                }
+              }
+            },
+            "application/x-www-form-urlencoded": {
+              "schema": {
+                "type": "object",
+                "required": [
+                  "nome",
+                  "descricao",
+                  "metodo",
+                  "url",
+                  "cabecalhos",
+                  "parametros"
+                ],
+                "properties": {
+                  "nome": {
+                    "type": "string"
+                  },
+                  "descricao": {
+                    "type": "string"
+                  },
+                  "metodo": {
+                    "type": "string",
+                    "enum": [
+                      "GET",
+                      "POST"
+                    ]
+                  },
+                  "url": {
+                    "type": "string"
+                  },
+                  "cabecalhos": {
+                    "maxItems": 30,
+                    "type": "array",
+                    "items": {
+                      "type": "object",
+                      "required": [
+                        "nome"
+                      ],
+                      "properties": {
+                        "nome": {
+                          "type": "string"
+                        },
+                        "valor": {
+                          "nullable": true,
+                          "type": [
+                            "string",
+                            "null"
+                          ]
+                        }
+                      }
+                    }
+                  },
+                  "parametros": {
+                    "maxItems": 30,
+                    "type": "array",
+                    "items": {
+                      "type": "object",
+                      "required": [
+                        "nome",
+                        "tipo",
+                        "descricao",
+                        "obrigatorio"
+                      ],
+                      "properties": {
+                        "nome": {
+                          "type": "string"
+                        },
+                        "tipo": {
+                          "type": "string",
+                          "enum": [
+                            "string",
+                            "number",
+                            "boolean"
+                          ]
+                        },
+                        "descricao": {
+                          "type": "string"
+                        },
+                        "obrigatorio": {
+                          "type": "boolean"
+                        }
+                      }
+                    }
+                  },
+                  "ativo": {
+                    "type": "boolean"
+                  }
+                }
+              }
+            },
+            "multipart/form-data": {
+              "schema": {
+                "type": "object",
+                "required": [
+                  "nome",
+                  "descricao",
+                  "metodo",
+                  "url",
+                  "cabecalhos",
+                  "parametros"
+                ],
+                "properties": {
+                  "nome": {
+                    "type": "string"
+                  },
+                  "descricao": {
+                    "type": "string"
+                  },
+                  "metodo": {
+                    "type": "string",
+                    "enum": [
+                      "GET",
+                      "POST"
+                    ]
+                  },
+                  "url": {
+                    "type": "string"
+                  },
+                  "cabecalhos": {
+                    "maxItems": 30,
+                    "type": "array",
+                    "items": {
+                      "type": "object",
+                      "required": [
+                        "nome"
+                      ],
+                      "properties": {
+                        "nome": {
+                          "type": "string"
+                        },
+                        "valor": {
+                          "nullable": true,
+                          "type": [
+                            "string",
+                            "null"
+                          ]
+                        }
+                      }
+                    }
+                  },
+                  "parametros": {
+                    "maxItems": 30,
+                    "type": "array",
+                    "items": {
+                      "type": "object",
+                      "required": [
+                        "nome",
+                        "tipo",
+                        "descricao",
+                        "obrigatorio"
+                      ],
+                      "properties": {
+                        "nome": {
+                          "type": "string"
+                        },
+                        "tipo": {
+                          "type": "string",
+                          "enum": [
+                            "string",
+                            "number",
+                            "boolean"
+                          ]
+                        },
+                        "descricao": {
+                          "type": "string"
+                        },
+                        "obrigatorio": {
+                          "type": "boolean"
+                        }
+                      }
+                    }
+                  },
+                  "ativo": {
+                    "type": "boolean"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "operationId": "putApiFerramenta"
+      },
+      "patch": {
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": [
+                  "id",
+                  "nome",
+                  "descricao",
+                  "metodo",
+                  "url",
+                  "cabecalhos",
+                  "parametros"
+                ],
+                "properties": {
+                  "id": {
+                    "anyOf": [
+                      {
+                        "format": "integer",
+                        "default": 0,
+                        "type": "string"
+                      },
+                      {
+                        "type": "integer"
+                      }
+                    ]
+                  },
+                  "nome": {
+                    "type": "string"
+                  },
+                  "descricao": {
+                    "type": "string"
+                  },
+                  "metodo": {
+                    "type": "string",
+                    "enum": [
+                      "GET",
+                      "POST"
+                    ]
+                  },
+                  "url": {
+                    "type": "string"
+                  },
+                  "cabecalhos": {
+                    "maxItems": 30,
+                    "type": "array",
+                    "items": {
+                      "type": "object",
+                      "required": [
+                        "nome"
+                      ],
+                      "properties": {
+                        "nome": {
+                          "type": "string"
+                        },
+                        "valor": {
+                          "nullable": true,
+                          "type": [
+                            "string",
+                            "null"
+                          ]
+                        }
+                      }
+                    }
+                  },
+                  "parametros": {
+                    "maxItems": 30,
+                    "type": "array",
+                    "items": {
+                      "type": "object",
+                      "required": [
+                        "nome",
+                        "tipo",
+                        "descricao",
+                        "obrigatorio"
+                      ],
+                      "properties": {
+                        "nome": {
+                          "type": "string"
+                        },
+                        "tipo": {
+                          "type": "string",
+                          "enum": [
+                            "string",
+                            "number",
+                            "boolean"
+                          ]
+                        },
+                        "descricao": {
+                          "type": "string"
+                        },
+                        "obrigatorio": {
+                          "type": "boolean"
+                        }
+                      }
+                    }
+                  },
+                  "ativo": {
+                    "type": "boolean"
+                  }
+                }
+              }
+            },
+            "application/x-www-form-urlencoded": {
+              "schema": {
+                "type": "object",
+                "required": [
+                  "id",
+                  "nome",
+                  "descricao",
+                  "metodo",
+                  "url",
+                  "cabecalhos",
+                  "parametros"
+                ],
+                "properties": {
+                  "id": {
+                    "anyOf": [
+                      {
+                        "format": "integer",
+                        "default": 0,
+                        "type": "string"
+                      },
+                      {
+                        "type": "integer"
+                      }
+                    ]
+                  },
+                  "nome": {
+                    "type": "string"
+                  },
+                  "descricao": {
+                    "type": "string"
+                  },
+                  "metodo": {
+                    "type": "string",
+                    "enum": [
+                      "GET",
+                      "POST"
+                    ]
+                  },
+                  "url": {
+                    "type": "string"
+                  },
+                  "cabecalhos": {
+                    "maxItems": 30,
+                    "type": "array",
+                    "items": {
+                      "type": "object",
+                      "required": [
+                        "nome"
+                      ],
+                      "properties": {
+                        "nome": {
+                          "type": "string"
+                        },
+                        "valor": {
+                          "nullable": true,
+                          "type": [
+                            "string",
+                            "null"
+                          ]
+                        }
+                      }
+                    }
+                  },
+                  "parametros": {
+                    "maxItems": 30,
+                    "type": "array",
+                    "items": {
+                      "type": "object",
+                      "required": [
+                        "nome",
+                        "tipo",
+                        "descricao",
+                        "obrigatorio"
+                      ],
+                      "properties": {
+                        "nome": {
+                          "type": "string"
+                        },
+                        "tipo": {
+                          "type": "string",
+                          "enum": [
+                            "string",
+                            "number",
+                            "boolean"
+                          ]
+                        },
+                        "descricao": {
+                          "type": "string"
+                        },
+                        "obrigatorio": {
+                          "type": "boolean"
+                        }
+                      }
+                    }
+                  },
+                  "ativo": {
+                    "type": "boolean"
+                  }
+                }
+              }
+            },
+            "multipart/form-data": {
+              "schema": {
+                "type": "object",
+                "required": [
+                  "id",
+                  "nome",
+                  "descricao",
+                  "metodo",
+                  "url",
+                  "cabecalhos",
+                  "parametros"
+                ],
+                "properties": {
+                  "id": {
+                    "anyOf": [
+                      {
+                        "format": "integer",
+                        "default": 0,
+                        "type": "string"
+                      },
+                      {
+                        "type": "integer"
+                      }
+                    ]
+                  },
+                  "nome": {
+                    "type": "string"
+                  },
+                  "descricao": {
+                    "type": "string"
+                  },
+                  "metodo": {
+                    "type": "string",
+                    "enum": [
+                      "GET",
+                      "POST"
+                    ]
+                  },
+                  "url": {
+                    "type": "string"
+                  },
+                  "cabecalhos": {
+                    "maxItems": 30,
+                    "type": "array",
+                    "items": {
+                      "type": "object",
+                      "required": [
+                        "nome"
+                      ],
+                      "properties": {
+                        "nome": {
+                          "type": "string"
+                        },
+                        "valor": {
+                          "nullable": true,
+                          "type": [
+                            "string",
+                            "null"
+                          ]
+                        }
+                      }
+                    }
+                  },
+                  "parametros": {
+                    "maxItems": 30,
+                    "type": "array",
+                    "items": {
+                      "type": "object",
+                      "required": [
+                        "nome",
+                        "tipo",
+                        "descricao",
+                        "obrigatorio"
+                      ],
+                      "properties": {
+                        "nome": {
+                          "type": "string"
+                        },
+                        "tipo": {
+                          "type": "string",
+                          "enum": [
+                            "string",
+                            "number",
+                            "boolean"
+                          ]
+                        },
+                        "descricao": {
+                          "type": "string"
+                        },
+                        "obrigatorio": {
+                          "type": "boolean"
+                        }
+                      }
+                    }
+                  },
+                  "ativo": {
+                    "type": "boolean"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "operationId": "patchApiFerramenta"
+      },
+      "delete": {
+        "parameters": [
+          {
+            "name": "id",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "anyOf": [
+                {
+                  "format": "integer",
+                  "default": 0,
+                  "type": "string"
+                },
+                {
+                  "type": "integer"
+                }
+              ]
+            }
+          }
+        ],
+        "operationId": "deleteApiFerramenta"
+      }
+    },
+    "/api/ferramenta/testar": {
+      "post": {
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": [
+                  "id",
+                  "argumentos"
+                ],
+                "properties": {
+                  "id": {
+                    "anyOf": [
+                      {
+                        "format": "integer",
+                        "default": 0,
+                        "type": "string"
+                      },
+                      {
+                        "type": "integer"
+                      }
+                    ]
+                  },
+                  "argumentos": {
+                    "type": "object",
+                    "patternProperties": {
+                      "^(.*)$": {}
+                    }
+                  }
+                }
+              }
+            },
+            "application/x-www-form-urlencoded": {
+              "schema": {
+                "type": "object",
+                "required": [
+                  "id",
+                  "argumentos"
+                ],
+                "properties": {
+                  "id": {
+                    "anyOf": [
+                      {
+                        "format": "integer",
+                        "default": 0,
+                        "type": "string"
+                      },
+                      {
+                        "type": "integer"
+                      }
+                    ]
+                  },
+                  "argumentos": {
+                    "type": "object",
+                    "patternProperties": {
+                      "^(.*)$": {}
+                    }
+                  }
+                }
+              }
+            },
+            "multipart/form-data": {
+              "schema": {
+                "type": "object",
+                "required": [
+                  "id",
+                  "argumentos"
+                ],
+                "properties": {
+                  "id": {
+                    "anyOf": [
+                      {
+                        "format": "integer",
+                        "default": 0,
+                        "type": "string"
+                      },
+                      {
+                        "type": "integer"
+                      }
+                    ]
+                  },
+                  "argumentos": {
+                    "type": "object",
+                    "patternProperties": {
+                      "^(.*)$": {}
+                    }
+                  }
+                }
+              }
+            }
+          }
+        },
+        "operationId": "postApiFerramentaTestar"
+      }
+    },
+    "/api/bot/permissoes": {
+      "put": {
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": [
+                  "id",
+                  "permissoes"
+                ],
+                "properties": {
+                  "id": {
+                    "anyOf": [
+                      {
+                        "format": "integer",
+                        "default": 0,
+                        "type": "string"
+                      },
+                      {
+                        "type": "integer"
+                      }
+                    ]
+                  },
+                  "permissoes": {
+                    "maxItems": 50,
+                    "type": "array",
+                    "items": {
+                      "type": "string"
+                    }
+                  }
+                }
+              }
+            },
+            "application/x-www-form-urlencoded": {
+              "schema": {
+                "type": "object",
+                "required": [
+                  "id",
+                  "permissoes"
+                ],
+                "properties": {
+                  "id": {
+                    "anyOf": [
+                      {
+                        "format": "integer",
+                        "default": 0,
+                        "type": "string"
+                      },
+                      {
+                        "type": "integer"
+                      }
+                    ]
+                  },
+                  "permissoes": {
+                    "maxItems": 50,
+                    "type": "array",
+                    "items": {
+                      "type": "string"
+                    }
+                  }
+                }
+              }
+            },
+            "multipart/form-data": {
+              "schema": {
+                "type": "object",
+                "required": [
+                  "id",
+                  "permissoes"
+                ],
+                "properties": {
+                  "id": {
+                    "anyOf": [
+                      {
+                        "format": "integer",
+                        "default": 0,
+                        "type": "string"
+                      },
+                      {
+                        "type": "integer"
+                      }
+                    ]
+                  },
+                  "permissoes": {
+                    "maxItems": 50,
+                    "type": "array",
+                    "items": {
+                      "type": "string"
+                    }
+                  }
+                }
+              }
+            }
+          }
+        },
+        "operationId": "putApiBotPermissoes"
+      }
+    },
     "/api/parametros/ia/testar": {
       "post": {
         "requestBody": {
@@ -5019,6 +7030,12 @@
                   },
                   "ia_modelo": {
                     "type": "string"
+                  },
+                  "cadastro_aberto": {
+                    "type": "boolean"
+                  },
+                  "ia_modelo_embeddings": {
+                    "type": "string"
                   }
                 }
               }
@@ -5069,6 +7086,12 @@
                   },
                   "ia_modelo": {
                     "type": "string"
+                  },
+                  "cadastro_aberto": {
+                    "type": "boolean"
+                  },
+                  "ia_modelo_embeddings": {
+                    "type": "string"
                   }
                 }
               }
@@ -5118,6 +7141,12 @@
                     "type": "string"
                   },
                   "ia_modelo": {
+                    "type": "string"
+                  },
+                  "cadastro_aberto": {
+                    "type": "boolean"
+                  },
+                  "ia_modelo_embeddings": {
                     "type": "string"
                   }
                 }
@@ -5185,6 +7214,170 @@
     "/api/atividades/vistas": {
       "post": {
         "operationId": "postApiAtividadesVistas"
+      }
+    },
+    "/api/atividade/concluir": {
+      "post": {
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": [
+                  "id"
+                ],
+                "properties": {
+                  "id": {
+                    "anyOf": [
+                      {
+                        "format": "integer",
+                        "default": 0,
+                        "type": "string"
+                      },
+                      {
+                        "type": "integer"
+                      }
+                    ]
+                  }
+                }
+              }
+            },
+            "application/x-www-form-urlencoded": {
+              "schema": {
+                "type": "object",
+                "required": [
+                  "id"
+                ],
+                "properties": {
+                  "id": {
+                    "anyOf": [
+                      {
+                        "format": "integer",
+                        "default": 0,
+                        "type": "string"
+                      },
+                      {
+                        "type": "integer"
+                      }
+                    ]
+                  }
+                }
+              }
+            },
+            "multipart/form-data": {
+              "schema": {
+                "type": "object",
+                "required": [
+                  "id"
+                ],
+                "properties": {
+                  "id": {
+                    "anyOf": [
+                      {
+                        "format": "integer",
+                        "default": 0,
+                        "type": "string"
+                      },
+                      {
+                        "type": "integer"
+                      }
+                    ]
+                  }
+                }
+              }
+            }
+          }
+        },
+        "operationId": "postApiAtividadeConcluir"
+      }
+    },
+    "/api/atividades/reacoes-vistas": {
+      "post": {
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": [
+                  "mensagens"
+                ],
+                "properties": {
+                  "mensagens": {
+                    "maxItems": 200,
+                    "type": "array",
+                    "items": {
+                      "anyOf": [
+                        {
+                          "format": "integer",
+                          "default": 0,
+                          "type": "string"
+                        },
+                        {
+                          "type": "integer"
+                        }
+                      ]
+                    }
+                  }
+                }
+              }
+            },
+            "application/x-www-form-urlencoded": {
+              "schema": {
+                "type": "object",
+                "required": [
+                  "mensagens"
+                ],
+                "properties": {
+                  "mensagens": {
+                    "maxItems": 200,
+                    "type": "array",
+                    "items": {
+                      "anyOf": [
+                        {
+                          "format": "integer",
+                          "default": 0,
+                          "type": "string"
+                        },
+                        {
+                          "type": "integer"
+                        }
+                      ]
+                    }
+                  }
+                }
+              }
+            },
+            "multipart/form-data": {
+              "schema": {
+                "type": "object",
+                "required": [
+                  "mensagens"
+                ],
+                "properties": {
+                  "mensagens": {
+                    "maxItems": 200,
+                    "type": "array",
+                    "items": {
+                      "anyOf": [
+                        {
+                          "format": "integer",
+                          "default": 0,
+                          "type": "string"
+                        },
+                        {
+                          "type": "integer"
+                        }
+                      ]
+                    }
+                  }
+                }
+              }
+            }
+          }
+        },
+        "operationId": "postApiAtividadesReacoes-vistas"
       }
     },
     "/api/chamada/chat": {

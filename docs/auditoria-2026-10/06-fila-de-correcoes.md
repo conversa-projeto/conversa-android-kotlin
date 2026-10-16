@@ -222,6 +222,8 @@
 - [ ] **FC-217 · P2 · 🆕 `b8ea0c2`/`769bd7d` Imagem ou emoji do grupo** (CON-15, GER-07): mostrar `emoji`/`avatar_url` do grupo em todos os avatares; editar na tela do grupo ("Imagem" com recorte 256 px JPEG, "Emoji", "Remover"; `PATCH /conversa {id, avatar_anexo_id, emoji}`, um tira o outro). 🆕 `e33ecba`: também ao **criar** o grupo (imagem ou emoji antes de "Criar", "Criando..."; `PATCH /conversa` depois de incluir os membros).
 - [ ] **FC-218 · P2 · 🆕 `769bd7d` Seção "Chamadas (N)" na lista** (CON-01): conversas `chamada:true` não fixadas nem arquivadas, recolhível, antes de "Arquivadas"; com termo, tudo junto.
 - [ ] **FC-219 · P3 · 🆕 `e33ecba` Ícone de grupo na lista** (CON-01): ícone de pessoas com a descrição "Conversa em grupo" no lugar da etiqueta "Grupo".
+- [ ] **FC-220 · P2 · 🆕 `ef13c22` Cadastro fechado** (AUT-02): `GET /cadastro` → `{aberto}` (rota pública) antes de mostrar "Não tem conta? Criar conta"; fechado, o link some (o `PUT /usuario` responde 403).
+- [ ] **FC-221 · P2 · 🆕 `ef13c22`/`9c6e8a6` Bots de IA** (CON-16): `bot` nos contatos e na conversa; pílula "Bot" na direta; não oferecer ligação para bot; tirar o bot da lista de confirmação (ele nunca marca `recebida`; pendência S27).
 
 ## Bloco E — Mensagens: núcleo (F2)
 
@@ -321,6 +323,7 @@
 - [ ] **FC-418 · P2 · 🆕 `d202c06` Seletor de emojis como o do web** (ENV-03, ENV-17): sem tons de pele, bandeiras nem FE0F sobrando (a reação não pode se dividir da do web); "Pesquisar emoji", categorias e "Recentes" (até 32). Opções: o catálogo `/emojis/pt.json` do web ou filtrar o `EmojiPickerView`.
 - [ ] **FC-419 · P2 · 🆕 `769bd7d` Recursos do servidor** (GER-08, ANX-12): `GET /recursos` → `{transcricao, ia}` uma vez por sessão; sem transcritor, esconder "Transcrever" (o já transcrito continua aparecendo).
 - [ ] **FC-420 · P3 · 🆕 `e33ecba` Zoom no ponto da pinça** (ANX-04): o visualizador amplia em torno do centro; ampliar no ponto entre os dedos, como o web faz no ponteiro.
+- [ ] **FC-421 · P2 · 🆕 `ef13c22` Duração e onda do áudio** (ANX-10, ANX-11): mandar `duracao` e `intensidade` no `PUT /anexo`; ler nos conteúdos; duração antes de tocar e onda no player, sem baixar. Sem isso, o áudio do Android aparece no web só com a barra simples.
 
 ## Bloco G — Ações sobre mensagens (F4)
 
@@ -491,6 +494,7 @@
 ## Bloco J — Atividades, pesquisa, perfil, configurações (F7)
 
 - [ ] **FC-800 · P1 · Atividades** (ATV-01, ATV-02).
+  - 🆕 `ef13c22`: a atividade fica **pendente até concluir** (sozinha ou à mão, `POST /atividade/concluir`); o contador é o de pendentes e `POST /atividades/vistas` não zera mais; `POST /atividades/reacoes-vistas`; tipo 5 (pedido de confirmação). Feito em `2219208` (ATV-04, ATV-05).
   - `GET /atividades?antes=&limite=30`; `GET /atividades/novas` → `{quantidade}`; `POST /atividades/vistas`.
   - WS 61 atualiza o badge. Textos e selos do web.
 - [ ] **FC-801 · P1 · Pesquisa** (PES-01, PES-02).
@@ -511,6 +515,9 @@
 - [ ] **FC-810 · P2 · 🆕 `769bd7d` Privacidade** (CFG-09): "Aparecer offline", "Mostrar o visto por último", "Mostrar quando estou na conversa" (textos do web); `GET /usuario/privacidade`, `PATCH /usuario`; com "Aparecer offline" ligado, as outras duas desabilitadas.
 - [ ] **FC-811 · P2 · 🆕 `769bd7d`/`05507a0` Resumo da conversa por IA** (CON-14): "Resumir conversa" no "⋮" (só com `recursos.ia`); períodos "Últimas 24 horas", "7 dias", "30 dias", "Últimas 400 mensagens"; `POST /conversa/resumo` e `GET /conversa/resumo?id=` a cada 2 s; assuntos, pendências e "Ver na conversa"; último resumo por conversa no Room, retomando a consulta.
 - [ ] **FC-812 · P3 · 🆕 `769bd7d` Sistema › Inteligência artificial** (CFG-07): endereço, modelo, token ("O token salvo nunca é mostrado."), "Testar conexão". Uso de administrador: avaliar se fica só no web.
+- [ ] **FC-813 · P1 · 🆕 `ef13c22`/`9c6e8a6` Acessos com as permissões de uso** (CFG-08): 32 permissões (`uso` no `GET /permissoes`); como o web, uma lista de pessoas que se abre, com os grupos e os nomes curtos; as próprias permissões marcadas ficam travadas.
+- [ ] **FC-814 · P1 · 🆕 `ef13c22`/`9c6e8a6` Permissões de uso** (GER-09): `GET /usuario/permissoes`; esconder ou travar cada ação; mostrar a mensagem do 403; no perfil, mandar só as chaves que mudaram (TODO 8.9).
+- [ ] **FC-815 · P3 · 🆕 `9c6e8a6` Administração de usuários, bots, ferramentas e conhecimento** (CFG-11…14): avaliar se fica só no web, junto da FC-812.
 
 ## Bloco K — SIP e extras (F8)
 
