@@ -320,7 +320,7 @@
 - [x] → `PUT /conversa/usuario {conversa_id, usuario_id:contato}` — ordem conferida em `ConversasRepositorioTest`; no emulador a conversa nasceu com os 2 membros
 - [x] → `GET /conversas` → abrir o chat — abre o chat (provisório até a etapa 3)
 - [x] Falha no meio → mostrar o erro (e registrar a conversa órfã no log); depende de S8 para ficar atômico — erro no Snackbar; `Timber.w` com o id da conversa incompleta
-- [ ] 🆕 `ef13c22`/`9c6e8a6` Bots de IA: ler `bot` nos contatos e na conversa; pílula "Bot" no cabeçalho da direta; não oferecer ligação para bot; tirar o bot da lista de quem precisa confirmar (o bot nunca marca `recebida`) (CON-16, FC-221)
+- [x] 🆕 `ef13c22`/`9c6e8a6` Bots de IA: ler `bot` nos contatos e na conversa; pílula "Bot" no cabeçalho da direta; não oferecer ligação para bot; tirar o bot da lista de quem precisa confirmar (o bot nunca marca `recebida`) (CON-16, FC-221) — `Contato.bot` (Room v9, coluna nova com padrão 0); na direta com bot: a pílula "Bot", sem ligar (cabeçalho e folha do perfil) e sem pedir confirmação; nos grupos, o "Quem precisa confirmar" sem os bots e o "todos" vira a lista explícita sem eles (`listaDeConfirmacao`); bot fora do "Adicionar à chamada". No emulador, com o C marcado como bot por instantes na base de dev (`ativo = false`, apagado depois) ✔ HASH
 
 ### 2.10 Grupos (FC-211, FC-212, CON-07, CON-08)
 - [x] Tela "Criar grupo": "Nome do grupo", busca, checkboxes de contatos — `CriarGrupo.kt`

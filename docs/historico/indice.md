@@ -42,6 +42,7 @@
 - 2026-10-15 · [Lista: seção "Chamadas (N)", ícone de grupo e emoji do grupo nos avatares](2026-10-15-13-lista-chamadas-e-icone-de-grupo.md) — `chamada` e `emoji` da conversa (Room v6); chats de ligação não fixados numa seção recolhível antes de Arquivadas; ícone "Conversa em grupo" no lugar da etiqueta; emoji no lugar da inicial; testado no emulador
 - 2026-10-15 · [Imagem ou emoji do grupo: na tela do grupo e ao criar](2026-10-15-15-imagem-ou-emoji-do-grupo.md) — "Imagem" (256 px JPEG), "Emoji" (o seletor novo) e "Remover", um tira o outro; ao criar, a imagem sobe antes e o avatar vai depois dos membros; o preparo da foto foi para o `core:data`; testado no emulador
 - 2026-10-16 · [Cadastro fechado pelo administrador](2026-10-16-04-cadastro-fechado.md) — o login lê `GET /cadastro` e esconde o "Criar conta" quando o cadastro está fechado; a seção "Cadastro" no Sistema liga e desliga; testado no emulador (fechado e religado)
+- 2026-10-16 · [Conversa com bot de IA](2026-10-16-05-conversa-com-bot.md) — `bot` nos contatos (Room v9); pílula "Bot" na direta, sem ligar nem pedir confirmação; grupos pedem confirmação sem os bots; bot fora do "Adicionar à chamada"; testado no emulador
 
 ## Mensagens (etapa 3)
 - 2026-10-07 · [Etapa 3 — regras do chat, carregar, ler e enviar](2026-10-07-06-etapa-3-regras-e-dados.md) — classificação e links do web, paginação, fila de leitura, envio com WorkManager; status do WS 3 só nas minhas; 159 testes

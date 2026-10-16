@@ -46,6 +46,7 @@ import com.conversa.app.core.model.TipoReferencia
 import com.conversa.app.core.model.anexosBarrados
 import com.conversa.app.core.model.atividadeDaConversa
 import com.conversa.app.core.model.codigoDoAnexo
+import com.conversa.app.core.model.listaDeConfirmacao
 import com.conversa.app.core.model.local
 import com.conversa.app.core.model.montarItensChat
 import com.conversa.app.core.model.podeReagir
@@ -125,6 +126,8 @@ data class ChatUiState(
     val respondendoPostagem: Mensagem? = null,
     /** "+" › "Confirmar leitura" (FC-521): a próxima mensagem pede confirmação. */
     val confirmacaoNoCampo: ConfirmacaoNoCampo? = null,
+    /** Direta com um bot de IA (CON-16): a pílula "Bot", sem ligar nem pedir confirmação. */
+    val comBot: Boolean = false,
 ) {
     val grupo: Boolean get() = conversa?.tipo == TipoConversa.GRUPO
 
@@ -322,6 +325,11 @@ class ChatViewModel @Inject constructor(
     /** Conexão lenta ou economia de dados do Android: imagens e vídeos esperam o toque (FC-414). */
     val economizarDados: StateFlow<Boolean> = economia.ativa
 
+    /** Os bots de IA entre os contatos (CON-16): o servidor só marca em `/usuario/contatos`. */
+    private val bots: StateFlow<Set<Long>> = contatos.observarOutros()
+        .map { lista -> lista.filter { it.bot }.mapTo(mutableSetOf()) { it.id } }
+        .stateIn(viewModelScope, SharingStarted.Eagerly, emptySet())
+
     private val nomes = combine(contatos.observarOutros(), membros) { pessoas, lista ->
         pessoas.associate { it.id to it.nome } + lista.associate { it.usuarioId to it.nome }
     }
@@ -411,8 +419,9 @@ class ChatViewModel @Inject constructor(
         )
     }
 
-    val estado: StateFlow<ChatUiState> = combine(base, fila, envio.progresso, extrasDoCampo) { b, f, p, campo ->
+    val estado: StateFlow<ChatUiState> = combine(base, fila, envio.progresso, extrasDoCampo, bots) { b, f, p, campo, osBots ->
         b.copy(
+            comBot = b.conversa?.tipo == TipoConversa.DIRETA && b.conversa.destinatarioId in osBots,
             fila = f,
             progresso = p,
             textoParaCampo = campo.texto,
@@ -743,9 +752,14 @@ class ChatViewModel @Inject constructor(
 
     // --- Confirmação de leitura (FC-521, FC-525, MSG-21) ---
 
-    /** Membros do grupo, sem mim: o "Quem precisa confirmar". */
-    val membrosDoGrupo: StateFlow<List<MembroConversa>> = membros.map { lista -> lista.filter { it.usuarioId != eu } }
-        .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), emptyList())
+    /** Membros do grupo, sem mim nem os bots (que nunca confirmam, CON-16): o "Quem precisa confirmar". */
+    val membrosDoGrupo: StateFlow<List<MembroConversa>> = combine(membros, bots) { lista, osBots ->
+        lista.filter { it.usuarioId != eu && it.usuarioId !in osBots }
+    }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), emptyList())
+
+    /** O "todos" com bot no grupo vira a lista explícita sem os bots (CON-16, [listaDeConfirmacao]). */
+    private fun semOsBots(usuarios: List<Long>?): List<Long>? =
+        listaDeConfirmacao(usuarios, membros.value.map { it.usuarioId }.filter { it != eu }, bots.value)
 
     /** "+" › "Confirmar leitura" (ou o "Pronto" do "Quem precisa confirmar"): [usuarios] nulo = todos. */
     fun escolherConfirmacao(usuarios: List<Long>?) {
@@ -765,13 +779,14 @@ class ChatViewModel @Inject constructor(
         val pedido = confirmacaoNoCampo.value ?: return null
         confirmacaoNoCampo.value = null
         val conversa = estado.value.conversa
+        val usuarios = semOsBots(pedido.usuarios)
         val destinatarios = if (conversa?.tipo == TipoConversa.GRUPO) {
-            membros.value.filter { it.usuarioId != eu && (pedido.usuarios == null || it.usuarioId in pedido.usuarios) }
+            membros.value.filter { it.usuarioId != eu && it.usuarioId !in bots.value && (usuarios == null || it.usuarioId in usuarios) }
                 .map { DestinatarioConfirmacao(it.usuarioId, it.nome) }
         } else {
             listOfNotNull(conversa?.destinatarioId?.let { DestinatarioConfirmacao(it, conversa.titulo) })
         }
-        return PedidoConfirmacao(pedido.usuarios, destinatarios)
+        return PedidoConfirmacao(usuarios, destinatarios)
     }
 
     /** "Confirmar leitura" no chip da bolha. Falha: o motivo do servidor (ex.: "Você não está entre quem precisa confirmar…"). */
@@ -787,7 +802,7 @@ class ChatViewModel @Inject constructor(
     fun pedirConfirmacaoDepois(mensagem: Mensagem, usuarios: List<Long>?) {
         if (mensagem.id <= 0) return
         viewModelScope.launch {
-            mensagens.pedirConfirmacao(conversaId, mensagem.id, usuarios)
+            mensagens.pedirConfirmacao(conversaId, mensagem.id, semOsBots(usuarios))
                 .onFailure { eventos.enviar(EventoChat.PedirConfirmacaoFalhou(it.paraErroApi().mensagemAmigavel())) }
         }
     }

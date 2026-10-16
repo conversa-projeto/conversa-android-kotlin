@@ -185,9 +185,11 @@ internal fun ContatoDto.paraEntidade() = ContatoEntidade(
     email = email,
     telefone = telefone,
     avatarUrl = avatarUrl,
+    bot = bot,
 )
 
-fun ContatoEntidade.paraModelo() = Contato(id = id, nome = nome, login = login, email = email, telefone = telefone, avatarUrl = avatarUrl)
+fun ContatoEntidade.paraModelo() =
+    Contato(id = id, nome = nome, login = login, email = email, telefone = telefone, avatarUrl = avatarUrl, bot = bot)
 
 /**
  * Mensagem do modelo no formato da citação que o servidor devolve: a otimista de uma

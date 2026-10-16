@@ -111,4 +111,6 @@ data class ContatoDto(
     val email: String? = null,
     val telefone: String? = null,
     @SerialName("avatar_url") val avatarUrl: String? = null,
+    /** Bot de IA (CON-16, servidor `ef13c22`): a única rota que marca quem é bot. */
+    val bot: Boolean = false,
 )

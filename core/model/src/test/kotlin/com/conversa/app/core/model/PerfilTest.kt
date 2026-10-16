@@ -14,6 +14,14 @@ class PerfilTest {
     }
 
     @Test
+    fun `a ficha da direta com um bot diz que e bot`() {
+        val conversa = conversa()
+        val bot = Contato(9, "Assistente", "bot-assistente-a1b2c3", "bot-assistente-a1b2c3@bot.conversa", null, bot = true)
+        assertThat(fichaDaConversa(conversa, listOf(bot))!!.bot).isTrue()
+        assertThat(fichaDaConversa(conversa, emptyList())!!.bot).isFalse()
+    }
+
+    @Test
     fun `nome e email sao obrigatorios`() {
         assertThat(dadosDoPerfilValidos("Ana", "ana@exemplo.test")).isTrue()
         assertThat(dadosDoPerfilValidos(" ", "ana@exemplo.test")).isFalse()

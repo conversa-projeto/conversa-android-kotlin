@@ -34,7 +34,15 @@ fun recorteQuadradoCentral(largura: Int, altura: Int): Recorte {
 }
 
 /** O perfil de outra pessoa (8.4, AUT-10), como o `UsuarioPopup` do web. E-mail e telefone vazios viram nulo. */
-data class FichaUsuario(val id: Long, val nome: String, val email: String?, val telefone: String?, val avatarUrl: String?)
+/** [bot]: bot de IA (CON-16), que nunca atende: a folha não oferece "Ligar". */
+data class FichaUsuario(
+    val id: Long,
+    val nome: String,
+    val email: String?,
+    val telefone: String?,
+    val avatarUrl: String?,
+    val bot: Boolean = false,
+)
 
 /**
  * Como o `resolverUsuarioDaConversa` do web: só na conversa direta. Os dados vêm do contato
@@ -51,5 +59,6 @@ fun fichaDaConversa(conversa: Conversa, contatos: List<Contato>): FichaUsuario? 
         email = contato.email?.takeIf { it.isNotBlank() },
         telefone = contato.telefone?.takeIf { it.isNotBlank() },
         avatarUrl = contato.avatarUrl?.takeIf { it.isNotBlank() } ?: foto,
+        bot = contato.bot,
     )
 }

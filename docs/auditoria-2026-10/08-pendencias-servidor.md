@@ -205,6 +205,7 @@
   4. **Marcação:** só `GET /usuario/contatos` diz quem é bot (`bot: true`). `GET /conversas`, `GET /conversa/usuarios`, `MensagemResposta` e as atividades não dizem; o cliente cruza ids.
   5. **Excluir bot** tira o bot dos grupos sem WS 40: os outros membros só veem a saída ao recarregar.
 - **Efeito:** tiques de entrega errados em todo grupo com bot; confirmações que não fecham; ligação que não serve para nada.
+- **No app (2026-10-16, FC-221):** os itens 2 e 3 estão contornados: a confirmação vai com a lista explícita sem os bots, e o app não oferece ligar para bot nem convidá-lo. O item 1 (tiques) depende do servidor.
 - **Proposta:** (1) o bot marcar `recebida` (e `visualizada`) de toda mensagem da conversa ao responder, ou o agregado ignorar bots; (2) deixar bots fora da lista padrão de confirmação (e recusar bot em `confirmacao_usuarios`); (3) recusar bot em `PUT /chamada/iniciar` e `PUT /chamada/usuario` (400); (4) mandar `bot` (ou `destinatario_bot`) em `/conversas` e `/conversa/usuarios`; (5) WS 40 ao tirar o bot dos grupos.
 
 ### S28 · Permissões de uso: arestas 🆕 (2026-10-15, `ef13c22`)

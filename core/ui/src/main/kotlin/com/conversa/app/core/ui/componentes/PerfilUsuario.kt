@@ -46,8 +46,8 @@ fun FolhaPerfilUsuario(
     aoVerAnexos: (() -> Unit)? = null,
 ) {
     // Superfície branca, como a lista: o fundo da inicial (#F5F5F5) some sobre o fundo padrão da folha.
-    // "Ligar" é de voz: some sem a permissão de chamada de áudio (GER-09).
-    val ligar = aoLigar?.takeIf { LocalPermissoesDeUso.current.pode(CodigoPermissao.CHAMADA_AUDIO) }
+    // "Ligar" é de voz: some sem a permissão de chamada de áudio (GER-09) e para bot, que nunca atende (CON-16).
+    val ligar = aoLigar?.takeIf { !ficha.bot && LocalPermissoesDeUso.current.pode(CodigoPermissao.CHAMADA_AUDIO) }
     ModalBottomSheet(onDismissRequest = aoFechar, containerColor = MaterialTheme.colorScheme.surface) {
         ConteudoPerfilUsuario(ficha, ligar, aoVerAnexos)
     }

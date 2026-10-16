@@ -53,6 +53,8 @@ data class Contato(
     val email: String?,
     val telefone: String?,
     val avatarUrl: String? = null,
+    /** Bot de IA (CON-16): conversa por mensagens comuns, mas nunca atende nem confirma. */
+    val bot: Boolean = false,
 )
 
 /** Membro de uma conversa (`GET /conversa/usuarios`). */

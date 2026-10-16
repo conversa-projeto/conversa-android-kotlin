@@ -182,6 +182,8 @@ internal fun Campo(
     respondendo: ReferenciaPendente? = null,
     agendadas: List<Mensagem> = emptyList(),
     grupo: Boolean = false,
+    /** Direta com um bot de IA (CON-16): ele nunca confirma, então o "+" não oferece "Confirmar leitura". */
+    comBot: Boolean = false,
     /** "+" › "Postagem" (7.13): a faixa com o título. */
     postando: Boolean = false,
     /** "Responder à postagem" (7.13): a faixa "Respondendo à postagem de…". */
@@ -314,7 +316,15 @@ internal fun Campo(
                 // O servidor recusa a resposta de postagem agendada.
                 podeAgendar = respondendoPostagem == null,
                 // Em grupo, escolhe antes quem precisa confirmar (como o web).
-                aoConfirmarLeitura = { if (grupo) escolhendoConfirmacao = true else acoes.aoEscolherConfirmacao(null) },
+                aoConfirmarLeitura = if (comBot) {
+                    null
+                } else {
+                    (
+                        {
+                            if (grupo) escolhendoConfirmacao = true else acoes.aoEscolherConfirmacao(null)
+                        }
+                        )
+                },
             )
         }
     }
@@ -536,7 +546,7 @@ private fun LinhaDoCampo(
     aoVerAgendadas: () -> Unit,
     aoPostar: (() -> Unit)?,
     podeAgendar: Boolean,
-    aoConfirmarLeitura: () -> Unit,
+    aoConfirmarLeitura: (() -> Unit)?,
 ) {
     Row(
         Modifier.fillMaxWidth().padding(horizontal = 8.dp, vertical = 6.dp),
@@ -891,7 +901,7 @@ private fun BotaoAnexar(
     aoInserirCodigo: () -> Unit,
     aoNovaVotacao: (() -> Unit)?,
     aoPostar: (() -> Unit)?,
-    aoConfirmarLeitura: () -> Unit,
+    aoConfirmarLeitura: (() -> Unit)?,
 ) {
     val contexto = LocalContext.current
     val avisos = LocalAvisos.current
@@ -1014,13 +1024,13 @@ private fun BotaoAnexar(
                 )
             }
             // Confirmar leitura (FC-521): a próxima mensagem pede confirmação.
-            if (permissoes.pode(CodigoPermissao.CONFIRMACAO)) {
+            aoConfirmarLeitura?.takeIf { permissoes.pode(CodigoPermissao.CONFIRMACAO) }?.let { confirmar ->
                 DropdownMenuItem(
                     text = { Text(stringResource(R.string.confirmar_leitura)) },
                     leadingIcon = { Icon(Icons.Outlined.TaskAlt, contentDescription = null) },
                     onClick = {
                         menu = false
-                        aoConfirmarLeitura()
+                        confirmar()
                     },
                 )
             }

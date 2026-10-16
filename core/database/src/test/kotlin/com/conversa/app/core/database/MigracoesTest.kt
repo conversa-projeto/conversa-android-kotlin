@@ -51,6 +51,7 @@ class MigracoesTest {
                 "INSERT INTO conteudo (mensagemId, ordem, tipo, conteudo, nome, extensao, transcricaoStatus, transcricao) " +
                     "VALUES (900, 1, 1, 'oi', '', '', 0, '')",
             )
+            conexao.execSQL("INSERT INTO contato (id, nome, login) VALUES (8, 'Bia', 'bia')")
         }
 
         ajudante.runMigrationsAndValidate(VERSAO_ATUAL).use { conexao ->
@@ -67,6 +68,11 @@ class MigracoesTest {
                 assertThat(it.getText(0)).isEqualTo("oi")
                 assertThat(it.isNull(1)).isTrue()
             }
+            // Versão 9 (CON-16): quem já estava nos contatos não é bot até a próxima leitura.
+            conexao.linha("SELECT nome, bot FROM contato WHERE id = 8") {
+                assertThat(it.getText(0)).isEqualTo("Bia")
+                assertThat(it.getLong(1)).isEqualTo(0)
+            }
         }
     }
 
@@ -79,6 +85,6 @@ class MigracoesTest {
     }
 
     private companion object {
-        const val VERSAO_ATUAL = 8
+        const val VERSAO_ATUAL = 9
     }
 }

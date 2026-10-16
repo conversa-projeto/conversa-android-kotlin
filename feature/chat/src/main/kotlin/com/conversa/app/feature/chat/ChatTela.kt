@@ -65,10 +65,13 @@ import androidx.compose.runtime.setValue
 import androidx.compose.runtime.snapshotFlow
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalResources
 import androidx.compose.ui.res.pluralStringResource
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.semantics.contentDescription
+import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.core.net.toUri
@@ -566,6 +569,7 @@ fun ChatTela(
                 respondendo = estado.respondendo,
                 agendadas = estado.agendadas,
                 grupo = estado.grupo,
+                comBot = estado.comBot,
                 postando = estado.postando,
                 respondendoPostagem = estado.respondendoPostagem,
                 confirmacao = estado.confirmacaoNoCampo,
@@ -685,12 +689,16 @@ private fun Cabecalho(estado: ChatUiState, acoes: AcoesChat) {
                     emoji = conversa?.emoji,
                 )
                 Column {
-                    Text(
-                        conversa?.titulo.orEmpty(),
-                        maxLines = 1,
-                        overflow = TextOverflow.Ellipsis,
-                        style = MaterialTheme.typography.titleMedium,
-                    )
+                    Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                        Text(
+                            conversa?.titulo.orEmpty(),
+                            maxLines = 1,
+                            overflow = TextOverflow.Ellipsis,
+                            style = MaterialTheme.typography.titleMedium,
+                            modifier = Modifier.weight(1f, fill = false),
+                        )
+                        if (estado.comBot) SeloBot()
+                    }
                     val atividade = textoAtividade(estado.atividade)
                     // "Gravando áudio…" em vermelho (como o web e o FMX); digitando na cor primária.
                     val corAtividade = if (gravandoAudio(
@@ -729,14 +737,14 @@ private fun Cabecalho(estado: ChatUiState, acoes: AcoesChat) {
             }
         },
         actions = {
-            // Só os tipos de chamada que a pessoa pode fazer (GER-09).
+            // Só os tipos de chamada que a pessoa pode fazer (GER-09); bot nunca atende (CON-16).
             val permissoes = LocalPermissoesDeUso.current
-            if (permissoes.pode(CodigoPermissao.CHAMADA_AUDIO)) {
+            if (!estado.comBot && permissoes.pode(CodigoPermissao.CHAMADA_AUDIO)) {
                 IconButton(onClick = { acoes.aoLigar(TipoChamada.AUDIO) }) {
                     Icon(Icons.Outlined.Call, contentDescription = stringResource(R.string.chamada_de_voz))
                 }
             }
-            if (permissoes.pode(CodigoPermissao.CHAMADA_VIDEO)) {
+            if (!estado.comBot && permissoes.pode(CodigoPermissao.CHAMADA_VIDEO)) {
                 IconButton(onClick = { acoes.aoLigar(TipoChamada.VIDEO) }) {
                     Icon(Icons.Outlined.Videocam, contentDescription = stringResource(R.string.chamada_de_video))
                 }
@@ -870,4 +878,22 @@ internal fun textoDosBarrados(codigos: List<String>, texto: (Int) -> String): St
         )
     }
     return texto(R.string.anexos_sem_permissao).format(nomes.joinToString(", "))
+}
+
+/** A pílula "Bot" ao lado do nome, na direta com um bot de IA (CON-16; `title` do web: "Responde com a IA"). */
+@Composable
+private fun SeloBot() {
+    val primaria = MaterialTheme.colorScheme.primary
+    val descricao = stringResource(R.string.selo_bot_descricao)
+    Text(
+        stringResource(R.string.selo_bot),
+        style = MaterialTheme.typography.labelSmall,
+        color = primaria,
+        maxLines = 1,
+        modifier = Modifier
+            .clip(RoundedCornerShape(50))
+            .background(primaria.copy(alpha = 0.12f))
+            .padding(horizontal = 8.dp, vertical = 2.dp)
+            .semantics { contentDescription = descricao },
+    )
 }

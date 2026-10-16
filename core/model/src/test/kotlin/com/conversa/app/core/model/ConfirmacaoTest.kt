@@ -6,6 +6,16 @@ import org.junit.Test
 
 /** Regras da confirmação de leitura (FC-521, FC-525), as mesmas do web. */
 class ConfirmacaoTest {
+    @Test
+    fun `lista de confirmacao sem os bots, que nunca confirmam`() {
+        // Sem bot no grupo, o "todos" continua sem lista (o servidor pede a todos os outros).
+        assertThat(listaDeConfirmacao(null, listOf(2, 3), bots = emptySet())).isNull()
+        // Com bot, vira a lista dos outros sem ele.
+        assertThat(listaDeConfirmacao(null, listOf(2, 3, 9), bots = setOf(9))).containsExactly(2L, 3L).inOrder()
+        // A escolhida também perde os bots.
+        assertThat(listaDeConfirmacao(listOf(3, 9), listOf(2, 3, 9), bots = setOf(9))).containsExactly(3L)
+    }
+
     private val agora = Instant.parse("2026-10-15T12:00:00Z")
 
     private fun confirmacao(total: Int, confirmaram: List<Long>, destinatarios: List<Long> = emptyList()) = ConfirmacaoLeitura(

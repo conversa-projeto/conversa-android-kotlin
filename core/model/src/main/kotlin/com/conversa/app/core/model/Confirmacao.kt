@@ -43,6 +43,17 @@ fun podePedirConfirmacao(mensagem: Mensagem, eu: Long, agora: Instant): Boolean 
     return !enviada.isAfter(agora) && Duration.between(enviada, agora) < PRAZO_PEDIR_CONFIRMACAO
 }
 
+/**
+ * O `confirmacao_usuarios` que vai ao servidor (CON-16). Sem a lista, o servidor pede a todos os
+ * outros membros, inclusive aos bots, que nunca confirmam: o "N de T" não fecharia (S27). Com bot
+ * no grupo, o "todos" ([escolhidos] nulo) vira a lista dos [outros] sem os [bots].
+ */
+fun listaDeConfirmacao(escolhidos: List<Long>?, outros: List<Long>, bots: Set<Long>): List<Long>? = when {
+    escolhidos != null -> escolhidos.filterNot { it in bots }
+    outros.any { it in bots } -> outros.filterNot { it in bots }
+    else -> null
+}
+
 /** Membros do "Quem precisa confirmar" que batem com o filtro (sem acento nem maiúsculas). */
 fun filtrarMembros(membros: List<MembroConversa>, termo: String): List<MembroConversa> {
     val busca = normalizarBusca(termo)

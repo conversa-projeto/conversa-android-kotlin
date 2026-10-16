@@ -532,6 +532,16 @@ class ChatViewModelTest {
             .isEqualTo("Você não tem permissão para enviar imagens, vídeos.")
     }
 
+    @Test
+    fun `direta com um bot de IA mostra a pilula`() = runTest {
+        val bot = com.conversa.app.core.model.Contato(8, "Bruno", "bot-bruno-a1b2c3", null, null, bot = true)
+        every { contatos.observarOutros() } returns MutableStateFlow(listOf(bot))
+        val vm = criar()
+        advanceUntilIdle()
+
+        assertThat(vm.estado.value.comBot).isTrue()
+    }
+
     // --- Menu da mensagem (etapa 7) ---
 
     @Test

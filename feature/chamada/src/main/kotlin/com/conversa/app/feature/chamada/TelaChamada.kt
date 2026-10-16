@@ -331,7 +331,8 @@ fun TelaChamadaRota(
         // Fora da chamada: quem não está entre os participantes (qualquer status), como o web.
         val naChamada = estado.dados?.participantes.orEmpty().mapTo(mutableSetOf()) { it.usuarioId } + viewModel.eu
         DialogoAdicionar(
-            contatos = contatos.filter { it.id !in naChamada },
+            // Bot pode ser convidado, mas nunca atende (CON-16): não é oferecido.
+            contatos = contatos.filter { it.id !in naChamada && !it.bot },
             aoConfirmar = { ids ->
                 adicionando = false
                 viewModel.adicionar(ids)

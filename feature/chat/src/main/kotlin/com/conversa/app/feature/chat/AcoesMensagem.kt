@@ -201,7 +201,7 @@ data class AcoesMenu(
 /** Toque longo na bolha (TODO 7.1): reações rápidas + "mais" e as ações (textos do web). */
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun MenuMensagem(mensagem: Mensagem, propria: Boolean, grupo: Boolean, acoes: AcoesMenu, aoFechar: () -> Unit) {
+fun MenuMensagem(mensagem: Mensagem, propria: Boolean, grupo: Boolean, acoes: AcoesMenu, aoFechar: () -> Unit, comBot: Boolean = false) {
     val haptico = LocalHapticFeedback.current
     // Só o que a pessoa pode fazer (GER-09, como o `MensagemAcoes` do web).
     val permissoes = LocalPermissoesDeUso.current
@@ -250,7 +250,9 @@ fun MenuMensagem(mensagem: Mensagem, propria: Boolean, grupo: Boolean, acoes: Ac
             ItemMenu(Icons.Outlined.ContentCopy, stringResource(R.string.copiar), onClick = acoes.aoCopiar)
         }
         // Até 24 h depois do envio, se ainda não pede (como o web).
+        // Bot nunca confirma (CON-16): na direta com ele, não oferece.
         if (propria &&
+            !comBot &&
             podePedirConfirmacao(mensagem, mensagem.remetenteId, Instant.now()) &&
             permissoes.pode(CodigoPermissao.CONFIRMACAO)
         ) {
@@ -472,6 +474,7 @@ internal fun AcoesDaMensagem(abertas: AcoesAbertas, estado: ChatUiState, viewMod
             mensagem,
             propria = mensagem.remetenteId == estado.eu,
             grupo = estado.grupo,
+            comBot = estado.comBot,
             acoes = AcoesMenu(
                 aoResponderNoPrivado = {
                     abertas.menuDe = null

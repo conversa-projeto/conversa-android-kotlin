@@ -128,6 +128,8 @@ data class ContatoEntidade(
     val email: String?,
     val telefone: String?,
     val avatarUrl: String?,
+    /** Bot de IA (CON-16, versão 9). */
+    @ColumnInfo(defaultValue = "0") val bot: Boolean = false,
 )
 
 @Entity(tableName = "atividade")
