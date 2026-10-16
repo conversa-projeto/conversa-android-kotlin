@@ -4,7 +4,7 @@
 - **Tipo:** código
 - **Itens:** `TODO.md` 2.4 (linha 🆕 `ef13c22`); FC-220; AUT-02; CFG-07
 - **Branch:** `reescrita`
-- **Commits:** (preencher)
+- **Commits:** `f427612`
 
 ## Contexto
 - **O servidor** (`ef13c22`) tem o parâmetro `cadastro_aberto` (padrão ligado). Fechado, o `PUT /usuario` responde 403 "O cadastro está fechado: peça a um administrador para criar sua conta."; a rota pública `GET /cadastro` → `{aberto}` diz se a tela de login oferece o cadastro (contrato §2.6).
