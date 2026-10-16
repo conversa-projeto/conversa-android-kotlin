@@ -274,6 +274,28 @@ class GerenciadorChamadas @Inject constructor(
     }
 
     /**
+     * "Chamar de novo" (FC-726, contrato §9.14): toca outra vez para quem recusou ou deixou tocar
+     * sem atender, com a chamada em andamento. A resposta já traz os dados; os outros participantes
+     * recebem o WS 57 `{acao:"participantes"}`. Se falhar, relê os dados e devolve o erro.
+     */
+    suspend fun chamarNovamente(usuario: Long): Result<Unit> = escopo.async {
+        val atual = _estado.value
+        val id = atual.chamadaId
+        if (id == null || atual.fase !in FASES_CHAMAR_DE_NOVO) return@async Result.success(Unit)
+        val g = geracao
+        try {
+            val dados = remoto.chamarNovamente(id, usuario)
+            if (vivo(g)) atualizar { it.copy(dados = dados, conversaChatId = dados.conversaChatId ?: it.conversaChatId) }
+            Result.success(Unit)
+        } catch (e: CancellationException) {
+            throw e
+        } catch (e: Exception) {
+            if (vivo(g)) atualizarDados(id)
+            Result.failure(e)
+        }
+    }.await()
+
+    /**
      * O chat da chamada (6.13): a conversa que já existe ou, na primeira vez, a criada agora
      * (`PUT /chamada/chat`; os outros recebem o WS 57 `{acao:"chat"}`). Nulo sem chamada ou se falhar.
      */
@@ -469,6 +491,8 @@ class GerenciadorChamadas @Inject constructor(
                 val conversa = (dados["conversa_id"] as? JsonPrimitive)?.longOrNull?.takeIf { it > 0 } ?: return
                 atualizar { it.copy(conversaChatId = conversa) }
             }
+            // Alguém foi chamado de novo (§9.14): relê quem está tocando, para a grade.
+            "participantes" -> noTrabalho { atualizarDados(id) }
             "tela" -> {
                 val ativa = (dados["ativa"] as? JsonPrimitive)?.booleanOrNull == true
                 atualizar { e ->
@@ -766,6 +790,9 @@ class GerenciadorChamadas @Inject constructor(
     }
 
     companion object {
+        /** Onde o "Chamar de novo" vale: liguei, atendi ou estou na chamada. */
+        private val FASES_CHAMAR_DE_NOVO = setOf(FaseChamada.CHAMANDO, FaseChamada.CONECTANDO, FaseChamada.ATIVA)
+
         /** Como o web: 30 s tocando → "não atendeu". */
         const val TEMPO_TOCANDO_MS = 30_000L
 

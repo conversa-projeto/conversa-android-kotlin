@@ -40,6 +40,12 @@ interface ChamadasRemotas {
     /** `PUT /chamada/usuario`: um por vez (o servidor não confere duplicidade). Toca para ele e manda WS 51 aos outros. */
     suspend fun adicionar(chamadaId: Long, usuarioId: Long)
 
+    /**
+     * `POST /chamada/chamar-novamente` (contrato §9.14): toca de novo para quem recusou ou não atendeu,
+     * com a chamada em andamento. Devolve os dados da chamada.
+     */
+    suspend fun chamarNovamente(chamadaId: Long, usuarioId: Long): Chamada
+
     /** `PUT /chamada/chat`: a conversa (grupo) do chat da chamada; a primeira vez cria (contrato §9.12). */
     suspend fun chat(chamadaId: Long): Long
 
@@ -77,6 +83,10 @@ class ChamadasRepositorio @Inject constructor(private val api: ConversaApi) : Ch
     override suspend fun adicionar(chamadaId: Long, usuarioId: Long) {
         chamarApi { api.adicionarUsuarioChamada(AdicionarUsuarioChamadaRequisicao(chamadaId, usuarioId)) }.getOrThrow()
     }
+
+    override suspend fun chamarNovamente(chamadaId: Long, usuarioId: Long): Chamada = chamarApi {
+        api.chamarNovamente(AdicionarUsuarioChamadaRequisicao(chamadaId, usuarioId))
+    }.getOrThrow().paraModelo()
 
     override suspend fun chat(chamadaId: Long): Long = chamarApi { api.chatChamada(IdDto(chamadaId)) }.getOrThrow().conversaId
 

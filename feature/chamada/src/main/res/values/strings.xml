@@ -13,6 +13,9 @@
     <string name="deslize_para_atender">Arraste um botão para qualquer lado</string>
 
     <string name="chamando">Chamando…</string>
+    <string name="nao_atendeu">Não atendeu</string>
+    <string name="chamar_de_novo">Chamar de novo</string>
+    <string name="erro_chamar_de_novo">Erro ao chamar de novo</string>
     <string name="conectando">Conectando…</string>
     <string name="em_chamada">Em chamada</string>
     <string name="encerrando">Encerrando…</string>

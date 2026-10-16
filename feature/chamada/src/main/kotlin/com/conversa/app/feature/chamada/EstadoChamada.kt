@@ -1,6 +1,8 @@
 package com.conversa.app.feature.chamada
 
 import com.conversa.app.core.model.Chamada
+import com.conversa.app.core.model.ParticipanteChamada
+import com.conversa.app.core.model.StatusParticipante
 import com.conversa.app.core.model.TipoChamada
 import com.conversa.app.core.webrtc.MidiaLocal
 import java.time.Instant
@@ -69,6 +71,17 @@ data class EstadoChamada(
     /** Tocando de verdade (os dados já chegaram). */
     val tocando: Boolean get() = fase == FaseChamada.RECEBENDO && dados != null
 }
+
+/**
+ * Convidados fora da chamada (FC-726, web `participantesAguardando`): tocando, ou que recusaram
+ * sem nunca ter entrado (estes podem ser chamados de novo). Sem mim e sem quem já está [conectados].
+ */
+fun convidadosAguardando(dados: Chamada?, eu: Long, conectados: Set<Long>): List<ParticipanteChamada> =
+    dados?.participantes.orEmpty().filter { p ->
+        p.usuarioId != eu &&
+            p.usuarioId !in conectados &&
+            (p.status == StatusParticipante.PENDENTE || (p.status == StatusParticipante.RECUSOU && p.entrouEm == null))
+    }
 
 /** Avisos de uma vez para a tela. */
 sealed interface AvisoChamada {

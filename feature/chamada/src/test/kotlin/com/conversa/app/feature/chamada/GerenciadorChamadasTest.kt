@@ -931,6 +931,79 @@ class GerenciadorChamadasTest {
         assertThat(remoto.chamadas.filter { it.startsWith("adicionar") }).isEmpty()
     }
 
+    // --- Chamar de novo (FC-726) ---
+
+    @Test
+    fun `chamar de novo usa os dados que o servidor devolve`() = runTest {
+        val g = criar()
+        ativaRecebida(g, listOf(p(OUTRO, ENTROU), p(TERCEIRO, RECUSOU)))
+
+        val resultado = g.chamarNovamente(TERCEIRO)
+        runCurrent()
+
+        assertThat(resultado.isSuccess).isTrue()
+        assertThat(remoto.chamadas.last()).isEqualTo("chamar_novamente $RECEBIDA $TERCEIRO")
+        assertThat(g.estado.value.dados?.participantes?.first { it.usuarioId == TERCEIRO }?.status).isEqualTo(PENDENTE)
+    }
+
+    @Test
+    fun `chamar de novo recusado pelo servidor rele os dados e devolve o erro`() = runTest {
+        val g = criar()
+        ativaRecebida(g, listOf(p(OUTRO, ENTROU), p(TERCEIRO, RECUSOU)))
+        remoto.falharChamarNovamente = IOException("Só dá para chamar de novo quem não atendeu")
+        // Enquanto isso, o terceiro entrou.
+        remoto.dados[RECEBIDA] = remoto.dados.getValue(RECEBIDA).comStatus(TERCEIRO, ENTROU)
+
+        val resultado = g.chamarNovamente(TERCEIRO)
+        runCurrent()
+
+        assertThat(resultado.exceptionOrNull()?.message).isEqualTo("Só dá para chamar de novo quem não atendeu")
+        assertThat(remoto.chamadas.last()).isEqualTo("dados $RECEBIDA")
+        assertThat(g.estado.value.dados?.participantes?.first { it.usuarioId == TERCEIRO }?.status).isEqualTo(ENTROU)
+    }
+
+    @Test
+    fun `chamar de novo sem chamada nao chama o servidor`() = runTest {
+        val g = criar()
+
+        assertThat(g.chamarNovamente(TERCEIRO).isSuccess).isTrue()
+        assertThat(remoto.chamadas).isEmpty()
+    }
+
+    @Test
+    fun `57 participantes rele os dados da chamada`() = runTest {
+        val g = criar()
+        ativaRecebida(g, listOf(p(OUTRO, ENTROU), p(TERCEIRO, RECUSOU)))
+        remoto.dados[RECEBIDA] = remoto.dados.getValue(RECEBIDA).comStatus(TERCEIRO, PENDENTE)
+
+        evento(EventoSocket.SinalChamada(RECEBIDA, OUTRO, buildJsonObject { put("acao", "participantes") }))
+
+        assertThat(remoto.chamadas.last()).isEqualTo("dados $RECEBIDA")
+        assertThat(g.estado.value.dados?.participantes?.first { it.usuarioId == TERCEIRO }?.status).isEqualTo(PENDENTE)
+    }
+
+    @Test
+    fun `convidados aguardando - tocando ou que nao atenderam, sem mim, sem conectados e sem quem ja entrou`() {
+        val dados = chamada(
+            RECEBIDA,
+            TipoChamada.VIDEO,
+            p(EU, ENTROU),
+            p(OUTRO, ENTROU),
+            p(TERCEIRO, RECUSOU),
+            p(40, PENDENTE),
+            // Entrou, saiu e depois recusou o "Chamar de novo" de outro: não pode ser chamado de novo.
+            p(41, RECUSOU).copy(entrouEm = INICIO),
+            p(42, SAIU),
+            // Ainda pendente para o servidor, mas já conectado aqui.
+            p(43, PENDENTE),
+        )
+
+        val aguardando = convidadosAguardando(dados, EU, conectados = setOf(OUTRO, 43))
+
+        assertThat(aguardando.map { it.usuarioId }).containsExactly(TERCEIRO, 40L).inOrder()
+        assertThat(convidadosAguardando(null, EU, emptySet())).isEmpty()
+    }
+
     // --- Tela e ponteiro remotos (6.13) ---
 
     @Test
@@ -1168,6 +1241,7 @@ class GerenciadorChamadasTest {
         val dados = mutableMapOf<Long, Chamada>()
         var falharIniciar: Exception? = null
         var falharEntrar: Exception? = null
+        var falharChamarNovamente: Exception? = null
         private val portoes = mutableMapOf<String, CompletableDeferred<Unit>>()
 
         fun portao(acao: String) = CompletableDeferred<Unit>().also { portoes[acao] = it }
@@ -1223,6 +1297,13 @@ class GerenciadorChamadasTest {
         override suspend fun adicionar(chamadaId: Long, usuarioId: Long) {
             chamadas += "adicionar $chamadaId $usuarioId"
             dados[chamadaId]?.let { dados[chamadaId] = it.copy(participantes = it.participantes + p(usuarioId, PENDENTE)) }
+        }
+
+        override suspend fun chamarNovamente(chamadaId: Long, usuarioId: Long): Chamada {
+            chamadas += "chamar_novamente $chamadaId $usuarioId"
+            falharChamarNovamente?.let { throw it }
+            val atual = dados[chamadaId] ?: throw IOException("sem rede")
+            return atual.comStatus(usuarioId, PENDENTE).also { dados[chamadaId] = it }
         }
 
         override suspend fun ice() = ServidoresIce(emptyList(), somenteRelay = true)

@@ -282,6 +282,9 @@ interface ConversaApi {
     @PUT("chamada/usuario")
     suspend fun adicionarUsuarioChamada(@Body corpo: AdicionarUsuarioChamadaRequisicao): IdDto
 
+    @POST("chamada/chamar-novamente")
+    suspend fun chamarNovamente(@Body corpo: AdicionarUsuarioChamadaRequisicao): DadosChamadaDto
+
     @POST("chamada/finalizar")
     suspend fun finalizarChamada(@Body corpo: IdDto): IdDto
 

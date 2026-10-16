@@ -8,7 +8,12 @@ import android.os.PowerManager
 import androidx.activity.compose.BackHandler
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
+import androidx.compose.animation.core.RepeatMode
+import androidx.compose.animation.core.animateFloat
 import androidx.compose.animation.core.animateFloatAsState
+import androidx.compose.animation.core.infiniteRepeatable
+import androidx.compose.animation.core.rememberInfiniteTransition
+import androidx.compose.animation.core.tween
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
@@ -17,6 +22,7 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
@@ -56,6 +62,8 @@ import androidx.compose.material.icons.filled.VideocamOff
 import androidx.compose.material.icons.filled.ViewAgenda
 import androidx.compose.material.icons.outlined.Visibility
 import androidx.compose.material3.AlertDialog
+import androidx.compose.material3.Button
+import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Checkbox
 import androidx.compose.material3.DropdownMenu
 import androidx.compose.material3.DropdownMenuItem
@@ -79,6 +87,7 @@ import androidx.compose.runtime.mutableLongStateOf
 import androidx.compose.runtime.mutableStateListOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
@@ -86,15 +95,18 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.layout.boundsInWindow
 import androidx.compose.ui.layout.onGloballyPositioned
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.pluralStringResource
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.semantics.LiveRegionMode
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.semantics.clearAndSetSemantics
 import androidx.compose.ui.semantics.contentDescription
+import androidx.compose.ui.semantics.liveRegion
 import androidx.compose.ui.semantics.role
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.semantics.stateDescription
@@ -114,6 +126,7 @@ import androidx.lifecycle.viewModelScope
 import com.conversa.app.core.data.SessaoRepositorio
 import com.conversa.app.core.data.contatos.ContatosRepositorio
 import com.conversa.app.core.model.Contato
+import com.conversa.app.core.model.ParticipanteChamada
 import com.conversa.app.core.model.StatusParticipante
 import com.conversa.app.core.model.TipoChamada
 import com.conversa.app.core.ui.componentes.Avatar
@@ -174,6 +187,8 @@ class ChamadaViewModel @Inject constructor(
     fun exibir(modo: ModoExibicao, destaque: Long? = null) = gerenciador.exibir(modo, destaque)
 
     fun adicionar(usuarios: List<Long>) = gerenciador.adicionar(usuarios)
+
+    suspend fun chamarNovamente(usuario: Long) = gerenciador.chamarNovamente(usuario)
 
     fun ativarTransmissao(video: Boolean) = gerenciador.ativarTransmissao(video)
 
@@ -277,6 +292,7 @@ fun TelaChamadaRota(
                     aoExibir = viewModel::exibir,
                     aoAreaDoVideo = aoAreaDoVideo,
                     aoAdicionar = { adicionando = true },
+                    aoChamarDeNovo = viewModel::chamarNovamente,
                     aoAtivarTransmissao = { video -> pedirEDepois(video) { viewModel.ativarTransmissao(video) } },
                     // Chat já existe: a conversa completa; senão, a folha com o campo que cria o grupo (como o web).
                     aoChat = { estado.conversaChatId?.let { aoAbrirChat(it, false) } ?: run { escrevendoNoChat = true } },
@@ -441,6 +457,8 @@ private data class AcoesEmChamada(
     /** Onde o vídeo está na tela: o picture-in-picture "encolhe" a partir daí. */
     val aoAreaDoVideo: (Rect) -> Unit,
     val aoAdicionar: () -> Unit,
+    /** "Chamar de novo" um convidado que não atendeu (FC-726); o resultado é para o quadro dele. */
+    val aoChamarDeNovo: suspend (Long) -> Result<Unit>,
     /** Somente recepção: "Ativar microfone" (false) / "Ativar câmera" (true). */
     val aoAtivarTransmissao: (Boolean) -> Unit,
     val aoChat: () -> Unit,
@@ -460,9 +478,13 @@ private fun TelaEmChamada(
     acoes: AcoesEmChamada,
 ) {
     val nomes = estado.dados?.participantes.orEmpty().associate { it.usuarioId to it.nome }
+    val remotos = trilhas.remotos
+    val aguardando = convidadosAguardando(estado.dados, eu, remotos.keys)
     Column(Modifier.fillMaxSize().statusBarsPadding().navigationBarsPadding()) {
         Cabecalho(estado)
-        if (trilhas.remotos.size >= 2) {
+        // Com 2 quadros ou mais na grade, contando os convidados aguardando: quem abriu em tela única
+        // ("só assistir") chega à grade e ao "Chamar de novo" (FC-726).
+        if (remotos.isNotEmpty() && remotos.size + aguardando.size >= 2) {
             // Trocar de modo mantém quem está em destaque; sem destaque, começa pelo primeiro (como o web).
             val destaque = estado.exibicao.destaque?.takeIf { it in trilhas.remotos } ?: trilhas.remotos.keys.first()
             SeletorDeExibicao(estado.exibicao.modo) { modo -> acoes.aoExibir(modo, destaque) }
@@ -483,8 +505,9 @@ private fun TelaEmChamada(
                 acoes.aoAreaDoVideo(Rect(r.left.toInt(), r.top.toInt(), r.right.toInt(), r.bottom.toInt()))
             },
         ) {
-            val remotos = trilhas.remotos
-            if (remotos.isEmpty()) {
+            // Um só tocando (direta): o avatar grande; em grupo, ou com quem não atendeu, a grade (FC-726).
+            val umSoTocando = aguardando.size <= 1 && aguardando.none { it.status == StatusParticipante.RECUSOU }
+            if (remotos.isEmpty() && umSoTocando) {
                 // Chamando (ou ninguém transmitindo ainda): quem foi chamado.
                 val outros = estado.dados?.participantes.orEmpty()
                     .filter { it.usuarioId != eu && it.status != StatusParticipante.RECUSOU }
@@ -496,7 +519,7 @@ private fun TelaEmChamada(
                 }
             } else {
                 CompositionLocalProvider(LocalTelasDaChamada provides TelasDaChamada(estado.telas, estado.ponteiros.values)) {
-                    Participantes(estado.exibicao, remotos, nomes, egl, acoes.aoExibir)
+                    Participantes(estado.exibicao, remotos, aguardando, nomes, egl, acoes)
                 }
             }
             val videoLocal = trilhas.videoLocal
@@ -580,14 +603,17 @@ internal fun formatarDuracao(segundos: Long): String {
 private fun Participantes(
     exibicao: Exibicao,
     remotos: Map<Long, TrilhaRemota>,
+    aguardando: List<ParticipanteChamada>,
     nomes: Map<Long, String>,
     egl: EglBase.Context,
-    aoExibir: (ModoExibicao, Long?) -> Unit,
+    acoes: AcoesEmChamada,
 ) {
+    val aoExibir = acoes.aoExibir
     val destaque = exibicao.destaque?.takeIf { it in remotos }
     when {
+        // Os convidados aguardando só aparecem na grade (como no web).
         exibicao.modo == ModoExibicao.GRADE || destaque == null ->
-            GradeDeParticipantes(remotos, nomes, egl, aoTocar = { aoExibir(ModoExibicao.DESTAQUE, it) })
+            GradeDeParticipantes(remotos, aguardando, nomes, egl, aoTocar = { aoExibir(ModoExibicao.DESTAQUE, it) }, acoes.aoChamarDeNovo)
         exibicao.modo == ModoExibicao.DESTAQUE -> Column(
             Modifier.fillMaxSize().padding(8.dp),
             verticalArrangement = Arrangement.spacedBy(8.dp),
@@ -680,27 +706,116 @@ private fun SeletorDeExibicao(atual: ModoExibicao, aoEscolher: (ModoExibicao) ->
     }
 }
 
-/** 1 participante ocupa tudo; 2 ficam um sobre o outro; a partir de 3, duas colunas. */
+/** Um quadro da grade: quem está na chamada ou um convidado aguardando (FC-726). */
+private sealed interface QuadroGrade {
+    val usuario: Long
+
+    data class Remoto(override val usuario: Long, val trilha: TrilhaRemota) : QuadroGrade
+
+    data class Convidado(val participante: ParticipanteChamada) : QuadroGrade {
+        override val usuario: Long get() = participante.usuarioId
+    }
+}
+
+/**
+ * 1 quadro ocupa tudo; 2 ficam um sobre o outro; a partir de 3, duas colunas. Depois de quem está
+ * na chamada, os convidados [aguardando] (tocando ou que não atenderam).
+ */
 @Composable
 private fun GradeDeParticipantes(
     remotos: Map<Long, TrilhaRemota>,
+    aguardando: List<ParticipanteChamada>,
     nomes: Map<Long, String>,
     egl: EglBase.Context,
     aoTocar: (Long) -> Unit,
+    aoChamarDeNovo: suspend (Long) -> Result<Unit>,
 ) {
-    val linhas = remotos.entries.toList().let { lista -> if (lista.size <= 2) lista.map { listOf(it) } else lista.chunked(2) }
+    val quadros = remotos.map { (usuario, trilha) -> QuadroGrade.Remoto(usuario, trilha) } + aguardando.map { QuadroGrade.Convidado(it) }
+    val linhas = if (quadros.size <= 2) quadros.map { listOf(it) } else quadros.chunked(2)
     Column(Modifier.fillMaxSize().padding(8.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
         for (linha in linhas) {
             Row(Modifier.weight(1f).fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                for ((usuario, trilha) in linha) {
-                    key(usuario) {
-                        Participante(usuario, nomes[usuario].orEmpty(), trilha, egl, Modifier.weight(1f).fillMaxSize(), aoTocar = {
-                            aoTocar(usuario)
-                        })
+                for (quadro in linha) {
+                    key(quadro.usuario) {
+                        val tamanho = Modifier.weight(1f).fillMaxSize()
+                        when (quadro) {
+                            is QuadroGrade.Remoto -> {
+                                val usuario = quadro.usuario
+                                Participante(usuario, nomes[usuario].orEmpty(), quadro.trilha, egl, tamanho, aoTocar = { aoTocar(usuario) })
+                            }
+                            is QuadroGrade.Convidado -> ConvidadoAguardando(quadro.participante, aoChamarDeNovo, tamanho)
+                        }
                     }
                 }
             }
         }
+    }
+}
+
+/**
+ * Convidado fora da chamada (FC-726, como o web): tocando ("Chamando…") ou "Não atendeu" com
+ * "Chamar de novo". Um toque por vez até o servidor responder; a falha aparece no lugar do "Não atendeu".
+ */
+@Composable
+private fun ConvidadoAguardando(participante: ParticipanteChamada, aoChamarDeNovo: suspend (Long) -> Result<Unit>, modifier: Modifier) {
+    val cores = ConversaTema.cores
+    val escopo = rememberCoroutineScope()
+    var chamando by remember { mutableStateOf(false) }
+    var erro by remember { mutableStateOf<String?>(null) }
+    val falhaPadrao = stringResource(R.string.erro_chamar_de_novo)
+    Box(modifier.clip(RoundedCornerShape(12.dp)).background(cores.chamadaBarraInferior)) {
+        Column(
+            Modifier.align(Alignment.Center).padding(start = 12.dp, end = 12.dp, top = 12.dp, bottom = 36.dp),
+            horizontalAlignment = Alignment.CenterHorizontally,
+            verticalArrangement = Arrangement.spacedBy(8.dp),
+        ) {
+            Avatar(participante.nome, null, Modifier.alpha(0.8f), tamanho = 64.dp)
+            if (participante.status == StatusParticipante.PENDENTE) {
+                val pulso = rememberInfiniteTransition(label = "chamando")
+                val alfa by pulso.animateFloat(1f, 0.4f, infiniteRepeatable(tween(900), RepeatMode.Reverse), label = "alfa")
+                Text(
+                    stringResource(R.string.chamando),
+                    style = MaterialTheme.typography.labelMedium,
+                    modifier = Modifier.graphicsLayer { alpha = alfa },
+                )
+            } else {
+                Text(
+                    erro ?: stringResource(R.string.nao_atendeu),
+                    style = MaterialTheme.typography.labelMedium,
+                    textAlign = TextAlign.Center,
+                    maxLines = 3,
+                    overflow = TextOverflow.Ellipsis,
+                    modifier = Modifier.semantics { liveRegion = LiveRegionMode.Polite },
+                )
+                Button(
+                    onClick = {
+                        chamando = true
+                        erro = null
+                        escopo.launch {
+                            val resultado = aoChamarDeNovo(participante.usuarioId)
+                            chamando = false
+                            erro = resultado.exceptionOrNull()?.let { it.message ?: falhaPadrao }
+                        }
+                    },
+                    enabled = !chamando,
+                    colors = ButtonDefaults.buttonColors(containerColor = cores.chamadaAtender, contentColor = Color.White),
+                    contentPadding = PaddingValues(horizontal = 12.dp, vertical = 6.dp),
+                ) {
+                    Icon(Icons.Filled.Call, contentDescription = null, modifier = Modifier.size(16.dp))
+                    Spacer(Modifier.width(6.dp))
+                    Text(stringResource(R.string.chamar_de_novo), style = MaterialTheme.typography.labelLarge)
+                }
+            }
+        }
+        Text(
+            participante.nome,
+            style = MaterialTheme.typography.labelMedium,
+            color = Color.White,
+            maxLines = 1,
+            overflow = TextOverflow.Ellipsis,
+            modifier = Modifier.align(Alignment.BottomStart).padding(8.dp)
+                .clip(RoundedCornerShape(6.dp)).background(Color.Black.copy(alpha = 0.45f)).padding(horizontal = 6.dp, vertical = 2.dp),
+        )
     }
 }
 

@@ -77,6 +77,7 @@
 - 2026-10-15 · ["Chamar de novo" volta a tocar no Android](2026-10-15-02-chamar-de-novo-toca.md) — o 51 de uma chamada já recusada consulta `/chamada/dados` e toca se o servidor diz que fui chamado de novo (`recusou_em` + pendente); o 51 repetido continua calado (+3 testes)
 - 2026-10-15 · [TODO 8.7 fechado: chat da chamada e teste no emulador](2026-10-15-06-fecha-8-7.md) — o app abre o chat que o servidor criar (agora um grupo novo por ligação); chamar de novo (vídeo com A, B e C) e chat 1:1 testados no emulador, atendendo e recusando por arrasto
 - 2026-10-15 · [Chat da ligação só para leitura, na bolha e no histórico](2026-10-15-17-chat-da-ligacao-so-leitura.md) — `chat_chamada_id`/`conversa_chat_id` (Room v7); "Ver chat da chamada" com as mensagens (na bolha, os conteúdos como no chat; no histórico, o resumo) e "Abrir o chat completo"; testado no emulador
+- 2026-10-15 · [Convidados fora da chamada na grade, com "Chamar de novo"](2026-10-15-18-convidados-na-grade-e-chamar-de-novo.md) — `POST /chamada/chamar-novamente` e WS 57 `participantes`; na grade, "Chamando…" ou "Não atendeu" com "Chamar de novo"; o seletor de modos conta os convidados; testado no emulador
 
 ## Ações sobre mensagens (etapa 7)
 - 2026-10-08 · [Etapa 7 — menu da mensagem, reações, ocultar e copiar](2026-10-08-19-etapa-7-menu-reacoes-ocultar.md) — toque longo com reações rápidas, seletor de emoji, chips e "quem reagiu", WS 7, Ocultar com a confirmação do web e Copiar (texto ou imagem)
