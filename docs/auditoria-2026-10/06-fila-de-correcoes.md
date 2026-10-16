@@ -323,7 +323,7 @@
 - [ ] **FC-418 · P2 · 🆕 `d202c06` Seletor de emojis como o do web** (ENV-03, ENV-17): sem tons de pele, bandeiras nem FE0F sobrando (a reação não pode se dividir da do web); "Pesquisar emoji", categorias e "Recentes" (até 32). Opções: o catálogo `/emojis/pt.json` do web ou filtrar o `EmojiPickerView`.
 - [ ] **FC-419 · P2 · 🆕 `769bd7d` Recursos do servidor** (GER-08, ANX-12): `GET /recursos` → `{transcricao, ia}` uma vez por sessão; sem transcritor, esconder "Transcrever" (o já transcrito continua aparecendo).
 - [ ] **FC-420 · P3 · 🆕 `e33ecba` Zoom no ponto da pinça** (ANX-04): o visualizador amplia em torno do centro; ampliar no ponto entre os dedos, como o web faz no ponteiro.
-- [x] **FC-421 · P2 · 🆕 `ef13c22` Duração e onda do áudio** (ANX-10, ANX-11): mandar `duracao` e `intensidade` no `PUT /anexo`; ler nos conteúdos; duração antes de tocar e onda no player, sem baixar. Sem isso, o áudio do Android aparece no web só com a barra simples. ✔ HASH
+- [x] **FC-421 · P2 · 🆕 `ef13c22` Duração e onda do áudio** (ANX-10, ANX-11): mandar `duracao` e `intensidade` no `PUT /anexo`; ler nos conteúdos; duração antes de tocar e onda no player, sem baixar. Sem isso, o áudio do Android aparece no web só com a barra simples. ✔ 2f0b29d
 
 ## Bloco G — Ações sobre mensagens (F4)
 

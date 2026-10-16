@@ -4,7 +4,7 @@
 - **Tipo:** código
 - **Itens:** `TODO.md` 4.5/4.6 (linha 🆕 `ef13c22`); FC-421; ANX-10; ANX-11
 - **Branch:** `reescrita`
-- **Commits:** (preencher)
+- **Commits:** `2f0b29d`
 
 ## Contexto
 - **O servidor** (`ef13c22`) guarda a `duracao` (segundos, 0 a 86400) e a `intensidade` (até 200 picos de 0 a 100) que o cliente manda no `PUT /anexo` de um áudio (tipos 4 e 5) e as devolve em cada conteúdo (contrato §8.2, §10.2). Valem as do primeiro envio daquele arquivo.
