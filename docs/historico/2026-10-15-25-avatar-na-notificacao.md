@@ -4,7 +4,7 @@
 - **Tipo:** código
 - **Itens:** `TODO.md` 5.4 (linha do título, avatar e corpo); NOT-02
 - **Branch:** `reescrita`
-- **Commits:** (preencher)
+- **Commits:** `ef281e4`
 
 ## Contexto
 - **A notificação de mensagem** já tinha título e corpo resumido, mas o avatar grande era o ícone do app. No Android 11+, o avatar de uma notificação de conversa vem do atalho da conversa, e o de cada mensagem vem do `Person`.
