@@ -140,6 +140,11 @@ private fun FormularioSistema(
         Surface(color = MaterialTheme.colorScheme.secondaryContainer, shape = MaterialTheme.shapes.medium) {
             Text(stringResource(R.string.sistema_aviso), style = MaterialTheme.typography.bodyMedium, modifier = Modifier.padding(12.dp))
         }
+        Secao(R.string.sistema_cadastro)
+        LinhaInterruptor(R.string.sistema_cadastro_aberto, R.string.sistema_cadastro_aberto_texto, editado.cadastroAberto) {
+            editado = editado.copy(cadastroAberto = it)
+        }
+        HorizontalDivider()
         Secao(R.string.sistema_firebase, R.string.sistema_firebase_texto)
         Campo(R.string.sistema_fcm_projeto, editado.fcmProjetoId) { editado = editado.copy(fcmProjetoId = it) }
         Campo(R.string.sistema_fcm_email, editado.fcmEmail, KeyboardType.Email) { editado = editado.copy(fcmEmail = it) }
@@ -162,22 +167,8 @@ private fun FormularioSistema(
         )
         HorizontalDivider()
         Secao(R.string.sistema_chamadas)
-        Row(
-            Modifier
-                .fillMaxWidth()
-                .toggleable(value = editado.turnForcarRelay, role = Role.Switch) { editado = editado.copy(turnForcarRelay = it) },
-            verticalAlignment = Alignment.CenterVertically,
-            horizontalArrangement = Arrangement.spacedBy(12.dp),
-        ) {
-            Column(Modifier.weight(1f)) {
-                Text(stringResource(R.string.sistema_turn), style = MaterialTheme.typography.bodyLarge)
-                Text(
-                    stringResource(R.string.sistema_turn_texto),
-                    style = MaterialTheme.typography.bodySmall,
-                    color = ConversaTema.cores.textoTerciario,
-                )
-            }
-            Interruptor(editado.turnForcarRelay)
+        LinhaInterruptor(R.string.sistema_turn, R.string.sistema_turn_texto, editado.turnForcarRelay) {
+            editado = editado.copy(turnForcarRelay = it)
         }
         OutlinedTextField(
             value = dias,
@@ -223,6 +214,22 @@ private fun FormularioSistema(
             onClick = { alteracao?.let(aoSalvar) },
             modifier = Modifier.align(Alignment.End),
         ) { Text(stringResource(if (estado.salvando) R.string.sistema_salvando else R.string.sistema_salvar)) }
+    }
+}
+
+/** Uma chave com título e explicação; a linha toda alterna. */
+@Composable
+private fun LinhaInterruptor(@StringRes titulo: Int, @StringRes texto: Int, valor: Boolean, aoMudar: (Boolean) -> Unit) {
+    Row(
+        Modifier.fillMaxWidth().toggleable(value = valor, role = Role.Switch, onValueChange = aoMudar),
+        verticalAlignment = Alignment.CenterVertically,
+        horizontalArrangement = Arrangement.spacedBy(12.dp),
+    ) {
+        Column(Modifier.weight(1f)) {
+            Text(stringResource(titulo), style = MaterialTheme.typography.bodyLarge)
+            Text(stringResource(texto), style = MaterialTheme.typography.bodySmall, color = ConversaTema.cores.textoTerciario)
+        }
+        Interruptor(valor)
     }
 }
 

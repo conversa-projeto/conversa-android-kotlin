@@ -6,6 +6,7 @@ import com.conversa.app.core.datastore.PreferenciasStore
 import com.conversa.app.core.model.Sessao
 import com.conversa.app.core.network.api.ConversaApi
 import com.conversa.app.core.network.dto.AlterarDispositivoRequisicao
+import com.conversa.app.core.network.dto.CadastroDto
 import com.conversa.app.core.network.dto.CadastroRequisicao
 import com.conversa.app.core.network.dto.DispositivoDto
 import com.conversa.app.core.network.dto.LoginRequisicao
@@ -44,6 +45,15 @@ class AutenticacaoRepositorioTest {
 
     private fun erroHttp(status: Int, corpo: String) =
         HttpException(Response.error<Any>(status, corpo.toResponseBody("application/json".toMediaType())))
+
+    @Test
+    fun `cadastro fechado pelo administrador - sem resposta, oferece como o web`() = runTest {
+        coEvery { api.cadastro() } returns CadastroDto(aberto = false)
+        assertThat(repositorio.cadastroAberto()).isFalse()
+
+        coEvery { api.cadastro() } throws java.io.IOException("sem rede")
+        assertThat(repositorio.cadastroAberto()).isTrue()
+    }
 
     @Test
     fun `login apara o usuario, reenvia o dispositivo e salva a sessao`() = runTest {

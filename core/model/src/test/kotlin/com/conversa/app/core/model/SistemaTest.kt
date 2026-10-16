@@ -26,6 +26,10 @@ class SistemaTest {
 
         assertThat(alteracaoDosParametros(original, original, novaChave = "-----BEGIN PRIVATE KEY-----"))
             .isEqualTo(AlteracaoParametros(fcmChave = "-----BEGIN PRIVATE KEY-----"))
+
+        // Fechar o cadastro (servidor `ef13c22`).
+        assertThat(alteracaoDosParametros(original, original.copy(cadastroAberto = false), novaChave = ""))
+            .isEqualTo(AlteracaoParametros(cadastroAberto = false))
     }
 
     @Test

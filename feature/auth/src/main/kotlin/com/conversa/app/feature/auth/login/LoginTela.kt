@@ -196,8 +196,10 @@ fun LoginTela(
                 Button(onClick = aoEntrar, enabled = !estado.entrando, modifier = Modifier.fillMaxWidth()) {
                     Text(stringResource(if (estado.entrando) R.string.login_entrando else R.string.login_entrar))
                 }
-                TextButton(onClick = aoCriarConta, enabled = !estado.entrando, modifier = Modifier.fillMaxWidth()) {
-                    Text(stringResource(R.string.login_criar_conta))
+                if (estado.cadastroAberto) {
+                    TextButton(onClick = aoCriarConta, enabled = !estado.entrando, modifier = Modifier.fillMaxWidth()) {
+                        Text(stringResource(R.string.login_criar_conta))
+                    }
                 }
             }
             Spacer(Modifier.weight(1f, fill = false))

@@ -222,7 +222,7 @@
 - [ ] **FC-217 · P2 · 🆕 `b8ea0c2`/`769bd7d` Imagem ou emoji do grupo** (CON-15, GER-07): mostrar `emoji`/`avatar_url` do grupo em todos os avatares; editar na tela do grupo ("Imagem" com recorte 256 px JPEG, "Emoji", "Remover"; `PATCH /conversa {id, avatar_anexo_id, emoji}`, um tira o outro). 🆕 `e33ecba`: também ao **criar** o grupo (imagem ou emoji antes de "Criar", "Criando..."; `PATCH /conversa` depois de incluir os membros).
 - [ ] **FC-218 · P2 · 🆕 `769bd7d` Seção "Chamadas (N)" na lista** (CON-01): conversas `chamada:true` não fixadas nem arquivadas, recolhível, antes de "Arquivadas"; com termo, tudo junto.
 - [ ] **FC-219 · P3 · 🆕 `e33ecba` Ícone de grupo na lista** (CON-01): ícone de pessoas com a descrição "Conversa em grupo" no lugar da etiqueta "Grupo".
-- [ ] **FC-220 · P2 · 🆕 `ef13c22` Cadastro fechado** (AUT-02): `GET /cadastro` → `{aberto}` (rota pública) antes de mostrar "Não tem conta? Criar conta"; fechado, o link some (o `PUT /usuario` responde 403).
+- [x] **FC-220 · P2 · 🆕 `ef13c22` Cadastro fechado** (AUT-02): `GET /cadastro` → `{aberto}` (rota pública) antes de mostrar "Não tem conta? Criar conta"; fechado, o link some (o `PUT /usuario` responde 403). ✔ HASH
 - [ ] **FC-221 · P2 · 🆕 `ef13c22`/`9c6e8a6` Bots de IA** (CON-16): `bot` nos contatos e na conversa; pílula "Bot" na direta; não oferecer ligação para bot; tirar o bot da lista de confirmação (ele nunca marca `recebida`; pendência S27).
 
 ## Bloco E — Mensagens: núcleo (F2)

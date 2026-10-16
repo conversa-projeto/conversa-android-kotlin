@@ -111,6 +111,8 @@ data class ParametrosSistema(
     val transcritorIdioma: String = "",
     val gravacaoDias: Int = 0,
     val s3Bucket: String = "",
+    /** Desligado, a tela de login não oferece o cadastro (servidor `ef13c22`). */
+    val cadastroAberto: Boolean = true,
 )
 
 /** `PATCH /parametros`: só o que mudou; nulo = não mexe. */
@@ -122,6 +124,7 @@ data class AlteracaoParametros(
     val transcritorUrl: String? = null,
     val transcritorIdioma: String? = null,
     val gravacaoDias: Int? = null,
+    val cadastroAberto: Boolean? = null,
 )
 
 /** Limite do "Guardar as gravações por (dias)": 0 = para sempre, até 100 anos. */
@@ -144,6 +147,7 @@ fun alteracaoDosParametros(original: ParametrosSistema, editado: ParametrosSiste
         transcritorUrl = seMudou(original.transcritorUrl, editado.transcritorUrl),
         transcritorIdioma = seMudou(original.transcritorIdioma, editado.transcritorIdioma),
         gravacaoDias = seMudou(original.gravacaoDias, editado.gravacaoDias),
+        cadastroAberto = seMudou(original.cadastroAberto, editado.cadastroAberto),
     )
     return alteracao.takeIf { it != AlteracaoParametros() }
 }

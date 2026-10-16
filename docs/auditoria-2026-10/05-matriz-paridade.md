@@ -88,7 +88,7 @@ A coluna **Fase** indica em que fase do plano da nova base (doc 07) a funcionali
 
 | Grupo | Total | ✅ | 🟡 | ⛔ | ⬜ | ➖ |
 |---|---|---|---|---|---|---|
-| AUT | 10 | 9 | 1 | 0 | 0 | 0 |
+| AUT | 10 | 10 | 0 | 0 | 0 | 0 |
 | CON | 16 | 12 | 1 | 0 | 3 | 0 |
 | MSG | 22 | 22 | 0 | 0 | 0 | 0 |
 | ENV | 28 | 24 | 0 | 2 | 1 | 1 |
@@ -101,11 +101,11 @@ A coluna **Fase** indica em que fase do plano da nova base (doc 07) a funcionali
 | ATV | 5 | 5 | 0 | 0 | 0 | 0 |
 | CFG | 14 | 6 | 1 | 0 | 5 | 2 |
 | GER | 10 | 7 | 1 | 0 | 0 | 2 |
-| **Total** | **163** | **132** | **6** | **3** | **16** | **6** |
+| **Total** | **163** | **133** | **5** | **3** | **16** | **6** |
 
 > Requisitos exclusivos do Android (AND, fora da contagem): 16 — 13 ✅, 2 🟡, 1 ⛔, 0 ⬜, 0 ➖.
 >
-> **Leitura:** 🆕 (2026-10-15, depois do servidor `ef13c22` e do web `9c6e8a6`) 131 de 163 funcionalidades estão prontas na nova base, e 6 estão em parte. A sincronização trouxe 10 funcionalidades (bots, permissões de uso, administração e atividades pendentes); a quebra das atividades (`nova` → `pendente`) já foi corrigida (`2219208`). Ficaram em parte o cadastro fechado (AUT-02), a duração e a onda do áudio (ANX-10, ANX-11); a tela de Acessos com as 32 permissões (CFG-08) já voltou a ✅. 🆕 (2026-10-16) As permissões de uso (GER-09) ficaram prontas: 132 de 163.
+> **Leitura:** 🆕 (2026-10-15, depois do servidor `ef13c22` e do web `9c6e8a6`) 131 de 163 funcionalidades estão prontas na nova base, e 6 estão em parte. A sincronização trouxe 10 funcionalidades (bots, permissões de uso, administração e atividades pendentes); a quebra das atividades (`nova` → `pendente`) já foi corrigida (`2219208`). Ficaram em parte o cadastro fechado (AUT-02), a duração e a onda do áudio (ANX-10, ANX-11); a tela de Acessos com as 32 permissões (CFG-08) já voltou a ✅. 🆕 (2026-10-16) As permissões de uso (GER-09) e o cadastro fechado (AUT-02) ficaram prontos: 133 de 163.
 > - **Bloqueadas (⛔):** dependem de algo fora do app: o push (Firebase, NOT-04) ou a decisão do campo rico (FC-416).
 > - **Por fazer (⬜):** a etapa 9 (SIP, compartilhar tela, Bubbles), as funções de IA (CON-14, ENV-25), os bots (CON-16), a administração de usuários, bots, ferramentas e conhecimento (CFG-11…14, a avaliar) e um item P3 fora do TODO.
 > - **Falta conferir:** as células com "falta conferir" ou "em aparelho" estão prontas, mas esperam um teste que o emulador não permite.
@@ -117,7 +117,7 @@ A coluna **Fase** indica em que fase do plano da nova base (doc 07) a funcionali
 | ID | Funcionalidade | Legado | Nova base | Situação / evidência (legado) | Adaptação Android | Fase | Prio |
 |---|---|---|---|---|---|---|---|
 | AUT-01 | Login | 🟡 | ✅ 2.1 | Funciona, mas salva **senha em texto puro** e refaz o login a cada abertura (#6, #44); `dispositivo_id = null` (`LoginActivity.kt:102`) | Guardar só o token (Keystore); reenviar o `dispositivo_id` salvo | F1 | P0 |
-| AUT-02 | Cadastro | ⬜ | 🟡 2.4 · 🆕 `ef13c22`: falta o `GET /cadastro` (com o cadastro fechado, o link leva a um 403) | Endpoint declarado, sem UI | Tela "Criar conta" | F1 | P1 |
+| AUT-02 | Cadastro | ⬜ | ✅ 2.4 · 🆕 `ef13c22`: o `GET /cadastro` esconde o "Criar conta" com o cadastro fechado, `HASH` | Endpoint declarado, sem UI | Tela "Criar conta" | F1 | P1 |
 | AUT-03 | Sessão resiliente (401 → login; outro erro → tenta de novo) | ⬜ | ✅ 1.8, 2.3 · falta conferir que o web não gera notificação depois do logout | Splash ignora o token e sempre manda para o Login; não há interceptor de 401 (#44) | `Authenticator`/interceptor + estado global de sessão | F1 | P0 |
 | AUT-04 | Registro de dispositivo e token push | 🔴 | ✅ 2.2 | `PATCH /dispositivo` sem `id` → 400; FCM não configurado (#5; doc 02 Q8) | `PATCH /dispositivo {id,…}` após o login + `onNewToken` | F1/F5 | P0 |
 | AUT-05 | Logout | 🟡 | ✅ 2.3 · falta conferir que o web não gera notificação depois do logout | Não para a chamada, não limpa notificações, cache nem token push (#45) | Logout central: limpa Room, DataStore, notificações e `token_fcm: null` | F1 | P0 |
@@ -317,7 +317,7 @@ A coluna **Fase** indica em que fase do plano da nova base (doc 07) a funcionali
 | CFG-04 | Permissões | 🟡 | ✅ 8.5 · `ee1237c` | Pedidas na Splash | Tela com o estado de cada permissão + atalho para as Configurações do sistema (inclui full-screen intent e otimização de bateria) | F7 | P1 |
 | CFG-05 | Cores personalizadas | ➖ | ➖ só as cores do `cores.md`; a etapa 9 lista "cor de destaque" para avaliar | — | Avaliar: cor primária/Material You. Não replicar o editor completo | F8 | P3 |
 | CFG-06 | Qualidade das chamadas | ⬜ | ✅ 8.5 · `705ee2e` · vale a partir da próxima chamada | — | = CHA-20 | F7 | P2 |
-| CFG-07 | Sistema — parâmetros do servidor (permissão `parametros`) | ⬜ | 🟡 8.5 · `afd3269` · 🆕 falta a seção "Inteligência artificial" (FC-812, avaliar) | — | Tela administrativa (FCM, TURN, gravações, transcritor) — 🆕 `769bd7d`: seção "Inteligência artificial" (endereço, modelo, token, "Testar conexão") | F7 | P2 |
+| CFG-07 | Sistema — parâmetros do servidor (permissão `parametros`) | ⬜ | 🟡 8.5 · `afd3269` · 🆕 com a seção "Cadastro" (`HASH`); falta a seção "Inteligência artificial" (FC-812, avaliar) | — | Tela administrativa (FCM, TURN, gravações, transcritor) — 🆕 `769bd7d`: seção "Inteligência artificial" (endereço, modelo, token, "Testar conexão") | F7 | P2 |
 | CFG-08 | Acessos — permissões (permissão `permissoes`) | ⬜ | ✅ 8.5 · `afd3269` · 🆕 com as 32 permissões em grupos, como o web, `91d5681` | — | Tela administrativa usuário × permissão | F7 | P2 |
 | CFG-09 🆕 | Privacidade ("Aparecer offline", "Mostrar o visto por último", "Mostrar quando estou na conversa") | ⬜ | ✅ 8.5 · `ab62486` | — | Tela nova com os textos do web; `GET /usuario/privacidade`, `PATCH /usuario` — 🆕 `769bd7d` | F7 | P2 |
 | CFG-10 🆕 | Temas prontos (Padrão, Teams, WhatsApp, Messenger) e cores dos balões | ➖ | ➖ | — | Não se aplica: o Android usa só as cores do FMX (`docs/design/cores.md`) — 🆕 `8b43965` | — | — |

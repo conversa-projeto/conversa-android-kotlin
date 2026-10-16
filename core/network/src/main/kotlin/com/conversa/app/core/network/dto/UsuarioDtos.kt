@@ -60,6 +60,10 @@ data class AlterarDispositivoRequisicao(
     @SerialName("token_fcm") val tokenFcm: JsonElement? = null,
 )
 
+/** `GET /cadastro` (pública): se a tela de login oferece o cadastro (servidor `ef13c22`). */
+@Serializable
+data class CadastroDto(val aberto: Boolean = true)
+
 @Serializable
 data class CadastroRequisicao(val nome: String, val login: String, val email: String, val senha: String, val telefone: String? = null)
 

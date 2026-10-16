@@ -11,6 +11,7 @@ import com.conversa.app.core.network.dto.AnexoItemDto
 import com.conversa.app.core.network.dto.ArquivadaResposta
 import com.conversa.app.core.network.dto.ArquivarRequisicao
 import com.conversa.app.core.network.dto.AtividadeDto
+import com.conversa.app.core.network.dto.CadastroDto
 import com.conversa.app.core.network.dto.CadastroRequisicao
 import com.conversa.app.core.network.dto.ChamadaHistoricoDto
 import com.conversa.app.core.network.dto.ChamadaPendenteDto
@@ -98,6 +99,11 @@ interface ConversaApi {
     @Headers(PUBLICA)
     @PUT("usuario")
     suspend fun cadastrar(@Body corpo: CadastroRequisicao): UsuarioDto
+
+    /** Cadastro aberto ou fechado pelo administrador (`cadastro_aberto`, contrato §2.6). */
+    @Headers(PUBLICA)
+    @GET("cadastro")
+    suspend fun cadastro(): CadastroDto
 
     // --- Usuário, dispositivo, contatos ---
 

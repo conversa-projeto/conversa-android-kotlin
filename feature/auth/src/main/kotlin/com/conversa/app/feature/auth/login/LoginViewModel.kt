@@ -15,6 +15,7 @@ import javax.inject.Inject
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
@@ -28,6 +29,8 @@ data class LoginUiState(
     val servidor: String = "",
     /** O último login já foi lido (a tela decide o foco inicial). */
     val pronto: Boolean = false,
+    /** O administrador pode fechar o cadastro: aí o "Criar conta" some (AUT-02, como o web). */
+    val cadastroAberto: Boolean = true,
 )
 
 sealed interface EventoLogin {
@@ -51,7 +54,14 @@ class LoginViewModel @Inject constructor(private val autenticacao: AutenticacaoR
             _estado.update { if (it.usuario.isEmpty()) it.copy(usuario = ultimo, pronto = true) else it.copy(pronto = true) }
         }
         viewModelScope.launch {
-            servidor.atual.collect { config -> _estado.update { it.copy(servidor = config?.base?.host.orEmpty()) } }
+            // Trocou de servidor: o cadastro pode estar aberto num e fechado no outro.
+            servidor.atual.collectLatest { config ->
+                _estado.update { it.copy(servidor = config?.base?.host.orEmpty()) }
+                if (config != null) {
+                    val aberto = autenticacao.cadastroAberto()
+                    _estado.update { it.copy(cadastroAberto = aberto) }
+                }
+            }
         }
     }
 

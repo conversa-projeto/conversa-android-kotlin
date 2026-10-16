@@ -81,6 +81,13 @@ class AutenticacaoRepositorio @Inject constructor(
         return Result.success(nova)
     }
 
+    /**
+     * `GET /cadastro` (rota pública): o administrador pode fechar o cadastro (AUT-02, servidor
+     * `ef13c22`). Sem resposta (erro, servidor antigo), oferece, como o web: se estiver fechado,
+     * o servidor recusa com o motivo.
+     */
+    suspend fun cadastroAberto(): Boolean = chamarApi { api.cadastro() }.map { it.aberto }.getOrDefault(true)
+
     /** `PUT /usuario {nome, login, email, senha}` (rota pública). Não faz login. */
     suspend fun cadastrar(nome: String, login: String, email: String, senha: String): Result<Unit> =
         chamarApi { api.cadastrar(CadastroRequisicao(nome.trim(), login.trim(), email.trim(), senha)) }

@@ -74,6 +74,7 @@ data class ParametrosDto(
     @SerialName("transcritor_idioma") val transcritorIdioma: String? = null,
     @SerialName("gravacao_dias") val gravacaoDias: Int = 0,
     @SerialName("s3_bucket") val s3Bucket: String? = null,
+    @SerialName("cadastro_aberto") val cadastroAberto: Boolean = true,
 )
 
 /** `PATCH /parametros`: só os campos alterados (nulos não são enviados). */
@@ -86,6 +87,7 @@ data class AlterarParametrosRequisicao(
     @SerialName("transcritor_url") val transcritorUrl: String? = null,
     @SerialName("transcritor_idioma") val transcritorIdioma: String? = null,
     @SerialName("gravacao_dias") val gravacaoDias: Int? = null,
+    @SerialName("cadastro_aberto") val cadastroAberto: Boolean? = null,
 )
 
 /** `GET /sip` devolve a linha ou `{}` (então tudo é opcional). */

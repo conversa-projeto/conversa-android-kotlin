@@ -25,7 +25,10 @@ import org.junit.Test
 class LoginViewModelTest {
     @get:Rule val regra = RegraDispatcherPrincipal()
 
-    private val autenticacao = mockk<AutenticacaoRepositorio> { every { ultimoLogin } returns flowOf("ana") }
+    private val autenticacao = mockk<AutenticacaoRepositorio> {
+        every { ultimoLogin } returns flowOf("ana")
+        coEvery { cadastroAberto() } returns true
+    }
     private val servidor = mockk<ServidorRepositorio> {
         every { atual } returns MutableStateFlow(ServerConfig.aPartirDe("https://192.168.2.5"))
     }
@@ -38,6 +41,14 @@ class LoginViewModelTest {
         advanceUntilIdle()
         assertThat(vm.estado.value.usuario).isEqualTo("ana")
         assertThat(vm.estado.value.servidor).isEqualTo("192.168.2.5")
+    }
+
+    @Test
+    fun `cadastro fechado pelo administrador esconde o Criar conta`() = runTest {
+        coEvery { autenticacao.cadastroAberto() } returns false
+        val vm = criar()
+        advanceUntilIdle()
+        assertThat(vm.estado.value.cadastroAberto).isFalse()
     }
 
     @Test

@@ -102,6 +102,7 @@ internal fun ParametrosDto.paraModelo() = ParametrosSistema(
     transcritorIdioma = transcritorIdioma.orEmpty(),
     gravacaoDias = gravacaoDias,
     s3Bucket = s3Bucket.orEmpty(),
+    cadastroAberto = cadastroAberto,
 )
 
 internal fun AlteracaoParametros.paraRequisicao() = AlterarParametrosRequisicao(
@@ -112,6 +113,7 @@ internal fun AlteracaoParametros.paraRequisicao() = AlterarParametrosRequisicao(
     transcritorUrl = transcritorUrl,
     transcritorIdioma = transcritorIdioma,
     gravacaoDias = gravacaoDias,
+    cadastroAberto = cadastroAberto,
 )
 
 internal fun PermissoesDto.paraModelo() = Acessos(
