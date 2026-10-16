@@ -19,6 +19,7 @@ import com.conversa.app.core.model.TipoChamada
 import com.conversa.app.core.network.http.ErroApi
 import com.conversa.app.core.network.realtime.EventoSocket
 import com.conversa.app.core.network.realtime.RealtimeClient
+import com.conversa.app.core.webrtc.EtapaVideo
 import com.conversa.app.core.webrtc.MidiaChamada
 import com.conversa.app.core.webrtc.MidiaLocal
 import com.google.common.truth.Truth.assertThat
@@ -37,6 +38,7 @@ import kotlinx.coroutines.launch
 import kotlinx.coroutines.test.StandardTestDispatcher
 import kotlinx.coroutines.test.TestScope
 import kotlinx.coroutines.test.advanceTimeBy
+import kotlinx.coroutines.test.advanceUntilIdle
 import kotlinx.coroutines.test.runCurrent
 import kotlinx.coroutines.test.runTest
 import kotlinx.serialization.json.JsonPrimitive
@@ -802,6 +804,43 @@ class GerenciadorChamadasTest {
     }
 
     @Test
+    fun `ligar o video mostra as etapas e some no fim`() = runTest {
+        val g = criar()
+        ativaRecebida(g)
+        midia.portaoVideo = CompletableDeferred()
+        midia.portaoRecebendo = CompletableDeferred()
+
+        g.ligarVideo()
+        runCurrent()
+        assertThat(g.estado.value.etapaVideo).isEqualTo(EtapaVideo.ENVIANDO)
+
+        midia.portaoVideo?.complete(Unit)
+        runCurrent()
+        assertThat(g.estado.value.etapaVideo).isEqualTo(EtapaVideo.RECEBENDO)
+
+        midia.portaoRecebendo?.complete(Unit)
+        runCurrent()
+        assertThat(g.estado.value.etapaVideo).isNull()
+        assertThat(g.estado.value.tipo).isEqualTo(TipoChamada.VIDEO)
+    }
+
+    @Test
+    fun `desligar enquanto liga o video nao deixa etapa para a proxima chamada`() = runTest {
+        val g = criar()
+        ativaRecebida(g)
+        midia.portaoVideo = CompletableDeferred()
+
+        g.ligarVideo()
+        runCurrent()
+        g.desligar()
+        runCurrent()
+        midia.portaoVideo?.complete(Unit)
+        advanceUntilIdle()
+
+        assertThat(g.estado.value.etapaVideo).isNull()
+    }
+
+    @Test
     fun `57 chat guarda a conversa do chat da chamada`() = runTest {
         val g = criar()
         ativaRecebida(g)
@@ -1314,6 +1353,7 @@ class GerenciadorChamadasTest {
         var local = MidiaLocal.AUDIO_VIDEO
         var falharPublicar = false
         var portaoVideo: CompletableDeferred<Unit>? = null
+        var portaoRecebendo: CompletableDeferred<Unit>? = null
 
         override suspend fun abrirLocal(video: Boolean): MidiaLocal {
             acoes += "abrir video=$video"
@@ -1337,9 +1377,12 @@ class GerenciadorChamadasTest {
             acoes += "desconectar $usuarioId"
         }
 
-        override suspend fun ativarVideo(transmitir: Boolean): Boolean {
+        override suspend fun ativarVideo(transmitir: Boolean, aoEtapa: (EtapaVideo) -> Unit): Boolean {
             acoes += "ativarVideo $transmitir"
+            aoEtapa(EtapaVideo.ENVIANDO)
             portaoVideo?.await()
+            aoEtapa(EtapaVideo.RECEBENDO)
+            portaoRecebendo?.await()
             return true
         }
 

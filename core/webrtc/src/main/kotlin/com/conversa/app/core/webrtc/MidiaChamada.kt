@@ -39,9 +39,10 @@ interface MidiaChamada {
 
     /**
      * Passa a chamada para vídeo: abre a câmera e republica. Com [transmitir] falso,
-     * a câmera fica desligada (só assiste). Devolve se conseguiu a câmera.
+     * a câmera fica desligada (só assiste). Devolve se conseguiu a câmera. [aoEtapa]
+     * conta o andamento (FC-728); pode ser chamada fora da vez de quem pediu.
      */
-    suspend fun ativarVideo(transmitir: Boolean): Boolean
+    suspend fun ativarVideo(transmitir: Boolean, aoEtapa: (EtapaVideo) -> Unit = {}): Boolean
 
     fun microfone(ligado: Boolean)
 
@@ -50,3 +51,6 @@ interface MidiaChamada {
     /** `DELETE` dos recursos WHIP/WHEP e `dispose()` de trilhas e conexões. */
     fun encerrar()
 }
+
+/** Etapas de ligar o vídeo numa chamada de áudio, para a tela mostrar o andamento (FC-728, como o web). */
+enum class EtapaVideo { CAMERA, ENVIANDO, RECEBENDO }

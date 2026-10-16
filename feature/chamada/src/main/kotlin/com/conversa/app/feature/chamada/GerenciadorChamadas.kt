@@ -11,6 +11,7 @@ import com.conversa.app.core.model.TipoChamada
 import com.conversa.app.core.network.di.EscopoAplicacao
 import com.conversa.app.core.network.realtime.EventoSocket
 import com.conversa.app.core.network.realtime.RealtimeClient
+import com.conversa.app.core.webrtc.EtapaVideo
 import com.conversa.app.core.webrtc.MidiaChamada
 import com.conversa.app.core.webrtc.MidiaLocal
 import dagger.Module
@@ -650,9 +651,15 @@ class GerenciadorChamadas @Inject constructor(
         val id = atual.chamadaId ?: return
         if (atual.fase != FaseChamada.ATIVA || atual.tipo != TipoChamada.AUDIO || ativandoVideo) return
         ativandoVideo = true
+        val g = geracao
+        // As etapas (FC-728) chegam da vez da mídia: passam para esta antes de mexer no estado.
+        atualizar { it.copy(etapaVideo = EtapaVideo.CAMERA) }
         try {
-            val g = geracao
-            val comCamera = tentar { midia.ativarVideo(transmitir) } ?: false
+            val comCamera = tentar {
+                midia.ativarVideo(transmitir) { etapa ->
+                    escopo.launch { if (vivo(g) && ativandoVideo) atualizar { it.copy(etapaVideo = etapa) } }
+                }
+            } ?: false
             if (!vivo(g)) return
             atualizar {
                 it.copy(
@@ -664,6 +671,7 @@ class GerenciadorChamadas @Inject constructor(
             if (notificar) tentar { remoto.anunciarVideo(id) }
         } finally {
             ativandoVideo = false
+            if (vivo(g)) atualizar { it.copy(etapaVideo = null) }
         }
     }
 

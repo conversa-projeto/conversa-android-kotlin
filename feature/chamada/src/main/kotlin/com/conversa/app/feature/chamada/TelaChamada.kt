@@ -65,6 +65,7 @@ import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Checkbox
+import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.DropdownMenu
 import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.ExperimentalMaterial3Api
@@ -131,6 +132,7 @@ import com.conversa.app.core.model.StatusParticipante
 import com.conversa.app.core.model.TipoChamada
 import com.conversa.app.core.ui.componentes.Avatar
 import com.conversa.app.core.ui.tema.ConversaTema
+import com.conversa.app.core.webrtc.EtapaVideo
 import com.conversa.app.core.webrtc.MidiaLocal
 import com.conversa.app.core.webrtc.MidiaWebRtc
 import com.conversa.app.core.webrtc.TrilhaRemota
@@ -522,6 +524,7 @@ private fun TelaEmChamada(
                     Participantes(estado.exibicao, remotos, aguardando, nomes, egl, acoes)
                 }
             }
+            estado.etapaVideo?.let { etapa -> EtapaDoVideo(etapa, Modifier.align(Alignment.TopCenter).padding(top = 12.dp)) }
             val videoLocal = trilhas.videoLocal
             if (videoLocal != null && estado.cameraLigada) {
                 // Miniatura local, com o nome "Você" (TODO 6.9).
@@ -541,6 +544,27 @@ private fun TelaEmChamada(
             }
         }
         BarraDeControles(estado, rotas, acoes)
+    }
+}
+
+/** Ligando o vídeo numa chamada de áudio: o que está acontecendo (FC-728, textos do web). */
+@Composable
+private fun EtapaDoVideo(etapa: EtapaVideo, modifier: Modifier) {
+    val texto = stringResource(
+        when (etapa) {
+            EtapaVideo.CAMERA -> R.string.etapa_video_camera
+            EtapaVideo.ENVIANDO -> R.string.etapa_video_enviando
+            EtapaVideo.RECEBENDO -> R.string.etapa_video_recebendo
+        },
+    )
+    Row(
+        modifier.zIndex(1f).clip(RoundedCornerShape(50)).background(Color.Black.copy(alpha = 0.7f))
+            .padding(horizontal = 12.dp, vertical = 6.dp).semantics { liveRegion = LiveRegionMode.Polite },
+        verticalAlignment = Alignment.CenterVertically,
+        horizontalArrangement = Arrangement.spacedBy(8.dp),
+    ) {
+        CircularProgressIndicator(Modifier.size(14.dp), color = Color.White, strokeWidth = 2.dp)
+        Text(texto, style = MaterialTheme.typography.labelMedium, color = Color.White)
     }
 }
 

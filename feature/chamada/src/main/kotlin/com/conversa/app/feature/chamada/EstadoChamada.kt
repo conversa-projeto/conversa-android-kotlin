@@ -4,6 +4,7 @@ import com.conversa.app.core.model.Chamada
 import com.conversa.app.core.model.ParticipanteChamada
 import com.conversa.app.core.model.StatusParticipante
 import com.conversa.app.core.model.TipoChamada
+import com.conversa.app.core.webrtc.EtapaVideo
 import com.conversa.app.core.webrtc.MidiaLocal
 import java.time.Instant
 
@@ -60,6 +61,8 @@ data class EstadoChamada(
     val telas: Set<Long> = emptySet(),
     /** Ponteiros dos outros sobre as telas compartilhadas (somem em 5 s sem atualizar). */
     val ponteiros: Map<Long, PonteiroRemoto> = emptyMap(),
+    /** Ligando o vídeo numa chamada de áudio: em que etapa está (FC-728); nulo fora disso. */
+    val etapaVideo: EtapaVideo? = null,
 ) {
     /** Liguei, atendi ou estou desligando (o "ocupado" do web, sem contar o toque). */
     val emChamada: Boolean

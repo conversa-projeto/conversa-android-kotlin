@@ -32,6 +32,7 @@ import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.joinAll
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.suspendCancellableCoroutine
 import kotlinx.coroutines.withTimeoutOrNull
@@ -113,11 +114,17 @@ class MidiaWebRtc @Inject constructor(
     // Só mexidos na [vez]:
     private var local: Local? = null
     private var publicacao: Publicacao? = null
+
+    /** A publicação que a [publicacao] está substituindo (FC-728): segue no ar até a nova entrar. */
+    private var publicacaoAnterior: Publicacao? = null
     private var republicando = false
     private var medidor: Job? = null
     private var falaLocal = DetectorDeFala()
     private var falandoLocal = false
     private val assinaturas = mutableMapOf<Long, Assinatura>()
+
+    /** Assinaturas trocadas que ainda tocam até a nova conectar (FC-728). */
+    private val substituidas = mutableMapOf<Long, Assinatura>()
     private var chamadaId = 0L
     private var eu = 0L
     private var comVideo = false
@@ -179,35 +186,50 @@ class MidiaWebRtc @Inject constructor(
 
     override suspend fun sincronizar(chamadaId: Long, participantes: Set<Long>, comVideo: Boolean) = naVez { s ->
         this@MidiaWebRtc.chamadaId = chamadaId
-        this@MidiaWebRtc.comVideo = comVideo
+        // A chamada não volta de vídeo para áudio: um sincronizar pedido ainda em áudio, no meio do
+        // ativarVideo, não desfaz o vídeo (as assinaturas novas sairiam só com áudio).
+        if (comVideo) this@MidiaWebRtc.comVideo = true
         (assinaturas.keys - participantes).toList().forEach(::soltar)
         for (usuario in participantes) {
             val atual = assinaturas[usuario]
-            if (atual == null || atual.falhou || (comVideo && !atual.comVideo)) assinar(usuario, s)
+            if (atual == null || atual.falhou) {
+                assinar(usuario, s)
+            } else if (comVideo && !atual.comVideo) {
+                assinar(usuario, s, trocar = true)
+            }
         }
     }
 
-    override suspend fun reassinar(usuarioId: Long) = naVez { s -> assinar(usuarioId, s) }
+    override suspend fun reassinar(usuarioId: Long) {
+        naVez { s -> assinar(usuarioId, s, trocar = true) }
+    }
 
     override fun desconectar(usuarioId: Long) {
         naVezSemEsperar { soltar(usuarioId) }
     }
 
-    override suspend fun ativarVideo(transmitir: Boolean): Boolean = naVez { s ->
+    override suspend fun ativarVideo(transmitir: Boolean, aoEtapa: (EtapaVideo) -> Unit): Boolean = naVez { s ->
+        aoEtapa(EtapaVideo.CAMERA)
         val l = local ?: Local().also { local = it }
         if (l.video == null && permitido(Manifest.permission.CAMERA)) abrirCamera(l)
         if (!transmitir) desligarCamera(l)
         comVideo = true
         publicarTrilhas()
-        // Republica com o vídeo e assina todos de novo, agora com vídeo (como o web).
-        try {
-            publicarAgora(s)
-        } catch (e: CancellationException) {
-            throw e
-        } catch (e: Exception) {
-            Timber.w("Republicar com vídeo falhou: %s", e.javaClass.simpleName)
+        // Com a câmera, republica com o vídeo sem cortar o áudio (como o web).
+        if (l.video != null) {
+            aoEtapa(EtapaVideo.ENVIANDO)
+            try {
+                trocarPublicacao(s)
+            } catch (e: CancellationException) {
+                throw e
+            } catch (e: Exception) {
+                Timber.w("Republicar com vídeo falhou: %s", e.javaClass.simpleName)
+            }
         }
-        assinaturas.keys.toList().forEach { assinar(it, s) }
+        // Assina todos de novo, agora com vídeo; cada assinatura antiga toca até a nova conectar.
+        aoEtapa(EtapaVideo.RECEBENDO)
+        val tarefas = assinaturas.keys.toList().mapNotNull { assinar(it, s, trocar = true) }
+        withTimeoutOrNull(ESPERA_ASSINATURAS_MS) { tarefas.joinAll() }
         l.video != null
     }
 
@@ -379,6 +401,37 @@ class MidiaWebRtc @Inject constructor(
         garantirMedidor(s)
     }
 
+    /**
+     * Publica de novo sem intervalo (FC-728, como o web): a nova transmissão entra no mesmo caminho e
+     * o MediaMTX troca a antiga por ela (`overridePublisher`); só depois a antiga é descartada. Até lá
+     * ela fica em [publicacaoAnterior], fora da [publicacao] (os avisos dela são ignorados). Se a troca
+     * for recusada, descarta a antiga e publica.
+     */
+    private suspend fun trocarPublicacao(s: Long) {
+        val antiga = publicacao ?: return publicarAgora(s)
+        publicacao = null
+        publicacaoAnterior = antiga
+        try {
+            try {
+                publicarAgora(s)
+            } catch (e: CancellationException) {
+                throw e
+            } catch (e: Exception) {
+                Timber.w("Troca da publicação recusada: %s", e.javaClass.simpleName)
+                soltarPublicacaoAnterior()
+                publicarAgora(s)
+            }
+        } finally {
+            soltarPublicacaoAnterior()
+        }
+    }
+
+    private fun soltarPublicacaoAnterior() {
+        val anterior = publicacaoAnterior ?: return
+        publicacaoAnterior = null
+        descartarPublicacao(anterior)
+    }
+
     private fun aoMudarPublicacao(pub: Publicacao, estado: PeerConnection.PeerConnectionState, s: Long) {
         if (s != sessaoAtual() || publicacao !== pub) return
         pub.estado = estado
@@ -434,8 +487,19 @@ class MidiaWebRtc @Inject constructor(
 
     // --- Assinaturas (WHEP) ---
 
-    private fun assinar(usuario: Long, s: Long) {
-        assinaturas.remove(usuario)?.let(::descartarAssinatura)
+    /**
+     * Assina [usuario] de novo. Com [trocar], a assinatura anterior, se conectada, continua tocando
+     * (em [substituidas]) até a nova conectar ou falhar (FC-728, como o web). Devolve a tarefa da conexão.
+     */
+    private fun assinar(usuario: Long, s: Long, trocar: Boolean = false): Job? {
+        soltarSubstituida(usuario)
+        assinaturas.remove(usuario)?.let { anterior ->
+            if (trocar && anterior.estado == PeerConnection.PeerConnectionState.CONNECTED) {
+                substituidas[usuario] = anterior
+            } else {
+                descartarAssinatura(anterior)
+            }
+        }
         val a = Assinatura(usuario, comVideo)
         assinaturas[usuario] = a
         a.tarefa = noTrabalho(s) {
@@ -447,11 +511,17 @@ class MidiaWebRtc @Inject constructor(
                 Timber.w("WHEP falhou: %s", e.javaClass.simpleName)
                 if (assinaturas[usuario] === a) {
                     a.falhou = true
+                    soltarSubstituida(usuario)
                     publicarTrilhas()
                 }
             }
         }
         publicarTrilhas()
+        return a.tarefa
+    }
+
+    private fun soltarSubstituida(usuario: Long) {
+        substituidas.remove(usuario)?.let(::descartarAssinatura)
     }
 
     private suspend fun conectarAssinatura(a: Assinatura, s: Long) {
@@ -546,6 +616,8 @@ class MidiaWebRtc @Inject constructor(
         when (estado) {
             PeerConnection.PeerConnectionState.CONNECTED -> {
                 a.falhou = false
+                // A nova tocando: a anterior (troca sem intervalo) sai.
+                soltarSubstituida(a.usuario)
                 publicarTrilhas()
                 // Como o web: conectou e o vídeo não chegou em 5 s → refazer.
                 if (a.esperaVideo) {
@@ -583,6 +655,7 @@ class MidiaWebRtc @Inject constructor(
     }
 
     private fun soltar(usuario: Long) {
+        soltarSubstituida(usuario)
         assinaturas.remove(usuario)?.let(::descartarAssinatura)
         publicarTrilhas()
     }
@@ -593,8 +666,11 @@ class MidiaWebRtc @Inject constructor(
         _trilhas.value = TrilhasChamada()
         assinaturas.values.forEach(::descartarAssinatura)
         assinaturas.clear()
+        substituidas.values.forEach(::descartarAssinatura)
+        substituidas.clear()
         publicacao?.let(::descartarPublicacao)
         publicacao = null
+        soltarPublicacaoAnterior()
         local?.let(::liberarLocal)
         local = null
         comVideo = false
@@ -660,8 +736,10 @@ class MidiaWebRtc @Inject constructor(
     private fun publicarTrilhas() {
         _trilhas.value = TrilhasChamada(
             videoLocal = local?.video,
-            remotos = assinaturas.mapValues { (_, a) ->
-                TrilhaRemota(a.video, a.estado == PeerConnection.PeerConnectionState.CONNECTED, a.falhou, a.falando)
+            remotos = assinaturas.mapValues { (usuario, a) ->
+                // Enquanto a nova não conecta, a tela segue com a anterior (troca sem intervalo).
+                val vista = substituidas[usuario]?.takeIf { a.estado != PeerConnection.PeerConnectionState.CONNECTED } ?: a
+                TrilhaRemota(vista.video, vista.estado == PeerConnection.PeerConnectionState.CONNECTED, a.falhou, a.falando)
             },
             falandoLocal = falandoLocal,
         )
@@ -731,6 +809,9 @@ class MidiaWebRtc @Inject constructor(
         const val ESPERA_RECONEXAO_MS = 2_000L
         const val ESPERA_VIDEO_MS = 5_000L
 
+        // Ligando o vídeo: quanto a etapa "Recebendo o vídeo" espera as assinaturas novas.
+        const val ESPERA_ASSINATURAS_MS = 10_000L
+
         // O web mede a cada 100 ms; aqui as estatísticas custam mais, e 150 ms com a espera de 400 ms não pisca.
         const val INTERVALO_FALA_MS = 150L
         const val ESPERA_ESTATISTICAS_MS = 1_000L
@@ -744,17 +825,22 @@ class MidiaWebRtc @Inject constructor(
 internal fun sdpEnviaVideo(sdp: String): Boolean {
     var dentroDoVideo = false
     var envia = false
+    var temTrilha = false
     for (linha in sdp.lineSequence().map { it.trim() }) {
         if (linha.startsWith("m=")) {
-            if (dentroDoVideo && envia) return true
+            if (dentroDoVideo && envia && temTrilha) return true
             val partes = linha.removePrefix("m=").split(' ')
             dentroDoVideo = partes.firstOrNull() == "video" && partes.getOrNull(1) != "0"
             envia = dentroDoVideo
+            temTrilha = false
         } else if (dentroDoVideo && (linha == "a=recvonly" || linha == "a=inactive")) {
             envia = false
+        } else if (dentroDoVideo && (linha.startsWith("a=msid:") || linha.startsWith("a=ssrc:"))) {
+            // O MediaMTX responde "a=sendonly" mesmo sem vídeo no caminho; só a trilha (msid/ssrc) diz que vem.
+            temTrilha = true
         }
     }
-    return dentroDoVideo && envia
+    return dentroDoVideo && envia && temTrilha
 }
 
 @Module

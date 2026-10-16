@@ -48,6 +48,8 @@ Para testar chamada, o usuário B fica no cliente web, num Chrome à parte com c
 2. Um Chrome com perfil descartável (fora do perfil da pessoa), com dispositivos falsos e a porta de depuração local:
    `chrome.exe --user-data-dir=<pasta temporária> --remote-debugging-port=9333 --use-fake-device-for-media-stream --use-fake-ui-for-media-stream https://localhost/`
    - a câmera falsa mostra um círculo verde girando; o microfone falso, um bipe;
+   - o contêiner `dev` (Vite) pode estar parado depois de reiniciar o Docker (`https://localhost` responde 502): `docker start dev` e o Vite como no `iniciar-desenvolvimento.bat`;
+   - para não digitar a senha no navegador: login pela API (`POST /api/login`, com a senha lida deste arquivo por um script, sem mostrar) e, pelo DevTools Protocol, `conversa.token` e `conversa.user` no `localStorage` da página, e recarregar;
    - entrar como `teste.android.b` e comandar a chamada pelo DevTools Protocol (a store `call` do Pinia: `iniciarChamada`, `aceitarChamada`, `upgradeParaVideo`, `sairDaChamada`…).
 3. Gravações: o MediaMTX grava cada participante em `call-<chamada>-u-<usuário>` no volume `conversa-gravacoes`. O contêiner não tem shell; para listar, um contêiner temporário com o volume só de leitura (`docker run --rm -v conversa-gravacoes:/g:ro alpine ls /g`).
 

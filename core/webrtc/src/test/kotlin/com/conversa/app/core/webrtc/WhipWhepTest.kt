@@ -98,16 +98,20 @@ class WhipWhepTest {
     @Test
     fun `sdp com video so conta se o MediaMTX manda video`() {
         val audio = "v=0\r\nm=audio 9 UDP/TLS/RTP/SAVPF 111\r\na=sendonly\r\n"
-        val comVideo = audio + "m=video 9 UDP/TLS/RTP/SAVPF 96\r\na=sendonly\r\n"
+        val trilha = "a=ssrc:2934213912 cname:mediamtx\r\na=msid:mediamtx video\r\n"
+        val comVideo = audio + "m=video 9 UDP/TLS/RTP/SAVPF 96\r\n" + trilha + "a=sendonly\r\n"
         val videoRecusado = audio + "m=video 0 UDP/TLS/RTP/SAVPF 96\r\na=inactive\r\n"
         val videoInativo = audio + "m=video 9 UDP/TLS/RTP/SAVPF 96\r\na=inactive\r\n"
-        val videoNoMeio = "v=0\r\nm=video 9 UDP 96\r\na=sendonly\r\nm=audio 9 UDP 111\r\na=sendonly\r\n"
+        val videoNoMeio = "v=0\r\nm=video 9 UDP 96\r\n" + trilha + "a=sendonly\r\nm=audio 9 UDP 111\r\na=sendonly\r\n"
+        // Como o MediaMTX responde a quem pede vídeo de um caminho só com áudio (conferido no dev).
+        val videoSemTrilha = audio + "m=video 9 UDP/TLS/RTP/SAVPF 96\r\na=sendonly\r\n"
 
         assertThat(sdpEnviaVideo(audio)).isFalse()
         assertThat(sdpEnviaVideo(comVideo)).isTrue()
         assertThat(sdpEnviaVideo(videoRecusado)).isFalse()
         assertThat(sdpEnviaVideo(videoInativo)).isFalse()
         assertThat(sdpEnviaVideo(videoNoMeio)).isTrue()
+        assertThat(sdpEnviaVideo(videoSemTrilha)).isFalse()
     }
 
     @Test
