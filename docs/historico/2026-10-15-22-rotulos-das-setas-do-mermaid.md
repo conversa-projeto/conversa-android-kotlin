@@ -4,7 +4,7 @@
 - **Tipo:** correção
 - **Itens:** `TODO.md` 7.9 (linha nova abaixo da do mermaid); MSG-15
 - **Branch:** `reescrita`
-- **Commits:** (preencher)
+- **Commits:** `3dc8674`
 
 ## Contexto
 - **O defeito:** num fluxograma, os rótulos das setas ("Sim", "Não") apareciam numa caixa preta, quase ilegíveis.
