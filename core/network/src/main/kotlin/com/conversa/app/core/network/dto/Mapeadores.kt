@@ -70,6 +70,7 @@ fun ConteudoDto.paraModelo() = Conteudo(
     extensao = extensao,
     transcricaoStatus = StatusTranscricao.de(transcricaoStatus),
     transcricao = transcricao,
+    chatChamadaId = chatChamadaId,
 )
 
 fun ReferenciaDto.paraModelo(): ReferenciaMensagem = ReferenciaMensagem(
@@ -146,6 +147,7 @@ fun ChamadaHistoricoDto.paraModelo() = ChamadaHistorico(
     conversaId = conversaId?.takeIf { it > 0 },
     duracao = duracao,
     participantes = participantes.map { ParticipanteHistorico(it.usuarioId, it.nome, StatusParticipante.de(it.status), it.avatarUrl) },
+    conversaChatId = conversaChatId,
 )
 
 fun ChamadaPendenteDto.paraModelo() = ChamadaPendente(

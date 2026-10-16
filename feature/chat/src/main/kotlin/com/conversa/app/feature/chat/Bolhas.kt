@@ -25,6 +25,7 @@ import androidx.compose.material.icons.outlined.DoneAll
 import androidx.compose.material.icons.outlined.ErrorOutline
 import androidx.compose.material.icons.outlined.Videocam
 import androidx.compose.material.icons.outlined.VisibilityOff
+import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
@@ -86,6 +87,7 @@ import com.conversa.app.core.model.separarConteudosDaCitacao
 import com.conversa.app.core.model.separarTexto
 import com.conversa.app.core.model.statusEntrega
 import com.conversa.app.core.network.dto.lerChamadaDaMensagem
+import com.conversa.app.core.ui.componentes.ChatDaChamada
 import com.conversa.app.core.ui.tema.ConversaTema
 import java.time.ZoneId
 import java.time.format.DateTimeFormatter
@@ -138,6 +140,10 @@ data class AcoesBolha(
     val aoConfirmarLeitura: (Mensagem) -> Unit = {},
     /** Quem confirmou e quem falta (toque no chip da confirmação). */
     val aoVerConfirmacao: (Mensagem) -> Unit = {},
+    /** O chat da ligação, só para ler (FC-727). */
+    val chatDaChamada: suspend (Long) -> Result<List<Mensagem>> = { Result.success(emptyList()) },
+    /** "Abrir o chat completo" do chat da ligação. */
+    val aoAbrirConversa: (Long) -> Unit = {},
 )
 
 /**
@@ -511,6 +517,7 @@ private fun BolhaOculta(mensagem: Mensagem, propria: Boolean, acoes: AcoesBolha)
 private fun BolhaChamada(mensagem: Mensagem, propria: Boolean, acoes: AcoesBolha) {
     val dados = lerChamadaDaMensagem(mensagem.conteudos.first().conteudo)
         ?: ChamadaNaMensagem(0, TipoChamada.AUDIO, 0, null, emptyList())
+    val chatId = mensagem.conteudos.first().chatChamadaId
     val cores = ConversaTema.cores
     val corIcone = when {
         dados.encerrada -> cores.chamadaRecebida
@@ -558,6 +565,21 @@ private fun BolhaChamada(mensagem: Mensagem, propria: Boolean, acoes: AcoesBolha
                         style = MaterialTheme.typography.bodySmall,
                         modifier = Modifier.padding(start = 40.dp, top = 2.dp),
                     )
+                }
+            }
+            // O chat da ligação, dentro da mensagem (CHA-26, web `964ed72`/`e33ecba`).
+            if (chatId != null) {
+                val cor = corTexto(propria)()
+                HorizontalDivider(Modifier.padding(top = 6.dp), color = cor.copy(alpha = 0.3f))
+                ChatDaChamada(
+                    cor = cor,
+                    carregar = { acoes.chatDaChamada(chatId) },
+                    aoAbrir = { acoes.aoAbrirConversa(chatId) },
+                    modifier = Modifier.padding(top = 2.dp),
+                ) { doChat ->
+                    Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
+                        doChat.conteudos.forEach { ConteudoNaBolha(doChat, it, propria, cor, acoes) }
+                    }
                 }
             }
             Text(

@@ -108,6 +108,14 @@ class MensagensRepositorio @Inject constructor(
     suspend fun pedirConfirmacao(conversaId: Long, mensagemId: Long, usuarios: List<Long>?): Result<Unit> =
         chamarApi { api.pedirConfirmacao(PedirConfirmacaoRequisicao(mensagemId, usuarios)) }.map { recarregar(conversaId, mensagemId) }
 
+    /**
+     * O chat de uma ligação, só para ler (FC-727): as últimas 100, sem gravar no Room (quem não abriu
+     * esse chat não precisa dele no aparelho).
+     */
+    suspend fun chatDaChamada(conversaId: Long): Result<List<Mensagem>> =
+        chamarApi { api.mensagens(conversaId, mensagensPrevias = LIMITE_CHAT_DA_CHAMADA) }
+            .map { lista -> lista.map { it.paraEntidade().paraModelo() } }
+
     /** Uma mensagem do aparelho (a pendente do "Responder no privado", 7.6). */
     suspend fun buscar(mensagemId: Long): Mensagem? = mensagemDao.buscar(mensagemId)?.paraModelo()
 
@@ -303,3 +311,6 @@ class MensagensRepositorio @Inject constructor(
         const val MAXIMO_PAGINAS_SALTO = 20
     }
 }
+
+/** Quantas mensagens o chat da ligação mostra (como o web). */
+private const val LIMITE_CHAT_DA_CHAMADA = 100

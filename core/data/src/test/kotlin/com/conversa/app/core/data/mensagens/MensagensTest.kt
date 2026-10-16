@@ -350,6 +350,23 @@ class MensagensTest {
         }
     }
 
+    // --- Chat da ligação só leitura (FC-727) ---
+
+    @Test
+    fun `chat da ligacao vem do servidor sem gravar no Room e o conteudo guarda o chat`() = runTest {
+        coEvery { api.mensagens(15, 0, 100, 0) } returns listOf(msg(900, "combinado").copy(conversaId = 15))
+
+        val lista = repo().chatDaChamada(15).getOrThrow()
+
+        assertThat(lista.map { it.id }).containsExactly(900L)
+        assertThat(banco.mensagemDao().buscar(900)).isNull()
+
+        // A mensagem da ligação guarda no Room o chat dela (para a bolha abrir).
+        val ligacao = msg(901).copy(conteudos = listOf(ConteudoDto(id = 1, ordem = 1, tipo = 6, conteudo = "{}", chatChamadaId = 15)))
+        banco.mensagemDao().salvarCompletas(listOf(ligacao.paraEntidade()))
+        assertThat(banco.mensagemDao().buscar(901)!!.paraModelo().conteudos.single().chatChamadaId).isEqualTo(15)
+    }
+
     // --- Confirmação de leitura (FC-521, FC-525) ---
 
     @Test

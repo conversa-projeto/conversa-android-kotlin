@@ -101,6 +101,7 @@ internal fun MensagemDto.paraEntidade() = MensagemCompleta(
             extensao = it.extensao,
             transcricaoStatus = it.transcricaoStatus,
             transcricao = it.transcricao,
+            chatChamadaId = it.chatChamadaId,
         )
     },
     reacoes = reacoes.mapIndexed { ordem, it ->
@@ -148,6 +149,7 @@ fun MensagemCompleta.paraModelo() = Mensagem(
             extensao = it.extensao,
             transcricaoStatus = StatusTranscricao.de(it.transcricaoStatus),
             transcricao = it.transcricao,
+            chatChamadaId = it.chatChamadaId,
         )
     },
     reacoes = reacoes.sortedBy { it.ordem }.map { reacao ->

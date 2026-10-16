@@ -34,4 +34,11 @@
     <string name="emojis_recentes">Recentes</string>
     <string name="emojis_carregando">Carregando os emojis…</string>
     <string name="emojis_nenhum">Nenhum emoji encontrado</string>
+    <!-- Chat da ligação só leitura (FC-727, web BolhaChamada.vue e ChatDaChamada.vue) -->
+    <string name="chat_chamada_ver">Ver chat da chamada</string>
+    <string name="chat_chamada_esconder">Esconder o chat da chamada</string>
+    <string name="chat_chamada_carregando">Carregando o chat…</string>
+    <string name="chat_chamada_erro">Não foi possível carregar o chat</string>
+    <string name="chat_chamada_vazio">Ninguém escreveu no chat da chamada.</string>
+    <string name="chat_chamada_abrir">Abrir o chat completo</string>
 </resources>

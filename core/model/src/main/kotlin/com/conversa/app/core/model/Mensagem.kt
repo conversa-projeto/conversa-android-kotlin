@@ -45,6 +45,8 @@ data class Conteudo(
     val extensao: String = "",
     val transcricaoStatus: StatusTranscricao = StatusTranscricao.NENHUMA,
     val transcricao: String = "",
+    /** Na mensagem da ligação: o chat criado nela (CHA-26), só para quem é membro. */
+    val chatChamadaId: Long? = null,
 )
 
 enum class TipoReferencia(val codigo: Int) {

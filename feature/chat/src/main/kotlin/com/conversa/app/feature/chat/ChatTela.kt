@@ -286,6 +286,8 @@ fun ChatRotaTela(
                     enquetes = viewModel.acoesEnquete,
                     postagens = viewModel.acoesPostagem,
                     aoConfirmarLeitura = viewModel::confirmarLeitura,
+                    chatDaChamada = viewModel::chatDaChamada,
+                    aoAbrirConversa = viewModel::abrirConversa,
                     aoVerConfirmacao = { acoesDaMensagem.confirmacaoDe = it.id },
                     aoResponder = viewModel::responder,
                     aoIrParaMensagem = viewModel::irParaMensagem,

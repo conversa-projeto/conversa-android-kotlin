@@ -94,6 +94,8 @@ data class ChamadaHistoricoDto(
     /** Segundos; nulo se faltou início ou fim. */
     val duracao: Long? = null,
     val participantes: List<ParticipanteHistoricoDto> = emptyList(),
+    /** O chat da ligação, só para quem é membro dele (servidor `964ed72`). */
+    @SerialName("conversa_chat_id") val conversaChatId: Long? = null,
 )
 
 /** `GET /ice` — a única resposta em camelCase. `urls` é texto (pode vir lista). */

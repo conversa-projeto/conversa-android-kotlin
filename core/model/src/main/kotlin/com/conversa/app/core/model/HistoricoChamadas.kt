@@ -18,6 +18,8 @@ data class ChamadaHistorico(
     /** Segundos; nula se faltou início ou fim. */
     val duracao: Long?,
     val participantes: List<ParticipanteHistorico>,
+    /** O chat da ligação (CHA-26), só para quem é membro dele. */
+    val conversaChatId: Long? = null,
 ) {
     /** Mais de duas pessoas: o web mostra "Grupo (N)". */
     val grupo: Boolean get() = participantes.size > 2

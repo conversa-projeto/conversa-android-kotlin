@@ -105,6 +105,22 @@ class DesserializacaoTest {
     }
 
     @Test
+    fun `chat da ligacao no conteudo da mensagem e no historico`() {
+        val conteudo = ConversaJson.decodeFromString(
+            ConteudoDto.serializer(),
+            """{"ordem":1,"tipo":6,"conteudo":"{}","chat_chamada_id":15}""",
+        )
+        assertThat(conteudo.paraModelo().chatChamadaId).isEqualTo(15)
+        val historico = ConversaJson.decodeFromString(
+            ChamadaHistoricoDto.serializer(),
+            """{"id":60,"tipo":1,"status":4,"conversa_chat_id":15}""",
+        )
+        assertThat(historico.paraModelo().conversaChatId).isEqualTo(15)
+        // Quem não é membro do chat não recebe o campo.
+        assertThat(ConversaJson.decodeFromString(ConteudoDto.serializer(), """{"ordem":1,"tipo":6}""").chatChamadaId).isNull()
+    }
+
+    @Test
     fun `dados da chamada`() {
         val chamada = ConversaJson.decodeFromString<DadosChamadaDto>(Fixtures.ler("chamada-dados.json")).paraModelo()
         assertThat(chamada.status).isEqualTo(StatusChamada.PENDENTE)

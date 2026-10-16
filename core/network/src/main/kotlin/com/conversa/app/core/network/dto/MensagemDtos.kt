@@ -21,6 +21,8 @@ data class ConteudoDto(
     val extensao: String = "",
     @SerialName("transcricao_status") val transcricaoStatus: Int = 0,
     val transcricao: String = "",
+    /** Na mensagem da ligação: o chat criado nela, só para quem é membro (servidor `964ed72`). */
+    @SerialName("chat_chamada_id") val chatChamadaId: Long? = null,
 )
 
 @Serializable

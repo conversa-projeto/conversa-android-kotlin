@@ -571,6 +571,15 @@ class ChatViewModel @Inject constructor(
         if (sim) emTela.apareceu(conversaId) else emTela.sumiu(conversaId)
     }
 
+    /** O chat de uma ligação, só para ler (FC-727). */
+    suspend fun chatDaChamada(conversaId: Long): Result<List<Mensagem>> = mensagens.chatDaChamada(conversaId)
+
+    /** "Abrir o chat completo" do chat da ligação. */
+    fun abrirConversa(conversaId: Long) {
+        if (conversaId == this.conversaId) return
+        viewModelScope.launch { eventos.enviar(EventoChat.AbrirConversa(conversaId)) }
+    }
+
     /** Menção tocada: obtém ou cria a direta e abre. */
     fun abrirDireta(usuarioId: Long) {
         if (usuarioId == eu) return

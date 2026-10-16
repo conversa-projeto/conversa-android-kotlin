@@ -57,16 +57,22 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewModelScope
 import com.conversa.app.core.data.SessaoRepositorio
 import com.conversa.app.core.data.chamadas.ChamadasRepositorio
+import com.conversa.app.core.data.mensagens.MensagensRepositorio
 import com.conversa.app.core.model.ChamadaHistorico
 import com.conversa.app.core.model.DiaHistorico
+import com.conversa.app.core.model.Mensagem
+import com.conversa.app.core.model.ResumoCitacao
 import com.conversa.app.core.model.StatusChamada
 import com.conversa.app.core.model.TipoChamada
+import com.conversa.app.core.model.TipoConteudo
 import com.conversa.app.core.model.agruparHistorico
 import com.conversa.app.core.model.filtrarHistorico
+import com.conversa.app.core.model.resumoDaMensagem
 import com.conversa.app.core.network.http.ErroApi
 import com.conversa.app.core.network.http.mensagemAmigavel
 import com.conversa.app.core.ui.componentes.Avatar
 import com.conversa.app.core.ui.componentes.Carregando
+import com.conversa.app.core.ui.componentes.ChatDaChamada
 import com.conversa.app.core.ui.componentes.EstadoErro
 import com.conversa.app.core.ui.componentes.EstadoVazio
 import com.conversa.app.core.ui.tema.ConversaTema
@@ -105,6 +111,7 @@ data class HistoricoUiState(
 @HiltViewModel
 class HistoricoChamadasViewModel @Inject constructor(
     private val chamadas: ChamadasRepositorio,
+    private val mensagens: MensagensRepositorio,
     gerenciador: GerenciadorChamadas,
     sessao: SessaoRepositorio,
     private val relogio: Clock,
@@ -146,6 +153,9 @@ class HistoricoChamadasViewModel @Inject constructor(
 
     fun soPerdidas(sim: Boolean) = _estado.update { it.copy(soPerdidas = sim) }
 
+    /** O chat da ligação, só para ler (FC-727). */
+    suspend fun chatDaChamada(conversaId: Long): Result<List<Mensagem>> = mensagens.chatDaChamada(conversaId)
+
     fun periodo(de: LocalDate?, ate: LocalDate?) {
         _estado.update { it.copy(de = de, ate = ate) }
         carregar()
@@ -186,9 +196,20 @@ fun HistoricoChamadasRota(
                 for (grupo in grupos) {
                     stickyHeader(key = "dia-${grupo.dia}") { TituloDoDia(grupo.dia) }
                     items(grupo.chamadas, key = { it.id }) { chamada ->
-                        LinhaChamada(chamada, eu, aoAbrir = {
-                            chamada.conversaId?.let(aoAbrirConversa)
-                        }, aoLigar = { ligarNovamente(chamada) })
+                        Column {
+                            LinhaChamada(chamada, eu, aoAbrir = {
+                                chamada.conversaId?.let(aoAbrirConversa)
+                            }, aoLigar = { ligarNovamente(chamada) })
+                            // O chat da ligação, só para ler (CHA-26): o resumo de cada mensagem; o completo abre o chat.
+                            chamada.conversaChatId?.let { chatId ->
+                                ChatDaChamada(
+                                    cor = MaterialTheme.colorScheme.onSurfaceVariant,
+                                    carregar = { viewModel.chatDaChamada(chatId) },
+                                    aoAbrir = { aoAbrirConversa(chatId) },
+                                    modifier = Modifier.padding(start = 68.dp, end = 16.dp, bottom = 8.dp),
+                                ) { mensagem -> Text(textoDoResumoDoChat(mensagem), style = MaterialTheme.typography.bodySmall) }
+                            }
+                        }
                     }
                 }
             }
@@ -373,3 +394,18 @@ private fun paraData(millis: Long): LocalDate = Instant.ofEpochMilli(millis).atZ
 private val FORMATO_HORA = DateTimeFormatter.ofPattern("HH:mm")
 private val FORMATO_DATA = DateTimeFormatter.ofPattern("dd/MM/yyyy")
 private val FORMATO_CURTO = DateTimeFormatter.ofPattern("dd/MM")
+
+/** O resumo de uma mensagem do chat da ligação no histórico: o texto, ou o tipo do anexo. */
+@Composable
+private fun textoDoResumoDoChat(mensagem: Mensagem): String = when (val resumo = resumoDaMensagem(mensagem)) {
+    is ResumoCitacao.Texto -> resumo.texto
+    ResumoCitacao.Oculta -> stringResource(R.string.chat_resumo_anexo)
+    is ResumoCitacao.Tipo -> stringResource(
+        when (resumo.tipo) {
+            TipoConteudo.IMAGEM -> R.string.chat_resumo_imagem
+            TipoConteudo.AUDIO, TipoConteudo.GRAVACAO_AUDIO -> R.string.chat_resumo_audio
+            TipoConteudo.FIGURINHA -> R.string.chat_resumo_figurinha
+            else -> R.string.chat_resumo_anexo
+        },
+    )
+}

@@ -91,4 +91,9 @@
     <string name="sem_microfone">Não foi possível acessar o microfone</string>
     <string name="falha_chamada">Não foi possível completar a chamada</string>
     <string name="falha_chamada_detalhe">Não foi possível completar a chamada: %1$s</string>
+    <!-- Chat da ligação no histórico (FC-727): o resumo de um anexo -->
+    <string name="chat_resumo_imagem">Imagem</string>
+    <string name="chat_resumo_audio">Áudio</string>
+    <string name="chat_resumo_figurinha">Figurinha</string>
+    <string name="chat_resumo_anexo">Arquivo</string>
 </resources>

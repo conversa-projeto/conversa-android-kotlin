@@ -86,6 +86,8 @@ data class ConteudoEntidade(
     val extensao: String,
     val transcricaoStatus: Int,
     val transcricao: String,
+    /** Na mensagem da ligação: o chat criado nela (FC-727). */
+    val chatChamadaId: Long? = null,
 )
 
 @Entity(

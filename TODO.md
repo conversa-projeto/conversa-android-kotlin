@@ -387,7 +387,7 @@
 - [x] Grupo: lista de participantes com a duração ou o status
 - [x] Cores: verde (encerrada), vermelho (recusada/perdida); sem status de entrega — ícone verde (`chamadaRecebida`) / vermelho (`chamadaPerdida`), cores do FMX; sem status de entrega
 - [x] Toque → ligar de novo (mesmo tipo) — 🔄 toque chama `aoLigar` (hoje só o aviso; liga de verdade na etapa 6) — concluído depois (conferido em 2026-10-09): liga de verdade (6.4) ✔ cf43b1f
-- [ ] 🆕 `964ed72` "Ver chat da chamada" / "Esconder o chat da chamada" na bolha da ligação com `chat_chamada_id`: o chat só leitura ("Ninguém escreveu no chat da chamada.", "Abrir o chat completo") (CHA-26, FC-727) — 🆕 `e33ecba`: os conteúdos como no chat (imagem com visualizador, áudio, arquivo, figurinha)
+- [x] 🆕 `964ed72` "Ver chat da chamada" / "Esconder o chat da chamada" na bolha da ligação com `chat_chamada_id`: o chat só leitura ("Ninguém escreveu no chat da chamada.", "Abrir o chat completo") (CHA-26, FC-727) — 🆕 `e33ecba`: os conteúdos como no chat (imagem com visualizador, áudio, arquivo, figurinha) — `ChatDaChamada` (`core:ui`); no emulador, a ligação 1179 mostrou o chat 15 e abriu o grupo ✔ (preencher)
 
 ### 3.6 Separadores e hora (FC-306, MSG-02)
 - [x] Separador de dia ("seg., 05/10/2026" ou "Hoje"/"Ontem") — "Hoje"/"Ontem"/"qua., 07/10/2026"; dia pela data efetiva
@@ -689,7 +689,7 @@
 - [x] Agrupar: Hoje / Ontem / `dd/MM/aaaa` (portar a lógica do adapter antigo) — `agruparHistorico` pelo dia local, como o web (+ teste, inclusive a virada de dia pelo fuso) ✔ b952923
 - [x] Item: avatar (grupo: "Grupo (N)"), seta efetuada/recebida (`criado_por == eu`), hora, "Vídeo"/"Áudio" · duração ou status, cor — seta e nome em vermelho na perdida; cores do FMX (`chamadaRealizada`, `chamadaRecebida`, `chamadaPerdida`) ✔ b952923
 - [x] Toque → abrir a conversa; botão "Ligar novamente" (mesmo tipo e participantes) — a linha sem conversa (chamada que não veio de uma conversa) não abre nada, como no web. No emulador: a linha abriu a conversa com o B; "Ligar novamente" ligou e o web tocou ✔ b952923
-- [ ] 🆕 `964ed72` "Ver chat da chamada" no item do histórico com `conversa_chat_id` (o mesmo chat só leitura do 3.5) (CHA-26, FC-727)
+- [x] 🆕 `964ed72` "Ver chat da chamada" no item do histórico com `conversa_chat_id` (o mesmo chat só leitura do 3.5) (CHA-26, FC-727) — com o resumo de cada mensagem; no emulador, na aba Chamadas ✔ (preencher)
 
 ### 6.11 Vídeo (FC-716, CHA-12, CHA-16)
 - [x] Renderers com `key(track)` e `onRelease` (#39); PiP local com `setZOrderMediaOverlay(true)` — o `removeSink` é protegido (a trilha pode já ter sido descartada no fim da chamada) ✔ cf43b1f
