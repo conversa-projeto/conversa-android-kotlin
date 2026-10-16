@@ -4,7 +4,7 @@
 - **Tipo:** documentação
 - **Itens:** `TODO.md` › Revisão periódica; doc 05
 - **Branch:** `reescrita`
-- **Commits:** (preencher)
+- **Commits:** `941f14f`
 
 ## Contexto
 - **A revisão periódica** do `TODO.md` pede marcar o que foi feito, atualizar a matriz de paridade (doc 05) e ver se o servidor e o web mudaram.
