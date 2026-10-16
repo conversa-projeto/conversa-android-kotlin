@@ -4,7 +4,7 @@
 - **Tipo:** código
 - **Itens:** `TODO.md` 2.x (as linhas 🆕 `769bd7d` da tela do grupo e `e33ecba` de criar); FC-217; CON-07, CON-15
 - **Branch:** `reescrita`
-- **Commits:** (preencher)
+- **Commits:** `943dbdb`
 
 ## Contexto
 O bloco 13 passou a mostrar a imagem e o emoji do grupo. Faltava escolher, como o web faz:

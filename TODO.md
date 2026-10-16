@@ -330,8 +330,8 @@
 - [ ] Remover (não para mim mesmo): `DELETE /conversa/usuario?id=<conversa_usuario_id>` — ⛔ o servidor só aceita remover o próprio vínculo (403 para os outros; o botão do web sempre falha). Não oferecido; a tela explica. Pendência S15
 - [x] Sair do grupo: `DELETE /conversa/usuario?id=<meu conversa_usuario_id>` — com confirmação de perigo; volta à lista
 - [x] 🆕 `eaa8bac` Tocar no avatar/nome do grupo no cabeçalho do chat abre os dados do grupo (no web, o painel "Dados do grupo"; no Android, a tela "Membros do grupo"); os anexos do grupo entram nessa tela com o 8.6 — avatar e nome clicáveis só em grupo (ação "Membros do grupo" para o TalkBack); testado no emulador ✔ fffcc10
-- [x] 🆕 `769bd7d` Imagem ou emoji do grupo na tela do grupo: "Imagem" (recorte 256 px JPEG, upload tipo 2, `PATCH /conversa {id, avatar_anexo_id, emoji:null}`), "Emoji" (`{avatar_anexo_id:null, emoji}`), "Remover"; um tira o outro (CON-15, FC-217) — `AvatarDoGrupo` + `EscolhaAvatarGrupo`; no emulador: emoji, imagem e remover conferidos no servidor ✔ (preencher)
-- [x] 🆕 `e33ecba` Imagem ou emoji já ao criar o grupo ("Criando..."); `PATCH /conversa` depois de incluir os membros (CON-07, FC-217) — no emulador, "Aniversario" nasceu com 🎂 ✔ (preencher)
+- [x] 🆕 `769bd7d` Imagem ou emoji do grupo na tela do grupo: "Imagem" (recorte 256 px JPEG, upload tipo 2, `PATCH /conversa {id, avatar_anexo_id, emoji:null}`), "Emoji" (`{avatar_anexo_id:null, emoji}`), "Remover"; um tira o outro (CON-15, FC-217) — `AvatarDoGrupo` + `EscolhaAvatarGrupo`; no emulador: emoji, imagem e remover conferidos no servidor ✔ 943dbdb
+- [x] 🆕 `e33ecba` Imagem ou emoji já ao criar o grupo ("Criando..."); `PATCH /conversa` depois de incluir os membros (CON-07, FC-217) — no emulador, "Aniversario" nasceu com 🎂 ✔ 943dbdb
 
 ### 2.11 Presença e conexão (FC-213, FC-214, PRE-01, GER-02)
 - [x] `PresencaRepository`: conjunto de ids online a partir de `GET /contatos/online` + WS 60 `{usuario_id, online}` — `PresencaRepositorio` (+ teste)
