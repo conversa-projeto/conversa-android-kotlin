@@ -4,7 +4,7 @@
 - **Tipo:** código
 - **Itens:** `TODO.md` 4.8 (linha 🆕 `769bd7d` do "Transcrever") e 8.8 (1ª linha, a parte do `/recursos`); FC-419; ANX-12, GER-08
 - **Branch:** `reescrita`
-- **Commits:** (preencher)
+- **Commits:** `db8bc35`
 
 ## Contexto
 - **O servidor** (`769bd7d`): diz o que tem ligado em `GET /recursos` → `{transcricao, ia}`.
