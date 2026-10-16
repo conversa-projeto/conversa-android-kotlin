@@ -4,7 +4,7 @@
 - **Tipo:** código
 - **Itens:** `TODO.md` 8.8 (linhas dos recursos e da sugestão); FC-523; ENV-25; GER-08
 - **Branch:** `reescrita`
-- **Commits:** (preencher)
+- **Commits:** `f392ce4`
 
 ## Contexto
 - **O servidor** (`ea02f57`, contrato §13.6) completa o que a pessoa digita: `POST /ia/sugestao {conversa_id, texto}` → `{sugestao}`, a continuação (pode começar com espaço). Falha não é erro (vem vazia), e cancelar a requisição cancela o pedido à IA.
