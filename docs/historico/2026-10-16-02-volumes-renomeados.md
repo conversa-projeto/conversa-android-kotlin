@@ -4,7 +4,7 @@
 - **Tipo:** ambiente / documentação
 - **Itens:** servidor `ef13c22` (volumes `conversa-postgres`/`conversa-minio`); `docs/desenvolvimento/emulador.md`
 - **Branch:** `reescrita`
-- **Commits:** (preencher)
+- **Commits:** `fc2c74a`
 
 ## Contexto
 - **O servidor** (`ef13c22`) renomeou os volumes: `pgdata` → `conversa-postgres` e `minio` → `conversa-minio`. O `bin\renomear-volumes.bat` copia, confere e apaga os antigos.
