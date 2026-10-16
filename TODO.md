@@ -202,7 +202,7 @@
 ### 1.10 Banco local (FC-110)
 - [x] Entidades Room: `ConversaEntity`, `MensagemEntity`, `ConteudoEntity`, `ReacaoEntity`, `ContatoEntity`, `AtividadeEntity`, `ChamadaHistoricoEntity`, `EnvioPendenteEntity`, `SyncEstadoEntity` (cursor `ate`) — nomes em português: `ConversaEntidade` etc.
 - [x] DAOs com `Flow` para a UI
-- [ ] Exportar o schema (`room.schemaLocation`) e criar o teste de migração — ⏭ schema da versão 1 exportado em `core/database/schemas`; o teste de migração nasce junto com a versão 2 (não há o que migrar ainda)
+- [x] Exportar o schema (`room.schemaLocation`) e criar o teste de migração — esquemas 1–7 em `core/database/schemas`; `MigracoesTest` (Robolectric, `MigrationTestHelper` com o `AndroidSQLiteDriver`): cada versão migra para a seguinte com o esquema esperado, e os dados da versão 1 chegam à 7 ✔ HASH
 - [x] **Teste:** inserir e ler cada entidade — `BancoTest` (Robolectric, Room em memória): todas as entidades
 
 ### 1.11 Sessão segura (FC-111)

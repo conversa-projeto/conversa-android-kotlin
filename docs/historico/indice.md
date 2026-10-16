@@ -27,6 +27,7 @@
 
 ## Fundação (etapa 1)
 - 2026-10-07 · [Etapa 1 — fundação do app novo](2026-10-07-02-etapa-1-fundacao.md) — 8 módulos, rede (67 rotas), WebSocket, Room, sessão cifrada, sync, design system, tela Servidor; 65 testes passando
+- 2026-10-15 · [Teste das migrações do Room](2026-10-15-23-teste-das-migracoes-do-room.md) — `MigracoesTest`: as seis migrações automáticas (1→7) conferidas contra os esquemas, com os dados da versão 1; esquemas como assets dos testes no AGP 9
 
 ## Sessão, conversas, contatos e presença (etapa 2)
 - 2026-10-07 · [Etapa 2 — camada de dados e OpenAPI](2026-10-07-03-etapa-2-camada-de-dados.md) — login/cadastro/dispositivo/sair, conversas (fixar, arquivar, direta, grupo), contatos, presença, início resiliente, limpeza; OpenAPI = 67 rotas

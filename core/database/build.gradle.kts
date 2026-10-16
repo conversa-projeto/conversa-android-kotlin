@@ -8,6 +8,14 @@ android {
     namespace = "com.conversa.app.core.database"
 }
 
+androidComponents {
+    onVariants { variante ->
+        // Os esquemas como assets dos testes unitários: o MigrationTestHelper os lê (MigracoesTest).
+        variante.hostTests[com.android.build.api.variant.HostTestBuilder.UNIT_TEST_TYPE]
+            ?.sources?.assets?.addStaticSourceDirectory("$projectDir/schemas")
+    }
+}
+
 room {
     // Schemas versionados para testar migrações (docs: FC-110).
     schemaDirectory("$projectDir/schemas")
