@@ -48,6 +48,8 @@ Para testar chamada, o usuário B fica no cliente web, num Chrome à parte com c
 2. Um Chrome com perfil descartável (fora do perfil da pessoa), com dispositivos falsos e a porta de depuração local:
    `chrome.exe --user-data-dir=<pasta temporária> --remote-debugging-port=9333 --use-fake-device-for-media-stream --use-fake-ui-for-media-stream https://localhost/`
    - a câmera falsa mostra um círculo verde girando; o microfone falso, um bipe;
+   - subir o backend pelo shell: `env -u CONVERSA_DATABASE -u CONVERSA_PORTA docker compose up -d` na pasta `conversa`. Nesta máquina há variáveis antigas `CONVERSA_DATABASE=conversa` e `CONVERSA_PORTA=90` que passam por cima do `.env` (`conversa_dev`): sem o `env -u`, a API usa a base antiga `conversa` (e roda as migrações nela) e o nginx vai para a porta 90. Conferir com `docker inspect api` (`CONVERSA_DATABASE=conversa_dev`);
+   - os volumes são `conversa-postgres` e `conversa-minio` desde o servidor `ef13c22` (o `bin\renomear-volumes.bat` já rodou em 2026-10-16);
    - o contêiner `dev` (Vite) pode estar parado depois de reiniciar o Docker (`https://localhost` responde 502): `docker start dev` e o Vite como no `iniciar-desenvolvimento.bat`;
    - para não digitar a senha no navegador: login pela API (`POST /api/login`, com a senha lida deste arquivo por um script, sem mostrar) e, pelo DevTools Protocol, `conversa.token` e `conversa.user` no `localStorage` da página, e recarregar;
    - entrar como `teste.android.b` e comandar a chamada pelo DevTools Protocol (a store `call` do Pinia: `iniciarChamada`, `aceitarChamada`, `upgradeParaVideo`, `sairDaChamada`…).

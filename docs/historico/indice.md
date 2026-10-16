@@ -26,6 +26,7 @@
 
 ## Repositório e build
 - 2026-10-06 · [Etapa 0 — preservação, limpeza e organização do repositório](2026-10-06-05-etapa-0-repositorio.md) — branch/tag legado, 11 stashes em tags e patches, limpeza, wrapper versionado, docs em `docs/legado/`, ADR 0001, README; push pendente
+- 2026-10-16 · [Volumes do Docker renomeados e as variáveis antigas do shell](2026-10-16-02-volumes-renomeados.md) — `renomear-volumes.bat` com cópia de segurança antes; variáveis `CONVERSA_*` antigas levaram a API à base `conversa` (desfeito pela cópia); o guia passa a usar `env -u`
 
 ## Fundação (etapa 1)
 - 2026-10-07 · [Etapa 1 — fundação do app novo](2026-10-07-02-etapa-1-fundacao.md) — 8 módulos, rede (67 rotas), WebSocket, Room, sessão cifrada, sync, design system, tela Servidor; 65 testes passando
