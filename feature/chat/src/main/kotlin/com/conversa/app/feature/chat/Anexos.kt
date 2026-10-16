@@ -50,7 +50,6 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.compositionLocalOf
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableFloatStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.produceState
 import androidx.compose.runtime.remember
@@ -62,14 +61,17 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.geometry.Offset
+import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.layout.onSizeChanged
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.toSize
 import androidx.compose.ui.window.Dialog
 import androidx.compose.ui.window.DialogProperties
 import androidx.core.net.toUri
@@ -481,26 +483,53 @@ private fun TiraMiniaturas(imagens: List<ImagemDaConversa>, atual: Int, aoEscolh
 
 @Composable
 private fun ImagemComZoom(conteudo: Conteudo) {
-    var escala by remember { mutableFloatStateOf(1f) }
-    var deslocamento by remember { mutableStateOf(Offset.Zero) }
-    val estado = rememberTransformableState { zoom, mover, _ ->
-        escala = (escala * zoom).coerceIn(1f, 5f)
-        deslocamento = if (escala == 1f) Offset.Zero else deslocamento + mover
+    var zoom by remember { mutableStateOf(ZoomImagem()) }
+    var tamanho by remember { mutableStateOf(Size.Zero) }
+    // A pinça amplia em torno do ponto entre os dedos (FC-420), não do centro.
+    val estado = rememberTransformableState { foco: Offset, mudanca: Float, mover: Offset, _: Float ->
+        zoom = zoom.aplicar(foco, mudanca, mover, tamanho)
     }
     Box(
         Modifier
             .fillMaxSize()
+            .onSizeChanged { tamanho = it.toSize() }
             .pointerInput(Unit) {
-                detectTapGestures(onDoubleTap = {
-                    escala = if (escala > 1f) 1f else 2.5f
-                    deslocamento = Offset.Zero
+                detectTapGestures(onDoubleTap = { ponto ->
+                    zoom = if (zoom.escala > 1f) ZoomImagem() else ZoomImagem().aplicar(ponto, ESCALA_DUPLO_TOQUE, Offset.Zero, tamanho)
                 })
             }
             // Sem zoom, o arrasto fica com o pager (trocar de imagem); a pinça sempre funciona.
-            .transformable(estado, canPan = { escala > 1f })
-            .graphicsLayer(scaleX = escala, scaleY = escala, translationX = deslocamento.x, translationY = deslocamento.y),
+            .transformable(estado, canPan = { zoom.escala > 1f })
+            .graphicsLayer(
+                scaleX = zoom.escala,
+                scaleY = zoom.escala,
+                translationX = zoom.deslocamento.x,
+                translationY = zoom.deslocamento.y,
+            ),
         contentAlignment = Alignment.Center,
     ) {
         ImagemAnexo(conteudo, Modifier.fillMaxSize())
+    }
+}
+
+private const val ESCALA_DUPLO_TOQUE = 2.5f
+private const val ESCALA_MAXIMA = 5f
+
+/** Escala e deslocamento da imagem no visualizador; o `graphicsLayer` amplia em torno do centro. */
+internal data class ZoomImagem(val escala: Float = 1f, val deslocamento: Offset = Offset.Zero) {
+    /**
+     * Amplia [mudanca] vezes em torno de [foco] (o ponto da pinça ou do duplo toque, FC-420): o ponto
+     * da imagem sob o foco continua sob ele. Depois soma o arrasto [mover], sem deixar a imagem
+     * ampliada sair da área de [tamanho]. Voltando a 1x, volta ao centro.
+     */
+    fun aplicar(foco: Offset, mudanca: Float, mover: Offset, tamanho: Size): ZoomImagem {
+        val nova = (escala * mudanca).coerceIn(1f, ESCALA_MAXIMA)
+        if (nova == 1f) return ZoomImagem()
+        val z = nova / escala
+        val centro = Offset(tamanho.width / 2, tamanho.height / 2)
+        val bruto = (foco - centro) * (1 - z) + deslocamento * z + mover
+        val limiteX = tamanho.width * (nova - 1) / 2
+        val limiteY = tamanho.height * (nova - 1) / 2
+        return ZoomImagem(nova, Offset(bruto.x.coerceIn(-limiteX, limiteX), bruto.y.coerceIn(-limiteY, limiteY)))
     }
 }
