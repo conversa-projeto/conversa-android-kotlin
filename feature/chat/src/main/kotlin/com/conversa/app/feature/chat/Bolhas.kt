@@ -65,6 +65,7 @@ import androidx.compose.ui.text.withStyle
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.conversa.app.core.model.ChamadaNaMensagem
+import com.conversa.app.core.model.CodigoPermissao
 import com.conversa.app.core.model.Conteudo
 import com.conversa.app.core.model.MAXIMO_NIVEIS_CITACAO
 import com.conversa.app.core.model.Mensagem
@@ -88,6 +89,7 @@ import com.conversa.app.core.model.separarTexto
 import com.conversa.app.core.model.statusEntrega
 import com.conversa.app.core.network.dto.lerChamadaDaMensagem
 import com.conversa.app.core.ui.componentes.ChatDaChamada
+import com.conversa.app.core.ui.componentes.LocalPermissoesDeUso
 import com.conversa.app.core.ui.tema.ConversaTema
 import java.time.ZoneId
 import java.time.format.DateTimeFormatter
@@ -187,7 +189,8 @@ fun LinhaMensagem(
         val rotuloAcoes = stringResource(R.string.acoes_da_mensagem)
         val rotuloResponder = stringResource(R.string.responder)
         val aoVerStatus = if (propria && mensagem.id > 0 && !mensagem.enviando) ({ acoes.aoVerStatus(mensagem) }) else null
-        DeslizarParaResponder(habilitado = comAcoes, aoResponder = { acoes.aoResponder(mensagem) }) {
+        val podeResponder = LocalPermissoesDeUso.current.pode(CodigoPermissao.RESPONDER)
+        DeslizarParaResponder(habilitado = comAcoes && podeResponder, aoResponder = { acoes.aoResponder(mensagem) }) {
             Box(
                 Modifier
                     // A postagem ocupa a largura do chat, de quem quer que seja (web `e33ecba`).

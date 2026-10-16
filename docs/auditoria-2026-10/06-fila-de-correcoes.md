@@ -516,7 +516,7 @@
 - [ ] **FC-811 · P2 · 🆕 `769bd7d`/`05507a0` Resumo da conversa por IA** (CON-14): "Resumir conversa" no "⋮" (só com `recursos.ia`); períodos "Últimas 24 horas", "7 dias", "30 dias", "Últimas 400 mensagens"; `POST /conversa/resumo` e `GET /conversa/resumo?id=` a cada 2 s; assuntos, pendências e "Ver na conversa"; último resumo por conversa no Room, retomando a consulta.
 - [ ] **FC-812 · P3 · 🆕 `769bd7d` Sistema › Inteligência artificial** (CFG-07): endereço, modelo, token ("O token salvo nunca é mostrado."), "Testar conexão". Uso de administrador: avaliar se fica só no web.
 - [x] **FC-813 · P1 · 🆕 `ef13c22`/`9c6e8a6` Acessos com as permissões de uso** (CFG-08): 32 permissões (`uso` no `GET /permissoes`); como o web, uma lista de pessoas que se abre, com os grupos e os nomes curtos; as próprias permissões marcadas ficam travadas.
-- [ ] **FC-814 · P1 · 🆕 `ef13c22`/`9c6e8a6` Permissões de uso** (GER-09): `GET /usuario/permissoes`; esconder ou travar cada ação; mostrar a mensagem do 403; no perfil, mandar só as chaves que mudaram (TODO 8.9).
+- [x] **FC-814 · P1 · 🆕 `ef13c22`/`9c6e8a6` Permissões de uso** (GER-09): `GET /usuario/permissoes`; esconder ou travar cada ação; mostrar a mensagem do 403; no perfil, mandar só as chaves que mudaram (TODO 8.9). ✔ HASH
 - [ ] **FC-815 · P3 · 🆕 `9c6e8a6` Administração de usuários, bots, ferramentas e conhecimento** (CFG-11…14): avaliar se fica só no web, junto da FC-812.
 
 ## Bloco K — SIP e extras (F8)

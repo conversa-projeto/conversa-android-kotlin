@@ -126,6 +126,7 @@ import androidx.core.content.FileProvider
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.conversa.app.core.data.anexos.AnexoLocal
 import com.conversa.app.core.data.mensagens.ReferenciaPendente
+import com.conversa.app.core.model.CodigoPermissao
 import com.conversa.app.core.model.Contato
 import com.conversa.app.core.model.MencaoInserida
 import com.conversa.app.core.model.Mensagem
@@ -140,6 +141,7 @@ import com.conversa.app.core.model.sugestoesDeMencao
 import com.conversa.app.core.model.textoParaEnvio
 import com.conversa.app.core.ui.componentes.Avatar
 import com.conversa.app.core.ui.componentes.LocalAvisos
+import com.conversa.app.core.ui.componentes.LocalPermissoesDeUso
 import com.conversa.app.core.ui.componentes.mostrarErro
 import com.conversa.app.core.ui.tema.ConversaTema
 import java.io.File
@@ -572,6 +574,8 @@ private fun LinhaDoCampo(
                 )
             }
         }
+        val permissoes = LocalPermissoesDeUso.current
+        val agendar = podeAgendar && permissoes.pode(CodigoPermissao.AGENDAR)
         var menuAgendar by remember { mutableStateOf(false) }
         var agendando by rememberSaveable { mutableStateOf(false) }
         // Agora (nulo) ou agendada (7.10). Só limpa se a pessoa não mudou o texto enquanto a mensagem era gravada no Room.
@@ -597,8 +601,8 @@ private fun LinhaDoCampo(
                         .combinedClickable(
                             role = Role.Button,
                             onClickLabel = stringResource(R.string.enviar),
-                            onLongClickLabel = if (podeAgendar) stringResource(R.string.agendar_mensagem) else null,
-                            onLongClick = if (podeAgendar) ({ menuAgendar = true }) else null,
+                            onLongClickLabel = if (agendar) stringResource(R.string.agendar_mensagem) else null,
+                            onLongClick = if (agendar) ({ menuAgendar = true }) else null,
                             onClick = { enviar(null) },
                         ),
                     contentAlignment = Alignment.Center,
@@ -623,7 +627,8 @@ private fun LinhaDoCampo(
         } else {
             // Campo vazio com agendadas: o relógio abre a lista (🆕 web `7322e83`).
             if (agendadas > 0 && segurando == null) RelogioAgendadas(agendadas, aoVerAgendadas)
-            BotaoMicrofone(segurando != null, acoes.gravacao)
+            // Sem a permissão de áudio, não grava (GER-09): o campo fica sem o microfone, como o web.
+            if (permissoes.pode(CodigoPermissao.AUDIO)) BotaoMicrofone(segurando != null, acoes.gravacao)
         }
         if (agendando) {
             AgendarMensagem(
@@ -892,6 +897,8 @@ private fun BotaoAnexar(
     val avisos = LocalAvisos.current
     val escopo = rememberCoroutineScope()
     val semCamera = stringResource(R.string.sem_app_de_camera)
+    // Só o que a pessoa pode enviar (GER-09, como o `AnexoPopup` do web).
+    val permissoes = LocalPermissoesDeUso.current
     var menu by remember { mutableStateOf(false) }
     var figurinhas by remember { mutableStateOf(false) }
     if (figurinhas) {
@@ -928,46 +935,54 @@ private fun BotaoAnexar(
             Icon(Icons.Outlined.AttachFile, contentDescription = stringResource(R.string.anexar))
         }
         DropdownMenu(expanded = menu, onDismissRequest = { menu = false }) {
-            DropdownMenuItem(
-                text = { Text(stringResource(R.string.anexar_galeria)) },
-                leadingIcon = { Icon(Icons.Outlined.Image, contentDescription = null) },
-                onClick = {
-                    menu = false
-                    galeria.launch(PickVisualMediaRequest(ActivityResultContracts.PickVisualMedia.ImageAndVideo))
-                },
-            )
-            DropdownMenuItem(
-                text = { Text(stringResource(R.string.anexar_camera)) },
-                leadingIcon = { Icon(Icons.Outlined.PhotoCamera, contentDescription = null) },
-                onClick = {
-                    menu = false
-                    val pasta = acoes.pastaCamera() ?: return@DropdownMenuItem
-                    val arquivo = File(pasta, "foto-${System.currentTimeMillis()}.jpg")
-                    fotoPendente = arquivo.path
-                    try {
-                        camera.launch(uriCompartilhado(contexto, arquivo))
-                    } catch (_: ActivityNotFoundException) {
-                        fotoPendente = null
-                        escopo.launch { avisos.mostrarErro(semCamera) }
-                    }
-                },
-            )
-            DropdownMenuItem(
-                text = { Text(stringResource(R.string.anexar_documento)) },
-                leadingIcon = { Icon(Icons.AutoMirrored.Outlined.InsertDriveFile, contentDescription = null) },
-                onClick = {
-                    menu = false
-                    documentos.launch(arrayOf("*/*"))
-                },
-            )
-            DropdownMenuItem(
-                text = { Text(stringResource(R.string.figurinha)) },
-                leadingIcon = { Icon(Icons.Outlined.EmojiEmotions, contentDescription = null) },
-                onClick = {
-                    menu = false
-                    figurinhas = true
-                },
-            )
+            if (permissoes.pode(CodigoPermissao.IMAGEM) || permissoes.pode(CodigoPermissao.VIDEO)) {
+                DropdownMenuItem(
+                    text = { Text(stringResource(R.string.anexar_galeria)) },
+                    leadingIcon = { Icon(Icons.Outlined.Image, contentDescription = null) },
+                    onClick = {
+                        menu = false
+                        galeria.launch(PickVisualMediaRequest(ActivityResultContracts.PickVisualMedia.ImageAndVideo))
+                    },
+                )
+            }
+            if (permissoes.pode(CodigoPermissao.IMAGEM)) {
+                DropdownMenuItem(
+                    text = { Text(stringResource(R.string.anexar_camera)) },
+                    leadingIcon = { Icon(Icons.Outlined.PhotoCamera, contentDescription = null) },
+                    onClick = {
+                        menu = false
+                        val pasta = acoes.pastaCamera() ?: return@DropdownMenuItem
+                        val arquivo = File(pasta, "foto-${System.currentTimeMillis()}.jpg")
+                        fotoPendente = arquivo.path
+                        try {
+                            camera.launch(uriCompartilhado(contexto, arquivo))
+                        } catch (_: ActivityNotFoundException) {
+                            fotoPendente = null
+                            escopo.launch { avisos.mostrarErro(semCamera) }
+                        }
+                    },
+                )
+            }
+            if (permissoes.algumAnexo) {
+                DropdownMenuItem(
+                    text = { Text(stringResource(R.string.anexar_documento)) },
+                    leadingIcon = { Icon(Icons.AutoMirrored.Outlined.InsertDriveFile, contentDescription = null) },
+                    onClick = {
+                        menu = false
+                        documentos.launch(arrayOf("*/*"))
+                    },
+                )
+            }
+            if (permissoes.pode(CodigoPermissao.FIGURINHA)) {
+                DropdownMenuItem(
+                    text = { Text(stringResource(R.string.figurinha)) },
+                    leadingIcon = { Icon(Icons.Outlined.EmojiEmotions, contentDescription = null) },
+                    onClick = {
+                        menu = false
+                        figurinhas = true
+                    },
+                )
+            }
             DropdownMenuItem(
                 text = { Text(stringResource(R.string.codigo)) },
                 leadingIcon = { Icon(Icons.Outlined.Code, contentDescription = null) },
@@ -977,7 +992,7 @@ private fun BotaoAnexar(
                 },
             )
             // Votação só em grupo (o servidor recusa na direta), como o web.
-            aoNovaVotacao?.let { abrir ->
+            aoNovaVotacao?.takeIf { permissoes.pode(CodigoPermissao.VOTACAO) }?.let { abrir ->
                 DropdownMenuItem(
                     text = { Text(stringResource(R.string.votacao)) },
                     leadingIcon = { Icon(Icons.Outlined.Poll, contentDescription = null) },
@@ -988,7 +1003,7 @@ private fun BotaoAnexar(
                 )
             }
             // Postagem (7.13) também só em grupo: a próxima mensagem vira a postagem.
-            aoPostar?.let { postar ->
+            aoPostar?.takeIf { permissoes.pode(CodigoPermissao.POSTAGEM) }?.let { postar ->
                 DropdownMenuItem(
                     text = { Text(stringResource(R.string.postagem)) },
                     leadingIcon = { Icon(Icons.Outlined.Campaign, contentDescription = null) },
@@ -999,14 +1014,16 @@ private fun BotaoAnexar(
                 )
             }
             // Confirmar leitura (FC-521): a próxima mensagem pede confirmação.
-            DropdownMenuItem(
-                text = { Text(stringResource(R.string.confirmar_leitura)) },
-                leadingIcon = { Icon(Icons.Outlined.TaskAlt, contentDescription = null) },
-                onClick = {
-                    menu = false
-                    aoConfirmarLeitura()
-                },
-            )
+            if (permissoes.pode(CodigoPermissao.CONFIRMACAO)) {
+                DropdownMenuItem(
+                    text = { Text(stringResource(R.string.confirmar_leitura)) },
+                    leadingIcon = { Icon(Icons.Outlined.TaskAlt, contentDescription = null) },
+                    onClick = {
+                        menu = false
+                        aoConfirmarLeitura()
+                    },
+                )
+            }
         }
     }
 }

@@ -27,6 +27,7 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
+import com.conversa.app.core.model.CodigoPermissao
 import com.conversa.app.core.model.FichaUsuario
 import com.conversa.app.core.ui.R
 import com.conversa.app.core.ui.tema.ConversaTema
@@ -45,8 +46,10 @@ fun FolhaPerfilUsuario(
     aoVerAnexos: (() -> Unit)? = null,
 ) {
     // Superfície branca, como a lista: o fundo da inicial (#F5F5F5) some sobre o fundo padrão da folha.
+    // "Ligar" é de voz: some sem a permissão de chamada de áudio (GER-09).
+    val ligar = aoLigar?.takeIf { LocalPermissoesDeUso.current.pode(CodigoPermissao.CHAMADA_AUDIO) }
     ModalBottomSheet(onDismissRequest = aoFechar, containerColor = MaterialTheme.colorScheme.surface) {
-        ConteudoPerfilUsuario(ficha, aoLigar, aoVerAnexos)
+        ConteudoPerfilUsuario(ficha, ligar, aoVerAnexos)
     }
 }
 

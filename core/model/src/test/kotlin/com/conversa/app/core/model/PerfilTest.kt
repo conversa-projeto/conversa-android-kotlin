@@ -18,6 +18,11 @@ class PerfilTest {
         assertThat(dadosDoPerfilValidos("Ana", "ana@exemplo.test")).isTrue()
         assertThat(dadosDoPerfilValidos(" ", "ana@exemplo.test")).isFalse()
         assertThat(dadosDoPerfilValidos("Ana", "")).isFalse()
+        // Campo travado (sem a permissão, GER-09) não vai e não é conferido; os dois travados, nada a salvar.
+        assertThat(dadosDoPerfilValidos(null, "ana@exemplo.test")).isTrue()
+        assertThat(dadosDoPerfilValidos("Ana", null)).isTrue()
+        assertThat(dadosDoPerfilValidos(" ", null)).isFalse()
+        assertThat(dadosDoPerfilValidos(null, null)).isFalse()
     }
 
     @Test

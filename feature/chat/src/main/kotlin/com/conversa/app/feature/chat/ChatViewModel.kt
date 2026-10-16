@@ -37,12 +37,15 @@ import com.conversa.app.core.model.MembroConversa
 import com.conversa.app.core.model.Mensagem
 import com.conversa.app.core.model.MensagensDoChat
 import com.conversa.app.core.model.PREFIXO_LOCAL
+import com.conversa.app.core.model.PermissoesDeUso
 import com.conversa.app.core.model.PresencaContato
 import com.conversa.app.core.model.StatusDestinatario
 import com.conversa.app.core.model.TipoConteudo
 import com.conversa.app.core.model.TipoConversa
 import com.conversa.app.core.model.TipoReferencia
+import com.conversa.app.core.model.anexosBarrados
 import com.conversa.app.core.model.atividadeDaConversa
+import com.conversa.app.core.model.codigoDoAnexo
 import com.conversa.app.core.model.local
 import com.conversa.app.core.model.montarItensChat
 import com.conversa.app.core.model.podeReagir
@@ -66,6 +69,7 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.debounce
+import kotlinx.coroutines.flow.filter
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.flatMapLatest
 import kotlinx.coroutines.flow.flow
@@ -162,6 +166,9 @@ sealed interface EventoChat {
 
     /** Arquivo acima de 1 GiB: nem entra na fila. */
     data class ArquivoGrande(val nome: String) : EventoChat
+
+    /** Anexos que a pessoa não pode enviar (GER-09): ficaram de fora ([codigos] na ordem do web). */
+    data class AnexosSemPermissao(val codigos: List<String>) : EventoChat
 
     /** Anexo baixado: a tela abre com outro app (ANX-09). */
     data class AbrirArquivo(val arquivo: java.io.File, val mime: String?) : EventoChat
@@ -423,6 +430,10 @@ class ChatViewModel @Inject constructor(
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), ChatUiState(eu = eu))
 
     init {
+        // O servidor recusou uma mensagem desta conversa (ex.: 403 sem a permissão, GER-09): o motivo dele.
+        viewModelScope.launch {
+            envio.recusas.filter { it.conversaId == conversaId }.collect { eventos.enviar(EventoChat.Erro(it.motivo)) }
+        }
         // Veio do "Enviar para…" (AND-10): os arquivos entram na fila e o texto vai para o campo.
         if (salvo.get<Boolean>("comCompartilhamento") == true) {
             compartilhamentos.retirar()?.let { itens ->
@@ -597,10 +608,11 @@ class ChatViewModel @Inject constructor(
     // --- Anexos (ANX-01…14) ---
 
     /** Arquivos escolhidos (galeria, documento, câmera). [tipo] força o tipo (ex.: foto da câmera). */
-    fun adicionarAnexos(uris: List<String>, tipo: TipoConteudo? = null) {
+    fun adicionarAnexos(uris: List<String>, tipo: TipoConteudo? = null, permissoes: PermissoesDeUso = PermissoesDeUso()) {
         if (uris.isEmpty()) return
         viewModelScope.launch {
-            val novos = withContext(Dispatchers.IO) { uris.mapNotNull { fontes.descrever(it, tipo) } }
+            val descritos = withContext(Dispatchers.IO) { uris.mapNotNull { fontes.descrever(it, tipo) } }
+            val novos = semOsBarrados(descritos, permissoes)
             val grandes = novos.filter { it.tamanho > AnexosRepositorio.LIMITE_BYTES }
             if (grandes.isNotEmpty()) eventos.enviar(EventoChat.ArquivoGrande(grandes.first().nome))
             fila.value = (fila.value + (novos - grandes.toSet())).distinctBy { it.uri }
@@ -611,11 +623,21 @@ class ChatViewModel @Inject constructor(
      * Imagem colada no campo (FC-412): a permissão de leitura do teclado ou da área de
      * transferência é temporária, então copia para o cache (mesmas regras do compartilhar).
      */
-    fun colarAnexos(uris: List<String>) {
+    fun colarAnexos(uris: List<String>, permissoes: PermissoesDeUso = PermissoesDeUso()) {
         viewModelScope.launch {
-            val copiados = compartilhamentos.copiarColados(uris)
+            val copiados = semOsBarrados(compartilhamentos.copiarColados(uris), permissoes)
             fila.value = (fila.value + copiados).distinctBy { it.uri }
         }
+    }
+
+    /**
+     * Cada tipo de anexo pede a sua permissão (GER-09, como o `inserirArquivos` do web): os
+     * barrados ficam de fora, e a tela diz quais ("Você não tem permissão para enviar …").
+     */
+    private suspend fun semOsBarrados(anexos: List<AnexoLocal>, permissoes: PermissoesDeUso): List<AnexoLocal> {
+        val barrados = anexosBarrados(permissoes, anexos.map { Triple(it.tipo, it.nome, it.mime) })
+        if (barrados.isNotEmpty()) eventos.enviar(EventoChat.AnexosSemPermissao(barrados))
+        return anexos.filter { permissoes.pode(codigoDoAnexo(it.tipo, it.nome, it.mime)) }
     }
 
     /** Pasta do cache onde a câmera grava a foto (compartilhada pelo FileProvider). */

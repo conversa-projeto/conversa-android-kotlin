@@ -73,6 +73,7 @@ import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import com.conversa.app.core.model.CodigoPermissao
 import com.conversa.app.core.model.ItemChat
 import com.conversa.app.core.model.Mensagem
 import com.conversa.app.core.model.REACOES_A_MOSTRA
@@ -83,6 +84,7 @@ import com.conversa.app.core.model.TipoExibicao
 import com.conversa.app.core.model.classificarMensagem
 import com.conversa.app.core.model.podePedirConfirmacao
 import com.conversa.app.core.ui.componentes.Avatar
+import com.conversa.app.core.ui.componentes.LocalPermissoesDeUso
 import com.conversa.app.core.ui.componentes.SeletorEmojis
 import com.conversa.app.core.ui.tema.ConversaTema
 import java.time.Instant
@@ -201,39 +203,46 @@ data class AcoesMenu(
 @Composable
 fun MenuMensagem(mensagem: Mensagem, propria: Boolean, grupo: Boolean, acoes: AcoesMenu, aoFechar: () -> Unit) {
     val haptico = LocalHapticFeedback.current
+    // Só o que a pessoa pode fazer (GER-09, como o `MensagemAcoes` do web).
+    val permissoes = LocalPermissoesDeUso.current
     ModalBottomSheet(onDismissRequest = aoFechar) {
-        Row(
-            Modifier.fillMaxWidth().padding(horizontal = 12.dp, vertical = 4.dp),
-            horizontalArrangement = Arrangement.SpaceEvenly,
-            verticalAlignment = Alignment.CenterVertically,
-        ) {
-            for (emoji in REACOES_RAPIDAS) {
-                val reagiu = mensagem.reacoes.any { it.emoji == emoji && it.reagiu }
-                Text(
-                    emoji,
-                    fontSize = 26.sp,
-                    modifier = Modifier.clip(CircleShape)
-                        .then(if (reagiu) Modifier.background(MaterialTheme.colorScheme.primaryContainer) else Modifier)
-                        .clickable {
-                            haptico.performHapticFeedback(HapticFeedbackType.LongPress)
-                            acoes.aoReagir(emoji)
-                        }
-                        .padding(6.dp),
+        if (permissoes.pode(CodigoPermissao.REAGIR)) {
+            Row(
+                Modifier.fillMaxWidth().padding(horizontal = 12.dp, vertical = 4.dp),
+                horizontalArrangement = Arrangement.SpaceEvenly,
+                verticalAlignment = Alignment.CenterVertically,
+            ) {
+                for (emoji in REACOES_RAPIDAS) {
+                    val reagiu = mensagem.reacoes.any { it.emoji == emoji && it.reagiu }
+                    Text(
+                        emoji,
+                        fontSize = 26.sp,
+                        modifier = Modifier.clip(CircleShape)
+                            .then(if (reagiu) Modifier.background(MaterialTheme.colorScheme.primaryContainer) else Modifier)
+                            .clickable {
+                                haptico.performHapticFeedback(HapticFeedbackType.LongPress)
+                                acoes.aoReagir(emoji)
+                            }
+                            .padding(6.dp),
+                    )
+                }
+                Icon(
+                    Icons.Outlined.AddReaction,
+                    contentDescription = stringResource(R.string.mais_emojis),
+                    modifier = Modifier.clip(CircleShape).clickable(onClick = acoes.aoMaisEmojis).padding(8.dp),
                 )
             }
-            Icon(
-                Icons.Outlined.AddReaction,
-                contentDescription = stringResource(R.string.mais_emojis),
-                modifier = Modifier.clip(CircleShape).clickable(onClick = acoes.aoMaisEmojis).padding(8.dp),
-            )
+            HorizontalDivider(Modifier.padding(vertical = 4.dp))
         }
-        HorizontalDivider(Modifier.padding(vertical = 4.dp))
-        ItemMenu(Icons.AutoMirrored.Outlined.Reply, stringResource(R.string.responder), onClick = acoes.aoResponder)
-        if (grupo && !propria) {
+        if (permissoes.pode(CodigoPermissao.RESPONDER)) {
+            ItemMenu(Icons.AutoMirrored.Outlined.Reply, stringResource(R.string.responder), onClick = acoes.aoResponder)
+        }
+        // "Responder no privado" leva a mensagem para a direta: pede as duas, como o web.
+        if (grupo && !propria && permissoes.pode(CodigoPermissao.RESPONDER) && permissoes.pode(CodigoPermissao.ENCAMINHAR)) {
             ItemMenu(Icons.Outlined.PersonOutline, stringResource(R.string.responder_no_privado), onClick = acoes.aoResponderNoPrivado)
         }
         // Votação não pode ser encaminhada: o servidor recusa (FC-518).
-        if (mensagem.conteudos.none { it.tipo == TipoConteudo.ENQUETE }) {
+        if (mensagem.conteudos.none { it.tipo == TipoConteudo.ENQUETE } && permissoes.pode(CodigoPermissao.ENCAMINHAR)) {
             ItemMenu(Icons.AutoMirrored.Outlined.Forward, stringResource(R.string.encaminhar), onClick = acoes.aoEncaminhar)
         }
         val temTexto = mensagem.conteudos.any { it.tipo == TipoConteudo.TEXTO || it.tipo == TipoConteudo.IMAGEM }
@@ -241,10 +250,13 @@ fun MenuMensagem(mensagem: Mensagem, propria: Boolean, grupo: Boolean, acoes: Ac
             ItemMenu(Icons.Outlined.ContentCopy, stringResource(R.string.copiar), onClick = acoes.aoCopiar)
         }
         // Até 24 h depois do envio, se ainda não pede (como o web).
-        if (propria && podePedirConfirmacao(mensagem, mensagem.remetenteId, Instant.now())) {
+        if (propria &&
+            podePedirConfirmacao(mensagem, mensagem.remetenteId, Instant.now()) &&
+            permissoes.pode(CodigoPermissao.CONFIRMACAO)
+        ) {
             ItemMenu(Icons.Outlined.TaskAlt, stringResource(R.string.pedir_confirmacao_de_leitura), onClick = acoes.aoPedirConfirmacao)
         }
-        if (propria && !mensagem.oculta) {
+        if (propria && !mensagem.oculta && permissoes.pode(CodigoPermissao.OCULTAR)) {
             ItemMenu(Icons.Outlined.VisibilityOff, stringResource(R.string.ocultar), perigo = true, onClick = acoes.aoOcultar)
         }
         Spacer(Modifier.height(16.dp))
@@ -278,6 +290,8 @@ fun ChipsDeReacao(
     if (reacoes.isEmpty()) return
     val cores = ConversaTema.cores
     val extras = reacoes.drop(REACOES_A_MOSTRA)
+    // Sem a permissão de reagir, o chip não alterna (o toque longo, "quem reagiu", continua).
+    val podeReagir = LocalPermissoesDeUso.current.pode(CodigoPermissao.REAGIR)
     FlowRow(
         modifier.padding(horizontal = 4.dp),
         horizontalArrangement = Arrangement.spacedBy(4.dp),
@@ -294,7 +308,7 @@ fun ChipsDeReacao(
                     .then(if (reacao.reagiu) Modifier.border(1.dp, MaterialTheme.colorScheme.primary, RoundedCornerShape(50)) else Modifier)
                     .semantics { contentDescription = descricao }
                     .clip(RoundedCornerShape(50))
-                    .combinedClickable(onClick = { aoAlternar(reacao.emoji) }, onLongClick = { aoVerQuem(reacao.emoji) }),
+                    .combinedClickable(onClick = { if (podeReagir) aoAlternar(reacao.emoji) }, onLongClick = { aoVerQuem(reacao.emoji) }),
             ) {
                 Row(Modifier.padding(horizontal = 8.dp, vertical = 2.dp), verticalAlignment = Alignment.CenterVertically) {
                     Text(reacao.emoji, fontSize = 14.sp)

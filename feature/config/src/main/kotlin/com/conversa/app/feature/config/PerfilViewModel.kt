@@ -102,7 +102,8 @@ class PerfilViewModel @Inject constructor(
         }
     }
 
-    fun salvarDados(nome: String, email: String) {
+    /** [nome] ou [email] nulo: a pessoa não pode mudar aquele (GER-09) e ele não vai para o servidor. */
+    fun salvarDados(nome: String?, email: String?) {
         if (!dadosDoPerfilValidos(nome, email)) {
             andamento.update { it.copy(avisoDados = Aviso(ok = false, recurso = R.string.perfil_preencha_dados)) }
             return

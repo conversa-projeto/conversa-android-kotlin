@@ -15,6 +15,7 @@ import com.conversa.app.core.data.sessao.IniciadorSessao
 import com.conversa.app.core.data.sessao.LimpezaSessao
 import com.conversa.app.core.data.sincronizacao.SyncManager
 import com.conversa.app.core.data.sistema.RecursosRepositorio
+import com.conversa.app.core.data.sistema.SistemaRepositorio
 import com.conversa.app.core.data.tempoReal.ConexaoTempoReal
 import com.conversa.app.core.data.tempoReal.MonitorPrimeiroPlano
 import com.conversa.app.core.network.di.EscopoAplicacao
@@ -70,6 +71,8 @@ class ConversaApplication :
 
     @Inject lateinit var recursos: RecursosRepositorio
 
+    @Inject lateinit var sistema: SistemaRepositorio
+
     @Inject @EscopoAplicacao
     lateinit var escopo: CoroutineScope
 
@@ -85,6 +88,7 @@ class ConversaApplication :
         sincronizacao.iniciar()
         iniciadorSessao.iniciar()
         recursos.iniciar()
+        sistema.iniciar()
         conexaoTempoReal.iniciar()
         notificador.iniciar()
         chamadas.iniciar()

@@ -51,8 +51,11 @@ import java.time.Instant
 import java.util.concurrent.TimeUnit
 import javax.inject.Inject
 import javax.inject.Singleton
+import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.SharedFlow
 import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.asSharedFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.sync.Mutex
@@ -141,6 +144,14 @@ class EnvioMensagens @Inject constructor(
     private val relogio: Clock,
 ) {
     private val trava = Mutex()
+
+    private val _recusas = MutableSharedFlow<RecusaEnvio>(extraBufferCapacity = 8)
+
+    /**
+     * O servidor recusou a mensagem com um motivo (ex.: 403 "Você não tem permissão para: …",
+     * GER-09): a bolha fica "falhou" e a tela da conversa mostra o motivo.
+     */
+    val recusas: SharedFlow<RecusaEnvio> = _recusas.asSharedFlow()
 
     private val _progresso = MutableStateFlow<Map<Long, Float>>(emptyMap())
 
@@ -322,6 +333,7 @@ class EnvioMensagens @Inject constructor(
                 } else if (erro.status < 500) {
                     Timber.w("Envio recusado pelo servidor (%d)", erro.status)
                     mensagemDao.marcarEnvio(pendente.mensagemIdLocal, enviando = false, falhou = true)
+                    if (erro.status == 403) _recusas.tryEmit(RecusaEnvio(mensagem.mensagem.conversaId, erro.detalhe))
                 }
                 else -> if (!contarFalha(pendente)) return@withLock ResultadoEnvio.TENTAR_DEPOIS
             }
@@ -485,3 +497,6 @@ class AgendadorEnvioWorkManager @Inject constructor(@ApplicationContext private 
         const val NOME = "envio_mensagens"
     }
 }
+
+/** Uma mensagem que o servidor recusou ([motivo] é o texto dele), na conversa [conversaId]. */
+data class RecusaEnvio(val conversaId: Long, val motivo: String)

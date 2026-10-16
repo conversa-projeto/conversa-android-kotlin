@@ -126,11 +126,13 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewModelScope
 import com.conversa.app.core.data.SessaoRepositorio
 import com.conversa.app.core.data.contatos.ContatosRepositorio
+import com.conversa.app.core.model.CodigoPermissao
 import com.conversa.app.core.model.Contato
 import com.conversa.app.core.model.ParticipanteChamada
 import com.conversa.app.core.model.StatusParticipante
 import com.conversa.app.core.model.TipoChamada
 import com.conversa.app.core.ui.componentes.Avatar
+import com.conversa.app.core.ui.componentes.LocalPermissoesDeUso
 import com.conversa.app.core.ui.tema.ConversaTema
 import com.conversa.app.core.webrtc.EtapaVideo
 import com.conversa.app.core.webrtc.MidiaLocal
@@ -1031,7 +1033,10 @@ private fun ControlesDaChamada(estado: EstadoChamada, rotas: Rotas, acoes: Acoes
                     onClick = acoes.aoTrocarCamera,
                 )
             }
-        } else if (estado.tipo == TipoChamada.AUDIO && estado.fase == FaseChamada.ATIVA) {
+        } else if (estado.tipo == TipoChamada.AUDIO &&
+            estado.fase == FaseChamada.ATIVA &&
+            LocalPermissoesDeUso.current.pode(CodigoPermissao.CHAMADA_VIDEO)
+        ) {
             BotaoRedondo(
                 Icons.Filled.Videocam,
                 stringResource(R.string.ativar_video),

@@ -100,14 +100,14 @@ A coluna **Fase** indica em que fase do plano da nova base (doc 07) a funcionali
 | PRE | 3 | 3 | 0 | 0 | 0 | 0 |
 | ATV | 5 | 5 | 0 | 0 | 0 | 0 |
 | CFG | 14 | 6 | 1 | 0 | 5 | 2 |
-| GER | 10 | 6 | 1 | 0 | 1 | 2 |
-| **Total** | **163** | **131** | **6** | **3** | **17** | **6** |
+| GER | 10 | 7 | 1 | 0 | 0 | 2 |
+| **Total** | **163** | **132** | **6** | **3** | **16** | **6** |
 
 > Requisitos exclusivos do Android (AND, fora da contagem): 16 — 13 ✅, 2 🟡, 1 ⛔, 0 ⬜, 0 ➖.
 >
-> **Leitura:** 🆕 (2026-10-15, depois do servidor `ef13c22` e do web `9c6e8a6`) 131 de 163 funcionalidades estão prontas na nova base, e 6 estão em parte. A sincronização trouxe 10 funcionalidades (bots, permissões de uso, administração e atividades pendentes); a quebra das atividades (`nova` → `pendente`) já foi corrigida (`2219208`). Ficaram em parte o cadastro fechado (AUT-02), a duração e a onda do áudio (ANX-10, ANX-11); a tela de Acessos com as 32 permissões (CFG-08) já voltou a ✅.
+> **Leitura:** 🆕 (2026-10-15, depois do servidor `ef13c22` e do web `9c6e8a6`) 131 de 163 funcionalidades estão prontas na nova base, e 6 estão em parte. A sincronização trouxe 10 funcionalidades (bots, permissões de uso, administração e atividades pendentes); a quebra das atividades (`nova` → `pendente`) já foi corrigida (`2219208`). Ficaram em parte o cadastro fechado (AUT-02), a duração e a onda do áudio (ANX-10, ANX-11); a tela de Acessos com as 32 permissões (CFG-08) já voltou a ✅. 🆕 (2026-10-16) As permissões de uso (GER-09) ficaram prontas: 132 de 163.
 > - **Bloqueadas (⛔):** dependem de algo fora do app: o push (Firebase, NOT-04) ou a decisão do campo rico (FC-416).
-> - **Por fazer (⬜):** a etapa 9 (SIP, compartilhar tela, Bubbles), as funções de IA (CON-14, ENV-25), as permissões de uso (GER-09), os bots (CON-16), a administração de usuários, bots, ferramentas e conhecimento (CFG-11…14, a avaliar) e um item P3 fora do TODO.
+> - **Por fazer (⬜):** a etapa 9 (SIP, compartilhar tela, Bubbles), as funções de IA (CON-14, ENV-25), os bots (CON-16), a administração de usuários, bots, ferramentas e conhecimento (CFG-11…14, a avaliar) e um item P3 fora do TODO.
 > - **Falta conferir:** as células com "falta conferir" ou "em aparelho" estão prontas, mas esperam um teste que o emulador não permite.
 
 ---
@@ -338,7 +338,7 @@ A coluna **Fase** indica em que fase do plano da nova base (doc 07) a funcionali
 | GER-06 | Tela "Em desenvolvimento" | ➖ | ➖ não replicar | — | Não replicar | — | — |
 | GER-07 | Avatares com fallback (inicial, inclusive emoji) | ⬜ | ✅ 1.5 | Ícone genérico | Componente `Avatar` com inicial (grafema) e cor | F0 | P0 |
 | GER-08 🆕 | Recursos do servidor (`GET /recursos` → `{transcricao, ia}`) | ⬜ | 🟡 8.8 · `db8bc35` · o "Transcrever" já some sem transcritor; "Resumir" e a sugestão ainda não existem no app (CON-14, ENV-25) | — | Carregar uma vez por sessão; esconder Transcrever, Resumir e Sugestão quando o servidor não tem — 🆕 `769bd7d` | F7 | P2 |
-| GER-09 🆕 | Permissões de uso (26 códigos): esconder ou travar o que a pessoa não pode; o servidor responde 403 "Você não tem permissão para: …" | ⬜ | ⬜ 8.9 | — | Ler `GET /usuario/permissoes`; esconder os botões; mostrar a mensagem do 403 (hoje o envio só marca "falhou"); no perfil, mandar só as chaves que mudaram — 🆕 `ef13c22`/`9c6e8a6` | F7 | P1 |
+| GER-09 🆕 | Permissões de uso (26 códigos): esconder ou travar o que a pessoa não pode; o servidor responde 403 "Você não tem permissão para: …" | ⬜ | ✅ 8.9 · `HASH` | — | Ler `GET /usuario/permissoes`; esconder os botões; mostrar a mensagem do 403 (hoje o envio só marca "falhou"); no perfil, mandar só as chaves que mudaram — 🆕 `ef13c22`/`9c6e8a6` | F7 | P1 |
 | GER-10 🆕 | Ocultar a barra de navegação no computador | ⬜ | ➖ | — | Só no web (tela larga) — 🆕 `9c6e8a6` | — | — |
 
 ---

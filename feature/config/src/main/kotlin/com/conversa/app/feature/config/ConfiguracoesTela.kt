@@ -49,9 +49,11 @@ import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.unit.dp
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import com.conversa.app.core.model.CodigoPermissao
 import com.conversa.app.core.model.PreferenciaTema
 import com.conversa.app.core.ui.componentes.Avatar
 import com.conversa.app.core.ui.componentes.DialogoConfirmacao
+import com.conversa.app.core.ui.componentes.LocalPermissoesDeUso
 
 /** Para onde cada item da lista leva (as telas ficam no `app`, na navegação). */
 class AcoesConfiguracoes(
@@ -124,12 +126,16 @@ internal fun ConfiguracoesTela(estado: ConfiguracoesUiState, acoes: AcoesConfigu
         Column(Modifier.padding(margens).verticalScroll(rememberScrollState())) {
             LinhaUsuario(estado, acoes)
             HorizontalDivider()
-            Item(
-                icone = Icons.Outlined.Palette,
-                titulo = stringResource(R.string.config_aparencia),
-                resumo = stringResource(textoDoTema(estado.tema)),
-                aoTocar = { escolherTema = true },
-            )
+            // Aparência e Chamadas são preferências do aparelho: só a tela confere (GER-09, como o web).
+            val permissoes = LocalPermissoesDeUso.current
+            if (permissoes.pode(CodigoPermissao.CORES)) {
+                Item(
+                    icone = Icons.Outlined.Palette,
+                    titulo = stringResource(R.string.config_aparencia),
+                    resumo = stringResource(textoDoTema(estado.tema)),
+                    aoTocar = { escolherTema = true },
+                )
+            }
             Item(
                 Icons.Outlined.Notifications,
                 stringResource(R.string.config_notificacoes),
@@ -142,12 +148,14 @@ internal fun ConfiguracoesTela(estado: ConfiguracoesUiState, acoes: AcoesConfigu
                 stringResource(R.string.privacidade_resumo),
                 acoes.aoAbrirPrivacidade,
             )
-            Item(
-                Icons.Outlined.Call,
-                stringResource(R.string.config_chamadas),
-                stringResource(R.string.config_chamadas_resumo),
-                acoes.aoAbrirChamadas,
-            )
+            if (permissoes.pode(CodigoPermissao.CONFIG_CHAMADAS)) {
+                Item(
+                    Icons.Outlined.Call,
+                    stringResource(R.string.config_chamadas),
+                    stringResource(R.string.config_chamadas_resumo),
+                    acoes.aoAbrirChamadas,
+                )
+            }
             Item(
                 Icons.Outlined.VerifiedUser,
                 stringResource(R.string.config_permissoes),

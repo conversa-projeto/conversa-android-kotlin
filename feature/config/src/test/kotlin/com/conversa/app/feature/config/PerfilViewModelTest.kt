@@ -84,6 +84,12 @@ class PerfilViewModelTest {
         vm.salvarDados("Ana", "ana@x.test")
         advanceUntilIdle()
         assertThat(vm.estado.value.avisoDados).isEqualTo(Aviso(ok = true, recurso = R.string.perfil_dados_salvos))
+
+        // Sem a permissão do e-mail (GER-09): o campo travado não vai.
+        coEvery { perfil.alterarDados("Bia", null) } returns Result.success(Unit)
+        vm.salvarDados("Bia", null)
+        advanceUntilIdle()
+        coVerify { perfil.alterarDados("Bia", null) }
     }
 
     @Test

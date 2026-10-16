@@ -45,6 +45,16 @@ class PerfilRepositorioTest {
     }
 
     @Test
+    fun `sem a permissao do email, so o nome vai`() = runTest {
+        coEvery { api.alterarUsuario(any()) } returns UsuarioDto(7, "Ana Souza", email = "ana@exemplo.test")
+
+        repo.alterarDados(" Ana Souza ", null)
+
+        coVerify { api.alterarUsuario(AlterarUsuarioRequisicao(7, nome = "Ana Souza", email = null)) }
+        assertThat(estado.value!!.nome).isEqualTo("Ana Souza")
+    }
+
+    @Test
     fun `senha vai com senha_atual e a nova, e nada muda na sessao`() = runTest {
         coEvery { api.alterarSenha(any()) } returns JsonObject(emptyMap())
 

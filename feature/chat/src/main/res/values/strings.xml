@@ -326,4 +326,10 @@
     <string name="anexos_vazio">Nenhum anexo encontrado</string>
     <string name="anexos_sem_nome">Sem nome</string>
     <string name="abrir_mensagem">Abrir mensagem</string>
+    <!-- Permissões de uso (GER-09), textos do web -->
+    <string name="anexos_sem_permissao">Você não tem permissão para enviar %1$s.</string>
+    <string name="anexo_barrado_imagens">imagens</string>
+    <string name="anexo_barrado_videos">vídeos</string>
+    <string name="anexo_barrado_audios">áudios</string>
+    <string name="anexo_barrado_arquivos">arquivos</string>
 </resources>

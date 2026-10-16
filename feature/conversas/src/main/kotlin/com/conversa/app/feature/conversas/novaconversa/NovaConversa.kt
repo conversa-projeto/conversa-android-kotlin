@@ -39,6 +39,7 @@ import androidx.lifecycle.viewModelScope
 import com.conversa.app.core.data.contatos.ContatosRepositorio
 import com.conversa.app.core.data.conversas.ConversasRepositorio
 import com.conversa.app.core.data.presenca.PresencaRepositorio
+import com.conversa.app.core.model.CodigoPermissao
 import com.conversa.app.core.model.EstadoPresenca
 import com.conversa.app.core.model.avatarDoContato
 import com.conversa.app.core.model.contatoCombina
@@ -48,6 +49,7 @@ import com.conversa.app.core.network.http.paraErroApi
 import com.conversa.app.core.ui.componentes.Avatar
 import com.conversa.app.core.ui.componentes.EstadoVazio
 import com.conversa.app.core.ui.componentes.LocalAvisos
+import com.conversa.app.core.ui.componentes.LocalPermissoesDeUso
 import com.conversa.app.core.ui.componentes.mostrarErro
 import com.conversa.app.core.ui.estado.ColetarEventos
 import com.conversa.app.core.ui.estado.EventosUnicos
@@ -173,15 +175,18 @@ fun NovaConversaRotaTela(
                 shape = RoundedCornerShape(24.dp),
                 modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 4.dp),
             )
+            val podeCriarGrupo = LocalPermissoesDeUso.current.pode(CodigoPermissao.GRUPO)
             LazyColumn(Modifier.fillMaxSize()) {
-                item(key = "grupo") {
-                    ListItem(
-                        headlineContent = { Text(stringResource(R.string.novo_grupo), color = MaterialTheme.colorScheme.primary) },
-                        leadingContent = {
-                            Icon(Icons.Outlined.GroupAdd, contentDescription = null, tint = MaterialTheme.colorScheme.primary)
-                        },
-                        modifier = Modifier.clickable(enabled = !estado.abrindo, onClick = aoNovoGrupo),
-                    )
+                if (podeCriarGrupo) {
+                    item(key = "grupo") {
+                        ListItem(
+                            headlineContent = { Text(stringResource(R.string.novo_grupo), color = MaterialTheme.colorScheme.primary) },
+                            leadingContent = {
+                                Icon(Icons.Outlined.GroupAdd, contentDescription = null, tint = MaterialTheme.colorScheme.primary)
+                            },
+                            modifier = Modifier.clickable(enabled = !estado.abrindo, onClick = aoNovoGrupo),
+                        )
+                    }
                 }
                 if (estado.contatos.isEmpty()) {
                     item(key = "vazio") { EstadoVazio(titulo = stringResource(R.string.contatos_vazio)) }

@@ -22,7 +22,8 @@ fun validarTrocaDeSenha(atual: String, nova: String, confirmacao: String): ErroS
 }
 
 /** "Preencha nome e email." quando falta um dos dois. */
-fun dadosDoPerfilValidos(nome: String, email: String): Boolean = nome.isNotBlank() && email.isNotBlank()
+fun dadosDoPerfilValidos(nome: String?, email: String?): Boolean =
+    (nome != null || email != null) && nome?.isNotBlank() != false && email?.isNotBlank() != false
 
 /** O quadrado do meio da imagem (o recorte da foto de perfil): x, y e o lado, em pixels da original. */
 data class Recorte(val x: Int, val y: Int, val lado: Int)

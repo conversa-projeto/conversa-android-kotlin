@@ -1,6 +1,7 @@
 package com.conversa.app.core.data.sistema
 
 import com.conversa.app.core.data.SessaoRepositorio
+import com.conversa.app.core.data.tempoReal.MonitorPrimeiroPlano
 import com.conversa.app.core.model.AlteracaoParametros
 import com.conversa.app.core.model.ParametrosSistema
 import com.conversa.app.core.model.Sessao
@@ -19,6 +20,8 @@ import io.mockk.every
 import io.mockk.mockk
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.test.TestScope
+import kotlinx.coroutines.test.runCurrent
 import kotlinx.coroutines.test.runTest
 import kotlinx.serialization.json.jsonObject
 import org.junit.Test
@@ -28,7 +31,7 @@ class SistemaRepositorioTest {
     private val sessao = MutableStateFlow<Sessao?>(Sessao("tok", 7, "Ana"))
     private val sessoes = mockk<SessaoRepositorio> { every { this@mockk.sessao } returns this@SistemaRepositorioTest.sessao }
     private val api = mockk<ConversaApi>()
-    private val repo = SistemaRepositorio(api, sessoes)
+    private val repo = SistemaRepositorio(api, sessoes, mockk(relaxed = true), TestScope())
 
     @Test
     fun `minhas permissoes ficam presas ao usuario logado`() = runTest {
@@ -39,6 +42,33 @@ class SistemaRepositorioTest {
 
         sessao.value = Sessao("tok2", 8, "Bruno")
         assertThat(repo.minhasPermissoes.first()).isEmpty()
+    }
+
+    @Test
+    fun `permissoes de uso - tudo pode antes de carregar, e le de novo cada vez que o app volta a frente`() = runTest {
+        val frente = MutableStateFlow(false)
+        val monitor = mockk<MonitorPrimeiroPlano> { every { emPrimeiroPlano } returns frente }
+        val sistema = SistemaRepositorio(api, sessoes, monitor, backgroundScope)
+        coEvery { api.minhasPermissoes() } returns listOf("imagem", "reagir")
+
+        assertThat(sistema.permissoesDeUso.first().pode("emoji")).isTrue()
+        sistema.iniciar()
+        frente.value = true
+        runCurrent()
+
+        val permissoes = sistema.permissoesDeUso.first()
+        assertThat(permissoes.pode("imagem")).isTrue()
+        assertThat(permissoes.pode("emoji")).isFalse()
+        frente.value = false
+        runCurrent()
+        frente.value = true
+        runCurrent()
+        coVerify(exactly = 2) { api.minhasPermissoes() }
+        // Outra conta não herda.
+        sessao.value = Sessao("tok2", 8, "Bruno")
+        coEvery { api.minhasPermissoes() } returns listOf("imagem")
+        runCurrent()
+        assertThat(sistema.permissoesDeUso.first().pode("reagir")).isFalse()
     }
 
     @Test

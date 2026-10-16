@@ -79,6 +79,7 @@ import androidx.lifecycle.compose.LocalLifecycleOwner
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.repeatOnLifecycle
 import com.conversa.app.core.model.AtividadeConversa
+import com.conversa.app.core.model.CodigoPermissao
 import com.conversa.app.core.model.ItemChat
 import com.conversa.app.core.model.Mensagem
 import com.conversa.app.core.model.RotuloDia
@@ -94,6 +95,7 @@ import com.conversa.app.core.ui.componentes.EstadoVazio
 import com.conversa.app.core.ui.componentes.FolhaPerfilUsuario
 import com.conversa.app.core.ui.componentes.IndicadorDigitando
 import com.conversa.app.core.ui.componentes.LocalAvisos
+import com.conversa.app.core.ui.componentes.LocalPermissoesDeUso
 import com.conversa.app.core.ui.componentes.mostrarErro
 import com.conversa.app.core.ui.estado.ColetarEventos
 import com.conversa.app.core.ui.tema.ConversaTema
@@ -137,6 +139,7 @@ fun ChatRotaTela(
     val escopo = rememberCoroutineScope()
     // Botões de voz e vídeo (e "ligar de novo" na bolha da chamada): pede as permissões e liga (6.4).
     val aoLigar: (TipoChamada) -> Unit = rememberLigar(estado.conversa)
+    val permissoes = LocalPermissoesDeUso.current
     // Perfil da pessoa (8.4, AUT-10): dados do contato e a foto da conversa, como o web.
     var verPerfil by rememberSaveable { mutableStateOf(false) }
     val contatos by viewModel.contatosMencao.collectAsStateWithLifecycle()
@@ -199,6 +202,7 @@ fun ChatRotaTela(
             EventoChat.EncaminharFalhou -> avisos.mostrarErro(encaminharFalhou)
             EventoChat.MensagemNaoLocalizada -> avisos.mostrarErro(naoLocalizada)
             is EventoChat.ArquivoGrande -> avisos.mostrarErro(recursos.getString(R.string.arquivo_grande, evento.nome))
+            is EventoChat.AnexosSemPermissao -> avisos.mostrarErro(textoDosBarrados(evento.codigos, recursos::getString))
             is EventoChat.AbrirArquivo -> if (!abrirComOutroApp(contexto, evento.arquivo, evento.mime)) avisos.mostrarErro(semApp)
             is EventoChat.Baixando -> avisos.showSnackbar(recursos.getString(R.string.baixando, evento.nome))
             is EventoChat.Salvo -> {
@@ -293,7 +297,7 @@ fun ChatRotaTela(
                     aoIrParaMensagem = viewModel::irParaMensagem,
                 ),
                 aoIrAoFim = { escopo.launch { lista.animateScrollToItem(0) } },
-                aoAdicionarAnexos = viewModel::adicionarAnexos,
+                aoAdicionarAnexos = { uris, tipo -> viewModel.adicionarAnexos(uris, tipo, permissoes) },
                 aoRemoverAnexo = viewModel::removerAnexo,
                 pastaCamera = viewModel::pastaCamera,
                 aoTextoUsado = viewModel::textoUsado,
@@ -308,7 +312,7 @@ fun ChatRotaTela(
                 membrosDoGrupo = viewModel.membrosDoGrupo,
                 contatosMencao = viewModel.contatosMencao,
                 aoChegouNaMensagem = viewModel::chegouNaMensagem,
-                aoColarAnexos = viewModel::colarAnexos,
+                aoColarAnexos = { uris -> viewModel.colarAnexos(uris, permissoes) },
                 aoVisivel = viewModel::visivel,
                 gravacao = AcoesGravacao(
                     estado = viewModel.gravacao,
@@ -725,11 +729,17 @@ private fun Cabecalho(estado: ChatUiState, acoes: AcoesChat) {
             }
         },
         actions = {
-            IconButton(onClick = { acoes.aoLigar(TipoChamada.AUDIO) }) {
-                Icon(Icons.Outlined.Call, contentDescription = stringResource(R.string.chamada_de_voz))
+            // Só os tipos de chamada que a pessoa pode fazer (GER-09).
+            val permissoes = LocalPermissoesDeUso.current
+            if (permissoes.pode(CodigoPermissao.CHAMADA_AUDIO)) {
+                IconButton(onClick = { acoes.aoLigar(TipoChamada.AUDIO) }) {
+                    Icon(Icons.Outlined.Call, contentDescription = stringResource(R.string.chamada_de_voz))
+                }
             }
-            IconButton(onClick = { acoes.aoLigar(TipoChamada.VIDEO) }) {
-                Icon(Icons.Outlined.Videocam, contentDescription = stringResource(R.string.chamada_de_video))
+            if (permissoes.pode(CodigoPermissao.CHAMADA_VIDEO)) {
+                IconButton(onClick = { acoes.aoLigar(TipoChamada.VIDEO) }) {
+                    Icon(Icons.Outlined.Videocam, contentDescription = stringResource(R.string.chamada_de_video))
+                }
             }
             if (estado.grupo) {
                 IconButton(onClick = acoes.aoMembros) {
@@ -845,4 +855,19 @@ private fun textoDoSubtitulo(subtitulo: SubtituloPresenca): String? = when (subt
     is SubtituloPresenca.VistoOntem -> stringResource(R.string.visto_ontem, subtitulo.hora)
     is SubtituloPresenca.VistoEm -> stringResource(R.string.visto_em, subtitulo.data, subtitulo.hora)
     SubtituloPresenca.Nenhum -> null
+}
+
+/** "Você não tem permissão para enviar imagens, vídeos." (texto do web, GER-09). */
+internal fun textoDosBarrados(codigos: List<String>, texto: (Int) -> String): String {
+    val nomes = codigos.map {
+        texto(
+            when (it) {
+                CodigoPermissao.IMAGEM -> R.string.anexo_barrado_imagens
+                CodigoPermissao.VIDEO -> R.string.anexo_barrado_videos
+                CodigoPermissao.AUDIO -> R.string.anexo_barrado_audios
+                else -> R.string.anexo_barrado_arquivos
+            },
+        )
+    }
+    return texto(R.string.anexos_sem_permissao).format(nomes.joinToString(", "))
 }

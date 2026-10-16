@@ -58,7 +58,11 @@ class ChatViewModelTest {
         every { observar(42) } returns lista
         coEvery { carregarRecentes(42) } returns Result.success(0)
     }
-    private val envio = mockk<EnvioMensagens>(relaxed = true) { every { progresso } returns MutableStateFlow(emptyMap()) }
+    private val recusas = MutableSharedFlow<com.conversa.app.core.data.mensagens.RecusaEnvio>()
+    private val envio = mockk<EnvioMensagens>(relaxed = true) {
+        every { progresso } returns MutableStateFlow(emptyMap())
+        every { recusas } returns this@ChatViewModelTest.recusas
+    }
     private val conversas = mockk<ConversasRepositorio>(relaxed = true) {
         every { observarTodas() } returns MutableStateFlow(emptyList())
         every { observar(42) } returns MutableStateFlow(
@@ -486,6 +490,46 @@ class ChatViewModelTest {
         advanceUntilIdle()
 
         assertThat(vm.estado.value.fila.map { it.nome }).containsExactly("colada.png")
+    }
+
+    @Test
+    fun `anexo sem a permissao fica de fora e a tela diz qual`() = runTest {
+        val pdf = anexoLocal("nota.pdf").copy(mime = "application/pdf", tipo = TipoConteudo.ARQUIVO)
+        coEvery { compartilhamentos.copiarColados(any()) } returns listOf(anexoLocal("colada.png"), pdf)
+        val vm = criar()
+        advanceUntilIdle()
+
+        val soImagem = com.conversa.app.core.model.PermissoesDeUso(setOf(com.conversa.app.core.model.CodigoPermissao.IMAGEM))
+        vm.colarAnexos(listOf("content://teclado/1", "content://teclado/2"), soImagem)
+        advanceUntilIdle()
+
+        assertThat(vm.estado.value.fila.map { it.nome }).containsExactly("colada.png")
+        assertThat(vm.eventos.fluxo.first()).isEqualTo(EventoChat.AnexosSemPermissao(listOf("arquivo")))
+    }
+
+    @Test
+    fun `recusa do servidor nesta conversa vira aviso, de outra nao`() = runTest {
+        val vm = criar()
+        advanceUntilIdle()
+
+        recusas.emit(com.conversa.app.core.data.mensagens.RecusaEnvio(99, "outra"))
+        recusas.emit(com.conversa.app.core.data.mensagens.RecusaEnvio(42, "Você não tem permissão para: Responder mensagens."))
+        advanceUntilIdle()
+
+        assertThat(vm.eventos.fluxo.first()).isEqualTo(EventoChat.Erro("Você não tem permissão para: Responder mensagens."))
+    }
+
+    @Test
+    fun `texto dos anexos barrados como o web`() {
+        val textos = mapOf(
+            R.string.anexos_sem_permissao to "Você não tem permissão para enviar %1${'$'}s.",
+            R.string.anexo_barrado_imagens to "imagens",
+            R.string.anexo_barrado_videos to "vídeos",
+            R.string.anexo_barrado_audios to "áudios",
+            R.string.anexo_barrado_arquivos to "arquivos",
+        )
+        assertThat(textoDosBarrados(listOf("imagem", "video"), textos::getValue))
+            .isEqualTo("Você não tem permissão para enviar imagens, vídeos.")
     }
 
     // --- Menu da mensagem (etapa 7) ---

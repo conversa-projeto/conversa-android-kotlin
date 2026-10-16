@@ -390,6 +390,9 @@ fun ehVideo(conteudo: Conteudo): Boolean {
     return conteudo.tipo == TipoConteudo.ARQUIVO && extensao in EXTENSOES_VIDEO
 }
 
+/** O nome do arquivo tem extensão de vídeo (a mesma lista de [ehVideo]). */
+fun ehNomeDeVideo(nome: String): Boolean = nome.substringAfterLast('.', "").trim().lowercase() in EXTENSOES_VIDEO
+
 /** Tamanho legível ("1.5 MB"), como o `formatarTamanho` do web. */
 fun formatarTamanho(bytes: Long): String {
     if (bytes < 1024) return "$bytes B"

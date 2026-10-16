@@ -1,12 +1,15 @@
 package com.conversa.app.core.data.sistema
 
 import com.conversa.app.core.data.SessaoRepositorio
+import com.conversa.app.core.data.tempoReal.MonitorPrimeiroPlano
 import com.conversa.app.core.model.Acessos
 import com.conversa.app.core.model.AlteracaoParametros
 import com.conversa.app.core.model.ParametrosSistema
 import com.conversa.app.core.model.PermissaoSistema
+import com.conversa.app.core.model.PermissoesDeUso
 import com.conversa.app.core.model.UsuarioAcessos
 import com.conversa.app.core.network.api.ConversaApi
+import com.conversa.app.core.network.di.EscopoAplicacao
 import com.conversa.app.core.network.dto.AlterarParametrosRequisicao
 import com.conversa.app.core.network.dto.ParametrosDto
 import com.conversa.app.core.network.dto.PermissaoUsuarioDto
@@ -14,9 +17,14 @@ import com.conversa.app.core.network.dto.PermissoesDto
 import com.conversa.app.core.network.http.chamarApi
 import javax.inject.Inject
 import javax.inject.Singleton
+import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.flow.combine
+import kotlinx.coroutines.flow.distinctUntilChanged
+import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.launch
 
 /**
  * Administração do servidor (8.5, FC-808): as minhas permissões (AUT-09), os parâmetros
@@ -24,12 +32,44 @@ import kotlinx.coroutines.flow.combine
  * aqui elas só decidem o que aparece.
  */
 @Singleton
-class SistemaRepositorio @Inject constructor(private val api: ConversaApi, private val sessoes: SessaoRepositorio) {
+class SistemaRepositorio @Inject constructor(
+    private val api: ConversaApi,
+    private val sessoes: SessaoRepositorio,
+    private val primeiroPlano: MonitorPrimeiroPlano,
+    @EscopoAplicacao private val escopo: CoroutineScope,
+) {
     /** Os códigos de quem está logado; preso ao usuário, para outra conta não herdar as telas. */
     private val minhas = MutableStateFlow<Pair<Long, Set<String>>?>(null)
 
     val minhasPermissoes: Flow<Set<String>> = combine(sessoes.sessao, minhas) { sessao, carregadas ->
         carregadas?.takeIf { sessao != null && it.first == sessao.usuarioId }?.second.orEmpty()
+    }
+
+    /**
+     * As de uso (GER-09, servidor `ef13c22`): nulo enquanto não carregou (tudo pode, como o web).
+     * Presas ao usuário, como as [minhasPermissoes].
+     */
+    val permissoesDeUso: Flow<PermissoesDeUso> = combine(sessoes.sessao, minhas) { sessao, carregadas ->
+        PermissoesDeUso(carregadas?.takeIf { sessao != null && it.first == sessao.usuarioId }?.second)
+    }
+
+    private var iniciado = false
+
+    /**
+     * Chamar uma vez (no `Application`): lê as minhas permissões ao entrar e cada vez que o app
+     * volta à frente, para valer o que o administrador mudou. Falhou (sem rede): fica o que já se
+     * sabia; a próxima volta à frente tenta de novo.
+     */
+    fun iniciar() {
+        if (iniciado) return
+        iniciado = true
+        escopo.launch {
+            combine(sessoes.sessao.map { it?.usuarioId }.distinctUntilChanged(), primeiroPlano.emPrimeiroPlano) { usuario, frente ->
+                usuario to frente
+            }.collectLatest { (usuario, frente) ->
+                if (usuario != null && frente) carregarMinhasPermissoes()
+            }
+        }
     }
 
     /** `GET /usuario/permissoes` (no modo aberto, todas). */

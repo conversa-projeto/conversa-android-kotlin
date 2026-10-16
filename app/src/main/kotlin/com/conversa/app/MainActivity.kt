@@ -7,19 +7,26 @@ import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
 import androidx.activity.viewModels
 import androidx.compose.foundation.isSystemInDarkTheme
+import androidx.compose.runtime.CompositionLocalProvider
 import androidx.core.splashscreen.SplashScreen.Companion.installSplashScreen
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import com.conversa.app.core.data.sistema.SistemaRepositorio
+import com.conversa.app.core.model.PermissoesDeUso
 import com.conversa.app.core.model.PreferenciaTema
 import com.conversa.app.core.ui.componentes.AreaDeAvisos
+import com.conversa.app.core.ui.componentes.LocalPermissoesDeUso
 import com.conversa.app.core.ui.tema.BarrasDoSistema
 import com.conversa.app.core.ui.tema.ConversaTema
 import com.conversa.app.feature.chamada.ComBannerDaChamada
 import com.conversa.app.navegacao.ConversaNavHost
 import dagger.hilt.android.AndroidEntryPoint
+import javax.inject.Inject
 
 @AndroidEntryPoint
 class MainActivity : ComponentActivity() {
     private val viewModel: MainViewModel by viewModels()
+
+    @Inject lateinit var sistema: SistemaRepositorio
 
     override fun onCreate(savedInstanceState: Bundle?) {
         val splash = installSplashScreen()
@@ -36,11 +43,15 @@ class MainActivity : ComponentActivity() {
             val tema = viewModel.tema.collectAsStateWithLifecycle().value ?: PreferenciaTema.PADRAO
             val escuro = tema.escuro(isSystemInDarkTheme())
             BarrasDoSistema(this, escuro)
+            // Permissões de uso (GER-09): cada tela esconde o que a pessoa não pode, como o web.
+            val permissoes = sistema.permissoesDeUso.collectAsStateWithLifecycle(PermissoesDeUso()).value
             ConversaTema(escuro = escuro) {
-                AreaDeAvisos {
-                    val destino = viewModel.destinoInicial.collectAsStateWithLifecycle().value
-                    // Em chamada, a faixa "Toque para voltar à chamada" fica no topo de todas as telas (6.12).
-                    if (destino != null) ComBannerDaChamada { ConversaNavHost(destinoInicial = destino, principal = viewModel) }
+                CompositionLocalProvider(LocalPermissoesDeUso provides permissoes) {
+                    AreaDeAvisos {
+                        val destino = viewModel.destinoInicial.collectAsStateWithLifecycle().value
+                        // Em chamada, a faixa "Toque para voltar à chamada" fica no topo de todas as telas (6.12).
+                        if (destino != null) ComBannerDaChamada { ConversaNavHost(destinoInicial = destino, principal = viewModel) }
+                    }
                 }
             }
         }

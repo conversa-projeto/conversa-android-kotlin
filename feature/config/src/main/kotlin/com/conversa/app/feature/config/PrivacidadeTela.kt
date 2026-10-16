@@ -23,10 +23,12 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewModelScope
 import com.conversa.app.core.data.perfil.PerfilRepositorio
+import com.conversa.app.core.model.CodigoPermissao
 import com.conversa.app.core.model.Privacidade
 import com.conversa.app.core.network.http.mensagemAmigavel
 import com.conversa.app.core.network.http.paraErroApi
 import com.conversa.app.core.ui.componentes.Interruptor
+import com.conversa.app.core.ui.componentes.LocalPermissoesDeUso
 import com.conversa.app.core.ui.tema.ConversaTema
 import dagger.hilt.android.lifecycle.HiltViewModel
 import javax.inject.Inject
@@ -125,6 +127,16 @@ private fun Privacidade(estado: PrivacidadeUiState, aoAlterar: (OpcaoPrivacidade
             color = ConversaTema.cores.textoTerciario,
             modifier = Modifier.padding(horizontal = 16.dp, vertical = 4.dp),
         )
+        // Sem a permissão, vê mas não muda (GER-09, como o web).
+        val podeMudar = LocalPermissoesDeUso.current.pode(CodigoPermissao.PRIVACIDADE)
+        if (!podeMudar) {
+            Text(
+                stringResource(R.string.privacidade_sem_permissao),
+                style = MaterialTheme.typography.bodyMedium,
+                color = ConversaTema.cores.textoTerciario,
+                modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp),
+            )
+        }
         val privacidade = estado.privacidade
         OpcaoPrivacidade.entries.forEach { opcao ->
             val ligado = when (opcao) {
@@ -133,7 +145,7 @@ private fun Privacidade(estado: PrivacidadeUiState, aoAlterar: (OpcaoPrivacidade
                 OpcaoPrivacidade.MOSTRAR_NA_CONVERSA -> privacidade.mostrarNaConversa
             }
             // Aparecendo offline, as outras duas não valem: ficam desabilitadas (como o web).
-            val habilitada = !estado.salvando && (opcao == OpcaoPrivacidade.APARECER_OFFLINE || !privacidade.aparecerOffline)
+            val habilitada = podeMudar && !estado.salvando && (opcao == OpcaoPrivacidade.APARECER_OFFLINE || !privacidade.aparecerOffline)
             ListItem(
                 headlineContent = { Text(stringResource(opcao.titulo)) },
                 supportingContent = { Text(stringResource(opcao.descricao), color = ConversaTema.cores.textoTerciario) },

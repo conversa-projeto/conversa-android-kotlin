@@ -56,9 +56,10 @@ class PerfilRepositorio @Inject constructor(
         }.map { }
     }
 
-    suspend fun alterarDados(nome: String, email: String): Result<Unit> {
+    /** Só vai o que não é nulo: o servidor confere a permissão de cada chave (`nome`, `email`; GER-09). */
+    suspend fun alterarDados(nome: String?, email: String?): Result<Unit> {
         val sessao = atual()
-        return chamarApi { api.alterarUsuario(AlterarUsuarioRequisicao(sessao.usuarioId, nome = nome.trim(), email = email.trim())) }
+        return chamarApi { api.alterarUsuario(AlterarUsuarioRequisicao(sessao.usuarioId, nome = nome?.trim(), email = email?.trim())) }
             .map { usuario -> sessoes.salvar(sessao.copy(nome = usuario.nome, email = usuario.email)) }
     }
 

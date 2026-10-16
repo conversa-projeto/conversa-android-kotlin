@@ -47,7 +47,9 @@ import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.unit.dp
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import com.conversa.app.core.model.CodigoPermissao
 import com.conversa.app.core.ui.componentes.Avatar
+import com.conversa.app.core.ui.componentes.LocalPermissoesDeUso
 import com.conversa.app.core.ui.tema.ConversaTema
 
 /**
@@ -79,7 +81,8 @@ class AcoesPerfil(
     val aoAlterarFoto: () -> Unit = {},
     val aoRemoverFoto: () -> Unit = {},
     val aoFotoFalhar: () -> Unit = {},
-    val aoSalvarDados: (nome: String, email: String) -> Unit = { _, _ -> },
+    /** Nulo: a pessoa não pode mudar aquele campo (GER-09), e ele não vai. */
+    val aoSalvarDados: (nome: String?, email: String?) -> Unit = { _, _ -> },
     val aoSalvarSenha: (atual: String, nova: String, confirmacao: String) -> Unit = { _, _, _ -> },
 )
 
@@ -103,11 +106,15 @@ internal fun PerfilTela(estado: PerfilUiState, acoes: AcoesPerfil) {
             Modifier.fillMaxSize().padding(margens).imePadding().verticalScroll(rememberScrollState()).padding(16.dp),
             verticalArrangement = Arrangement.spacedBy(20.dp),
         ) {
+            val permissoes = LocalPermissoesDeUso.current
             BlocoFoto(estado, acoes)
             HorizontalDivider()
             BlocoDados(estado, acoes)
-            HorizontalDivider()
-            BlocoSenha(estado, acoes)
+            // Trocar a senha só com a permissão (GER-09), como o web.
+            if (permissoes.pode(CodigoPermissao.SENHA)) {
+                HorizontalDivider()
+                BlocoSenha(estado, acoes)
+            }
         }
     }
 }
@@ -147,13 +154,22 @@ private fun BlocoFoto(estado: PerfilUiState, acoes: AcoesPerfil) {
         }
         Column(verticalArrangement = Arrangement.spacedBy(6.dp)) {
             Titulo(stringResource(R.string.perfil_foto), stringResource(R.string.perfil_foto_texto))
-            Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                OutlinedButton(enabled = !estado.enviandoFoto, onClick = acoes.aoAlterarFoto) {
-                    Text(stringResource(if (estado.enviandoFoto) R.string.perfil_enviando else R.string.perfil_alterar_foto))
-                }
-                if (estado.temFoto) {
-                    TextButton(enabled = !estado.enviandoFoto, onClick = acoes.aoRemoverFoto) {
-                        Text(stringResource(R.string.perfil_remover_foto), color = MaterialTheme.colorScheme.error)
+            if (!LocalPermissoesDeUso.current.pode(CodigoPermissao.AVATAR)) {
+                // Sem a permissão (GER-09): o aviso no lugar dos botões, como o web.
+                Text(
+                    stringResource(R.string.perfil_sem_permissao_avatar),
+                    style = MaterialTheme.typography.bodySmall,
+                    color = ConversaTema.cores.textoTerciario,
+                )
+            } else {
+                Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                    OutlinedButton(enabled = !estado.enviandoFoto, onClick = acoes.aoAlterarFoto) {
+                        Text(stringResource(if (estado.enviandoFoto) R.string.perfil_enviando else R.string.perfil_alterar_foto))
+                    }
+                    if (estado.temFoto) {
+                        TextButton(enabled = !estado.enviandoFoto, onClick = acoes.aoRemoverFoto) {
+                            Text(stringResource(R.string.perfil_remover_foto), color = MaterialTheme.colorScheme.error)
+                        }
                     }
                 }
             }
@@ -167,12 +183,18 @@ private fun BlocoDados(estado: PerfilUiState, acoes: AcoesPerfil) {
     // Os campos começam com o que está na sessão e ficam em estado local (o cursor não pula).
     var nome by rememberSaveable(estado.nome) { mutableStateOf(estado.nome) }
     var email by rememberSaveable(estado.email) { mutableStateOf(estado.email) }
+    // Cada campo com a sua permissão (GER-09): sem ela, fica travado; vai só o que pode mudar.
+    val permissoes = LocalPermissoesDeUso.current
+    val podeNome = permissoes.pode(CodigoPermissao.NOME)
+    val podeEmail = permissoes.pode(CodigoPermissao.EMAIL)
     Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
         Titulo(stringResource(R.string.perfil_dados), stringResource(R.string.perfil_dados_texto))
         OutlinedTextField(
             value = nome,
             onValueChange = { nome = it },
             label = { Text(stringResource(R.string.perfil_nome)) },
+            supportingText = if (podeNome) null else ({ Text(stringResource(R.string.perfil_sem_permissao_nome)) }),
+            enabled = podeNome,
             singleLine = true,
             modifier = Modifier.fillMaxWidth(),
         )
@@ -180,13 +202,21 @@ private fun BlocoDados(estado: PerfilUiState, acoes: AcoesPerfil) {
             value = email,
             onValueChange = { email = it },
             label = { Text(stringResource(R.string.perfil_email)) },
+            supportingText = if (podeEmail) null else ({ Text(stringResource(R.string.perfil_sem_permissao_email)) }),
+            enabled = podeEmail,
             singleLine = true,
             keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Email),
             modifier = Modifier.fillMaxWidth(),
         )
         TextoAviso(estado.avisoDados)
-        Button(enabled = !estado.salvandoDados, onClick = { acoes.aoSalvarDados(nome, email) }, modifier = Modifier.align(Alignment.End)) {
-            Text(stringResource(if (estado.salvandoDados) R.string.perfil_salvando else R.string.perfil_salvar_dados))
+        if (podeNome || podeEmail) {
+            Button(
+                enabled = !estado.salvandoDados,
+                onClick = { acoes.aoSalvarDados(nome.takeIf { podeNome }, email.takeIf { podeEmail }) },
+                modifier = Modifier.align(Alignment.End),
+            ) {
+                Text(stringResource(if (estado.salvandoDados) R.string.perfil_salvando else R.string.perfil_salvar_dados))
+            }
         }
     }
 }

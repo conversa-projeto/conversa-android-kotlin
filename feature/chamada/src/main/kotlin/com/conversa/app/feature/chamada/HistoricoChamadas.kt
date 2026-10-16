@@ -59,6 +59,7 @@ import com.conversa.app.core.data.SessaoRepositorio
 import com.conversa.app.core.data.chamadas.ChamadasRepositorio
 import com.conversa.app.core.data.mensagens.MensagensRepositorio
 import com.conversa.app.core.model.ChamadaHistorico
+import com.conversa.app.core.model.CodigoPermissao
 import com.conversa.app.core.model.DiaHistorico
 import com.conversa.app.core.model.Mensagem
 import com.conversa.app.core.model.ResumoCitacao
@@ -75,6 +76,7 @@ import com.conversa.app.core.ui.componentes.Carregando
 import com.conversa.app.core.ui.componentes.ChatDaChamada
 import com.conversa.app.core.ui.componentes.EstadoErro
 import com.conversa.app.core.ui.componentes.EstadoVazio
+import com.conversa.app.core.ui.componentes.LocalPermissoesDeUso
 import com.conversa.app.core.ui.tema.ConversaTema
 import dagger.hilt.android.lifecycle.HiltViewModel
 import java.time.Clock
@@ -369,12 +371,18 @@ private fun LinhaChamada(chamada: ChamadaHistorico, eu: Long, aoAbrir: () -> Uni
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
             )
         }
-        IconButton(onClick = aoLigar) {
-            Icon(
-                if (chamada.tipo == TipoChamada.VIDEO) Icons.Outlined.Videocam else Icons.Outlined.Call,
-                contentDescription = stringResource(R.string.ligar_novamente),
-                tint = MaterialTheme.colorScheme.primary,
-            )
+        // "Ligar novamente" do mesmo tipo, se a pessoa pode (GER-09).
+        val tipoPermitido = LocalPermissoesDeUso.current.pode(
+            if (chamada.tipo == TipoChamada.VIDEO) CodigoPermissao.CHAMADA_VIDEO else CodigoPermissao.CHAMADA_AUDIO,
+        )
+        if (tipoPermitido) {
+            IconButton(onClick = aoLigar) {
+                Icon(
+                    if (chamada.tipo == TipoChamada.VIDEO) Icons.Outlined.Videocam else Icons.Outlined.Call,
+                    contentDescription = stringResource(R.string.ligar_novamente),
+                    tint = MaterialTheme.colorScheme.primary,
+                )
+            }
         }
     }
 }

@@ -13,14 +13,18 @@ import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
 import androidx.compose.foundation.isSystemInDarkTheme
+import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.mutableStateOf
 import androidx.core.net.toUri
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.conversa.app.core.data.preferencias.PreferenciasRepositorio
+import com.conversa.app.core.data.sistema.SistemaRepositorio
 import com.conversa.app.core.data.tempoReal.MonitorPrimeiroPlano
+import com.conversa.app.core.model.PermissoesDeUso
 import com.conversa.app.core.model.PreferenciaTema
 import com.conversa.app.core.network.di.EscopoAplicacao
 import com.conversa.app.core.ui.componentes.AreaDeAvisos
+import com.conversa.app.core.ui.componentes.LocalPermissoesDeUso
 import com.conversa.app.core.ui.tema.ConversaTema
 import dagger.hilt.android.AndroidEntryPoint
 import dagger.hilt.android.qualifiers.ApplicationContext
@@ -40,6 +44,8 @@ import kotlinx.coroutines.launch
 class ChamadaActivity : ComponentActivity() {
     @Inject lateinit var preferencias: PreferenciasRepositorio
 
+    @Inject lateinit var sistema: SistemaRepositorio
+
     /** "Atender" da notificação: atende assim que a tela abre. */
     private val pedidoAtender = mutableStateOf(false)
     private val emPip = mutableStateOf(false)
@@ -58,18 +64,21 @@ class ChamadaActivity : ComponentActivity() {
         setContent {
             // A tela da chamada é escura nos dois temas; o tema vale para o que abre por cima (8.5).
             val tema = preferencias.tema.collectAsStateWithLifecycle(PreferenciaTema.PADRAO).value
+            val permissoes = sistema.permissoesDeUso.collectAsStateWithLifecycle(PermissoesDeUso()).value
             ConversaTema(escuro = tema.escuro(isSystemInDarkTheme())) {
-                AreaDeAvisos {
-                    TelaChamadaRota(
-                        aoFechar = ::finish,
-                        atenderAoAbrir = pedidoAtender.value,
-                        aoAtenderAoAbrir = { pedidoAtender.value = false },
-                        emPip = emPip.value,
-                        aoPodePip = ::atualizarPip,
-                        aoMinimizar = ::minimizar,
-                        aoAreaDoVideo = ::novaAreaDoVideo,
-                        aoAbrirChat = ::abrirChat,
-                    )
+                CompositionLocalProvider(LocalPermissoesDeUso provides permissoes) {
+                    AreaDeAvisos {
+                        TelaChamadaRota(
+                            aoFechar = ::finish,
+                            atenderAoAbrir = pedidoAtender.value,
+                            aoAtenderAoAbrir = { pedidoAtender.value = false },
+                            emPip = emPip.value,
+                            aoPodePip = ::atualizarPip,
+                            aoMinimizar = ::minimizar,
+                            aoAreaDoVideo = ::novaAreaDoVideo,
+                            aoAbrirChat = ::abrirChat,
+                        )
+                    }
                 }
             }
         }

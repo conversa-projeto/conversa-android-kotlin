@@ -57,6 +57,8 @@ import java.io.IOException
 import java.time.Clock
 import java.time.Instant
 import java.time.ZoneOffset
+import kotlinx.coroutines.CoroutineStart
+import kotlinx.coroutines.async
 import kotlinx.coroutines.cancel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.first
@@ -573,6 +575,20 @@ class MensagensTest {
         assertThat(banco.mensagemDao().buscar(id)!!.mensagem.falhou).isFalse()
         assertThat(envio.processarPendentes()).isEqualTo(ResultadoEnvio.CONCLUIDO)
         assertThat(banco.mensagemDao().buscar(id)!!.mensagem.falhou).isTrue()
+    }
+
+    @Test
+    fun `403 sem a permissao - a bolha falha e o motivo do servidor vai para a conversa`() = runTest {
+        val envio = envio()
+        val id = envio.enviarTexto(42, "oi 😀")
+        val motivo = "Você não tem permissão para: Enviar emoji."
+        coEvery { api.enviarMensagem(any()) } throws ErroApi.Servidor(403, motivo)
+        val recusa = async(start = CoroutineStart.UNDISPATCHED) { envio.recusas.first() }
+
+        assertThat(envio.processarPendentes()).isEqualTo(ResultadoEnvio.CONCLUIDO)
+
+        assertThat(banco.mensagemDao().buscar(id)!!.mensagem.falhou).isTrue()
+        assertThat(recusa.await()).isEqualTo(RecusaEnvio(42, motivo))
     }
 
     // --- Anexos (4.2) ---

@@ -207,4 +207,9 @@
     <string name="acessos_caixa">%1$s para %2$s</string>
     <string name="acessos_erro_carregar">Erro ao carregar as permissões</string>
     <string name="acessos_erro_alterar">Erro ao alterar a permissão</string>
+    <!-- Permissões de uso (GER-09), textos do web -->
+    <string name="perfil_sem_permissao_nome">Você não tem permissão para mudar o nome</string>
+    <string name="perfil_sem_permissao_email">Você não tem permissão para mudar o e-mail</string>
+    <string name="perfil_sem_permissao_avatar">Você não tem permissão para mudar o avatar.</string>
+    <string name="privacidade_sem_permissao">Você não tem permissão para mudar a privacidade.</string>
 </resources>
