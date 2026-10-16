@@ -4,7 +4,7 @@
 - **Tipo:** código
 - **Itens:** `TODO.md` 4.4 (linha 🆕 `e33ecba` do zoom no ponto da pinça); FC-420; ANX-04
 - **Branch:** `reescrita`
-- **Commits:** (preencher)
+- **Commits:** `b3bcb0c`
 
 ## Contexto
 - **O web** (`e33ecba`): o visualizador amplia no ponto do cursor.
