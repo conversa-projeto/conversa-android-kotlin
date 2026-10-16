@@ -338,7 +338,7 @@ A coluna **Fase** indica em que fase do plano da nova base (doc 07) a funcionali
 | GER-06 | Tela "Em desenvolvimento" | ➖ | ➖ não replicar | — | Não replicar | — | — |
 | GER-07 | Avatares com fallback (inicial, inclusive emoji) | ⬜ | ✅ 1.5 | Ícone genérico | Componente `Avatar` com inicial (grafema) e cor | F0 | P0 |
 | GER-08 🆕 | Recursos do servidor (`GET /recursos` → `{transcricao, ia}`) | ⬜ | 🟡 8.8 · `db8bc35` · o "Transcrever" já some sem transcritor; "Resumir" e a sugestão ainda não existem no app (CON-14, ENV-25) | — | Carregar uma vez por sessão; esconder Transcrever, Resumir e Sugestão quando o servidor não tem — 🆕 `769bd7d` | F7 | P2 |
-| GER-09 🆕 | Permissões de uso (26 códigos): esconder ou travar o que a pessoa não pode; o servidor responde 403 "Você não tem permissão para: …" | ⬜ | ✅ 8.9 · `HASH` | — | Ler `GET /usuario/permissoes`; esconder os botões; mostrar a mensagem do 403 (hoje o envio só marca "falhou"); no perfil, mandar só as chaves que mudaram — 🆕 `ef13c22`/`9c6e8a6` | F7 | P1 |
+| GER-09 🆕 | Permissões de uso (26 códigos): esconder ou travar o que a pessoa não pode; o servidor responde 403 "Você não tem permissão para: …" | ⬜ | ✅ 8.9 · `946c410` | — | Ler `GET /usuario/permissoes`; esconder os botões; mostrar a mensagem do 403 (hoje o envio só marca "falhou"); no perfil, mandar só as chaves que mudaram — 🆕 `ef13c22`/`9c6e8a6` | F7 | P1 |
 | GER-10 🆕 | Ocultar a barra de navegação no computador | ⬜ | ➖ | — | Só no web (tela larga) — 🆕 `9c6e8a6` | — | — |
 
 ---

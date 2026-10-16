@@ -4,7 +4,7 @@
 - **Tipo:** código
 - **Itens:** `TODO.md` 8.9; FC-814; GER-09
 - **Branch:** `reescrita`
-- **Commits:** (preencher)
+- **Commits:** `946c410`
 
 ## Contexto
 - **O servidor** (`ef13c22`) tem 26 permissões de uso (enviar emoji, figurinha, imagem, vídeo, áudio, arquivo; responder, encaminhar, reagir, postagem, votação, confirmação, agendar; grupo; chamada de áudio e de vídeo; nome, e-mail, avatar, senha, privacidade, cores, config. de chamadas…).
