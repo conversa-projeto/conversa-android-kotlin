@@ -4,7 +4,7 @@
 - **Tipo:** teste / build
 - **Itens:** `TODO.md` 1.x (linha do esquema e do teste de migração); FC-110
 - **Branch:** `reescrita`
-- **Commits:** (preencher)
+- **Commits:** `953aa2e`
 
 ## Contexto
 - **O banco** está na versão 7, com seis migrações automáticas (1→7), cada uma com o esquema exportado em `core/database/schemas`.
