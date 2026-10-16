@@ -19,6 +19,7 @@ import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.compositeOver
 import androidx.compose.ui.graphics.toArgb
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.viewinterop.AndroidView
@@ -102,7 +103,9 @@ internal fun DiagramaMermaid(codigo: String, aoFalhar: () -> Unit, modifier: Mod
 private fun coresDoMermaid(): String {
     val esquema = MaterialTheme.colorScheme
     val cores = ConversaTema.cores
-    val hex = { cor: Color -> "#%06X".format(cor.toArgb() and 0xFFFFFF) }
+    // Tokens translúcidos (o divisorLista é preto a 20%) viram a cor que aparecem sobre o fundo:
+    // só o RGB faria do cinza claro um preto (o fundo dos rótulos das setas) e, no escuro, um branco.
+    val hex = { cor: Color -> corHex(cor, esquema.surface) }
     return JSONObject(
         mapOf(
             "background" to hex(esquema.surface),
@@ -119,3 +122,6 @@ private fun coresDoMermaid(): String {
         ),
     ).toString()
 }
+
+/** `#RRGGBB` da [cor] como aparece sobre o [fundo] (o mermaid não usa a transparência). */
+internal fun corHex(cor: Color, fundo: Color): String = "#%06X".format(cor.compositeOver(fundo).toArgb() and 0xFFFFFF)
