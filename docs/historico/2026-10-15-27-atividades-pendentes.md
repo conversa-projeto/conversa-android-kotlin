@@ -4,7 +4,7 @@
 - **Tipo:** código
 - **Itens:** `TODO.md` 8.1 (linha 🆕 `ef13c22` das pendentes); ATV-01; servidor `ef13c22`, web `9c6e8a6`
 - **Branch:** `reescrita`
-- **Commits:** (preencher)
+- **Commits:** `2219208`
 
 ## Contexto
 - **O servidor** (`ef13c22`, migração 044) trocou o "nova" das atividades por **pendente**.
