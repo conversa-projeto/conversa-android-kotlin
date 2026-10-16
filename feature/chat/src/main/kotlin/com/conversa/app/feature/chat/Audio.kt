@@ -1,5 +1,6 @@
 package com.conversa.app.feature.chat
 
+import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.gestures.detectHorizontalDragGestures
@@ -32,6 +33,9 @@ import androidx.compose.runtime.staticCompositionLocalOf
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.geometry.CornerRadius
+import androidx.compose.ui.geometry.Offset
+import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.res.stringResource
@@ -48,8 +52,8 @@ import com.conversa.app.core.model.Conteudo
 import com.conversa.app.core.model.Mensagem
 import com.conversa.app.core.model.StatusTranscricao
 import com.conversa.app.core.model.TipoConteudo
-import com.conversa.app.core.model.formatarDuracao
 import com.conversa.app.core.model.local
+import com.conversa.app.core.model.textoDoTempoDoAudio
 import com.conversa.app.core.ui.tema.ConversaTema
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -72,7 +76,8 @@ fun PlayerNaBolha(mensagem: Mensagem, conteudo: Conteudo, propria: Boolean, cor:
     val atual = audio.chave == chave
     val tocando = atual && audio.tocando
     val baixando = audio.baixando == chave
-    val duracao = audio.duracoes[chave]
+    // A duração gravada no envio (ANX-10) vale antes de tocar e prevalece sobre a do player, como no web.
+    val duracao = conteudo.duracao?.let { (it * 1000).toLong() } ?: audio.duracoes[chave]
     val posicao = if (atual) audio.posicaoMs else 0
     val naoOuvido = !propria && !mensagem.reproduzida
     // Enquanto arrasta, a barra segue o dedo; o player só pula quando solta.
@@ -106,7 +111,8 @@ fun PlayerNaBolha(mensagem: Mensagem, conteudo: Conteudo, propria: Boolean, cor:
                 fracao = fracao,
                 // Só dá para pular no áudio que está no player (como o web).
                 habilitada = atual,
-                corTrilha = cor.copy(alpha = 0.2f),
+                corTrilha = cor.copy(alpha = if (conteudo.intensidade != null) 0.35f else 0.2f),
+                intensidade = conteudo.intensidade,
                 aoArrastar = { arrastando = it },
                 aoSoltar = {
                     arrastando?.let { acoes.aoBuscarAudio(chave, it) }
@@ -116,14 +122,8 @@ fun PlayerNaBolha(mensagem: Mensagem, conteudo: Conteudo, propria: Boolean, cor:
             )
         }
         Text(
-            // Tocando ou parado no meio: a posição; senão, a duração (como o web).
-            formatarDuracao(
-                when {
-                    tocando || posicao > 0 -> posicao / 1000
-                    duracao != null -> duracao / 1000
-                    else -> null
-                },
-            ),
+            // Tocando ou parado no meio: "atual / total"; senão, a duração (como o web).
+            textoDoTempoDoAudio(posicao.takeIf { tocando || it > 0 }?.let { it / 1000 }, duracao?.let { it / 1000 }),
             color = cor.copy(alpha = 0.7f),
             style = MaterialTheme.typography.labelSmall,
             modifier = Modifier.padding(start = 48.dp),
@@ -181,6 +181,7 @@ private fun TranscricaoNaBolha(conteudo: Conteudo, audio: AudioNaConversa, cor: 
 /**
  * Barra fina de progresso (como a do web): tocar ou arrastar escolhe a posição. A área
  * de toque é mais alta que a barra desenhada. Leitores de tela veem um controle de valor.
+ * Com a [intensidade] (ANX-10), vira a onda: uma barra por pico, as já tocadas na cor cheia.
  */
 @Composable
 internal fun BarraAudio(
@@ -190,6 +191,7 @@ internal fun BarraAudio(
     aoArrastar: (Float) -> Unit,
     aoSoltar: () -> Unit,
     modifier: Modifier = Modifier,
+    intensidade: List<Int>? = null,
 ) {
     val corCheia = MaterialTheme.colorScheme.primary
     Box(
@@ -222,7 +224,33 @@ internal fun BarraAudio(
             },
         contentAlignment = Alignment.CenterStart,
     ) {
-        Box(Modifier.fillMaxWidth().height(4.dp).clip(RoundedCornerShape(2.dp)).background(corTrilha))
-        Box(Modifier.fillMaxWidth(fracao).height(4.dp).clip(RoundedCornerShape(2.dp)).background(corCheia))
+        if (intensidade.isNullOrEmpty()) {
+            Box(Modifier.fillMaxWidth().height(4.dp).clip(RoundedCornerShape(2.dp)).background(corTrilha))
+            Box(Modifier.fillMaxWidth(fracao).height(4.dp).clip(RoundedCornerShape(2.dp)).background(corCheia))
+        } else {
+            OndaAudio(intensidade, fracao, corCheia, corTrilha)
+        }
     }
 }
+
+/** A onda (web `OndaAudio.vue`): 2 dp entre as barras, 28 dp de altura, cada barra com pelo menos 12%. */
+@Composable
+private fun OndaAudio(intensidade: List<Int>, fracao: Float, corTocada: Color, corResto: Color) {
+    Canvas(Modifier.fillMaxWidth().height(28.dp)) {
+        val vao = 2.dp.toPx()
+        val largura = ((size.width - vao * (intensidade.size - 1)) / intensidade.size).coerceAtLeast(1f)
+        intensidade.forEachIndexed { indice, nivel ->
+            val altura = size.height * maxOf(ALTURA_MINIMA_ONDA, nivel.coerceIn(0, 100)) / 100f
+            val tocada = indice.toFloat() / intensidade.size < fracao
+            drawRoundRect(
+                color = if (tocada) corTocada else corResto,
+                topLeft = Offset(indice * (largura + vao), (size.height - altura) / 2),
+                size = Size(largura, altura),
+                cornerRadius = CornerRadius(largura / 2),
+            )
+        }
+    }
+}
+
+/** Altura mínima de cada barra da onda, em % (como o web). */
+private const val ALTURA_MINIMA_ONDA = 12

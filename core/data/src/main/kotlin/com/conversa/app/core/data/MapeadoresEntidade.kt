@@ -21,6 +21,8 @@ import com.conversa.app.core.model.TipoChamada
 import com.conversa.app.core.model.TipoConteudo
 import com.conversa.app.core.model.TipoConversa
 import com.conversa.app.core.model.UsuarioReacao
+import com.conversa.app.core.model.intensidadeDoTexto
+import com.conversa.app.core.model.intensidadeParaTexto
 import com.conversa.app.core.network.dto.ConfirmacaoDto
 import com.conversa.app.core.network.dto.ContatoDto
 import com.conversa.app.core.network.dto.ConteudoDto
@@ -102,6 +104,8 @@ internal fun MensagemDto.paraEntidade() = MensagemCompleta(
             transcricaoStatus = it.transcricaoStatus,
             transcricao = it.transcricao,
             chatChamadaId = it.chatChamadaId,
+            duracao = it.duracao,
+            intensidade = it.intensidade?.let(::intensidadeParaTexto),
         )
     },
     reacoes = reacoes.mapIndexed { ordem, it ->
@@ -150,6 +154,8 @@ fun MensagemCompleta.paraModelo() = Mensagem(
             transcricaoStatus = StatusTranscricao.de(it.transcricaoStatus),
             transcricao = it.transcricao,
             chatChamadaId = it.chatChamadaId,
+            duracao = it.duracao,
+            intensidade = intensidadeDoTexto(it.intensidade),
         )
     },
     reacoes = reacoes.sortedBy { it.ordem }.map { reacao ->

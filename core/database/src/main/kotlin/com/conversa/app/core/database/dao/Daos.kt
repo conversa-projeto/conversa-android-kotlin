@@ -159,6 +159,10 @@ interface MensagemDao {
     @Query("UPDATE conteudo SET transcricaoStatus = :status, transcricao = :texto WHERE conteudo = :identificador AND tipo IN (4, 5)")
     suspend fun atualizarTranscricao(identificador: String, status: Int, texto: String)
 
+    /** Duração e onda medidas no envio (ANX-10): a otimista já mostra antes de o servidor responder. */
+    @Query("UPDATE conteudo SET duracao = :duracao, intensidade = :intensidade WHERE mensagemId = :mensagemId AND ordem = :ordem")
+    suspend fun gravarDadosAudio(mensagemId: Long, ordem: Int, duracao: Double, intensidade: String)
+
     /** Eu ouvi o áudio de outra pessoa (otimista). Não marca como lida (o servidor também não). */
     @Query("UPDATE mensagem SET reproduzida = 1 WHERE id = :id")
     suspend fun marcarReproduzidaPorMim(id: Long)

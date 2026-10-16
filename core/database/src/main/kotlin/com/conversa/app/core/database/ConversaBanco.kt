@@ -56,7 +56,7 @@ class Conversores {
         SyncEstadoEntidade::class,
         RascunhoEntidade::class,
     ],
-    version = 9,
+    version = 10,
     exportSchema = true,
     // 2: ordem das reações (a do servidor), para o "+N" esconder as mesmas que o web.
     // 3: rascunho por conversa (FC-519).
@@ -74,6 +74,7 @@ class Conversores {
         AutoMigration(from = 6, to = 7),
         AutoMigration(from = 7, to = 8, spec = Migracao7Para8::class),
         AutoMigration(from = 8, to = 9),
+        AutoMigration(from = 9, to = 10),
     ],
 )
 @TypeConverters(Conversores::class)

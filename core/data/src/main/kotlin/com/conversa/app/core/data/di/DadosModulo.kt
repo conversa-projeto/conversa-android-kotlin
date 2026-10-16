@@ -4,6 +4,8 @@ import com.conversa.app.core.data.ServidorRepositorio
 import com.conversa.app.core.data.SessaoRepositorio
 import com.conversa.app.core.data.anexos.FontesArquivo
 import com.conversa.app.core.data.anexos.FontesArquivoAndroid
+import com.conversa.app.core.data.anexos.MedidorAudio
+import com.conversa.app.core.data.anexos.MedidorAudioAndroid
 import com.conversa.app.core.data.autenticacao.InfoDispositivo
 import com.conversa.app.core.data.autenticacao.InfoDispositivoAndroid
 import com.conversa.app.core.data.chamadas.ChamadasRemotas
@@ -35,6 +37,9 @@ abstract class DadosModulo {
 
     @Binds
     abstract fun fontesArquivo(fontes: FontesArquivoAndroid): FontesArquivo
+
+    @Binds
+    abstract fun medidorAudio(medidor: MedidorAudioAndroid): MedidorAudio
 
     @Binds
     abstract fun infoDispositivo(info: InfoDispositivoAndroid): InfoDispositivo

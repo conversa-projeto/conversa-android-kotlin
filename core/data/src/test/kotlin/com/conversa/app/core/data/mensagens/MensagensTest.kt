@@ -85,6 +85,7 @@ class MensagensTest {
     private val conversas = mockk<ConversasRepositorio>(relaxed = true)
     private val anexos = mockk<AnexosRepositorio>()
     private val fontes = mockk<FontesArquivo>()
+    private val medidor = mockk<com.conversa.app.core.data.anexos.MedidorAudio> { coEvery { medir(any(), any()) } returns null }
     private val agendador = object : AgendadorEnvio {
         var agendados = 0
         var cancelados = 0
@@ -127,6 +128,7 @@ class MensagensTest {
         anexos,
         fontes,
         Clock.fixed(agora, ZoneOffset.UTC),
+        medidor,
     )
 
     // --- Carregar e paginar ---
@@ -593,6 +595,25 @@ class MensagensTest {
 
     // --- Anexos (4.2) ---
 
+    @Test
+    fun `audio e medido uma vez - a otimista ganha a onda e o PUT do anexo leva os dois`() = runTest {
+        val envio = envio()
+        val gravacao = AnexoLocal("content://x/g", "gravacao.m4a", 50, "audio/mp4", TipoConteudo.GRAVACAO_AUDIO)
+        val id = envio.enviar(42, "", listOf(gravacao))
+        val dados = com.conversa.app.core.model.DadosAudio(3.25, listOf(10, 100, 40))
+        coEvery { medidor.medir("content://x/g", 50) } returns dados
+        every { fontes.abrir("content://x/g") } returns fonte("gravacao.m4a", 50)
+        every { fontes.liberar(any()) } just Runs
+        coEvery { anexos.enviar(any(), TipoConteudo.GRAVACAO_AUDIO, dados, any()) } returns
+            Result.failure(ErroApi.SemConexao(IOException("caiu")))
+
+        assertThat(envio.processarPendentes()).isEqualTo(ResultadoEnvio.TENTAR_DEPOIS)
+        val conteudo = banco.mensagemDao().buscar(id)!!.conteudos.single()
+        assertThat(conteudo.duracao).isEqualTo(3.25)
+        assertThat(conteudo.intensidade).isEqualTo("10,100,40")
+        coVerify { anexos.enviar(any(), TipoConteudo.GRAVACAO_AUDIO, dados, any()) }
+    }
+
     private fun fonte(nome: String, tamanho: Long) = object : com.conversa.app.core.data.anexos.FonteArquivo {
         override val nome = nome
         override val tamanho = tamanho
@@ -614,9 +635,9 @@ class MensagensTest {
         every { fontes.abrir("content://x/1") } returns fonte("foto.jpg", 100)
         every { fontes.abrir("content://x/2") } returns fonte("doc.pdf", 300)
         every { fontes.liberar(any()) } just Runs
-        coEvery { anexos.enviar(match { it.nome == "foto.jpg" }, TipoConteudo.IMAGEM, any()) } returns
+        coEvery { anexos.enviar(match { it.nome == "foto.jpg" }, TipoConteudo.IMAGEM, any(), any()) } returns
             Result.success(AnexoEnviado(1, "hash1", TipoConteudo.IMAGEM, "foto.jpg", "jpg", 100))
-        coEvery { anexos.enviar(match { it.nome == "doc.pdf" }, TipoConteudo.ARQUIVO, any()) } returns
+        coEvery { anexos.enviar(match { it.nome == "doc.pdf" }, TipoConteudo.ARQUIVO, any(), any()) } returns
             Result.failure(ErroApi.SemConexao(IOException("caiu")))
 
         assertThat(envio.processarPendentes()).isEqualTo(ResultadoEnvio.TENTAR_DEPOIS)
@@ -625,13 +646,13 @@ class MensagensTest {
         // Ainda na fila: o acesso aos arquivos continua.
         verify(exactly = 0) { fontes.liberar(any()) }
 
-        coEvery { anexos.enviar(match { it.nome == "doc.pdf" }, TipoConteudo.ARQUIVO, any()) } returns
+        coEvery { anexos.enviar(match { it.nome == "doc.pdf" }, TipoConteudo.ARQUIVO, any(), any()) } returns
             Result.success(AnexoEnviado(2, "hash2", TipoConteudo.ARQUIVO, "doc.pdf", "pdf", 300))
         coEvery { api.enviarMensagem(any()) } returns MensagemCriadaDto(id = 700, conversaId = 42)
         coEvery { api.mensagens(42, 700, 0, 0) } throws IOException("caiu")
 
         assertThat(envio.processarPendentes()).isEqualTo(ResultadoEnvio.CONCLUIDO)
-        coVerify(exactly = 1) { anexos.enviar(match { it.nome == "foto.jpg" }, any(), any()) }
+        coVerify(exactly = 1) { anexos.enviar(match { it.nome == "foto.jpg" }, any(), any(), any()) }
         coVerify {
             api.enviarMensagem(
                 EnviarMensagemRequisicao(

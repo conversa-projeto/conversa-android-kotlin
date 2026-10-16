@@ -114,6 +114,18 @@ class AnexosRepositorioTest {
     }
 
     @Test
+    fun `audio leva a duracao e a onda no PUT do anexo`() = runTest {
+        val pedido = slot<IncluirAnexoRequisicao>()
+        coEvery { api.incluirAnexo(capture(pedido)) } returns
+            IncluirAnexoResposta(existe = true, id = 9, uploadUrl = "https://x/storage/leitura")
+
+        repositorio().enviar(fonte, TipoConteudo.GRAVACAO_AUDIO, com.conversa.app.core.model.DadosAudio(4.5, listOf(0, 100))).getOrThrow()
+
+        assertThat(pedido.captured.duracao).isEqualTo(4.5)
+        assertThat(pedido.captured.intensidade).containsExactly(0, 100).inOrder()
+    }
+
+    @Test
     fun `url vencida no meio - pede outra uma vez`() = runTest {
         var vez = 0
         coEvery { api.incluirAnexo(any()) } answers {

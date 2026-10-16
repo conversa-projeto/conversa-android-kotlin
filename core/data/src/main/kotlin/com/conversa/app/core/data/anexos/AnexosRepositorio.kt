@@ -1,6 +1,7 @@
 package com.conversa.app.core.data.anexos
 
 import com.conversa.app.core.model.AnexoDaConversa
+import com.conversa.app.core.model.DadosAudio
 import com.conversa.app.core.model.DirecaoAnexos
 import com.conversa.app.core.model.FiltroAnexos
 import com.conversa.app.core.model.LIMITE_ANEXOS
@@ -99,6 +100,8 @@ class AnexosRepositorio @Inject constructor(
     suspend fun enviar(
         fonte: FonteArquivo,
         tipo: TipoConteudo,
+        /** Áudio: a duração e a onda medidas antes (ANX-10); o servidor guarda só as do primeiro envio. */
+        dadosAudio: DadosAudio? = null,
         aoProgresso: (enviados: Long, total: Long) -> Unit = { _, _ -> },
     ): Result<AnexoEnviado> = withContext(es) {
         if (fonte.tamanho > LIMITE_BYTES) return@withContext Result.failure(ArquivoGrandeDemaisException())
@@ -114,6 +117,8 @@ class AnexosRepositorio @Inject constructor(
             nome = fonte.nome.take(LIMITE_NOME).ifBlank { null },
             extensao = extensao.ifBlank { null },
             tamanho = fonte.tamanho,
+            duracao = dadosAudio?.duracao,
+            intensidade = dadosAudio?.intensidade,
         )
         var tentativa = 0
         while (true) {

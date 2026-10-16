@@ -23,6 +23,9 @@ data class ConteudoDto(
     val transcricao: String = "",
     /** Na mensagem da ligação: o chat criado nela, só para quem é membro (servidor `964ed72`). */
     @SerialName("chat_chamada_id") val chatChamadaId: Long? = null,
+    /** Áudio: segundos e picos de 0 a 100, gravados no envio (servidor `ef13c22`); nulos no resto. */
+    val duracao: Double? = null,
+    val intensidade: List<Int>? = null,
 )
 
 @Serializable

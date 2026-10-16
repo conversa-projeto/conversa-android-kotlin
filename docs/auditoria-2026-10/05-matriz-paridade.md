@@ -92,7 +92,7 @@ A coluna **Fase** indica em que fase do plano da nova base (doc 07) a funcionali
 | CON | 16 | 13 | 1 | 0 | 2 | 0 |
 | MSG | 22 | 22 | 0 | 0 | 0 | 0 |
 | ENV | 28 | 24 | 0 | 2 | 1 | 1 |
-| ANX | 16 | 13 | 2 | 0 | 0 | 1 |
+| ANX | 16 | 15 | 0 | 0 | 0 | 1 |
 | PES | 2 | 2 | 0 | 0 | 0 | 0 |
 | CHA | 26 | 24 | 0 | 0 | 2 | 0 |
 | SIP | 5 | 0 | 0 | 0 | 5 | 0 |
@@ -101,11 +101,11 @@ A coluna **Fase** indica em que fase do plano da nova base (doc 07) a funcionali
 | ATV | 5 | 5 | 0 | 0 | 0 | 0 |
 | CFG | 14 | 6 | 1 | 0 | 5 | 2 |
 | GER | 10 | 7 | 1 | 0 | 0 | 2 |
-| **Total** | **163** | **134** | **5** | **3** | **15** | **6** |
+| **Total** | **163** | **136** | **3** | **3** | **15** | **6** |
 
 > Requisitos exclusivos do Android (AND, fora da contagem): 16 — 13 ✅, 2 🟡, 1 ⛔, 0 ⬜, 0 ➖.
 >
-> **Leitura:** 🆕 (2026-10-15, depois do servidor `ef13c22` e do web `9c6e8a6`) 131 de 163 funcionalidades estão prontas na nova base, e 6 estão em parte. A sincronização trouxe 10 funcionalidades (bots, permissões de uso, administração e atividades pendentes); a quebra das atividades (`nova` → `pendente`) já foi corrigida (`2219208`). Ficaram em parte o cadastro fechado (AUT-02), a duração e a onda do áudio (ANX-10, ANX-11); a tela de Acessos com as 32 permissões (CFG-08) já voltou a ✅. 🆕 (2026-10-16) As permissões de uso (GER-09), o cadastro fechado (AUT-02) e a conversa com bot (CON-16) ficaram prontos: 134 de 163.
+> **Leitura:** 🆕 (2026-10-15, depois do servidor `ef13c22` e do web `9c6e8a6`) 131 de 163 funcionalidades estão prontas na nova base, e 6 estão em parte. A sincronização trouxe 10 funcionalidades (bots, permissões de uso, administração e atividades pendentes); a quebra das atividades (`nova` → `pendente`) já foi corrigida (`2219208`). Ficaram em parte o cadastro fechado (AUT-02), a duração e a onda do áudio (ANX-10, ANX-11); a tela de Acessos com as 32 permissões (CFG-08) já voltou a ✅. 🆕 (2026-10-16) As permissões de uso (GER-09), o cadastro fechado (AUT-02) a conversa com bot (CON-16) e a duração e a onda do áudio (ANX-10, ANX-11) ficaram prontos: 136 de 163.
 > - **Bloqueadas (⛔):** dependem de algo fora do app: o push (Firebase, NOT-04) ou a decisão do campo rico (FC-416).
 > - **Por fazer (⬜):** a etapa 9 (SIP, compartilhar tela, Bubbles), as funções de IA (CON-14, ENV-25), a administração de usuários, bots, ferramentas e conhecimento (CFG-11…14, a avaliar) e um item P3 fora do TODO.
 > - **Falta conferir:** as células com "falta conferir" ou "em aparelho" estão prontas, mas esperam um teste que o emulador não permite.
@@ -221,8 +221,8 @@ A coluna **Fase** indica em que fase do plano da nova base (doc 07) a funcionali
 | ANX-07 | HTML isolado | ⬜ | ✅ 4.10 · `d9d03f1` | — | WebView com JavaScript **sem** acesso a arquivos/cookies, sem token; ou abrir externamente | F3 | P3 |
 | ANX-08 | Markdown/Mermaid em blocos | ⬜ | ✅ = MSG-15 (7.9: Markdown `26f4ea2`, Mermaid `cba9d66`) | — | Ver MSG-15 | F4 | P2 |
 | ANX-09 | Download | 🔴 | ✅ 4.7 | Trata `{url}` como arquivo (Q3); scoped storage/path traversal (#33) | `GET /anexo?identificador=` → `{url}` → baixar a URL assinada → `MediaStore.Downloads`; nome sanitizado | F3 | P0 |
-| ANX-10 | Player de áudio (um por vez, seek, "não ouvido" verde, `POST /mensagem/reproduzir`) | 🔴 | 🟡 4.5 · `1ceaad0` · 🆕 `ef13c22`: falta a duração e a onda (`duracao`/`intensidade`) | Download quebrado (Q3); vazamentos (#31); não chama `reproduzir` | Media3 único + estado por mensagem | F3 | P0 |
-| ANX-11 | Gravação de áudio (segurar para enviar, travar, pausar, ouvir antes) | 🟡 | 🟡 4.6 · `399bae5` · 🆕 `ef13c22`: falta mandar `duracao`/`intensidade` no `PUT /anexo` | Grava M4A e funciona localmente; o envio quebra (Q2); tipo errado (4) | Reaproveitar `AudioRecorderHelper` (#48); UI de segurar/travar | F3 | P0 |
+| ANX-10 | Player de áudio (um por vez, seek, "não ouvido" verde, `POST /mensagem/reproduzir`) | 🔴 | ✅ 4.5 · `1ceaad0` · 🆕 `ef13c22`: duração antes de tocar e onda, `HASH` | Download quebrado (Q3); vazamentos (#31); não chama `reproduzir` | Media3 único + estado por mensagem | F3 | P0 |
+| ANX-11 | Gravação de áudio (segurar para enviar, travar, pausar, ouvir antes) | 🟡 | ✅ 4.6 · `399bae5` · 🆕 `ef13c22`: `duracao`/`intensidade` no `PUT /anexo`, `HASH` | Grava M4A e funciona localmente; o envio quebra (Q2); tipo errado (4) | Reaproveitar `AudioRecorderHelper` (#48); UI de segurar/travar | F3 | P0 |
 | ANX-12 | Transcrição de áudio | ⬜ | ✅ 4.8 · `f5d1501` · 🆕 "Transcrever" só com transcritor `db8bc35` | — | `PUT/GET /anexo/transcricao`; polling de 3 s enquanto "Processando" — 🆕 `769bd7d`: "Transcrever" só com `GET /recursos` → `transcricao` (GER-08) | F3 | P1 |
 | ANX-13 | Página de Anexos (filtros, grade, paginação) | ⬜ | ✅ 8.6 · `95b9bb5` | — | Tela "Anexos" por conversa (acessada pelo perfil/grupo) — 🆕 `eaa8bac`: no web, a lista também fica no painel do grupo | F7 | P2 |
 | ANX-14 | URLs assinadas e renovação | ⬜ | ✅ 4.3 | — | URL expira (600 s em `/anexos`, 300 s no upload): renovar ao falhar; Coil com chave = identificador | F3 | P0 |

@@ -15,6 +15,7 @@ import com.conversa.app.core.data.anexos.AnexoLocal
 import com.conversa.app.core.data.anexos.AnexosRepositorio
 import com.conversa.app.core.data.anexos.ArquivoGrandeDemaisException
 import com.conversa.app.core.data.anexos.FontesArquivo
+import com.conversa.app.core.data.anexos.MedidorAudio
 import com.conversa.app.core.data.anexos.extensaoDe
 import com.conversa.app.core.data.conversas.ConversasRepositorio
 import com.conversa.app.core.data.paraEntidade
@@ -25,11 +26,13 @@ import com.conversa.app.core.database.entidades.ConteudoEntidade
 import com.conversa.app.core.database.entidades.EnvioPendenteEntidade
 import com.conversa.app.core.database.entidades.MensagemCompleta
 import com.conversa.app.core.database.entidades.MensagemEntidade
+import com.conversa.app.core.model.DadosAudio
 import com.conversa.app.core.model.DestinatarioConfirmacao
 import com.conversa.app.core.model.Mensagem
 import com.conversa.app.core.model.PREFIXO_LOCAL
 import com.conversa.app.core.model.TipoConteudo
 import com.conversa.app.core.model.TipoReferencia
+import com.conversa.app.core.model.intensidadeParaTexto
 import com.conversa.app.core.model.local
 import com.conversa.app.core.network.api.ConversaApi
 import com.conversa.app.core.network.dto.ConfirmacaoDto
@@ -89,6 +92,9 @@ data class AnexoPendente(
     val tipo: Int,
     /** Preenchido assim que o upload termina: se o envio tentar de novo, não sobe outra vez. */
     val identificador: String? = null,
+    /** Áudio: medidos uma vez antes do upload (ANX-10); numa nova tentativa, não mede de novo. */
+    val duracao: Double? = null,
+    val intensidade: List<Int>? = null,
 )
 
 /** O que fica em `envio_pendente.payloadJson`: o corpo do `PUT /mensagem` (sem os anexos) e os anexos. */
@@ -142,6 +148,7 @@ class EnvioMensagens @Inject constructor(
     private val anexos: AnexosRepositorio,
     private val fontes: FontesArquivo,
     private val relogio: Clock,
+    private val medidor: MedidorAudio,
 ) {
     private val trava = Mutex()
 
@@ -258,7 +265,20 @@ class EnvioMensagens @Inject constructor(
                         ),
                         conteudos =
                         encaminhados.mapIndexed { i, it ->
-                            ConteudoEntidade(id, i + 1, null, it.tipo.codigo, it.conteudo, it.nome, it.extensao, 0, "")
+                            // Áudio encaminhado leva a duração e a onda da original (ANX-10).
+                            ConteudoEntidade(
+                                id,
+                                i + 1,
+                                null,
+                                it.tipo.codigo,
+                                it.conteudo,
+                                it.nome,
+                                it.extensao,
+                                0,
+                                "",
+                                duracao = it.duracao,
+                                intensidade = it.intensidade?.let(::intensidadeParaTexto),
+                            )
                         } +
                             comFigurinha.drop(encaminhados.size).map {
                                 ConteudoEntidade(id, it.ordem, null, it.tipo, it.conteudo.orEmpty(), "", "", 0, "")
@@ -357,7 +377,19 @@ class EnvioMensagens @Inject constructor(
                 throw FalhaDefinitiva()
             }
             val base = jaEnviados
-            val enviado = anexos.enviar(fonte, TipoConteudo.de(anexo.tipo)) { enviados, _ ->
+            val tipo = TipoConteudo.de(anexo.tipo)
+            // Áudio: mede uma vez (ANX-10) e a otimista já mostra a duração e a onda.
+            val medido = anexo.duracao?.let { DadosAudio(it, anexo.intensidade.orEmpty()) }
+                ?: if (tipo.ehAudio) medidor.medir(anexo.uri, anexo.tamanho) else null
+            if (medido != null && anexo.duracao == null) {
+                mensagemDao.gravarDadosAudio(
+                    pendente.mensagemIdLocal,
+                    anexo.ordem,
+                    medido.duracao,
+                    intensidadeParaTexto(medido.intensidade),
+                )
+            }
+            val enviado = anexos.enviar(fonte, tipo, medido) { enviados, _ ->
                 _progresso.update { it + (pendente.mensagemIdLocal to ((base + enviados).toFloat() / total)) }
             }.getOrElse { erro ->
                 when {
@@ -374,7 +406,7 @@ class EnvioMensagens @Inject constructor(
                         if (it.ordem ==
                             anexo.ordem
                         ) {
-                            it.copy(identificador = enviado.identificador)
+                            it.copy(identificador = enviado.identificador, duracao = medido?.duracao, intensidade = medido?.intensidade)
                         } else {
                             it
                         }
@@ -408,12 +440,19 @@ class EnvioMensagens @Inject constructor(
             return
         }
         val identificadores = pacote.anexos.associate { it.ordem to it.identificador }
+        val audios = pacote.anexos.filter { it.duracao != null }.associateBy { it.ordem }
         val real = chamarApi { api.mensagens(otimista.mensagem.conversaId, mensagemReferencia = idReal) }
             .getOrNull()?.firstOrNull { it.id == idReal }?.paraEntidade()
             ?: otimista.copy(
                 mensagem = otimista.mensagem.copy(id = idReal, enviando = false, falhou = false),
                 conteudos = otimista.conteudos.map {
-                    it.copy(mensagemId = idReal, conteudo = identificadores[it.ordem] ?: it.conteudo)
+                    val audio = audios[it.ordem]
+                    it.copy(
+                        mensagemId = idReal,
+                        conteudo = identificadores[it.ordem] ?: it.conteudo,
+                        duracao = audio?.duracao ?: it.duracao,
+                        intensidade = audio?.intensidade?.let(::intensidadeParaTexto) ?: it.intensidade,
+                    )
                 },
             )
         mensagemDao.remover(otimista.mensagem.id)

@@ -29,6 +29,9 @@ data class IncluirAnexoRequisicao(
     val nome: String? = null,
     val extensao: String? = null,
     val tamanho: Long,
+    /** Áudio (4/5): segundos (0 a 86400) e até 200 picos de 0 a 100 (servidor `ef13c22`, contrato §8.2). */
+    val duracao: Double? = null,
+    val intensidade: List<Int>? = null,
 )
 
 /**

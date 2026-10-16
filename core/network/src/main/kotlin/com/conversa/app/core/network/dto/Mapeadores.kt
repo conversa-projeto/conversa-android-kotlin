@@ -71,6 +71,8 @@ fun ConteudoDto.paraModelo() = Conteudo(
     transcricaoStatus = StatusTranscricao.de(transcricaoStatus),
     transcricao = transcricao,
     chatChamadaId = chatChamadaId,
+    duracao = duracao,
+    intensidade = intensidade,
 )
 
 fun ReferenciaDto.paraModelo(): ReferenciaMensagem = ReferenciaMensagem(

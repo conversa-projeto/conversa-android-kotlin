@@ -64,9 +64,12 @@ class MigracoesTest {
                 assertThat(it.getText(0)).isEqualTo("Ana")
                 assertThat(it.isNull(1)).isTrue()
             }
-            conexao.linha("SELECT conteudo, chatChamadaId FROM conteudo WHERE mensagemId = 900") {
+            conexao.linha("SELECT conteudo, chatChamadaId, duracao, intensidade FROM conteudo WHERE mensagemId = 900") {
                 assertThat(it.getText(0)).isEqualTo("oi")
                 assertThat(it.isNull(1)).isTrue()
+                // Versão 10 (ANX-10): sem duração nem onda até o servidor mandar.
+                assertThat(it.isNull(2)).isTrue()
+                assertThat(it.isNull(3)).isTrue()
             }
             // Versão 9 (CON-16): quem já estava nos contatos não é bot até a próxima leitura.
             conexao.linha("SELECT nome, bot FROM contato WHERE id = 8") {
@@ -85,6 +88,6 @@ class MigracoesTest {
     }
 
     private companion object {
-        const val VERSAO_ATUAL = 9
+        const val VERSAO_ATUAL = 10
     }
 }

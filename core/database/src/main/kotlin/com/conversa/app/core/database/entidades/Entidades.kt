@@ -88,6 +88,10 @@ data class ConteudoEntidade(
     val transcricao: String,
     /** Na mensagem da ligação: o chat criado nela (FC-727). */
     val chatChamadaId: Long? = null,
+    /** Áudio: segundos (ANX-10, versão 10). */
+    val duracao: Double? = null,
+    /** Áudio: picos de 0 a 100 como texto ("12,40,…", versão 10). */
+    val intensidade: String? = null,
 )
 
 @Entity(

@@ -66,7 +66,7 @@ class PerfilRepositorioTest {
 
     @Test
     fun `trocar a foto sobe o JPEG e poe o anexo no perfil, remover manda null explicito`() = runTest {
-        coEvery { anexos.enviar(any(), TipoConteudo.IMAGEM, any()) } returns Result.success(
+        coEvery { anexos.enviar(any(), TipoConteudo.IMAGEM, any(), any()) } returns Result.success(
             AnexoEnviado(55, "nova-foto", TipoConteudo.IMAGEM, "avatar.jpg", "jpg", 3),
         )
         val pedido = slot<AlterarUsuarioRequisicao>()

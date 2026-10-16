@@ -17,6 +17,9 @@ enum class TipoConteudo(val codigo: Int) {
 
     val ehAnexo: Boolean get() = this == IMAGEM || this == ARQUIVO || this == AUDIO || this == GRAVACAO_AUDIO
 
+    /** Áudio escolhido (4) ou gravação (5): leva duração e onda (ANX-10). */
+    val ehAudio: Boolean get() = this == AUDIO || this == GRAVACAO_AUDIO
+
     companion object {
         fun de(codigo: Int): TipoConteudo = entries.firstOrNull { it.codigo == codigo } ?: DESCONHECIDO
     }
@@ -47,6 +50,10 @@ data class Conteudo(
     val transcricao: String = "",
     /** Na mensagem da ligação: o chat criado nela (CHA-26), só para quem é membro. */
     val chatChamadaId: Long? = null,
+    /** Áudio (4/5): segundos, gravados no envio (ANX-10, servidor `ef13c22`); nulo em áudio antigo. */
+    val duracao: Double? = null,
+    /** Áudio (4/5): picos de 0 a 100 para a onda; nulo em áudio antigo. */
+    val intensidade: List<Int>? = null,
 )
 
 enum class TipoReferencia(val codigo: Int) {
