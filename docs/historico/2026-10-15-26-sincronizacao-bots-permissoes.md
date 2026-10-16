@@ -4,7 +4,7 @@
 - **Tipo:** documentação
 - **Itens:** linhas 🆕 no `TODO.md`: 2.4, 2.9, 4.6, 8.5 e a seção nova 8.9; FC-220, FC-221, FC-421, FC-813, FC-814 e FC-815, e nota na FC-800; S26–S30
 - **Branch:** `reescrita`
-- **Commits:** (preencher)
+- **Commits:** `07f84ad`
 - **Commits de origem** (pull `--ff-only` em 2026-10-15, à noite; um commit em cada repositório):
   - **Servidor (`e25c4db` → `ef13c22`):** "Bots de IA com ferramentas e base de conhecimento, permissões de uso e cadastro pelo administrador" (migrações 044–052).
   - **Web (`8b43965` → `9c6e8a6`):** o mesmo título, com as telas disso, o visualizador do Office (`@silurus/ooxml`) e o player de vídeo na bolha.
