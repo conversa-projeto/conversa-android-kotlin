@@ -18,6 +18,11 @@ class PreferenciasRepositorio @Inject constructor(private val store: Preferencia
 
     suspend fun alterarTema(tema: PreferenciaTema) = store.salvarTema(tema.chave)
 
+    /** "Sugerir a continuação ao digitar" (ENV-25), preferência do aparelho. */
+    val sugestoesIa: Flow<Boolean> = store.sugestoesIa.distinctUntilChanged()
+
+    suspend fun alterarSugestoesIa(ligadas: Boolean) = store.salvarSugestoesIa(ligadas)
+
     /** Qualidade das chamadas: a mídia lê ao abrir, então vale a partir da próxima chamada. */
     val chamada: Flow<ConfigChamada> = store.configChamada.map { ConfigChamada.deTexto(it) }.distinctUntilChanged()
 

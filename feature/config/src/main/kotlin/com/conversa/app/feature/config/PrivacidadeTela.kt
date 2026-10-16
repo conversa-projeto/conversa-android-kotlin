@@ -3,6 +3,7 @@ package com.conversa.app.feature.config
 import androidx.annotation.StringRes
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.selection.toggleable
@@ -22,6 +23,7 @@ import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewModelScope
+import com.conversa.app.core.data.ia.SugestoesRepositorio
 import com.conversa.app.core.data.perfil.PerfilRepositorio
 import com.conversa.app.core.model.CodigoPermissao
 import com.conversa.app.core.model.Privacidade
@@ -33,8 +35,10 @@ import com.conversa.app.core.ui.tema.ConversaTema
 import dagger.hilt.android.lifecycle.HiltViewModel
 import javax.inject.Inject
 import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 
@@ -96,17 +100,53 @@ class PrivacidadeViewModel @Inject constructor(private val perfil: PerfilReposit
     }
 }
 
-@Composable
-fun PrivacidadeRotaTela(aoVoltar: () -> Unit, viewModel: PrivacidadeViewModel = hiltViewModel()) {
-    val estado by viewModel.estado.collectAsStateWithLifecycle()
-    SubTela(titulo = stringResource(R.string.privacidade_titulo), aoVoltar = aoVoltar) { modificador ->
-        Privacidade(estado, viewModel::alterar, modificador)
+/** "Sugerir a continuação ao digitar" (ENV-25): preferência do aparelho, só com a IA do servidor ligada. */
+@HiltViewModel
+class SugestoesIaViewModel @Inject constructor(private val sugestoes: SugestoesRepositorio) : ViewModel() {
+    val disponivel: StateFlow<Boolean> = sugestoes.disponivel.stateIn(viewModelScope, SharingStarted.Eagerly, false)
+    val ligadas: StateFlow<Boolean> = sugestoes.preferencia.stateIn(viewModelScope, SharingStarted.Eagerly, true)
+
+    fun alterar(ligadas: Boolean) {
+        viewModelScope.launch { sugestoes.alterar(ligadas) }
     }
 }
 
 @Composable
+fun PrivacidadeRotaTela(
+    aoVoltar: () -> Unit,
+    viewModel: PrivacidadeViewModel = hiltViewModel(),
+    sugestoes: SugestoesIaViewModel = hiltViewModel(),
+) {
+    val estado by viewModel.estado.collectAsStateWithLifecycle()
+    val iaDisponivel by sugestoes.disponivel.collectAsStateWithLifecycle()
+    val sugestoesLigadas by sugestoes.ligadas.collectAsStateWithLifecycle()
+    SubTela(titulo = stringResource(R.string.privacidade_titulo), aoVoltar = aoVoltar) { modificador ->
+        Column(modificador.fillMaxSize().verticalScroll(rememberScrollState())) {
+            Privacidade(estado, viewModel::alterar, Modifier)
+            if (iaDisponivel) SugestoesIa(sugestoesLigadas, sugestoes::alterar)
+        }
+    }
+}
+
+/** Seção "Inteligência artificial" (como o web): a chave fica no aparelho, não no servidor. */
+@Composable
+private fun SugestoesIa(ligadas: Boolean, aoAlterar: (Boolean) -> Unit) {
+    Text(
+        stringResource(R.string.privacidade_ia),
+        style = MaterialTheme.typography.titleSmall,
+        modifier = Modifier.padding(start = 16.dp, end = 16.dp, top = 16.dp),
+    )
+    ListItem(
+        headlineContent = { Text(stringResource(R.string.privacidade_sugestoes)) },
+        supportingContent = { Text(stringResource(R.string.privacidade_sugestoes_texto), color = ConversaTema.cores.textoTerciario) },
+        trailingContent = { Interruptor(ligadas) },
+        modifier = Modifier.toggleable(value = ligadas, role = Role.Switch, onValueChange = aoAlterar),
+    )
+}
+
+@Composable
 private fun Privacidade(estado: PrivacidadeUiState, aoAlterar: (OpcaoPrivacidade, Boolean) -> Unit, modifier: Modifier) {
-    Column(modifier.fillMaxSize().verticalScroll(rememberScrollState()).padding(vertical = 8.dp)) {
+    Column(modifier.fillMaxWidth().padding(vertical = 8.dp)) {
         if (estado.carregando) {
             Text(
                 stringResource(R.string.privacidade_carregando),

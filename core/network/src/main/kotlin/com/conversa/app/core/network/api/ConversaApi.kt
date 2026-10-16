@@ -50,6 +50,7 @@ import com.conversa.app.core.network.dto.NovaMensagemDto
 import com.conversa.app.core.network.dto.ParametrosDto
 import com.conversa.app.core.network.dto.PedirConfirmacaoRequisicao
 import com.conversa.app.core.network.dto.PedirResumoRequisicao
+import com.conversa.app.core.network.dto.PedirSugestaoRequisicao
 import com.conversa.app.core.network.dto.PermissaoUsuarioDto
 import com.conversa.app.core.network.dto.PermissoesDto
 import com.conversa.app.core.network.dto.PrazoEnqueteRequisicao
@@ -67,6 +68,7 @@ import com.conversa.app.core.network.dto.SipDto
 import com.conversa.app.core.network.dto.StatusDetalheDto
 import com.conversa.app.core.network.dto.StatusMensagemDto
 import com.conversa.app.core.network.dto.SucessoDto
+import com.conversa.app.core.network.dto.SugestaoDto
 import com.conversa.app.core.network.dto.TranscricaoDto
 import com.conversa.app.core.network.dto.UrlAnexoDto
 import com.conversa.app.core.network.dto.UsuarioDto
@@ -111,6 +113,10 @@ interface ConversaApi {
     /** Consulta o pedido; só quem pediu, e vale por 30 min (depois, 404). */
     @GET("conversa/resumo")
     suspend fun consultarResumo(@Query("id") id: String): ResumoDto
+
+    /** Continuação do que se digita (ENV-25, §13.6); cancelar a chamada cancela o pedido à IA. */
+    @POST("ia/sugestao")
+    suspend fun sugestao(@Body corpo: PedirSugestaoRequisicao): SugestaoDto
 
     /** Cadastro aberto ou fechado pelo administrador (`cadastro_aberto`, contrato §2.6). */
     @Headers(PUBLICA)

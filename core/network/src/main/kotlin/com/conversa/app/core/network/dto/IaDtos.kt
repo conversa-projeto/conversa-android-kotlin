@@ -3,6 +3,14 @@ package com.conversa.app.core.network.dto
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
 
+/** `POST /ia/sugestao` (contrato §13.6): `texto` até 4000 caracteres. */
+@Serializable
+data class PedirSugestaoRequisicao(@SerialName("conversa_id") val conversaId: Long, val texto: String)
+
+/** A continuação a acrescentar depois do que foi digitado (pode começar com espaço); vazia se a IA falhou. */
+@Serializable
+data class SugestaoDto(val sugestao: String = "")
+
 /** `POST /conversa/resumo` (contrato §13.5): `periodo` ∈ `24h`, `7d`, `30d`, `recentes`. */
 @Serializable
 data class PedirResumoRequisicao(@SerialName("conversa_id") val conversaId: Long, val periodo: String)

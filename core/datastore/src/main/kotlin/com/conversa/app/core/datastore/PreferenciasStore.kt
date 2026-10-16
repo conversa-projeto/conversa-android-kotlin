@@ -44,6 +44,13 @@ class PreferenciasStore(private val dataStore: DataStore<Preferences>) {
         dataStore.edit { it[CONFIG_CHAMADA] = texto }
     }
 
+    /** "Sugerir a continuação ao digitar" (ENV-25): ligada até a pessoa desligar, como o web. */
+    val sugestoesIa: Flow<Boolean> = dataStore.data.map { it[SUGESTOES_IA] != false }
+
+    suspend fun salvarSugestoesIa(ligadas: Boolean) {
+        dataStore.edit { it[SUGESTOES_IA] = ligadas }
+    }
+
     suspend fun salvarEnderecoServidor(endereco: String) {
         dataStore.edit { it[ENDERECO_SERVIDOR] = endereco }
     }
@@ -72,5 +79,6 @@ class PreferenciasStore(private val dataStore: DataStore<Preferences>) {
         val PEDIU_TELA_CHEIA = booleanPreferencesKey("pediu_tela_cheia")
         val TEMA = stringPreferencesKey("tema")
         val CONFIG_CHAMADA = stringPreferencesKey("config_chamada")
+        val SUGESTOES_IA = booleanPreferencesKey("sugestoes_ia")
     }
 }

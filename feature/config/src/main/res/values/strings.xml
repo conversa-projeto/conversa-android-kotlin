@@ -210,6 +210,10 @@
     <string name="acessos_caixa">%1$s para %2$s</string>
     <string name="acessos_erro_carregar">Erro ao carregar as permissões</string>
     <string name="acessos_erro_alterar">Erro ao alterar a permissão</string>
+    <!-- Sugestão de texto da IA (ENV-25), adaptado do web (no celular não há Tab) -->
+    <string name="privacidade_ia">Inteligência artificial</string>
+    <string name="privacidade_sugestoes">Sugerir a continuação ao digitar</string>
+    <string name="privacidade_sugestoes_texto">Depois de uma pausa, a IA sugere como continuar a mensagem num balão acima do campo: toque para usar. Para isso, o que você digita e as últimas mensagens da conversa vão para o servidor de IA do sistema.</string>
     <!-- Permissões de uso (GER-09), textos do web -->
     <string name="perfil_sem_permissao_nome">Você não tem permissão para mudar o nome</string>
     <string name="perfil_sem_permissao_email">Você não tem permissão para mudar o e-mail</string>

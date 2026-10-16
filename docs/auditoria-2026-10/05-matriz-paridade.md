@@ -91,7 +91,7 @@ A coluna **Fase** indica em que fase do plano da nova base (doc 07) a funcionali
 | AUT | 10 | 10 | 0 | 0 | 0 | 0 |
 | CON | 16 | 14 | 1 | 0 | 1 | 0 |
 | MSG | 22 | 22 | 0 | 0 | 0 | 0 |
-| ENV | 28 | 24 | 0 | 2 | 1 | 1 |
+| ENV | 28 | 25 | 0 | 2 | 0 | 1 |
 | ANX | 16 | 15 | 0 | 0 | 0 | 1 |
 | PES | 2 | 2 | 0 | 0 | 0 | 0 |
 | CHA | 26 | 24 | 0 | 0 | 2 | 0 |
@@ -100,14 +100,14 @@ A coluna **Fase** indica em que fase do plano da nova base (doc 07) a funcionali
 | PRE | 3 | 3 | 0 | 0 | 0 | 0 |
 | ATV | 5 | 5 | 0 | 0 | 0 | 0 |
 | CFG | 14 | 6 | 1 | 0 | 5 | 2 |
-| GER | 10 | 7 | 1 | 0 | 0 | 2 |
-| **Total** | **163** | **137** | **3** | **3** | **14** | **6** |
+| GER | 10 | 8 | 0 | 0 | 0 | 2 |
+| **Total** | **163** | **139** | **2** | **3** | **13** | **6** |
 
 > Requisitos exclusivos do Android (AND, fora da contagem): 16 — 13 ✅, 2 🟡, 1 ⛔, 0 ⬜, 0 ➖.
 >
-> **Leitura:** 🆕 (2026-10-15, depois do servidor `ef13c22` e do web `9c6e8a6`) 131 de 163 funcionalidades estão prontas na nova base, e 6 estão em parte. A sincronização trouxe 10 funcionalidades (bots, permissões de uso, administração e atividades pendentes); a quebra das atividades (`nova` → `pendente`) já foi corrigida (`2219208`). Ficaram em parte o cadastro fechado (AUT-02), a duração e a onda do áudio (ANX-10, ANX-11); a tela de Acessos com as 32 permissões (CFG-08) já voltou a ✅. 🆕 (2026-10-16) As permissões de uso (GER-09), o cadastro fechado (AUT-02) a conversa com bot (CON-16) a duração e a onda do áudio (ANX-10, ANX-11) e o resumo por IA (CON-14, falta conferir com um servidor de IA) ficaram prontos: 137 de 163.
+> **Leitura:** 🆕 (2026-10-15, depois do servidor `ef13c22` e do web `9c6e8a6`) 131 de 163 funcionalidades estão prontas na nova base, e 6 estão em parte. A sincronização trouxe 10 funcionalidades (bots, permissões de uso, administração e atividades pendentes); a quebra das atividades (`nova` → `pendente`) já foi corrigida (`2219208`). Ficaram em parte o cadastro fechado (AUT-02), a duração e a onda do áudio (ANX-10, ANX-11); a tela de Acessos com as 32 permissões (CFG-08) já voltou a ✅. 🆕 (2026-10-16) As permissões de uso (GER-09), o cadastro fechado (AUT-02) a conversa com bot (CON-16) a duração e a onda do áudio (ANX-10, ANX-11) o resumo e a sugestão por IA (CON-14, ENV-25, falta conferir com um servidor de IA) e os recursos do servidor (GER-08) ficaram prontos: 139 de 163.
 > - **Bloqueadas (⛔):** dependem de algo fora do app: o push (Firebase, NOT-04) ou a decisão do campo rico (FC-416).
-> - **Por fazer (⬜):** a etapa 9 (SIP, compartilhar tela, Bubbles), a sugestão de texto da IA (ENV-25), a administração de usuários, bots, ferramentas e conhecimento (CFG-11…14, a avaliar) e um item P3 fora do TODO.
+> - **Por fazer (⬜):** a etapa 9 (SIP, compartilhar tela, Bubbles), a administração de usuários, bots, ferramentas e conhecimento (CFG-11…14, a avaliar) e um item P3 fora do TODO.
 > - **Falta conferir:** as células com "falta conferir" ou "em aparelho" estão prontas, mas esperam um teste que o emulador não permite.
 
 ---
@@ -203,7 +203,7 @@ A coluna **Fase** indica em que fase do plano da nova base (doc 07) a funcionali
 | ENV-22 🆕 | Criar votação (só grupo): pergunta ≤ 300, 2–12 opções ≤ 200, "Permitir várias escolhas" | ⬜ | ✅ 7.12 · `b6d8631` | — | Bottom sheet "Nova votação" a partir do "+"; `PUT /enquete` — 🆕 `785bdef`: "Definir data final" opcional (`encerra_em`) | F4 | P1 |
 | ENV-23 🆕 | Rascunho por conversa (texto, menções, anexos e resposta pendente), restaurado ao voltar | ⬜ | ✅ 7.11 · `217be62` | — | Guardar no aparelho por conversa (Room) e restaurar ao abrir o chat; apagar ao enviar | F4 | P2 |
 | ENV-24 🆕 | Pedir confirmação de leitura ("+" › "Confirmar leitura", `pede_confirmacao`) | ⬜ | ✅ 3.8 · `32de350` | — | Item no "+" e faixa removível; vale para a próxima mensagem — 🆕 `769bd7d` — 🆕 `e33ecba`: em grupo, modal "Quem precisa confirmar" e faixa com " de N pessoas" e "Escolher" (`confirmacao_usuarios`) | F2 | P1 |
-| ENV-25 🆕 | Sugestão de texto da IA (Tab aceita, Esc descarta, `POST /ia/sugestao`) | ⬜ | ⬜ 8.8 | — | Sem Tab no celular: chip de sugestão acima do teclado; chave na Privacidade — 🆕 `f798e9c` | F7 | P3 |
+| ENV-25 🆕 | Sugestão de texto da IA (Tab aceita, Esc descarta, `POST /ia/sugestao`) | ⬜ | ✅ 8.8 · `HASH` · falta conferir com um servidor de IA | — | Sem Tab no celular: chip de sugestão acima do teclado; chave na Privacidade — 🆕 `f798e9c` | F7 | P3 |
 | ENV-26 🆕 | Criar postagem em grupo ("+" › "Postagem", título opcional) | ⬜ | ✅ 7.13 · `2033b39` | — | Item no "+" (só grupo) e faixa com o título — 🆕 `d202c06` | F4 | P1 |
 | ENV-27 🆕 | Pedir confirmação de leitura depois do envio (menu da mensagem, até 24 h) | ⬜ | ✅ 7.1 · `32de350` | — | Item "Pedir confirmação de leitura" no toque longo (minha mensagem, menos de 24 h); em grupo, o modal "Quem precisa confirmar"; `POST /mensagem/pedir-confirmacao`; WS 65 — 🆕 `e33ecba`/`6d20ff7` | F4 | P2 |
 | ENV-28 🆕 | Código como peça no campo ("Inserir na mensagem", editar, remover) | ⬜ | ⛔ 4.11 · depende da decisão do campo rico (FC-416) | — | Campo simplificado: inserir o bloco cercado no cursor; campo por blocos: peça com prévia — 🆕 `e33ecba` | F4 | P3 |
@@ -337,7 +337,7 @@ A coluna **Fase** indica em que fase do plano da nova base (doc 07) a funcionali
 | GER-05 | Menu de contexto | ➖ | ✅ toque longo (2.8, 7.1) | — | Toque longo | — | — |
 | GER-06 | Tela "Em desenvolvimento" | ➖ | ➖ não replicar | — | Não replicar | — | — |
 | GER-07 | Avatares com fallback (inicial, inclusive emoji) | ⬜ | ✅ 1.5 | Ícone genérico | Componente `Avatar` com inicial (grafema) e cor | F0 | P0 |
-| GER-08 🆕 | Recursos do servidor (`GET /recursos` → `{transcricao, ia}`) | ⬜ | 🟡 8.8 · `db8bc35` · o "Transcrever" já some sem transcritor; "Resumir" e a sugestão ainda não existem no app (CON-14, ENV-25) | — | Carregar uma vez por sessão; esconder Transcrever, Resumir e Sugestão quando o servidor não tem — 🆕 `769bd7d` | F7 | P2 |
+| GER-08 🆕 | Recursos do servidor (`GET /recursos` → `{transcricao, ia}`) | ⬜ | ✅ 8.8 · `db8bc35` · o "Transcrever" some sem transcritor; "Resumir" (`110f742`) e a sugestão (`HASH`) só com a IA | — | Carregar uma vez por sessão; esconder Transcrever, Resumir e Sugestão quando o servidor não tem — 🆕 `769bd7d` | F7 | P2 |
 | GER-09 🆕 | Permissões de uso (26 códigos): esconder ou travar o que a pessoa não pode; o servidor responde 403 "Você não tem permissão para: …" | ⬜ | ✅ 8.9 · `946c410` | — | Ler `GET /usuario/permissoes`; esconder os botões; mostrar a mensagem do 403 (hoje o envio só marca "falhou"); no perfil, mandar só as chaves que mudaram — 🆕 `ef13c22`/`9c6e8a6` | F7 | P1 |
 | GER-10 🆕 | Ocultar a barra de navegação no computador | ⬜ | ➖ | — | Só no web (tela larga) — 🆕 `9c6e8a6` | — | — |
 

@@ -101,6 +101,7 @@ import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.focusRequester
+import androidx.compose.ui.focus.onFocusChanged
 import androidx.compose.ui.geometry.CornerRadius
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.Size
@@ -193,6 +194,8 @@ internal fun Campo(
 ) {
     // Estado do texto local e síncrono (o cursor não pula); sobrevive a girar a tela.
     val texto = rememberTextFieldState()
+    // O campo em foco: a sugestão da IA só é pedida assim (ENV-25).
+    val focado = remember { mutableStateOf(false) }
     val foco = remember { FocusRequester() }
     // Menções inseridas pela lista (7.7): o campo mostra "@Nome"; no envio vira "@[Nome](id)".
     val mencoes = remember { mutableStateListOf<MencaoInserida>() }
@@ -294,6 +297,9 @@ internal fun Campo(
             }, aoCancelar = acoes.aoCancelarConfirmacao)
         }
         if (atual == EstadoGravacao.Parada) SugestoesDeMencao(texto, mencoes, acoes.contatosMencao)
+        // Sugestão da IA (ENV-25): só com a IA do servidor e a preferência ligadas.
+        val pedirSugestao = acoes.aoPedirSugestao
+        if (atual == EstadoGravacao.Parada && pedirSugestao != null) SugestaoDaIa(texto, focado, pedirSugestao)
         if (fila.isNotEmpty() && atual == EstadoGravacao.Parada) FilaAnexos(fila, acoes.aoRemoverAnexo)
         if (comBarra) {
             BarraGravacao(atual, acoes.gravacao)
@@ -316,15 +322,10 @@ internal fun Campo(
                 // O servidor recusa a resposta de postagem agendada.
                 podeAgendar = respondendoPostagem == null,
                 // Em grupo, escolhe antes quem precisa confirmar (como o web).
-                aoConfirmarLeitura = if (comBot) {
-                    null
-                } else {
-                    (
-                        {
-                            if (grupo) escolhendoConfirmacao = true else acoes.aoEscolherConfirmacao(null)
-                        }
-                        )
-                },
+                aoConfirmarLeitura = {
+                    if (grupo) escolhendoConfirmacao = true else acoes.aoEscolherConfirmacao(null)
+                }.takeUnless { comBot },
+                aoMudarFoco = { focado.value = it },
             )
         }
     }
@@ -547,6 +548,7 @@ private fun LinhaDoCampo(
     aoPostar: (() -> Unit)?,
     podeAgendar: Boolean,
     aoConfirmarLeitura: (() -> Unit)?,
+    aoMudarFoco: (Boolean) -> Unit = {},
 ) {
     Row(
         Modifier.fillMaxWidth().padding(horizontal = 8.dp, vertical = 6.dp),
@@ -580,7 +582,11 @@ private fun LinhaDoCampo(
                     keyboardOptions = KeyboardOptions(capitalization = KeyboardCapitalization.Sentences),
                     outputTransformation = destaqueDasMencoes(mencoes, MaterialTheme.colorScheme.primary),
                     inputTransformation = transformacao,
-                    modifier = Modifier.fillMaxWidth().focusRequester(foco).contentReceiver(receptorDeImagens(acoes.aoColarAnexos)),
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .focusRequester(foco)
+                        .onFocusChanged { aoMudarFoco(it.isFocused) }
+                        .contentReceiver(receptorDeImagens(acoes.aoColarAnexos)),
                 )
             }
         }

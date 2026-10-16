@@ -355,6 +355,9 @@
         <item quantity="one">Gerado por IA a partir de %1$d mensagem. Confira na conversa antes de agir.</item>
         <item quantity="other">Gerado por IA a partir de %1$d mensagens. Confira na conversa antes de agir.</item>
     </plurals>
+    <!-- Sugestão de texto da IA (ENV-25) -->
+    <string name="sugestao_ia_descricao">Sugestão da IA: %1$s. Toque para usar.</string>
+    <string name="descartar_sugestao">Descartar a sugestão</string>
     <!-- Bot de IA (CON-16), textos do web -->
     <string name="selo_bot">Bot</string>
     <string name="selo_bot_descricao">Bot: responde com a IA</string>

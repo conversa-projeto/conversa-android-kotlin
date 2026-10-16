@@ -243,6 +243,9 @@ fun ChatRotaTela(
     val resumo: ResumoViewModel = hiltViewModel()
     val iaLigada by resumo.disponivel.collectAsStateWithLifecycle()
     var vendoResumo by rememberSaveable { mutableStateOf(false) }
+    // Sugestão de texto da IA ao digitar (ENV-25).
+    val sugestao: SugestaoViewModel = hiltViewModel()
+    val sugestaoLigada by sugestao.ligada.collectAsStateWithLifecycle()
     if (vendoResumo) {
         FolhaResumo(
             resumo,
@@ -264,6 +267,7 @@ fun ChatRotaTela(
                 aoMembros = { aoMembros(viewModel.conversaId) },
                 aoAbrirPesquisa = viewModel::abrirPesquisa,
                 aoResumir = if (iaLigada) ({ vendoResumo = true }) else null,
+                aoPedirSugestao = if (sugestaoLigada) sugestao::sugerir else null,
                 aoFecharPesquisa = viewModel::fecharPesquisa,
                 aoPesquisar = viewModel::pesquisar,
                 aoAbrirResultado = viewModel::abrirResultado,
@@ -407,6 +411,8 @@ class AcoesChat(
     val aoAbrirPesquisa: () -> Unit = {},
     /** "Resumir conversa" (CON-14): nulo sem a IA ligada no servidor. */
     val aoResumir: (() -> Unit)? = null,
+    /** Sugestão de texto da IA (ENV-25): nula sem a IA do servidor ou com a preferência desligada. */
+    val aoPedirSugestao: (suspend (String) -> String)? = null,
     val aoFecharPesquisa: () -> Unit = {},
     val aoPesquisar: (String) -> Unit = {},
     val aoAbrirResultado: (Mensagem) -> Unit = {},
