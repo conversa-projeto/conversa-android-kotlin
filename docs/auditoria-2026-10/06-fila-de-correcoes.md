@@ -223,7 +223,7 @@
 - [ ] **FC-218 · P2 · 🆕 `769bd7d` Seção "Chamadas (N)" na lista** (CON-01): conversas `chamada:true` não fixadas nem arquivadas, recolhível, antes de "Arquivadas"; com termo, tudo junto.
 - [ ] **FC-219 · P3 · 🆕 `e33ecba` Ícone de grupo na lista** (CON-01): ícone de pessoas com a descrição "Conversa em grupo" no lugar da etiqueta "Grupo".
 - [x] **FC-220 · P2 · 🆕 `ef13c22` Cadastro fechado** (AUT-02): `GET /cadastro` → `{aberto}` (rota pública) antes de mostrar "Não tem conta? Criar conta"; fechado, o link some (o `PUT /usuario` responde 403). ✔ f427612
-- [x] **FC-221 · P2 · 🆕 `ef13c22`/`9c6e8a6` Bots de IA** (CON-16): `bot` nos contatos e na conversa; pílula "Bot" na direta; não oferecer ligação para bot; tirar o bot da lista de confirmação (ele nunca marca `recebida`; pendência S27). ✔ HASH
+- [x] **FC-221 · P2 · 🆕 `ef13c22`/`9c6e8a6` Bots de IA** (CON-16): `bot` nos contatos e na conversa; pílula "Bot" na direta; não oferecer ligação para bot; tirar o bot da lista de confirmação (ele nunca marca `recebida`; pendência S27). ✔ 9594d53
 
 ## Bloco E — Mensagens: núcleo (F2)
 

@@ -4,7 +4,7 @@
 - **Tipo:** código
 - **Itens:** `TODO.md` 2.9 (linha 🆕 `ef13c22`/`9c6e8a6`); FC-221; CON-16; S27 (itens 2 e 3)
 - **Branch:** `reescrita`
-- **Commits:** (preencher)
+- **Commits:** `9594d53`
 
 ## Contexto
 - **O servidor** (`ef13c22`) tem bots de IA: usuários comuns que conversam por mensagens comuns. Só `GET /usuario/contatos` diz quem é bot (`bot: true`); as outras rotas não, e o cliente cruza pelo id (contrato §13.7).

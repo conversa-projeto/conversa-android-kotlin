@@ -146,7 +146,7 @@ A coluna **Fase** indica em que fase do plano da nova base (doc 07) a funcionali
 | CON-13 | Conversa atualizada em tempo real (WS 40) | ⬜ | ✅ 2.6 | WS 40 não tem consumidor | Evento → refresh da lista | F1 | P0 |
 | CON-14 🆕 | Resumo da conversa por IA (períodos, assuntos com pendências, "Ver na conversa", último resumo guardado) | ⬜ | ⬜ 8.8 | — | "Resumir conversa" no "⋮" do chat (só com `recursos.ia`); `POST`/`GET /conversa/resumo` a cada 2 s; último resumo no Room — 🆕 `769bd7d`/`05507a0` | F7 | P2 |
 | CON-15 🆕 | Imagem ou emoji do grupo (`PATCH /conversa {avatar_anexo_id, emoji}`) | ⬜ | ✅ 2.10 · `04c5c14`, `943dbdb` | — | "Imagem", "Emoji", "Remover" na tela do grupo; mostrar `emoji`/`avatar_url` do grupo em todos os avatares — 🆕 `769bd7d` | F1 | P2 |
-| CON-16 🆕 | Conversa com bot de IA (pílula "Bot" no cabeçalho da direta; o bot responde na direta, quando mencionado e quando respondem a ele) | ⬜ | ✅ 2.9 · `HASH` | — | Ler `bot` nos contatos e na conversa; pílula "Bot"; não oferecer ligação para bot; tirar o bot da lista de confirmação — 🆕 `ef13c22`/`9c6e8a6` | F1 | P2 |
+| CON-16 🆕 | Conversa com bot de IA (pílula "Bot" no cabeçalho da direta; o bot responde na direta, quando mencionado e quando respondem a ele) | ⬜ | ✅ 2.9 · `9594d53` | — | Ler `bot` nos contatos e na conversa; pílula "Bot"; não oferecer ligação para bot; tirar o bot da lista de confirmação — 🆕 `ef13c22`/`9c6e8a6` | F1 | P2 |
 
 ## MSG — Exibição e leitura
 
