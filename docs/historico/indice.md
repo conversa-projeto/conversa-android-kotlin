@@ -14,6 +14,7 @@
 - 2026-10-07 · [Cores do app vêm do conversa-windows-fmx](2026-10-07-01-cores-do-fmx.md) — `docs/design/cores.md`; primária `#007DFF`; escuro é proposta e fica desligado
 - 2026-10-09 · [Matriz de paridade com a nova base](2026-10-09-10-matriz-paridade-nova-base.md) — coluna "Nova base" no doc 05 (121 ✅, 2 🟡, 2 ⛔, 9 ⬜, 3 ➖ de 137) e placar dela; placar do legado corrigido (ENV-23); 16 linhas antigas do TODO, cumpridas depois, fechadas com o commit
 - 2026-10-15 · [Investigação: o app funcionar sem FCM (push opcional)](2026-10-15-01-push-opcional-sem-fcm.md) — ADR 0002 proposto: hoje, sem FCM, nada chega em segundo plano; opções A (conexão própria), B (UnifiedPush), C (sincronização periódica), D (Firebase pelo servidor); recomendação D + A + C; TODO 5.9 e S23/S24, aguardando decisão
+- 2026-10-15 · [Revisão: matriz de paridade e TODO](2026-10-15-24-revisao-matriz-e-todo.md) — servidor e web sem mudanças; doc 05 com o trabalho do dia (131 de 153 prontas); fechadas as linhas dos módulos criados
 
 ## Sincronização com servidor e web
 - 2026-10-06 · [Commits da noite: votação, campo rico, chat completo na chamada](2026-10-06-03-sincronizacao-votacao-campo-rico.md) — servidor `8031fa5` (enquete, WS 62, tipo 8) e web `39d06f9`; 136 funcionalidades; novos FC-315/415/416/516–518/723

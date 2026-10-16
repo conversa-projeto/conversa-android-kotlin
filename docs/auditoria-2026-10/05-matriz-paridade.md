@@ -78,32 +78,34 @@ A coluna **Fase** indica em que fase do plano da nova base (doc 07) a funcionali
 >
 > 🆕 **Atualizado em 2026-10-15** com o servidor `e25c4db` (`6d20ff7`, `e25c4db`) e o web `8b43965` (`e33ecba`, `8b43965`): +3 funcionalidades (ENV-27, ENV-28, CFG-10 ➖); o chat da ligação voltou a ser um grupo novo; mudam PES-01, CON-01, CON-07, MSG-21, ENV-24, MSG-22, CHA-18, CHA-26, ANX-04 e ATV-01. ENV-04 voltou a ✅ (figurinhas Noto, `a7a6c8a`).
 >
+> 🆕 **Atualizado em 2026-10-15 (fim do dia):** a coluna "Nova base" acompanha o que ficou pronto desde a sincronização: presença e privacidade, postagens, confirmação de leitura, imagem/emoji do grupo, seletor de emojis, chat da ligação, "Chamar de novo", etapas do vídeo, zoom na pinça e `GET /recursos` (em parte). O servidor e o web não mudaram desde `e25c4db` e `8b43965`.
+>
 > **Leitura (legado):** só 2 de 137 funcionalidades estão íntegras. 42 existem de alguma forma (🟡+🔴), mas 16 delas quebram contra o servidor atual. 79 nunca existiram no Android. (🆕 2026-10-09: o placar ainda não contava o ENV-23, ⬜ no legado.)
 
-### Nova base (2026-10-09, etapas 1–8 do `TODO.md`; 🆕 revisto em 2026-10-13)
+### Nova base (2026-10-09, etapas 1–8 do `TODO.md`; 🆕 revisto em 2026-10-13 e 2026-10-15)
 
 | Grupo | Total | ✅ | 🟡 | ⛔ | ⬜ | ➖ |
 |---|---|---|---|---|---|---|
 | AUT | 10 | 10 | 0 | 0 | 0 | 0 |
-| CON | 15 | 10 | 2 | 0 | 3 | 0 |
-| MSG | 22 | 19 | 1 | 0 | 2 | 0 |
-| ENV | 28 | 20 | 1 | 2 | 4 | 1 |
-| ANX | 15 | 14 | 1 | 0 | 0 | 0 |
-| PES | 2 | 1 | 1 | 0 | 0 | 0 |
-| CHA | 26 | 22 | 0 | 0 | 4 | 0 |
+| CON | 15 | 12 | 1 | 0 | 2 | 0 |
+| MSG | 22 | 22 | 0 | 0 | 0 | 0 |
+| ENV | 28 | 24 | 0 | 2 | 1 | 1 |
+| ANX | 15 | 15 | 0 | 0 | 0 | 0 |
+| PES | 2 | 2 | 0 | 0 | 0 | 0 |
+| CHA | 26 | 24 | 0 | 0 | 2 | 0 |
 | SIP | 5 | 0 | 0 | 0 | 5 | 0 |
 | NOT | 6 | 4 | 1 | 1 | 0 | 0 |
-| PRE | 3 | 0 | 1 | 0 | 2 | 0 |
+| PRE | 3 | 3 | 0 | 0 | 0 | 0 |
 | ATV | 3 | 3 | 0 | 0 | 0 | 0 |
-| CFG | 10 | 5 | 1 | 0 | 2 | 2 |
-| GER | 8 | 6 | 0 | 0 | 1 | 1 |
-| **Total** | **153** | **114** | **9** | **3** | **23** | **4** |
+| CFG | 10 | 6 | 1 | 0 | 1 | 2 |
+| GER | 8 | 6 | 1 | 0 | 0 | 1 |
+| **Total** | **153** | **131** | **4** | **3** | **11** | **4** |
 
 > Requisitos exclusivos do Android (AND, fora da contagem): 16 — 13 ✅, 2 🟡, 1 ⛔, 0 ⬜, 0 ➖.
 >
-> **Leitura:** 🆕 (2026-10-15) 114 de 153 funcionalidades estão prontas na nova base, e 9 estão em parte. A sincronização com o servidor `12cf0cf` e o web `d202c06` rebaixou 9 itens que estavam prontos e trouxe 13 novos; três deles quebram o que já funcionava (8.7 do TODO): o contador preso pelas respostas de postagem, as figurinhas Noto e o "Chamar de novo" que não toca.
+> **Leitura:** 🆕 (2026-10-15, fim do dia) 131 de 153 funcionalidades estão prontas na nova base, e 4 estão em parte. As três quebras da sincronização com o servidor `12cf0cf` (o contador preso pelas respostas de postagem, as figurinhas Noto e o "Chamar de novo" que não tocava) foram corrigidas no 8.7, e as funcionalidades novas do servidor e do web foram feitas, menos as de IA (CON-14, ENV-25, CFG-07), que dependem do servidor de IA.
 > - **Bloqueadas (⛔):** dependem de algo fora do app: o push (Firebase, NOT-04) ou a decisão do campo rico (FC-416).
-> - **Por fazer (⬜):** a etapa 9 (SIP, compartilhar tela, Bubbles) e um item P3 fora do TODO.
+> - **Por fazer (⬜):** a etapa 9 (SIP, compartilhar tela, Bubbles), as funções de IA (CON-14, ENV-25) e um item P3 fora do TODO.
 > - **Falta conferir:** as células com "falta conferir" ou "em aparelho" estão prontas, mas esperam um teste que o emulador não permite.
 
 ---
@@ -127,7 +129,7 @@ A coluna **Fase** indica em que fase do plano da nova base (doc 07) a funcionali
 
 | ID | Funcionalidade | Legado | Nova base | Situação / evidência (legado) | Adaptação Android | Fase | Prio |
 |---|---|---|---|---|---|---|---|
-| CON-01 | Lista de conversas (avatar, online, prévia, não lidas, fixadas, arquivadas, digitando) | 🟡 | 🟡 2.6 · 🆕 falta a seção "Chamadas (N)" e o emoji/imagem do grupo (FC-218, FC-217) | Lista existe; **sem badge** (o layout tem, o adapter não preenche), sem avatar, sem fixadas/arquivadas, hora sempre `HH:mm`, recarrega tudo com spinner (#26, #47) | Compose `LazyColumn` alimentada pelo Room; atualização incremental — 🆕 `769bd7d`: seção recolhível "Chamadas (N)" (`chamada:true`) antes de "Arquivadas"; emoji ou imagem do grupo no lugar da inicial; bolinha amarela de ausente — 🆕 `e33ecba`: ícone de pessoas ("Conversa em grupo") no lugar da etiqueta "Grupo"; 🆕 `6d20ff7`: cada ligação com chat cria um grupo novo, então a seção "Chamadas (N)" cresce | F1 | P0 |
+| CON-01 | Lista de conversas (avatar, online, prévia, não lidas, fixadas, arquivadas, digitando) | 🟡 | ✅ 2.6 · 🆕 seção "Chamadas (N)" e emoji/imagem do grupo `04c5c14`; bolinha de ausente `c7bef01` | Lista existe; **sem badge** (o layout tem, o adapter não preenche), sem avatar, sem fixadas/arquivadas, hora sempre `HH:mm`, recarrega tudo com spinner (#26, #47) | Compose `LazyColumn` alimentada pelo Room; atualização incremental — 🆕 `769bd7d`: seção recolhível "Chamadas (N)" (`chamada:true`) antes de "Arquivadas"; emoji ou imagem do grupo no lugar da inicial; bolinha amarela de ausente — 🆕 `e33ecba`: ícone de pessoas ("Conversa em grupo") no lugar da etiqueta "Grupo"; 🆕 `6d20ff7`: cada ligação com chat cria um grupo novo, então a seção "Chamadas (N)" cresce | F1 | P0 |
 | CON-02 | Filtro local + "Nova conversa" com contatos sem conversa | ⬜ | ✅ 2.7 | Só há a tela separada de Contatos | Busca na barra superior + seção "Nova conversa" | F1 | P1 |
 | CON-03 | Fixar / desafixar / reordenar | ⬜ | ✅ 2.8 | — | Menu de toque longo + arrastar (ou "mover para cima/baixo"); `PATCH /conversa/fixadas` com a lista inteira | F1 | P1 |
 | CON-04 | Arquivar / desarquivar | ⬜ | ✅ 2.8 · arquivada sem notificação na 5.4 (`199ce1b`) | — | Menu + gesto de deslizar; arquivadas sem som nem notificação; seção "Arquivadas (N)" | F1 | P1 |
@@ -141,7 +143,7 @@ A coluna **Fase** indica em que fase do plano da nova base (doc 07) a funcionali
 | CON-12 | Deep link (abrir conversa pela notificação/âncora) | 🔴 | ✅ 3.11 · `2a4cc59` | A notificação manda `conversa_id`; a `MainActivity` ignora (#14) | Navigation Compose com deep link `conversa/{id}?mensagem={id}` | F2/F5 | P0 |
 | CON-13 | Conversa atualizada em tempo real (WS 40) | ⬜ | ✅ 2.6 | WS 40 não tem consumidor | Evento → refresh da lista | F1 | P0 |
 | CON-14 🆕 | Resumo da conversa por IA (períodos, assuntos com pendências, "Ver na conversa", último resumo guardado) | ⬜ | ⬜ 8.8 | — | "Resumir conversa" no "⋮" do chat (só com `recursos.ia`); `POST`/`GET /conversa/resumo` a cada 2 s; último resumo no Room — 🆕 `769bd7d`/`05507a0` | F7 | P2 |
-| CON-15 🆕 | Imagem ou emoji do grupo (`PATCH /conversa {avatar_anexo_id, emoji}`) | ⬜ | ⬜ 2.10 | — | "Imagem", "Emoji", "Remover" na tela do grupo; mostrar `emoji`/`avatar_url` do grupo em todos os avatares — 🆕 `769bd7d` | F1 | P2 |
+| CON-15 🆕 | Imagem ou emoji do grupo (`PATCH /conversa {avatar_anexo_id, emoji}`) | ⬜ | ✅ 2.10 · `04c5c14`, `943dbdb` | — | "Imagem", "Emoji", "Remover" na tela do grupo; mostrar `emoji`/`avatar_url` do grupo em todos os avatares — 🆕 `769bd7d` | F1 | P2 |
 
 ## MSG — Exibição e leitura
 
@@ -152,7 +154,7 @@ A coluna **Fase** indica em que fase do plano da nova base (doc 07) a funcionali
 | MSG-03 | Linha "Últimas" (não lidas) | ⬜ | ✅ 3.9 | — | Mesmas 5 regras do web (doc 03, MSG-03) | F2 | P1 |
 | MSG-04 | Marcar como visualizada | 🔴 | ✅ 3.8 | `GET mensagem/visualizar` → **404** (doc 02 Q4); uma chamada por mensagem | `POST /mensagem/visualizar {conversa, mensagem}` só para as visíveis, com o app em primeiro plano | F2 | P0 |
 | MSG-05 | "Ir para o final" / "Há novas mensagens" | ⬜ | ✅ 3.9 | — | FAB com contador | F2 | P1 |
-| MSG-06 | Ir para uma mensagem (contexto) | ⬜ | 🟡 7.5 · `2a4cc59` · 🆕 falta o destaque em faixa (FC-524) | — | Carregar contexto 30/30 (fallback 120/120) + destaque — 🆕 `d202c06`: o destaque vira faixa da largura toda, que aparece na hora, fica 1,5 s e some em 0,7 s | F4 | P1 |
+| MSG-06 | Ir para uma mensagem (contexto) | ⬜ | ✅ 7.5 · `2a4cc59` · 🆕 destaque em faixa `923297f` | — | Carregar contexto 30/30 (fallback 120/120) + destaque — 🆕 `d202c06`: o destaque vira faixa da largura toda, que aparece na hora, fica 1,5 s e some em 0,7 s | F4 | P1 |
 | MSG-07 | Classificação das bolhas (oculta, chamada, imagem, figurinha, código, emoji, referência, curta, padrão) | 🟡 | ✅ 3.3 | Só texto, imagem, áudio e arquivo; **tipos 5, 6 e 7 aparecem vazios** | Mesma prioridade de classificação (`classificarMensagem.ts`) | F2–F4 | P0 |
 | MSG-08 | Ícone de status (enviando → ✓ → ✓✓ → ✓✓ azul) | 🟡 | ✅ 3.8 | Calculado só no carregamento; WS 3 ignorado | Atualização via WS 3 | F2 | P0 |
 | MSG-09 | Detalhe do status (quem recebeu/viu/ouviu) | ⬜ | ✅ 7.10 · `f3cab38` | — | Bottom sheet; **atenção:** campos são datas aqui e booleanos em `/mensagens` | F4 | P2 |
@@ -167,8 +169,8 @@ A coluna **Fase** indica em que fase do plano da nova base (doc 07) a funcionali
 | MSG-18 | Modo conexão lenta | ➖ | ✅ 4.10 · `d9d03f1` | — | Usar `ConnectivityManager` (rede limitada/economia de dados) → "Toque para carregar" | F3 | P3 |
 | MSG-19 | Citação de resposta/encaminhada (recursiva até 5) | ⬜ | ✅ 7.5 · `2a4cc59` | — | Componente recursivo — 🆕 `7322e83`: encaminhada de encaminhada não repete, na citação, o que a citação de baixo já mostra | F4 | P1 |
 | MSG-20 🆕 | Bolha de votação (tipo 8): pergunta, opções com barra, votantes, votar/trocar/tirar voto, tempo real (WS 62) | ⬜ | ✅ 7.12 · `b6d8631` | O app antigo mostra a bolha **vazia** | `GET /enquete?id=` com cache por id; `POST /enquete/votar` com a lista completa; reler no WS 62 se estiver na tela. **No F2, pelo menos um placeholder "📊 Votação"** — 🆕 `5cad911`/`785bdef`: data final, encerrar (`POST /enquete/encerrar`), mudar a data (`PATCH /enquete`), estado encerrado com 🏆 e prazo vencendo na tela | F4 (placeholder F2) | P1 (placeholder P0) |
-| MSG-21 🆕 | Confirmação de leitura na bolha ("Confirmar leitura" / "Confirmada por N de T", WS 8) | ⬜ | ⬜ 3.8 | — | Chip abaixo da bolha; `POST /mensagem/confirmar`; lista de quem confirmou — 🆕 `769bd7d` — 🆕 `6d20ff7`/`e33ecba`: lista de quem precisa confirmar (`pode_confirmar`, `destinatarios`), caixa só para quem está nela, "Falta confirmar", WS 65 | F2 | P1 |
-| MSG-22 🆕 | Postagem em grupo com respostas embaixo (2 últimas, "Ver todas", responder, "N novas", WS 64) | ⬜ | ⬜ 7.13 (o mínimo, contador, no 8.7) | — | Bolha própria; `GET /postagem/respostas`, `POST /postagem/visualizar`; as respostas ficam **fora** de `/mensagens` mas contam nas não lidas — 🆕 `12cf0cf`/`d202c06` — 🆕 `e33ecba`: cartão na largura toda, "Responder à postagem" leva ao campo (qualquer conteúdo), avatar nas respostas | F4 | P0 (contador) / P1 |
+| MSG-21 🆕 | Confirmação de leitura na bolha ("Confirmar leitura" / "Confirmada por N de T", WS 8) | ⬜ | ✅ 3.8 · `32de350` | — | Chip abaixo da bolha; `POST /mensagem/confirmar`; lista de quem confirmou — 🆕 `769bd7d` — 🆕 `6d20ff7`/`e33ecba`: lista de quem precisa confirmar (`pode_confirmar`, `destinatarios`), caixa só para quem está nela, "Falta confirmar", WS 65 | F2 | P1 |
+| MSG-22 🆕 | Postagem em grupo com respostas embaixo (2 últimas, "Ver todas", responder, "N novas", WS 64) | ⬜ | ✅ 7.13 · `2033b39` · notificação de resposta `6f9a298` | — | Bolha própria; `GET /postagem/respostas`, `POST /postagem/visualizar`; as respostas ficam **fora** de `/mensagens` mas contam nas não lidas — 🆕 `12cf0cf`/`d202c06` — 🆕 `e33ecba`: cartão na largura toda, "Responder à postagem" leva ao campo (qualquer conteúdo), avatar nas respostas | F4 | P0 (contador) / P1 |
 
 ## ENV — Composição e ações
 
@@ -190,17 +192,17 @@ A coluna **Fase** indica em que fase do plano da nova base (doc 07) a funcionali
 | ENV-14 | Cancelar agendada | ⬜ | ✅ 7.4, 7.10 · `f3cab38` | — | "Ocultar" vira "Cancelar envio" — 🆕 `7322e83`: pela folha "Mensagens agendadas" | F4 | P2 |
 | ENV-15 | Digitando (enviar e receber) | 🟡 | ✅ 3.10 | **Não commitado**; throttle de 2,5 s; recebimento sem expirar corretamente; textos de grupo ausentes | Throttle de 2,5 s; expira em 4 s; textos exatos do web | F2 | P1 |
 | ENV-16 | Gravando áudio (indicador) | ⬜ | ✅ 4.6 · `399bae5` | `broadcastGravando` não é usado; WS 5 sem efeito | `POST /conversa/gravando` a cada 2,5 s durante a gravação | F3 | P1 |
-| ENV-17 | Reações (toggle, chips, quem reagiu) | ⬜ | 🟡 7.2 · `52d6d03` · 🆕 o seletor do AndroidX manda tons de pele, bandeiras e FE0F: a reação se divide do web (FC-418) | Só no repositório morto | Barra de reações no menu de toque longo; WS 7 — 🆕 `d4435db`/`eaa8bac`: até 5 emojis diferentes por pessoa (conferir antes da otimista); 5 chips à mostra e "+N" — 🆕 `d202c06`: "Mais emojis" usa o seletor novo do web (pesquisa, categorias, Recentes; sem tons, bandeiras nem FE0F sobrando) | F4 | P0 |
+| ENV-17 | Reações (toggle, chips, quem reagiu) | ⬜ | ✅ 7.2 · `52d6d03` · 🆕 seletor de emojis como o do web `5d17a71` | Só no repositório morto | Barra de reações no menu de toque longo; WS 7 — 🆕 `d4435db`/`eaa8bac`: até 5 emojis diferentes por pessoa (conferir antes da otimista); 5 chips à mostra e "+N" — 🆕 `d202c06`: "Mais emojis" usa o seletor novo do web (pesquisa, categorias, Recentes; sem tons, bandeiras nem FE0F sobrando) | F4 | P0 |
 | ENV-18 | Ocultar mensagem (com confirmação) | ⬜ | ✅ 7.4 · `52d6d03` | `DELETE /mensagem` está só no repositório morto | Ação "Ocultar" com o texto exato do web | F4 | P0 |
 | ENV-19 | Copiar (texto/imagem) | ⬜ | ✅ 7.6 · `52d6d03` | — | `ClipboardManager` (texto) e `ClipData` com URI de conteúdo (imagem) | F4 | P1 |
 | ENV-20 | Menu de ações da mensagem | ⬜ | ✅ 7.1 · `52d6d03` | — | Toque longo → reações + Responder, Responder no privado, Encaminhar, Copiar, Ocultar — 🆕 `7322e83`/`e8d82cb`: no celular o web também abre o menu completo no toque longo; Ctrl + clique direito (só reações) não se aplica | F4 | P0 |
 | ENV-21 🆕 | Campo de mensagem rico (texto e anexos/figurinhas/menções intercalados, enviados na ordem) | ⬜ | ⛔ 4.11 · falta a decisão FC-416 (campo simplificado × completo); hoje: fila de anexos + texto, figurinha sozinha | — | Editor por blocos (texto ↔ peça) acima do teclado; figurinha/gravação com o campo vazio vão na hora. Ver a decisão FC-416 | F3 | P1 |
 | ENV-22 🆕 | Criar votação (só grupo): pergunta ≤ 300, 2–12 opções ≤ 200, "Permitir várias escolhas" | ⬜ | ✅ 7.12 · `b6d8631` | — | Bottom sheet "Nova votação" a partir do "+"; `PUT /enquete` — 🆕 `785bdef`: "Definir data final" opcional (`encerra_em`) | F4 | P1 |
 | ENV-23 🆕 | Rascunho por conversa (texto, menções, anexos e resposta pendente), restaurado ao voltar | ⬜ | ✅ 7.11 · `217be62` | — | Guardar no aparelho por conversa (Room) e restaurar ao abrir o chat; apagar ao enviar | F4 | P2 |
-| ENV-24 🆕 | Pedir confirmação de leitura ("+" › "Confirmar leitura", `pede_confirmacao`) | ⬜ | ⬜ 3.8 | — | Item no "+" e faixa removível; vale para a próxima mensagem — 🆕 `769bd7d` — 🆕 `e33ecba`: em grupo, modal "Quem precisa confirmar" e faixa com " de N pessoas" e "Escolher" (`confirmacao_usuarios`) | F2 | P1 |
+| ENV-24 🆕 | Pedir confirmação de leitura ("+" › "Confirmar leitura", `pede_confirmacao`) | ⬜ | ✅ 3.8 · `32de350` | — | Item no "+" e faixa removível; vale para a próxima mensagem — 🆕 `769bd7d` — 🆕 `e33ecba`: em grupo, modal "Quem precisa confirmar" e faixa com " de N pessoas" e "Escolher" (`confirmacao_usuarios`) | F2 | P1 |
 | ENV-25 🆕 | Sugestão de texto da IA (Tab aceita, Esc descarta, `POST /ia/sugestao`) | ⬜ | ⬜ 8.8 | — | Sem Tab no celular: chip de sugestão acima do teclado; chave na Privacidade — 🆕 `f798e9c` | F7 | P3 |
-| ENV-26 🆕 | Criar postagem em grupo ("+" › "Postagem", título opcional) | ⬜ | ⬜ 7.13 | — | Item no "+" (só grupo) e faixa com o título — 🆕 `d202c06` | F4 | P1 |
-| ENV-27 🆕 | Pedir confirmação de leitura depois do envio (menu da mensagem, até 24 h) | ⬜ | ⬜ 7.1 | — | Item "Pedir confirmação de leitura" no toque longo (minha mensagem, menos de 24 h); em grupo, o modal "Quem precisa confirmar"; `POST /mensagem/pedir-confirmacao`; WS 65 — 🆕 `e33ecba`/`6d20ff7` | F4 | P2 |
+| ENV-26 🆕 | Criar postagem em grupo ("+" › "Postagem", título opcional) | ⬜ | ✅ 7.13 · `2033b39` | — | Item no "+" (só grupo) e faixa com o título — 🆕 `d202c06` | F4 | P1 |
+| ENV-27 🆕 | Pedir confirmação de leitura depois do envio (menu da mensagem, até 24 h) | ⬜ | ✅ 7.1 · `32de350` | — | Item "Pedir confirmação de leitura" no toque longo (minha mensagem, menos de 24 h); em grupo, o modal "Quem precisa confirmar"; `POST /mensagem/pedir-confirmacao`; WS 65 — 🆕 `e33ecba`/`6d20ff7` | F4 | P2 |
 | ENV-28 🆕 | Código como peça no campo ("Inserir na mensagem", editar, remover) | ⬜ | ⛔ 4.11 · depende da decisão do campo rico (FC-416) | — | Campo simplificado: inserir o bloco cercado no cursor; campo por blocos: peça com prévia — 🆕 `e33ecba` | F4 | P3 |
 
 ## ANX — Anexos e mídia
@@ -210,7 +212,7 @@ A coluna **Fase** indica em que fase do plano da nova base (doc 07) a funcionali
 | ANX-01 | Fila de anexos (vários, prévia, remover) — 🆕 no web foi **substituída pelo ENV-21** | ⬜ | ✅ 4.2 · `389e66d` | Só uma imagem por vez | Photo Picker múltiplo + SAF (`OpenMultipleDocuments`) + fila com prévia | F3 | P0 |
 | ANX-02 | Upload com dedupe SHA-256 e URL assinada + progresso | 🔴 | ✅ 4.1 | Manda bytes em `PUT /anexo` (doc 02 Q2); lê tudo em memória (#27) | `PUT /anexo` (JSON) → `PUT` na URL do MinIO (em até 300 s) → `POST /anexo/confirmar?identificador=`; hash em streaming; WorkManager com progresso | F3 | **P0** |
 | ANX-03 | Tipo de conteúdo por arquivo | 🟡 | ✅ 4.2 · `389e66d` | Imagem = 2 e áudio = 4. **A gravação do microfone deveria ser 5** (o web usa 5) | Mapear igual ao web; vídeo = 3 com extensão | F3 | P0 |
-| ANX-04 | Visualizador de imagens/vídeos (galeria, zoom, legenda) | 🟡 | ✅ 4.4 · `0168bd6` | `ImageViewerActivity` existe, mas o download está quebrado (Q3) e não há galeria/vídeo | Pager com zoom (Telephoto/Zoomable) + Media3 para vídeo — 🆕 `e33ecba`: zoom no ponto do ponteiro (no Android, a pinça amplia em torno do centro) | F3 | P0 |
+| ANX-04 | Visualizador de imagens/vídeos (galeria, zoom, legenda) | 🟡 | ✅ 4.4 · `0168bd6` · 🆕 zoom no ponto da pinça `b3bcb0c` | `ImageViewerActivity` existe, mas o download está quebrado (Q3) e não há galeria/vídeo | Pager com zoom (Telephoto/Zoomable) + Media3 para vídeo — 🆕 `e33ecba`: zoom no ponto do ponteiro (no Android, a pinça amplia em torno do centro) | F3 | P0 |
 | ANX-05 | Vídeo na conversa (prévia + play) | ⬜ | ✅ 4.4 · `0168bd6` | — | Miniatura do primeiro quadro (Coil video frame) + player | F3 | P1 |
 | ANX-06 | Visualizador de PDF | ⬜ | ✅ 4.10 · `d9d03f1` | — | `PdfRenderer` nativo (ou `androidx.pdf`) | F3 | P2 |
 | ANX-07 | HTML isolado | ⬜ | ✅ 4.10 · `d9d03f1` | — | WebView com JavaScript **sem** acesso a arquivos/cookies, sem token; ou abrir externamente | F3 | P3 |
@@ -218,7 +220,7 @@ A coluna **Fase** indica em que fase do plano da nova base (doc 07) a funcionali
 | ANX-09 | Download | 🔴 | ✅ 4.7 | Trata `{url}` como arquivo (Q3); scoped storage/path traversal (#33) | `GET /anexo?identificador=` → `{url}` → baixar a URL assinada → `MediaStore.Downloads`; nome sanitizado | F3 | P0 |
 | ANX-10 | Player de áudio (um por vez, seek, "não ouvido" verde, `POST /mensagem/reproduzir`) | 🔴 | ✅ 4.5 · `1ceaad0` | Download quebrado (Q3); vazamentos (#31); não chama `reproduzir` | Media3 único + estado por mensagem | F3 | P0 |
 | ANX-11 | Gravação de áudio (segurar para enviar, travar, pausar, ouvir antes) | 🟡 | ✅ 4.6 · `399bae5` | Grava M4A e funciona localmente; o envio quebra (Q2); tipo errado (4) | Reaproveitar `AudioRecorderHelper` (#48); UI de segurar/travar | F3 | P0 |
-| ANX-12 | Transcrição de áudio | ⬜ | 🟡 4.8 · `f5d1501` · 🆕 falta esconder "Transcrever" sem transcritor (FC-419) | — | `PUT/GET /anexo/transcricao`; polling de 3 s enquanto "Processando" — 🆕 `769bd7d`: "Transcrever" só com `GET /recursos` → `transcricao` (GER-08) | F3 | P1 |
+| ANX-12 | Transcrição de áudio | ⬜ | ✅ 4.8 · `f5d1501` · 🆕 "Transcrever" só com transcritor `db8bc35` | — | `PUT/GET /anexo/transcricao`; polling de 3 s enquanto "Processando" — 🆕 `769bd7d`: "Transcrever" só com `GET /recursos` → `transcricao` (GER-08) | F3 | P1 |
 | ANX-13 | Página de Anexos (filtros, grade, paginação) | ⬜ | ✅ 8.6 · `95b9bb5` | — | Tela "Anexos" por conversa (acessada pelo perfil/grupo) — 🆕 `eaa8bac`: no web, a lista também fica no painel do grupo | F7 | P2 |
 | ANX-14 | URLs assinadas e renovação | ⬜ | ✅ 4.3 | — | URL expira (600 s em `/anexos`, 300 s no upload): renovar ao falhar; Coil com chave = identificador | F3 | P0 |
 | ANX-15 | Pré-visualização de imagem antes de enviar | ➖ | ✅ a fila de anexos mostra a prévia (4.2) | No web é código sem gatilho | A fila (ANX-01) já mostra a prévia | — | P3 |
@@ -227,7 +229,7 @@ A coluna **Fase** indica em que fase do plano da nova base (doc 07) a funcionali
 
 | ID | Funcionalidade | Legado | Nova base | Situação / evidência (legado) | Adaptação Android | Fase | Prio |
 |---|---|---|---|---|---|---|---|
-| PES-01 | Pesquisa na conversa | ⬜ | 🟡 8.2 · `28cef66` · 🆕 falta o painel novo (FC-524) | — | Ícone de busca no topo do chat → resultados → MSG-06 — 🆕 `d202c06`: cabeçalho "N resultados para “termo”"/"Nenhuma mensagem com “termo”"; autor, quando e trecho com o termo destacado; ordem do mais antigo ao mais novo — 🆕 `e33ecba`/`6d20ff7`: resultados também dos chats das ligações feitas na conversa, com o selo "no chat da ligação" (o toque abre aquela conversa); o Android filtra por `conversaId` e jogaria esses fora | F7 | P1 |
+| PES-01 | Pesquisa na conversa | ⬜ | ✅ 8.2 · `28cef66` · 🆕 painel novo e os chats das ligações `923297f` | — | Ícone de busca no topo do chat → resultados → MSG-06 — 🆕 `d202c06`: cabeçalho "N resultados para “termo”"/"Nenhuma mensagem com “termo”"; autor, quando e trecho com o termo destacado; ordem do mais antigo ao mais novo — 🆕 `e33ecba`/`6d20ff7`: resultados também dos chats das ligações feitas na conversa, com o selo "no chat da ligação" (o toque abre aquela conversa); o Android filtra por `conversaId` e jogaria esses fora | F7 | P1 |
 | PES-02 | Pesquisa em todos os chats | ⬜ | ✅ 8.2 · `28cef66` | — | Busca global com resultados agrupados e termo destacado | F7 | P1 |
 
 ## CHA — Chamadas
@@ -249,17 +251,17 @@ A coluna **Fase** indica em que fase do plano da nova base (doc 07) a funcionali
 | CHA-13 | Janela flutuante / barra de chamada | 🟡 | ✅ 6.12 · `add5196` | `CallBanner` existe | **Picture-in-Picture** + banner "voltar para a chamada" | F6 | P1 |
 | CHA-14 | Adicionar participante | ⬜ | ✅ 6.13 | Botão sempre desabilitado | `PUT /chamada/usuario` | F6 | P1 |
 | CHA-15 | Compartilhar tela com áudio do sistema | ⬜ | ⬜ etapa 9 (compartilhar a tela) | — | `MediaProjection` + `AudioPlaybackCapture` (API 29+) | F8 | P3 |
-| CHA-16 | Troca áudio → vídeo (WS 56 + modal "Apenas assistir / Transmitir também", 15 s) | 🟡 | ✅ 6.11 · `cf43b1f` | Envia o upgrade; não trata o 56 recebido (flow sem coletor) | Igual ao web — 🆕 `769bd7d`: etapas "Abrindo a câmera...", "Enviando o vídeo...", "Recebendo o vídeo dos participantes..."; republica sem derrubar (FC-728) | F6 | P1 |
+| CHA-16 | Troca áudio → vídeo (WS 56 + modal "Apenas assistir / Transmitir também", 15 s) | 🟡 | ✅ 6.11 · `cf43b1f` · 🆕 etapas ao ligar o vídeo e troca sem intervalo `af5d9e1` | Envia o upgrade; não trata o 56 recebido (flow sem coletor) | Igual ao web — 🆕 `769bd7d`: etapas "Abrindo a câmera...", "Enviando o vídeo...", "Recebendo o vídeo dos participantes..."; republica sem derrubar (FC-728) | F6 | P1 |
 | CHA-17 | Ponteiro remoto (WS 57 `ponteiro`) | ⬜ | ✅ 6.13 | — | Desenhar o ponteiro sobre a tela compartilhada recebida (enviar é opcional no celular) | F8 | P2 |
-| CHA-18 | Chat da chamada (`PUT /chamada/chat`, WS 57 `chat`) | ⬜ | ✅ 6.13 · 🆕 `6d20ff7`: o servidor voltou a criar um grupo novo por ligação (só reaproveita dentro do chat de outra ligação); conferir que o app abre o `conversa_id` que vier (8.7) | — | Painel lateral/inferior — 🆕 `eaa8bac`: o grupo é criado no primeiro toque no campo (não mais na primeira mensagem) — 🆕 `a40fd47`: `PUT /chamada/chat` reaproveita a conversa onde a ligação começou quando todos já são membros (numa 1:1, o chat é a própria direta) — 🆕 `6d20ff7`: grupo novo por ligação, com o nome dos participantes, sem "Chamada: " | F6 | P2 |
+| CHA-18 | Chat da chamada (`PUT /chamada/chat`, WS 57 `chat`) | ⬜ | ✅ 6.13 · 🆕 `6d20ff7`: grupo novo por ligação; o app abre o `conversa_id` que vier (conferido no 8.7, `18495c2`) | — | Painel lateral/inferior — 🆕 `eaa8bac`: o grupo é criado no primeiro toque no campo (não mais na primeira mensagem) — 🆕 `a40fd47`: `PUT /chamada/chat` reaproveita a conversa onde a ligação começou quando todos já são membros (numa 1:1, o chat é a própria direta) — 🆕 `6d20ff7`: grupo novo por ligação, com o nome dos participantes, sem "Chamada: " | F6 | P2 |
 | CHA-19 | Indicador de fala | ⬜ | ✅ 6.13 | — | `AudioTrackSink` (RMS > 0,02; segura 400 ms) ou estatísticas `audioLevel` do WebRTC | F6 | P2 |
 | CHA-20 | Qualidade da chamada (ruído, eco, ganho, bitrate, resolução, fps) | ⬜ | ✅ 8.5 · `705ee2e` · vale a partir da próxima chamada | — | Tela de configurações de chamada | F7 | P2 |
 | CHA-21 | Somente recepção | ⬜ | ✅ 6.13 | — | Permitir entrar sem permissão de mic/câmera | F6 | P2 |
 | CHA-22 | Histórico de chamadas (abas, filtros, "ligar de novo") | 🔴 | ✅ 6.10 · `b952923` | Modelo não bate com `GET /chamadas` (Q10) | Reescrever com o modelo `ChamadaHistoricoItem` (doc 01 §9.7); portar a lógica "Hoje/Ontem" — 🆕 `964ed72`: "Ver chat da chamada" no item com `conversa_chat_id` (CHA-26) | F6 | P0 |
 | CHA-23 | Áudio remoto estável | ➖ | ✅ 6.12 · `add5196` | WebRTC nativo toca os tracks remotos por padrão | Garantir que o áudio sobreviva a PiP/troca de tela | F6 | P0 |
 | CHA-24 🆕 | Chat **completo** da chamada (o mesmo chat, com anexos, respostas, reações), conversa do grupo da chamada como ativa | ⬜ | ✅ 6.13 · `3a9f39d` | — | Reusar a `ChatScreen` num painel/bottom sheet durante a chamada — 🆕 `eaa8bac`: abre já no primeiro toque no campo | F6 | P2 |
-| CHA-25 🆕 | Convidados fora da chamada na grade ("Chamando...", "Não atendeu", "Chamar de novo") | ⬜ | ⬜ 6.13 | — | Tiles na grade; `POST /chamada/chamar-novamente`; WS 57 `participantes`. Do lado de quem recebe, tocar de novo (8.7) — 🆕 `769bd7d` | F6 | P2 |
-| CHA-26 🆕 | Chat da ligação só leitura na bolha e no histórico ("Ver chat da chamada", "Abrir o chat completo") | ⬜ | ⬜ 3.5, 6.10 | — | `chat_chamada_id` (tipo 6) e `conversa_chat_id` (histórico) — 🆕 `964ed72` — 🆕 `e33ecba`: o chat mostra os conteúdos de verdade (imagem com visualizador, áudio, arquivo, figurinha) | F6 | P2 |
+| CHA-25 🆕 | Convidados fora da chamada na grade ("Chamando...", "Não atendeu", "Chamar de novo") | ⬜ | ✅ 6.13 · `15844e4` | — | Tiles na grade; `POST /chamada/chamar-novamente`; WS 57 `participantes`. Do lado de quem recebe, tocar de novo (8.7) — 🆕 `769bd7d` | F6 | P2 |
+| CHA-26 🆕 | Chat da ligação só leitura na bolha e no histórico ("Ver chat da chamada", "Abrir o chat completo") | ⬜ | ✅ 3.5, 6.10 · `e773a8e` | — | `chat_chamada_id` (tipo 6) e `conversa_chat_id` (histórico) — 🆕 `964ed72` — 🆕 `e33ecba`: o chat mostra os conteúdos de verdade (imagem com visualizador, áudio, arquivo, figurinha) | F6 | P2 |
 | **Gravação** | Publicar vídeo em **H264/VP9** (VP8 não é gravado) | 🔴 | ✅ 6.1 · `cf43b1f` | Preferência de codec não é configurada (Q12) | `setCodecPreferences` H264 → VP9 → VP8 | F6 | P0 |
 
 ## SIP — Telefonia (ramal)
@@ -287,15 +289,15 @@ A coluna **Fase** indica em que fase do plano da nova base (doc 07) a funcionali
 
 | ID | Funcionalidade | Legado | Nova base | Situação / evidência (legado) | Adaptação Android | Fase | Prio |
 |---|---|---|---|---|---|---|---|
-| PRE-01 | Online/offline (`GET /contatos/online` + WS 60) | 🔴 | 🟡 2.11 · 🆕 falta ativo/ausente/offline, `estado`/`visto_em` no WS 60 e `GET /contatos/presenca` (FC-215) | O app **mostra "online" fixo** (informação falsa) | Bolinha verde real na lista, no cabeçalho e nos contatos. Só existe online/offline (não há "visto por último") — 🆕 `769bd7d`/`b8ea0c2`: ativo/ausente/offline; `GET /contatos/presenca` no lugar de `/contatos/online`; WS 60 com `estado` e `visto_em`; bolinha verde (ativo) e amarela (ausente). A frase "não há visto por último" deixou de valer (PRE-03) | F1 | P0 |
-| PRE-02 🆕 | Presença enviada pelo cliente (WS 63 `{ativo, conversa_id}`) e o próprio status | ⬜ | ⬜ 2.11 | — | Do ciclo de vida: primeiro plano = ativo; chat aberto = `conversa_id`; segundo plano `ativo:false`. Sem isso o Android aparece "ativo" com o socket aberto — 🆕 `769bd7d` | F1 | P1 |
-| PRE-03 🆕 | "Visto por último" e "nesta conversa" | ⬜ | ⬜ 2.11 | — | Subtítulo da direta; `GET /conversa/presentes`, WS 63 `aberta`; " · nesta conversa" nos membros — 🆕 `769bd7d` | F1 | P2 |
+| PRE-01 | Online/offline (`GET /contatos/online` + WS 60) | 🔴 | ✅ 2.11 · `c7bef01` | O app **mostra "online" fixo** (informação falsa) | Bolinha verde real na lista, no cabeçalho e nos contatos. Só existe online/offline (não há "visto por último") — 🆕 `769bd7d`/`b8ea0c2`: ativo/ausente/offline; `GET /contatos/presenca` no lugar de `/contatos/online`; WS 60 com `estado` e `visto_em`; bolinha verde (ativo) e amarela (ausente). A frase "não há visto por último" deixou de valer (PRE-03) | F1 | P0 |
+| PRE-02 🆕 | Presença enviada pelo cliente (WS 63 `{ativo, conversa_id}`) e o próprio status | ⬜ | ✅ 2.11 · `c7bef01` | — | Do ciclo de vida: primeiro plano = ativo; chat aberto = `conversa_id`; segundo plano `ativo:false`. Sem isso o Android aparece "ativo" com o socket aberto — 🆕 `769bd7d` | F1 | P1 |
+| PRE-03 🆕 | "Visto por último" e "nesta conversa" | ⬜ | ✅ 2.11 · `c7bef01` | — | Subtítulo da direta; `GET /conversa/presentes`, WS 63 `aberta`; " · nesta conversa" nos membros — 🆕 `769bd7d` | F1 | P2 |
 
 ## ATV — Atividades
 
 | ID | Funcionalidade | Legado | Nova base | Situação / evidência (legado) | Adaptação Android | Fase | Prio |
 |---|---|---|---|---|---|---|---|
-| ATV-01 | Tela de atividades | ⬜ | ✅ 8.1 · `84a6ec3` | — | Aba "Atividades" com paginação — 🆕 `e25c4db`: resposta ou menção já lida no chat deixa de contar como nova; WS 61 também ao ler | F7 | P1 |
+| ATV-01 | Tela de atividades | ⬜ | ✅ 8.1 · `84a6ec3` · 🆕 resposta ou menção lida no chat `a2af7f6` | — | Aba "Atividades" com paginação — 🆕 `e25c4db`: resposta ou menção já lida no chat deixa de contar como nova; WS 61 também ao ler | F7 | P1 |
 | ATV-02 | Contador de novas (WS 61) | ⬜ | ✅ 8.1 · `84a6ec3` | — | Badge na navegação inferior | F7 | P1 |
 | ATV-03 | Gerar chamada perdida (`nao_atendeu: true`) | ⬜ | ✅ 6.5, 6.6 · `ceeec72` | — | **Obrigatório** no `CallManager` (timeout, ocupado, pendente > 25 s) | F6 | P0 |
 
@@ -311,7 +313,7 @@ A coluna **Fase** indica em que fase do plano da nova base (doc 07) a funcionali
 | CFG-06 | Qualidade das chamadas | ⬜ | ✅ 8.5 · `705ee2e` · vale a partir da próxima chamada | — | = CHA-20 | F7 | P2 |
 | CFG-07 | Sistema — parâmetros do servidor (permissão `parametros`) | ⬜ | 🟡 8.5 · `afd3269` · 🆕 falta a seção "Inteligência artificial" (FC-812, avaliar) | — | Tela administrativa (FCM, TURN, gravações, transcritor) — 🆕 `769bd7d`: seção "Inteligência artificial" (endereço, modelo, token, "Testar conexão") | F7 | P2 |
 | CFG-08 | Acessos — permissões (permissão `permissoes`) | ⬜ | ✅ 8.5 · `afd3269` | — | Tela administrativa usuário × permissão | F7 | P2 |
-| CFG-09 🆕 | Privacidade ("Aparecer offline", "Mostrar o visto por último", "Mostrar quando estou na conversa") | ⬜ | ⬜ 8.5 | — | Tela nova com os textos do web; `GET /usuario/privacidade`, `PATCH /usuario` — 🆕 `769bd7d` | F7 | P2 |
+| CFG-09 🆕 | Privacidade ("Aparecer offline", "Mostrar o visto por último", "Mostrar quando estou na conversa") | ⬜ | ✅ 8.5 · `ab62486` | — | Tela nova com os textos do web; `GET /usuario/privacidade`, `PATCH /usuario` — 🆕 `769bd7d` | F7 | P2 |
 | CFG-10 🆕 | Temas prontos (Padrão, Teams, WhatsApp, Messenger) e cores dos balões | ➖ | ➖ | — | Não se aplica: o Android usa só as cores do FMX (`docs/design/cores.md`) — 🆕 `8b43965` | — | — |
 
 ## GER — UX geral
@@ -325,7 +327,7 @@ A coluna **Fase** indica em que fase do plano da nova base (doc 07) a funcionali
 | GER-05 | Menu de contexto | ➖ | ✅ toque longo (2.8, 7.1) | — | Toque longo | — | — |
 | GER-06 | Tela "Em desenvolvimento" | ➖ | ➖ não replicar | — | Não replicar | — | — |
 | GER-07 | Avatares com fallback (inicial, inclusive emoji) | ⬜ | ✅ 1.5 | Ícone genérico | Componente `Avatar` com inicial (grafema) e cor | F0 | P0 |
-| GER-08 🆕 | Recursos do servidor (`GET /recursos` → `{transcricao, ia}`) | ⬜ | ⬜ 8.8 | — | Carregar uma vez por sessão; esconder Transcrever, Resumir e Sugestão quando o servidor não tem — 🆕 `769bd7d` | F7 | P2 |
+| GER-08 🆕 | Recursos do servidor (`GET /recursos` → `{transcricao, ia}`) | ⬜ | 🟡 8.8 · `db8bc35` · o "Transcrever" já some sem transcritor; "Resumir" e a sugestão ainda não existem no app (CON-14, ENV-25) | — | Carregar uma vez por sessão; esconder Transcrever, Resumir e Sugestão quando o servidor não tem — 🆕 `769bd7d` | F7 | P2 |
 
 ---
 

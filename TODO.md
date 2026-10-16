@@ -121,9 +121,9 @@
 - [x] Criar `:core:data`
 - [x] Criar `:core:ui`
 - [x] Criar `:core:media` — criado na 4.5 (ver etapa 4) ✔ 1ceaad0
-- [ ] Criar `:core:webrtc` — ⏭ adiado: será criado quando a etapa 6 começar
+- [x] Criar `:core:webrtc` — criado no começo da etapa 6 (`MidiaChamada`, `MidiaWebRtc`) ✔ ceeec72
 - [x] Criar `:core:testing`
-- [ ] Criar `:feature:auth`, `:feature:conversas`, `:feature:chat`, `:feature:chamada`, `:feature:atividades`, `:feature:pesquisa`, `:feature:config` — ⏭ `:feature:auth` criado; os demais têm uma linha no início da etapa onde são usados
+- [x] Criar `:feature:auth`, `:feature:conversas`, `:feature:chat`, `:feature:chamada`, `:feature:atividades`, `:feature:pesquisa`, `:feature:config` — todos criados, cada um no começo da sua etapa (`:feature:conversas` ✔ 0d595af, `:feature:chat` ✔ d3f51e6, `:feature:chamada` ✔ ceeec72, `:feature:atividades` ✔ 84a6ec3, `:feature:pesquisa` ✔ 28cef66, `:feature:config` ✔ 143d8d6)
 - [x] Criar convention plugins em `build-logic/` (android-library, compose, hilt, feature) — `Plugins.kt`: application, library, compose, hilt, feature, jvm
 - [x] **Teste:** o build passa e não há dependência circular — o build com todos os módulos passou
 
@@ -965,7 +965,7 @@
 ---
 
 ## Revisão periódica
-- [ ] Marcar o que foi feito neste TODO (com o commit) — última vez: 2026-10-09 (16 linhas antigas das etapas 2–6, cumpridas depois, foram fechadas)
-- [ ] Atualizar `docs/auditoria-2026-10/05-matriz-paridade.md` — última vez: 2026-10-09 (coluna "Nova base" e placar dela)
-- [ ] Ver se o servidor mudou: `git -C ../conversa log --since="1 week ago" --oneline`; se mudou o contrato → atualizar o doc 01 e as fixtures
-- [ ] Ver se o web ganhou funcionalidade nova: `git -C ../conversa-web log --since="1 week ago" --oneline` → acrescentar aqui
+- [ ] Marcar o que foi feito neste TODO (com o commit) — última vez: 2026-10-15 (fechadas as linhas do `:core:webrtc`, dos módulos de feature e do teste de migração; antes, 2026-10-09)
+- [ ] Atualizar `docs/auditoria-2026-10/05-matriz-paridade.md` — última vez: 2026-10-15 (coluna "Nova base" e placar: 131 de 153 prontas)
+- [ ] Ver se o servidor mudou: `git -C ../conversa log --since="1 week ago" --oneline`; se mudou o contrato → atualizar o doc 01 e as fixtures — última vez: 2026-10-15 (nada depois de `e25c4db`)
+- [ ] Ver se o web ganhou funcionalidade nova: `git -C ../conversa-web log --since="1 week ago" --oneline` → acrescentar aqui — última vez: 2026-10-15 (nada depois de `8b43965`)
