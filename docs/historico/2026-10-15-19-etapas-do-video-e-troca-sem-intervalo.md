@@ -4,7 +4,7 @@
 - **Tipo:** código
 - **Itens:** `TODO.md` 6.11 (linha 🆕 `769bd7d` das etapas do vídeo); FC-728; CHA-16
 - **Branch:** `reescrita`
-- **Commits:** (preencher)
+- **Commits:** `af5d9e1`
 
 ## Contexto
 - **O web** (`769bd7d`, `call.ts`): ao ligar o vídeo numa chamada de áudio, a janela mostra a etapa: "Abrindo a câmera...", "Enviando o vídeo..." e "Recebendo o vídeo dos participantes...". E troca sem cortar:
