@@ -34,6 +34,7 @@ import androidx.compose.material.icons.outlined.Call
 import androidx.compose.material.icons.outlined.Group
 import androidx.compose.material.icons.outlined.KeyboardArrowDown
 import androidx.compose.material.icons.outlined.Search
+import androidx.compose.material.icons.outlined.Summarize
 import androidx.compose.material.icons.outlined.Videocam
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.DropdownMenu
@@ -238,6 +239,20 @@ fun ChatRotaTela(
     }
     // O áudio vai como fluxo: só as bolhas de áudio leem (ver LocalAudio).
     val economizar by viewModel.economizarDados.collectAsStateWithLifecycle()
+    // Resumo da conversa por IA (CON-14): só com a IA ligada no servidor.
+    val resumo: ResumoViewModel = hiltViewModel()
+    val iaLigada by resumo.disponivel.collectAsStateWithLifecycle()
+    var vendoResumo by rememberSaveable { mutableStateOf(false) }
+    if (vendoResumo) {
+        FolhaResumo(
+            resumo,
+            aoIrParaMensagem = { id ->
+                vendoResumo = false
+                viewModel.irParaMensagem(id, viewModel.conversaId)
+            },
+            aoFechar = { vendoResumo = false },
+        )
+    }
     CompositionLocalProvider(LocalAudio provides viewModel.audio, LocalEconomiaDados provides economizar) {
         ChatTela(
             estado = estado,
@@ -248,6 +263,7 @@ fun ChatRotaTela(
                 aoVerPerfil = { verPerfil = true },
                 aoMembros = { aoMembros(viewModel.conversaId) },
                 aoAbrirPesquisa = viewModel::abrirPesquisa,
+                aoResumir = if (iaLigada) ({ vendoResumo = true }) else null,
                 aoFecharPesquisa = viewModel::fecharPesquisa,
                 aoPesquisar = viewModel::pesquisar,
                 aoAbrirResultado = viewModel::abrirResultado,
@@ -389,6 +405,8 @@ class AcoesChat(
     val aoVerPerfil: () -> Unit = {},
     /** Pesquisa na conversa (8.2). */
     val aoAbrirPesquisa: () -> Unit = {},
+    /** "Resumir conversa" (CON-14): nulo sem a IA ligada no servidor. */
+    val aoResumir: (() -> Unit)? = null,
     val aoFecharPesquisa: () -> Unit = {},
     val aoPesquisar: (String) -> Unit = {},
     val aoAbrirResultado: (Mensagem) -> Unit = {},
@@ -769,6 +787,16 @@ private fun Cabecalho(estado: ChatUiState, acoes: AcoesChat) {
                             acoes.aoAbrirPesquisa()
                         },
                     )
+                    acoes.aoResumir?.let { resumir ->
+                        DropdownMenuItem(
+                            text = { Text(stringResource(R.string.resumir_conversa)) },
+                            leadingIcon = { Icon(Icons.Outlined.Summarize, contentDescription = null) },
+                            onClick = {
+                                menu = false
+                                resumir()
+                            },
+                        )
+                    }
                 }
             }
         },

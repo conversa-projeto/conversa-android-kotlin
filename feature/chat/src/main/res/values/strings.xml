@@ -326,6 +326,35 @@
     <string name="anexos_vazio">Nenhum anexo encontrado</string>
     <string name="anexos_sem_nome">Sem nome</string>
     <string name="abrir_mensagem">Abrir mensagem</string>
+    <!-- Resumo da conversa por IA (CON-14), textos do web -->
+    <string name="resumir_conversa">Resumir conversa</string>
+    <string name="resumo_titulo">Resumo da conversa</string>
+    <string name="resumo_periodo_24h">Últimas 24 horas</string>
+    <string name="resumo_periodo_7d">7 dias</string>
+    <string name="resumo_periodo_30d">30 dias</string>
+    <string name="resumo_periodo_recentes">Últimas 400 mensagens</string>
+    <string name="resumir">Resumir</string>
+    <string name="resumir_de_novo">Resumir de novo</string>
+    <string name="resumo_escolha_o_periodo">Escolha o período e toque em Resumir. As mensagens são separadas por assunto.</string>
+    <string name="resumindo">Resumindo…</string>
+    <plurals name="resumindo_mensagens">
+        <item quantity="one">Resumindo %1$d mensagem…</item>
+        <item quantity="other">Resumindo %1$d mensagens…</item>
+    </plurals>
+    <string name="resumo_pode_demorar">Pode levar alguns minutos, dependendo do servidor de IA.</string>
+    <string name="resumo_sem_mensagens">Nenhuma mensagem nesse período.</string>
+    <plurals name="resumo_gerado_em">
+        <item quantity="one">Resumo de %1$s às %2$s · %3$s · %4$d mensagem</item>
+        <item quantity="other">Resumo de %1$s às %2$s · %3$s · %4$d mensagens</item>
+    </plurals>
+    <plurals name="ver_na_conversa">
+        <item quantity="one">Ver na conversa (%1$d mensagem)</item>
+        <item quantity="other">Ver na conversa (%1$d mensagens)</item>
+    </plurals>
+    <plurals name="resumo_rodape">
+        <item quantity="one">Gerado por IA a partir de %1$d mensagem. Confira na conversa antes de agir.</item>
+        <item quantity="other">Gerado por IA a partir de %1$d mensagens. Confira na conversa antes de agir.</item>
+    </plurals>
     <!-- Bot de IA (CON-16), textos do web -->
     <string name="selo_bot">Bot</string>
     <string name="selo_bot_descricao">Bot: responde com a IA</string>

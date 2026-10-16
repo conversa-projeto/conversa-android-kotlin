@@ -1,5 +1,6 @@
 package com.conversa.app.core.network.dto
 
+import com.conversa.app.core.model.AssuntoResumo
 import com.conversa.app.core.model.Atividade
 import com.conversa.app.core.model.Chamada
 import com.conversa.app.core.model.ChamadaHistorico
@@ -19,13 +20,16 @@ import com.conversa.app.core.model.OpcaoEnquete
 import com.conversa.app.core.model.ParticipanteChamada
 import com.conversa.app.core.model.ParticipanteHistorico
 import com.conversa.app.core.model.ParticipanteNaMensagem
+import com.conversa.app.core.model.PeriodoResumo
 import com.conversa.app.core.model.Postagem
 import com.conversa.app.core.model.Reacao
 import com.conversa.app.core.model.ReferenciaMensagem
+import com.conversa.app.core.model.ResumoConversa
 import com.conversa.app.core.model.ServidorIce
 import com.conversa.app.core.model.ServidoresIce
 import com.conversa.app.core.model.StatusChamada
 import com.conversa.app.core.model.StatusParticipante
+import com.conversa.app.core.model.StatusResumo
 import com.conversa.app.core.model.StatusTranscricao
 import com.conversa.app.core.model.TipoAtividade
 import com.conversa.app.core.model.TipoChamada
@@ -73,6 +77,27 @@ fun ConteudoDto.paraModelo() = Conteudo(
     chatChamadaId = chatChamadaId,
     duracao = duracao,
     intensidade = intensidade,
+)
+
+fun ResumoDto.paraModelo() = ResumoConversa(
+    id = id,
+    conversaId = conversaId,
+    periodo = PeriodoResumo.de(periodo),
+    status = StatusResumo.de(status),
+    mensagens = mensagens,
+    assuntos = assuntos.map { AssuntoResumo(it.titulo, it.resumo, it.pendencias, it.mensagens) },
+    erro = erro,
+)
+
+/** O contrário de [paraModelo]: o resumo guardado no Room vai como o JSON do servidor. */
+fun ResumoConversa.paraDto() = ResumoDto(
+    id = id,
+    conversaId = conversaId,
+    periodo = periodo.codigo,
+    status = status.codigo,
+    mensagens = mensagens,
+    assuntos = assuntos.map { AssuntoResumoDto(it.titulo, it.resumo, it.pendencias, it.mensagens) },
+    erro = erro,
 )
 
 fun ReferenciaDto.paraModelo(): ReferenciaMensagem = ReferenciaMensagem(

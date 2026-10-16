@@ -191,6 +191,13 @@ data class SyncEstadoEntidade(@PrimaryKey val chave: String, val valor: String)
  * Rascunho do campo de uma conversa (FC-519, 🆕 web `7322e83`): o texto (menções no formato
  * `@[Nome](id)`), a fila de anexos em JSON e a resposta ou encaminhamento pendente.
  */
+/**
+ * O último resumo de cada conversa por IA (CON-14, versão 11), por usuário, como o IndexedDB do
+ * web: ir até a mensagem e voltar, ou fechar o app, não o perde. [json] é o `ResumoDto`.
+ */
+@Entity(tableName = "resumo", primaryKeys = ["usuarioId", "conversaId"])
+data class ResumoEntidade(val usuarioId: Long, val conversaId: Long, val json: String, val geradoEm: Instant)
+
 @Entity(tableName = "rascunho")
 data class RascunhoEntidade(
     @PrimaryKey val conversaId: Long,

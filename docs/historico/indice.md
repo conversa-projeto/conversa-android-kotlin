@@ -129,6 +129,7 @@
 - 2026-10-15 · [Atividades pendentes até concluir](2026-10-15-27-atividades-pendentes.md) — servidor `ef13c22`: `pendente` no lugar de `nova` (Room v8), contador de pendentes, "Marcar como concluída", reações vistas no chat e o tipo 5 (pedido de confirmação); testado no emulador
 - 2026-10-16 · [Acessos com as permissões de uso](2026-10-16-01-acessos-com-permissoes-de-uso.md) — as 32 permissões em grupos, como o web: cada pessoa se abre ("Administração", "N de M"), com os nomes curtos e as próprias marcadas travadas; testado no emulador
 - 2026-10-16 · [Permissões de uso](2026-10-16-03-permissoes-de-uso.md) — o app lê as próprias permissões ao entrar e ao voltar à frente e esconde ou trava o que a pessoa não pode, como o web; anexos barrados com o texto do web; o 403 do envio mostra o motivo; o perfil manda só o que pode; testado no emulador fora do modo aberto (tabela restaurada)
+- 2026-10-16 · [Resumo da conversa por IA](2026-10-16-07-resumo-da-conversa.md) — "Resumir conversa" no "⋮" (só com a IA ligada): períodos, consulta a cada 2 s com a folha aberta, assuntos com pendências e "Ver na conversa"; o último resumo no Room (v11); falta conferir com um servidor de IA
 
 ## Extras — SIP, compartilhar tela (etapa 9)
 _(nada ainda)_

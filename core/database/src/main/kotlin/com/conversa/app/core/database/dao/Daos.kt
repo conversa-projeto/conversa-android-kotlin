@@ -16,6 +16,7 @@ import com.conversa.app.core.database.entidades.MensagemCompleta
 import com.conversa.app.core.database.entidades.MensagemEntidade
 import com.conversa.app.core.database.entidades.RascunhoEntidade
 import com.conversa.app.core.database.entidades.ReacaoEntidade
+import com.conversa.app.core.database.entidades.ResumoEntidade
 import com.conversa.app.core.database.entidades.SyncEstadoEntidade
 import kotlinx.coroutines.flow.Flow
 
@@ -279,6 +280,15 @@ interface SyncEstadoDao {
 
     @Upsert
     suspend fun gravar(estado: SyncEstadoEntidade)
+}
+
+@Dao
+interface ResumoDao {
+    @Query("SELECT * FROM resumo WHERE usuarioId = :usuarioId AND conversaId = :conversaId")
+    fun observar(usuarioId: Long, conversaId: Long): Flow<ResumoEntidade?>
+
+    @Upsert
+    suspend fun salvar(resumo: ResumoEntidade)
 }
 
 @Dao

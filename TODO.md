@@ -918,8 +918,8 @@
 
 ### 8.8 🆕 Recursos de IA (FC-419, FC-811, FC-523, CON-14, ENV-25, GER-08) — `769bd7d`, `05507a0`, `f798e9c`
 - [ ] `GET /recursos` uma vez por sessão → `{transcricao, ia}`; esconder Transcrever, Resumir e Sugestão quando o servidor não tem (GER-08) — 🔄 `RecursosRepositorio` lê os dois e o Transcrever já some ✔ db8bc35; Resumir e Sugestão vêm com as linhas abaixo
-- [ ] "Resumir conversa" no "⋮" do chat (só com IA): períodos "Últimas 24 horas", "7 dias", "30 dias", "Últimas 400 mensagens"; `POST /conversa/resumo` e `GET /conversa/resumo?id=` a cada 2 s; assuntos com pendências e "Ver na conversa (N mensagens)" (CON-14)
-- [ ] Guardar o último resumo de cada conversa no aparelho (Room) e retomar a consulta se estava processando; linha "Resumo de dd/MM às HH:MM · período · N mensagens" (CON-14)
+- [x] "Resumir conversa" no "⋮" do chat (só com IA): períodos "Últimas 24 horas", "7 dias", "30 dias", "Últimas 400 mensagens"; `POST /conversa/resumo` e `GET /conversa/resumo?id=` a cada 2 s; assuntos com pendências e "Ver na conversa (N mensagens)" (CON-14) — `ResumoViewModel` e a folha `FolhaResumo` (textos do web; a consulta só roda com a folha aberta; "Ver na conversa" fecha e vai à primeira mensagem do assunto). No emulador, sem IA no servidor de dev, o item não aparece ✔ HASH
+- [x] Guardar o último resumo de cada conversa no aparelho (Room) e retomar a consulta se estava processando; linha "Resumo de dd/MM às HH:MM · período · N mensagens" (CON-14) — `ResumosRepositorio` e a tabela `resumo` (Room v11, por usuário e conversa, o JSON do servidor e a hora do pedido); consulta sem rede continua, o pedido perdido (404) vira erro com o motivo ✔ HASH
 - [ ] Sugestão de texto (`POST /ia/sugestao`, 600 ms parado, ≥ 3 caracteres, cursor no fim): no celular, chip de sugestão acima do teclado em vez do Tab; chave "Sugerir a continuação ao digitar" na Privacidade, preferência do aparelho (ENV-25) — baixa prioridade
 - [ ] **Teste:** com um servidor de IA configurado no Sistema do servidor de dev — ⛔ mexe nos parâmetros do servidor: pedir antes
 

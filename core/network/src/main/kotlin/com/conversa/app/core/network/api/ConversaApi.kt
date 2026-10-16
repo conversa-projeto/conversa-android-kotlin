@@ -49,6 +49,7 @@ import com.conversa.app.core.network.dto.MensagemIdDto
 import com.conversa.app.core.network.dto.NovaMensagemDto
 import com.conversa.app.core.network.dto.ParametrosDto
 import com.conversa.app.core.network.dto.PedirConfirmacaoRequisicao
+import com.conversa.app.core.network.dto.PedirResumoRequisicao
 import com.conversa.app.core.network.dto.PermissaoUsuarioDto
 import com.conversa.app.core.network.dto.PermissoesDto
 import com.conversa.app.core.network.dto.PrazoEnqueteRequisicao
@@ -61,6 +62,7 @@ import com.conversa.app.core.network.dto.ReacoesVistasRequisicao
 import com.conversa.app.core.network.dto.RecursosDto
 import com.conversa.app.core.network.dto.RecusarChamadaRequisicao
 import com.conversa.app.core.network.dto.RespostasVistasDto
+import com.conversa.app.core.network.dto.ResumoDto
 import com.conversa.app.core.network.dto.SipDto
 import com.conversa.app.core.network.dto.StatusDetalheDto
 import com.conversa.app.core.network.dto.StatusMensagemDto
@@ -99,6 +101,16 @@ interface ConversaApi {
     @Headers(PUBLICA)
     @PUT("usuario")
     suspend fun cadastrar(@Body corpo: CadastroRequisicao): UsuarioDto
+
+    // --- IA (contrato §13.5) ---
+
+    /** Pede o resumo da conversa; a IA trabalha em segundo plano (CON-14). */
+    @POST("conversa/resumo")
+    suspend fun pedirResumo(@Body corpo: PedirResumoRequisicao): ResumoDto
+
+    /** Consulta o pedido; só quem pediu, e vale por 30 min (depois, 404). */
+    @GET("conversa/resumo")
+    suspend fun consultarResumo(@Query("id") id: String): ResumoDto
 
     /** Cadastro aberto ou fechado pelo administrador (`cadastro_aberto`, contrato §2.6). */
     @Headers(PUBLICA)

@@ -16,6 +16,7 @@ import com.conversa.app.core.database.dao.ConversaDao
 import com.conversa.app.core.database.dao.EnvioPendenteDao
 import com.conversa.app.core.database.dao.MensagemDao
 import com.conversa.app.core.database.dao.RascunhoDao
+import com.conversa.app.core.database.dao.ResumoDao
 import com.conversa.app.core.database.dao.SyncEstadoDao
 import com.conversa.app.core.database.entidades.AtividadeEntidade
 import com.conversa.app.core.database.entidades.ChamadaHistoricoEntidade
@@ -26,6 +27,7 @@ import com.conversa.app.core.database.entidades.EnvioPendenteEntidade
 import com.conversa.app.core.database.entidades.MensagemEntidade
 import com.conversa.app.core.database.entidades.RascunhoEntidade
 import com.conversa.app.core.database.entidades.ReacaoEntidade
+import com.conversa.app.core.database.entidades.ResumoEntidade
 import com.conversa.app.core.database.entidades.SyncEstadoEntidade
 import dagger.Module
 import dagger.Provides
@@ -55,8 +57,9 @@ class Conversores {
         EnvioPendenteEntidade::class,
         SyncEstadoEntidade::class,
         RascunhoEntidade::class,
+        ResumoEntidade::class,
     ],
-    version = 10,
+    version = 11,
     exportSchema = true,
     // 2: ordem das reações (a do servidor), para o "+N" esconder as mesmas que o web.
     // 3: rascunho por conversa (FC-519).
@@ -75,6 +78,7 @@ class Conversores {
         AutoMigration(from = 7, to = 8, spec = Migracao7Para8::class),
         AutoMigration(from = 8, to = 9),
         AutoMigration(from = 9, to = 10),
+        AutoMigration(from = 10, to = 11),
     ],
 )
 @TypeConverters(Conversores::class)
@@ -94,6 +98,8 @@ abstract class ConversaBanco : RoomDatabase() {
     abstract fun syncEstadoDao(): SyncEstadoDao
 
     abstract fun rascunhoDao(): RascunhoDao
+
+    abstract fun resumoDao(): ResumoDao
 
     companion object {
         const val NOME = "conversa.db"
@@ -123,6 +129,8 @@ object BancoModulo {
     @Provides fun syncEstadoDao(banco: ConversaBanco) = banco.syncEstadoDao()
 
     @Provides fun rascunhoDao(banco: ConversaBanco) = banco.rascunhoDao()
+
+    @Provides fun resumoDao(banco: ConversaBanco) = banco.resumoDao()
 }
 
 /** A coluna `nova` da atividade vira `pendente` (o servidor trocou o campo em `ef13c22`). */
