@@ -24,6 +24,7 @@
     <string name="notificacao_gravacao">Gravação de áudio</string>
     <string name="notificacao_audio">Áudio</string>
     <string name="notificacao_figurinha">Figurinha</string>
+    <string name="notificacao_localizacao">Localização</string>
     <string name="notificacao_votacao">Votação</string>
     <string name="notificacao_arquivo">Arquivo</string>
     <string name="notificacao_responder">Responder</string>

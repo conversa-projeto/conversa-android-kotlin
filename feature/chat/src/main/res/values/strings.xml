@@ -355,6 +355,17 @@
         <item quantity="one">Gerado por IA a partir de %1$d mensagem. Confira na conversa antes de agir.</item>
         <item quantity="other">Gerado por IA a partir de %1$d mensagens. Confira na conversa antes de agir.</item>
     </plurals>
+    <!-- Localização e trajeto (MSG-25), textos do web -->
+    <string name="localizacao">Localização</string>
+    <string name="trajeto">Trajeto</string>
+    <string name="trajeto_linha_reta">Trajeto · %1$s em linha reta</string>
+    <string name="trajeto_de_carro">Trajeto · %1$s · %2$s de carro</string>
+    <string name="abrir_no_google_maps">Abrir no Google Maps</string>
+    <string name="ampliar_mapa">Ampliar mapa</string>
+    <string name="mapa_satelite">Satélite</string>
+    <string name="mapa_ruas">Mapa</string>
+    <string name="atribuicao_osm" translatable="false">© OpenStreetMap</string>
+    <string name="atribuicao_esri" translatable="false">Imagens © Esri, Maxar, Earthstar Geographics</string>
     <!-- Velocidade do áudio (web `f351190`) -->
     <string name="velocidade_audio">Velocidade: %1$s</string>
     <!-- Sugestão de texto da IA (ENV-25) -->

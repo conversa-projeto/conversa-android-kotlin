@@ -120,6 +120,8 @@ data class AcoesBolha(
     val aoBuscarAudio: (String, Float) -> Unit = { _, _ -> },
     /** O botão de velocidade do player (web `f351190`). */
     val aoMudarVelocidade: () -> Unit = {},
+    /** Tocar no mapa da localização: o visualizador (MSG-25). */
+    val aoAbrirLocalizacao: (com.conversa.app.core.model.Localizacao) -> Unit = {},
     /** Toque longo na bolha: o menu da mensagem (7.1). */
     val aoMenu: (Mensagem) -> Unit = {},
     /** Toque num chip de reação: alterna a minha (7.2). */
@@ -325,6 +327,8 @@ internal fun ConteudoNaBolha(mensagem: Mensagem, conteudo: Conteudo, propria: Bo
         TipoConteudo.FIGURINHA -> FigurinhaAnimada(conteudo.conteudo, 120.dp)
         // Na citação e na oculta revelada: só o resumo (7.12); a bolha da votação é a BolhaEnquete.
         TipoConteudo.ENQUETE -> ResumoEnquete(conteudo.conteudo.toLongOrNull(), cor, acoes.enquetes)
+        // Localização ou trajeto (MSG-25): o mapa, o nome e "Abrir no Google Maps".
+        TipoConteudo.LOCALIZACAO -> ConteudoLocalizacao(conteudo.conteudo, cor, acoes.aoAbrirLocalizacao)
         TipoConteudo.CHAMADA, TipoConteudo.DESCONHECIDO -> Marcador("•", stringResource(R.string.conteudo_desconhecido), cor)
     }
 }
@@ -623,6 +627,7 @@ internal fun textoDoResumo(resumo: ResumoCitacao): String = when (resumo) {
         TipoConteudo.GRAVACAO_AUDIO, TipoConteudo.AUDIO -> stringResource(R.string.conteudo_audio)
         TipoConteudo.FIGURINHA -> stringResource(R.string.conteudo_figurinha)
         TipoConteudo.ENQUETE -> stringResource(R.string.votacao)
+        TipoConteudo.LOCALIZACAO -> stringResource(R.string.localizacao)
         else -> stringResource(R.string.conteudo_arquivo)
     }
 }

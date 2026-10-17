@@ -92,7 +92,7 @@ A coluna **Fase** indica em que fase do plano da nova base (doc 07) a funcionali
 |---|---|---|---|---|---|---|
 | AUT | 11 | 11 | 0 | 0 | 0 | 0 |
 | CON | 17 | 14 | 1 | 0 | 2 | 0 |
-| MSG | 25 | 22 | 0 | 0 | 3 | 0 |
+| MSG | 25 | 23 | 0 | 0 | 2 | 0 |
 | ENV | 30 | 25 | 0 | 2 | 2 | 1 |
 | ANX | 18 | 16 | 1 | 0 | 0 | 1 |
 | PES | 2 | 2 | 0 | 0 | 0 | 0 |
@@ -103,13 +103,13 @@ A coluna **Fase** indica em que fase do plano da nova base (doc 07) a funcionali
 | ATV | 5 | 5 | 0 | 0 | 0 | 0 |
 | CFG | 14 | 6 | 1 | 0 | 5 | 2 |
 | GER | 10 | 8 | 0 | 0 | 0 | 2 |
-| **Total** | **172** | **141** | **3** | **3** | **19** | **6** |
+| **Total** | **172** | **142** | **3** | **3** | **18** | **6** |
 
 > Requisitos exclusivos do Android (AND, fora da contagem): 16 — 13 ✅, 2 🟡, 1 ⛔, 0 ⬜, 0 ➖.
 >
-> **Leitura:** 🆕 (2026-10-15, depois do servidor `ef13c22` e do web `9c6e8a6`) 131 de 163 funcionalidades estão prontas na nova base, e 6 estão em parte. A sincronização trouxe 10 funcionalidades (bots, permissões de uso, administração e atividades pendentes); a quebra das atividades (`nova` → `pendente`) já foi corrigida (`2219208`). Ficaram em parte o cadastro fechado (AUT-02), a duração e a onda do áudio (ANX-10, ANX-11); a tela de Acessos com as 32 permissões (CFG-08) já voltou a ✅. 🆕 (2026-10-16) As permissões de uso (GER-09), o cadastro fechado (AUT-02) a conversa com bot (CON-16) a duração e a onda do áudio (ANX-10, ANX-11) o resumo e a sugestão por IA (CON-14, ENV-25, falta conferir com um servidor de IA) e os recursos do servidor (GER-08) ficaram prontos: 139 de 163. 🆕 (2026-10-17, servidor `ac710eb` e web `f351190`) Com as 9 funcionalidades novas e os 4 IDs que voltaram a 🟡, são 135 prontas de 172. Com os ajustes do sincronismo (contatos pelo WS 66, "Gravando áudio…" na lista, velocidade do áudio, espaço usado, "Usuário desde" e os Acessos), 141 de 172.
+> **Leitura:** 🆕 (2026-10-15, depois do servidor `ef13c22` e do web `9c6e8a6`) 131 de 163 funcionalidades estão prontas na nova base, e 6 estão em parte. A sincronização trouxe 10 funcionalidades (bots, permissões de uso, administração e atividades pendentes); a quebra das atividades (`nova` → `pendente`) já foi corrigida (`2219208`). Ficaram em parte o cadastro fechado (AUT-02), a duração e a onda do áudio (ANX-10, ANX-11); a tela de Acessos com as 32 permissões (CFG-08) já voltou a ✅. 🆕 (2026-10-16) As permissões de uso (GER-09), o cadastro fechado (AUT-02) a conversa com bot (CON-16) a duração e a onda do áudio (ANX-10, ANX-11) o resumo e a sugestão por IA (CON-14, ENV-25, falta conferir com um servidor de IA) e os recursos do servidor (GER-08) ficaram prontos: 139 de 163. 🆕 (2026-10-17, servidor `ac710eb` e web `f351190`) Com as 9 funcionalidades novas e os 4 IDs que voltaram a 🟡, são 135 prontas de 172. Com os ajustes do sincronismo (contatos pelo WS 66, "Gravando áudio…" na lista, velocidade do áudio, espaço usado, "Usuário desde" e os Acessos), 141 de 172. Com a localização e o trajeto na conversa (MSG-25), 142 de 172.
 > - **Bloqueadas (⛔):** dependem de algo fora do app: o push (Firebase, NOT-04) ou a decisão do campo rico (FC-416).
-> - **Por fazer (⬜):** 🆕 as pastas de mensagens (CON-17, MSG-23, MSG-24, ENV-29), a localização e o trajeto (MSG-25, ENV-30), a etapa 9 (SIP, compartilhar tela, Bubbles), a administração de usuários, bots, ferramentas e conhecimento (CFG-11…14, a avaliar) e um item P3 fora do TODO.
+> - **Por fazer (⬜):** 🆕 as pastas de mensagens (CON-17, MSG-23, MSG-24, ENV-29), o envio de localização e trajeto (ENV-30), a etapa 9 (SIP, compartilhar tela, Bubbles), a administração de usuários, bots, ferramentas e conhecimento (CFG-11…14, a avaliar) e um item P3 fora do TODO.
 > - **Falta conferir:** as células com "falta conferir" ou "em aparelho" estão prontas, mas esperam um teste que o emulador não permite.
 
 ---
@@ -180,7 +180,7 @@ A coluna **Fase** indica em que fase do plano da nova base (doc 07) a funcionali
 | MSG-22 🆕 | Postagem em grupo com respostas embaixo (2 últimas, "Ver todas", responder, "N novas", WS 64) | ⬜ | ✅ 7.13 · `2033b39` · notificação de resposta `6f9a298` | — | Bolha própria; `GET /postagem/respostas`, `POST /postagem/visualizar`; as respostas ficam **fora** de `/mensagens` mas contam nas não lidas — 🆕 `12cf0cf`/`d202c06` — 🆕 `e33ecba`: cartão na largura toda, "Responder à postagem" leva ao campo (qualquer conteúdo), avatar nas respostas | F4 | P0 (contador) / P1 |
 | MSG-23 🆕 | Marcas das pastas na bolha (até 3 bolinhas na cor da pasta; atrás do ✓ na enviada, ao lado e clicáveis na recebida) | ⬜ | ⬜ 7.14 | — | Ler `pastas` (opcional) nas mensagens; atualizar pelo WS 67 e pelas respostas de pôr e tirar — 🆕 `ac710eb`/`f351190` | F4 | P3 |
 | MSG-24 🆕 | Pasta aberta por cima do chat, sem campo ("Ver na conversa", "Tirar da pasta", tirar várias, 50 por página) | ⬜ | ⬜ 7.14 | — | Tela da pasta com `GET /pasta/mensagens?id=&antes=`, menu sem "Pedir confirmação" nem "Ocultar" — 🆕 `ac710eb`/`f351190` | F4 | P2 |
-| MSG-25 🆕 | Localização e trajeto na conversa (bolha com mapa, visualizador com satélite, "Abrir no Google Maps") | ⬜ | ⬜ 4.12 | — | Conteúdo tipo 9 (JSON dentro do `conteudo`); mapa de tiles do OSM com User-Agent do app e a atribuição; rótulo "Localização" nas prévias — 🆕 `ac710eb`/`f351190` | F3 | P1 |
+| MSG-25 🆕 | Localização e trajeto na conversa (bolha com mapa, visualizador com satélite, "Abrir no Google Maps") | ⬜ | ✅ 4.12 · `HASH_B` · falta conferir a pinça em aparelho | — | Conteúdo tipo 9 (JSON dentro do `conteudo`); mapa de tiles do OSM com User-Agent do app e a atribuição; rótulo "Localização" nas prévias — 🆕 `ac710eb`/`f351190` | F3 | P1 |
 
 ## ENV — Composição e ações
 

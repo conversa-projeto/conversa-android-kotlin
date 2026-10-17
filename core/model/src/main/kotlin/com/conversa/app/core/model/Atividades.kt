@@ -70,6 +70,7 @@ private val TIPOS_COM_NOME = setOf(
     TipoConteudo.GRAVACAO_AUDIO,
     TipoConteudo.FIGURINHA,
     TipoConteudo.ENQUETE,
+    TipoConteudo.LOCALIZACAO,
 )
 
 fun Atividade.previa(): PreviaAtividade? {

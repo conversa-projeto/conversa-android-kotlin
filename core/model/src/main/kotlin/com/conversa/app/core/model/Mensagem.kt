@@ -12,6 +12,9 @@ enum class TipoConteudo(val codigo: Int) {
     CHAMADA(6),
     FIGURINHA(7),
     ENQUETE(8),
+
+    /** Localização ou trajeto: um JSON dentro do `conteudo` (servidor `ac710eb`, contrato §10.16). */
+    LOCALIZACAO(9),
     DESCONHECIDO(-1),
     ;
 

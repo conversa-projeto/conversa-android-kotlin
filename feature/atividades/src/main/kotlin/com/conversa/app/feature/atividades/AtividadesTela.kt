@@ -315,6 +315,7 @@ private fun textoDaPrevia(previa: PreviaAtividade?): String? = when (previa) {
         TipoConteudo.AUDIO, TipoConteudo.GRAVACAO_AUDIO -> stringResource(R.string.atividade_previa_audio)
         TipoConteudo.FIGURINHA -> stringResource(R.string.atividade_previa_figurinha)
         TipoConteudo.ENQUETE -> stringResource(R.string.atividade_previa_votacao)
+        TipoConteudo.LOCALIZACAO -> stringResource(R.string.atividade_previa_localizacao)
         else -> stringResource(R.string.atividade_previa_arquivo)
     }
 }

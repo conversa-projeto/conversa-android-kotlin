@@ -101,5 +101,6 @@
     <string name="chat_resumo_imagem">Imagem</string>
     <string name="chat_resumo_audio">Áudio</string>
     <string name="chat_resumo_figurinha">Figurinha</string>
+    <string name="chat_resumo_localizacao">Localização</string>
     <string name="chat_resumo_anexo">Arquivo</string>
 </resources>

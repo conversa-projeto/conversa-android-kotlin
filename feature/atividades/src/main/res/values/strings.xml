@@ -21,6 +21,7 @@
     <string name="atividade_previa_arquivo">Arquivo</string>
     <string name="atividade_previa_audio">Áudio</string>
     <string name="atividade_previa_figurinha">Figurinha</string>
+    <string name="atividade_previa_localizacao">Localização</string>
     <string name="atividade_previa_votacao">Votação</string>
     <string name="atividade_previa_entre_aspas">“%1$s”</string>
 </resources>

@@ -256,6 +256,7 @@ class NotificadorMensagens @Inject constructor(
                 TipoConteudo.AUDIO -> R.string.notificacao_audio
                 TipoConteudo.FIGURINHA -> R.string.notificacao_figurinha
                 TipoConteudo.ENQUETE -> R.string.notificacao_votacao
+                TipoConteudo.LOCALIZACAO -> R.string.notificacao_localizacao
                 else -> R.string.notificacao_arquivo
             },
         )

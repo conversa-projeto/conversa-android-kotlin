@@ -2,9 +2,11 @@ package com.conversa.app
 
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import com.conversa.app.core.model.Contato
+import com.conversa.app.core.model.PontoMapa
 import com.conversa.app.core.model.SegmentoTexto
 import com.conversa.app.core.model.contatoCombina
 import com.conversa.app.core.model.ehSoEmoji
+import com.conversa.app.core.model.lerCoordenadas
 import com.conversa.app.core.model.normalizarBusca
 import com.conversa.app.core.model.resumirTexto
 import com.conversa.app.core.model.separarTexto
@@ -35,5 +37,8 @@ class RegexNoAndroidTest {
         assertThat(normalizarBusca("Família")).isEqualTo("familia")
         assertThat(contatoCombina(Contato(1, "Élcio", "elcio", "e@x.com", null), "elc")).isTrue()
         assertThat(ehSoEmoji("👍🏽 ❤️")).isTrue()
+        // Coordenadas digitadas na busca da localização (ENV-30): ponto ou vírgula, e o separador.
+        assertThat(lerCoordenadas("-23,55; -46,63")).isEqualTo(PontoMapa(-23.55, -46.63))
+        assertThat(lerCoordenadas("Praça da Sé")).isNull()
     }
 }

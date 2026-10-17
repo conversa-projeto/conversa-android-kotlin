@@ -413,6 +413,7 @@ private fun textoDoResumoDoChat(mensagem: Mensagem): String = when (val resumo =
             TipoConteudo.IMAGEM -> R.string.chat_resumo_imagem
             TipoConteudo.AUDIO, TipoConteudo.GRAVACAO_AUDIO -> R.string.chat_resumo_audio
             TipoConteudo.FIGURINHA -> R.string.chat_resumo_figurinha
+            TipoConteudo.LOCALIZACAO -> R.string.chat_resumo_localizacao
             else -> R.string.chat_resumo_anexo
         },
     )

@@ -291,7 +291,14 @@ private fun resumoDosConteudos(conteudos: List<Conteudo>, oculta: Boolean): Resu
     if (oculta) return ResumoCitacao.Oculta
     conteudos.firstOrNull { it.tipo == TipoConteudo.TEXTO && it.conteudo.isNotEmpty() }
         ?.let { return ResumoCitacao.Texto(resumirTexto(it.conteudo)) }
-    val ordem = listOf(TipoConteudo.IMAGEM, TipoConteudo.GRAVACAO_AUDIO, TipoConteudo.AUDIO, TipoConteudo.FIGURINHA, TipoConteudo.ENQUETE)
+    val ordem = listOf(
+        TipoConteudo.IMAGEM,
+        TipoConteudo.GRAVACAO_AUDIO,
+        TipoConteudo.AUDIO,
+        TipoConteudo.FIGURINHA,
+        TipoConteudo.ENQUETE,
+        TipoConteudo.LOCALIZACAO,
+    )
     val tipo = ordem.firstOrNull { t -> conteudos.any { it.tipo == t } } ?: TipoConteudo.ARQUIVO
     return ResumoCitacao.Tipo(tipo)
 }

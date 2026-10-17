@@ -539,10 +539,10 @@
 - [ ] 🆕 `e33ecba` Código como peça no campo ("Inserir na mensagem"; colar mais de 10 linhas abre a janela) — ⛔ depende da decisão FC-416 (ENV-28, FC-526)
 
 ### 4.12 🆕 Localização e trajeto (MSG-25, ENV-30; FC-319, FC-528) — servidor `ac710eb`, web `f351190`
-- [ ] Modelo e formatação (`PontoMapa`, `Localizacao`; distância, tempo, coordenadas, resumo, "Abrir no Google Maps", polyline do OSRM) e o JSON do tipo 9 (lido e escrito sem `null`, como o servidor confere)
-- [ ] `TipoConteudo.LOCALIZACAO` (9) e o rótulo "Localização" nas prévias, na citação, nas atividades e no chat da chamada
-- [ ] Bolha: mapa de tiles do OSM (User-Agent do app, "© OpenStreetMap"), o nome do local ou A → B com a descrição do trajeto, e "Abrir no Google Maps"
-- [ ] Visualizador: o mapa grande com arrastar e pinça, ruas ou satélite (Esri), o nome e as coordenadas ou a descrição do trajeto
+- [x] Modelo e formatação (`PontoMapa`, `Localizacao`; distância, tempo, coordenadas, resumo, "Abrir no Google Maps", polyline do OSRM) e o JSON do tipo 9 (lido e escrito sem `null`, como o servidor confere) ✔ HASH_B
+- [x] `TipoConteudo.LOCALIZACAO` (9) e o rótulo "Localização" nas prévias, na citação, nas atividades e no chat da chamada ✔ HASH_B
+- [x] Bolha: mapa de tiles do OSM (User-Agent do app, "© OpenStreetMap"), o nome do local ou A → B com a descrição do trajeto, e "Abrir no Google Maps" — 🔄 mapa próprio em Compose (tiles pelo Coil, rota e marcadores num Canvas), sem biblioteca de mapa ✔ HASH_B
+- [x] Visualizador: o mapa grande com arrastar e pinça, ruas ou satélite (Esri), o nome e as coordenadas ou a descrição do trajeto — a pinça e o toque duplo ficam para conferir em aparelho ✔ HASH_B
 - [ ] Enviar: "+" › "Localização" (permissão de uso `localizacao`), Local ou Trajeto, busca de endereço (Nominatim) e coordenadas digitadas, toque no mapa para marcar, minha posição (permissão de localização do aparelho), rota de carro (OSRM) com debounce; "Enviar" ("Inserir na mensagem" depende da FC-416)
 - [ ] **Teste:** local e trajeto nos dois sentidos com o web (bolha, visualizador, link)
 

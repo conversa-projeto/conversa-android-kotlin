@@ -70,6 +70,8 @@ object RedeModulo {
             .readTimeout(30, TimeUnit.SECONDS)
             .writeTimeout(30, TimeUnit.SECONDS)
             .pingInterval(20, TimeUnit.SECONDS)
+            // Os tiles do OSM, o Nominatim e o OSRM públicos recusam o agente padrão das bibliotecas (localização, `ac710eb`).
+            .addInterceptor { cadeia -> cadeia.proceed(cadeia.request().newBuilder().header("User-Agent", AGENTE_DO_APP).build()) }
             .addInterceptor(EnderecoInterceptor(config))
             .addInterceptor(AutenticacaoInterceptor(tokens, eventos, config))
             .addInterceptor(log)
@@ -96,3 +98,6 @@ object RedeModulo {
         @EscopoAplicacao escopo: CoroutineScope,
     ): RealtimeClient = RealtimeClient(okHttp, config, escopo)
 }
+
+/** Como o app se identifica nas requisições (exigido pelos serviços públicos de mapa). */
+const val AGENTE_DO_APP = "ConversaAndroid/2.0 (app de mensagens do Conversa)"

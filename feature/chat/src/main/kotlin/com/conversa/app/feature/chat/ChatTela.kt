@@ -243,6 +243,9 @@ fun ChatRotaTela(
     val resumo: ResumoViewModel = hiltViewModel()
     val iaLigada by resumo.disponivel.collectAsStateWithLifecycle()
     var vendoResumo by rememberSaveable { mutableStateOf(false) }
+    // O mapa grande da localização (MSG-25).
+    var localizacaoAberta by remember { mutableStateOf<com.conversa.app.core.model.Localizacao?>(null) }
+    localizacaoAberta?.let { VisualizadorLocalizacao(it, aoFechar = { localizacaoAberta = null }) }
     // Sugestão de texto da IA ao digitar (ENV-25).
     val sugestao: SugestaoViewModel = hiltViewModel()
     val sugestaoLigada by sugestao.ligada.collectAsStateWithLifecycle()
@@ -306,6 +309,7 @@ fun ChatRotaTela(
                     aoAcompanharTranscricao = viewModel::acompanharTranscricao,
                     aoBuscarAudio = viewModel::buscarAudio,
                     aoMudarVelocidade = viewModel::mudarVelocidadeAudio,
+                    aoAbrirLocalizacao = { localizacaoAberta = it },
                     aoMenu = { acoesDaMensagem.menuDe = it },
                     aoReagir = viewModel::reagir,
                     aoVerReacoes = { mensagem, emoji -> acoesDaMensagem.quemReagiu = mensagem.id to emoji },
