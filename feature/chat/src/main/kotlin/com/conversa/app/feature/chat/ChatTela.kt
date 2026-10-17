@@ -246,6 +246,19 @@ fun ChatRotaTela(
     // O mapa grande da localização (MSG-25).
     var localizacaoAberta by remember { mutableStateOf<com.conversa.app.core.model.Localizacao?>(null) }
     localizacaoAberta?.let { VisualizadorLocalizacao(it, aoFechar = { localizacaoAberta = null }) }
+    // Enviar localização ou trajeto (ENV-30), pelo "+".
+    val escolhaLocalizacao: EnviarLocalizacaoViewModel = hiltViewModel()
+    var escolhendoLocalizacao by rememberSaveable { mutableStateOf(false) }
+    if (escolhendoLocalizacao) {
+        EnviarLocalizacao(
+            escolhaLocalizacao,
+            aoEnviar = {
+                escolhendoLocalizacao = false
+                viewModel.enviarLocalizacao(it)
+            },
+            aoFechar = { escolhendoLocalizacao = false },
+        )
+    }
     // Sugestão de texto da IA ao digitar (ENV-25).
     val sugestao: SugestaoViewModel = hiltViewModel()
     val sugestaoLigada by sugestao.ligada.collectAsStateWithLifecycle()
@@ -332,6 +345,7 @@ fun ChatRotaTela(
                 aoCampoFocado = viewModel::campoFocado,
                 aoCancelarResposta = viewModel::cancelarResposta,
                 aoEnviarFigurinha = viewModel::enviarFigurinha,
+                aoEscolherLocalizacao = { escolhendoLocalizacao = true },
                 aoPostar = viewModel::postar,
                 aoMudarTituloPostagem = viewModel::tituloDaPostagem,
                 aoCancelarPostagem = viewModel::cancelarPostagem,
@@ -450,6 +464,8 @@ class AcoesChat(
     val aoCancelarResposta: () -> Unit = {},
     /** Figurinha escolhida (7.8): vai na hora. */
     val aoEnviarFigurinha: (String) -> Unit = {},
+    /** "+" › "Localização" (ENV-30): abre a janela de enviar. */
+    val aoEscolherLocalizacao: () -> Unit = {},
     /** "+" › "Postagem" (7.13, só grupo). */
     val aoPostar: () -> Unit = {},
     /** O título digitado na faixa da postagem. */

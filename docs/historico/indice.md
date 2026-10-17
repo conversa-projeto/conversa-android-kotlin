@@ -66,6 +66,7 @@
 - 2026-10-15 · [Zoom no ponto da pinça](2026-10-15-20-zoom-no-ponto-da-pinca.md) — a pinça e o duplo toque ampliam em torno do ponto (não do centro); o arrasto não deixa a imagem sair; testado no emulador com o duplo toque
 - 2026-10-16 · [Duração e onda do áudio](2026-10-16-06-duracao-e-onda-do-audio.md) — o app mede a duração e 48 picos antes do upload (MediaCodec) e manda no `PUT /anexo`; Room v10; o player mostra a duração antes de tocar, "atual / total" e a onda; testado no emulador com um WAV gerado
 - 2026-10-17 · [Localização e trajeto na conversa](2026-10-17-03-localizacao-na-conversa.md) — conteúdo tipo 9: bolha com mapa de tiles (OSM, sem biblioteca), o nome ou A e B com o trajeto, "Abrir no Google Maps"; visualizador com ruas ou satélite (Esri); rótulo "Localização" nas prévias; testado no emulador
+- 2026-10-17 · [Enviar localização ou trajeto](2026-10-17-04-enviar-localizacao.md) — "+" › "Localização": Local ou Trajeto, busca no Nominatim, coordenadas, toque no mapa, minha posição (`LocationManager`, permissão no toque) e rota de carro no OSRM; mapas fora do log; testado no emulador (busca, trajeto com rota e GPS simulado)
 
 ## Notificações e push (etapa 5)
 - 2026-10-08 · [Etapa 5 — notificação de mensagem, canais, permissão e atalhos (sem o push)](2026-10-08-07-etapa-5-notificacoes-sem-push.md) — MessagingStyle por conversa com Responder/Marcar como lida, regra do web (som na frente, notificação em segundo plano), some ao ler/arquivar/abrir, atalhos; Firebase ⛔ (precisa do usuário); 214 testes

@@ -366,6 +366,27 @@
     <string name="mapa_ruas">Mapa</string>
     <string name="atribuicao_osm" translatable="false">© OpenStreetMap</string>
     <string name="atribuicao_esri" translatable="false">Imagens © Esri, Maxar, Earthstar Geographics</string>
+    <!-- Enviar localização (ENV-30), textos do web; "clique" virou "toque" -->
+    <string name="enviar_localizacao">Enviar localização</string>
+    <string name="localizacao_local">Local</string>
+    <string name="localizacao_campo_local">Endereço, lugar ou coordenadas</string>
+    <string name="localizacao_campo_origem">Origem: endereço, lugar ou coordenadas</string>
+    <string name="localizacao_campo_destino">Destino: endereço, lugar ou coordenadas</string>
+    <string name="localizacao_buscar">Buscar</string>
+    <string name="localizacao_minha_posicao">Usar minha posição</string>
+    <string name="localizacao_buscando">Buscando…</string>
+    <string name="localizacao_calculando_rota">Calculando a rota…</string>
+    <string name="localizacao_rota_de_carro">%1$s · %2$s de carro</string>
+    <string name="localizacao_sem_rota">Sem rota pelas ruas: %1$s em linha reta</string>
+    <string name="localizacao_dica_local">Sem GPS? Busque o endereço, digite as coordenadas ou toque no mapa.</string>
+    <string name="localizacao_dica_origem">Toque no mapa para marcar a origem, ou busque o endereço.</string>
+    <string name="localizacao_dica_destino">Toque no mapa para marcar o destino, ou busque o endereço.</string>
+    <string name="localizacao_nada_encontrado">Nada encontrado com esse endereço.</string>
+    <string name="localizacao_busca_falhou">A busca de endereço não respondeu.</string>
+    <string name="localizacao_negada">O acesso à localização foi negado.</string>
+    <string name="localizacao_indisponivel">Não foi possível obter a posição deste dispositivo.</string>
+    <string name="localizacao_sem_sensor">Este dispositivo não informa a posição.</string>
+    <string name="localizacao_sem_posicao">%1$s Busque o endereço, digite as coordenadas ou toque no mapa.</string>
     <!-- Velocidade do áudio (web `f351190`) -->
     <string name="velocidade_audio">Velocidade: %1$s</string>
     <!-- Sugestão de texto da IA (ENV-25) -->

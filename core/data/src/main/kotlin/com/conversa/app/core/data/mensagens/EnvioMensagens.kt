@@ -176,7 +176,8 @@ class EnvioMensagens @Inject constructor(
      * agendada: vai `visivel_em` em ISO UTC e a otimista já fica no fim, com o selo.
      * Com [postagem] (7.13): a nova já aparece como postagem, sem respostas; a resposta vai com
      * `postagem_id` e fica embaixo da postagem, fora do fluxo, até o servidor gravar. Com
-     * [confirmacao] (FC-521), vai `pede_confirmacao` (e a lista, se houver).
+     * [confirmacao] (FC-521), vai `pede_confirmacao` (e a lista, se houver). [localizacao] (ENV-30) é
+     * o JSON do conteúdo tipo 9, depois do texto, como a figurinha.
      * Devolve o id local.
      */
     suspend fun enviar(
@@ -185,6 +186,7 @@ class EnvioMensagens @Inject constructor(
         anexosLocais: List<AnexoLocal>,
         referencia: ReferenciaPendente? = null,
         figurinha: String? = null,
+        localizacao: String? = null,
         visivelEm: Instant? = null,
         postagem: PostagemEnvio? = null,
         confirmacao: PedidoConfirmacao? = null,
@@ -197,7 +199,11 @@ class EnvioMensagens @Inject constructor(
         } else {
             emptyList()
         }
-        require(textoLimpo.isNotEmpty() || anexosLocais.isNotEmpty() || encaminhados.isNotEmpty() || figurinha != null) { "Mensagem vazia" }
+        require(
+            textoLimpo.isNotEmpty() || anexosLocais.isNotEmpty() || encaminhados.isNotEmpty() || figurinha != null || localizacao != null,
+        ) {
+            "Mensagem vazia"
+        }
         val idLocal = trava.withLock {
             val id = minOf(mensagemDao.menorId() ?: 0, 0) - 1
             val conteudosEncaminhados = encaminhados.mapIndexed { i, conteudo ->
@@ -210,10 +216,11 @@ class EnvioMensagens @Inject constructor(
                     ConteudoEnvioDto(encaminhados.size + 1, TipoConteudo.TEXTO.codigo, textoLimpo),
                 )
             }
-            // Figurinha (7.8) vai depois do texto, como no web: "pacote/nome", tipo 7.
+            // Figurinha (7.8) vai depois do texto, como no web: "pacote/nome", tipo 7. A localização também (tipo 9).
             val comFigurinha = conteudosTexto + listOfNotNull(
-                figurinha?.let { ConteudoEnvioDto(conteudosTexto.size + 1, TipoConteudo.FIGURINHA.codigo, it) },
-            )
+                figurinha?.let { TipoConteudo.FIGURINHA to it },
+                localizacao?.let { TipoConteudo.LOCALIZACAO to it },
+            ).mapIndexed { i, (tipo, conteudo) -> ConteudoEnvioDto(conteudosTexto.size + i + 1, tipo.codigo, conteudo) }
             val pendentes = anexosLocais.mapIndexed { i, anexo ->
                 AnexoPendente(comFigurinha.size + i + 1, anexo.uri, anexo.nome, anexo.tamanho, anexo.mime, anexo.tipo.codigo)
             }

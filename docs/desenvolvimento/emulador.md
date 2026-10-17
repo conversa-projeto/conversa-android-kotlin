@@ -26,6 +26,8 @@ A mídia das chamadas passa pelo TURN do coturn (só TCP, porta 3478): `GET /api
 5. `./gradlew :app:installDebug` e abrir o app.
 6. Tela "Servidor": `http://localhost:8081` → "Testar conexão" → "Salvar".
 
+GPS simulado (enviar localização, ENV-30): o GPS do emulador só entrega uma posição nova enquanto há um pedido ativo. Com o app esperando em "Usar minha posição", mande `adb emu geo fix <longitude> <latitude>` (ex.: `adb emu geo fix -46.6559 -23.5614`, o MASP). Com mais de um emulador ligado, use `adb -s emulator-5554 …` (ou `ANDROID_SERIAL`).
+
 Atenção: `./gradlew :app:connectedDebugAndroidTest` **desinstala o app no fim**. Depois dele, o servidor e a sessão precisam ser configurados de novo.
 
 ## Contas de teste (banco `conversa_dev`, só no servidor local)

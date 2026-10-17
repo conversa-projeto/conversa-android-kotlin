@@ -300,6 +300,21 @@ class MensagensTest {
     }
 
     @Test
+    fun `localizacao vai sozinha como tipo 9 e a otimista ja mostra o mapa`() = runTest {
+        val envio = envio()
+        val json = """{"pontos":[{"lat":-23.55,"lng":-46.63,"nome":"Praça da Sé"}]}"""
+
+        val id = envio.enviar(42, "", emptyList(), localizacao = json)
+
+        assertThat(banco.mensagemDao().buscar(id)!!.paraModelo().conteudos.map { it.tipo to it.conteudo })
+            .containsExactly(TipoConteudo.LOCALIZACAO to json)
+        coEvery { api.enviarMensagem(any()) } returns MensagemCriadaDto(id = 701, conversaId = 42)
+        coEvery { api.mensagens(42, any(), 0, 0) } throws java.io.IOException("sem rede")
+        envio.processarPendentes()
+        coVerify { api.enviarMensagem(EnviarMensagemRequisicao(42, listOf(ConteudoEnvioDto(1, 9, json)))) }
+    }
+
+    @Test
     fun `agendada vai com visivel_em em ISO UTC e a otimista ordena pela data agendada`() = runTest {
         val envio = envio()
         val quando = java.time.Instant.parse("2027-01-02T11:00:00Z")

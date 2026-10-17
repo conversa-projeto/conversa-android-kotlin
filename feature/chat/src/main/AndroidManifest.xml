@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="utf-8"?>
+<manifest xmlns:android="http://schemas.android.com/apk/res/android">
+
+    <!--
+        "Usar minha posição" ao enviar uma localização (ENV-30): pedida na hora em que a pessoa
+        toca no botão. A aproximada basta; o GPS não é obrigatório (busca, coordenadas e o toque
+        no mapa continuam funcionando sem ele).
+    -->
+    <uses-permission android:name="android.permission.ACCESS_COARSE_LOCATION" />
+    <uses-permission android:name="android.permission.ACCESS_FINE_LOCATION" />
+    <uses-feature android:name="android.hardware.location" android:required="false" />
+    <uses-feature android:name="android.hardware.location.gps" android:required="false" />
+</manifest>

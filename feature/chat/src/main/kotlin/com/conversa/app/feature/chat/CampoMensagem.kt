@@ -69,6 +69,7 @@ import androidx.compose.material.icons.outlined.Code
 import androidx.compose.material.icons.outlined.Delete
 import androidx.compose.material.icons.outlined.EmojiEmotions
 import androidx.compose.material.icons.outlined.Image
+import androidx.compose.material.icons.outlined.LocationOn
 import androidx.compose.material.icons.outlined.PhotoCamera
 import androidx.compose.material.icons.outlined.Poll
 import androidx.compose.material.icons.outlined.Schedule
@@ -1007,6 +1008,17 @@ private fun BotaoAnexar(
                     aoInserirCodigo()
                 },
             )
+            // Localização ou trajeto (ENV-30), com a permissão de uso, como o web.
+            if (permissoes.pode(CodigoPermissao.LOCALIZACAO)) {
+                DropdownMenuItem(
+                    text = { Text(stringResource(R.string.localizacao)) },
+                    leadingIcon = { Icon(Icons.Outlined.LocationOn, contentDescription = null) },
+                    onClick = {
+                        menu = false
+                        acoes.aoEscolherLocalizacao()
+                    },
+                )
+            }
             // Votação só em grupo (o servidor recusa na direta), como o web.
             aoNovaVotacao?.takeIf { permissoes.pode(CodigoPermissao.VOTACAO) }?.let { abrir ->
                 DropdownMenuItem(

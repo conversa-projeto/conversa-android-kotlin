@@ -33,6 +33,7 @@ import com.conversa.app.core.model.Conversa
 import com.conversa.app.core.model.DestinatarioConfirmacao
 import com.conversa.app.core.model.EstadoPresenca
 import com.conversa.app.core.model.ItemChat
+import com.conversa.app.core.model.Localizacao
 import com.conversa.app.core.model.MembroConversa
 import com.conversa.app.core.model.Mensagem
 import com.conversa.app.core.model.MensagensDoChat
@@ -52,6 +53,7 @@ import com.conversa.app.core.model.montarItensChat
 import com.conversa.app.core.model.podeReagir
 import com.conversa.app.core.model.reacoesDeOutros
 import com.conversa.app.core.model.separarAgendadas
+import com.conversa.app.core.network.dto.localizacaoParaJson
 import com.conversa.app.core.network.http.mensagemAmigavel
 import com.conversa.app.core.network.http.paraErroApi
 import com.conversa.app.core.ui.estado.EventosUnicos
@@ -587,6 +589,26 @@ class ChatViewModel @Inject constructor(
         viewModelScope.launch {
             val resposta = respondendo.value
             envio.enviar(conversaId, "", emptyList(), resposta, figurinha = id, postagem = postagem, confirmacao = confirmacao)
+            if (respondendo.value == resposta) respondendo.value = null
+            if (postagem !is PostagemEnvio.Resposta) eventos.enviar(EventoChat.RolarAoFim)
+        }
+    }
+
+    /** Localização ou trajeto (ENV-30): vai na hora, sozinha, como o "Enviar" do web (e como resposta, se houver uma pendente). */
+    fun enviarLocalizacao(localizacao: Localizacao) {
+        val postagem = pegarPostagem()
+        val confirmacao = pegarConfirmacao()
+        viewModelScope.launch {
+            val resposta = respondendo.value
+            envio.enviar(
+                conversaId,
+                "",
+                emptyList(),
+                resposta,
+                localizacao = localizacaoParaJson(localizacao),
+                postagem = postagem,
+                confirmacao = confirmacao,
+            )
             if (respondendo.value == resposta) respondendo.value = null
             if (postagem !is PostagemEnvio.Resposta) eventos.enviar(EventoChat.RolarAoFim)
         }

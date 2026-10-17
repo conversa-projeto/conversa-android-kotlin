@@ -93,7 +93,7 @@ A coluna **Fase** indica em que fase do plano da nova base (doc 07) a funcionali
 | AUT | 11 | 11 | 0 | 0 | 0 | 0 |
 | CON | 17 | 14 | 1 | 0 | 2 | 0 |
 | MSG | 25 | 23 | 0 | 0 | 2 | 0 |
-| ENV | 30 | 25 | 0 | 2 | 2 | 1 |
+| ENV | 30 | 26 | 0 | 2 | 1 | 1 |
 | ANX | 18 | 16 | 1 | 0 | 0 | 1 |
 | PES | 2 | 2 | 0 | 0 | 0 | 0 |
 | CHA | 26 | 24 | 0 | 0 | 2 | 0 |
@@ -103,13 +103,13 @@ A coluna **Fase** indica em que fase do plano da nova base (doc 07) a funcionali
 | ATV | 5 | 5 | 0 | 0 | 0 | 0 |
 | CFG | 14 | 6 | 1 | 0 | 5 | 2 |
 | GER | 10 | 8 | 0 | 0 | 0 | 2 |
-| **Total** | **172** | **142** | **3** | **3** | **18** | **6** |
+| **Total** | **172** | **143** | **3** | **3** | **17** | **6** |
 
 > Requisitos exclusivos do Android (AND, fora da contagem): 16 — 13 ✅, 2 🟡, 1 ⛔, 0 ⬜, 0 ➖.
 >
-> **Leitura:** 🆕 (2026-10-15, depois do servidor `ef13c22` e do web `9c6e8a6`) 131 de 163 funcionalidades estão prontas na nova base, e 6 estão em parte. A sincronização trouxe 10 funcionalidades (bots, permissões de uso, administração e atividades pendentes); a quebra das atividades (`nova` → `pendente`) já foi corrigida (`2219208`). Ficaram em parte o cadastro fechado (AUT-02), a duração e a onda do áudio (ANX-10, ANX-11); a tela de Acessos com as 32 permissões (CFG-08) já voltou a ✅. 🆕 (2026-10-16) As permissões de uso (GER-09), o cadastro fechado (AUT-02) a conversa com bot (CON-16) a duração e a onda do áudio (ANX-10, ANX-11) o resumo e a sugestão por IA (CON-14, ENV-25, falta conferir com um servidor de IA) e os recursos do servidor (GER-08) ficaram prontos: 139 de 163. 🆕 (2026-10-17, servidor `ac710eb` e web `f351190`) Com as 9 funcionalidades novas e os 4 IDs que voltaram a 🟡, são 135 prontas de 172. Com os ajustes do sincronismo (contatos pelo WS 66, "Gravando áudio…" na lista, velocidade do áudio, espaço usado, "Usuário desde" e os Acessos), 141 de 172. Com a localização e o trajeto na conversa (MSG-25), 142 de 172.
+> **Leitura:** 🆕 (2026-10-15, depois do servidor `ef13c22` e do web `9c6e8a6`) 131 de 163 funcionalidades estão prontas na nova base, e 6 estão em parte. A sincronização trouxe 10 funcionalidades (bots, permissões de uso, administração e atividades pendentes); a quebra das atividades (`nova` → `pendente`) já foi corrigida (`2219208`). Ficaram em parte o cadastro fechado (AUT-02), a duração e a onda do áudio (ANX-10, ANX-11); a tela de Acessos com as 32 permissões (CFG-08) já voltou a ✅. 🆕 (2026-10-16) As permissões de uso (GER-09), o cadastro fechado (AUT-02) a conversa com bot (CON-16) a duração e a onda do áudio (ANX-10, ANX-11) o resumo e a sugestão por IA (CON-14, ENV-25, falta conferir com um servidor de IA) e os recursos do servidor (GER-08) ficaram prontos: 139 de 163. 🆕 (2026-10-17, servidor `ac710eb` e web `f351190`) Com as 9 funcionalidades novas e os 4 IDs que voltaram a 🟡, são 135 prontas de 172. Com os ajustes do sincronismo (contatos pelo WS 66, "Gravando áudio…" na lista, velocidade do áudio, espaço usado, "Usuário desde" e os Acessos), 141 de 172. Com a localização e o trajeto na conversa (MSG-25), 142 de 172; com o envio (ENV-30), 143.
 > - **Bloqueadas (⛔):** dependem de algo fora do app: o push (Firebase, NOT-04) ou a decisão do campo rico (FC-416).
-> - **Por fazer (⬜):** 🆕 as pastas de mensagens (CON-17, MSG-23, MSG-24, ENV-29), o envio de localização e trajeto (ENV-30), a etapa 9 (SIP, compartilhar tela, Bubbles), a administração de usuários, bots, ferramentas e conhecimento (CFG-11…14, a avaliar) e um item P3 fora do TODO.
+> - **Por fazer (⬜):** 🆕 as pastas de mensagens (CON-17, MSG-23, MSG-24, ENV-29), a etapa 9 (SIP, compartilhar tela, Bubbles), a administração de usuários, bots, ferramentas e conhecimento (CFG-11…14, a avaliar) e um item P3 fora do TODO.
 > - **Falta conferir:** as células com "falta conferir" ou "em aparelho" estão prontas, mas esperam um teste que o emulador não permite.
 
 ---
@@ -215,7 +215,7 @@ A coluna **Fase** indica em que fase do plano da nova base (doc 07) a funcionali
 | ENV-27 🆕 | Pedir confirmação de leitura depois do envio (menu da mensagem, até 24 h) | ⬜ | ✅ 7.1 · `32de350` | — | Item "Pedir confirmação de leitura" no toque longo (minha mensagem, menos de 24 h); em grupo, o modal "Quem precisa confirmar"; `POST /mensagem/pedir-confirmacao`; WS 65 — 🆕 `e33ecba`/`6d20ff7` | F4 | P2 |
 | ENV-28 🆕 | Código como peça no campo ("Inserir na mensagem", editar, remover) | ⬜ | ⛔ 4.11 · depende da decisão do campo rico (FC-416) | — | Campo simplificado: inserir o bloco cercado no cursor; campo por blocos: peça com prévia — 🆕 `e33ecba` | F4 | P3 |
 | ENV-29 🆕 | Selecionar mensagens e pôr na pasta (arraste, Ctrl, Esc no web) | ⬜ | ⬜ 7.14 | — | No celular não há arraste: toque longo › "Selecionar", barra "N selecionadas" com "Pôr na pasta" — 🆕 `f351190` | F4 | P2 |
-| ENV-30 🆕 | Enviar localização ou trajeto ("+" › Localização: Local ou Trajeto, busca de endereço, minha posição, rota de carro) | ⬜ | ⬜ 4.12 | — | Permissão de uso `localizacao`; Nominatim, OSRM (`driving`) e tiles do OSM com User-Agent; posição do aparelho (permissão de localização); "Inserir na mensagem" depende do campo rico (FC-416) — 🆕 `ac710eb`/`f351190` | F4 | P2 |
+| ENV-30 🆕 | Enviar localização ou trajeto ("+" › Localização: Local ou Trajeto, busca de endereço, minha posição, rota de carro) | ⬜ | ✅ 4.12 · `HASH_C` · falta conferir com o web | — | Permissão de uso `localizacao`; Nominatim, OSRM (`driving`) e tiles do OSM com User-Agent; posição do aparelho (permissão de localização); "Inserir na mensagem" depende do campo rico (FC-416) — 🆕 `ac710eb`/`f351190` | F4 | P2 |
 
 ## ANX — Anexos e mídia
 

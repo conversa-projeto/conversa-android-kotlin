@@ -9,6 +9,7 @@ import com.conversa.app.core.network.http.AutenticacaoInterceptor
 import com.conversa.app.core.network.http.BASE_FICTICIA
 import com.conversa.app.core.network.http.EnderecoInterceptor
 import com.conversa.app.core.network.json.ConversaJson
+import com.conversa.app.core.network.mapas.ehServicoDeMapa
 import com.conversa.app.core.network.realtime.RealtimeClient
 import dagger.Module
 import dagger.Provides
@@ -74,7 +75,10 @@ object RedeModulo {
             .addInterceptor { cadeia -> cadeia.proceed(cadeia.request().newBuilder().header("User-Agent", AGENTE_DO_APP).build()) }
             .addInterceptor(EnderecoInterceptor(config))
             .addInterceptor(AutenticacaoInterceptor(tokens, eventos, config))
-            .addInterceptor(log)
+            // Os mapas ficam fora do log: o endereço buscado e os tiles mostram onde a pessoa está olhando.
+            .addInterceptor { cadeia ->
+                if (ehServicoDeMapa(cadeia.request().url.host)) cadeia.proceed(cadeia.request()) else log.intercept(cadeia)
+            }
             .build()
     }
 

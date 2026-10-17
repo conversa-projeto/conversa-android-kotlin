@@ -9,6 +9,8 @@ android {
 dependencies {
     // Seletores do sistema (galeria, documento, câmera) para os anexos.
     implementation(libs.androidx.activity.compose)
+    // A posição do aparelho ao enviar uma localização (LocationManagerCompat).
+    implementation(libs.androidx.core.ktx)
     // Player de áudio único (4.5).
     implementation(projects.core.media)
     // Ligar a partir da conversa (6.4).

@@ -24,6 +24,19 @@ data class Localizacao(val pontos: List<PontoMapa>, val rota: String? = null, va
     val trajeto: Boolean get() = pontos.size == 2
 }
 
+/** A rota de carro do OSRM: a polyline, a distância (metros) e o tempo (segundos), inteiros como no web. */
+data class RotaCarro(val rota: String, val distancia: Double, val duracao: Double)
+
+/**
+ * O que vai na mensagem (web `LocalizacaoModal.resultado`): um ponto é o local; dois, o trajeto
+ * com a rota de carro ou, sem ela, só a distância em linha reta.
+ */
+fun montarLocalizacao(pontos: List<PontoMapa>, rota: RotaCarro?): Localizacao = when {
+    pontos.size < 2 -> Localizacao(pontos)
+    rota == null -> Localizacao(pontos, distancia = kotlin.math.round(distanciaReta(pontos[0], pontos[1])))
+    else -> Localizacao(pontos, rota.rota, rota.distancia, rota.duracao)
+}
+
 /** O servidor aceita nomes de até 300 caracteres. */
 const val LIMITE_NOME_PONTO = 300
 

@@ -49,4 +49,17 @@ class LocalizacaoTest {
             .containsExactly(38.5 to -120.2, 40.7 to -120.95, 43.252 to -126.453).inOrder()
         assertThat(decodificarRota("")).isEmpty()
     }
+
+    @Test
+    fun `monta o local, o trajeto com rota e o trajeto em linha reta`() {
+        val se = PontoMapa(-23.5503, -46.6339, "Praça da Sé")
+        val masp = PontoMapa(-23.5614, -46.6559, "MASP")
+        assertThat(montarLocalizacao(listOf(se), RotaCarro("x", 1.0, 2.0))).isEqualTo(Localizacao(listOf(se)))
+        assertThat(montarLocalizacao(listOf(se, masp), RotaCarro("_p~iF", 3100.0, 540.0)))
+            .isEqualTo(Localizacao(listOf(se, masp), "_p~iF", 3100.0, 540.0))
+        val reta = montarLocalizacao(listOf(se, masp), null)
+        assertThat(reta.rota).isNull()
+        assertThat(reta.duracao).isNull()
+        assertThat(reta.distancia).isEqualTo(kotlin.math.round(distanciaReta(se, masp)))
+    }
 }
