@@ -4,7 +4,7 @@
 - **Tipo:** documentação
 - **Itens:** linhas 🆕 no `TODO.md` (2.6, 2.9, 4.5, 8.3, 8.4, 8.5, 8.6) e as seções novas 4.12 (localização) e 7.14 (pastas); FC-222, FC-223, FC-224, FC-318, FC-319, FC-422, FC-423, FC-424, FC-527, FC-528 e FC-816, e nota na FC-812; S31–S39
 - **Branch:** `reescrita`
-- **Commits:** (preencher)
+- **Commits:** `1e7ab54`
 - **Commits de origem** (pull `--ff-only` em 2026-10-17, de madrugada; um commit em cada repositório):
   - **Servidor (`ef13c22` → `ac710eb`):** "Pastas de mensagens, localização e trajeto, espaço usado e ajustes de IA e acessos" (migrações 053–056).
   - **Web (`9c6e8a6` → `f351190`):** "Pastas de mensagens, localização e trajeto, espaço usado e menu das Configurações".
