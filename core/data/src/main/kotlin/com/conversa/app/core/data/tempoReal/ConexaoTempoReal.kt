@@ -49,10 +49,12 @@ class MonitorPrimeiroPlano @Inject constructor() {
 
 /**
  * Decide quando o WebSocket fica ligado: com sessão **e** (app em primeiro plano
- * **ou** chamada ativa). Em segundo plano desliga depois de [TOLERANCIA_MS]; aí o
- * usuário aparece offline e o servidor volta a mandar push (contrato §15.1).
- * Sem sessão (logout ou 401), desliga na hora.
- * Sem serviço em primeiro plano permanente (problema #15 do legado).
+ * **ou** chamada ativa **ou** conexão em segundo plano). Em segundo plano desliga depois
+ * de [TOLERANCIA_MS]; aí o usuário aparece offline e o servidor volta a mandar push
+ * (contrato §15.1). Sem sessão (logout ou 401), desliga na hora.
+ * A conexão em segundo plano ([manterEmSegundoPlano], ADR 0002 opção A) é o serviço com
+ * notificação fixa que a pessoa pode desligar: sem FCM, é o que faz mensagens e
+ * chamadas chegarem com o app fechado.
  *
  * Enquanto deveria estar ligado mas não está conectado:
  * - a cada [PERIODO_ATUALIZACAO_MS] busca mensagens novas e chamadas pendentes (como o web);
@@ -71,6 +73,9 @@ class ConexaoTempoReal @Inject constructor(
 ) {
     /** Ligado pelo gerenciador de chamadas (etapa 6) enquanto houver chamada. */
     val chamadaAtiva = MutableStateFlow(false)
+
+    /** Ligado pela conexão em segundo plano (serviço do app) enquanto ela estiver ativa. */
+    val manterEmSegundoPlano = MutableStateFlow(false)
 
     private val _ligada = MutableStateFlow(false)
 
@@ -93,10 +98,10 @@ class ConexaoTempoReal @Inject constructor(
                 sessao.sessao,
                 servidor.atual,
                 primeiroPlano.emPrimeiroPlano,
-                chamadaAtiva,
-            ) { sessaoAtual, config, visivel, emChamada ->
+                combine(chamadaAtiva, manterEmSegundoPlano) { emChamada, manter -> emChamada || manter },
+            ) { sessaoAtual, config, visivel, foraDaTela ->
                 Desejado(
-                    token = sessaoAtual?.token?.takeIf { config != null && (visivel || emChamada) },
+                    token = sessaoAtual?.token?.takeIf { config != null && (visivel || foraDaTela) },
                     temSessao = sessaoAtual != null,
                     config = config?.base?.toString(),
                 )

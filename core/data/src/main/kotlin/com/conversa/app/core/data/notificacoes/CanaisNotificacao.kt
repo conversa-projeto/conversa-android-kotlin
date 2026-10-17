@@ -17,6 +17,9 @@ object CanaisNotificacao {
     const val CHAMADA_ATIVA = "chamada_ativa_v1"
     const val SISTEMA = "sistema_v1"
 
+    /** Aviso fixo da conexão em segundo plano (ADR 0002, opção A): mínimo, sem som, só na gaveta. */
+    const val CONEXAO = "conexao_v1"
+
     fun criar(contexto: Context) {
         val canais = listOf(
             canal(
@@ -42,6 +45,14 @@ object CanaisNotificacao {
                 R.string.canal_chamada_ativa_descricao,
             ),
             canal(contexto, SISTEMA, NotificationManagerCompat.IMPORTANCE_LOW, R.string.canal_sistema, R.string.canal_sistema_descricao),
+            canal(
+                contexto,
+                CONEXAO,
+                NotificationManagerCompat.IMPORTANCE_MIN,
+                R.string.canal_conexao,
+                R.string.canal_conexao_descricao,
+                silencioso = true,
+            ),
         )
         NotificationManagerCompat.from(contexto).apply {
             createNotificationChannelsCompat(canais)

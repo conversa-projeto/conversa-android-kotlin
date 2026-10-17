@@ -115,9 +115,14 @@ class ChamadaActivity : ComponentActivity() {
         if (podePip && Build.VERSION.SDK_INT < Build.VERSION_CODES.S) entrarEmPip()
     }
 
-    /** Voltar minimiza: em vídeo vira picture-in-picture; senão a tela fecha e a chamada segue (faixa no topo do app). */
+    /**
+     * Voltar (ou o botão de minimizar) sai da tela sem encerrar: em vídeo vira picture-in-picture; senão a
+     * tela fecha. Nos dois casos o app vem para a frente, na tela em que estava (ou na lista, se tinha sido
+     * fechado), com a faixa "Toque para voltar à chamada" no topo: dá para ir a outro chat.
+     */
     private fun minimizar() {
         if (podePip) entrarEmPip() else finish()
+        packageManager.getLaunchIntentForPackage(packageName)?.let { startActivity(it.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)) }
     }
 
     private fun entrarEmPip() {

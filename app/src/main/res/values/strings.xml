@@ -41,6 +41,13 @@
     <string name="permissao_tela_cheia_titulo">Chamadas em tela cheia</string>
     <string name="permissao_tela_cheia_texto">Para a chamada recebida aparecer na tela, mesmo com o celular bloqueado, permita que o Conversa use a tela cheia.</string>
     <string name="permissao_tela_cheia_abrir">Abrir configurações</string>
+    <string name="permissao_bateria_titulo">Receber com o app fechado</string>
+    <string name="permissao_bateria_texto">Para as mensagens e chamadas chegarem mesmo com o app fechado e a tela apagada, permita que o Conversa fique conectado sem restrição de bateria.</string>
+    <string name="permissao_bateria_permitir">Permitir</string>
+
+    <!-- Conexão em segundo plano (ADR 0002, opção A) -->
+    <string name="conexao_notificacao_titulo">Conectado ao Conversa</string>
+    <string name="conexao_notificacao_texto">Recebendo mensagens e chamadas com o app fechado</string>
 
 
 

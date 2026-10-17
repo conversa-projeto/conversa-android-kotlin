@@ -33,6 +33,8 @@ data class ServidorUiState(
     val aviso: AvisoServidor? = null,
     /** Endereço como será usado (normalizado), para mostrar abaixo do campo. */
     val enderecoNormalizado: String? = null,
+    /** Certificado próprio recusado que a pessoa pode aceitar (impressão SHA-256; só no debug). */
+    val certificadoParaConfiar: String? = null,
 )
 
 sealed interface EventoServidor {
@@ -67,25 +69,70 @@ class ServidorViewModel @Inject constructor(private val repositorio: ServidorRep
     fun testar() {
         val config = configOuAviso() ?: return
         viewModelScope.launch {
-            _estado.update { it.copy(testando = true, aviso = null) }
-            val resultado = repositorio.testar(config)
-            _estado.update { it.copy(testando = false, aviso = resultado.paraAviso()) }
+            _estado.update { it.copy(testando = true, aviso = null, certificadoParaConfiar = null) }
+            val (_, resultado) = testarComAlternativa(config)
+            _estado.update {
+                it.copy(testando = false, aviso = resultado.paraAviso(), certificadoParaConfiar = resultado.impressaoParaConfiar())
+            }
         }
     }
 
     fun salvar() {
         val config = configOuAviso() ?: return
         viewModelScope.launch {
-            _estado.update { it.copy(salvando = true, aviso = null) }
-            val resultado = repositorio.testar(config)
+            _estado.update { it.copy(salvando = true, aviso = null, certificadoParaConfiar = null) }
+            val (usado, resultado) = testarComAlternativa(config)
             if (resultado == ResultadoTesteServidor.Ok) {
-                repositorio.salvar(config)
+                repositorio.salvar(usado, repositorio.certificadoAceito(usado))
+                _estado.update { it.copy(salvando = false) }
+                eventos.enviar(EventoServidor.Salvo)
+            } else {
+                _estado.update {
+                    it.copy(salvando = false, aviso = resultado.paraAviso(), certificadoParaConfiar = resultado.impressaoParaConfiar())
+                }
+            }
+        }
+    }
+
+    /**
+     * "Confiar neste certificado" (só no debug): servidor interno com certificado próprio. Testa de
+     * novo aceitando só esse certificado e, se responder como Conversa, salva o endereço com ele.
+     */
+    fun confiarNoCertificado() {
+        val impressao = _estado.value.certificadoParaConfiar ?: return
+        val config = configOuAviso() ?: return
+        viewModelScope.launch {
+            _estado.update { it.copy(salvando = true, aviso = null, certificadoParaConfiar = null) }
+            val resultado = repositorio.testar(config, impressao)
+            if (resultado == ResultadoTesteServidor.Ok) {
+                repositorio.salvar(config, impressao)
                 _estado.update { it.copy(salvando = false) }
                 eventos.enviar(EventoServidor.Salvo)
             } else {
                 _estado.update { it.copy(salvando = false, aviso = resultado.paraAviso()) }
             }
         }
+    }
+
+    fun naoConfiarNoCertificado() {
+        _estado.update { it.copy(certificadoParaConfiar = null) }
+    }
+
+    /**
+     * Digitou só o nome ou o IP (sem `http://`/`https://`): tenta HTTPS e, se não houver nada
+     * na porta, HTTP (servidor interno sem TLS; só o debug aceita). Se o HTTP der certo, o campo passa a mostrá-lo.
+     */
+    private suspend fun testarComAlternativa(config: ServerConfig): Pair<ServerConfig, ResultadoTesteServidor> {
+        val resultado = repositorio.testar(config, repositorio.certificadoAceito(config))
+        val texto = _estado.value.endereco.trim()
+        // Sem resposta no HTTPS, ou o TLS falhou sem nem chegar um certificado (porta só HTTP, ex.: "IP:8080").
+        val semHttps = resultado is ResultadoTesteServidor.SemConexao ||
+            (resultado is ResultadoTesteServidor.CertificadoInvalido && resultado.impressao == null)
+        if (!semHttps || "://" in texto) return config to resultado
+        val http = ServerConfig.aPartirDe("http://$texto") ?: return config to resultado
+        if (repositorio.testar(http) != ResultadoTesteServidor.Ok) return config to resultado
+        _estado.update { it.copy(endereco = http.base.toString(), enderecoNormalizado = http.base.toString()) }
+        return http to ResultadoTesteServidor.Ok
     }
 
     private fun configOuAviso(): ServerConfig? {
@@ -98,8 +145,10 @@ class ServidorViewModel @Inject constructor(private val repositorio: ServidorRep
 internal fun ResultadoTesteServidor.paraAviso(): AvisoServidor = when (this) {
     ResultadoTesteServidor.Ok -> AvisoServidor.CONEXAO_OK
     ResultadoTesteServidor.NaoEhConversa -> AvisoServidor.NAO_EH_CONVERSA
-    ResultadoTesteServidor.CertificadoInvalido -> AvisoServidor.CERTIFICADO_INVALIDO
+    is ResultadoTesteServidor.CertificadoInvalido -> AvisoServidor.CERTIFICADO_INVALIDO
     ResultadoTesteServidor.HostNaoEncontrado -> AvisoServidor.HOST_NAO_ENCONTRADO
     ResultadoTesteServidor.Indisponivel -> AvisoServidor.INDISPONIVEL
     is ResultadoTesteServidor.SemConexao -> AvisoServidor.SEM_CONEXAO
 }
+
+internal fun ResultadoTesteServidor.impressaoParaConfiar(): String? = (this as? ResultadoTesteServidor.CertificadoInvalido)?.impressao

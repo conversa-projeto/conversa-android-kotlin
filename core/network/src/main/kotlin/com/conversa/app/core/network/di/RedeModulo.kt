@@ -10,6 +10,8 @@ import com.conversa.app.core.network.http.BASE_FICTICIA
 import com.conversa.app.core.network.http.EnderecoInterceptor
 import com.conversa.app.core.network.json.ConversaJson
 import com.conversa.app.core.network.realtime.RealtimeClient
+import com.conversa.app.core.network.tls.CertificadoConfiadoProvider
+import com.conversa.app.core.network.tls.ConfiancaServidor
 import dagger.Module
 import dagger.Provides
 import dagger.hilt.InstallIn
@@ -17,6 +19,7 @@ import dagger.hilt.components.SingletonComponent
 import java.util.concurrent.TimeUnit
 import javax.inject.Qualifier
 import javax.inject.Singleton
+import javax.net.ssl.HttpsURLConnection
 import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -57,10 +60,16 @@ object RedeModulo {
     /**
      * O único OkHttpClient do app (REST, WebSocket, WHIP/WHEP, imagens).
      * Log só no debug e sem o cabeçalho Authorization (problema #4 do legado).
+     * No debug, também o certificado próprio que a pessoa aceitou na tela Servidor ([ConfiancaServidor]).
      */
     @Provides
     @Singleton
-    fun okHttp(config: ServerConfigProvider, tokens: TokenProvider, eventos: EventosSessao): OkHttpClient {
+    fun okHttp(
+        config: ServerConfigProvider,
+        tokens: TokenProvider,
+        eventos: EventosSessao,
+        certificado: CertificadoConfiadoProvider,
+    ): OkHttpClient {
         val log = HttpLoggingInterceptor().apply {
             level = if (BuildConfig.DEBUG) HttpLoggingInterceptor.Level.BASIC else HttpLoggingInterceptor.Level.NONE
             redactHeader("Authorization")
@@ -73,6 +82,18 @@ object RedeModulo {
             .addInterceptor(EnderecoInterceptor(config))
             .addInterceptor(AutenticacaoInterceptor(tokens, eventos, config))
             .addInterceptor(log)
+            .apply {
+                if (ConfiancaServidor.PERMITIDA) {
+                    val confianca = ConfiancaServidor({ certificado.impressao.value })
+                    val fabrica = confianca.fabricaDeSockets()
+                    val nomes = confianca.verificadorDeNome()
+                    sslSocketFactory(fabrica, confianca)
+                    hostnameVerifier(nomes)
+                    // O vídeo (Media3) abre a URL pelo HttpsURLConnection: as mesmas regras valem lá.
+                    HttpsURLConnection.setDefaultSSLSocketFactory(fabrica)
+                    HttpsURLConnection.setDefaultHostnameVerifier(nomes)
+                }
+            }
             .build()
     }
 

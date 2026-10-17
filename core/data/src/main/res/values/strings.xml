@@ -12,4 +12,6 @@
     <string name="canal_chamada_ativa_descricao">Aviso fixo enquanto uma chamada está ativa</string>
     <string name="canal_sistema">Sistema</string>
     <string name="canal_sistema_descricao">Downloads concluídos e outros avisos do app</string>
+    <string name="canal_conexao">Conexão em segundo plano</string>
+    <string name="canal_conexao_descricao">Aviso fixo enquanto o Conversa fica conectado para receber mensagens e chamadas com o app fechado</string>
 </resources>

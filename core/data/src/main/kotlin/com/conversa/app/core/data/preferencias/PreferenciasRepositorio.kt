@@ -23,6 +23,11 @@ class PreferenciasRepositorio @Inject constructor(private val store: Preferencia
 
     suspend fun alterarSugestoesIa(ligadas: Boolean) = store.salvarSugestoesIa(ligadas)
 
+    /** "Receber com o app fechado" (ADR 0002, opção A), preferência do aparelho. */
+    val conexaoSegundoPlano: Flow<Boolean> = store.conexaoSegundoPlano.distinctUntilChanged()
+
+    suspend fun alterarConexaoSegundoPlano(ligada: Boolean) = store.salvarConexaoSegundoPlano(ligada)
+
     /** Qualidade das chamadas: a mídia lê ao abrir, então vale a partir da próxima chamada. */
     val chamada: Flow<ConfigChamada> = store.configChamada.map { ConfigChamada.deTexto(it) }.distinctUntilChanged()
 

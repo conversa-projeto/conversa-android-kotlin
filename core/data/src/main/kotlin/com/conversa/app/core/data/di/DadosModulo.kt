@@ -16,6 +16,7 @@ import com.conversa.app.core.data.preferencias.PreferenciasRepositorio
 import com.conversa.app.core.model.FonteConfigChamada
 import com.conversa.app.core.network.auth.TokenProvider
 import com.conversa.app.core.network.config.ServerConfigProvider
+import com.conversa.app.core.network.tls.CertificadoConfiadoProvider
 import dagger.Binds
 import dagger.Module
 import dagger.Provides
@@ -28,6 +29,9 @@ import java.time.Clock
 abstract class DadosModulo {
     @Binds
     abstract fun configServidor(repositorio: ServidorRepositorio): ServerConfigProvider
+
+    @Binds
+    abstract fun certificadoServidor(repositorio: ServidorRepositorio): CertificadoConfiadoProvider
 
     @Binds
     abstract fun token(repositorio: SessaoRepositorio): TokenProvider
