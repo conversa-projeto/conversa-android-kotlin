@@ -224,6 +224,9 @@
 - [ ] **FC-219 · P3 · 🆕 `e33ecba` Ícone de grupo na lista** (CON-01): ícone de pessoas com a descrição "Conversa em grupo" no lugar da etiqueta "Grupo".
 - [x] **FC-220 · P2 · 🆕 `ef13c22` Cadastro fechado** (AUT-02): `GET /cadastro` → `{aberto}` (rota pública) antes de mostrar "Não tem conta? Criar conta"; fechado, o link some (o `PUT /usuario` responde 403). ✔ f427612
 - [x] **FC-221 · P2 · 🆕 `ef13c22`/`9c6e8a6` Bots de IA** (CON-16): `bot` nos contatos e na conversa; pílula "Bot" na direta; não oferecer ligação para bot; tirar o bot da lista de confirmação (ele nunca marca `recebida`; pendência S27). ✔ 9594d53
+- [ ] **FC-222 · P2 · 🆕 `ac710eb` Contatos relidos pelo WS 66 e na reconexão** (CON-11, AUT-11): `{"tipo":66}` quando uma conta é criada, renomeada ou excluída → `GET /usuario/contatos`; reler também ao reconectar (como o web); guardar o `criado_em` ("Usuário desde").
+- [ ] **FC-223 · P2 · 🆕 `ac710eb`/`f351190` Pastas de mensagens** (CON-17): só na direta; folha "Pastas de mensagens" no "⋮"; criar (nome até 60), renomear, cor (paleta do web), compartilhar com a outra pessoa, excluir (só o dono, com confirmação); WS 67 relê a lista; limites e mensagens do servidor (doc 01 §10.17).
+- [ ] **FC-224 · P3 · 🆕 `f351190` "Gravando áudio…" na lista de conversas** (CON-01, ENV-16): pontinhos e texto na cor de gravando, com prioridade sobre o "digitando".
 
 ## Bloco E — Mensagens: núcleo (F2)
 
@@ -268,6 +271,8 @@
 - [ ] **FC-315 · P0 · 🆕 Placeholder da votação** (MSG-20): até a F4, a bolha tipo 8 mostra "📊 Votação" + "Abra no computador para votar". Nunca deixar a bolha vazia.
 - [ ] **FC-316 · P0 · 🆕 `12cf0cf` Respostas de postagem não podem prender o contador** (MSG-22, mínimo): as respostas ficam fora de `/mensagens`, mas contam em `mensagens_sem_visualizar`, viram a prévia da lista e chegam no WS 2, no WS 3 e no push. Ler `postagem` no DTO, chamar `POST /postagem/visualizar {postagem_id}` quando a postagem aparece, tratar o WS 64 e não reconsultar em laço os ids do WS 3 que são respostas. Achado no emulador em 2026-10-13: depois de abrir o grupo, "1 não lida" para sempre.
 - [ ] **FC-317 · P1 · 🆕 `12cf0cf`/`d202c06` Bolha de postagem com respostas** (MSG-22, MSG-07): "Postagem · <remetente>", título, contagem ("Nenhuma resposta ainda"/"1 resposta"/"N respostas"), selo "N novas", as 2 últimas (`ultimas`), "Ver todas as N"/"Mostrar menos" (`GET /postagem/respostas?id=`), "Mensagem apagada", campo "Responder à postagem" (`PUT /mensagem {…, postagem_id}`); classificação depois de Excluída e Chamada, antes de Imagem. 🆕 `e33ecba`: o cartão ocupa a largura toda; "Responder à postagem" leva ao campo do chat (faixa "Respondendo à postagem de <remetente>", qualquer conteúdo, `postagem_id`) em vez de um campo dentro do cartão; avatar em cada resposta.
+- [ ] **FC-318 · P2 · 🆕 `ac710eb`/`f351190` Pasta aberta e marcas nas bolhas** (MSG-23, MSG-24): `pastas` (opcional) nas mensagens; até 3 bolinhas na cor da pasta; tela da pasta com `GET /pasta/mensagens` (50 por página, `antes`), "Ver na conversa", "Tirar da pasta" (um ou vários; DELETE com corpo JSON), sem "Pedir confirmação" nem "Ocultar".
+- [ ] **FC-319 · P1 · 🆕 `ac710eb`/`f351190` Localização na conversa** (MSG-25, CHA-18, NOT-02, ATV-01): conteúdo tipo 9 (`{"pontos":[…],"rota"?,"distancia"?,"duracao"?}` como texto); bolha com mapa (tiles do OSM, User-Agent do app, "© OpenStreetMap"), visualizador com satélite (Esri), "Abrir no Google Maps"; fórmulas de distância e tempo do web; rótulo "Localização" nas prévias, citações e atividades. Hoje aparece como conteúdo desconhecido.
 
 ## Bloco F — Anexos e mídia (F3)
 
@@ -324,6 +329,9 @@
 - [ ] **FC-419 · P2 · 🆕 `769bd7d` Recursos do servidor** (GER-08, ANX-12): `GET /recursos` → `{transcricao, ia}` uma vez por sessão; sem transcritor, esconder "Transcrever" (o já transcrito continua aparecendo).
 - [ ] **FC-420 · P3 · 🆕 `e33ecba` Zoom no ponto da pinça** (ANX-04): o visualizador amplia em torno do centro; ampliar no ponto entre os dedos, como o web faz no ponteiro.
 - [x] **FC-421 · P2 · 🆕 `ef13c22` Duração e onda do áudio** (ANX-10, ANX-11): mandar `duracao` e `intensidade` no `PUT /anexo`; ler nos conteúdos; duração antes de tocar e onda no player, sem baixar. Sem isso, o áudio do Android aparece no web só com a barra simples. ✔ 2f0b29d
+- [ ] **FC-422 · P3 · 🆕 `f351190` Velocidade do áudio** (ANX-18): botão 1x → 1,5x → 2x → 3x, a mesma para todos os áudios, guardada no aparelho.
+- [ ] **FC-423 · P3 · 🆕 `ac710eb` Espaço usado** (ANX-17): `GET /usuario/espaco` → "Armazenamento" no Perfil, com o texto do web.
+- [ ] **FC-424 · P3 · 🆕 `f351190` Anexos de todas as conversas** (ANX-13): `GET /anexos?conversa=0`, com o nome da conversa em cada item; avaliar onde entra no app (o web tem a aba Anexos na barra).
 
 ## Bloco G — Ações sobre mensagens (F4)
 
@@ -389,6 +397,8 @@
 - [ ] **FC-524 · P2 · 🆕 `d202c06` Pesquisa na conversa e destaque** (PES-01, MSG-06): painel com "N resultados para “termo”"/"Nenhuma mensagem com “termo”", autor, quando e trecho com o termo destacado; ao ir para a mensagem, faixa da largura toda (1,5 s + 0,7 s de saída). 🆕 `6d20ff7`/`e33ecba`: a pesquisa na conversa traz também as mensagens dos chats das ligações feitas nela, com o selo "no chat da ligação"; **o Android hoje filtra por `conversaId` (`MensagensRepositorio.pesquisar`) e jogaria esses resultados fora**, e o `abrirResultado` precisa abrir a conversa do resultado.
 - [ ] **FC-525 · P2 · 🆕 `6d20ff7`/`e33ecba` Pedir confirmação depois do envio** (ENV-27): "Pedir confirmação de leitura" no toque longo (minha mensagem salva, não oculta, que ainda não pede, até 24 h de `coalesce(visivel_em, inserida)`); em grupo, o modal "Quem precisa confirmar" com "Pedir confirmação"; `POST /mensagem/pedir-confirmacao {mensagem_id, usuarios?}`; erro "Não foi possível pedir a confirmação".
 - [ ] **FC-526 · P3 · 🆕 `e33ecba` Código como peça no campo** (ENV-28): "Inserir na mensagem" na janela de código; no campo simplificado, o bloco cercado entra como texto no cursor; com campo por blocos, a peça com prévia, editar e remover — depende de FC-416.
+- [ ] **FC-527 · P2 · 🆕 `f351190` Selecionar mensagens e pôr na pasta** (ENV-29): no celular, toque longo › "Selecionar"; barra "N selecionadas" com "Pôr na pasta" (as pastas da conversa) e "×"; só mensagens salvas (id > 0); `PUT /pasta/mensagens` (até 500).
+- [ ] **FC-528 · P2 · 🆕 `ac710eb`/`f351190` Enviar localização ou trajeto** (ENV-30): "+" › "Localização" (permissão de uso `localizacao`); Local ou Trajeto; busca de endereço (Nominatim), coordenadas digitadas, minha posição (permissão de localização do aparelho), rota de carro (OSRM); "Enviar" na hora ("Inserir na mensagem" depende da FC-416); JSON no formato que o servidor confere, sem `null`.
 
 ## Bloco H — Notificações e push (F5)
 
@@ -514,10 +524,11 @@
 - [ ] **FC-809 · P2 · Página de anexos por conversa** (ANX-13): `GET /anexos?conversa=&direcao=&tipos=&antes=&limite=60`.
 - [ ] **FC-810 · P2 · 🆕 `769bd7d` Privacidade** (CFG-09): "Aparecer offline", "Mostrar o visto por último", "Mostrar quando estou na conversa" (textos do web); `GET /usuario/privacidade`, `PATCH /usuario`; com "Aparecer offline" ligado, as outras duas desabilitadas.
 - [x] **FC-811 · P2 · 🆕 `769bd7d`/`05507a0` Resumo da conversa por IA** (CON-14): "Resumir conversa" no "⋮" (só com `recursos.ia`); períodos "Últimas 24 horas", "7 dias", "30 dias", "Últimas 400 mensagens"; `POST /conversa/resumo` e `GET /conversa/resumo?id=` a cada 2 s; assuntos, pendências e "Ver na conversa"; último resumo por conversa no Room, retomando a consulta. ✔ 110f742 (falta conferir com um servidor de IA)
-- [ ] **FC-812 · P3 · 🆕 `769bd7d` Sistema › Inteligência artificial** (CFG-07): endereço, modelo, token ("O token salvo nunca é mostrado."), "Testar conexão". Uso de administrador: avaliar se fica só no web.
+- [ ] **FC-812 · P3 · 🆕 `769bd7d` Sistema › Inteligência artificial** (CFG-07; 🆕 `ac710eb`: também o servidor de embeddings próprio, com endereço, token e "Testar embeddings"): endereço, modelo, token ("O token salvo nunca é mostrado."), "Testar conexão". Uso de administrador: avaliar se fica só no web.
 - [x] **FC-813 · P1 · 🆕 `ef13c22`/`9c6e8a6` Acessos com as permissões de uso** (CFG-08): 32 permissões (`uso` no `GET /permissoes`); como o web, uma lista de pessoas que se abre, com os grupos e os nomes curtos; as próprias permissões marcadas ficam travadas.
 - [x] **FC-814 · P1 · 🆕 `ef13c22`/`9c6e8a6` Permissões de uso** (GER-09): `GET /usuario/permissoes`; esconder ou travar cada ação; mostrar a mensagem do 403; no perfil, mandar só as chaves que mudaram (TODO 8.9). ✔ 946c410
 - [ ] **FC-815 · P3 · 🆕 `9c6e8a6` Administração de usuários, bots, ferramentas e conhecimento** (CFG-11…14): avaliar se fica só no web, junto da FC-812.
+- [ ] **FC-816 · P2 · 🆕 `ac710eb` Permissões e Acessos depois da junção** (GER-09, CFG-08, AUT-11): `usuarios` saiu (quem tinha ganhou `permissoes`, que o web chama de "Pessoas"); `localizacao` entra no grupo Enviar ("Localização e trajeto"); a lista de Acessos mostra o espaço, o "Usuário desde" e o selo "Bot"; textos do modo aberto com "Pessoas".
 
 ## Bloco K — SIP e extras (F8)
 

@@ -1,6 +1,6 @@
 # 08 — Pendências no servidor (`conversa`) que afetam o Android
 
-**Data:** 2026-10-06 (🆕 S17–S22 em 2026-10-13, servidor em `12cf0cf`; 🆕 S11 e S20 revistas e S25 em 2026-10-15, servidor em `e25c4db`; 🆕 S26–S30 e notas em S4, S7, S10, S11, S12, S19 e S25 em 2026-10-15 (noite), servidor em `ef13c22`) · **Origem:** leitura de `conversa/src/*.ts` durante a auditoria (detalhes e linhas no doc 01).
+**Data:** 2026-10-06 (🆕 S17–S22 em 2026-10-13, servidor em `12cf0cf`; 🆕 S11 e S20 revistas e S25 em 2026-10-15, servidor em `e25c4db`; 🆕 S26–S30 e notas em S4, S7, S10, S11, S12, S19 e S25 em 2026-10-15 (noite), servidor em `ef13c22`; 🆕 S31–S39 e notas em S4, S7, S10, S12, S16, S27 e S28 em 2026-10-16, servidor em `ac710eb`) · **Origem:** leitura de `conversa/src/*.ts` durante a auditoria (detalhes e linhas no doc 01).
 
 > **Nenhuma alteração foi feita no servidor.** Esta lista serve para planejar o trabalho no repositório `conversa`. Itens marcados como **bloqueante** impedem uma funcionalidade P0 do Android.
 
@@ -42,6 +42,7 @@
 3. **`mensagem_referencia`** não checa o acesso à mensagem referenciada (doc 01 §10.3). Isso permite citar ou encaminhar o conteúdo de conversas de que o usuário não participa.
    - 🆕 2026-10-15 (`ef13c22`): agora isso também **dribla as permissões de uso** — ver S28, item 1.
 4. 🆕 2026-10-15 (`ef13c22`): **ferramentas externas dos bots** fazem o servidor chamar qualquer endereço http(s), inclusive a rede interna — ver S29.
+5. 🆕 2026-10-16 (`ac710eb`): os testes de IA e de embeddings mandam o **token salvo** para o endereço que veio na tela — ver S39. E a localização do usuário vai do aparelho para serviços públicos de terceiros (mapa, endereço, rota) — ver S36.
 
 ### S5 · Figurinhas não são servidas pelo servidor de produção
 
@@ -60,6 +61,7 @@
 - E-mail duplicado no cadastro, segundo `PUT /sip`, strings acima do limite da coluna (nome 100, login 50, dispositivo 50/15, extensão 10, emoji 10…) e FKs inválidas viram **500** com o texto do Postgres (doc 01 §3, pegadinha 42).
 - **Proposta:** validar o tamanho no `esquemas.ts` (`maxLength`) e mapear `unique_violation` → **409** e `foreign_key_violation` → **400/404**, com mensagens em português. O Android passa a mostrar mensagens corretas sem precisar adivinhar.
 - 🆕 2026-10-15 (`ef13c22`): o cadastro pelo administrador (`PUT /usuario/novo`) usa a mesma rotina do cadastro (`criarConta`): e-mail repetido continua dando **500**. As rotas novas de bots, ferramentas e base de conhecimento já validam tamanho e duplicidade com 400 em português.
+- 🆕 2026-10-16 (`ac710eb`): as rotas de pastas validam o nome (até 60) e a cor (até 20) com 400. Já o `PATCH /parametros` não limita o tamanho dos campos: um endereço ou token com mais de **5000** caracteres (a coluna `parametros.valor`, migração 005) dá **500** com a mensagem do Postgres. Vale também para `ia_embeddings_url` e `ia_embeddings_token`, novos. Na prática, raro (só administração).
 
 ### S8 · Criação de conversa não atômica
 
@@ -77,6 +79,7 @@
 - **Proposta:** `GET /api/recursos` (para qualquer usuário logado) → `{transcricao:boolean, sip:boolean, gravacao:boolean, versao_api:"…"}`.
 - 🆕 2026-10-13: **parcialmente atendida** em `b8ea0c2`: `GET /api/recursos` existe, para qualquer usuário logado, e devolve `{transcricao, ia}` (doc 01 §13.3). Ainda faltam `versao_api` (e `sip`/`gravacao`, se fizerem sentido).
 - 🆕 2026-10-15 (`ef13c22`): `GET /recursos` ganhou `conhecimento` (base de conhecimento dos bots), e surgiu `GET /api/cadastro` **público** (`{aberto}`), que a tela de login pode usar antes do login. `versao_api` continua faltando; com a mudança incompatível de `GET /atividades` (S26), ela fica mais necessária.
+- 🆕 2026-10-16 (`ac710eb`): o critério de `conhecimento` mudou: agora basta haver endereço de embeddings (o próprio, `ia_embeddings_url`, ou o `ia_url`) e o modelo de embeddings. Pode vir **`ia: false, conhecimento: true`**, e um cliente que lia `conhecimento` como "IA ligada" passa a errar. Não há recurso para os mapas da localização (S36), e o código de permissão `usuarios` sumiu sem versão (S35): `versao_api` continua faltando.
 
 ### S11 · Ambiguidade do `tipo` da chamada
 
@@ -99,6 +102,7 @@
   - Um `CHANGELOG-API.md` no servidor.
   - Versão da API no login ou em `/recursos`.
 - 🆕 2026-10-15 (`ef13c22`): o commit trocou uma chave de resposta (`nova` → `pendente` em `GET /atividades`) sem versão nem aviso, e o OpenAPI não pega isso porque as respostas não têm esquema (S26). É o caso que esta pendência queria evitar.
+- 🆕 2026-10-16 (`ac710eb`): de novo, sem versão: o código `usuarios` deixou de existir (S35), entraram chaves em respostas antigas (`pastas` nas mensagens; `criado_em` nos contatos; `criado_em`, `bot` e `espaco` em `GET /permissoes`) e dois tipos de WebSocket (66 e 67). O OpenAPI mostra as rotas novas, mas não as respostas, e o WebSocket continua fora dele.
 
 ### S13 · JWT sem renovação
 
@@ -121,6 +125,7 @@
 
 - Em `GET /conversas`, `ultima_mensagem_texto` vem `""` para arquivo, áudio, gravação e chamada (doc 01 §11.2). O cliente não sabe o que foi: o web mostra "Sem mensagens"; o Android mostra "Anexo ou chamada".
 - **Proposta:** incluir `ultima_mensagem_tipo` (tipo do primeiro conteúdo) na lista, para a prévia dizer "Áudio", "Arquivo", "Chamada perdida"…
+- 🆕 2026-10-16 (`ac710eb`): a localização (tipo 9) ganhou texto na prévia (`"localização"`), mas arquivo, áudio, gravação e chamada continuam `""`. A proposta segue valendo.
 
 ### S17 · Respostas de postagem contam como mensagens do fluxo em `/conversas` e `/mensagens/novas` 🆕 (2026-10-13, `12cf0cf`)
 
@@ -206,6 +211,10 @@
   5. **Excluir bot** tira o bot dos grupos sem WS 40: os outros membros só veem a saída ao recarregar.
 - **Efeito:** tiques de entrega errados em todo grupo com bot; confirmações que não fecham; ligação que não serve para nada.
 - **No app (2026-10-16, FC-221):** os itens 2 e 3 estão contornados: a confirmação vai com a lista explícita sem os bots, e o app não oferece ligar para bot nem convidá-lo. O item 1 (tiques) depende do servidor.
+- 🆕 2026-10-16 (`ac710eb`):
+  - item 4: `GET /permissoes` (administração) passou a trazer `bot` em `usuarios[]`; no chat, continua só `GET /usuario/contatos`;
+  - item 5: criar, renomear e excluir bot agora gera **WS 66** (contatos), mas a saída dos grupos continua sem WS 40;
+  - **localização:** nenhum bot tem a permissão `localizacao` (a migração 055 deixou todos de fora e o bot novo nasce com `emoji`, `responder` e `reagir`), e não há ferramenta para enviar uma. O bot lê a localização no histórico (`[localização: …]`/`[trajeto: …]`), mas não consegue mandar uma de volta. Se fizer falta, uma ferramenta `enviar_localizacao` seguiria a mesma regra das outras (só com a permissão).
 - **Proposta:** (1) o bot marcar `recebida` (e `visualizada`) de toda mensagem da conversa ao responder, ou o agregado ignorar bots; (2) deixar bots fora da lista padrão de confirmação (e recusar bot em `confirmacao_usuarios`); (3) recusar bot em `PUT /chamada/iniciar` e `PUT /chamada/usuario` (400); (4) mandar `bot` (ou `destinatario_bot`) em `/conversas` e `/conversa/usuarios`; (5) WS 40 ao tirar o bot dos grupos.
 
 ### S28 · Permissões de uso: arestas 🆕 (2026-10-15, `ef13c22`)
@@ -218,8 +227,10 @@
   5. **Não conferidas no servidor:** `compartilhar_tela`, `cores` e `config_chamadas` (só o cliente esconde). Para `compartilhar_tela` isso permite compartilhar a tela mesmo sem a permissão.
   6. **Vídeo pela extensão:** `ogg` conta como vídeo (um áudio `.ogg` enviado como arquivo pede `video`); anexo desconhecido conta como `arquivo`.
   7. **Sem aviso:** não há evento quando um administrador muda as permissões de alguém; o cliente só descobre no 403 ou ao reler `GET /usuario/permissoes`.
+  8. 🆕 2026-10-16 (`ac710eb`) **A nova `localizacao` também é driblada pelo encaminhamento** (item 1): uma mensagem marcada como encaminhada com conteúdo tipo 9 só pede `encaminhar`. O servidor ainda confere o **formato** da localização (400), mas não a permissão. E a ordem é "formato antes da permissão": quem não tem `localizacao` e manda um JSON errado leva 400, não 403.
+  9. 🆕 2026-10-16 (`ac710eb`) **Pastas não têm permissão de uso:** qualquer pessoa cria e compartilha pastas na conversa direta; o administrador não tem como desligar.
 - **Efeito:** o item 1 anula as permissões de conteúdo para quem conhece a API; os itens 2–4 dão 403 em situações que o usuário não entende; o item 7 deixa botões aparecendo até o 403.
-- **Proposta:** (1) no encaminhamento, copiar os conteúdos da mensagem original no servidor (e conferir o acesso a ela) em vez de aceitar os do cliente, e conferir `agendar`/`postagem`/`confirmacao` também no encaminhamento; (2) usar uma checagem de emoji de verdade (`\p{Emoji_Presentation}` ou `\p{Extended_Pictographic}` sem os símbolos de texto) e conferir também título, votação e emoji do grupo; (3) liberar o "desfazer" sem a permissão; (4) conferir só os campos que mudam; (5) conferir `compartilhar_tela` no sinal `{acao:'tela'}` (WS 57); (6) tirar `ogg` da lista de vídeo; (7) um WS (por exemplo 61 ou um tipo novo) ao mudar as permissões da pessoa.
+- **Proposta:** (1) no encaminhamento, copiar os conteúdos da mensagem original no servidor (e conferir o acesso a ela) em vez de aceitar os do cliente, e conferir `agendar`/`postagem`/`confirmacao` também no encaminhamento; (2) usar uma checagem de emoji de verdade (`\p{Emoji_Presentation}` ou `\p{Extended_Pictographic}` sem os símbolos de texto) e conferir também título, votação e emoji do grupo; (3) liberar o "desfazer" sem a permissão; (4) conferir só os campos que mudam; (5) conferir `compartilhar_tela` no sinal `{acao:'tela'}` (WS 57); (6) tirar `ogg` da lista de vídeo; (7) um WS (por exemplo 61 ou um tipo novo) ao mudar as permissões da pessoa; 🆕 (8) a proposta (1) resolve também o tipo 9 (copiar o conteúdo da original); (9) se a organização quiser controlar, uma permissão de uso `pastas`.
 
 ### S29 · Ferramentas externas: o servidor chama qualquer endereço 🆕 (2026-10-15, `ef13c22`)
 
@@ -235,12 +246,88 @@
 - **Efeito:** só administração (o celular não usa): mensagem de erro ruim para documentos grandes e documentos presos em "processando".
 - **Proposta:** (1) aumentar o `client_max_body_size` só para `/api/conhecimento/documento`, ou baixar o limite do servidor para o que passa no nginx (com 400 em português); (2) ao subir a API, recolocar na fila os documentos com status 1; avisar o fim por WebSocket.
 
+### S31 · Pastas: contagem, mensagens ocultas e pasta sem dono 🆕 (2026-10-16, `ac710eb`)
+
+- **Hoje** (`pastas.ts`, `listarPastas`, `alterarPasta`, `mensagensDaPasta`; `mensagens.ts`, `excluirMensagem`; doc 01 §10.17):
+  1. **Contagem sem filtro:** `mensagens` em `PastaResposta` é o `count` de `pasta_mensagem`, sem olhar `excluida_em` nem a visibilidade. Conta mensagens ocultas e, numa pasta compartilhada, a agendada que o dono pôs e que a outra pessoa ainda não vê (ela conta para a outra pessoa, mas não aparece no `GET /pasta/mensagens` dela).
+  2. **Mensagem oculta fica na pasta:** `DELETE /mensagem` só marca `excluida_em`; a mensagem continua nas pastas e em `GET /pasta/mensagens`, com o conteúdo original (como no chat). `PUT /pasta/mensagens` também aceita pôr uma mensagem oculta.
+  3. **Sem aviso:** ocultar a mensagem e apagar uma agendada (que sai das pastas pelo cascade) não geram WS 67; a contagem muda sem evento.
+  4. **Quem sai da conversa:** as pastas da pessoa continuam. Uma pasta compartilhada dela fica visível e editável para quem ficou, mas ninguém mais consegue renomeá-la nem excluí-la (o dono leva 403 por não ser mais membro).
+- **Efeito:** o número da pasta não bate com o que a tela mostra; a pasta guarda "Mensagem oculta" sem o usuário saber; uma pasta compartilhada pode ficar sem ninguém que a apague.
+- **Proposta:** (1) contar só as mensagens que o usuário vê (`excluida_em is null` e a regra de `visivel_em`), ou devolver as duas contagens; (2) decidir se a oculta sai das pastas ao ocultar (ou se a lista da pasta a esconde); (3) WS 67 a quem vê a pasta quando uma mensagem dela é ocultada ou apagada; (4) ao sair da conversa, apagar as pastas da pessoa (ou passar a compartilhada para a outra).
+
+### S32 · Pastas: WS 67 sem o que mudou e com ids não conferidos 🆕 (2026-10-16, `ac710eb`)
+
+- **Hoje** (`pastas.ts:69-78`, `avisar`; `incluirMensagensPasta`, `tirarMensagensPasta`):
+  1. Ao criar, alterar e excluir, o evento é só `{conversa_id, pasta_id}`: o cliente não sabe se a pasta nasceu, mudou ou sumiu.
+  2. Em `acao: "tirar"`, `mensagens` é o array **do corpo**, como veio (com repetidos e com ids que nunca estiveram na pasta, até de outra conversa); em `"incluir"`, todos os ids válidos, inclusive os que já estavam. O evento sai mesmo com `incluidas`/`tiradas` = 0.
+  3. Vai também a quem fez a ação (todas as conexões dele).
+- **Efeito:** um cliente que aplica o delta pode marcar ou desmarcar bolhas erradas; o seguro é recarregar `GET /pastas` (e as mensagens visíveis) a cada evento, o que custa mais requisições.
+- **Proposta:** mandar `acao: "criada" | "alterada" | "excluida"` nos três casos (ou a própria `PastaResposta`); em `incluir`/`tirar`, só os ids que de fato entraram ou saíram (o `returning` já existe no código) e nenhum evento quando nada mudou.
+
+### S33 · `DELETE /pasta/mensagens` com corpo JSON 🆕 (2026-10-16, `ac710eb`)
+
+- **Hoje** (`rotas.ts:223`, esquema `mensagensPasta`): tirar mensagens da pasta é um `DELETE` com corpo `{pasta_id, mensagens}`. É a única rota da API com corpo em `DELETE`; as outras exclusões usam `?id=`.
+- **Efeito:** o HTTP não define sentido para corpo em `DELETE`, e há bibliotecas, proxies e caches que descartam o corpo ou recusam a requisição. No Android, o Retrofit não aceita `@DELETE` com `@Body` (é preciso `@HTTP(method = "DELETE", hasBody = true)`); o OkHttp aceita. Se um proxy no caminho tirar o corpo, o servidor responde 400 de validação.
+- **Proposta:** trocar por `POST /pasta/mensagens/tirar` (mesmo corpo) ou `DELETE /pasta/mensagens?pasta_id=&mensagens=1,2,3`, mantendo a rota atual por um tempo.
+
+### S34 · WS 66 sai antes de a conta estar gravada 🆕 (2026-10-16, `ac710eb`)
+
+- **Hoje** (`usuarios.ts:111-123`, `criarConta`; `:129-158`, `cadastrarUsuario`; `bots.ts:122-147`, `incluirBot`; `websocket.ts:219-224`):
+  1. `criarConta` manda o WS 66 logo depois do `insert`. No `PUT /usuario/novo` de pessoa, isso acontece **dentro da transação**: o aviso sai antes do commit, do avatar e da lista de permissões. No bot, sai depois da transação dele, mas antes do avatar e da lista.
+  2. O evento vai a todas as conexões de todos os usuários e não traz nada (nem o id).
+  3. Não sai quando muda só o avatar ou o telefone, que também aparecem nos contatos.
+- **Efeito:** quem recarrega `GET /usuario/contatos` assim que recebe o 66 pode não ver a conta nova (o commit ainda não aconteceu) ou vê-la sem avatar; como não vem outro aviso, a lista fica desatualizada até a próxima mudança ou recarga. Com muitas conexões, cada mudança faz todo mundo recarregar a lista inteira.
+- **Proposta:** mandar o 66 depois do commit e de todas as gravações (no fim de `cadastrarUsuario`, `incluirUsuario` e das rotas de bot); incluir `usuario_id` e o que aconteceu (`criado`, `alterado`, `excluido`); avisar também troca de avatar e de telefone.
+
+### S35 · Migração 054: `usuarios` virou `permissoes` sem aviso 🆕 (2026-10-16, `ac710eb`)
+
+- **Hoje** (`migracoes/054.sql`, `permissoes.ts`):
+  1. Quem tinha `usuarios` ("Cadastrar usuários e bots") ganhou `permissoes`, que também concede e retira **qualquer** permissão e cuida de **todos** os bots. É uma ampliação de acesso feita pela migração, sem ninguém escolher.
+  2. **Modo aberto:** ele dura enquanto ninguém tem `permissoes`. Se uma instalação estava assim e alguém tinha recebido `usuarios`, a migração dá `permissoes` a essa pessoa e o modo aberto **acaba** ao subir a versão nova: as outras contas perdem, sem aviso, o que tinham só pelo modo aberto (as permissões de administração e as de uso que não estavam gravadas).
+  3. O código `usuarios` sumiu das listas: `PUT`/`DELETE /permissao/usuario` com ele dão 404, e um cliente com o código fixo (o Android tem `CodigoPermissao.USUARIOS`) fica com código morto. Não há versão nem changelog (S12).
+- **Efeito:** um administrador pode descobrir só depois que alguém passou a mexer nas permissões de todos; "cadastrar pessoas" e "mudar acessos" deixaram de ser coisas separadas.
+- **Proposta:** registrar a mudança num `CHANGELOG-API.md` e nas notas da versão, com o aviso de revisar quem tem `permissoes` depois de atualizar; se a separação fizer falta, voltar a ter uma permissão só de cadastro.
+
+### S36 · Localização: mapa, endereço e rota dependem de serviços públicos 🆕 (2026-10-16, `ac710eb`)
+
+- **Hoje:** o servidor só guarda e confere o JSON da localização (doc 01 §10.16). O mapa, a busca de endereço, o nome do lugar e a rota vêm de serviços públicos chamados **direto pelo cliente**: no web, `tile.openstreetmap.org`, `nominatim.openstreetmap.org` e `router.project-osrm.org` (`conversa-web/src/services/mapas.ts`). Não há parâmetro para trocar esses endereços nem proxy, e `GET /recursos` não diz nada sobre mapas.
+- **Efeito:**
+  - **Privacidade:** as coordenadas, o que a pessoa digita na busca e o IP do aparelho vão para terceiros, fora do controle da instalação. Pode não servir a uma empresa que hospeda o próprio servidor.
+  - **Regras de uso:** os servidores públicos do OpenStreetMap limitam o uso (o Nominatim pede no máximo 1 requisição por segundo e a identificação do aplicativo; os tiles pedem `User-Agent` identificável e proíbem uso pesado), e o servidor de demonstração do OSRM não tem garantia de funcionamento. Com muitas pessoas, o app pode ser bloqueado, e o Android teria de mandar os cabeçalhos certos.
+  - **Rede fechada:** numa instalação sem internet, a localização fica sem mapa e sem busca de endereço.
+- **Proposta:** parâmetros no servidor com os endereços de tiles, geocodificador e roteador (padrão: os públicos), expostos em `GET /recursos`; opcionalmente, um proxy com cache no servidor (por exemplo `/api/mapa/busca` e `/api/mapa/rota`), que também cuide do `User-Agent` e do limite de taxa.
+
+### S37 · Localização: validação recusa `null` e não diz o campo 🆕 (2026-10-16, `ac710eb`)
+
+- **Hoje** (`mensagens.ts:241-261`, `localizacaoValida`):
+  1. Os campos opcionais (`nome`, `rota`, `distancia`, `duracao`) aceitam "ausente", mas **não `null`**: um cliente que serializa os nulos leva 400.
+  2. Qualquer desvio dá a mesma mensagem, `Localização inválida!`, sem dizer o campo.
+  3. A `rota` não é conferida (qualquer string, até os 200.000 caracteres do conteúdo); `distancia` e `duracao` são aceitas com um ponto só; chaves a mais são guardadas e repassadas a todos.
+- **Efeito:** erro difícil de diagnosticar no cliente; dados sem sentido (rota que não decodifica, distância num ponto só) chegam aos outros clientes, que precisam se defender.
+- **Proposta:** tratar `null` como ausente; dizer o campo na mensagem (ex.: `Localização inválida: a rota só vale com dois pontos.`); conferir que a `rota` é uma polyline válida (só os caracteres do formato, tamanho razoável); recusar ou descartar chaves desconhecidas.
+
+### S38 · Espaço usado: conta uploads não concluídos e recalcula tudo a cada chamada 🆕 (2026-10-16, `ac710eb`)
+
+- **Hoje** (`anexos.ts:33-58`, `espacoPorUsuario`; `permissoes.ts`, `listarPermissoes`):
+  1. A soma junta os conteúdos de anexo com a tabela `anexo` sem olhar `upload_status`: anexo pendente ou que falhou (o arquivo não está no MinIO) conta como espaço usado.
+  2. Em `GET /permissoes` (sem filtro de usuário), a consulta percorre **todos** os conteúdos de anexo de todas as mensagens a cada chamada.
+  3. Cada pessoa só consulta o próprio (`GET /usuario/espaco`); o dos outros sai só em `GET /permissoes`, junto da lista inteira.
+- **Efeito:** um número um pouco maior que o real quando há uploads que falharam; a tela "Pessoas" fica mais lenta conforme o histórico cresce.
+- **Proposta:** filtrar `upload_status = 1`; guardar o total por usuário (atualizado ao confirmar o upload) ou calcular sob demanda, por pessoa.
+
+### S39 · Testes de IA e de embeddings mandam o token salvo ao endereço digitado 🆕 (2026-10-16, `ac710eb`)
+
+- **Hoje** (`parametros.ts:117-132`, `testarEmbeddings`; `:134-148`, `testarIa`): com o token em branco, o teste usa o token **salvo** (o `ia_embeddings_token` se veio `url`, senão o `ia_token`) e o manda para o endereço que veio **no corpo**, mesmo que seja outro host. O `testarIa` (`b8ea0c2`) já fazia o mesmo com o `ia_token`.
+- **Efeito:** os tokens nunca saem pela API (`GET /parametros` só diz se estão preenchidos), mas quem tem a permissão `parametros` — ou qualquer conta no modo aberto — consegue lê-los apontando o teste para um servidor seu. Contraria a própria regra do commit de que o token da IA não vai para outro host.
+- **Proposta:** só usar o token salvo quando o endereço do teste for igual ao salvo; com outro endereço, exigir o token digitado.
+
 ## Prioridade sugerida no servidor
 
 | Ordem | Itens | Por quê |
 |---|---|---|
 | 1 | S1, S2, 🆕 S18 | Sem eles, o Android não toca nem notifica de forma confiável |
-| 2 | S4, 🆕 S22, 🆕 `ef13c22` S29, S28 (item 1) | Segurança (ouvir chamadas e baixar anexos alheios; presença em conversa alheia; 🆕 servidor chamando a rede interna; encaminhamento driblando as permissões) |
-| 3 | S3, S13, 🆕 S17, 🆕 `ef13c22` S26 | Qualidade das notificações, do contador de não lidas (🆕 e do de atividades) e da sessão no celular |
-| 4 | S7, S8, S9, S11, 🆕 S19, S20 (🆕 2026-10-15: só o caso do chat de outra ligação), 🆕 `ef13c22` S27, S28 (itens 2–7) | Robustez para todos os clientes |
-| 5 | S5, S6, S10, S12, S14, S15, S16, 🆕 S21, 🆕 S25, 🆕 `ef13c22` S30 | Higiene e evolução |
+| 2 | S4, 🆕 S22, 🆕 `ef13c22` S29, S28 (item 1; 🆕 `ac710eb` e item 8), 🆕 `ac710eb` S39, S36 | Segurança (ouvir chamadas e baixar anexos alheios; presença em conversa alheia; 🆕 servidor chamando a rede interna; encaminhamento driblando as permissões; 🆕 token salvo indo a endereço digitado; coordenadas indo a serviços de terceiros) |
+| 3 | S3, S13, 🆕 S17, 🆕 `ef13c22` S26, 🆕 `ac710eb` S35 | Qualidade das notificações, do contador de não lidas (🆕 e do de atividades) e da sessão no celular; 🆕 mudança de acesso feita pela migração, sem aviso |
+| 4 | S7, S8, S9, S11, 🆕 S19, S20 (🆕 2026-10-15: só o caso do chat de outra ligação), 🆕 `ef13c22` S27, S28 (itens 2–7 e 🆕 9), 🆕 `ac710eb` S31, S32, S33, S34, S37 | Robustez para todos os clientes |
+| 5 | S5, S6, S10, S12, S14, S15, S16, 🆕 S21, 🆕 S25, 🆕 `ef13c22` S30, 🆕 `ac710eb` S38 | Higiene e evolução |

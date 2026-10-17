@@ -295,6 +295,7 @@
 - [x] 🆕 `769bd7d` Seção recolhível "Chamadas (N)" no fim da lista, antes de "Arquivadas": conversas com `chamada:true` não fixadas nem arquivadas; com termo no filtro, tudo junto (CON-01, FC-218) — `chamada` na conversa (Room v6); no emulador, "Chamadas (4)" com os chats das ligações ✔ 04c5c14
 - [x] 🆕 `b8ea0c2` Emoji ou imagem do grupo no lugar da inicial em todos os avatares de grupo (`emoji`, `avatar_url`) (CON-15, GER-07, FC-217) — `Avatar(emoji = …)` na lista, no cabeçalho do chat e no "Enviar para" ✔ 04c5c14
 - [x] 🆕 `e33ecba` Ícone de pessoas com a descrição "Conversa em grupo" no lugar da etiqueta "Grupo" (CON-01, FC-219) — ícone `Group` ✔ 04c5c14
+- [ ] 🆕 `f351190` "Gravando áudio…" na lista (pontinhos e texto na cor de gravando), com prioridade sobre o "digitando" (CON-01, ENV-16, FC-224)
 
 ### 2.7 Filtro e "Nova conversa" (FC-206, CON-02)
 - [x] Campo de busca: filtra por título e prévia — sem acento e sem maiúscula (`conversaCombina`)
@@ -321,6 +322,7 @@
 - [x] → `GET /conversas` → abrir o chat — abre o chat (provisório até a etapa 3)
 - [x] Falha no meio → mostrar o erro (e registrar a conversa órfã no log); depende de S8 para ficar atômico — erro no Snackbar; `Timber.w` com o id da conversa incompleta
 - [x] 🆕 `ef13c22`/`9c6e8a6` Bots de IA: ler `bot` nos contatos e na conversa; pílula "Bot" no cabeçalho da direta; não oferecer ligação para bot; tirar o bot da lista de quem precisa confirmar (o bot nunca marca `recebida`) (CON-16, FC-221) — `Contato.bot` (Room v9, coluna nova com padrão 0); na direta com bot: a pílula "Bot", sem ligar (cabeçalho e folha do perfil) e sem pedir confirmação; nos grupos, o "Quem precisa confirmar" sem os bots e o "todos" vira a lista explícita sem eles (`listaDeConfirmacao`); bot fora do "Adicionar à chamada". No emulador, com o C marcado como bot por instantes na base de dev (`ativo = false`, apagado depois) ✔ 9594d53
+- [ ] 🆕 `ac710eb` Contatos relidos no WS 66 (conta criada, renomeada ou excluída) e na reconexão, como o web; guardar o `criado_em` (Room) para o "Usuário desde" (CON-11, AUT-11, FC-222)
 
 ### 2.10 Grupos (FC-211, FC-212, CON-07, CON-08)
 - [x] Tela "Criar grupo": "Nome do grupo", busca, checkboxes de contatos — `CriarGrupo.kt`
@@ -483,6 +485,7 @@
 - [x] Download sob demanda para o cache: arquivo `.part` → rename ao terminar — `ArquivosLocais.baixar` (o mesmo do "Abrir"), só no primeiro play; agora com URL vencida → pede outra e tenta de novo (+ teste `ArquivosLocaisTest`; achado no emulador com `URL_VENCIDA=1`) ✔ 1ceaad0
 - [x] Áudio de outro não ouvido: botão verde; o primeiro play chama `POST /mensagem/reproduzir {conversa, mensagem}` — verde = `waveform` do FMX (o FMX não tem cor de "não ouvido"); `MensagensRepositorio.marcarReproduzida` (Room otimista + uma chamada; não marca lida) (+ testes). No emulador: `mensagem_status.reproduzida` gravado só no áudio tocado ✔ 1ceaad0
 - [x] Parar o áudio ao sair da conversa ou ao começar uma chamada — 🔄 sair da conversa: `ChatViewModel.onCleared` para o áudio dela (+ teste; no emulador, 0 players ativos depois de voltar); a chamada (etapa 6) deve chamar `PlayerAudio.parar()` — concluído depois (conferido em 2026-10-09): a chamada para o áudio ao começar (`SistemaChamada`) ✔ 5837aec
+- [ ] 🆕 `f351190` Velocidade do áudio: botão 1x → 1,5x → 2x → 3x no player, a mesma para todos os áudios, guardada no aparelho (ANX-18, FC-422)
 
 ### 4.6 Gravação de áudio (FC-406, ANX-11, ENV-16)
 - [x] Transplantar o `AudioRecorderHelper` (pegar `Exception` em `start()`, #48) — `GravadorMediaRecorder` (`:core:media`): AAC/M4A mono 64 kbps (toca no web, no Windows e no Android), qualquer `Exception` ao abrir o microfone vira "Não foi possível iniciar a gravação"; pausa = fecha o trecho e `juntarTrechos` (MediaMuxer, sem recodificar) monta o arquivo. No emulador: 2 trechos juntados = 42,42 s contínuos (1827 quadros AAC) ✔ 399bae5
@@ -534,6 +537,14 @@
 - [ ] Figurinha e gravação com o campo vazio vão na hora; com algo escrito, entram como peça
 - [ ] **Teste:** enviar [texto, imagem, texto, figurinha] e conferir a mesma ordem no web
 - [ ] 🆕 `e33ecba` Código como peça no campo ("Inserir na mensagem"; colar mais de 10 linhas abre a janela) — ⛔ depende da decisão FC-416 (ENV-28, FC-526)
+
+### 4.12 🆕 Localização e trajeto (MSG-25, ENV-30; FC-319, FC-528) — servidor `ac710eb`, web `f351190`
+- [ ] Modelo e formatação (`PontoMapa`, `Localizacao`; distância, tempo, coordenadas, resumo, "Abrir no Google Maps", polyline do OSRM) e o JSON do tipo 9 (lido e escrito sem `null`, como o servidor confere)
+- [ ] `TipoConteudo.LOCALIZACAO` (9) e o rótulo "Localização" nas prévias, na citação, nas atividades e no chat da chamada
+- [ ] Bolha: mapa de tiles do OSM (User-Agent do app, "© OpenStreetMap"), o nome do local ou A → B com a descrição do trajeto, e "Abrir no Google Maps"
+- [ ] Visualizador: o mapa grande com arrastar e pinça, ruas ou satélite (Esri), o nome e as coordenadas ou a descrição do trajeto
+- [ ] Enviar: "+" › "Localização" (permissão de uso `localizacao`), Local ou Trajeto, busca de endereço (Nominatim) e coordenadas digitadas, toque no mapa para marcar, minha posição (permissão de localização do aparelho), rota de carro (OSRM) com debounce; "Enviar" ("Inserir na mensagem" depende da FC-416)
+- [ ] **Teste:** local e trajeto nos dois sentidos com o web (bolha, visualizador, link)
 
 ---
 
@@ -850,6 +861,14 @@
 - [x] Criar: "+" › "Postagem" (só grupo), faixa "Postagem: as respostas ficam embaixo dela" com "Título (opcional)" (até 150) e X "Não postar"; a próxima mensagem vira a postagem (`postagem:{titulo}`) ✔ 2033b39
 - [x] **Teste:** postar e responder dos dois lados (web e Android); o contador zera; a notificação de resposta chega (5.4) — no emulador, com o B pela API (as rotas do web): postar, responder, "Ver todas", resposta do B ao vivo (WS 64) e o contador zerado ✔ 2033b39; a notificação de resposta chegou com o app em segundo plano ✔ 6f9a298
 
+### 7.14 🆕 Pastas de mensagens (CON-17, MSG-23, MSG-24, ENV-29; FC-223, FC-318, FC-527) — servidor `ac710eb`, web `f351190`
+- [ ] DTOs e rotas (`/pastas`, `/pasta`, `/pasta/mensagens` com o DELETE com corpo JSON, `@HTTP(hasBody = true)`); `pastas` (opcional) nas mensagens, guardado no Room; WS 67
+- [ ] Folha "Pastas de mensagens" no "⋮" da direta: lista (nome, cor, compartilhada, contador), criar (até 60), renomear, cor (paleta do web), compartilhar, excluir com a confirmação do web (só o dono)
+- [ ] Selecionar: toque longo › "Selecionar"; barra "N selecionadas" com "Pôr na pasta" e "×"; só mensagens salvas
+- [ ] Marcas na bolha: até 3 bolinhas na cor da pasta (atrás do ✓ na enviada; ao lado e tocáveis na recebida)
+- [ ] Pasta aberta: as mensagens dela (50 por página, `antes`), sem campo; "Ver na conversa", "Tirar da pasta" (uma ou várias), voltar
+- [ ] **Teste:** criar, compartilhar e pôr mensagens com o web do outro lado (WS 67 nos dois sentidos)
+
 ---
 
 ## Etapa 8 — Atividades, pesquisa, perfil e configurações
@@ -883,9 +902,11 @@
 - [x] Avatar: Photo Picker → recorte quadrado central 256×256 → JPEG 85% → upload (4.1) → `PATCH /usuario {id, avatar_anexo_id}` ✔ 143d8d6
 - [x] Remover avatar: `PATCH /usuario {id, avatar_anexo_id:null}` ✔ 143d8d6
 - [x] Avatar com URL expirada → renovar (no máximo a cada 30 s) ✔ 143d8d6
+- [ ] 🆕 `ac710eb` "Armazenamento" (espaço usado, `GET /usuario/espaco`) entre a foto e os dados, e "Usuário desde dd/mm/aaaa" debaixo de "Nome e e-mail visíveis na sua conta.", como o web (ANX-17, AUT-11, FC-423)
 
 ### 8.4 Perfil de outro usuário (FC-803, AUT-10)
 - [x] Toque no avatar da direta (lista ou cabeçalho) → bottom sheet: foto, nome, e-mail, telefone ("Não informado"), "Ligar"; o "Ver anexos" entra com a tela do 8.6 ✔ 4d53ba8 (o "Ver anexos" veio com o 8.6) ✔ 95b9bb5
+- [ ] 🆕 `ac710eb` "Usuário desde" na folha do perfil, só com a data (AUT-11)
 
 ### 8.5 Configurações (FC-804…808)
 - [x] Tela com seções: Perfil, Aparência, Notificações, Chamadas, Permissões, Servidor, Sistema*, Acessos*, Ramal SIP, Sobre — todas, mais "Sair"; o Ramal SIP fica com o SIP (etapa 9) ✔ afd3269
@@ -898,9 +919,10 @@
 - [x] Sistema: `GET /parametros`; editar Firebase (ID do projeto, e-mail, chave — nunca exibida), forçar relay TURN, dias de gravação (0–36500), transcritor (URL, idioma); `PATCH /parametros` só com o que mudou ✔ afd3269
 - [x] Acessos: `GET /permissoes` → tabela usuário × permissão com busca; `PUT /permissao/usuario {usuario_id, codigo}`; `DELETE /permissao/usuario?usuario_id=&codigo=`; aviso de "modo aberto" (no celular, uma linha por usuário com uma caixa por permissão) ✔ afd3269
 - [x] 🆕 `769bd7d` Configurações › Privacidade: "Aparecer offline", "Mostrar o visto por último", "Mostrar quando estou na conversa" (textos do web; `GET /usuario/privacidade`, `PATCH /usuario`; com "Aparecer offline", as outras duas desabilitadas) (CFG-09, FC-810) — `PrivacidadeTela`; muda na hora e volta se o servidor recusar. No emulador, o C viu o A ficar offline e voltar ✔ ab62486
-- [ ] 🆕 `769bd7d` Sistema › "Inteligência artificial" (endereço, modelo, token, "Testar conexão") — uso de administrador; avaliar se fica só no web (CFG-07, FC-812)
+- [ ] 🆕 `769bd7d` Sistema › "Inteligência artificial" (endereço, modelo, token, "Testar conexão") — 🆕 `ac710eb`: e o servidor de embeddings próprio (endereço, token, "Testar embeddings") — uso de administrador; avaliar se fica só no web (CFG-07, FC-812)
 - [x] 🆕 `ef13c22`/`9c6e8a6` Acessos com as permissões de uso: são 32 (6 de administração + 26 de uso, `uso` no `GET /permissoes`); a linha de caixas por pessoa passa da tela. Como o web: lista de pessoas que se abre ("Administração", "N de M"), com os grupos Administração, Enviar, Mensagens, Grupos, Chamadas, Configurações e Outras e os nomes curtos; as próprias permissões marcadas ficam travadas ("Você não pode retirar as próprias permissões") (CFG-08, FC-813) — `gruposDePermissoes`, `quantasDe`, `temAdministracao`, `propriaMarcada` (+ 2 testes); `PermissaoDto.uso`. No emulador: "26 de 32" por pessoa e, aberta, os grupos com as próprias marcadas travadas ✔ 91d5681
 - [ ] 🆕 `9c6e8a6` Usuários, Bots, Ferramentas e Conhecimento (administração): avaliar se ficam só no web, junto da FC-812 (CFG-11…14, FC-815)
+- [ ] 🆕 `ac710eb` Acessos depois da junção: sem `usuarios`, `permissoes` como "Pessoas" (textos do modo aberto), `localizacao` no grupo Enviar ("Localização e trajeto"); espaço, "Usuário desde" e selo "Bot" em cada pessoa (CFG-08, GER-09, AUT-11, FC-816)
 
 ### 8.6 Anexos da conversa (FC-809, ANX-13)
 - [x] A partir do perfil ou do grupo: "Ver anexos" (🆕 `eaa8bac`: no web, os anexos ficam dentro do painel do grupo) — folha do perfil (lista e cabeçalho) e item nos dados do grupo ✔ 95b9bb5
@@ -908,6 +930,7 @@
 - [x] Filtros: Todos / Enviados / Recebidos e Todos / Imagens / Arquivos / Áudios / Gravações ✔ 95b9bb5
 - [x] Imagens em grade; demais em lista (nome, tamanho, data, autor); ações "Abrir mensagem" e "Baixar" — o toque abre: imagem e vídeo no visualizador do chat, PDF no do app, o resto com outro app ✔ 95b9bb5
 - [x] Paginação infinita ✔ 95b9bb5
+- [ ] 🆕 `f351190` Anexos de todas as conversas (`GET /anexos?conversa=0`, com o nome da conversa em cada item): avaliar onde entra no app (ANX-13, FC-424)
 
 ### 8.7 🆕 O que o update de 2026-10-13 quebrou (servidor `12cf0cf`, web `d202c06`) — fazer primeiro
 - [x] Postagens: as respostas ficam fora do fluxo, mas contam nas não lidas e viram a prévia da lista — no emulador, depois de abrir o grupo, ficou "1 não lida" para sempre. Ler `postagem` no DTO, `POST /postagem/visualizar {postagem_id}` quando a postagem aparece, tratar o WS 64 e não reconsultar em laço os ids do WS 3 que são respostas (FC-316) — `MensagensRepositorio.visualizarPostagem` (desconta, marca e relê; chave = resposta mais recente), WS 64/8/65 releem, ids do WS 3 fora do fluxo procurados uma vez (+ testes). No emulador: a resposta presa desde 13/10 zerou; resposta nova com a lista ou com o grupo aberto também ✔ 4ba2643

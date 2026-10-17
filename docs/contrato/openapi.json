@@ -50,8 +50,7 @@
                       }
                     ]
                   }
-                },
-                "additionalProperties": false
+                }
               }
             },
             "application/x-www-form-urlencoded": {
@@ -88,8 +87,7 @@
                       }
                     ]
                   }
-                },
-                "additionalProperties": false
+                }
               }
             },
             "multipart/form-data": {
@@ -126,8 +124,7 @@
                       }
                     ]
                   }
-                },
-                "additionalProperties": false
+                }
               }
             }
           }
@@ -742,6 +739,13 @@
                   },
                   "instrucoes": {
                     "type": "string"
+                  },
+                  "permissoes": {
+                    "maxItems": 100,
+                    "type": "array",
+                    "items": {
+                      "type": "string"
+                    }
                   }
                 }
               }
@@ -797,6 +801,13 @@
                   },
                   "instrucoes": {
                     "type": "string"
+                  },
+                  "permissoes": {
+                    "maxItems": 100,
+                    "type": "array",
+                    "items": {
+                      "type": "string"
+                    }
                   }
                 }
               }
@@ -852,6 +863,13 @@
                   },
                   "instrucoes": {
                     "type": "string"
+                  },
+                  "permissoes": {
+                    "maxItems": 100,
+                    "type": "array",
+                    "items": {
+                      "type": "string"
+                    }
                   }
                 }
               }
@@ -920,6 +938,11 @@
     "/api/contatos/presenca": {
       "get": {
         "operationId": "getApiContatosPresenca"
+      }
+    },
+    "/api/usuario/espaco": {
+      "get": {
+        "operationId": "getApiUsuarioEspaco"
       }
     },
     "/api/usuario/privacidade": {
@@ -4819,6 +4842,564 @@
         "operationId": "postApiEnqueteEncerrar"
       }
     },
+    "/api/pastas": {
+      "get": {
+        "parameters": [
+          {
+            "name": "conversa",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "anyOf": [
+                {
+                  "format": "integer",
+                  "default": 0,
+                  "type": "string"
+                },
+                {
+                  "type": "integer"
+                }
+              ]
+            }
+          }
+        ],
+        "operationId": "getApiPastas"
+      }
+    },
+    "/api/pasta": {
+      "put": {
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": [
+                  "conversa_id",
+                  "nome"
+                ],
+                "properties": {
+                  "conversa_id": {
+                    "anyOf": [
+                      {
+                        "format": "integer",
+                        "default": 0,
+                        "type": "string"
+                      },
+                      {
+                        "type": "integer"
+                      }
+                    ]
+                  },
+                  "nome": {
+                    "type": "string"
+                  },
+                  "cor": {
+                    "maxLength": 20,
+                    "type": "string"
+                  },
+                  "compartilhada": {
+                    "type": "boolean"
+                  }
+                }
+              }
+            },
+            "application/x-www-form-urlencoded": {
+              "schema": {
+                "type": "object",
+                "required": [
+                  "conversa_id",
+                  "nome"
+                ],
+                "properties": {
+                  "conversa_id": {
+                    "anyOf": [
+                      {
+                        "format": "integer",
+                        "default": 0,
+                        "type": "string"
+                      },
+                      {
+                        "type": "integer"
+                      }
+                    ]
+                  },
+                  "nome": {
+                    "type": "string"
+                  },
+                  "cor": {
+                    "maxLength": 20,
+                    "type": "string"
+                  },
+                  "compartilhada": {
+                    "type": "boolean"
+                  }
+                }
+              }
+            },
+            "multipart/form-data": {
+              "schema": {
+                "type": "object",
+                "required": [
+                  "conversa_id",
+                  "nome"
+                ],
+                "properties": {
+                  "conversa_id": {
+                    "anyOf": [
+                      {
+                        "format": "integer",
+                        "default": 0,
+                        "type": "string"
+                      },
+                      {
+                        "type": "integer"
+                      }
+                    ]
+                  },
+                  "nome": {
+                    "type": "string"
+                  },
+                  "cor": {
+                    "maxLength": 20,
+                    "type": "string"
+                  },
+                  "compartilhada": {
+                    "type": "boolean"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "operationId": "putApiPasta"
+      },
+      "patch": {
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": [
+                  "id"
+                ],
+                "properties": {
+                  "id": {
+                    "anyOf": [
+                      {
+                        "format": "integer",
+                        "default": 0,
+                        "type": "string"
+                      },
+                      {
+                        "type": "integer"
+                      }
+                    ]
+                  },
+                  "nome": {
+                    "type": "string"
+                  },
+                  "cor": {
+                    "maxLength": 20,
+                    "type": "string"
+                  },
+                  "compartilhada": {
+                    "type": "boolean"
+                  }
+                }
+              }
+            },
+            "application/x-www-form-urlencoded": {
+              "schema": {
+                "type": "object",
+                "required": [
+                  "id"
+                ],
+                "properties": {
+                  "id": {
+                    "anyOf": [
+                      {
+                        "format": "integer",
+                        "default": 0,
+                        "type": "string"
+                      },
+                      {
+                        "type": "integer"
+                      }
+                    ]
+                  },
+                  "nome": {
+                    "type": "string"
+                  },
+                  "cor": {
+                    "maxLength": 20,
+                    "type": "string"
+                  },
+                  "compartilhada": {
+                    "type": "boolean"
+                  }
+                }
+              }
+            },
+            "multipart/form-data": {
+              "schema": {
+                "type": "object",
+                "required": [
+                  "id"
+                ],
+                "properties": {
+                  "id": {
+                    "anyOf": [
+                      {
+                        "format": "integer",
+                        "default": 0,
+                        "type": "string"
+                      },
+                      {
+                        "type": "integer"
+                      }
+                    ]
+                  },
+                  "nome": {
+                    "type": "string"
+                  },
+                  "cor": {
+                    "maxLength": 20,
+                    "type": "string"
+                  },
+                  "compartilhada": {
+                    "type": "boolean"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "operationId": "patchApiPasta"
+      },
+      "delete": {
+        "parameters": [
+          {
+            "name": "id",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "anyOf": [
+                {
+                  "format": "integer",
+                  "default": 0,
+                  "type": "string"
+                },
+                {
+                  "type": "integer"
+                }
+              ]
+            }
+          }
+        ],
+        "operationId": "deleteApiPasta"
+      }
+    },
+    "/api/pasta/mensagens": {
+      "get": {
+        "parameters": [
+          {
+            "name": "id",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "anyOf": [
+                {
+                  "format": "integer",
+                  "default": 0,
+                  "type": "string"
+                },
+                {
+                  "type": "integer"
+                }
+              ]
+            }
+          },
+          {
+            "name": "antes",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "default": 0,
+              "anyOf": [
+                {
+                  "format": "integer",
+                  "default": 0,
+                  "type": "string"
+                },
+                {
+                  "default": 0,
+                  "type": "integer"
+                }
+              ]
+            }
+          }
+        ],
+        "operationId": "getApiPastaMensagens"
+      },
+      "put": {
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": [
+                  "pasta_id",
+                  "mensagens"
+                ],
+                "properties": {
+                  "pasta_id": {
+                    "anyOf": [
+                      {
+                        "format": "integer",
+                        "default": 0,
+                        "type": "string"
+                      },
+                      {
+                        "type": "integer"
+                      }
+                    ]
+                  },
+                  "mensagens": {
+                    "minItems": 1,
+                    "maxItems": 500,
+                    "type": "array",
+                    "items": {
+                      "anyOf": [
+                        {
+                          "format": "integer",
+                          "default": 0,
+                          "type": "string"
+                        },
+                        {
+                          "type": "integer"
+                        }
+                      ]
+                    }
+                  }
+                }
+              }
+            },
+            "application/x-www-form-urlencoded": {
+              "schema": {
+                "type": "object",
+                "required": [
+                  "pasta_id",
+                  "mensagens"
+                ],
+                "properties": {
+                  "pasta_id": {
+                    "anyOf": [
+                      {
+                        "format": "integer",
+                        "default": 0,
+                        "type": "string"
+                      },
+                      {
+                        "type": "integer"
+                      }
+                    ]
+                  },
+                  "mensagens": {
+                    "minItems": 1,
+                    "maxItems": 500,
+                    "type": "array",
+                    "items": {
+                      "anyOf": [
+                        {
+                          "format": "integer",
+                          "default": 0,
+                          "type": "string"
+                        },
+                        {
+                          "type": "integer"
+                        }
+                      ]
+                    }
+                  }
+                }
+              }
+            },
+            "multipart/form-data": {
+              "schema": {
+                "type": "object",
+                "required": [
+                  "pasta_id",
+                  "mensagens"
+                ],
+                "properties": {
+                  "pasta_id": {
+                    "anyOf": [
+                      {
+                        "format": "integer",
+                        "default": 0,
+                        "type": "string"
+                      },
+                      {
+                        "type": "integer"
+                      }
+                    ]
+                  },
+                  "mensagens": {
+                    "minItems": 1,
+                    "maxItems": 500,
+                    "type": "array",
+                    "items": {
+                      "anyOf": [
+                        {
+                          "format": "integer",
+                          "default": 0,
+                          "type": "string"
+                        },
+                        {
+                          "type": "integer"
+                        }
+                      ]
+                    }
+                  }
+                }
+              }
+            }
+          }
+        },
+        "operationId": "putApiPastaMensagens"
+      },
+      "delete": {
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": [
+                  "pasta_id",
+                  "mensagens"
+                ],
+                "properties": {
+                  "pasta_id": {
+                    "anyOf": [
+                      {
+                        "format": "integer",
+                        "default": 0,
+                        "type": "string"
+                      },
+                      {
+                        "type": "integer"
+                      }
+                    ]
+                  },
+                  "mensagens": {
+                    "minItems": 1,
+                    "maxItems": 500,
+                    "type": "array",
+                    "items": {
+                      "anyOf": [
+                        {
+                          "format": "integer",
+                          "default": 0,
+                          "type": "string"
+                        },
+                        {
+                          "type": "integer"
+                        }
+                      ]
+                    }
+                  }
+                }
+              }
+            },
+            "application/x-www-form-urlencoded": {
+              "schema": {
+                "type": "object",
+                "required": [
+                  "pasta_id",
+                  "mensagens"
+                ],
+                "properties": {
+                  "pasta_id": {
+                    "anyOf": [
+                      {
+                        "format": "integer",
+                        "default": 0,
+                        "type": "string"
+                      },
+                      {
+                        "type": "integer"
+                      }
+                    ]
+                  },
+                  "mensagens": {
+                    "minItems": 1,
+                    "maxItems": 500,
+                    "type": "array",
+                    "items": {
+                      "anyOf": [
+                        {
+                          "format": "integer",
+                          "default": 0,
+                          "type": "string"
+                        },
+                        {
+                          "type": "integer"
+                        }
+                      ]
+                    }
+                  }
+                }
+              }
+            },
+            "multipart/form-data": {
+              "schema": {
+                "type": "object",
+                "required": [
+                  "pasta_id",
+                  "mensagens"
+                ],
+                "properties": {
+                  "pasta_id": {
+                    "anyOf": [
+                      {
+                        "format": "integer",
+                        "default": 0,
+                        "type": "string"
+                      },
+                      {
+                        "type": "integer"
+                      }
+                    ]
+                  },
+                  "mensagens": {
+                    "minItems": 1,
+                    "maxItems": 500,
+                    "type": "array",
+                    "items": {
+                      "anyOf": [
+                        {
+                          "format": "integer",
+                          "default": 0,
+                          "type": "string"
+                        },
+                        {
+                          "type": "integer"
+                        }
+                      ]
+                    }
+                  }
+                }
+              }
+            }
+          }
+        },
+        "operationId": "deleteApiPastaMensagens"
+      }
+    },
     "/api/usuario/permissoes": {
       "get": {
         "operationId": "getApiUsuarioPermissoes"
@@ -5887,6 +6468,11 @@
         "operationId": "getApiFerramentas"
       }
     },
+    "/api/ferramentas/embutidas": {
+      "get": {
+        "operationId": "getApiFerramentasEmbutidas"
+      }
+    },
     "/api/ferramentas/disponiveis": {
       "get": {
         "operationId": "getApiFerramentasDisponiveis"
@@ -6696,6 +7282,88 @@
         "operationId": "putApiBotPermissoes"
       }
     },
+    "/api/parametros/ia/testar-embeddings": {
+      "post": {
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": [
+                  "url",
+                  "url_ia",
+                  "modelo"
+                ],
+                "properties": {
+                  "url": {
+                    "type": "string"
+                  },
+                  "url_ia": {
+                    "type": "string"
+                  },
+                  "modelo": {
+                    "type": "string"
+                  },
+                  "token": {
+                    "type": "string"
+                  }
+                }
+              }
+            },
+            "application/x-www-form-urlencoded": {
+              "schema": {
+                "type": "object",
+                "required": [
+                  "url",
+                  "url_ia",
+                  "modelo"
+                ],
+                "properties": {
+                  "url": {
+                    "type": "string"
+                  },
+                  "url_ia": {
+                    "type": "string"
+                  },
+                  "modelo": {
+                    "type": "string"
+                  },
+                  "token": {
+                    "type": "string"
+                  }
+                }
+              }
+            },
+            "multipart/form-data": {
+              "schema": {
+                "type": "object",
+                "required": [
+                  "url",
+                  "url_ia",
+                  "modelo"
+                ],
+                "properties": {
+                  "url": {
+                    "type": "string"
+                  },
+                  "url_ia": {
+                    "type": "string"
+                  },
+                  "modelo": {
+                    "type": "string"
+                  },
+                  "token": {
+                    "type": "string"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "operationId": "postApiParametrosIaTestar-embeddings"
+      }
+    },
     "/api/parametros/ia/testar": {
       "post": {
         "requestBody": {
@@ -7036,6 +7704,12 @@
                   },
                   "ia_modelo_embeddings": {
                     "type": "string"
+                  },
+                  "ia_embeddings_url": {
+                    "type": "string"
+                  },
+                  "ia_embeddings_token": {
+                    "type": "string"
                   }
                 }
               }
@@ -7092,6 +7766,12 @@
                   },
                   "ia_modelo_embeddings": {
                     "type": "string"
+                  },
+                  "ia_embeddings_url": {
+                    "type": "string"
+                  },
+                  "ia_embeddings_token": {
+                    "type": "string"
                   }
                 }
               }
@@ -7147,6 +7827,12 @@
                     "type": "boolean"
                   },
                   "ia_modelo_embeddings": {
+                    "type": "string"
+                  },
+                  "ia_embeddings_url": {
+                    "type": "string"
+                  },
+                  "ia_embeddings_token": {
                     "type": "string"
                   }
                 }
