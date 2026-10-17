@@ -224,9 +224,9 @@
 - [ ] **FC-219 · P3 · 🆕 `e33ecba` Ícone de grupo na lista** (CON-01): ícone de pessoas com a descrição "Conversa em grupo" no lugar da etiqueta "Grupo".
 - [x] **FC-220 · P2 · 🆕 `ef13c22` Cadastro fechado** (AUT-02): `GET /cadastro` → `{aberto}` (rota pública) antes de mostrar "Não tem conta? Criar conta"; fechado, o link some (o `PUT /usuario` responde 403). ✔ f427612
 - [x] **FC-221 · P2 · 🆕 `ef13c22`/`9c6e8a6` Bots de IA** (CON-16): `bot` nos contatos e na conversa; pílula "Bot" na direta; não oferecer ligação para bot; tirar o bot da lista de confirmação (ele nunca marca `recebida`; pendência S27). ✔ 9594d53
-- [x] **FC-222 · P2 · 🆕 `ac710eb` Contatos relidos pelo WS 66 e na reconexão** (CON-11, AUT-11): `{"tipo":66}` quando uma conta é criada, renomeada ou excluída → `GET /usuario/contatos`; reler também ao reconectar (como o web); guardar o `criado_em` ("Usuário desde"). ✔ HASH
+- [x] **FC-222 · P2 · 🆕 `ac710eb` Contatos relidos pelo WS 66 e na reconexão** (CON-11, AUT-11): `{"tipo":66}` quando uma conta é criada, renomeada ou excluída → `GET /usuario/contatos`; reler também ao reconectar (como o web); guardar o `criado_em` ("Usuário desde"). ✔ 08e2e77
 - [ ] **FC-223 · P2 · 🆕 `ac710eb`/`f351190` Pastas de mensagens** (CON-17): só na direta; folha "Pastas de mensagens" no "⋮"; criar (nome até 60), renomear, cor (paleta do web), compartilhar com a outra pessoa, excluir (só o dono, com confirmação); WS 67 relê a lista; limites e mensagens do servidor (doc 01 §10.17).
-- [x] **FC-224 · P3 · 🆕 `f351190` "Gravando áudio…" na lista de conversas** (CON-01, ENV-16): pontinhos e texto na cor de gravando, com prioridade sobre o "digitando". ✔ HASH
+- [x] **FC-224 · P3 · 🆕 `f351190` "Gravando áudio…" na lista de conversas** (CON-01, ENV-16): pontinhos e texto na cor de gravando, com prioridade sobre o "digitando". ✔ 08e2e77
 
 ## Bloco E — Mensagens: núcleo (F2)
 
@@ -329,8 +329,8 @@
 - [ ] **FC-419 · P2 · 🆕 `769bd7d` Recursos do servidor** (GER-08, ANX-12): `GET /recursos` → `{transcricao, ia}` uma vez por sessão; sem transcritor, esconder "Transcrever" (o já transcrito continua aparecendo).
 - [ ] **FC-420 · P3 · 🆕 `e33ecba` Zoom no ponto da pinça** (ANX-04): o visualizador amplia em torno do centro; ampliar no ponto entre os dedos, como o web faz no ponteiro.
 - [x] **FC-421 · P2 · 🆕 `ef13c22` Duração e onda do áudio** (ANX-10, ANX-11): mandar `duracao` e `intensidade` no `PUT /anexo`; ler nos conteúdos; duração antes de tocar e onda no player, sem baixar. Sem isso, o áudio do Android aparece no web só com a barra simples. ✔ 2f0b29d
-- [x] **FC-422 · P3 · 🆕 `f351190` Velocidade do áudio** (ANX-18): botão 1x → 1,5x → 2x → 3x, a mesma para todos os áudios, guardada no aparelho. ✔ HASH
-- [x] **FC-423 · P3 · 🆕 `ac710eb` Espaço usado** (ANX-17): `GET /usuario/espaco` → "Armazenamento" no Perfil, com o texto do web. ✔ HASH
+- [x] **FC-422 · P3 · 🆕 `f351190` Velocidade do áudio** (ANX-18): botão 1x → 1,5x → 2x → 3x, a mesma para todos os áudios, guardada no aparelho. ✔ 08e2e77
+- [x] **FC-423 · P3 · 🆕 `ac710eb` Espaço usado** (ANX-17): `GET /usuario/espaco` → "Armazenamento" no Perfil, com o texto do web. ✔ 08e2e77
 - [ ] **FC-424 · P3 · 🆕 `f351190` Anexos de todas as conversas** (ANX-13): `GET /anexos?conversa=0`, com o nome da conversa em cada item; avaliar onde entra no app (o web tem a aba Anexos na barra).
 
 ## Bloco G — Ações sobre mensagens (F4)
@@ -528,7 +528,7 @@
 - [x] **FC-813 · P1 · 🆕 `ef13c22`/`9c6e8a6` Acessos com as permissões de uso** (CFG-08): 32 permissões (`uso` no `GET /permissoes`); como o web, uma lista de pessoas que se abre, com os grupos e os nomes curtos; as próprias permissões marcadas ficam travadas.
 - [x] **FC-814 · P1 · 🆕 `ef13c22`/`9c6e8a6` Permissões de uso** (GER-09): `GET /usuario/permissoes`; esconder ou travar cada ação; mostrar a mensagem do 403; no perfil, mandar só as chaves que mudaram (TODO 8.9). ✔ 946c410
 - [ ] **FC-815 · P3 · 🆕 `9c6e8a6` Administração de usuários, bots, ferramentas e conhecimento** (CFG-11…14): avaliar se fica só no web, junto da FC-812.
-- [x] **FC-816 · P2 · 🆕 `ac710eb` Permissões e Acessos depois da junção** (GER-09, CFG-08, AUT-11): `usuarios` saiu (quem tinha ganhou `permissoes`, que o web chama de "Pessoas"); `localizacao` entra no grupo Enviar ("Localização e trajeto"); a lista de Acessos mostra o espaço, o "Usuário desde" e o selo "Bot"; textos do modo aberto com "Pessoas". ✔ HASH
+- [x] **FC-816 · P2 · 🆕 `ac710eb` Permissões e Acessos depois da junção** (GER-09, CFG-08, AUT-11): `usuarios` saiu (quem tinha ganhou `permissoes`, que o web chama de "Pessoas"); `localizacao` entra no grupo Enviar ("Localização e trajeto"); a lista de Acessos mostra o espaço, o "Usuário desde" e o selo "Bot"; textos do modo aberto com "Pessoas". ✔ 08e2e77
 
 ## Bloco K — SIP e extras (F8)
 

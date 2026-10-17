@@ -4,7 +4,7 @@
 - **Tipo:** código
 - **Itens:** `TODO.md` 2.6, 2.9, 4.5, 8.3, 8.4 e 8.5 (linhas 🆕 `ac710eb`/`f351190`); FC-222, FC-224, FC-422, FC-423, FC-816; AUT-11, CON-01, CON-11, ANX-17, ANX-18, CFG-08, GER-09
 - **Branch:** `reescrita`
-- **Commits:** (preencher)
+- **Commits:** `08e2e77`
 
 ## Contexto
 O sincronismo com o servidor `ac710eb` e o web `f351190` (histórico 2026-10-17-01) trouxe, além das pastas e da localização, ajustes menores que o app já podia fazer sem decisão: os contatos pelo WS 66, a permissão `usuarios` juntada a `permissoes`, a `localizacao` nas permissões de uso, o espaço usado, o "Usuário desde", a velocidade do áudio e o "Gravando áudio…" na lista.
