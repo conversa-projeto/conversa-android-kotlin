@@ -3,7 +3,7 @@
 - **Fluxo:** Repositório e build
 - **Tipo:** build
 - **Itens:** histórico `2026-10-17-20` (ADR 0002 opção A, minimizar a chamada, servidor interno no debug)
-- **Commits:** `HASH_JUNCAO` (merge de `e69a64e` na `reescrita` em `3450d49`)
+- **Commits:** `ca13388` (merge de `e69a64e` na `reescrita` em `3450d49`)
 
 ## Contexto
 O trabalho da apresentação (`f4a9be3`, `e69a64e`) foi feito num worktree, na branch `apresentacao`, enquanto outra sessão fazia a Localização e as pastas de mensagens na `reescrita` (`eaa4f42` … `3450d49`). Com a outra sessão parada e o checkout limpo, a pessoa pediu para juntar.
