@@ -3,7 +3,7 @@
 - **Fluxo:** Notificações e push (etapa 5) — também Chamadas (etapa 6) e Fundação (tela Servidor, TLS)
 - **Tipo:** código | decisão
 - **Itens:** ADR 0002 (opção A); TODO 5.3 (bateria), 5.7 (teste com o app fechado), 5.9 (A), 6.12 (minimizar), 1.x (TLS do debug); NOT-01, CHA-03, CHA-13, AND-01, AND-06
-- **Commits:** `HASH_APRESENTACAO` (branch `apresentacao`, a partir de `dd799d0` da `reescrita`)
+- **Commits:** `f4a9be3` (branch `apresentacao`, a partir de `dd799d0` da `reescrita`)
 
 ## Contexto
 A pessoa vai apresentar o app em 2026-10-17, num celular real, contra um servidor que já roda o web na rede local de lá (endereço e certificado desconhecidos). Ela listou o que precisa funcionar:
