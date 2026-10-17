@@ -4,7 +4,7 @@
 - **Tipo:** código
 - **Itens:** `TODO.md` 7.14 (as cinco primeiras linhas); FC-223, FC-318, FC-527; CON-17, MSG-23, MSG-24, ENV-29
 - **Branch:** `reescrita`
-- **Commits:** (preencher)
+- **Commits:** `2a58133`
 
 ## Contexto
 - **O servidor** (`ac710eb`, contrato §10.17) tem pastas na conversa direta. Cada pessoa cria as suas (até 50 por conversa) e pode compartilhar com a outra, que põe e tira mensagens mas não muda a pasta.
