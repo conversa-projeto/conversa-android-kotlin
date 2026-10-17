@@ -215,7 +215,7 @@ A coluna **Fase** indica em que fase do plano da nova base (doc 07) a funcionali
 | ENV-27 🆕 | Pedir confirmação de leitura depois do envio (menu da mensagem, até 24 h) | ⬜ | ✅ 7.1 · `32de350` | — | Item "Pedir confirmação de leitura" no toque longo (minha mensagem, menos de 24 h); em grupo, o modal "Quem precisa confirmar"; `POST /mensagem/pedir-confirmacao`; WS 65 — 🆕 `e33ecba`/`6d20ff7` | F4 | P2 |
 | ENV-28 🆕 | Código como peça no campo ("Inserir na mensagem", editar, remover) | ⬜ | ⛔ 4.11 · depende da decisão do campo rico (FC-416) | — | Campo simplificado: inserir o bloco cercado no cursor; campo por blocos: peça com prévia — 🆕 `e33ecba` | F4 | P3 |
 | ENV-29 🆕 | Selecionar mensagens e pôr na pasta (arraste, Ctrl, Esc no web) | ⬜ | ⬜ 7.14 | — | No celular não há arraste: toque longo › "Selecionar", barra "N selecionadas" com "Pôr na pasta" — 🆕 `f351190` | F4 | P2 |
-| ENV-30 🆕 | Enviar localização ou trajeto ("+" › Localização: Local ou Trajeto, busca de endereço, minha posição, rota de carro) | ⬜ | ✅ 4.12 · `HASH_C` · falta conferir com o web | — | Permissão de uso `localizacao`; Nominatim, OSRM (`driving`) e tiles do OSM com User-Agent; posição do aparelho (permissão de localização); "Inserir na mensagem" depende do campo rico (FC-416) — 🆕 `ac710eb`/`f351190` | F4 | P2 |
+| ENV-30 🆕 | Enviar localização ou trajeto ("+" › Localização: Local ou Trajeto, busca de endereço, minha posição, rota de carro) | ⬜ | ✅ 4.12 · `e0d3300` · falta conferir com o web | — | Permissão de uso `localizacao`; Nominatim, OSRM (`driving`) e tiles do OSM com User-Agent; posição do aparelho (permissão de localização); "Inserir na mensagem" depende do campo rico (FC-416) — 🆕 `ac710eb`/`f351190` | F4 | P2 |
 
 ## ANX — Anexos e mídia
 

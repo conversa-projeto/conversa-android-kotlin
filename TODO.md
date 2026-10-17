@@ -543,7 +543,7 @@
 - [x] `TipoConteudo.LOCALIZACAO` (9) e o rótulo "Localização" nas prévias, na citação, nas atividades e no chat da chamada ✔ eaa4f42
 - [x] Bolha: mapa de tiles do OSM (User-Agent do app, "© OpenStreetMap"), o nome do local ou A → B com a descrição do trajeto, e "Abrir no Google Maps" — 🔄 mapa próprio em Compose (tiles pelo Coil, rota e marcadores num Canvas), sem biblioteca de mapa ✔ eaa4f42
 - [x] Visualizador: o mapa grande com arrastar e pinça, ruas ou satélite (Esri), o nome e as coordenadas ou a descrição do trajeto — a pinça e o toque duplo ficam para conferir em aparelho ✔ eaa4f42
-- [x] Enviar: "+" › "Localização" (permissão de uso `localizacao`), Local ou Trajeto, busca de endereço (Nominatim) e coordenadas digitadas, toque no mapa para marcar, minha posição (permissão de localização do aparelho), rota de carro (OSRM) com debounce; "Enviar" ("Inserir na mensagem" depende da FC-416) — a permissão do aparelho é pedida no toque em "Usar minha posição"; os marcadores não se arrastam (tocar remarca) ✔ HASH_C
+- [x] Enviar: "+" › "Localização" (permissão de uso `localizacao`), Local ou Trajeto, busca de endereço (Nominatim) e coordenadas digitadas, toque no mapa para marcar, minha posição (permissão de localização do aparelho), rota de carro (OSRM) com debounce; "Enviar" ("Inserir na mensagem" depende da FC-416) — a permissão do aparelho é pedida no toque em "Usar minha posição"; os marcadores não se arrastam (tocar remarca) ✔ e0d3300
 - [ ] **Teste:** local e trajeto nos dois sentidos com o web (bolha, visualizador, link) — no emulador, o app mandou e mostrou os dois (o JSON conferido pela API é o do web); falta abrir no web, que estava fora do ar
 
 ---

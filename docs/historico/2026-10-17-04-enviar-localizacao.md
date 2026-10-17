@@ -4,7 +4,7 @@
 - **Tipo:** código
 - **Itens:** `TODO.md` 4.12 (a linha "Enviar"); FC-528; ENV-30
 - **Branch:** `reescrita`
-- **Commits:** (preencher)
+- **Commits:** `e0d3300`
 
 ## Contexto
 - **No web** (`f351190`, `LocalizacaoModal.vue`), "+" › "Localização" escolhe um local ou um trajeto de quatro formas:
