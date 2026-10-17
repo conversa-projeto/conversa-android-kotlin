@@ -95,6 +95,13 @@ class EventoSocketParserTest {
             .isEqualTo(EventoSocket.ConfirmacaoPedida(3, 1170))
         // Servidor `ac710eb`: só o tipo.
         assertThat(ler("""{"tipo":66}""")).isEqualTo(EventoSocket.ContatosAtualizados)
+        // 67: pasta mudou; com "acao", as mensagens que entraram ou saíram.
+        assertThat(ler("""{"tipo":67,"conversa_id":5,"pasta_id":2}""")).isEqualTo(EventoSocket.PastasAtualizadas(5, 2))
+        assertThat(ler("""{"tipo":67,"conversa_id":5,"pasta_id":2,"mensagens":[10,11],"acao":"tirar"}"""))
+            .isEqualTo(EventoSocket.PastasAtualizadas(5, 2, listOf(10, 11), "tirar"))
+        assertThat(ler("""{"tipo":67,"conversa_id":5,"pasta_id":2,"mensagens":[10],"acao":"apagar"}"""))
+            .isEqualTo(EventoSocket.PastasAtualizadas(5, 2, listOf(10), null))
+        assertThat(ler("""{"tipo":67,"pasta_id":2}""")).isInstanceOf(EventoSocket.Desconhecido::class.java)
     }
 
     @Test

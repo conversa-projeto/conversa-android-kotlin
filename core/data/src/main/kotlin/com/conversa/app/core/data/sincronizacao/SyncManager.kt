@@ -5,6 +5,7 @@ import com.conversa.app.core.data.atividades.AtividadesRepositorio
 import com.conversa.app.core.data.contatos.ContatosRepositorio
 import com.conversa.app.core.data.enquetes.EnquetesRepositorio
 import com.conversa.app.core.data.paraEntidade
+import com.conversa.app.core.data.pastas.PastasRepositorio
 import com.conversa.app.core.data.presenca.PresencaRepositorio
 import com.conversa.app.core.database.dao.ConversaDao
 import com.conversa.app.core.database.dao.MensagemDao
@@ -71,6 +72,7 @@ class SyncManager @Inject constructor(
     private val enquetes: EnquetesRepositorio,
     private val atividades: AtividadesRepositorio,
     private val contatos: ContatosRepositorio,
+    private val pastas: PastasRepositorio,
     @EscopoAplicacao private val escopo: CoroutineScope,
 ) {
     private val trava = Mutex()
@@ -137,6 +139,8 @@ class SyncManager @Inject constructor(
                     async { sincronizarChamadasPendentes() },
                     // Uma conta pode ter sido criada ou renomeada enquanto o socket estava fora (o web relê na reconexão).
                     async { contatos.atualizar() },
+                    // E as pastas das conversas já abertas (7.14): o WS 67 pode ter se perdido.
+                    async { pastas.recarregarAbertas() },
                 ).awaitAll()
             }
         }
@@ -248,6 +252,8 @@ class SyncManager @Inject constructor(
             is EventoSocket.ConfirmacaoPedida -> escopo.launch { reler(evento.conversaId, evento.mensagemId) }
             // 66: uma conta foi criada, renomeada ou excluída (servidor `ac710eb`).
             is EventoSocket.ContatosAtualizados -> escopo.launch { contatos.atualizar() }
+            // 67: uma pasta da direta mudou ou ganhou/perdeu mensagens (servidor `ac710eb`, 7.14).
+            is EventoSocket.PastasAtualizadas -> escopo.launch { pastas.aoAviso(evento) }
             else -> Unit
         }
     }

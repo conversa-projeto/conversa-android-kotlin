@@ -447,8 +447,10 @@ internal fun Rodape(mensagem: Mensagem, propria: Boolean, modifier: Modifier = M
         verticalAlignment = Alignment.CenterVertically,
         horizontalArrangement = Arrangement.spacedBy(3.dp),
     ) {
+        // As pastas da mensagem (MSG-23): na recebida, antes da hora; na minha, atrás do ✓.
+        if (!propria && mensagem.pastas.isNotEmpty()) MarcasDePasta(mensagem, propria = false) {}
         Text(horaDa(mensagem), style = MaterialTheme.typography.labelSmall, color = ConversaTema.cores.horaBolha)
-        if (propria) IconeStatus(statusEntrega(mensagem))
+        if (propria) MarcasDePasta(mensagem, propria = true) { IconeStatus(statusEntrega(mensagem)) }
     }
 }
 

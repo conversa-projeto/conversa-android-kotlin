@@ -149,6 +149,7 @@ fun MensagemDto.paraModelo(): Mensagem = Mensagem(
     postagem = postagem?.paraModelo(),
     confirmacao = confirmacao?.paraModelo(),
     postagemId = postagemId,
+    pastas = pastas.distinct().sorted(),
 )
 
 fun DadosChamadaDto.paraModelo() = Chamada(

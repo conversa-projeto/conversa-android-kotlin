@@ -52,9 +52,10 @@ class SyncManagerTest {
         coEvery { atualizar() } returns Result.success(Unit)
     }
     private val sessao = mockk<SessaoRepositorio> { every { sessao } returns MutableStateFlow(Sessao("t", 7, "Ana")) }
+    private val pastas = mockk<com.conversa.app.core.data.pastas.PastasRepositorio>(relaxed = true)
 
     private fun kotlinx.coroutines.test.TestScope.criar() = SyncManager(
-        api, tempoReal, conversaDao, mensagemDao, syncEstadoDao, presenca, sessao, enquetes, atividades, contatos, escopoDoTeste(),
+        api, tempoReal, conversaDao, mensagemDao, syncEstadoDao, presenca, sessao, enquetes, atividades, contatos, pastas, escopoDoTeste(),
     )
 
     private fun prepararApi() {
@@ -128,6 +129,13 @@ class SyncManagerTest {
         eventos.emit(EventoSocket.ContatosAtualizados)
         advanceUntilIdle()
         coVerify(exactly = 2) { contatos.atualizar() }
+
+        // A reconexão relê as pastas já abertas, e o 67 vai para o repositório das pastas (7.14).
+        coVerify(exactly = 1) { pastas.recarregarAbertas() }
+        val aviso = EventoSocket.PastasAtualizadas(5, 2, listOf(10), "incluir")
+        eventos.emit(aviso)
+        advanceUntilIdle()
+        coVerify { pastas.aoAviso(aviso) }
     }
 
     @Test

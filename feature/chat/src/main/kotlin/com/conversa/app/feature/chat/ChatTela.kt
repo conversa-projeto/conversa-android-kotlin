@@ -7,6 +7,7 @@ import android.content.Context
 import android.content.Intent
 import android.os.Build
 import android.webkit.MimeTypeMap
+import androidx.activity.compose.BackHandler
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.animation.AnimatedVisibility
@@ -31,6 +32,7 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.MoreVert
 import androidx.compose.material.icons.outlined.Call
+import androidx.compose.material.icons.outlined.Folder
 import androidx.compose.material.icons.outlined.Group
 import androidx.compose.material.icons.outlined.KeyboardArrowDown
 import androidx.compose.material.icons.outlined.Search
@@ -186,7 +188,26 @@ fun ChatRotaTela(
     }
     // Toque longo na bolha: menu, seletor de emoji, quem reagiu e ocultar (etapa 7).
     val acoesDaMensagem = remember { AcoesAbertas() }
-    AcoesDaMensagem(acoesDaMensagem, estado, viewModel)
+    // Pastas de mensagens da direta (7.14): a folha, as marcas, a seleção e a pasta aberta.
+    val pastas: PastasViewModel = hiltViewModel()
+    LaunchedEffect(estado.conversa?.tipo) { if (estado.conversa != null) pastas.usarConversa(!estado.grupo) }
+    val listaDePastas by pastas.pastas.collectAsStateWithLifecycle()
+    val selecionadas by pastas.selecionadas.collectAsStateWithLifecycle()
+    val pastaAberta by pastas.aberta.collectAsStateWithLifecycle()
+    var vendoPastas by rememberSaveable { mutableStateOf(false) }
+    if (vendoPastas) {
+        FolhaPastas(
+            listaDePastas,
+            eu = estado.eu,
+            nomeOutraPessoa = estado.conversa?.nome?.takeIf { it.isNotBlank() } ?: stringResource(R.string.pasta_outra_pessoa),
+            viewModel = pastas,
+            aoFechar = { vendoPastas = false },
+        )
+    }
+    LaunchedEffect(pastas) {
+        pastas.falhas.collect { falha -> avisos.mostrarErro(recursos.getString(textoDaFalha(falha.acao), falha.motivo)) }
+    }
+    AcoesDaMensagem(acoesDaMensagem, estado, viewModel, aoSelecionar = if (estado.grupo) null else ({ pastas.selecionar(it.id) }))
     val copiado = stringResource(R.string.copiado)
     val naoOcultou = stringResource(R.string.nao_foi_possivel_ocultar)
     val limiteDeReacoes = stringResource(R.string.limite_de_reacoes)
@@ -272,7 +293,77 @@ fun ChatRotaTela(
             aoFechar = { vendoResumo = false },
         )
     }
-    CompositionLocalProvider(LocalAudio provides viewModel.audio, LocalEconomiaDados provides economizar) {
+    // As ações das bolhas: as do chat e as da pasta aberta.
+    val acoesDaBolha = AcoesBolha(
+        aoReenviar = viewModel::reenviar,
+        aoDescartar = viewModel::descartar,
+        aoMencao = viewModel::abrirDireta,
+        aoLigar = aoLigar,
+        aoAbrirArquivo = {
+            if (ehPdf(it)) {
+                viewModel.abrirPdf(it)
+            } else {
+                viewModel.abrirArquivo(
+                    it.conteudo,
+                    it.nome.ifBlank {
+                        it.conteudo
+                    },
+                    null,
+                )
+            }
+        },
+        urlDoVideo = viewModel::urlDoVideo,
+        aoBaixar = viewModel::baixar,
+        aoCompartilhar = viewModel::compartilhar,
+        aoAlternarAudio = viewModel::alternarAudio,
+        aoTranscrever = viewModel::transcrever,
+        aoAcompanharTranscricao = viewModel::acompanharTranscricao,
+        aoBuscarAudio = viewModel::buscarAudio,
+        aoMudarVelocidade = viewModel::mudarVelocidadeAudio,
+        aoAbrirLocalizacao = { localizacaoAberta = it },
+        aoMenu = { acoesDaMensagem.menuDe = it },
+        aoReagir = viewModel::reagir,
+        aoVerReacoes = { mensagem, emoji -> acoesDaMensagem.quemReagiu = mensagem.id to emoji },
+        aoVerMaisReacoes = { acoesDaMensagem.maisReacoes = it.id },
+        aoVerStatus = { acoesDaMensagem.statusDe = it },
+        enquetes = viewModel.acoesEnquete,
+        postagens = viewModel.acoesPostagem,
+        aoConfirmarLeitura = viewModel::confirmarLeitura,
+        chatDaChamada = viewModel::chatDaChamada,
+        aoAbrirConversa = viewModel::abrirConversa,
+        aoVerConfirmacao = { acoesDaMensagem.confirmacaoDe = it.id },
+        aoResponder = viewModel::responder,
+        aoIrParaMensagem = viewModel::irParaMensagem,
+    )
+    CompositionLocalProvider(
+        LocalAudio provides viewModel.audio,
+        LocalEconomiaDados provides economizar,
+        LocalPastasNaConversa provides PastasNaConversa(listaDePastas, pastas::abrir),
+        LocalSelecaoDeMensagens provides
+            SelecaoDeMensagens(selecionadas, pastas::alternarSelecao, pastas::limparSelecao, pastas::porSelecionadas),
+    ) {
+        // A pasta aberta (MSG-24), por cima do chat.
+        pastaAberta?.let { aberta ->
+            TelaPastaAberta(
+                aberta,
+                eu = estado.eu,
+                acoesBolha = acoesDaBolha.copy(
+                    aoIrParaMensagem = { id, conversa ->
+                        pastas.fecharPasta()
+                        viewModel.irParaMensagem(id, conversa)
+                    },
+                ),
+                viewModel = pastas,
+                aoVerNaConversa = { mensagem ->
+                    pastas.fecharPasta()
+                    viewModel.irParaMensagem(mensagem.id, viewModel.conversaId)
+                },
+                aoResponder = { mensagem ->
+                    pastas.fecharPasta()
+                    viewModel.responder(mensagem)
+                },
+            )
+        }
         ChatTela(
             estado = estado,
             lista = lista,
@@ -283,6 +374,7 @@ fun ChatRotaTela(
                 aoMembros = { aoMembros(viewModel.conversaId) },
                 aoAbrirPesquisa = viewModel::abrirPesquisa,
                 aoResumir = if (iaLigada) ({ vendoResumo = true }) else null,
+                aoPastas = if (estado.conversa != null && !estado.grupo) ({ vendoPastas = true }) else null,
                 aoPedirSugestao = if (sugestaoLigada) sugestao::sugerir else null,
                 aoFecharPesquisa = viewModel::fecharPesquisa,
                 aoPesquisar = viewModel::pesquisar,
@@ -296,47 +388,7 @@ fun ChatRotaTela(
                 aoDigitar = viewModel::aoDigitar,
                 aoCarregarAnteriores = viewModel::carregarAnteriores,
                 aoVerMensagens = viewModel::marcarLidas,
-                bolha = AcoesBolha(
-                    aoReenviar = viewModel::reenviar,
-                    aoDescartar = viewModel::descartar,
-                    aoMencao = viewModel::abrirDireta,
-                    aoLigar = aoLigar,
-                    aoAbrirArquivo = {
-                        if (ehPdf(it)) {
-                            viewModel.abrirPdf(it)
-                        } else {
-                            viewModel.abrirArquivo(
-                                it.conteudo,
-                                it.nome.ifBlank {
-                                    it.conteudo
-                                },
-                                null,
-                            )
-                        }
-                    },
-                    urlDoVideo = viewModel::urlDoVideo,
-                    aoBaixar = viewModel::baixar,
-                    aoCompartilhar = viewModel::compartilhar,
-                    aoAlternarAudio = viewModel::alternarAudio,
-                    aoTranscrever = viewModel::transcrever,
-                    aoAcompanharTranscricao = viewModel::acompanharTranscricao,
-                    aoBuscarAudio = viewModel::buscarAudio,
-                    aoMudarVelocidade = viewModel::mudarVelocidadeAudio,
-                    aoAbrirLocalizacao = { localizacaoAberta = it },
-                    aoMenu = { acoesDaMensagem.menuDe = it },
-                    aoReagir = viewModel::reagir,
-                    aoVerReacoes = { mensagem, emoji -> acoesDaMensagem.quemReagiu = mensagem.id to emoji },
-                    aoVerMaisReacoes = { acoesDaMensagem.maisReacoes = it.id },
-                    aoVerStatus = { acoesDaMensagem.statusDe = it },
-                    enquetes = viewModel.acoesEnquete,
-                    postagens = viewModel.acoesPostagem,
-                    aoConfirmarLeitura = viewModel::confirmarLeitura,
-                    chatDaChamada = viewModel::chatDaChamada,
-                    aoAbrirConversa = viewModel::abrirConversa,
-                    aoVerConfirmacao = { acoesDaMensagem.confirmacaoDe = it.id },
-                    aoResponder = viewModel::responder,
-                    aoIrParaMensagem = viewModel::irParaMensagem,
-                ),
+                bolha = acoesDaBolha,
                 aoIrAoFim = { escopo.launch { lista.animateScrollToItem(0) } },
                 aoAdicionarAnexos = { uris, tipo -> viewModel.adicionarAnexos(uris, tipo, permissoes) },
                 aoRemoverAnexo = viewModel::removerAnexo,
@@ -430,6 +482,8 @@ class AcoesChat(
     val aoAbrirPesquisa: () -> Unit = {},
     /** "Resumir conversa" (CON-14): nulo sem a IA ligada no servidor. */
     val aoResumir: (() -> Unit)? = null,
+    /** "Pastas de mensagens" (CON-17): só na direta. */
+    val aoPastas: (() -> Unit)? = null,
     /** Sugestão de texto da IA (ENV-25): nula sem a IA do servidor ou com a preferência desligada. */
     val aoPedirSugestao: (suspend (String) -> String)? = null,
     val aoFecharPesquisa: () -> Unit = {},
@@ -638,14 +692,16 @@ fun ChatTela(
                         when (item) {
                             is ItemChat.Dia -> SeparadorDia(item)
                             ItemChat.NaoLidas -> SeparadorNaoLidas()
-                            is ItemChat.Bolha -> LinhaMensagem(
-                                mensagem = item.mensagem,
-                                propria = item.mensagem.remetenteId == estado.eu,
-                                mostrarRemetente = item.mostrarRemetente,
-                                acoes = acoesBolha,
-                                progresso = estado.progresso[item.mensagem.id],
-                                destacada = item.mensagem.id == estado.destaque,
-                            )
+                            is ItemChat.Bolha -> Selecionavel(item.mensagem.id) {
+                                LinhaMensagem(
+                                    mensagem = item.mensagem,
+                                    propria = item.mensagem.remetenteId == estado.eu,
+                                    mostrarRemetente = item.mostrarRemetente,
+                                    acoes = acoesBolha,
+                                    progresso = estado.progresso[item.mensagem.id],
+                                    destacada = item.mensagem.id == estado.destaque,
+                                )
+                            }
                         }
                     }
                     if (estado.carregandoAnteriores) {
@@ -664,6 +720,18 @@ fun ChatTela(
             }
             // "Ir para a mensagem" trazendo páginas antigas (7.5).
             if (estado.buscandoMensagem) LinearProgressIndicator(Modifier.fillMaxWidth().align(Alignment.TopCenter))
+            // Mensagens selecionadas (ENV-29): a barra com "Pôr na pasta"; voltar limpa a seleção.
+            val selecao = LocalSelecaoDeMensagens.current
+            if (selecao.ativa) {
+                BarraDeSelecao(
+                    selecao.selecionadas.size,
+                    LocalPastasNaConversa.current.pastas,
+                    selecao.aoPor,
+                    selecao.aoLimpar,
+                    Modifier.align(Alignment.TopCenter).padding(8.dp),
+                )
+            }
+            BackHandler(enabled = selecao.ativa) { selecao.aoLimpar() }
             if (pesquisa.aberta) {
                 ResultadosPesquisa(
                     pesquisa,
@@ -824,6 +892,16 @@ private fun Cabecalho(estado: ChatUiState, acoes: AcoesChat) {
                             },
                         )
                     }
+                    acoes.aoPastas?.let { abrirPastas ->
+                        DropdownMenuItem(
+                            text = { Text(stringResource(R.string.pasta_menu)) },
+                            leadingIcon = { Icon(Icons.Outlined.Folder, contentDescription = null) },
+                            onClick = {
+                                menu = false
+                                abrirPastas()
+                            },
+                        )
+                    }
                 }
             }
         },
@@ -876,7 +954,7 @@ private fun textoAtividade(atividade: AtividadeConversa): String? = when (ativid
 private val FORMATO_DIA = DateTimeFormatter.ofPattern("EEE, dd/MM/yyyy", Locale.forLanguageTag("pt-BR"))
 
 @Composable
-private fun SeparadorDia(item: ItemChat.Dia) {
+internal fun SeparadorDia(item: ItemChat.Dia) {
     val texto = when (val rotulo = rotuloDia(item.data, Instant.now(), ZoneId.systemDefault())) {
         RotuloDia.Hoje -> stringResource(R.string.hoje)
         RotuloDia.Ontem -> stringResource(R.string.ontem)

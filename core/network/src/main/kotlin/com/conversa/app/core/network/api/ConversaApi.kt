@@ -4,6 +4,7 @@ import com.conversa.app.core.network.dto.AdicionarUsuarioChamadaRequisicao
 import com.conversa.app.core.network.dto.AlterarConversaRequisicao
 import com.conversa.app.core.network.dto.AlterarDispositivoRequisicao
 import com.conversa.app.core.network.dto.AlterarParametrosRequisicao
+import com.conversa.app.core.network.dto.AlterarPastaRequisicao
 import com.conversa.app.core.network.dto.AlterarSenhaRequisicao
 import com.conversa.app.core.network.dto.AlterarUsuarioRequisicao
 import com.conversa.app.core.network.dto.AnexoExisteDto
@@ -24,6 +25,7 @@ import com.conversa.app.core.network.dto.ConversaCriadaDto
 import com.conversa.app.core.network.dto.ConversaDto
 import com.conversa.app.core.network.dto.CriarConversaRequisicao
 import com.conversa.app.core.network.dto.CriarEnqueteRequisicao
+import com.conversa.app.core.network.dto.CriarPastaRequisicao
 import com.conversa.app.core.network.dto.DadosChamadaDto
 import com.conversa.app.core.network.dto.DispositivoDto
 import com.conversa.app.core.network.dto.EncerrarEnqueteRequisicao
@@ -47,13 +49,16 @@ import com.conversa.app.core.network.dto.MensagemCriadaDto
 import com.conversa.app.core.network.dto.MensagemDto
 import com.conversa.app.core.network.dto.MensagemExcluidaDto
 import com.conversa.app.core.network.dto.MensagemIdDto
+import com.conversa.app.core.network.dto.MensagensDaPastaRequisicao
 import com.conversa.app.core.network.dto.NovaMensagemDto
 import com.conversa.app.core.network.dto.ParametrosDto
+import com.conversa.app.core.network.dto.PastaDto
 import com.conversa.app.core.network.dto.PedirConfirmacaoRequisicao
 import com.conversa.app.core.network.dto.PedirResumoRequisicao
 import com.conversa.app.core.network.dto.PedirSugestaoRequisicao
 import com.conversa.app.core.network.dto.PermissaoUsuarioDto
 import com.conversa.app.core.network.dto.PermissoesDto
+import com.conversa.app.core.network.dto.PorNaPastaDto
 import com.conversa.app.core.network.dto.PrazoEnqueteRequisicao
 import com.conversa.app.core.network.dto.PresencaContatoDto
 import com.conversa.app.core.network.dto.PrivacidadeDto
@@ -70,6 +75,7 @@ import com.conversa.app.core.network.dto.StatusDetalheDto
 import com.conversa.app.core.network.dto.StatusMensagemDto
 import com.conversa.app.core.network.dto.SucessoDto
 import com.conversa.app.core.network.dto.SugestaoDto
+import com.conversa.app.core.network.dto.TirarDaPastaDto
 import com.conversa.app.core.network.dto.TranscricaoDto
 import com.conversa.app.core.network.dto.UrlAnexoDto
 import com.conversa.app.core.network.dto.UsuarioDto
@@ -82,6 +88,7 @@ import kotlinx.serialization.json.JsonObject
 import retrofit2.http.Body
 import retrofit2.http.DELETE
 import retrofit2.http.GET
+import retrofit2.http.HTTP
 import retrofit2.http.Headers
 import retrofit2.http.PATCH
 import retrofit2.http.POST
@@ -414,4 +421,32 @@ interface ConversaApi {
     /** Definir, adiar ou tirar a data final (🆕 5cad911): só quem criou a votação. */
     @PATCH("enquete")
     suspend fun alterarPrazoEnquete(@Body corpo: PrazoEnqueteRequisicao): EnqueteDto
+
+    // --- Pastas de mensagens (🆕 ac710eb, contrato §10.17): só na conversa direta ---
+
+    /** As próprias e as compartilhadas pela outra pessoa, por nome; em grupo, `[]`. */
+    @GET("pastas")
+    suspend fun pastas(@Query("conversa") conversaId: Long): List<PastaDto>
+
+    @PUT("pasta")
+    suspend fun criarPasta(@Body corpo: CriarPastaRequisicao): PastaDto
+
+    /** Só o dono (403 "Só quem criou a pasta pode mudá-la."). */
+    @PATCH("pasta")
+    suspend fun alterarPasta(@Body corpo: AlterarPastaRequisicao): PastaDto
+
+    /** Apaga a pasta e os vínculos; as mensagens ficam. */
+    @DELETE("pasta")
+    suspend fun excluirPasta(@Query("id") id: Long): IdDto
+
+    /** 50 por página, da mais antiga para a mais nova; [antes] = id da mais antiga já carregada. Não marca recebida. */
+    @GET("pasta/mensagens")
+    suspend fun mensagensDaPasta(@Query("id") pastaId: Long, @Query("antes") antes: Long = 0): List<MensagemDto>
+
+    @PUT("pasta/mensagens")
+    suspend fun porNaPasta(@Body corpo: MensagensDaPastaRequisicao): PorNaPastaDto
+
+    /** DELETE com corpo JSON (pegadinha 88). */
+    @HTTP(method = "DELETE", path = "pasta/mensagens", hasBody = true)
+    suspend fun tirarDaPasta(@Body corpo: MensagensDaPastaRequisicao): TirarDaPastaDto
 }

@@ -14,6 +14,7 @@ import com.conversa.app.core.database.entidades.ConversaEntidade
 import com.conversa.app.core.database.entidades.EnvioPendenteEntidade
 import com.conversa.app.core.database.entidades.MensagemCompleta
 import com.conversa.app.core.database.entidades.MensagemEntidade
+import com.conversa.app.core.database.entidades.PastasDaMensagem
 import com.conversa.app.core.database.entidades.RascunhoEntidade
 import com.conversa.app.core.database.entidades.ReacaoEntidade
 import com.conversa.app.core.database.entidades.ResumoEntidade
@@ -167,6 +168,17 @@ interface MensagemDao {
     /** Eu ouvi o áudio de outra pessoa (otimista). Não marca como lida (o servidor também não). */
     @Query("UPDATE mensagem SET reproduzida = 1 WHERE id = :id")
     suspend fun marcarReproduzidaPorMim(id: Long)
+
+    /** As pastas destas mensagens (7.14): o WS 67 põe ou tira uma pasta delas. */
+    @Query("SELECT id, pastas FROM mensagem WHERE id IN (:ids)")
+    suspend fun pastasDas(ids: List<Long>): List<PastasDaMensagem>
+
+    /** As mensagens da conversa que estão em alguma pasta: a pasta que sumiu sai delas. */
+    @Query("SELECT id, pastas FROM mensagem WHERE conversaId = :conversaId AND pastas != ''")
+    suspend fun pastasDaConversa(conversaId: Long): List<PastasDaMensagem>
+
+    @Query("UPDATE mensagem SET pastas = :pastas WHERE id = :id")
+    suspend fun atualizarPastas(id: Long, pastas: String)
 
     /** Mensagem otimista: saindo, saiu ou desistiu. */
     @Query("UPDATE mensagem SET enviando = :enviando, falhou = :falhou WHERE id = :id")

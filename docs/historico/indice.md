@@ -115,6 +115,7 @@
 - 2026-10-15 · [Confirmação de leitura: pedir, confirmar e pedir depois](2026-10-15-10-confirmacao-de-leitura.md) — "+" › "Confirmar leitura" (no grupo, "Quem precisa confirmar"); na bolha, a caixa de quem precisa confirmar e "Aguardando"/"Confirmada por N de T" com o detalhe; "Pedir confirmação de leitura" no menu até 24 h; testado no emulador com o B
 - 2026-10-15 · [Seletor de emojis como o do web](2026-10-15-14-seletor-de-emojis.md) — o catálogo `pt.json` do web nos assets (sem tons de pele nem bandeiras), pesquisa em português sem acento, categorias e "Recentes" no `core:ui`; no lugar do `EmojiPickerView` nas reações; testado no emulador
 - 2026-10-15 · [Rótulos das setas do mermaid sem a caixa preta](2026-10-15-22-rotulos-das-setas-do-mermaid.md) — as cores translúcidas iam ao mermaid sem a transparência (o cinza virava preto); agora vão como aparecem sobre o fundo
+- 2026-10-17 · [Pastas de mensagens na conversa direta](2026-10-17-05-pastas-de-mensagens.md) — "⋮" › "Pastas de mensagens" (criar, renomear, cor, compartilhar, excluir), toque longo › "Selecionar" e "Pôr na pasta", bolinhas nas bolhas, pasta aberta por cima do chat e WS 67; Room v13; testado no emulador (com o C pela API)
 
 ## Atividades, pesquisa, perfil e configurações (etapa 8)
 - 2026-10-08 · [Etapa 8 — aba Atividades](2026-10-08-37-etapa-8-atividades.md) — módulo `:feature:atividades`: lista por dia com selos, prévias e "Nova", paginação, abrir marca como vistas e o WS 61 relê com a aba aberta; corrigido o POST de vistas (o OkHttp recusava POST sem corpo)

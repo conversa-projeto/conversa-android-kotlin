@@ -387,6 +387,53 @@
     <string name="localizacao_indisponivel">Não foi possível obter a posição deste dispositivo.</string>
     <string name="localizacao_sem_sensor">Este dispositivo não informa a posição.</string>
     <string name="localizacao_sem_posicao">%1$s Busque o endereço, digite as coordenadas ou toque no mapa.</string>
+    <!-- Pastas de mensagens (CON-17, MSG-23, MSG-24, ENV-29), textos do web; o arraste virou “Selecionar” -->
+    <string name="pasta_menu">Pastas de mensagens</string>
+    <string name="pasta_titulo">Pastas</string>
+    <string name="pasta_nova">Nova pasta</string>
+    <string name="pasta_nome">Nome da pasta</string>
+    <string name="pasta_vazio">Crie pastas para guardar mensagens por assunto. Toque e segure numa mensagem e escolha “Selecionar” para pôr mensagens numa pasta.</string>
+    <string name="pasta_opcoes">Opções da pasta</string>
+    <string name="pasta_renomear">Renomear</string>
+    <string name="pasta_compartilhar_com">Compartilhar com %1$s</string>
+    <string name="pasta_deixar_de_compartilhar">Deixar de compartilhar</string>
+    <string name="pasta_cor">Cor</string>
+    <string name="pasta_cor_do_tema">Cor do tema</string>
+    <string name="pasta_excluir">Excluir</string>
+    <string name="pasta_excluir_titulo">Excluir pasta</string>
+    <string name="pasta_excluir_texto">A pasta “%1$s” sai daqui. As mensagens continuam na conversa.</string>
+    <string name="pasta_excluir_texto_compartilhada">A pasta “%1$s” sai daqui e de %2$s. As mensagens continuam na conversa.</string>
+    <string name="pasta_compartilhada_com">Compartilhada com %1$s</string>
+    <string name="pasta_compartilhada_por">Compartilhada por %1$s</string>
+    <string name="pasta_outra_pessoa">a outra pessoa</string>
+    <plurals name="pasta_selecionadas">
+        <item quantity="one">%1$d selecionada</item>
+        <item quantity="other">%1$d selecionadas</item>
+    </plurals>
+    <string name="pasta_por">Pôr na pasta</string>
+    <string name="pasta_limpar_selecao">Limpar seleção</string>
+    <string name="pasta_nenhuma">Nenhuma pasta ainda. Crie em “Pastas de mensagens”, no menu ⋮.</string>
+    <string name="pasta_voltar_ao_chat">Voltar ao chat</string>
+    <plurals name="pasta_mensagens">
+        <item quantity="one">%1$d mensagem</item>
+        <item quantity="other">%1$d mensagens</item>
+    </plurals>
+    <string name="pasta_mensagens_compartilhada">%1$s · compartilhada</string>
+    <string name="pasta_carregando">Carregando mensagens</string>
+    <string name="pasta_aberta_vazia">Nenhuma mensagem nesta pasta. No chat, toque e segure numa mensagem e escolha “Selecionar” para pôr mensagens aqui.</string>
+    <string name="pasta_ver_na_conversa">Ver na conversa</string>
+    <string name="pasta_tirar">Tirar da pasta</string>
+    <string name="pasta_selecionar">Selecionar</string>
+    <string name="pasta_marca">Pasta %1$s</string>
+    <string name="pasta_na_pasta">Na pasta %1$s</string>
+    <string name="pasta_falha_criar">Não foi possível criar a pasta: %1$s</string>
+    <string name="pasta_falha_renomear">Não foi possível renomear a pasta: %1$s</string>
+    <string name="pasta_falha_mudar">Não foi possível mudar a pasta: %1$s</string>
+    <string name="pasta_falha_cor">Não foi possível mudar a cor: %1$s</string>
+    <string name="pasta_falha_excluir">Não foi possível excluir a pasta: %1$s</string>
+    <string name="pasta_falha_por">Não foi possível pôr na pasta: %1$s</string>
+    <string name="pasta_falha_tirar">Não foi possível tirar da pasta: %1$s</string>
+    <string name="pasta_falha_carregar">Não foi possível carregar as pastas: %1$s</string>
     <!-- Velocidade do áudio (web `f351190`) -->
     <string name="velocidade_audio">Velocidade: %1$s</string>
     <!-- Sugestão de texto da IA (ENV-25) -->

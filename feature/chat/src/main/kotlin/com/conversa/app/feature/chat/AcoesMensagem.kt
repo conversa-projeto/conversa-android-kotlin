@@ -31,6 +31,7 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.outlined.Forward
 import androidx.compose.material.icons.automirrored.outlined.Reply
 import androidx.compose.material.icons.outlined.AddReaction
+import androidx.compose.material.icons.outlined.CheckCircle
 import androidx.compose.material.icons.outlined.ContentCopy
 import androidx.compose.material.icons.outlined.PersonOutline
 import androidx.compose.material.icons.outlined.TaskAlt
@@ -196,6 +197,8 @@ data class AcoesMenu(
     val aoOcultar: () -> Unit,
     /** "Pedir confirmação de leitura" numa minha já enviada (FC-525). */
     val aoPedirConfirmacao: () -> Unit = {},
+    /** "Selecionar" para pôr numa pasta (ENV-29): só na direta. */
+    val aoSelecionar: (() -> Unit)? = null,
 )
 
 /** Toque longo na bolha (TODO 7.1): reações rápidas + "mais" e as ações (textos do web). */
@@ -248,6 +251,10 @@ fun MenuMensagem(mensagem: Mensagem, propria: Boolean, grupo: Boolean, acoes: Ac
         val temTexto = mensagem.conteudos.any { it.tipo == TipoConteudo.TEXTO || it.tipo == TipoConteudo.IMAGEM }
         if (temTexto) {
             ItemMenu(Icons.Outlined.ContentCopy, stringResource(R.string.copiar), onClick = acoes.aoCopiar)
+        }
+        // Só as já salvas vão para uma pasta (ENV-29).
+        acoes.aoSelecionar?.takeIf { mensagem.id > 0 }?.let { selecionar ->
+            ItemMenu(Icons.Outlined.CheckCircle, stringResource(R.string.pasta_selecionar), onClick = selecionar)
         }
         // Até 24 h depois do envio, se ainda não pede (como o web).
         // Bot nunca confirma (CON-16): na direta com ele, não oferece.
@@ -466,7 +473,12 @@ class AcoesAbertas {
  * as reações mudam com a folha aberta (a minha, otimista, ou a de alguém pelo WS 7).
  */
 @Composable
-internal fun AcoesDaMensagem(abertas: AcoesAbertas, estado: ChatUiState, viewModel: ChatViewModel) {
+internal fun AcoesDaMensagem(
+    abertas: AcoesAbertas,
+    estado: ChatUiState,
+    viewModel: ChatViewModel,
+    aoSelecionar: ((Mensagem) -> Unit)? = null,
+) {
     fun atual(id: Long): Mensagem? = estado.itens.firstNotNullOfOrNull { (it as? ItemChat.Bolha)?.mensagem?.takeIf { m -> m.id == id } }
     abertas.menuDe?.let { inicial ->
         val mensagem = atual(inicial.id) ?: inicial
@@ -507,6 +519,12 @@ internal fun AcoesDaMensagem(abertas: AcoesAbertas, estado: ChatUiState, viewMod
                 aoPedirConfirmacao = {
                     abertas.menuDe = null
                     if (estado.grupo) abertas.pedindoConfirmacao = mensagem else viewModel.pedirConfirmacaoDepois(mensagem, null)
+                },
+                aoSelecionar = aoSelecionar?.let { selecionar ->
+                    {
+                        abertas.menuDe = null
+                        selecionar(mensagem)
+                    }
                 },
             ),
             aoFechar = { abertas.menuDe = null },

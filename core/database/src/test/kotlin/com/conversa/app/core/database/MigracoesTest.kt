@@ -60,9 +60,11 @@ class MigracoesTest {
                 assertThat(it.isNull(1)).isTrue()
                 assertThat(it.getLong(2)).isEqualTo(0)
             }
-            conexao.linha("SELECT remetente, postagemId FROM mensagem WHERE id = 900") {
+            conexao.linha("SELECT remetente, postagemId, pastas FROM mensagem WHERE id = 900") {
                 assertThat(it.getText(0)).isEqualTo("Ana")
                 assertThat(it.isNull(1)).isTrue()
+                // Versão 13 (7.14): sem pasta até a próxima leitura das mensagens.
+                assertThat(it.getText(2)).isEmpty()
             }
             conexao.linha("SELECT conteudo, chatChamadaId, duracao, intensidade FROM conteudo WHERE mensagemId = 900") {
                 assertThat(it.getText(0)).isEqualTo("oi")
@@ -90,6 +92,6 @@ class MigracoesTest {
     }
 
     private companion object {
-        const val VERSAO_ATUAL = 12
+        const val VERSAO_ATUAL = 13
     }
 }

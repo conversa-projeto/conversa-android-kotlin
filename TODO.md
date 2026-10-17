@@ -862,12 +862,12 @@
 - [x] **Teste:** postar e responder dos dois lados (web e Android); o contador zera; a notificação de resposta chega (5.4) — no emulador, com o B pela API (as rotas do web): postar, responder, "Ver todas", resposta do B ao vivo (WS 64) e o contador zerado ✔ 2033b39; a notificação de resposta chegou com o app em segundo plano ✔ 6f9a298
 
 ### 7.14 🆕 Pastas de mensagens (CON-17, MSG-23, MSG-24, ENV-29; FC-223, FC-318, FC-527) — servidor `ac710eb`, web `f351190`
-- [ ] DTOs e rotas (`/pastas`, `/pasta`, `/pasta/mensagens` com o DELETE com corpo JSON, `@HTTP(hasBody = true)`); `pastas` (opcional) nas mensagens, guardado no Room; WS 67
-- [ ] Folha "Pastas de mensagens" no "⋮" da direta: lista (nome, cor, compartilhada, contador), criar (até 60), renomear, cor (paleta do web), compartilhar, excluir com a confirmação do web (só o dono)
-- [ ] Selecionar: toque longo › "Selecionar"; barra "N selecionadas" com "Pôr na pasta" e "×"; só mensagens salvas
-- [ ] Marcas na bolha: até 3 bolinhas na cor da pasta (atrás do ✓ na enviada; ao lado e tocáveis na recebida)
-- [ ] Pasta aberta: as mensagens dela (50 por página, `antes`), sem campo; "Ver na conversa", "Tirar da pasta" (uma ou várias), voltar
-- [ ] **Teste:** criar, compartilhar e pôr mensagens com o web do outro lado (WS 67 nos dois sentidos)
+- [x] DTOs e rotas (`/pastas`, `/pasta`, `/pasta/mensagens` com o DELETE com corpo JSON, `@HTTP(hasBody = true)`); `pastas` (opcional) nas mensagens, guardado no Room; WS 67 — Room v13; as pastas ficam na memória e são relidas na reconexão ✔ HASH_D
+- [x] Folha "Pastas de mensagens" no "⋮" da direta: lista (nome, cor, compartilhada, contador), criar (até 60), renomear, cor (paleta do web), compartilhar, excluir com a confirmação do web (só o dono) — paleta registrada como proposta (`cores.md` §6.5) ✔ HASH_D
+- [x] Selecionar: toque longo › "Selecionar"; barra "N selecionadas" com "Pôr na pasta" e "×"; só mensagens salvas ✔ HASH_D
+- [x] Marcas na bolha: até 3 bolinhas na cor da pasta (atrás do ✓ na enviada; ao lado e tocáveis na recebida) ✔ HASH_D
+- [x] Pasta aberta: as mensagens dela (50 por página, `antes`), sem campo; "Ver na conversa", "Tirar da pasta" (uma ou várias), voltar — com "Responder" e "Selecionar" no toque longo ✔ HASH_D
+- [ ] **Teste:** criar, compartilhar e pôr mensagens com o web do outro lado (WS 67 nos dois sentidos) — no emulador, com o C pela API (WS 67 nos dois sentidos); falta com o web, que estava fora do ar
 
 ---
 

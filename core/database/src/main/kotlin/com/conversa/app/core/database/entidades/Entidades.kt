@@ -62,7 +62,12 @@ data class MensagemEntidade(
     val confirmacaoJson: String? = null,
     /** Resposta de postagem (7.13): só a minha, enquanto está na fila. Fica fora do fluxo do chat. */
     val postagemId: Long? = null,
+    /** As pastas da mensagem (7.14), ids separados por vírgula; "" sem pasta. */
+    @ColumnInfo(defaultValue = "") val pastas: String = "",
 )
+
+/** As pastas de uma mensagem, para pôr ou tirar sem reescrever a linha inteira (7.14). */
+data class PastasDaMensagem(val id: Long, val pastas: String)
 
 @Entity(
     tableName = "conteudo",

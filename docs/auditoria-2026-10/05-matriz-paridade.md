@@ -91,9 +91,9 @@ A coluna **Fase** indica em que fase do plano da nova base (doc 07) a funcionali
 | Grupo | Total | ✅ | 🟡 | ⛔ | ⬜ | ➖ |
 |---|---|---|---|---|---|---|
 | AUT | 11 | 11 | 0 | 0 | 0 | 0 |
-| CON | 17 | 14 | 1 | 0 | 2 | 0 |
-| MSG | 25 | 23 | 0 | 0 | 2 | 0 |
-| ENV | 30 | 26 | 0 | 2 | 1 | 1 |
+| CON | 17 | 15 | 1 | 0 | 1 | 0 |
+| MSG | 25 | 25 | 0 | 0 | 0 | 0 |
+| ENV | 30 | 27 | 0 | 2 | 0 | 1 |
 | ANX | 18 | 16 | 1 | 0 | 0 | 1 |
 | PES | 2 | 2 | 0 | 0 | 0 | 0 |
 | CHA | 26 | 24 | 0 | 0 | 2 | 0 |
@@ -103,13 +103,13 @@ A coluna **Fase** indica em que fase do plano da nova base (doc 07) a funcionali
 | ATV | 5 | 5 | 0 | 0 | 0 | 0 |
 | CFG | 14 | 6 | 1 | 0 | 5 | 2 |
 | GER | 10 | 8 | 0 | 0 | 0 | 2 |
-| **Total** | **172** | **143** | **3** | **3** | **17** | **6** |
+| **Total** | **172** | **147** | **3** | **3** | **13** | **6** |
 
 > Requisitos exclusivos do Android (AND, fora da contagem): 16 — 13 ✅, 2 🟡, 1 ⛔, 0 ⬜, 0 ➖.
 >
-> **Leitura:** 🆕 (2026-10-15, depois do servidor `ef13c22` e do web `9c6e8a6`) 131 de 163 funcionalidades estão prontas na nova base, e 6 estão em parte. A sincronização trouxe 10 funcionalidades (bots, permissões de uso, administração e atividades pendentes); a quebra das atividades (`nova` → `pendente`) já foi corrigida (`2219208`). Ficaram em parte o cadastro fechado (AUT-02), a duração e a onda do áudio (ANX-10, ANX-11); a tela de Acessos com as 32 permissões (CFG-08) já voltou a ✅. 🆕 (2026-10-16) As permissões de uso (GER-09), o cadastro fechado (AUT-02) a conversa com bot (CON-16) a duração e a onda do áudio (ANX-10, ANX-11) o resumo e a sugestão por IA (CON-14, ENV-25, falta conferir com um servidor de IA) e os recursos do servidor (GER-08) ficaram prontos: 139 de 163. 🆕 (2026-10-17, servidor `ac710eb` e web `f351190`) Com as 9 funcionalidades novas e os 4 IDs que voltaram a 🟡, são 135 prontas de 172. Com os ajustes do sincronismo (contatos pelo WS 66, "Gravando áudio…" na lista, velocidade do áudio, espaço usado, "Usuário desde" e os Acessos), 141 de 172. Com a localização e o trajeto na conversa (MSG-25), 142 de 172; com o envio (ENV-30), 143.
+> **Leitura:** 🆕 (2026-10-15, depois do servidor `ef13c22` e do web `9c6e8a6`) 131 de 163 funcionalidades estão prontas na nova base, e 6 estão em parte. A sincronização trouxe 10 funcionalidades (bots, permissões de uso, administração e atividades pendentes); a quebra das atividades (`nova` → `pendente`) já foi corrigida (`2219208`). Ficaram em parte o cadastro fechado (AUT-02), a duração e a onda do áudio (ANX-10, ANX-11); a tela de Acessos com as 32 permissões (CFG-08) já voltou a ✅. 🆕 (2026-10-16) As permissões de uso (GER-09), o cadastro fechado (AUT-02) a conversa com bot (CON-16) a duração e a onda do áudio (ANX-10, ANX-11) o resumo e a sugestão por IA (CON-14, ENV-25, falta conferir com um servidor de IA) e os recursos do servidor (GER-08) ficaram prontos: 139 de 163. 🆕 (2026-10-17, servidor `ac710eb` e web `f351190`) Com as 9 funcionalidades novas e os 4 IDs que voltaram a 🟡, são 135 prontas de 172. Com os ajustes do sincronismo (contatos pelo WS 66, "Gravando áudio…" na lista, velocidade do áudio, espaço usado, "Usuário desde" e os Acessos), 141 de 172. Com a localização e o trajeto na conversa (MSG-25), 142 de 172; com o envio (ENV-30), 143; com as pastas de mensagens (CON-17, MSG-23, MSG-24, ENV-29), 147.
 > - **Bloqueadas (⛔):** dependem de algo fora do app: o push (Firebase, NOT-04) ou a decisão do campo rico (FC-416).
-> - **Por fazer (⬜):** 🆕 as pastas de mensagens (CON-17, MSG-23, MSG-24, ENV-29), a etapa 9 (SIP, compartilhar tela, Bubbles), a administração de usuários, bots, ferramentas e conhecimento (CFG-11…14, a avaliar) e um item P3 fora do TODO.
+> - **Por fazer (⬜):** 🆕 a etapa 9 (SIP, compartilhar tela, Bubbles), a administração de usuários, bots, ferramentas e conhecimento (CFG-11…14, a avaliar) e um item P3 fora do TODO.
 > - **Falta conferir:** as células com "falta conferir" ou "em aparelho" estão prontas, mas esperam um teste que o emulador não permite.
 
 ---
@@ -150,7 +150,7 @@ A coluna **Fase** indica em que fase do plano da nova base (doc 07) a funcionali
 | CON-14 🆕 | Resumo da conversa por IA (períodos, assuntos com pendências, "Ver na conversa", último resumo guardado) | ⬜ | ✅ 8.8 · `110f742` · falta conferir com um servidor de IA | — | "Resumir conversa" no "⋮" do chat (só com `recursos.ia`); `POST`/`GET /conversa/resumo` a cada 2 s; último resumo no Room — 🆕 `769bd7d`/`05507a0` | F7 | P2 |
 | CON-15 🆕 | Imagem ou emoji do grupo (`PATCH /conversa {avatar_anexo_id, emoji}`) | ⬜ | ✅ 2.10 · `04c5c14`, `943dbdb` | — | "Imagem", "Emoji", "Remover" na tela do grupo; mostrar `emoji`/`avatar_url` do grupo em todos os avatares — 🆕 `769bd7d` | F1 | P2 |
 | CON-16 🆕 | Conversa com bot de IA (pílula "Bot" no cabeçalho da direta; o bot responde na direta, quando mencionado e quando respondem a ele) | ⬜ | ✅ 2.9 · `9594d53` | — | Ler `bot` nos contatos e na conversa; pílula "Bot"; não oferecer ligação para bot; tirar o bot da lista de confirmação — 🆕 `ef13c22`/`9c6e8a6` | F1 | P2 |
-| CON-17 🆕 | Pastas de mensagens na conversa direta (criar, renomear, cor, compartilhar, excluir; até 50 por pessoa; WS 67) | ⬜ | ⬜ 7.14 | — | Folha "Pastas de mensagens" no "⋮" da direta; `GET /pastas`, `PUT`/`PATCH`/`DELETE /pasta`, `GET`/`PUT`/`DELETE /pasta/mensagens` (o DELETE leva corpo JSON) — 🆕 `ac710eb`/`f351190` | F4 | P2 |
+| CON-17 🆕 | Pastas de mensagens na conversa direta (criar, renomear, cor, compartilhar, excluir; até 50 por pessoa; WS 67) | ⬜ | ✅ 7.14 · `HASH_D` · falta conferir com o web | — | Folha "Pastas de mensagens" no "⋮" da direta; `GET /pastas`, `PUT`/`PATCH`/`DELETE /pasta`, `GET`/`PUT`/`DELETE /pasta/mensagens` (o DELETE leva corpo JSON) — 🆕 `ac710eb`/`f351190` | F4 | P2 |
 
 ## MSG — Exibição e leitura
 
@@ -178,8 +178,8 @@ A coluna **Fase** indica em que fase do plano da nova base (doc 07) a funcionali
 | MSG-20 🆕 | Bolha de votação (tipo 8): pergunta, opções com barra, votantes, votar/trocar/tirar voto, tempo real (WS 62) | ⬜ | ✅ 7.12 · `b6d8631` | O app antigo mostra a bolha **vazia** | `GET /enquete?id=` com cache por id; `POST /enquete/votar` com a lista completa; reler no WS 62 se estiver na tela. **No F2, pelo menos um placeholder "📊 Votação"** — 🆕 `5cad911`/`785bdef`: data final, encerrar (`POST /enquete/encerrar`), mudar a data (`PATCH /enquete`), estado encerrado com 🏆 e prazo vencendo na tela | F4 (placeholder F2) | P1 (placeholder P0) |
 | MSG-21 🆕 | Confirmação de leitura na bolha ("Confirmar leitura" / "Confirmada por N de T", WS 8) | ⬜ | ✅ 3.8 · `32de350` | — | Chip abaixo da bolha; `POST /mensagem/confirmar`; lista de quem confirmou — 🆕 `769bd7d` — 🆕 `6d20ff7`/`e33ecba`: lista de quem precisa confirmar (`pode_confirmar`, `destinatarios`), caixa só para quem está nela, "Falta confirmar", WS 65 | F2 | P1 |
 | MSG-22 🆕 | Postagem em grupo com respostas embaixo (2 últimas, "Ver todas", responder, "N novas", WS 64) | ⬜ | ✅ 7.13 · `2033b39` · notificação de resposta `6f9a298` | — | Bolha própria; `GET /postagem/respostas`, `POST /postagem/visualizar`; as respostas ficam **fora** de `/mensagens` mas contam nas não lidas — 🆕 `12cf0cf`/`d202c06` — 🆕 `e33ecba`: cartão na largura toda, "Responder à postagem" leva ao campo (qualquer conteúdo), avatar nas respostas | F4 | P0 (contador) / P1 |
-| MSG-23 🆕 | Marcas das pastas na bolha (até 3 bolinhas na cor da pasta; atrás do ✓ na enviada, ao lado e clicáveis na recebida) | ⬜ | ⬜ 7.14 | — | Ler `pastas` (opcional) nas mensagens; atualizar pelo WS 67 e pelas respostas de pôr e tirar — 🆕 `ac710eb`/`f351190` | F4 | P3 |
-| MSG-24 🆕 | Pasta aberta por cima do chat, sem campo ("Ver na conversa", "Tirar da pasta", tirar várias, 50 por página) | ⬜ | ⬜ 7.14 | — | Tela da pasta com `GET /pasta/mensagens?id=&antes=`, menu sem "Pedir confirmação" nem "Ocultar" — 🆕 `ac710eb`/`f351190` | F4 | P2 |
+| MSG-23 🆕 | Marcas das pastas na bolha (até 3 bolinhas na cor da pasta; atrás do ✓ na enviada, ao lado e clicáveis na recebida) | ⬜ | ✅ 7.14 · `HASH_D` | — | Ler `pastas` (opcional) nas mensagens; atualizar pelo WS 67 e pelas respostas de pôr e tirar — 🆕 `ac710eb`/`f351190` | F4 | P3 |
+| MSG-24 🆕 | Pasta aberta por cima do chat, sem campo ("Ver na conversa", "Tirar da pasta", tirar várias, 50 por página) | ⬜ | ✅ 7.14 · `HASH_D` | — | Tela da pasta com `GET /pasta/mensagens?id=&antes=`, menu sem "Pedir confirmação" nem "Ocultar" — 🆕 `ac710eb`/`f351190` | F4 | P2 |
 | MSG-25 🆕 | Localização e trajeto na conversa (bolha com mapa, visualizador com satélite, "Abrir no Google Maps") | ⬜ | ✅ 4.12 · `eaa4f42` · falta conferir a pinça em aparelho | — | Conteúdo tipo 9 (JSON dentro do `conteudo`); mapa de tiles do OSM com User-Agent do app e a atribuição; rótulo "Localização" nas prévias — 🆕 `ac710eb`/`f351190` | F3 | P1 |
 
 ## ENV — Composição e ações
@@ -214,7 +214,7 @@ A coluna **Fase** indica em que fase do plano da nova base (doc 07) a funcionali
 | ENV-26 🆕 | Criar postagem em grupo ("+" › "Postagem", título opcional) | ⬜ | ✅ 7.13 · `2033b39` | — | Item no "+" (só grupo) e faixa com o título — 🆕 `d202c06` | F4 | P1 |
 | ENV-27 🆕 | Pedir confirmação de leitura depois do envio (menu da mensagem, até 24 h) | ⬜ | ✅ 7.1 · `32de350` | — | Item "Pedir confirmação de leitura" no toque longo (minha mensagem, menos de 24 h); em grupo, o modal "Quem precisa confirmar"; `POST /mensagem/pedir-confirmacao`; WS 65 — 🆕 `e33ecba`/`6d20ff7` | F4 | P2 |
 | ENV-28 🆕 | Código como peça no campo ("Inserir na mensagem", editar, remover) | ⬜ | ⛔ 4.11 · depende da decisão do campo rico (FC-416) | — | Campo simplificado: inserir o bloco cercado no cursor; campo por blocos: peça com prévia — 🆕 `e33ecba` | F4 | P3 |
-| ENV-29 🆕 | Selecionar mensagens e pôr na pasta (arraste, Ctrl, Esc no web) | ⬜ | ⬜ 7.14 | — | No celular não há arraste: toque longo › "Selecionar", barra "N selecionadas" com "Pôr na pasta" — 🆕 `f351190` | F4 | P2 |
+| ENV-29 🆕 | Selecionar mensagens e pôr na pasta (arraste, Ctrl, Esc no web) | ⬜ | ✅ 7.14 · `HASH_D` · toque longo › "Selecionar" | — | No celular não há arraste: toque longo › "Selecionar", barra "N selecionadas" com "Pôr na pasta" — 🆕 `f351190` | F4 | P2 |
 | ENV-30 🆕 | Enviar localização ou trajeto ("+" › Localização: Local ou Trajeto, busca de endereço, minha posição, rota de carro) | ⬜ | ✅ 4.12 · `e0d3300` · falta conferir com o web | — | Permissão de uso `localizacao`; Nominatim, OSRM (`driving`) e tiles do OSM com User-Agent; posição do aparelho (permissão de localização); "Inserir na mensagem" depende do campo rico (FC-416) — 🆕 `ac710eb`/`f351190` | F4 | P2 |
 
 ## ANX — Anexos e mídia

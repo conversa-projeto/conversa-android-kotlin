@@ -330,6 +330,25 @@ O conjunto pulsa entre opacidade 1 e 0,55. O brilho só pinta por cima das forma
 
 Ver a pergunta 12 da §9.
 
+### 6.5 Cores das pastas de mensagens — **PROPOSTA** (2026-10-17)
+
+A cor de uma pasta (contrato §10.17) é **um dado guardado no servidor** (texto de até 20 caracteres), escolhido por quem criou a pasta, no web ou no app, e visto pelos dois lados quando ela é compartilhada. Para a pasta aparecer igual nos dois clientes, o app mostra a cor que veio e oferece, para escolher, **a mesma paleta do web** (`CORES_PASTA` em `conversa-web/src/utils/pastas.ts`). É uma exceção à regra 2 da §8, porque a cor é dado e não tema.
+
+| Valor guardado | Cor | Origem |
+|---|---|---|
+| `""` (sem cor) | `primary` do tema (`#007DFF`) | o web usa a cor principal do tema dele; aqui, a do FMX |
+| `#ef4444` | vermelho | paleta do web |
+| `#f59e0b` | âmbar | paleta do web |
+| `#22c55e` | verde | paleta do web |
+| `#06b6d4` | ciano | paleta do web |
+| `#3b82f6` | azul | paleta do web |
+| `#a855f7` | roxo | paleta do web |
+| `#ec4899` | rosa | paleta do web |
+
+- Qualquer valor fora de `#rrggbb` (a API aceita texto livre) aparece como `""`, na cor principal.
+- No código, as cores ficam só em `core:model` (`CORES_PASTA`, `argbDaPasta`), como dado; as telas convertem a cor da pasta, sem `Color(0x…)` solto.
+- Ver a pergunta 14 da §9.
+
 ## 7. Snippet Kotlin (Compose)
 
 ```kotlin
@@ -593,3 +612,4 @@ fun ConversaTheme(
 11. **Cabeçalho:** `Conversa.Chat.fmx` usa `#F0F0F0`, mas `Conversa.Conteudo.fmx:13` usa `#FFFFFF`. Proposta: top bar = `#F0F0F0` (`surfaceContainer`).
 12. **Destaque de código (§6.4):** como o FMX não tem, o Android reaproveita tokens da paleta (azul, verde de atender, cinza terciário, vermelho de encerrar, link). Confirmar se está bom ou se prefere outro esquema.
 13. **Presença "ausente" (2026-10-15):** o servidor passou a ter ativo/ausente/offline. O FMX não tem presença nem cor amarela. Proposta provisória: âmbar `#FFB300` (o mesmo nos dois temas), ao lado do verde provisório de `online`. Confirmar a cor, ou trocar por outra da paleta.
+14. **Cores das pastas (2026-10-17, §6.5):** a cor da pasta é dado do servidor, e o app oferece as 8 opções do web para a pasta ficar igual nos dois clientes. Alternativa: oferecer cores do FMX (o web mostraria a cor escolhida no app, mas a marca de "selecionada" da paleta dele não acenderia). Confirmar.

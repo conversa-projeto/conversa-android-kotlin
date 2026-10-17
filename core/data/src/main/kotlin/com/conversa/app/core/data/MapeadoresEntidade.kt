@@ -23,6 +23,8 @@ import com.conversa.app.core.model.TipoConversa
 import com.conversa.app.core.model.UsuarioReacao
 import com.conversa.app.core.model.intensidadeDoTexto
 import com.conversa.app.core.model.intensidadeParaTexto
+import com.conversa.app.core.model.pastasDoTexto
+import com.conversa.app.core.model.pastasParaTexto
 import com.conversa.app.core.network.dto.ConfirmacaoDto
 import com.conversa.app.core.network.dto.ContatoDto
 import com.conversa.app.core.network.dto.ConteudoDto
@@ -91,6 +93,7 @@ internal fun MensagemDto.paraEntidade() = MensagemCompleta(
         postagemJson = postagem?.let { ConversaJson.encodeToString(PostagemDto.serializer(), it) },
         confirmacaoJson = confirmacao?.let { ConversaJson.encodeToString(ConfirmacaoDto.serializer(), it) },
         postagemId = postagemId,
+        pastas = pastasParaTexto(pastas),
     ),
     conteudos = conteudos.map {
         ConteudoEntidade(
@@ -143,6 +146,7 @@ fun MensagemCompleta.paraModelo() = Mensagem(
         runCatching { ConversaJson.decodeFromString(ConfirmacaoDto.serializer(), json).paraModelo() }.getOrNull()
     },
     postagemId = mensagem.postagemId,
+    pastas = pastasDoTexto(mensagem.pastas),
     conteudos = conteudos.sortedBy { it.ordem }.map {
         Conteudo(
             id = it.id,

@@ -141,6 +141,8 @@ data class Mensagem(
     val confirmacao: ConfirmacaoLeitura? = null,
     /** Resposta de postagem (7.13): a postagem dela. Fica embaixo da postagem, fora do fluxo do chat. */
     val postagemId: Long? = null,
+    /** As pastas que eu enxergo em que ela está (7.14, conversa direta), em ordem. */
+    val pastas: List<Long> = emptyList(),
 ) {
     /** "Mensagem oculta" (antigo excluir): o conteúdo continua vindo, mas não é exibido. */
     val oculta: Boolean get() = excluidaEm != null

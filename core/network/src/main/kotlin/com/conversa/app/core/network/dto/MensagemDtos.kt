@@ -85,6 +85,8 @@ data class MensagemDto(
     @SerialName("postagem_id") val postagemId: Long? = null,
     /** Confirmação de leitura pedida por quem enviou (`b8ea0c2`, `6d20ff7`, contrato §10.14). */
     val confirmacao: ConfirmacaoDto? = null,
+    /** As pastas que eu enxergo em que a mensagem está (`ac710eb`, contrato §10.17); só vem quando há alguma. */
+    val pastas: List<Long> = emptyList(),
 )
 
 @Serializable

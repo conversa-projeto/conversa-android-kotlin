@@ -59,7 +59,7 @@ class Conversores {
         RascunhoEntidade::class,
         ResumoEntidade::class,
     ],
-    version = 12,
+    version = 13,
     exportSchema = true,
     // 2: ordem das reações (a do servidor), para o "+N" esconder as mesmas que o web.
     // 3: rascunho por conversa (FC-519).
@@ -68,6 +68,7 @@ class Conversores {
     // 6: emoji do grupo e "chat de ligação" na conversa (FC-217, FC-218).
     // 7: o chat da ligação no conteúdo da mensagem da ligação (FC-727).
     // 8: atividade "pendente" no lugar de "nova" (servidor `ef13c22`).
+    // 13: as pastas da mensagem (servidor `ac710eb`, 7.14).
     autoMigrations = [
         AutoMigration(from = 1, to = 2),
         AutoMigration(from = 2, to = 3),
@@ -80,6 +81,7 @@ class Conversores {
         AutoMigration(from = 9, to = 10),
         AutoMigration(from = 10, to = 11),
         AutoMigration(from = 11, to = 12),
+        AutoMigration(from = 12, to = 13),
     ],
 )
 @TypeConverters(Conversores::class)
