@@ -1,22 +1,21 @@
 <?xml version="1.0" encoding="utf-8"?>
 <!--
-    Versão SÓ DO DEBUG (substitui a de src/main no build de debug; o release usa a de src/main).
-    Igual à principal (que no debug confia também nas CAs instaladas pelo usuário, para o mkcert),
-    mais uma exceção: HTTP sem TLS apenas para localhost/127.0.0.1.
-    Uso: emulador ligado à API de dev sem nginx, com `adb reverse tcp:8080 tcp:8080`
-    e o servidor configurado como http://localhost:8080 (docs/desenvolvimento/emulador.md).
-    Nenhum outro endereço aceita HTTP, nem no debug.
+    Versão SÓ DO DEBUG (substitui a de src/main no build de debug; o release usa a de src/main,
+    que aceita só HTTPS com as CAs do sistema).
+    - Confia também nas CAs instaladas pelo usuário no aparelho (mkcert, CA interna da empresa).
+    - Certificado próprio sem CA instalada: a tela Servidor oferece "Confiar neste certificado"
+      (impressão SHA-256 fixada; ConfiancaServidor, em core:network).
+    - HTTP sem TLS em qualquer endereço: servidor interno em modo produção sem a borda TLS
+      (`bin/producao.bat` do servidor escuta só na porta 80) e o emulador com
+      `adb reverse tcp:8080 tcp:8080` + http://localhost:8080 (docs/desenvolvimento/emulador.md).
+      O endereço com http:// precisa ser digitado (ou o app tenta sozinho quando o HTTPS não responde).
     Sem <debug-overrides> aqui: este arquivo já é só do debug (e o lint não aceita dois).
 -->
 <network-security-config>
-    <base-config cleartextTrafficPermitted="false">
+    <base-config cleartextTrafficPermitted="true">
         <trust-anchors>
             <certificates src="system" />
             <certificates src="user" />
         </trust-anchors>
     </base-config>
-    <domain-config cleartextTrafficPermitted="true">
-        <domain includeSubdomains="false">localhost</domain>
-        <domain includeSubdomains="false">127.0.0.1</domain>
-    </domain-config>
 </network-security-config>

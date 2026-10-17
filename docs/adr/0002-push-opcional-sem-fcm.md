@@ -1,6 +1,6 @@
 # ADR 0002 — O app precisa funcionar sem FCM (push opcional)
 
-- **Status:** proposto, aguardando decisão (pedido de 2026-10-15: "o projeto também precisa funcionar sem FCM, seja opcional").
+- **Status:** 🆕 **aceito em parte (2026-10-17): opção A implementada**; D, C e B continuam em aberto (pedido de 2026-10-15: "o projeto também precisa funcionar sem FCM, seja opcional"). Ver "Decisão de 2026-10-17" no fim.
 - **Data:** 2026-10-15
 - **Base:**
   - código do app (`ConexaoTempoReal`, manifestos, `TODO.md` etapa 5);
@@ -120,3 +120,18 @@
 - O 5.1/5.2 (Firebase) deixa de estar ⛔ "esperando o projeto". Vira "FCM quando o servidor tiver", sem bloquear nada.
 - O 5.7 ("sem serviço permanente") ganha uma exceção controlada: a conexão em segundo plano, só sem FCM e com a chave ligada.
 - No servidor, entram as pendências novas S23 (configuração do cliente Firebase por servidor) e, se B for escolhida, S24 (UnifiedPush).
+
+## Decisão de 2026-10-17 (para a apresentação de 2026-10-17)
+A pessoa pediu, para a apresentação, que **mensagens e chamadas cheguem com o app fechado e a tela bloqueada, sem FCM**, e aceitou a notificação fixa e o pedido de isenção de bateria. Isso responde às perguntas 1 e 2:
+1. **Chamadas com o app fechado sem FCM:** sim, é requisito. Por isso a **opção A** é obrigatória.
+2. **Notificação fixa:** aceita.
+3. **Distribuição:** por enquanto, APK direto (debug), sem a Play Store. O `specialUse` não passa por revisão.
+
+O que entrou (histórico `2026-10-17-20`):
+- `ServicoConexao` (`app/.../conexao/ConexaoEmSegundoPlano.kt`): serviço em primeiro plano `specialUse` com a notificação fixa "Conectado ao Conversa" no canal `conexao_v1` (mínimo, sem som).
+- `ConexaoEmSegundoPlano`: com sessão e a chave ligada, põe `ConexaoTempoReal.manterEmSegundoPlano`, e o WebSocket não desliga mais 10 s depois de sair do app. Inicia o serviço com o app visível, porque o Android não deixa iniciar em segundo plano.
+- `InicioDoAparelhoReceiver`: sobe o serviço quando o celular liga e quando o app é atualizado.
+- A chave **"Receber com o app fechado"** fica em Configurações › Notificações, **ligada por padrão**. Ao lado, o estado da otimização de bateria, com um atalho para o pedido do Android.
+- Pedido único da isenção de bateria na tela principal, depois dos pedidos de notificação e de tela cheia.
+
+Continuam em aberto: D (FCM pelo servidor, S23), C (sincronização periódica de reserva), B (UnifiedPush) e a medição de bateria e atraso no Galaxy A25.

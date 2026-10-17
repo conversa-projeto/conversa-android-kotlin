@@ -8,6 +8,12 @@
     <uses-permission android:name="android.permission.RECORD_AUDIO" />
     <!-- Notificações (download concluído; mensagens e chamadas na etapa 5). Pedida em tempo de execução na etapa 5. -->
     <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />
+    <!-- Receber com o app fechado sem FCM (ADR 0002, opção A): serviço com notificação fixa,
+         religado quando o celular liga, e o pedido para o Android não cortar a rede com a tela apagada. -->
+    <uses-permission android:name="android.permission.FOREGROUND_SERVICE" />
+    <uses-permission android:name="android.permission.FOREGROUND_SERVICE_SPECIAL_USE" />
+    <uses-permission android:name="android.permission.RECEIVE_BOOT_COMPLETED" />
+    <uses-permission android:name="android.permission.REQUEST_IGNORE_BATTERY_OPTIMIZATIONS" />
 
     <!--
         allowBackup=false e regras de extração vazias: a sessão (token) e o cache
@@ -61,6 +67,26 @@
         <receiver
             android:name=".notificacoes.AcoesNotificacaoReceiver"
             android:exported="false" />
+
+        <!-- Conexão em segundo plano (ADR 0002, opção A): mantém o WebSocket do próprio servidor
+             aberto para mensagens e chamadas chegarem sem o Google (FCM). -->
+        <service
+            android:name=".conexao.ServicoConexao"
+            android:exported="false"
+            android:foregroundServiceType="specialUse">
+            <property
+                android:name="android.app.PROPERTY_SPECIAL_USE_FGS_SUBTYPE"
+                android:value="Conexão com o servidor de mensagens próprio da empresa (sem Google Play) para receber mensagens e chamadas" />
+        </service>
+
+        <receiver
+            android:name=".conexao.InicioDoAparelhoReceiver"
+            android:exported="true">
+            <intent-filter>
+                <action android:name="android.intent.action.BOOT_COMPLETED" />
+                <action android:name="android.intent.action.MY_PACKAGE_REPLACED" />
+            </intent-filter>
+        </receiver>
 
         <!-- Anexos baixados e fotos da câmera, compartilhados com outros apps só por URI com permissão temporária. -->
         <provider

@@ -91,6 +91,11 @@
     <string name="notificacoes_ativadas">Ativadas</string>
     <string name="notificacoes_desativadas">Desativadas</string>
     <string name="notificacoes_abrir_no_sistema">Abrir nas configurações do Android</string>
+    <string name="notificacoes_app_fechado">Receber com o app fechado</string>
+    <string name="notificacoes_app_fechado_texto">Mantém o Conversa conectado ao servidor, com um aviso fixo, para mensagens e chamadas chegarem mesmo com o app fechado. Desligado, elas só chegam com o app aberto.</string>
+    <string name="notificacoes_bateria">Uso de bateria</string>
+    <string name="notificacoes_bateria_livre">Sem restrição: avisos chegam com a tela apagada.</string>
+    <string name="notificacoes_bateria_restrita">Restrito: com a tela apagada, mensagens e chamadas podem não chegar. Toque para permitir.</string>
     <!-- Qualidade das chamadas (8.5, CFG-06; textos do ConfiguracaoChamadas.vue) -->
     <string name="config_chamadas">Chamadas</string>
     <string name="config_chamadas_resumo">Qualidade do áudio e do vídeo</string>

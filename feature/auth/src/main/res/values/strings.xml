@@ -12,6 +12,10 @@
     <string name="servidor_aviso_ok">Conexão OK: é um servidor Conversa.</string>
     <string name="servidor_aviso_nao_conversa">O endereço respondeu, mas não é um servidor Conversa.</string>
     <string name="servidor_aviso_certificado">Certificado não confiável. Em desenvolvimento, instale a CA do mkcert no aparelho.</string>
+    <string name="servidor_certificado_titulo">Certificado não reconhecido</string>
+    <string name="servidor_certificado_texto">O Android não reconhece o certificado deste servidor. É comum em servidor interno da empresa com certificado próprio.\n\nSó confie se este for o seu servidor. Se puder, confira a impressão digital (SHA-256) com quem administra o servidor:</string>
+    <string name="servidor_certificado_confiar">Confiar e salvar</string>
+    <string name="servidor_certificado_cancelar">Cancelar</string>
     <string name="servidor_aviso_host">Endereço não encontrado. Confira o nome ou o IP.</string>
     <string name="servidor_aviso_indisponivel">O servidor está fora do ar. Tente de novo em instantes.</string>
     <string name="servidor_aviso_sem_conexao">Não foi possível conectar. Verifique a rede e o endereço.</string>

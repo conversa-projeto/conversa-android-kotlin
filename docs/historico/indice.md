@@ -28,6 +28,7 @@
 ## Repositório e build
 - 2026-10-06 · [Etapa 0 — preservação, limpeza e organização do repositório](2026-10-06-05-etapa-0-repositorio.md) — branch/tag legado, 11 stashes em tags e patches, limpeza, wrapper versionado, docs em `docs/legado/`, ADR 0001, README; push pendente
 - 2026-10-16 · [Volumes do Docker renomeados e as variáveis antigas do shell](2026-10-16-02-volumes-renomeados.md) — `renomear-volumes.bat` com cópia de segurança antes; variáveis `CONVERSA_*` antigas levaram a API à base `conversa` (desfeito pela cópia); o guia passa a usar `env -u`
+- 2026-10-17 · [Branch `apresentacao` juntada na `reescrita`](2026-10-17-21-junta-apresentacao-na-reescrita.md) — merge `--no-ff` depois da Localização; um conflito no `RedeModulo` (log sem os mapas + `ConfiancaServidor`, os dois mantidos)
 
 ## Fundação (etapa 1)
 - 2026-10-07 · [Etapa 1 — fundação do app novo](2026-10-07-02-etapa-1-fundacao.md) — 8 módulos, rede (67 rotas), WebSocket, Room, sessão cifrada, sync, design system, tela Servidor; 65 testes passando
@@ -72,6 +73,7 @@
 - 2026-10-08 · [Etapa 5 — notificação de mensagem, canais, permissão e atalhos (sem o push)](2026-10-08-07-etapa-5-notificacoes-sem-push.md) — MessagingStyle por conversa com Responder/Marcar como lida, regra do web (som na frente, notificação em segundo plano), some ao ler/arquivar/abrir, atalhos; Firebase ⛔ (precisa do usuário); 214 testes
 - 2026-10-15 · [Notificação de resposta a postagem](2026-10-15-09-notificacao-resposta-postagem.md) — WS 64 de outra pessoa → "<nome> respondeu a uma postagem" na notificação da conversa (mesma regra das mensagens); "Marcar como lida"/"Responder" também marcam as respostas (`POST /postagem/visualizar`); testado no emulador
 - 2026-10-15 · [Avatar na notificação de mensagem](2026-10-15-25-avatar-na-notificacao.md) — o atalho da conversa com a foto, o emoji ou a inicial, e o `Person` com a foto de quem mandou; no emulador, o 🎂 do "Aniversario" e a foto de um grupo
+- 2026-10-17 · [Apresentação: receber com o app fechado (sem FCM), minimizar a chamada e servidor interno](2026-10-17-20-apresentacao-app-fechado-e-servidor-interno.md) — ADR 0002 opção A (serviço `specialUse` com aviso fixo, chave em Notificações, pedido de bateria, religa no boot); botão "Voltar ao app sem encerrar"; no debug, "Confiar neste certificado" (SHA-256) e HTTP em servidor interno; os 8 pedidos testados num AVD separado (branch `apresentacao`)
 
 ## Chamadas (etapa 6)
 - 2026-10-08 · [Etapa 6 — módulos de chamada e a máquina de estados](2026-10-08-08-etapa-6-maquina-de-estados-chamada.md) — `:core:webrtc` (interface `MidiaChamada`) e `:feature:chamada` (`GerenciadorChamadas`): fases, eventos 51–57, pendentes, regras do web (ocupado, 30 s, 25 s, 55 sem 52…), monitor de 4 s; 51 testes com eventos duplicados e fora de ordem

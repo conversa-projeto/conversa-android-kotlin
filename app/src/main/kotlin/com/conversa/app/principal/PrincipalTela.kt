@@ -1,12 +1,14 @@
 package com.conversa.app.principal
 
 import android.Manifest
+import android.annotation.SuppressLint
 import android.app.NotificationManager
 import android.content.ActivityNotFoundException
 import android.content.Intent
 import android.content.pm.PackageManager
 import android.net.Uri
 import android.os.Build
+import android.os.PowerManager
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.annotation.StringRes
@@ -87,6 +89,12 @@ class PrincipalViewModel @Inject constructor(
     fun telaCheiaPedida() {
         viewModelScope.launch { preferencias.marcarPediuTelaCheia() }
     }
+
+    val pediuBateria: StateFlow<Boolean?> = preferencias.pediuBateria.stateIn(viewModelScope, SharingStarted.Eagerly, null)
+
+    fun bateriaPedida() {
+        viewModelScope.launch { preferencias.marcarPediuBateria() }
+    }
 }
 
 /** Abas da barra inferior (TODO 2.5). */
@@ -120,6 +128,11 @@ fun PrincipalTela(
     if (pediuNotificacoes == true) {
         val pediuTelaCheia by viewModel.pediuTelaCheia.collectAsStateWithLifecycle()
         PedidoTelaCheia(pediuTelaCheia, viewModel::telaCheiaPedida)
+        // E por último a bateria (receber com o app fechado, ADR 0002).
+        if (pediuTelaCheia == true) {
+            val pediuBateria by viewModel.pediuBateria.collectAsStateWithLifecycle()
+            PedidoBateria(pediuBateria, viewModel::bateriaPedida)
+        }
     }
     val avisos = LocalAvisos.current
     val tentando = stringResource(R.string.tentando_de_novo)
@@ -250,6 +263,47 @@ private fun PedidoTelaCheia(jaPediu: Boolean?, aoPedir: () -> Unit) {
                 } catch (_: ActivityNotFoundException) {
                 }
             }) { Text(stringResource(R.string.permissao_tela_cheia_abrir)) }
+        },
+        dismissButton = { TextButton(onClick = fechar) { Text(stringResource(R.string.permissao_notificacoes_agora_nao)) } },
+    )
+}
+
+/**
+ * Receber com o app fechado sem FCM (ADR 0002, opção A): com a otimização de bateria, o
+ * Android corta a rede com a tela apagada e nada chega. Explica uma vez e abre o pedido do
+ * próprio Android; a pessoa decide lá (depois, em Configurações › Notificações).
+ */
+@Composable
+private fun PedidoBateria(jaPediu: Boolean?, aoPedir: () -> Unit) {
+    if (jaPediu != false) return
+    val contexto = LocalContext.current
+    if (contexto.getSystemService(PowerManager::class.java)?.isIgnoringBatteryOptimizations(contexto.packageName) != false) {
+        LaunchedEffect(Unit) { aoPedir() }
+        return
+    }
+    var mostrar by rememberSaveable { mutableStateOf(true) }
+    if (!mostrar) return
+    val fechar = {
+        mostrar = false
+        aoPedir()
+    }
+    AlertDialog(
+        onDismissRequest = fechar,
+        title = { Text(stringResource(R.string.permissao_bateria_titulo)) },
+        text = { Text(stringResource(R.string.permissao_bateria_texto)) },
+        confirmButton = {
+            TextButton(onClick = {
+                fechar()
+                @SuppressLint("BatteryLife")
+                val pedido = Intent(
+                    android.provider.Settings.ACTION_REQUEST_IGNORE_BATTERY_OPTIMIZATIONS,
+                    Uri.fromParts("package", contexto.packageName, null),
+                )
+                try {
+                    contexto.startActivity(pedido)
+                } catch (_: ActivityNotFoundException) {
+                }
+            }) { Text(stringResource(R.string.permissao_bateria_permitir)) }
         },
         dismissButton = { TextButton(onClick = fechar) { Text(stringResource(R.string.permissao_notificacoes_agora_nao)) } },
     )

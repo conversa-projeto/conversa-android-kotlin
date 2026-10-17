@@ -50,6 +50,7 @@ import androidx.compose.material.icons.filled.Call
 import androidx.compose.material.icons.filled.CallEnd
 import androidx.compose.material.icons.filled.Cameraswitch
 import androidx.compose.material.icons.filled.Check
+import androidx.compose.material.icons.filled.CloseFullscreen
 import androidx.compose.material.icons.filled.Fullscreen
 import androidx.compose.material.icons.filled.GridView
 import androidx.compose.material.icons.filled.Headset
@@ -300,6 +301,7 @@ fun TelaChamadaRota(
                     aoAtivarTransmissao = { video -> pedirEDepois(video) { viewModel.ativarTransmissao(video) } },
                     // Chat já existe: a conversa completa; senão, a folha com o campo que cria o grupo (como o web).
                     aoChat = { estado.conversaChatId?.let { aoAbrirChat(it, false) } ?: run { escrevendoNoChat = true } },
+                    aoMinimizar = aoMinimizar,
                 ),
             )
         }
@@ -467,6 +469,8 @@ private data class AcoesEmChamada(
     /** Somente recepção: "Ativar microfone" (false) / "Ativar câmera" (true). */
     val aoAtivarTransmissao: (Boolean) -> Unit,
     val aoChat: () -> Unit,
+    /** Sai da tela sem encerrar: a chamada segue (faixa no topo do app ou picture-in-picture). */
+    val aoMinimizar: () -> Unit,
 )
 
 /** Rotas de áudio do Telecom: as disponíveis e a de agora. */
@@ -486,7 +490,7 @@ private fun TelaEmChamada(
     val remotos = trilhas.remotos
     val aguardando = convidadosAguardando(estado.dados, eu, remotos.keys)
     Column(Modifier.fillMaxSize().statusBarsPadding().navigationBarsPadding()) {
-        Cabecalho(estado)
+        Cabecalho(estado, acoes.aoMinimizar)
         // Com 2 quadros ou mais na grade, contando os convidados aguardando: quem abriu em tela única
         // ("só assistir") chega à grade e ao "Chamar de novo" (FC-726).
         if (remotos.isNotEmpty() && remotos.size + aguardando.size >= 2) {
@@ -572,7 +576,7 @@ private fun EtapaDoVideo(etapa: EtapaVideo, modifier: Modifier) {
 }
 
 @Composable
-private fun Cabecalho(estado: EstadoChamada) {
+private fun Cabecalho(estado: EstadoChamada, aoMinimizar: () -> Unit) {
     val cores = ConversaTema.cores
     val status = when (estado.fase) {
         FaseChamada.CHAMANDO -> stringResource(R.string.chamando)
@@ -581,10 +585,14 @@ private fun Cabecalho(estado: EstadoChamada) {
         else -> stringResource(R.string.em_chamada)
     }
     Row(
-        Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 12.dp),
+        Modifier.fillMaxWidth().padding(start = 4.dp, end = 16.dp, top = 4.dp, bottom = 4.dp),
         verticalAlignment = Alignment.CenterVertically,
         horizontalArrangement = Arrangement.spacedBy(8.dp),
     ) {
+        // Volta ao app sem encerrar a chamada (o Voltar do sistema faz o mesmo).
+        IconButton(onClick = aoMinimizar) {
+            Icon(Icons.Filled.CloseFullscreen, contentDescription = stringResource(R.string.minimizar_chamada))
+        }
         val ativa = estado.fase == FaseChamada.ATIVA
         Box(Modifier.size(8.dp).clip(CircleShape).background(if (ativa) cores.chamadaEmAndamento else cores.avisoConexao))
         Text(status, style = MaterialTheme.typography.labelLarge)

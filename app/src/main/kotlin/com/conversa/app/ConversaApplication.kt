@@ -7,6 +7,7 @@ import coil3.ImageLoader
 import coil3.PlatformContext
 import coil3.SingletonImageLoader
 import coil3.network.okhttp.OkHttpNetworkFetcherFactory
+import com.conversa.app.conexao.ConexaoEmSegundoPlano
 import com.conversa.app.core.data.SessaoRepositorio
 import com.conversa.app.core.data.anexos.AnexosRepositorio
 import com.conversa.app.core.data.notificacoes.CanaisNotificacao
@@ -73,6 +74,8 @@ class ConversaApplication :
 
     @Inject lateinit var sistema: SistemaRepositorio
 
+    @Inject lateinit var conexaoEmSegundoPlano: ConexaoEmSegundoPlano
+
     @Inject @EscopoAplicacao
     lateinit var escopo: CoroutineScope
 
@@ -94,6 +97,7 @@ class ConversaApplication :
         chamadas.iniciar()
         apresentadorChamada.iniciar()
         integracaoChamada.iniciar()
+        conexaoEmSegundoPlano.iniciar()
         limparAoSair()
     }
 

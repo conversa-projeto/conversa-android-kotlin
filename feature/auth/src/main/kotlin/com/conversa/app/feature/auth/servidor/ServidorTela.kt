@@ -11,11 +11,13 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.text.KeyboardOptions
+import androidx.compose.foundation.text.selection.SelectionContainer
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.outlined.CheckCircle
 import androidx.compose.material.icons.outlined.ErrorOutline
+import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ExperimentalMaterial3Api
@@ -26,6 +28,7 @@ import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
@@ -35,6 +38,7 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.LiveRegionMode
 import androidx.compose.ui.semantics.liveRegion
 import androidx.compose.ui.semantics.semantics
+import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.tooling.preview.Preview
@@ -63,6 +67,28 @@ fun ServidorRotaTela(
         aoTestar = viewModel::testar,
         aoSalvar = viewModel::salvar,
         aoVoltar = aoVoltar,
+    )
+    estado.certificadoParaConfiar?.let { impressao ->
+        ConfiarNoCertificado(impressao, aoConfiar = viewModel::confiarNoCertificado, aoCancelar = viewModel::naoConfiarNoCertificado)
+    }
+}
+
+/** Servidor interno com certificado próprio (só no debug): mostra a impressão digital e deixa a pessoa decidir. */
+@Composable
+private fun ConfiarNoCertificado(impressao: String, aoConfiar: () -> Unit, aoCancelar: () -> Unit) {
+    AlertDialog(
+        onDismissRequest = aoCancelar,
+        title = { Text(stringResource(R.string.servidor_certificado_titulo)) },
+        text = {
+            Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
+                Text(stringResource(R.string.servidor_certificado_texto))
+                SelectionContainer {
+                    Text(impressao, style = MaterialTheme.typography.bodySmall, fontFamily = FontFamily.Monospace)
+                }
+            }
+        },
+        confirmButton = { TextButton(onClick = aoConfiar) { Text(stringResource(R.string.servidor_certificado_confiar)) } },
+        dismissButton = { TextButton(onClick = aoCancelar) { Text(stringResource(R.string.servidor_certificado_cancelar)) } },
     )
 }
 
