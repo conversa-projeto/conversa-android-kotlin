@@ -274,6 +274,8 @@ data class AudioNaConversa(
     val errosTranscricao: Map<String, String> = emptyMap(),
     /** Pedidos de transcrição em andamento. */
     val pedindoTranscricao: Set<String> = emptySet(),
+    /** A velocidade de todos os áudios (web `f351190`). */
+    val velocidade: Float = 1f,
 )
 
 /** Identifica um áudio na tela: a mesma gravação pode estar em duas mensagens (encaminhada). */
@@ -1021,7 +1023,13 @@ class ChatViewModel @Inject constructor(
         Triple(desligada, erros, pedindo)
     }
 
-    val audio: StateFlow<AudioNaConversa> = combine(player.estado, baixandoAudio, duracoes, transcricao) { p, baixando, d, t ->
+    val audio: StateFlow<AudioNaConversa> = combine(player.estado, baixandoAudio, duracoes, transcricao, player.velocidade) {
+            p,
+            baixando,
+            d,
+            t,
+            v,
+        ->
         val daqui = p.chave?.startsWith(prefixoAudio) == true
         AudioNaConversa(
             chave = p.chave.takeIf { daqui },
@@ -1032,8 +1040,12 @@ class ChatViewModel @Inject constructor(
             transcricaoDesligada = t.first,
             errosTranscricao = t.second,
             pedindoTranscricao = t.third,
+            velocidade = v,
         )
     }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), AudioNaConversa())
+
+    /** O botão de velocidade do player: 1x → 1,5x → 2x → 3x → 1x. */
+    fun mudarVelocidadeAudio() = player.mudarVelocidade(com.conversa.app.core.model.proximaVelocidade(player.velocidade.value))
 
     init {
         // Fim dos downloads pedidos (a notificação, se permitida, avisa mesmo fora da conversa).

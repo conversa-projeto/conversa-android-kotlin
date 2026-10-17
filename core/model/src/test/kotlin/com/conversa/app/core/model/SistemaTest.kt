@@ -77,6 +77,7 @@ class SistemaTest {
             PermissaoSistema("chamada_video", "Fazer chamadas de vídeo", uso = true),
             PermissaoSistema("imagem", "Enviar imagens", uso = true),
             PermissaoSistema("emoji", "Enviar emojis", uso = true),
+            PermissaoSistema("localizacao", "Enviar localizações e trajetos", uso = true),
             PermissaoSistema("permissoes", "Conceder e retirar"),
             PermissaoSistema("nova_do_servidor", "Algo novo", uso = true),
         )
@@ -87,7 +88,8 @@ class SistemaTest {
             .containsExactly(GrupoPermissao.ADMINISTRACAO, GrupoPermissao.ENVIAR, GrupoPermissao.CHAMADAS, GrupoPermissao.OUTRAS).inOrder()
         assertThat(grupos[0].second.map { it.codigo }).containsExactly("parametros", "permissoes").inOrder()
         // Dentro do grupo, a ordem do web (emoji antes de imagem), não a do servidor.
-        assertThat(grupos[1].second.map { it.codigo }).containsExactly("emoji", "imagem").inOrder()
+        // A localização (servidor `ac710eb`) fecha o grupo Enviar, como no web.
+        assertThat(grupos[1].second.map { it.codigo }).containsExactly("emoji", "imagem", "localizacao").inOrder()
         assertThat(grupos[3].second.map { it.codigo }).containsExactly("nova_do_servidor")
     }
 

@@ -55,6 +55,8 @@ data class Contato(
     val avatarUrl: String? = null,
     /** Bot de IA (CON-16): conversa por mensagens comuns, mas nunca atende nem confirma. */
     val bot: Boolean = false,
+    /** "Usuário desde" (servidor `ac710eb`); nulo em contato antigo. */
+    val criadoEm: Instant? = null,
 )
 
 /** Membro de uma conversa (`GET /conversa/usuarios`). */

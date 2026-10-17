@@ -9,6 +9,7 @@ android {
 }
 
 dependencies {
+    implementation(projects.core.model)
     implementation(libs.media3.exoplayer)
     // PlayerView (controles prontos) para os vídeos do visualizador.
     implementation(libs.media3.ui)

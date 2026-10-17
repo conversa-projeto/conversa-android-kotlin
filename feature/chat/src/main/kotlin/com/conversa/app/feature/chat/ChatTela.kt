@@ -305,6 +305,7 @@ fun ChatRotaTela(
                     aoTranscrever = viewModel::transcrever,
                     aoAcompanharTranscricao = viewModel::acompanharTranscricao,
                     aoBuscarAudio = viewModel::buscarAudio,
+                    aoMudarVelocidade = viewModel::mudarVelocidadeAudio,
                     aoMenu = { acoesDaMensagem.menuDe = it },
                     aoReagir = viewModel::reagir,
                     aoVerReacoes = { mensagem, emoji -> acoesDaMensagem.quemReagiu = mensagem.id to emoji },

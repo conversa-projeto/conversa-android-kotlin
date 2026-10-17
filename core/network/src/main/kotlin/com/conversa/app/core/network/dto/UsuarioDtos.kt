@@ -60,6 +60,10 @@ data class AlterarDispositivoRequisicao(
     @SerialName("token_fcm") val tokenFcm: JsonElement? = null,
 )
 
+/** `GET /usuario/espaco` (servidor `ac710eb`): bytes dos arquivos que a pessoa enviou, cada um uma vez. */
+@Serializable
+data class EspacoDto(val bytes: Double = 0.0)
+
 /** `GET /cadastro` (pública): se a tela de login oferece o cadastro (servidor `ef13c22`). */
 @Serializable
 data class CadastroDto(val aberto: Boolean = true)
@@ -113,4 +117,6 @@ data class ContatoDto(
     @SerialName("avatar_url") val avatarUrl: String? = null,
     /** Bot de IA (CON-16, servidor `ef13c22`): a única rota que marca quem é bot. */
     val bot: Boolean = false,
+    /** "Usuário desde" (servidor `ac710eb`). */
+    @SerialName("criado_em") val criadoEm: Instant? = null,
 )

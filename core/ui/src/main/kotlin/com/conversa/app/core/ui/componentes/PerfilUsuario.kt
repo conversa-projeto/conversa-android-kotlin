@@ -31,6 +31,8 @@ import com.conversa.app.core.model.CodigoPermissao
 import com.conversa.app.core.model.FichaUsuario
 import com.conversa.app.core.ui.R
 import com.conversa.app.core.ui.tema.ConversaTema
+import java.time.ZoneId
+import java.time.format.DateTimeFormatter
 
 /**
  * O perfil de outra pessoa (8.4, AUT-10), como o `UserInfoModal.vue` do web: a foto (ou a
@@ -72,6 +74,11 @@ private fun ConteudoPerfilUsuario(ficha: FichaUsuario, aoLigar: (() -> Unit)?, a
                 Dado(stringResource(R.string.perfil_usuario_email), ficha.email)
                 HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant)
                 Dado(stringResource(R.string.perfil_usuario_telefone), ficha.telefone)
+                // "Usuário desde" (como o web, só com a data).
+                ficha.criadoEm?.let { desde ->
+                    HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant)
+                    Dado(stringResource(R.string.perfil_usuario_desde), DIA_MES_ANO.format(desde.atZone(ZoneId.systemDefault())))
+                }
             }
         }
         if (aoLigar != null || aoVerAnexos != null) {
@@ -112,3 +119,5 @@ private fun PreviaPerfilUsuario() {
         ConteudoPerfilUsuario(FichaUsuario(9, "Bia Souza", "bia@exemplo.test", null, null), aoLigar = {}, aoVerAnexos = {})
     }
 }
+
+private val DIA_MES_ANO: DateTimeFormatter = DateTimeFormatter.ofPattern("dd/MM/yyyy")

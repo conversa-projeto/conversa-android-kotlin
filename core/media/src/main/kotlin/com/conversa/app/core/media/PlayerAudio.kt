@@ -1,12 +1,14 @@
 package com.conversa.app.core.media
 
 import android.content.Context
+import androidx.core.content.edit
 import androidx.media3.common.AudioAttributes
 import androidx.media3.common.C
 import androidx.media3.common.MediaItem
 import androidx.media3.common.PlaybackException
 import androidx.media3.common.Player
 import androidx.media3.exoplayer.ExoPlayer
+import com.conversa.app.core.model.velocidadeValida
 import dagger.Binds
 import dagger.Module
 import dagger.hilt.InstallIn
@@ -59,7 +61,14 @@ interface PlayerAudio {
     fun buscar(posicaoMs: Long)
 
     fun parar()
+
+    /** A velocidade de todos os áudios (1x, 1,5x, 2x, 3x), guardada no aparelho (web `f351190`). */
+    val velocidade: StateFlow<Float> get() = VELOCIDADE_NORMAL
+
+    fun mudarVelocidade(velocidade: Float) {}
 }
+
+private val VELOCIDADE_NORMAL: StateFlow<Float> = MutableStateFlow(1f)
 
 /**
  * [PlayerAudio] com o Media3 (ExoPlayer), criado na primeira vez que toca. Pede o foco
@@ -68,6 +77,17 @@ interface PlayerAudio {
  */
 @Singleton
 class PlayerMedia3 @Inject constructor(@ApplicationContext private val contexto: Context) : PlayerAudio {
+    private val preferencias = contexto.getSharedPreferences(PREFERENCIAS, Context.MODE_PRIVATE)
+    private val _velocidade = MutableStateFlow(velocidadeValida(preferencias.getFloat(CHAVE_VELOCIDADE, 1f)))
+    override val velocidade: StateFlow<Float> = _velocidade.asStateFlow()
+
+    override fun mudarVelocidade(velocidade: Float) {
+        val valida = velocidadeValida(velocidade)
+        _velocidade.value = valida
+        preferencias.edit { putFloat(CHAVE_VELOCIDADE, valida) }
+        instancia?.setPlaybackSpeed(valida)
+    }
+
     private val _estado = MutableStateFlow(EstadoAudio())
     override val estado: StateFlow<EstadoAudio> = _estado.asStateFlow()
 
@@ -116,6 +136,7 @@ class PlayerMedia3 @Inject constructor(@ApplicationContext private val contexto:
         .build()
         .also {
             it.addListener(ouvinte)
+            it.setPlaybackSpeed(_velocidade.value)
             instancia = it
         }
 
@@ -169,6 +190,8 @@ class PlayerMedia3 @Inject constructor(@ApplicationContext private val contexto:
 
     private companion object {
         const val INTERVALO_POSICAO_MS = 200L
+        const val PREFERENCIAS = "player_audio"
+        const val CHAVE_VELOCIDADE = "velocidade"
     }
 }
 

@@ -58,13 +58,21 @@ import com.conversa.app.core.ui.tema.ConversaTema
  * e-mail) e "Senha" (atual, nova e confirmação). As senhas ficam só nos campos da tela.
  */
 @Composable
-fun PerfilRotaTela(aoVoltar: () -> Unit, viewModel: PerfilViewModel = hiltViewModel()) {
+fun PerfilRotaTela(
+    aoVoltar: () -> Unit,
+    viewModel: PerfilViewModel = hiltViewModel(),
+    armazenamento: ArmazenamentoViewModel = hiltViewModel(),
+) {
     val estado by viewModel.estado.collectAsStateWithLifecycle()
+    val espaco by armazenamento.espaco.collectAsStateWithLifecycle()
+    val desde by armazenamento.desde.collectAsStateWithLifecycle()
     val escolherFoto = rememberLauncherForActivityResult(ActivityResultContracts.PickVisualMedia()) { uri ->
         if (uri != null) viewModel.trocarFoto(uri)
     }
     PerfilTela(
         estado = estado,
+        espaco = espaco,
+        desde = desde,
         acoes = AcoesPerfil(
             aoVoltar = aoVoltar,
             aoAlterarFoto = { escolherFoto.launch(PickVisualMediaRequest(ActivityResultContracts.PickVisualMedia.ImageOnly)) },
@@ -88,7 +96,12 @@ class AcoesPerfil(
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-internal fun PerfilTela(estado: PerfilUiState, acoes: AcoesPerfil) {
+internal fun PerfilTela(
+    estado: PerfilUiState,
+    acoes: AcoesPerfil,
+    espaco: EspacoUsado = EspacoUsado.Calculando,
+    desde: java.time.Instant? = null,
+) {
     Scaffold(
         topBar = {
             TopAppBar(
@@ -109,7 +122,10 @@ internal fun PerfilTela(estado: PerfilUiState, acoes: AcoesPerfil) {
             val permissoes = LocalPermissoesDeUso.current
             BlocoFoto(estado, acoes)
             HorizontalDivider()
-            BlocoDados(estado, acoes)
+            // O espaço dos arquivos que enviou (servidor `ac710eb`), entre a foto e os dados, como o web.
+            BlocoArmazenamento(espaco)
+            HorizontalDivider()
+            BlocoDados(estado, acoes, desde)
             // Trocar a senha só com a permissão (GER-09), como o web.
             if (permissoes.pode(CodigoPermissao.SENHA)) {
                 HorizontalDivider()
@@ -179,7 +195,7 @@ private fun BlocoFoto(estado: PerfilUiState, acoes: AcoesPerfil) {
 }
 
 @Composable
-private fun BlocoDados(estado: PerfilUiState, acoes: AcoesPerfil) {
+private fun BlocoDados(estado: PerfilUiState, acoes: AcoesPerfil, desde: java.time.Instant? = null) {
     // Os campos começam com o que está na sessão e ficam em estado local (o cursor não pula).
     var nome by rememberSaveable(estado.nome) { mutableStateOf(estado.nome) }
     var email by rememberSaveable(estado.email) { mutableStateOf(estado.email) }
@@ -189,6 +205,17 @@ private fun BlocoDados(estado: PerfilUiState, acoes: AcoesPerfil) {
     val podeEmail = permissoes.pode(CodigoPermissao.EMAIL)
     Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
         Titulo(stringResource(R.string.perfil_dados), stringResource(R.string.perfil_dados_texto))
+        // "Usuário desde dd/mm/aaaa" (servidor `ac710eb`): some sem a data.
+        desde?.let {
+            Text(
+                stringResource(
+                    R.string.perfil_desde,
+                    java.time.format.DateTimeFormatter.ofPattern("dd/MM/yyyy").format(it.atZone(java.time.ZoneId.systemDefault())),
+                ),
+                style = MaterialTheme.typography.bodySmall,
+                color = ConversaTema.cores.textoTerciario,
+            )
+        }
         OutlinedTextField(
             value = nome,
             onValueChange = { nome = it },

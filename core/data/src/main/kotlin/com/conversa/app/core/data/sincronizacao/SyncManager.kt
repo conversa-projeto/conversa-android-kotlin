@@ -2,6 +2,7 @@ package com.conversa.app.core.data.sincronizacao
 
 import com.conversa.app.core.data.SessaoRepositorio
 import com.conversa.app.core.data.atividades.AtividadesRepositorio
+import com.conversa.app.core.data.contatos.ContatosRepositorio
 import com.conversa.app.core.data.enquetes.EnquetesRepositorio
 import com.conversa.app.core.data.paraEntidade
 import com.conversa.app.core.data.presenca.PresencaRepositorio
@@ -69,6 +70,7 @@ class SyncManager @Inject constructor(
     private val sessao: SessaoRepositorio,
     private val enquetes: EnquetesRepositorio,
     private val atividades: AtividadesRepositorio,
+    private val contatos: ContatosRepositorio,
     @EscopoAplicacao private val escopo: CoroutineScope,
 ) {
     private val trava = Mutex()
@@ -133,6 +135,8 @@ class SyncManager @Inject constructor(
                     async { presenca.recarregarOnline() },
                     async { atividades.atualizarNovas() },
                     async { sincronizarChamadasPendentes() },
+                    // Uma conta pode ter sido criada ou renomeada enquanto o socket estava fora (o web relê na reconexão).
+                    async { contatos.atualizar() },
                 ).awaitAll()
             }
         }
@@ -242,6 +246,8 @@ class SyncManager @Inject constructor(
             // 8 e 65: a confirmação de leitura da mensagem mudou — relê a mensagem.
             is EventoSocket.ConfirmacaoLeitura -> escopo.launch { reler(evento.conversaId, evento.mensagemId) }
             is EventoSocket.ConfirmacaoPedida -> escopo.launch { reler(evento.conversaId, evento.mensagemId) }
+            // 66: uma conta foi criada, renomeada ou excluída (servidor `ac710eb`).
+            is EventoSocket.ContatosAtualizados -> escopo.launch { contatos.atualizar() }
             else -> Unit
         }
     }

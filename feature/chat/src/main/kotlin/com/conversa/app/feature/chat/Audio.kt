@@ -8,6 +8,7 @@ import androidx.compose.foundation.gestures.detectTapGestures
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
@@ -23,6 +24,7 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
@@ -41,6 +43,7 @@ import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.ProgressBarRangeInfo
 import androidx.compose.ui.semantics.Role
+import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.progressBarRangeInfo
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.semantics.setProgress
@@ -53,6 +56,7 @@ import com.conversa.app.core.model.Mensagem
 import com.conversa.app.core.model.StatusTranscricao
 import com.conversa.app.core.model.TipoConteudo
 import com.conversa.app.core.model.local
+import com.conversa.app.core.model.rotuloVelocidade
 import com.conversa.app.core.model.textoDoTempoDoAudio
 import com.conversa.app.core.ui.tema.ConversaTema
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -118,8 +122,18 @@ fun PlayerNaBolha(mensagem: Mensagem, conteudo: Conteudo, propria: Boolean, cor:
                     arrastando?.let { acoes.aoBuscarAudio(chave, it) }
                     arrastando = null
                 },
-                modifier = Modifier.weight(1f).padding(end = 8.dp),
+                modifier = Modifier.weight(1f),
             )
+            // Velocidade (web `f351190`): a mesma para todos os áudios.
+            val rotulo = rotuloVelocidade(audio.velocidade)
+            val descricao = stringResource(R.string.velocidade_audio, rotulo)
+            TextButton(
+                onClick = acoes.aoMudarVelocidade,
+                contentPadding = PaddingValues(horizontal = 6.dp),
+                modifier = Modifier.semantics { contentDescription = descricao },
+            ) {
+                Text(rotulo, color = cor, style = MaterialTheme.typography.labelMedium)
+            }
         }
         Text(
             // Tocando ou parado no meio: "atual / total"; senão, a duração (como o web).

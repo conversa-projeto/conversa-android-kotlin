@@ -8,12 +8,11 @@ object CodigoPermissao {
     /** "Sistema": ver e alterar os parâmetros. */
     const val PARAMETROS = "parametros"
 
-    /** "Acessos": conceder e retirar permissões. */
+    /** "Pessoas": cadastrar pessoas e bots e conceder e retirar permissões (servidor `ac710eb` juntou "usuarios" a ela). */
     const val PERMISSOES = "permissoes"
 
     // Administração e uso do app (servidor `ef13c22`); os de uso o servidor confere em cada rota.
     const val BOTS = "bots"
-    const val USUARIOS = "usuarios"
     const val FERRAMENTAS = "ferramentas"
     const val CONHECIMENTO = "conhecimento"
     const val EMOJI = "emoji"
@@ -42,6 +41,9 @@ object CodigoPermissao {
     const val PRIVACIDADE = "privacidade"
     const val CORES = "cores"
     const val CONFIG_CHAMADAS = "config_chamadas"
+
+    /** Enviar localizações e trajetos (conteúdo tipo 9, servidor `ac710eb`). */
+    const val LOCALIZACAO = "localizacao"
 }
 
 /** Os grupos da tela de Acessos, na ordem do web (`utils/permissoesUso.ts`). */
@@ -55,6 +57,7 @@ enum class GrupoPermissao(val codigos: List<String>) {
             CodigoPermissao.VIDEO,
             CodigoPermissao.AUDIO,
             CodigoPermissao.ARQUIVO,
+            CodigoPermissao.LOCALIZACAO,
         ),
     ),
     MENSAGENS(
@@ -155,7 +158,16 @@ fun alteracaoDosParametros(original: ParametrosSistema, editado: ParametrosSiste
 /** [uso]: permissão de uso do app (enviar, chamar…); as outras são de administração (servidor `ef13c22`). */
 data class PermissaoSistema(val codigo: String, val descricao: String, val uso: Boolean = false)
 
-data class UsuarioAcessos(val id: Long, val nome: String, val login: String, val permissoes: Set<String>)
+/** [espaco]: bytes dos arquivos que a pessoa enviou; [criadoEm]: "Usuário desde" (servidor `ac710eb`). */
+data class UsuarioAcessos(
+    val id: Long,
+    val nome: String,
+    val login: String,
+    val permissoes: Set<String>,
+    val criadoEm: java.time.Instant? = null,
+    val bot: Boolean = false,
+    val espaco: Long = 0,
+)
 
 /** `GET /permissoes`: o que cada permissão libera, quem tem o quê, e se ninguém tem "Acessos" ainda. */
 data class Acessos(val permissoes: List<PermissaoSistema>, val usuarios: List<UsuarioAcessos>, val modoAberto: Boolean)

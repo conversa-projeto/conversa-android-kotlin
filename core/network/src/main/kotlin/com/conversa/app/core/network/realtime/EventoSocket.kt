@@ -76,6 +76,9 @@ sealed interface EventoSocket {
     /** 65 — quem enviou passou a pedir confirmação de leitura numa mensagem já enviada. */
     data class ConfirmacaoPedida(val conversaId: Long, val mensagemId: Long) : EventoSocket
 
+    /** 66 — uma conta foi criada, renomeada ou excluída (servidor `ac710eb`): reler os contatos. */
+    data object ContatosAtualizados : EventoSocket
+
     /** Tipo que o app ainda não conhece (o servidor evoluiu). */
     data class Desconhecido(val tipo: Int?, val json: String) : EventoSocket
 }
@@ -103,6 +106,7 @@ object TipoSocket {
     const val CONFIRMACAO_LEITURA = 8
     const val POSTAGEM_ATUALIZADA = 64
     const val CONFIRMACAO_PEDIDA = 65
+    const val CONTATOS_ATUALIZADOS = 66
 
     /** Enviado: a minha presença `{ativo, conversa_id}`; recebido: quem abriu ou deixou a conversa. */
     const val PRESENCA = 63
@@ -182,6 +186,7 @@ object EventoSocketParser {
             postagemId = obj.longo("postagem_id") ?: return null,
             usuarioId = obj.longo("usuario_id") ?: return null,
         )
+        TipoSocket.CONTATOS_ATUALIZADOS -> EventoSocket.ContatosAtualizados
         TipoSocket.CONFIRMACAO_PEDIDA -> EventoSocket.ConfirmacaoPedida(
             conversaId = obj.longo("conversa_id") ?: return null,
             mensagemId = obj.longo("mensagem_id") ?: return null,

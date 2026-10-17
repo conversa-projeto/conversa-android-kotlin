@@ -90,26 +90,26 @@ A coluna **Fase** indica em que fase do plano da nova base (doc 07) a funcionali
 
 | Grupo | Total | ✅ | 🟡 | ⛔ | ⬜ | ➖ |
 |---|---|---|---|---|---|---|
-| AUT | 11 | 10 | 0 | 0 | 1 | 0 |
-| CON | 17 | 12 | 3 | 0 | 2 | 0 |
+| AUT | 11 | 11 | 0 | 0 | 0 | 0 |
+| CON | 17 | 14 | 1 | 0 | 2 | 0 |
 | MSG | 25 | 22 | 0 | 0 | 3 | 0 |
 | ENV | 30 | 25 | 0 | 2 | 2 | 1 |
-| ANX | 18 | 14 | 1 | 0 | 2 | 1 |
+| ANX | 18 | 16 | 1 | 0 | 0 | 1 |
 | PES | 2 | 2 | 0 | 0 | 0 | 0 |
 | CHA | 26 | 24 | 0 | 0 | 2 | 0 |
 | SIP | 5 | 0 | 0 | 0 | 5 | 0 |
 | NOT | 6 | 5 | 0 | 1 | 0 | 0 |
 | PRE | 3 | 3 | 0 | 0 | 0 | 0 |
 | ATV | 5 | 5 | 0 | 0 | 0 | 0 |
-| CFG | 14 | 5 | 2 | 0 | 5 | 2 |
+| CFG | 14 | 6 | 1 | 0 | 5 | 2 |
 | GER | 10 | 8 | 0 | 0 | 0 | 2 |
-| **Total** | **172** | **135** | **6** | **3** | **22** | **6** |
+| **Total** | **172** | **141** | **3** | **3** | **19** | **6** |
 
 > Requisitos exclusivos do Android (AND, fora da contagem): 16 — 13 ✅, 2 🟡, 1 ⛔, 0 ⬜, 0 ➖.
 >
-> **Leitura:** 🆕 (2026-10-15, depois do servidor `ef13c22` e do web `9c6e8a6`) 131 de 163 funcionalidades estão prontas na nova base, e 6 estão em parte. A sincronização trouxe 10 funcionalidades (bots, permissões de uso, administração e atividades pendentes); a quebra das atividades (`nova` → `pendente`) já foi corrigida (`2219208`). Ficaram em parte o cadastro fechado (AUT-02), a duração e a onda do áudio (ANX-10, ANX-11); a tela de Acessos com as 32 permissões (CFG-08) já voltou a ✅. 🆕 (2026-10-16) As permissões de uso (GER-09), o cadastro fechado (AUT-02) a conversa com bot (CON-16) a duração e a onda do áudio (ANX-10, ANX-11) o resumo e a sugestão por IA (CON-14, ENV-25, falta conferir com um servidor de IA) e os recursos do servidor (GER-08) ficaram prontos: 139 de 163. 🆕 (2026-10-17, servidor `ac710eb` e web `f351190`) Com as 9 funcionalidades novas e os 4 IDs que voltaram a 🟡, são 135 prontas de 172.
+> **Leitura:** 🆕 (2026-10-15, depois do servidor `ef13c22` e do web `9c6e8a6`) 131 de 163 funcionalidades estão prontas na nova base, e 6 estão em parte. A sincronização trouxe 10 funcionalidades (bots, permissões de uso, administração e atividades pendentes); a quebra das atividades (`nova` → `pendente`) já foi corrigida (`2219208`). Ficaram em parte o cadastro fechado (AUT-02), a duração e a onda do áudio (ANX-10, ANX-11); a tela de Acessos com as 32 permissões (CFG-08) já voltou a ✅. 🆕 (2026-10-16) As permissões de uso (GER-09), o cadastro fechado (AUT-02) a conversa com bot (CON-16) a duração e a onda do áudio (ANX-10, ANX-11) o resumo e a sugestão por IA (CON-14, ENV-25, falta conferir com um servidor de IA) e os recursos do servidor (GER-08) ficaram prontos: 139 de 163. 🆕 (2026-10-17, servidor `ac710eb` e web `f351190`) Com as 9 funcionalidades novas e os 4 IDs que voltaram a 🟡, são 135 prontas de 172. Com os ajustes do sincronismo (contatos pelo WS 66, "Gravando áudio…" na lista, velocidade do áudio, espaço usado, "Usuário desde" e os Acessos), 141 de 172.
 > - **Bloqueadas (⛔):** dependem de algo fora do app: o push (Firebase, NOT-04) ou a decisão do campo rico (FC-416).
-> - **Por fazer (⬜):** 🆕 as pastas de mensagens (CON-17, MSG-23, MSG-24, ENV-29), a localização e o trajeto (MSG-25, ENV-30), o espaço usado (ANX-17), a velocidade do áudio (ANX-18), o "Usuário desde" (AUT-11), a etapa 9 (SIP, compartilhar tela, Bubbles), a administração de usuários, bots, ferramentas e conhecimento (CFG-11…14, a avaliar) e um item P3 fora do TODO.
+> - **Por fazer (⬜):** 🆕 as pastas de mensagens (CON-17, MSG-23, MSG-24, ENV-29), a localização e o trajeto (MSG-25, ENV-30), a etapa 9 (SIP, compartilhar tela, Bubbles), a administração de usuários, bots, ferramentas e conhecimento (CFG-11…14, a avaliar) e um item P3 fora do TODO.
 > - **Falta conferir:** as células com "falta conferir" ou "em aparelho" estão prontas, mas esperam um teste que o emulador não permite.
 
 ---
@@ -128,13 +128,13 @@ A coluna **Fase** indica em que fase do plano da nova base (doc 07) a funcionali
 | AUT-08 | Avatar (enviar/remover) | ⬜ | ✅ 8.3 · `143d8d6` | — | Photo Picker + recorte quadrado 256×256 JPEG 85% + upload + `PATCH /usuario {avatar_anexo_id}` | F7 | P1 |
 | AUT-09 | Permissões do sistema do usuário | ⬜ | ✅ 8.5 · `afd3269` | — | `GET /usuario/permissoes` → mostra/oculta as telas Sistema/Acessos | F7 | P2 |
 | AUT-10 | Ver perfil de outro usuário | ⬜ | ✅ 8.4 · `4d53ba8`; "Ver anexos" no 8.6 (`95b9bb5`) | — | Bottom sheet com foto, nome, e-mail, telefone e "Ver anexos" — 🆕 "Usuário desde" no AUT-11 | F7 | P1 |
-| AUT-11 🆕 | "Usuário desde": a data do cadastro no Perfil, no perfil de outra pessoa e na lista de Pessoas | ⬜ | ⬜ 8.3, 8.4, 8.5 | — | Ler `criado_em` de `/usuario/contatos` (Room) e de `GET /permissoes` — 🆕 `ac710eb`/`f351190` | F7 | P3 |
+| AUT-11 🆕 | "Usuário desde": a data do cadastro no Perfil, no perfil de outra pessoa e na lista de Pessoas | ⬜ | ✅ 8.3, 8.4, 8.5 · `HASH` | — | Ler `criado_em` de `/usuario/contatos` (Room) e de `GET /permissoes` — 🆕 `ac710eb`/`f351190` | F7 | P3 |
 
 ## CON — Conversas
 
 | ID | Funcionalidade | Legado | Nova base | Situação / evidência (legado) | Adaptação Android | Fase | Prio |
 |---|---|---|---|---|---|---|---|
-| CON-01 | Lista de conversas (avatar, online, prévia, não lidas, fixadas, arquivadas, digitando) | 🟡 | 🟡 2.6 · 🆕 `f351190`: falta o "Gravando áudio…" na lista (FC-224) · 🆕 seção "Chamadas (N)" e emoji/imagem do grupo `04c5c14`; bolinha de ausente `c7bef01` | Lista existe; **sem badge** (o layout tem, o adapter não preenche), sem avatar, sem fixadas/arquivadas, hora sempre `HH:mm`, recarrega tudo com spinner (#26, #47) | Compose `LazyColumn` alimentada pelo Room; atualização incremental — 🆕 `769bd7d`: seção recolhível "Chamadas (N)" (`chamada:true`) antes de "Arquivadas"; emoji ou imagem do grupo no lugar da inicial; bolinha amarela de ausente — 🆕 `e33ecba`: ícone de pessoas ("Conversa em grupo") no lugar da etiqueta "Grupo"; 🆕 `6d20ff7`: cada ligação com chat cria um grupo novo, então a seção "Chamadas (N)" cresce | F1 | P0 |
+| CON-01 | Lista de conversas (avatar, online, prévia, não lidas, fixadas, arquivadas, digitando) | 🟡 | ✅ 2.6 · 🆕 `f351190`: "Gravando áudio…" na lista (FC-224), `HASH` · 🆕 seção "Chamadas (N)" e emoji/imagem do grupo `04c5c14`; bolinha de ausente `c7bef01` | Lista existe; **sem badge** (o layout tem, o adapter não preenche), sem avatar, sem fixadas/arquivadas, hora sempre `HH:mm`, recarrega tudo com spinner (#26, #47) | Compose `LazyColumn` alimentada pelo Room; atualização incremental — 🆕 `769bd7d`: seção recolhível "Chamadas (N)" (`chamada:true`) antes de "Arquivadas"; emoji ou imagem do grupo no lugar da inicial; bolinha amarela de ausente — 🆕 `e33ecba`: ícone de pessoas ("Conversa em grupo") no lugar da etiqueta "Grupo"; 🆕 `6d20ff7`: cada ligação com chat cria um grupo novo, então a seção "Chamadas (N)" cresce | F1 | P0 |
 | CON-02 | Filtro local + "Nova conversa" com contatos sem conversa | ⬜ | ✅ 2.7 | Só há a tela separada de Contatos | Busca na barra superior + seção "Nova conversa" | F1 | P1 |
 | CON-03 | Fixar / desafixar / reordenar | ⬜ | ✅ 2.8 | — | Menu de toque longo + arrastar (ou "mover para cima/baixo"); `PATCH /conversa/fixadas` com a lista inteira | F1 | P1 |
 | CON-04 | Arquivar / desarquivar | ⬜ | ✅ 2.8 · arquivada sem notificação na 5.4 (`199ce1b`) | — | Menu + gesto de deslizar; arquivadas sem som nem notificação; seção "Arquivadas (N)" | F1 | P1 |
@@ -144,7 +144,7 @@ A coluna **Fase** indica em que fase do plano da nova base (doc 07) a funcionali
 | CON-08 | Gerenciar membros (renomear, adicionar, remover) | ⬜ | 🟡 2.10 · remover outro membro: ⛔ o servidor só aceita a própria saída (403); os anexos do grupo vêm no 8.6 (`95b9bb5`) | Endpoints mortos | Tela "Membros do grupo" — 🆕 `eaa8bac`: o web juntou nome, participantes e anexos num painel "Dados do grupo" aberto pelo avatar do grupo; no Android, abrir pelo cabeçalho do chat e mostrar os anexos do grupo na mesma tela — 🆕 `769bd7d`: o painel do grupo ganhou imagem ou emoji (CON-15) e " · nesta conversa" (PRE-03) | F1 | P1 |
 | CON-09 | Cabeçalho (avatar, online real, membros, digitando, botões) | 🟡 | ✅ 3.1 | Mostra **"online" fixo, que é falso** (`ChatActivity.kt:137,1144`) | TopAppBar com presença real e subtítulo de membros/digitando | F2 | P0 |
 | CON-10 | Abrir em nova janela (popup) | ➖ | ⬜ etapa 9 (Bubbles, avaliar) | — | Avaliar *Bubbles* (Android 11+) e suporte a multi-janela | F8 | P3 |
-| CON-11 | Contatos | ✅ | 🟡 2.9 · 🆕 `ac710eb`: falta reler no WS 66 e na reconexão, e o `criado_em` (FC-222) | `GET /usuario/contatos` funciona | Reescrever em Compose; usar `avatar_url` | F1 | P0 |
+| CON-11 | Contatos | ✅ | ✅ 2.9 · 🆕 `ac710eb`: relidos no WS 66 e na reconexão, com o `criado_em` (FC-222), `HASH` | `GET /usuario/contatos` funciona | Reescrever em Compose; usar `avatar_url` | F1 | P0 |
 | CON-12 | Deep link (abrir conversa pela notificação/âncora) | 🔴 | ✅ 3.11 · `2a4cc59` | A notificação manda `conversa_id`; a `MainActivity` ignora (#14) | Navigation Compose com deep link `conversa/{id}?mensagem={id}` | F2/F5 | P0 |
 | CON-13 | Conversa atualizada em tempo real (WS 40) | ⬜ | ✅ 2.6 | WS 40 não tem consumidor | Evento → refresh da lista | F1 | P0 |
 | CON-14 🆕 | Resumo da conversa por IA (períodos, assuntos com pendências, "Ver na conversa", último resumo guardado) | ⬜ | ✅ 8.8 · `110f742` · falta conferir com um servidor de IA | — | "Resumir conversa" no "⋮" do chat (só com `recursos.ia`); `POST`/`GET /conversa/resumo` a cada 2 s; último resumo no Room — 🆕 `769bd7d`/`05507a0` | F7 | P2 |
@@ -237,8 +237,8 @@ A coluna **Fase** indica em que fase do plano da nova base (doc 07) a funcionali
 | ANX-14 | URLs assinadas e renovação | ⬜ | ✅ 4.3 | — | URL expira (600 s em `/anexos`, 300 s no upload): renovar ao falhar; Coil com chave = identificador | F3 | P0 |
 | ANX-15 | Pré-visualização de imagem antes de enviar | ➖ | ✅ a fila de anexos mostra a prévia (4.2) | No web é código sem gatilho | A fila (ANX-01) já mostra a prévia | — | P3 |
 | ANX-16 🆕 | Visualizador de arquivos do Office (`.docx`, `.xlsx`, `.pptx`) | ⬜ | ➖ | — | No celular, "Abrir com…" outro app; o web desenha com `@silurus/ooxml` — 🆕 `9c6e8a6` | F3 | P3 |
-| ANX-17 🆕 | Espaço usado pelos arquivos que a pessoa enviou (Perfil; coluna em Pessoas) | ⬜ | ⬜ 8.3 | — | `GET /usuario/espaco` → `{bytes}`; seção "Armazenamento" no Perfil — 🆕 `ac710eb`/`f351190` | F7 | P3 |
-| ANX-18 🆕 | Velocidade do áudio (1x, 1,5x, 2x, 3x; a mesma para todos os áudios) | ⬜ | ⬜ 4.5 | — | Botão no player; `setPlaybackSpeed` do Media3; guardar no aparelho — 🆕 `f351190` | F3 | P3 |
+| ANX-17 🆕 | Espaço usado pelos arquivos que a pessoa enviou (Perfil; coluna em Pessoas) | ⬜ | ✅ 8.3 · `HASH` | — | `GET /usuario/espaco` → `{bytes}`; seção "Armazenamento" no Perfil — 🆕 `ac710eb`/`f351190` | F7 | P3 |
+| ANX-18 🆕 | Velocidade do áudio (1x, 1,5x, 2x, 3x; a mesma para todos os áudios) | ⬜ | ✅ 4.5 · `HASH` | — | Botão no player; `setPlaybackSpeed` do Media3; guardar no aparelho — 🆕 `f351190` | F3 | P3 |
 
 ## PES — Pesquisa
 
@@ -329,7 +329,7 @@ A coluna **Fase** indica em que fase do plano da nova base (doc 07) a funcionali
 | CFG-05 | Cores personalizadas | ➖ | ➖ só as cores do `cores.md`; a etapa 9 lista "cor de destaque" para avaliar | — | Avaliar: cor primária/Material You. Não replicar o editor completo | F8 | P3 |
 | CFG-06 | Qualidade das chamadas | ⬜ | ✅ 8.5 · `705ee2e` · vale a partir da próxima chamada | — | = CHA-20 | F7 | P2 |
 | CFG-07 | Sistema — parâmetros do servidor (permissão `parametros`) | ⬜ | 🟡 8.5 · `afd3269` · 🆕 com a seção "Cadastro" (`f427612`); falta a seção "Inteligência artificial" (FC-812, avaliar), que com o `ac710eb` ganhou o servidor de embeddings próprio e o "Testar embeddings" | — | Tela administrativa (FCM, TURN, gravações, transcritor) — 🆕 `769bd7d`: seção "Inteligência artificial" (endereço, modelo, token, "Testar conexão") | F7 | P2 |
-| CFG-08 | Acessos — permissões (permissão `permissoes`) | ⬜ | 🟡 8.5 · `afd3269` · 🆕 com as 32 permissões em grupos, como o web, `91d5681` · 🆕 `ac710eb`: falta "Pessoas" (sem `usuarios`), `localizacao` no Enviar, espaço, "Usuário desde" e selo "Bot" (FC-816) | — | Tela administrativa usuário × permissão | F7 | P2 |
+| CFG-08 | Acessos — permissões (permissão `permissoes`) | ⬜ | ✅ 8.5 · `afd3269` · 🆕 com as 32 permissões em grupos, como o web, `91d5681` · 🆕 `ac710eb`: "Pessoas" (sem `usuarios`), `localizacao` no Enviar, espaço, "Usuário desde" e selo "Bot" (FC-816), `HASH` | — | Tela administrativa usuário × permissão | F7 | P2 |
 | CFG-09 🆕 | Privacidade ("Aparecer offline", "Mostrar o visto por último", "Mostrar quando estou na conversa") | ⬜ | ✅ 8.5 · `ab62486` | — | Tela nova com os textos do web; `GET /usuario/privacidade`, `PATCH /usuario` — 🆕 `769bd7d` | F7 | P2 |
 | CFG-10 🆕 | Temas prontos (Padrão, Teams, WhatsApp, Messenger) e cores dos balões | ➖ | ➖ | — | Não se aplica: o Android usa só as cores do FMX (`docs/design/cores.md`) — 🆕 `8b43965` | — | — |
 | CFG-11 🆕 | Usuários: cadastrar pessoas e bots (permissão `usuarios`) | ⬜ | ⬜ 8.5 · avaliar | — | `PUT /usuario/novo`; uso de administrador: avaliar se fica só no web, como a FC-812 — 🆕 `9c6e8a6` | F7 | P3 |

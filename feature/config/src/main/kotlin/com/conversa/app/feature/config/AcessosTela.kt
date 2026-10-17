@@ -56,6 +56,7 @@ import com.conversa.app.core.model.PermissaoSistema
 import com.conversa.app.core.model.UsuarioAcessos
 import com.conversa.app.core.model.comPermissao
 import com.conversa.app.core.model.filtrarUsuarios
+import com.conversa.app.core.model.formatarTamanho
 import com.conversa.app.core.model.gruposDePermissoes
 import com.conversa.app.core.model.propriaMarcada
 import com.conversa.app.core.model.quantasDe
@@ -63,6 +64,8 @@ import com.conversa.app.core.model.temAdministracao
 import com.conversa.app.core.ui.componentes.Carregando
 import com.conversa.app.core.ui.tema.ConversaTema
 import dagger.hilt.android.lifecycle.HiltViewModel
+import java.time.ZoneId
+import java.time.format.DateTimeFormatter
 import javax.inject.Inject
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -123,9 +126,8 @@ class AcessosViewModel @Inject constructor(private val sistema: SistemaRepositor
 private fun nomeDaPermissao(permissao: PermissaoSistema): String {
     val recurso = when (permissao.codigo) {
         CodigoPermissao.PARAMETROS -> R.string.config_sistema
-        CodigoPermissao.PERMISSOES -> R.string.config_acessos
+        CodigoPermissao.PERMISSOES -> R.string.acessos_permissao_permissoes
         CodigoPermissao.BOTS -> R.string.acessos_permissao_bots
-        CodigoPermissao.USUARIOS -> R.string.acessos_permissao_usuarios
         CodigoPermissao.FERRAMENTAS -> R.string.acessos_permissao_ferramentas
         CodigoPermissao.CONHECIMENTO -> R.string.acessos_permissao_conhecimento
         CodigoPermissao.EMOJI -> R.string.acessos_permissao_emoji
@@ -154,6 +156,7 @@ private fun nomeDaPermissao(permissao: PermissaoSistema): String {
         CodigoPermissao.PRIVACIDADE -> R.string.acessos_permissao_privacidade
         CodigoPermissao.CORES -> R.string.acessos_permissao_cores
         CodigoPermissao.CONFIG_CHAMADAS -> R.string.acessos_permissao_config_chamadas
+        CodigoPermissao.LOCALIZACAO -> R.string.acessos_permissao_localizacao
         else -> null
     }
     return recurso?.let { stringResource(it) } ?: permissao.descricao.ifBlank { permissao.codigo }
@@ -280,6 +283,28 @@ private fun LinhaUsuario(
                     maxLines = 1,
                     overflow = TextOverflow.Ellipsis,
                 )
+                // Espaço dos arquivos que enviou e "Usuário desde" (servidor `ac710eb`), as colunas do web.
+                Text(
+                    listOfNotNull(
+                        formatarTamanho(usuario.espaco),
+                        usuario.criadoEm?.let {
+                            stringResource(R.string.acessos_usuario_desde, DIA_MES_ANO.format(it.atZone(ZoneId.systemDefault())))
+                        },
+                    ).joinToString(" · "),
+                    style = MaterialTheme.typography.bodySmall,
+                    color = ConversaTema.cores.textoTerciario,
+                    maxLines = 1,
+                    overflow = TextOverflow.Ellipsis,
+                )
+            }
+            if (usuario.bot) {
+                Text(
+                    stringResource(R.string.acessos_selo_bot),
+                    style = MaterialTheme.typography.labelSmall,
+                    color = primaria,
+                    modifier = Modifier.clip(RoundedCornerShape(50)).background(primaria.copy(alpha = 0.12f))
+                        .padding(horizontal = 8.dp, vertical = 2.dp),
+                )
             }
             if (acessos.temAdministracao(usuario)) {
                 Text(
@@ -347,3 +372,5 @@ private fun CaixaPermissao(
         Text(nome, style = MaterialTheme.typography.bodyMedium, modifier = Modifier.padding(start = 4.dp))
     }
 }
+
+private val DIA_MES_ANO: DateTimeFormatter = DateTimeFormatter.ofPattern("dd/MM/yyyy")

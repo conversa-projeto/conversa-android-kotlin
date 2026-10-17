@@ -25,6 +25,16 @@ class DadosAudioTest {
     }
 
     @Test
+    fun `velocidade - 1x, 1,5x, 2x, 3x e volta, e o valor estranho vira 1x`() {
+        assertThat(proximaVelocidade(1f)).isEqualTo(1.5f)
+        assertThat(proximaVelocidade(3f)).isEqualTo(1f)
+        assertThat(proximaVelocidade(1.25f)).isEqualTo(1f)
+        assertThat(VELOCIDADES_AUDIO.map(::rotuloVelocidade)).containsExactly("1x", "1,5x", "2x", "3x").inOrder()
+        assertThat(velocidadeValida(1.25f)).isEqualTo(1f)
+        assertThat(velocidadeValida(2f)).isEqualTo(2f)
+    }
+
+    @Test
     fun `tempo do player - atual sobre total, como o web`() {
         assertThat(textoDoTempoDoAudio(null, 12)).isEqualTo("00:12")
         assertThat(textoDoTempoDoAudio(5, 12)).isEqualTo("00:05 / 00:12")

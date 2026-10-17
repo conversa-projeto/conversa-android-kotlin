@@ -377,7 +377,17 @@ private fun LinhaConversa(
             }
             Row(verticalAlignment = Alignment.CenterVertically) {
                 Box(Modifier.weight(1f)) {
-                    if (item.digitando) {
+                    if (item.gravando) {
+                        Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(6.dp)) {
+                            IndicadorDigitando(Modifier.padding(vertical = 6.dp), cor = ConversaTema.cores.gravandoAudio)
+                            Text(
+                                stringResource(R.string.lista_gravando_audio),
+                                style = MaterialTheme.typography.bodyMedium,
+                                color = ConversaTema.cores.gravandoAudio,
+                                maxLines = 1,
+                            )
+                        }
+                    } else if (item.digitando) {
                         IndicadorDigitando(Modifier.padding(vertical = 6.dp))
                     } else {
                         Text(

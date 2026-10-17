@@ -18,6 +18,9 @@ class PerfilTest {
         val conversa = conversa()
         val bot = Contato(9, "Assistente", "bot-assistente-a1b2c3", "bot-assistente-a1b2c3@bot.conversa", null, bot = true)
         assertThat(fichaDaConversa(conversa, listOf(bot))!!.bot).isTrue()
+        // "Usuário desde" vem do contato (servidor `ac710eb`).
+        val desde = java.time.Instant.parse("2026-03-09T12:00:00Z")
+        assertThat(fichaDaConversa(conversa, listOf(bot.copy(criadoEm = desde)))!!.criadoEm).isEqualTo(desde)
         assertThat(fichaDaConversa(conversa, emptyList())!!.bot).isFalse()
     }
 

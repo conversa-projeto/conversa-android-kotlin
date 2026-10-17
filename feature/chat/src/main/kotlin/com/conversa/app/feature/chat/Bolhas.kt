@@ -118,6 +118,8 @@ data class AcoesBolha(
     val aoAcompanharTranscricao: (String) -> Unit = {},
     /** Chave do áudio ([chaveDoAudio]) e fração da barra (0..1). */
     val aoBuscarAudio: (String, Float) -> Unit = { _, _ -> },
+    /** O botão de velocidade do player (web `f351190`). */
+    val aoMudarVelocidade: () -> Unit = {},
     /** Toque longo na bolha: o menu da mensagem (7.1). */
     val aoMenu: (Mensagem) -> Unit = {},
     /** Toque num chip de reação: alterna a minha (7.2). */

@@ -42,6 +42,8 @@ data class FichaUsuario(
     val telefone: String?,
     val avatarUrl: String?,
     val bot: Boolean = false,
+    /** "Usuário desde" (servidor `ac710eb`); a folha não mostra sem a data. */
+    val criadoEm: java.time.Instant? = null,
 )
 
 /**
@@ -60,5 +62,6 @@ fun fichaDaConversa(conversa: Conversa, contatos: List<Contato>): FichaUsuario? 
         telefone = contato.telefone?.takeIf { it.isNotBlank() },
         avatarUrl = contato.avatarUrl?.takeIf { it.isNotBlank() } ?: foto,
         bot = contato.bot,
+        criadoEm = contato.criadoEm,
     )
 }

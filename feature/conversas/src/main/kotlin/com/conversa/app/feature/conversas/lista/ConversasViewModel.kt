@@ -53,6 +53,8 @@ data class ItemConversa(
     val previa: PreviaConversa,
     val rotulo: RotuloData?,
     val digitando: Boolean,
+    /** Alguém gravando áudio nesta conversa (tem prioridade sobre o "digitando", como o web). */
+    val gravando: Boolean = false,
     /** Posição entre as fixadas, para habilitar "mover para cima/baixo". */
     val podeSubir: Boolean = false,
     val podeDescer: Boolean = false,
@@ -127,7 +129,8 @@ class ConversasViewModel @Inject constructor(
         contatos.observarOutros(),
         presenca.presencas,
         presenca.digitando,
-    ) { lista, pessoas, presencas, digitando -> Dados(lista, pessoas, presencas, digitando) }
+        presenca.gravando,
+    ) { lista, pessoas, presencas, digitando, gravando -> Dados(lista, pessoas, presencas, digitando, gravando) }
 
     private val controles = combine(termo, arquivadasAbertas, chamadasAbertas, atualizando, erro) {
             t,
@@ -215,6 +218,7 @@ class ConversasViewModel @Inject constructor(
                 previa = previaDaConversa(conversa),
                 rotulo = conversa.ultimaMensagemEm?.let { rotuloData(it, agora, zona) },
                 digitando = d.digitando[conversa.id].orEmpty().isNotEmpty(),
+                gravando = d.gravando[conversa.id].orEmpty().isNotEmpty(),
                 podeSubir = posicao > 0,
                 podeDescer = posicao >= 0 && posicao < fixadasIds.lastIndex,
                 ficha = fichaDaConversa(conversa, d.contatos),
@@ -265,6 +269,7 @@ class ConversasViewModel @Inject constructor(
         val contatos: List<Contato>,
         val presencas: Map<Long, PresencaContato>,
         val digitando: Map<Long, Set<Long>>,
+        val gravando: Map<Long, Set<Long>> = emptyMap(),
     )
 
     private data class Controles(

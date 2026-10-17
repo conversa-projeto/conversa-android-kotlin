@@ -86,4 +86,5 @@
     <string name="grupo_remover_avatar">Remover</string>
     <string name="grupo_salvando_avatar">Salvando…</string>
     <string name="grupo_imagem_ilegivel">Não foi possível ler a imagem.</string>
+    <string name="lista_gravando_audio">Gravando áudio…</string>
 </resources>

@@ -72,9 +72,11 @@ class MigracoesTest {
                 assertThat(it.isNull(3)).isTrue()
             }
             // Versão 9 (CON-16): quem já estava nos contatos não é bot até a próxima leitura.
-            conexao.linha("SELECT nome, bot FROM contato WHERE id = 8") {
+            conexao.linha("SELECT nome, bot, criadoEm FROM contato WHERE id = 8") {
                 assertThat(it.getText(0)).isEqualTo("Bia")
                 assertThat(it.getLong(1)).isEqualTo(0)
+                // Versão 12: sem "Usuário desde" até a próxima leitura dos contatos.
+                assertThat(it.isNull(2)).isTrue()
             }
         }
     }
@@ -88,6 +90,6 @@ class MigracoesTest {
     }
 
     private companion object {
-        const val VERSAO_ATUAL = 11
+        const val VERSAO_ATUAL = 12
     }
 }

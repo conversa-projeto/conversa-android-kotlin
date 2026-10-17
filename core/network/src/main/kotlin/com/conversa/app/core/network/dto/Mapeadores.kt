@@ -61,7 +61,7 @@ fun ConversaDto.paraModelo() = Conversa(
     avatarUrl = avatarUrl,
 )
 
-fun ContatoDto.paraModelo() = Contato(id, nome, login, email, telefone, avatarUrl)
+fun ContatoDto.paraModelo() = Contato(id, nome, login, email, telefone, avatarUrl, bot = bot, criadoEm = criadoEm)
 
 fun MembroDto.paraModelo() = MembroConversa(vinculoId = id, usuarioId = usuarioId, nome = nome, avatarUrl = avatarUrl)
 

@@ -93,6 +93,8 @@ class EventoSocketParserTest {
         ).isEqualTo(EventoSocket.PostagemAtualizada(3, 1170, 8))
         assertThat(ler("""{"tipo":65,"conversa_id":3,"mensagem_id":1170,"usuario_id":8,"confirmacao":{"total":2}}"""))
             .isEqualTo(EventoSocket.ConfirmacaoPedida(3, 1170))
+        // Servidor `ac710eb`: só o tipo.
+        assertThat(ler("""{"tipo":66}""")).isEqualTo(EventoSocket.ContatosAtualizados)
     }
 
     @Test

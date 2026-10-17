@@ -295,7 +295,7 @@
 - [x] 🆕 `769bd7d` Seção recolhível "Chamadas (N)" no fim da lista, antes de "Arquivadas": conversas com `chamada:true` não fixadas nem arquivadas; com termo no filtro, tudo junto (CON-01, FC-218) — `chamada` na conversa (Room v6); no emulador, "Chamadas (4)" com os chats das ligações ✔ 04c5c14
 - [x] 🆕 `b8ea0c2` Emoji ou imagem do grupo no lugar da inicial em todos os avatares de grupo (`emoji`, `avatar_url`) (CON-15, GER-07, FC-217) — `Avatar(emoji = …)` na lista, no cabeçalho do chat e no "Enviar para" ✔ 04c5c14
 - [x] 🆕 `e33ecba` Ícone de pessoas com a descrição "Conversa em grupo" no lugar da etiqueta "Grupo" (CON-01, FC-219) — ícone `Group` ✔ 04c5c14
-- [ ] 🆕 `f351190` "Gravando áudio…" na lista (pontinhos e texto na cor de gravando), com prioridade sobre o "digitando" (CON-01, ENV-16, FC-224)
+- [x] 🆕 `f351190` "Gravando áudio…" na lista (pontinhos e texto na cor de gravando), com prioridade sobre o "digitando" (CON-01, ENV-16, FC-224) — `presenca.gravando` no item; no emulador, o C avisou que gravava e a direta mostrou "Gravando áudio…" em vermelho ✔ HASH
 
 ### 2.7 Filtro e "Nova conversa" (FC-206, CON-02)
 - [x] Campo de busca: filtra por título e prévia — sem acento e sem maiúscula (`conversaCombina`)
@@ -322,7 +322,7 @@
 - [x] → `GET /conversas` → abrir o chat — abre o chat (provisório até a etapa 3)
 - [x] Falha no meio → mostrar o erro (e registrar a conversa órfã no log); depende de S8 para ficar atômico — erro no Snackbar; `Timber.w` com o id da conversa incompleta
 - [x] 🆕 `ef13c22`/`9c6e8a6` Bots de IA: ler `bot` nos contatos e na conversa; pílula "Bot" no cabeçalho da direta; não oferecer ligação para bot; tirar o bot da lista de quem precisa confirmar (o bot nunca marca `recebida`) (CON-16, FC-221) — `Contato.bot` (Room v9, coluna nova com padrão 0); na direta com bot: a pílula "Bot", sem ligar (cabeçalho e folha do perfil) e sem pedir confirmação; nos grupos, o "Quem precisa confirmar" sem os bots e o "todos" vira a lista explícita sem eles (`listaDeConfirmacao`); bot fora do "Adicionar à chamada". No emulador, com o C marcado como bot por instantes na base de dev (`ativo = false`, apagado depois) ✔ 9594d53
-- [ ] 🆕 `ac710eb` Contatos relidos no WS 66 (conta criada, renomeada ou excluída) e na reconexão, como o web; guardar o `criado_em` (Room) para o "Usuário desde" (CON-11, AUT-11, FC-222)
+- [x] 🆕 `ac710eb` Contatos relidos no WS 66 (conta criada, renomeada ou excluída) e na reconexão, como o web; guardar o `criado_em` (Room) para o "Usuário desde" (CON-11, AUT-11, FC-222) — `EventoSocket.ContatosAtualizados` e a reconexão no `SyncManager`; `criado_em` no Room (v12). No emulador, o C mudou o nome e a "Nova conversa", aberta, acompanhou ✔ HASH
 
 ### 2.10 Grupos (FC-211, FC-212, CON-07, CON-08)
 - [x] Tela "Criar grupo": "Nome do grupo", busca, checkboxes de contatos — `CriarGrupo.kt`
@@ -485,7 +485,7 @@
 - [x] Download sob demanda para o cache: arquivo `.part` → rename ao terminar — `ArquivosLocais.baixar` (o mesmo do "Abrir"), só no primeiro play; agora com URL vencida → pede outra e tenta de novo (+ teste `ArquivosLocaisTest`; achado no emulador com `URL_VENCIDA=1`) ✔ 1ceaad0
 - [x] Áudio de outro não ouvido: botão verde; o primeiro play chama `POST /mensagem/reproduzir {conversa, mensagem}` — verde = `waveform` do FMX (o FMX não tem cor de "não ouvido"); `MensagensRepositorio.marcarReproduzida` (Room otimista + uma chamada; não marca lida) (+ testes). No emulador: `mensagem_status.reproduzida` gravado só no áudio tocado ✔ 1ceaad0
 - [x] Parar o áudio ao sair da conversa ou ao começar uma chamada — 🔄 sair da conversa: `ChatViewModel.onCleared` para o áudio dela (+ teste; no emulador, 0 players ativos depois de voltar); a chamada (etapa 6) deve chamar `PlayerAudio.parar()` — concluído depois (conferido em 2026-10-09): a chamada para o áudio ao começar (`SistemaChamada`) ✔ 5837aec
-- [ ] 🆕 `f351190` Velocidade do áudio: botão 1x → 1,5x → 2x → 3x no player, a mesma para todos os áudios, guardada no aparelho (ANX-18, FC-422)
+- [x] 🆕 `f351190` Velocidade do áudio: botão 1x → 1,5x → 2x → 3x no player, a mesma para todos os áudios, guardada no aparelho (ANX-18, FC-422) — `PlayerAudio.velocidade` (`SharedPreferences`), botão "1x" ao lado da barra; no emulador, 1x → 1,5x → 2x → 3x → 1x ✔ HASH
 
 ### 4.6 Gravação de áudio (FC-406, ANX-11, ENV-16)
 - [x] Transplantar o `AudioRecorderHelper` (pegar `Exception` em `start()`, #48) — `GravadorMediaRecorder` (`:core:media`): AAC/M4A mono 64 kbps (toca no web, no Windows e no Android), qualquer `Exception` ao abrir o microfone vira "Não foi possível iniciar a gravação"; pausa = fecha o trecho e `juntarTrechos` (MediaMuxer, sem recodificar) monta o arquivo. No emulador: 2 trechos juntados = 42,42 s contínuos (1827 quadros AAC) ✔ 399bae5
@@ -902,11 +902,11 @@
 - [x] Avatar: Photo Picker → recorte quadrado central 256×256 → JPEG 85% → upload (4.1) → `PATCH /usuario {id, avatar_anexo_id}` ✔ 143d8d6
 - [x] Remover avatar: `PATCH /usuario {id, avatar_anexo_id:null}` ✔ 143d8d6
 - [x] Avatar com URL expirada → renovar (no máximo a cada 30 s) ✔ 143d8d6
-- [ ] 🆕 `ac710eb` "Armazenamento" (espaço usado, `GET /usuario/espaco`) entre a foto e os dados, e "Usuário desde dd/mm/aaaa" debaixo de "Nome e e-mail visíveis na sua conta.", como o web (ANX-17, AUT-11, FC-423)
+- [x] 🆕 `ac710eb` "Armazenamento" (espaço usado, `GET /usuario/espaco`) entre a foto e os dados, e "Usuário desde dd/mm/aaaa" debaixo de "Nome e e-mail visíveis na sua conta.", como o web (ANX-17, AUT-11, FC-423) — `ArmazenamentoViewModel`; no emulador, "200.9 MB usados…" e "Usuário desde 07/10/2026" ✔ HASH
 
 ### 8.4 Perfil de outro usuário (FC-803, AUT-10)
 - [x] Toque no avatar da direta (lista ou cabeçalho) → bottom sheet: foto, nome, e-mail, telefone ("Não informado"), "Ligar"; o "Ver anexos" entra com a tela do 8.6 ✔ 4d53ba8 (o "Ver anexos" veio com o 8.6) ✔ 95b9bb5
-- [ ] 🆕 `ac710eb` "Usuário desde" na folha do perfil, só com a data (AUT-11)
+- [x] 🆕 `ac710eb` "Usuário desde" na folha do perfil, só com a data (AUT-11) — `FichaUsuario.criadoEm`; no emulador, a folha do C mostrou "Usuário desde 08/10/2026" ✔ HASH
 
 ### 8.5 Configurações (FC-804…808)
 - [x] Tela com seções: Perfil, Aparência, Notificações, Chamadas, Permissões, Servidor, Sistema*, Acessos*, Ramal SIP, Sobre — todas, mais "Sair"; o Ramal SIP fica com o SIP (etapa 9) ✔ afd3269
@@ -922,7 +922,7 @@
 - [ ] 🆕 `769bd7d` Sistema › "Inteligência artificial" (endereço, modelo, token, "Testar conexão") — 🆕 `ac710eb`: e o servidor de embeddings próprio (endereço, token, "Testar embeddings") — uso de administrador; avaliar se fica só no web (CFG-07, FC-812)
 - [x] 🆕 `ef13c22`/`9c6e8a6` Acessos com as permissões de uso: são 32 (6 de administração + 26 de uso, `uso` no `GET /permissoes`); a linha de caixas por pessoa passa da tela. Como o web: lista de pessoas que se abre ("Administração", "N de M"), com os grupos Administração, Enviar, Mensagens, Grupos, Chamadas, Configurações e Outras e os nomes curtos; as próprias permissões marcadas ficam travadas ("Você não pode retirar as próprias permissões") (CFG-08, FC-813) — `gruposDePermissoes`, `quantasDe`, `temAdministracao`, `propriaMarcada` (+ 2 testes); `PermissaoDto.uso`. No emulador: "26 de 32" por pessoa e, aberta, os grupos com as próprias marcadas travadas ✔ 91d5681
 - [ ] 🆕 `9c6e8a6` Usuários, Bots, Ferramentas e Conhecimento (administração): avaliar se ficam só no web, junto da FC-812 (CFG-11…14, FC-815)
-- [ ] 🆕 `ac710eb` Acessos depois da junção: sem `usuarios`, `permissoes` como "Pessoas" (textos do modo aberto), `localizacao` no grupo Enviar ("Localização e trajeto"); espaço, "Usuário desde" e selo "Bot" em cada pessoa (CFG-08, GER-09, AUT-11, FC-816)
+- [x] 🆕 `ac710eb` Acessos depois da junção: sem `usuarios`, `permissoes` como "Pessoas" (textos do modo aberto), `localizacao` no grupo Enviar ("Localização e trajeto"); espaço, "Usuário desde" e selo "Bot" em cada pessoa (CFG-08, GER-09, AUT-11, FC-816) — no emulador, "Ninguém tem a permissão Pessoas ainda", "200.9 MB · Usuário desde 07/10/2026", "Localização e trajeto" no fim do Enviar e a administração sem "Usuários" ✔ HASH
 
 ### 8.6 Anexos da conversa (FC-809, ANX-13)
 - [x] A partir do perfil ou do grupo: "Ver anexos" (🆕 `eaa8bac`: no web, os anexos ficam dentro do painel do grupo) — folha do perfil (lista e cabeçalho) e item nos dados do grupo ✔ 95b9bb5

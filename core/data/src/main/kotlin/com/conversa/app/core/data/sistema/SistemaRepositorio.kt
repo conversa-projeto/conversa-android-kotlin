@@ -118,6 +118,6 @@ internal fun AlteracaoParametros.paraRequisicao() = AlterarParametrosRequisicao(
 
 internal fun PermissoesDto.paraModelo() = Acessos(
     permissoes = permissoes.map { PermissaoSistema(it.codigo, it.descricao, it.uso) },
-    usuarios = usuarios.map { UsuarioAcessos(it.id, it.nome, it.login, it.permissoes.toSet()) },
+    usuarios = usuarios.map { UsuarioAcessos(it.id, it.nome, it.login, it.permissoes.toSet(), it.criadoEm, it.bot, it.espaco.toLong()) },
     modoAberto = modoAberto,
 )

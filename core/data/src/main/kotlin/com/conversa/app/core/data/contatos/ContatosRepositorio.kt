@@ -28,6 +28,11 @@ class ContatosRepositorio @Inject constructor(
         lista.filter { it.id != atual?.usuarioId }.map { it.paraModelo() }
     }
 
+    /** O próprio usuário, como está nos contatos ("Usuário desde" no Perfil, servidor `ac710eb`). */
+    fun observarEu(): Flow<Contato?> = combine(dao.observarTodos(), sessao.sessao) { lista, atual ->
+        lista.firstOrNull { it.id == atual?.usuarioId }?.paraModelo()
+    }
+
     suspend fun atualizar(): Result<Unit> = chamarApi { api.contatos() }.map { lista ->
         dao.substituirTodos(lista.map { it.paraEntidade() })
     }

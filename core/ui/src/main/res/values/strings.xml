@@ -41,4 +41,5 @@
     <string name="chat_chamada_erro">Não foi possível carregar o chat</string>
     <string name="chat_chamada_vazio">Ninguém escreveu no chat da chamada.</string>
     <string name="chat_chamada_abrir">Abrir o chat completo</string>
+    <string name="perfil_usuario_desde">Usuário desde</string>
 </resources>

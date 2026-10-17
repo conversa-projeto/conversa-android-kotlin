@@ -30,6 +30,7 @@ import com.conversa.app.core.network.dto.EncerrarEnqueteRequisicao
 import com.conversa.app.core.network.dto.EnqueteCriadaDto
 import com.conversa.app.core.network.dto.EnqueteDto
 import com.conversa.app.core.network.dto.EnviarMensagemRequisicao
+import com.conversa.app.core.network.dto.EspacoDto
 import com.conversa.app.core.network.dto.FixadasDto
 import com.conversa.app.core.network.dto.IceDto
 import com.conversa.app.core.network.dto.IdDto
@@ -103,6 +104,10 @@ interface ConversaApi {
     @Headers(PUBLICA)
     @PUT("usuario")
     suspend fun cadastrar(@Body corpo: CadastroRequisicao): UsuarioDto
+
+    /** Espaço dos arquivos que eu enviei (servidor `ac710eb`). */
+    @GET("usuario/espaco")
+    suspend fun espacoUsado(): EspacoDto
 
     // --- IA (contrato §13.5) ---
 

@@ -355,6 +355,8 @@
         <item quantity="one">Gerado por IA a partir de %1$d mensagem. Confira na conversa antes de agir.</item>
         <item quantity="other">Gerado por IA a partir de %1$d mensagens. Confira na conversa antes de agir.</item>
     </plurals>
+    <!-- Velocidade do áudio (web `f351190`) -->
+    <string name="velocidade_audio">Velocidade: %1$s</string>
     <!-- Sugestão de texto da IA (ENV-25) -->
     <string name="sugestao_ia_descricao">Sugestão da IA: %1$s. Toque para usar.</string>
     <string name="descartar_sugestao">Descartar a sugestão</string>

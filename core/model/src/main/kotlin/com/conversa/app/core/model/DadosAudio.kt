@@ -34,6 +34,19 @@ fun picos(amostras: FloatArray, barras: Int = BARRAS_ONDA): List<Int> {
     return maximos.map { if (topo > 0f) (it / topo * 100).roundToInt() else 0 }
 }
 
+/** As velocidades do player, na ordem do botão (web `f351190`); vale para todos os áudios. */
+val VELOCIDADES_AUDIO: List<Float> = listOf(1f, 1.5f, 2f, 3f)
+
+/** A próxima velocidade ao tocar no botão (depois de 3x, volta a 1x). */
+fun proximaVelocidade(atual: Float): Float = VELOCIDADES_AUDIO.getOrNull(VELOCIDADES_AUDIO.indexOf(atual) + 1) ?: VELOCIDADES_AUDIO.first()
+
+/** Valor salvo que não está na lista vira 1x, como no web. */
+fun velocidadeValida(valor: Float): Float = if (valor in VELOCIDADES_AUDIO) valor else 1f
+
+/** "1x", "1,5x", "2x", "3x". */
+fun rotuloVelocidade(velocidade: Float): String =
+    (if (velocidade % 1f == 0f) velocidade.toInt().toString() else velocidade.toString().replace('.', ',')) + "x"
+
 /** A intensidade no Room, como texto ("12,40,…"). */
 fun intensidadeParaTexto(intensidade: List<Int>): String = intensidade.joinToString(",")
 

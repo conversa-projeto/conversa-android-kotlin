@@ -48,7 +48,14 @@ class SyncManagerTest {
     private val presenca = mockk<PresencaRepositorio>(relaxed = true)
     private val enquetes = mockk<com.conversa.app.core.data.enquetes.EnquetesRepositorio>(relaxed = true)
     private val atividades by lazy { com.conversa.app.core.data.atividades.AtividadesRepositorio(api, mockk(relaxed = true)) }
+    private val contatos = mockk<com.conversa.app.core.data.contatos.ContatosRepositorio> {
+        coEvery { atualizar() } returns Result.success(Unit)
+    }
     private val sessao = mockk<SessaoRepositorio> { every { sessao } returns MutableStateFlow(Sessao("t", 7, "Ana")) }
+
+    private fun kotlinx.coroutines.test.TestScope.criar() = SyncManager(
+        api, tempoReal, conversaDao, mensagemDao, syncEstadoDao, presenca, sessao, enquetes, atividades, contatos, escopoDoTeste(),
+    )
 
     private fun prepararApi() {
         coEvery { api.mensagensNovas(any()) } returns listOf(
@@ -69,7 +76,7 @@ class SyncManagerTest {
     fun `ressincronizar busca tudo e avanca o cursor`() = runTest {
         prepararApi()
         val sync =
-            SyncManager(api, tempoReal, conversaDao, mensagemDao, syncEstadoDao, presenca, sessao, enquetes, atividades, escopoDoTeste())
+            criar()
 
         sync.ressincronizar()
 
@@ -90,7 +97,7 @@ class SyncManagerTest {
         prepararApi()
         coEvery { api.mensagensNovas(any()) } throws IOException("sem rede")
         val sync =
-            SyncManager(api, tempoReal, conversaDao, mensagemDao, syncEstadoDao, presenca, sessao, enquetes, atividades, escopoDoTeste())
+            criar()
 
         sync.ressincronizar()
 
@@ -102,7 +109,7 @@ class SyncManagerTest {
     fun `conectar dispara a sincronizacao e eventos atualizam o contador`() = runTest {
         prepararApi()
         val sync =
-            SyncManager(api, tempoReal, conversaDao, mensagemDao, syncEstadoDao, presenca, sessao, enquetes, atividades, escopoDoTeste())
+            criar()
         sync.iniciar()
         advanceUntilIdle()
 
@@ -115,13 +122,19 @@ class SyncManagerTest {
         eventos.emit(EventoSocket.NovaAtividade)
         advanceUntilIdle()
         assertThat(sync.atividadesNovas.value).isEqualTo(5)
+
+        // A reconexão relê os contatos, e o 66 (conta criada, renomeada ou excluída) também (servidor `ac710eb`).
+        coVerify(exactly = 1) { contatos.atualizar() }
+        eventos.emit(EventoSocket.ContatosAtualizados)
+        advanceUntilIdle()
+        coVerify(exactly = 2) { contatos.atualizar() }
     }
 
     @Test
     fun `varias mensagens novas seguidas viram uma sincronizacao so`() = runTest {
         prepararApi()
         val sync =
-            SyncManager(api, tempoReal, conversaDao, mensagemDao, syncEstadoDao, presenca, sessao, enquetes, atividades, escopoDoTeste())
+            criar()
         sync.iniciar()
         advanceUntilIdle()
 
@@ -146,7 +159,7 @@ class SyncManagerTest {
             ),
         )
         val sync =
-            SyncManager(api, tempoReal, conversaDao, mensagemDao, syncEstadoDao, presenca, sessao, enquetes, atividades, escopoDoTeste())
+            criar()
         sync.iniciar()
         advanceUntilIdle()
 
@@ -165,7 +178,7 @@ class SyncManagerTest {
         coEvery { mensagemDao.buscar(105) } returns null
         coEvery { mensagemDao.ultimaSalva(42) } returns 100L
         val sync =
-            SyncManager(api, tempoReal, conversaDao, mensagemDao, syncEstadoDao, presenca, sessao, enquetes, atividades, escopoDoTeste())
+            criar()
         sync.iniciar()
         advanceUntilIdle()
 
@@ -183,7 +196,7 @@ class SyncManagerTest {
         coEvery { mensagemDao.buscar(171) } returns null
         coEvery { mensagemDao.ultimaSalva(42) } returns 170L
         val sync =
-            SyncManager(api, tempoReal, conversaDao, mensagemDao, syncEstadoDao, presenca, sessao, enquetes, atividades, escopoDoTeste())
+            criar()
         sync.iniciar()
         advanceUntilIdle()
 
@@ -200,7 +213,7 @@ class SyncManagerTest {
     fun `WS 64 de outra pessoa rele a postagem e a lista e avisa a resposta, a minha nao`() = runTest {
         prepararApi()
         val sync =
-            SyncManager(api, tempoReal, conversaDao, mensagemDao, syncEstadoDao, presenca, sessao, enquetes, atividades, escopoDoTeste())
+            criar()
         coEvery { mensagemDao.buscar(1170) } returns mockk(relaxed = true)
         val avisos = mutableListOf<RespostaDePostagem>()
         backgroundScope.launch { sync.respostasDePostagem.collect { avisos += it } }
@@ -234,7 +247,7 @@ class SyncManagerTest {
         coEvery { api.mensagens(42, 100, 0, 100) } returns listOf(msg(100, 8, 42), msg(101, 7, 42), msg(102, 8, 42))
         coEvery { api.mensagens(50, 0, 80, 0) } returns listOf(msg(200, 8, 50, lida = true))
         val sync =
-            SyncManager(api, tempoReal, conversaDao, mensagemDao, syncEstadoDao, presenca, sessao, enquetes, atividades, escopoDoTeste())
+            criar()
         val avisos = mutableListOf<Set<Long>>()
         backgroundScope.launch { sync.novasDeOutros.collect { avisos += it } }
         runCurrent()

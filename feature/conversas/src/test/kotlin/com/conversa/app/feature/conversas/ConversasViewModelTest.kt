@@ -46,6 +46,7 @@ class ConversasViewModelTest {
     private val presenca = mockk<PresencaRepositorio> {
         every { presencas } returns this@ConversasViewModelTest.presencas
         every { digitando } returns this@ConversasViewModelTest.digitando
+        every { gravando } returns MutableStateFlow(emptyMap())
     }
     private val iniciador = mockk<IniciadorSessao> {
         every { carregada } returns this@ConversasViewModelTest.carregada

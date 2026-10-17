@@ -52,7 +52,16 @@ data class VistasDto(@SerialName("vistas_em") val vistasEm: Instant? = null)
 data class PermissaoDto(val codigo: String, val descricao: String = "", val uso: Boolean = false)
 
 @Serializable
-data class UsuarioPermissoesDto(val id: Long, val nome: String, val login: String = "", val permissoes: List<String> = emptyList())
+data class UsuarioPermissoesDto(
+    val id: Long,
+    val nome: String,
+    val login: String = "",
+    val permissoes: List<String> = emptyList(),
+    /** Servidor `ac710eb`: "Usuário desde", se é bot e os bytes dos arquivos que enviou. */
+    @SerialName("criado_em") val criadoEm: Instant? = null,
+    val bot: Boolean = false,
+    val espaco: Double = 0.0,
+)
 
 @Serializable
 data class PermissoesDto(

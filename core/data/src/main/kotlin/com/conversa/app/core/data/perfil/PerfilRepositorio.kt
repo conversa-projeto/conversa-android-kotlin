@@ -56,6 +56,9 @@ class PerfilRepositorio @Inject constructor(
         }.map { }
     }
 
+    /** `GET /usuario/espaco`: bytes dos arquivos que enviei (imagens, arquivos e áudios), cada um uma vez. */
+    suspend fun espacoUsado(): Result<Long> = chamarApi { api.espacoUsado() }.map { it.bytes.toLong() }
+
     /** Só vai o que não é nulo: o servidor confere a permissão de cada chave (`nome`, `email`; GER-09). */
     suspend fun alterarDados(nome: String?, email: String?): Result<Unit> {
         val sessao = atual()

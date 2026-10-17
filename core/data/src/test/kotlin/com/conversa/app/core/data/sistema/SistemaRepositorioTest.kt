@@ -91,11 +91,23 @@ class SistemaRepositorioTest {
     fun `acessos - mapeia e, depois de conceder, rele as minhas`() = runTest {
         coEvery { api.permissoes() } returns PermissoesDto(
             permissoes = listOf(PermissaoDto("permissoes", "Conceder e retirar")),
-            usuarios = listOf(UsuarioPermissoesDto(7, "Ana", "ana", listOf("parametros"))),
+            usuarios = listOf(
+                UsuarioPermissoesDto(
+                    7,
+                    "Ana",
+                    "ana",
+                    listOf("parametros"),
+                    java.time.Instant.parse("2026-03-09T12:00:00Z"),
+                    espaco = 1572864.0,
+                ),
+            ),
             modoAberto = true,
         )
         val acessos = repo.acessos().getOrThrow()
         assertThat(acessos.usuarios.single().permissoes).containsExactly("parametros")
+        // Servidor `ac710eb`: "Usuário desde" e o espaço dos arquivos que enviou.
+        assertThat(acessos.usuarios.single().espaco).isEqualTo(1_572_864L)
+        assertThat(acessos.usuarios.single().criadoEm).isEqualTo(java.time.Instant.parse("2026-03-09T12:00:00Z"))
         assertThat(acessos.modoAberto).isTrue()
 
         coEvery { api.concederPermissao(any()) } returns PermissaoUsuarioDto(7, "permissoes")

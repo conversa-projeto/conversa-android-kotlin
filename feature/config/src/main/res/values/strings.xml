@@ -160,9 +160,9 @@
     <string name="sistema_salvo">Configurações salvas.</string>
     <string name="sistema_erro_carregar">Erro ao carregar as configurações</string>
     <string name="sistema_erro_salvar">Erro ao salvar as configurações</string>
-    <string name="acessos_modo_aberto_titulo">Ninguém tem a permissão Acessos ainda:</string>
-    <string name="acessos_modo_aberto">todos os usuários podem mexer nas configurações e nas permissões. Marque Sistema e Acessos para quem deve cuidar disso; ao marcar Acessos para alguém, só passa a valer o que estiver marcado.</string>
-    <string name="acessos_explicacao">Abra uma pessoa para ver e mudar o que ela pode fazer: a administração do sistema e o uso do chat. Conta nova começa com todas as de uso. Ninguém retira as próprias permissões: outra pessoa com Acessos precisa fazer isso.</string>
+    <string name="acessos_modo_aberto_titulo">Ninguém tem a permissão Pessoas ainda:</string>
+    <string name="acessos_modo_aberto">todos os usuários podem mexer nas configurações e nas permissões. Marque Sistema e Pessoas para quem deve cuidar disso; ao marcar Pessoas para alguém, só passa a valer o que estiver marcado.</string>
+    <string name="acessos_explicacao">Abra uma pessoa para ver e mudar o que ela pode fazer: a administração do sistema e o uso do chat. Conta nova começa com todas as de uso. Ninguém retira as próprias permissões: outra pessoa com a permissão Pessoas precisa fazer isso.</string>
     <string name="acessos_administracao">Administração</string>
     <string name="acessos_quantas">%1$d de %2$d</string>
     <string name="acessos_aberto">Aberto</string>
@@ -175,7 +175,10 @@
     <string name="acessos_grupo_configuracoes">Configurações</string>
     <string name="acessos_grupo_outras">Outras</string>
     <string name="acessos_permissao_bots">Bots</string>
-    <string name="acessos_permissao_usuarios">Usuários</string>
+    <string name="acessos_permissao_permissoes">Pessoas</string>
+    <string name="acessos_permissao_localizacao">Localização e trajeto</string>
+    <string name="acessos_selo_bot">Bot</string>
+    <string name="acessos_usuario_desde">Usuário desde %1$s</string>
     <string name="acessos_permissao_ferramentas">Ferramentas</string>
     <string name="acessos_permissao_conhecimento">Conhecimento</string>
     <string name="acessos_permissao_emoji">Emojis no texto</string>
@@ -210,6 +213,12 @@
     <string name="acessos_caixa">%1$s para %2$s</string>
     <string name="acessos_erro_carregar">Erro ao carregar as permissões</string>
     <string name="acessos_erro_alterar">Erro ao alterar a permissão</string>
+    <!-- Espaço usado e "Usuário desde" (servidor `ac710eb`), textos do web -->
+    <string name="perfil_armazenamento">Armazenamento</string>
+    <string name="perfil_espaco_calculando">Calculando…</string>
+    <string name="perfil_espaco_erro">Não foi possível calcular o espaço usado</string>
+    <string name="perfil_espaco_usado">" usados pelos arquivos que você enviou (imagens, arquivos e áudios; cada arquivo conta uma vez, mesmo mandado em várias conversas)."</string>
+    <string name="perfil_desde">Usuário desde %1$s</string>
     <!-- Sugestão de texto da IA (ENV-25), adaptado do web (no celular não há Tab) -->
     <string name="privacidade_ia">Inteligência artificial</string>
     <string name="privacidade_sugestoes">Sugerir a continuação ao digitar</string>
