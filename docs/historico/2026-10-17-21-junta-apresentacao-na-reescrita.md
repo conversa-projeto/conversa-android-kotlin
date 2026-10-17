@@ -26,5 +26,5 @@ O trabalho da apresentação (`f4a9be3`, `e69a64e`) foi feito num worktree, na b
 - Merge com `--no-ff`, para a branch da apresentação continuar visível no histórico.
 
 ## Pendências / próximos passos
-- O worktree `../conversa-android-apresentacao` e a branch `apresentacao` podem ser apagados quando a pessoa quiser. O APK da apresentação (`conversa-projeto/Conversa-apresentacao-debug.apk`) foi gerado antes da junção, **sem** a Localização.
-- O AVD `Apresentacao` (4,7 GB), criado só para os testes, pode ser apagado.
+- ~~O worktree `../conversa-android-apresentacao` e a branch `apresentacao` podem ser apagados quando a pessoa quiser.~~ Apagados em 2026-10-17, a pedido da pessoa (os commits seguem na `reescrita` pelo merge), junto com o AVD `Apresentacao`. O APK da apresentação (`conversa-projeto/Conversa-apresentacao-debug.apk`) foi gerado antes da junção, **sem** a Localização.
+- ~~O AVD `Apresentacao` (4,7 GB), criado só para os testes, pode ser apagado.~~ Apagado (ver acima).
