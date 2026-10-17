@@ -4,7 +4,7 @@
 - **Tipo:** código
 - **Itens:** `TODO.md` 4.12 (as quatro primeiras linhas); FC-319; MSG-25 (e o rótulo em CHA-18, NOT-02, ATV-01)
 - **Branch:** `reescrita`
-- **Commits:** (preencher)
+- **Commits:** `eaa4f42`
 
 ## Contexto
 - **O servidor** (`ac710eb`, contrato §10.16) aceita o conteúdo **tipo 9**: um JSON dentro do texto do `conteudo`, com 1 ponto (local) ou 2 (trajeto), `rota` (polyline do OSRM), `distancia` (metros) e `duracao` (segundos).
