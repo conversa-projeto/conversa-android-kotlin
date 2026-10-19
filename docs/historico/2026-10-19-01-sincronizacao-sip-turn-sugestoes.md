@@ -4,7 +4,7 @@
 - **Tipo:** documentação
 - **Itens:** linhas 🆕 no `TODO.md` (4.5, 6.1, 6.5, 6.11, 7.14, 8.5 e etapa 9); FC-225, FC-425, FC-729, FC-730 e FC-817, e notas na FC-702, FC-900 e FC-901; CON-18, ANX-19, CHA-27, SIP-06; S40–S42
 - **Branch:** `reescrita`
-- **Commits:** (preencher)
+- **Commits:** `540e79b`
 - **Commits de origem** (pull `--ff-only` em 2026-10-19; três em cada repositório):
   - **Servidor (`ac710eb` → `b104db8`):**
     - `be17b8e` "Ramal SIP de cada pessoa configurado só pelo administrador (migração 057)";
