@@ -15,7 +15,9 @@ O servidor de dev atende em HTTPS (nginx, porta 443) com certificado do **mkcert
 
 > Dá para usar a API direto (`http://localhost:8080`, sem o proxy) para tudo menos anexos: sem o nginx/proxy, `/storage/` não existe.
 
-A mídia das chamadas passa pelo TURN do coturn (só TCP, porta 3478): `GET /api/ice` responde `turn:localhost:3478?transport=tcp`, então o emulador precisa também de `adb reverse tcp:3478 tcp:3478`.
+A mídia das chamadas passa pelo TURN do coturn, na porta 3478. 🆕 Desde o servidor `383eaaa` (2026-10-19) ele aceita UDP e TCP, e `GET /api/ice` responde as duas URLs, o UDP primeiro: `["turn:localhost:3478?transport=udp", "turn:localhost:3478?transport=tcp"]`.
+- **No emulador, só o TCP chega:** o `adb reverse` só leva TCP, então o candidato UDP falha e a chamada usa o TCP. Continue com `adb reverse tcp:3478 tcp:3478`.
+- **Para o UDP valer no Docker local,** o contêiner do coturn precisa ser recriado com a porta `3478/udp` publicada (`env -u CONVERSA_DATABASE -u CONVERSA_PORTA docker compose up -d coturn`, em `../conversa`).
 
 ## Passo a passo
 

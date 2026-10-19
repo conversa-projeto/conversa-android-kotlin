@@ -1,6 +1,6 @@
 # 03 — Inventário de funcionalidades e comportamento do cliente web (conversa-web)
 
-> Auditoria de 2026-10-06. Fonte: `C:\Users\danie\Desktop\GIT\conversa-projeto\conversa-web` no commit `bfb79d8` (2026-10-06, "Abas Sistema e Acessos nas configurações; Equipes sai da barra"), **atualizado com `39d06f9`** (2026-10-06 21:22, "Campo de mensagem rico, votação em grupo e chat completo na chamada"). Itens novos ou alterados por esse commit estão marcados com 🆕; o resumo está na §10. **Atualizado de novo em 2026-10-08** com `eaa8bac` e `785bdef` (2026-10-07 20:30 e 20:41): as marcações citam o commit (🆕 `eaa8bac`) e o resumo está na §11. Depois vieram `7322e83` e `e8d82cb` (§12, total 137). **Atualizado de novo em 2026-10-13** até o commit **`d202c06`** (2026-10-11 18:00, "Postagens em grupo, todos os emojis, figurinhas Noto e pesquisa nova"), com `769bd7d`, `05507a0`, `f798e9c`, `964ed72` e `d202c06` (servidor até `12cf0cf`): 13 IDs novos, total **150**; as marcações citam o commit (🆕 `769bd7d`) e o resumo está na §13. **Atualizado de novo em 2026-10-15** até o commit **`8b43965`** (2026-10-14 20:39, "Temas prontos, balões com cores próprias, seletor de emoji rápido e ajustes"), com `e33ecba` e `8b43965` (servidor até `e25c4db`, com `6d20ff7`): 3 IDs novos, total **153**; as marcações citam o commit (🆕 `e33ecba`) e o resumo está na §14. **Atualizado de novo em 2026-10-15 (noite)** com o commit **`9c6e8a6`** (2026-10-15 22:42, "Bots de IA com ferramentas e base de conhecimento, permissões de uso e cadastro pelo administrador"; servidor até `ef13c22`): 10 IDs novos, total **163**; as marcações citam o commit (🆕 `9c6e8a6`) e o resumo está na §15. **Atualizado de novo em 2026-10-16 (noite)** com o commit **`f351190`** (2026-10-16 22:49, "Pastas de mensagens, localização e trajeto, espaço usado e menu das Configurações"; servidor até `ac710eb`): 9 IDs novos, total **172**; as marcações citam o commit (🆕 `f351190`) e o resumo está na §16. Foram lidos `CLAUDE.md`, `README.md`, todo o `src/`, `chat-popup.html`, `public/firebase-messaging-sw.js`, `package.json`, `vite.config.ts`, os nomes dos testes em `tests/unit/` (589 casos) e o `git show --stat` de todos os commits desde 2026-09-12.
+> Auditoria de 2026-10-06. Fonte: `C:\Users\danie\Desktop\GIT\conversa-projeto\conversa-web` no commit `bfb79d8` (2026-10-06, "Abas Sistema e Acessos nas configurações; Equipes sai da barra"), **atualizado com `39d06f9`** (2026-10-06 21:22, "Campo de mensagem rico, votação em grupo e chat completo na chamada"). Itens novos ou alterados por esse commit estão marcados com 🆕; o resumo está na §10. **Atualizado de novo em 2026-10-08** com `eaa8bac` e `785bdef` (2026-10-07 20:30 e 20:41): as marcações citam o commit (🆕 `eaa8bac`) e o resumo está na §11. Depois vieram `7322e83` e `e8d82cb` (§12, total 137). **Atualizado de novo em 2026-10-13** até o commit **`d202c06`** (2026-10-11 18:00, "Postagens em grupo, todos os emojis, figurinhas Noto e pesquisa nova"), com `769bd7d`, `05507a0`, `f798e9c`, `964ed72` e `d202c06` (servidor até `12cf0cf`): 13 IDs novos, total **150**; as marcações citam o commit (🆕 `769bd7d`) e o resumo está na §13. **Atualizado de novo em 2026-10-15** até o commit **`8b43965`** (2026-10-14 20:39, "Temas prontos, balões com cores próprias, seletor de emoji rápido e ajustes"), com `e33ecba` e `8b43965` (servidor até `e25c4db`, com `6d20ff7`): 3 IDs novos, total **153**; as marcações citam o commit (🆕 `e33ecba`) e o resumo está na §14. **Atualizado de novo em 2026-10-15 (noite)** com o commit **`9c6e8a6`** (2026-10-15 22:42, "Bots de IA com ferramentas e base de conhecimento, permissões de uso e cadastro pelo administrador"; servidor até `ef13c22`): 10 IDs novos, total **163**; as marcações citam o commit (🆕 `9c6e8a6`) e o resumo está na §15. **Atualizado de novo em 2026-10-16 (noite)** com o commit **`f351190`** (2026-10-16 22:49, "Pastas de mensagens, localização e trajeto, espaço usado e menu das Configurações"; servidor até `ac710eb`): 9 IDs novos, total **172**; as marcações citam o commit (🆕 `f351190`) e o resumo está na §16. **Atualizado de novo em 2026-10-19** com os commits **`8385b22`**, **`d244fc8`** e **`57bd9f0`** (2026-10-18, "Telefonia SIP configurada pelo administrador…", "Chamada já conectada enquanto toca, áudios em sequência e clique direito na seleção" e "Sugestões da IA no painel de pastas…"; servidor até `b104db8`, com `be17b8e` e `383eaaa`): 4 IDs novos, total **176**; as marcações citam o commit (🆕 `d244fc8`) e o resumo está na §17. Foram lidos `CLAUDE.md`, `README.md`, todo o `src/`, `chat-popup.html`, `public/firebase-messaging-sw.js`, `package.json`, `vite.config.ts`, os nomes dos testes em `tests/unit/` (589 casos) e o `git show --stat` de todos os commits desde 2026-09-12.
 >
 > Objetivo: servir de **checklist de paridade** para o app Android (`conversa-android-kotlin`). Cada funcionalidade tem um ID (ex.: `MSG-07`) para ser marcada como "feito / parcial / falta" na comparação com o Android.
 >
@@ -26,6 +26,7 @@
 14. [🆕 Atualização de 2026-10-15 — commits `e33ecba` e `8b43965`](#14-atualização-de-2026-10-15--commits-e33ecba-e-8b43965)
 15. [🆕 Atualização de 2026-10-15 (noite) — commit `9c6e8a6`](#15-atualização-de-2026-10-15-noite--commit-9c6e8a6)
 16. [🆕 Atualização de 2026-10-16 (noite) — commit `f351190`](#16-atualização-de-2026-10-16-noite--commit-f351190)
+17. [🆕 Atualização de 2026-10-19 — commits `8385b22`, `d244fc8` e `57bd9f0`](#17-atualização-de-2026-10-19--commits-8385b22-d244fc8-e-57bd9f0)
 
 ---
 
@@ -72,12 +73,12 @@ https://HOST
 |---|---|---|
 | `auth` (`stores/auth.ts`) | token, usuário, `dispositivoId`, URL do avatar resolvida, permissões do sistema (`permissoes`, `temPermissao`); 🆕 `9c6e8a6` `pode(codigo)` para as permissões de uso (verdadeiro até a lista chegar, GER-09) | `localStorage`: `conversa.token`, `conversa.user` (JSON), `conversa.deviceId`, `conversa.apiBase` |
 | `chat` (`stores/chat.ts`) | contatos, conversas, mensagens por conversa, conversa ativa, resposta pendente, digitando/gravando, online, WebSocket, polling, cursor de sincronização, buscas; 🆕 `769bd7d` presença (`presencas`: estado e visto por último; `presentesPorConversa`), confirmação pendente (`pedirConfirmacao`); 🆕 `d202c06` postagem pendente (`postagemPendente`) e respostas por postagem; 🆕 `e33ecba` quem precisa confirmar (`confirmacaoUsuarios`, `null` = todos) e a postagem que está sendo respondida pelo campo (`postagemRespondendo`) | memória (não persiste mensagens) |
-| `call` (`stores/call.ts`) | estado da chamada (`inativo`/`chamando`/`recebendo`/`ativa`/`encerrando`), peers WHIP/WHEP, mídia local, tela, ponteiros, chat da chamada | memória |
-| `sip` (`stores/sip.ts`) | config do ramal, UserAgent/Registerer sip.js, sessão, tons | memória |
+| `call` (`stores/call.ts`) | estado da chamada (`inativo`/`chamando`/`recebendo`/`ativa`/`encerrando`), peers WHIP/WHEP, mídia local, tela, ponteiros, chat da chamada; 🆕 `d244fc8` pré-conexões enquanto toca (`preConexoes`, fora de `peers`), o preparo de quem recebe (`preparacao`) e o som de aguardar conexão (`aguardandoConexao`, CHA-27, §5.10) | memória |
+| `sip` (`stores/sip.ts`) | config do ramal, UserAgent/Registerer sip.js, sessão, tons; 🆕 `8385b22` o ICE vem do próprio ramal (`utils/sip.ts#iceDoRamal`: STUN e o TURN do PABX) e o destino passa por `destinoSip` (SIP-03, SIP-05) | memória |
 | `atividades` (`stores/atividades.ts`) | lista paginada, contador de novas, tela aberta; 🆕 `9c6e8a6` o contador (`novas`) passa a contar as **pendentes**, `marcarVistas` saiu e entrou `concluir(id)` (ATV-02, ATV-04) | memória |
-| 🆕 `f351190` `pastas` (`stores/pastas.ts`) | pastas da conversa direta aberta (`lista`, `porId`), painel aberto, mensagens selecionadas no chat, arraste em andamento, pasta aberta e as mensagens dela, com a paginação (CON-17, ENV-29, MSG-24) | memória |
+| 🆕 `f351190` `pastas` (`stores/pastas.ts`) | pastas da conversa direta aberta (`lista`, `porId`), painel aberto, mensagens selecionadas no chat, arraste em andamento, pasta aberta e as mensagens dela, com a paginação (CON-17, ENV-29, MSG-24); 🆕 `57bd9f0` a última análise das sugestões da IA (`analise`) e as sugestões ainda sem resposta (`sugestoesPendentes`, CON-18) | memória (🆕 `57bd9f0` as sugestões ignoradas ficam no `localStorage`, CON-18) |
 
-Estados globais fora do Pinia (composables singleton): tema (`useTheme`, chave `theme` = `dark`/`light`), cores personalizadas (`useCoresPersonalizadas`, chave própria no localStorage, por tema; 🆕 `8b43965` por cima do tema pronto escolhido, chave `conversa.temaCores`, CFG-10), qualidade das chamadas (`useConfigChamada`, chave `conversa.chamada`), uploads ativos (`useUploadProgress`), áudio tocando (`useAudioManager`), relógio compartilhado (`useAgora`), conexão lenta (`useConexao`). 🆕 `769bd7d`…`d202c06`: recursos do servidor (`useRecursos`, GER-08), sugestão da IA (`useSugestaoIa`, chave `conversa.sugestoesIa`), catálogo e recentes de emojis (`useEmojis`, chave `conversa.emojisRecentes`), aba própria da chamada (`useAbaChamada`). 🆕 `9c6e8a6`: `useRecursos` ganha `conhecimento`; barra de navegação oculta no computador (chave `conversa.menuOculto`, GER-10). 🆕 `f351190`: velocidade dos áudios, a mesma para todos (`useAudioPlayer`, chave `conversa.velocidadeAudio`, ANX-18). IndexedDB: rascunhos (ENV-23) e o último resumo de cada conversa (banco `conversa-resumos`, CON-14).
+Estados globais fora do Pinia (composables singleton): tema (`useTheme`, chave `theme` = `dark`/`light`), cores personalizadas (`useCoresPersonalizadas`, chave própria no localStorage, por tema; 🆕 `8b43965` por cima do tema pronto escolhido, chave `conversa.temaCores`, CFG-10), qualidade das chamadas (`useConfigChamada`, chave `conversa.chamada`), uploads ativos (`useUploadProgress`), áudio tocando (`useAudioManager`), relógio compartilhado (`useAgora`), conexão lenta (`useConexao`). 🆕 `769bd7d`…`d202c06`: recursos do servidor (`useRecursos`, GER-08), sugestão da IA (`useSugestaoIa`, chave `conversa.sugestoesIa`), catálogo e recentes de emojis (`useEmojis`, chave `conversa.emojisRecentes`), aba própria da chamada (`useAbaChamada`). 🆕 `9c6e8a6`: `useRecursos` ganha `conhecimento`; barra de navegação oculta no computador (chave `conversa.menuOculto`, GER-10). 🆕 `f351190`: velocidade dos áudios, a mesma para todos (`useAudioPlayer`, chave `conversa.velocidadeAudio`, ANX-18). 🆕 `57bd9f0`: as sugestões de pasta ignoradas, por pessoa e conversa (chave `conversa.sugestoesIgnoradas.<usuarioId>.<conversaId>`, lista JSON de ids de mensagem, as 2000 últimas, CON-18). IndexedDB: rascunhos (ENV-23) e o último resumo de cada conversa (banco `conversa-resumos`, CON-14).
 
 ### 1.3 Como fala com a API (Eden)
 
@@ -212,7 +213,7 @@ Desktop: barra vertical à esquerda. Celular (< 768 px): barra horizontal no rod
 | `AnexoPopup` | botão "Anexar" | Arquivo / Código (hoje: Arquivo, Código, 🆕 `f351190` **Localização**, Votação e Postagem em grupo, Confirmar leitura) |
 | 🆕 `f351190` `LocalizacaoModal` | "+" › "Localização", ou "Editar localização" na peça do campo | "Enviar localização" / "Editar localização": Local ou Trajeto, busca, posição, mapa; "Inserir na mensagem" ou "Enviar" (ENV-30) |
 | 🆕 `f351190` `VisualizadorLocalizacao` | clique no mapa da bolha | mapa grande com arrastar, zoom e satélite; "Abrir no Google Maps" (MSG-25) |
-| 🆕 `f351190` `PainelPastas` | botão "Pastas de mensagens" do cabeçalho (direta), ou ao selecionar mensagens | pastas da conversa: criar, abrir, opções, soltar mensagens (CON-17) |
+| 🆕 `f351190` `PainelPastas` | botão "Pastas de mensagens" do cabeçalho (direta), ou ao selecionar mensagens | pastas da conversa: criar, abrir, opções, soltar mensagens (CON-17); 🆕 `57bd9f0` no pé, a seção "Sugestões da IA" com "Sugerir pastas" (CON-18) |
 | 🆕 `f351190` `ChatDaPasta` | clique numa pasta do painel ou na marca da bolha recebida | só as mensagens da pasta, sem campo; "Voltar ao chat" (MSG-24) |
 | `EmojiPicker` (com abas Emojis/Figurinhas) | botão "Emoji" | |
 | `CodigoModal` | Anexar → Código, ou colar texto > 10 linhas; 🆕 `e33ecba` também "Editar código" na peça do campo | editor CodeMirror; 🆕 `e33ecba` "Inserir na mensagem" (vira a peça `codigo`, ENV-28) ou "Enviar"; editando, só "Salvar" (ENV-10) |
@@ -223,7 +224,7 @@ Desktop: barra vertical à esquerda. Celular (< 768 px): barra horizontal no rod
 | 🆕 `9c6e8a6` `PlayerVideo` | vídeo na bolha e no visualizador | player próprio: play/pausa, barra, tempo, baixar, tela cheia; no visualizador também volume até 200% e velocidade (ANX-05, ANX-04) |
 | `VisualizadorPdf`, `VisualizadorHtml` | botão "Abrir" em anexo PDF/HTML | 🆕 `8b43965` o de HTML tem "Ver fonte" / "Ver página" (ANX-07) |
 | 🆕 `9c6e8a6` `VisualizadorOffice` | botão "Abrir" em `.docx`, `.xlsx`, `.pptx` (chat) ou clique na página de Anexos | documento desenhado em canvas, com páginas/slides e zoom (ANX-16) |
-| `IncomingCallModal` | evento 51 | atender / recusar / atender só assistindo |
+| `IncomingCallModal` | evento 51 | atender / recusar / atender só assistindo (🆕 `d244fc8` enquanto ele está aberto, a conexão já é preparada por trás: microfone, câmera, publicação e assinaturas, CHA-27) |
 | `VideoUpgradeModal` | evento 56 | Apenas assistir / Transmitir também |
 | `AddUserToCallModal` (App) e modal interno do `CallWindow` | botão "Adicionar usuário" | contatos fora da chamada |
 | `ChatChamada` | botão "Chat da chamada" no `CallWindow` | painel lateral (celular: por cima) |
@@ -231,7 +232,9 @@ Desktop: barra vertical à esquerda. Celular (< 768 px): barra horizontal no rod
 | 🆕 `964ed72` `ChatDaChamada` | "Ver chat da chamada" na bolha da ligação ou no histórico | chat da ligação só leitura, "Abrir o chat completo" (CHA-26); 🆕 `e33ecba` com os conteúdos como no chat |
 | 🆕 `d202c06` `BolhaPostagem` | postagem de grupo no chat | respostas embaixo e campo "Responder à postagem" (MSG-22); 🆕 `e33ecba` o campo saiu: o botão "Responder à postagem" leva a resposta ao campo de mensagem; cartão na largura do chat |
 | 🆕 `e33ecba` `ConfirmacaoLeituraModal` | em grupo: "+" › "Confirmar leitura" (e "Escolher" na faixa), ou "Pedir confirmação de leitura" no menu da mensagem | "Quem precisa confirmar": "Filtrar por nome", "Todos (N)", os participantes (menos eu) com caixa; "Cancelar" / "Pronto" (antes do envio) ou "Pedir confirmação" (depois) — ENV-24, ENV-27 |
-| `SipDialerModal` | item Ramal da barra, ou chamada SIP recebida sendo conectada | discador flutuante arrastável |
+| `SipDialerModal` | item Ramal da barra, ou chamada SIP recebida sendo conectada | discador flutuante arrastável (🆕 `8385b22` o destino aceita o número ou o endereço SIP completo, SIP-03) |
+| 🆕 `8385b22` `ConfiguracaoVoip` | Configurações › Chamadas › Voip | o próprio ramal, **só leitura**: dados, estado do registro e "Reconectar" (SIP-01) |
+| 🆕 `8385b22` `ConfiguracaoSipUsuario` | Pessoas › Usuários › (pessoa) › aba "Telefonia (SIP)", com a permissão `sip` | o ramal da pessoa: criar, alterar, excluir; TURN do PABX (SIP-06) |
 | `SipIncomingCallModal` | INVITE SIP | atender / recusar |
 | Overlay de arrastar arquivo | arrastar arquivos sobre a conversa | "Solte para enviar o arquivo" |
 | Toast de erro | qualquer erro tratado no `App.vue` | topo, botão × |
@@ -246,7 +249,7 @@ Título "Configuracoes" / "Preferencias da conta". Lista de abas à esquerda (ce
 | 🆕 `769bd7d` `privacidade` | Privacidade | Status, visto por último e aparecer offline | todos (CFG-09) |
 | `dispositivos` | Dispositivos | Sessao atual e perifericos locais | todos |
 | `permissoes` | Permissoes | Notificacoes, microfone e camera | todos |
-| `voip` | Voip | Configuracao SIP do usuario | todos; 🆕 `9c6e8a6` só com a permissão de uso `telefonia` |
+| `voip` | Voip | Configuracao SIP do usuario | todos; 🆕 `9c6e8a6` só com a permissão de uso `telefonia`; 🆕 `8385b22` só leitura (SIP-01) |
 | `cores` | Cores | Cores do sistema, salvas neste navegador | todos; 🆕 `9c6e8a6` só com a permissão de uso `cores` |
 | `chamadas` | Chamadas | Qualidade do áudio, vídeo e tela | todos; 🆕 `9c6e8a6` só com a permissão de uso `config_chamadas` |
 | `sistema` | Sistema | Configurações que valem para todos | só com permissão `parametros` |
@@ -267,9 +270,9 @@ Regra: link direto para aba restrita sem a permissão volta para `usuario` **dep
 | Pessoal | **Conta** ("Perfil, senha e privacidade") | `usuario` — **Perfil** · "Nome, email, avatar e senha"; `privacidade` — **Privacidade** · "Status, visto por último e aparecer offline" | todos |
 | Pessoal | **Aparência** ("Tema claro ou escuro e cores") | `cores` — **Tema** · "Tema claro ou escuro e cores do sistema, salvos neste navegador" | uso `cores` |
 | Pessoal | **Dispositivos** ("Sessão, periféricos e permissões do navegador") | `dispositivos` — **Sessão e periféricos** · "Sessao atual e perifericos locais"; `permissoes` — **Permissões do navegador** · "Notificacoes, microfone e camera" | todos |
-| Pessoal | **Chamadas** ("Qualidade das chamadas e telefonia") | `chamadas` — **Qualidade** · "Qualidade do áudio, vídeo e tela" (uso `config_chamadas`); `voip` — **Voip** · "Configuracao SIP do usuario" (uso `telefonia`) | cada sub-aba com a sua |
+| Pessoal | **Chamadas** ("Qualidade das chamadas e telefonia") | `chamadas` — **Qualidade** · "Qualidade do áudio, vídeo e tela" (uso `config_chamadas`); `voip` — **Voip** · ~~"Configuracao SIP do usuario"~~ 🆕 `8385b22` **"Seu ramal SIP, configurado pelo administrador"** (uso `telefonia`; só leitura, SIP-01) | cada sub-aba com a sua |
 | Administração | **Sistema** ("Configurações que valem para todos") | `sistema` — **Sistema** · "Configurações que valem para todos" (a parte geral, CFG-07) | `parametros` |
-| Administração | **Pessoas** ("Usuários e o que cada um pode fazer") | `usuarios` — **Usuários** · "Cadastrar pessoas e bots e o que cada um pode fazer" (CFG-11, com o CFG-08 dentro) | `permissoes` |
+| Administração | **Pessoas** ("Usuários e o que cada um pode fazer") | `usuarios` — **Usuários** · "Cadastrar pessoas e bots e o que cada um pode fazer" (CFG-11, com o CFG-08 dentro; 🆕 `8385b22` com a permissão `sip`, o painel de cada pessoa ganha as abas "Acessos" e "Telefonia (SIP)", SIP-06) | `permissoes` |
 | Administração | **IA** ("Bots, conhecimento, ferramentas e servidor") | `bots` — **Bots** · "Bots de IA: instruções e o que cada um pode fazer" (`bots` **ou** `permissoes`); `conhecimento` — **Conhecimento** · "Documentos que os bots consultam" (`conhecimento`); `ferramentas` — **Ferramentas** · "APIs externas que os bots podem chamar" (`ferramentas`); `ia` — **Servidor** · "Servidor de IA e de embeddings" (`parametros`, a parte de IA do CFG-07) | cada sub-aba com a sua |
 
 - Cada sub-aba some sem a sua permissão; o menu sem nenhuma sub-aba visível some. As de uso usam `auth.pode` (aparecem até a lista chegar); as de administração, `auth.temPermissao`.
@@ -336,6 +339,7 @@ Legenda dos campos: **Comportamento** (o que o usuário vê/faz), **API/WS** (ro
 - API: `GET /usuario/permissoes` → `string[]` (códigos `parametros`, `permissoes`). Só controla visibilidade das abas Sistema/Acessos; o servidor confere em cada rota.
 - 🆕 `9c6e8a6` A lista passa a ter **32 códigos**: 6 de administração (`parametros`, `permissoes`, `bots`, `usuarios`, `ferramentas`, `conhecimento`) e 26 de uso do app (GER-09). No **modo aberto** (ninguém tem `permissoes`) o servidor devolve todos. As de administração continuam em `auth.temPermissao`; as de uso vão por `auth.pode`, que é verdadeiro enquanto a lista não chegou.
 - 🆕 `f351190` (servidor `ac710eb`, migrações 054 e 055) Continua com **32 códigos**, mas outros: **5 de administração** (`usuarios` deixou de existir, juntada a `permissoes`) e **27 de uso** (entrou `localizacao`). Ver GER-09.
+- 🆕 `8385b22` (servidor `be17b8e`, migração 057) Passam a ser **33 códigos**: **6 de administração** (entra **`sip`**, "Configurar a telefonia (SIP) das pessoas"; quem tinha `permissoes` ganhou) e os mesmos 27 de uso. Ver SIP-06 e GER-09.
 
 **AUT-10 Ver perfil de outro usuário** (`UserInfoModal.vue`)
 - Abre ao clicar no avatar da conversa **direta** (lista ou cabeçalho). Mostra foto/inicial, nome, Email, Telefone ("Nao informado" se vazio) e botão **"Ver anexos"** que leva a `/anexos/:conversaId`.
@@ -489,6 +493,28 @@ Legenda dos campos: **Comportamento** (o que o usuário vê/faz), **API/WS** (ro
   - o web ignora o aviso de outra conversa; com `mensagens` e `acao`, marca ou desmarca as mensagens em memória; sempre relê `GET /pastas`; se é a pasta aberta e veio `acao`, relê as mensagens dela;
   - ao reler a lista, a pasta que sumiu (excluída, ou que deixou de ser compartilhada) sai das bolhas e, se estava aberta, fecha.
 - **Limites e erros do servidor:** só em conversa direta (400 "Pastas só existem nas conversas diretas."); nome de 1 a 60 caracteres depois do `trim` (400 "Informe o nome da pasta." / "O nome da pasta pode ter até 60 caracteres."); até **50 pastas por pessoa por conversa** (400 "Cada pessoa pode ter até 50 pastas por conversa."); mudar ou excluir a de outro: 403 "Só quem criou a pasta pode mudá-la."; pasta que eu não enxergo: 404 "Pasta não encontrada!".
+- 🆕 `57bd9f0` No **pé do painel**, depois da lista de pastas, a seção **"Sugestões da IA"**, só com a IA ligada e pelo menos uma pasta (CON-18).
+
+**CON-18 🆕 `57bd9f0` Sugestões da IA no painel de pastas** (`PainelPastas.vue`, `stores/pastas.ts`; servidor `b104db8`, `src/sugestoesPastas.ts`)
+- **Quando aparece:** com a IA ligada (`recursos.ia`, GER-08) **e** pelo menos uma pasta na lista (`pastas.lista.length`). É uma seção no pé do painel (CON-17), separada por uma linha, com `aria-label` **"Sugestões da IA"** e o título pequeno em maiúsculas **"Sugestões da IA"**. **Nada é posto na pasta sozinho**: só quando a pessoa pede, e cada sugestão é confirmada ou ignorada.
+- **Botão** **"Sugerir pastas"** (ícone de brilhos; `title` **"A IA olha as mensagens recentes que ainda não estão em pasta e sugere a pasta de cada uma pelo assunto"**). Enquanto a análise roda: **"Analisando..."**, desabilitado, o ícone pulsando, e embaixo **"Analisando as mensagens que ainda não estão em pasta..."** (`role="status"`). Pedir de novo descarta as sugestões que estavam na tela e começa outra análise.
+- **Pedido:** `POST /pastas/sugerir {conversa_id, ignorar: number[]}` → `SugestoesPastas {id (texto, UUID), conversa_id, status: 'processando' | 'concluido' | 'erro', analisadas, sugestoes: [{mensagem_id, pasta_id, autor, texto}], erro}`. `ignorar` = as ignoradas guardadas no navegador (abaixo). Enquanto `processando`, `GET /pastas/sugestao?id=<id>` **a cada 2 s** (um `setTimeout` depois de cada resposta), até sair de `processando`. Consulta que falha (ex.: o servidor reiniciou e a análise se perdeu) vira `erro` com a mensagem (fallback **"Erro ao consultar as sugestões"**); o pedido que falha, também (fallback **"Erro ao pedir sugestões"**). Trocar de conversa para a consulta e limpa tudo; resposta que chega depois da troca é descartada.
+- **Resultado:**
+  - `erro`: a mensagem em vermelho, embaixo do botão;
+  - `concluido` sem nada pendente: **"Nenhuma sugestão pendente."** (havia mensagens para analisar, `analisadas > 0`) ou **"As mensagens recentes já estão em pastas."** (`analisadas = 0`);
+  - cada sugestão, num cartão: **"<autor>:"** em negrito e a prévia do texto (até 3 linhas; o texto inteiro no `title`); embaixo, o ícone de pasta na cor dela, o nome da pasta, **✓** (`title` **"Pôr em <nome da pasta>"**) e **✕** (`title` **"Ignorar"**);
+  - com mais de uma pendente, o botão **"Aceitar todas (N)"**.
+  - Só aparecem as sugestões de pastas que ainda estão na lista (pasta excluída tira a sugestão).
+- **✓ (aceitar):** `PUT /pasta/mensagens {pasta_id, mensagens: [id]}` (ENV-29): marca a bolha (MSG-23), relê `GET /pastas`, relê a pasta se ela está aberta, e a sugestão sai da lista. Os botões ✓ e "Aceitar todas" ficam desabilitados enquanto põe. Erro: diálogo **"Não foi possível pôr na pasta"** com a mensagem do servidor, e a sugestão continua.
+- **"Aceitar todas":** agrupa as pendentes por pasta e faz **um `PUT /pasta/mensagens` por pasta**, uma depois da outra; cada pasta que dá certo sai da lista. Na primeira que falhar, para: o diálogo de erro aparece e essa (e as que viriam depois) ficam na lista.
+- **✕ (ignorar):** só no navegador. O id da mensagem vai para `localStorage['conversa.sugestoesIgnoradas.<usuarioId>.<conversaId>']` (lista JSON de ids, sem repetir, as **2000** últimas; leitura que falha vale como lista vazia; sem armazenamento, só some desta vez) e sai da lista. A próxima análise manda essa lista em `ignorar`, para a IA não trazê-las de volta.
+- **Servidor** (`b104db8`):
+  - a IA olha as **80 mensagens mais recentes** da conversa que **não estão em nenhuma pasta que a pessoa enxerga**, menos as de `ignorar` (até 2000 ids), as ocultas e a agendada de outra pessoa que ainda não saiu. Cada uma vira texto (menção como `@Nome`, "[imagem]", "[arquivo: nome]", "[áudio: "transcrição"]", "[votação: pergunta]", a localização); mensagem sem texto que a IA entenda (chamada, figurinha) fica de fora. Até 800 caracteres por mensagem e 24.000 no total (as mais antigas saem primeiro);
+  - a IA conhece cada pasta pelo **nome** e pelas **últimas 5 mensagens** dela (300 caracteres cada); no máximo **uma pasta por mensagem**, só ids enviados, "na dúvida, não sugira", cumprimentos e agradecimentos sem sugestão; o modelo roda sem raciocínio (`semRaciocinio`);
+  - `autor` é o **nome** de quem escreveu (também nas minhas mensagens: não vira "Você"); `texto` é a prévia, cortada em 200 caracteres (199 + "…"); as sugestões vêm na ordem das mensagens na conversa;
+  - roda em segundo plano, como o resumo (CON-14), e fica **só na memória, por 30 minutos**. Um segundo pedido da mesma pessoa e conversa com uma análise ainda em `processando` devolve **a mesma**. Sem mensagens para analisar, já volta `concluido` com `analisadas: 0`;
+  - erros: 400 **"IA não configurada: defina o endereço e o modelo nas configurações do sistema."**; 400 **"Crie uma pasta antes de pedir sugestões."**; quem não é da conversa é recusado como nas outras rotas; consulta de análise que não existe (ou de outra pessoa, ou vencida): 404 **"Sugestão não encontrada (pode ter expirado). Peça de novo."**; resposta da IA fora do formato: `erro` "A resposta da IA não veio no formato esperado.".
+- **Não muda:** o WS 67 (outra pessoa pôs a mensagem numa pasta) não tira a sugestão da lista; aceitar depois só a confirma (o servidor ignora a que já está na pasta). As sugestões não ficam guardadas: trocar de conversa ou recarregar a página as perde (as ignoradas ficam).
 
 ### 3.3 MSG — Mensagens: exibição e leitura
 
@@ -649,6 +675,7 @@ Hora (`HH:MM`) dentro da bolha (`MensagemStatus.vue`), posição conforme varian
   - **Reagir:** como no chat (`PUT /mensagem/reacao`); como a cópia da pasta é outra, o web relê só essa mensagem (`GET /mensagens?conversa=<id>&mensagemreferencia=<id>&mensagensprevias=0&mensagensseguintes=0`). Erro: "Não foi possível reagir".
   - **"Tirar da pasta"** → `DELETE /pasta/mensagens` **com corpo JSON** `{pasta_id, mensagens: [id]}` → `{pasta_id, tiradas}`; a mensagem sai da lista, as marcas do chat são atualizadas e a contagem é relida (`GET /pastas`). Erro: **"Não foi possível tirar da pasta"** (fallback "Erro ao tirar da pasta"). Download que falha: "Não foi possível baixar".
 - **Tirar várias:** a mesma seleção do chat (ENV-29: arrastar ao lado das bolhas, Ctrl + clique), só nesta tela e sem arrastar para outra pasta. A barra (abaixo da do topo) mostra **"1 selecionada"** / **"N selecionadas"**, **"Tirar da pasta"** (vermelho; tira todas numa chamada) e × **"Limpar seleção (Esc)"**. Trocar de pasta limpa a seleção.
+- 🆕 `d244fc8` O **clique direito no vazio da linha selecionada** abre o menu da mensagem, como no chat (ENV-29); aqui, o menu da pasta ("Ver na conversa", "Tirar da pasta"). Os áudios da pasta aberta **não** tocam em sequência (ANX-19 só vale no chat).
 - **Esc:** com seleção, limpa a seleção; sem, **volta ao chat** (ignorado com um diálogo aberto).
 - Também fecha quando a pasta some da lista (WS 67, CON-17) e ao trocar de conversa.
 
@@ -879,6 +906,11 @@ Hora (`HH:MM`) dentro da bolha (`MensagemStatus.vue`), posição conforme varian
   - o botão **"Pôr na pasta"**, que abre a lista das pastas (as minhas e as compartilhadas, cada uma com a bolinha da cor); sem pastas: **"Nenhuma pasta ainda. Crie no painel de pastas."**. O menu fecha com clique fora ou quando a seleção esvazia.
 - **API:** `PUT /pasta/mensagens {pasta_id, mensagens: number[]}` → `{pasta_id, incluidas}` (só ids > 0; sem nenhum, não chama). Depois: marca `mensagem.pastas` nas bolhas (MSG-23), relê `GET /pastas` (contagem), relê a pasta se ela está aberta e limpa a seleção. Erro: diálogo **"Não foi possível pôr na pasta"** (fallback "Erro ao pôr na pasta").
 - **Servidor:** de **1 a 500** ids; todos da conversa da pasta e visíveis para mim (a agendada de outra pessoa que ainda não saiu não vale), senão 400 "Alguma das mensagens não é desta conversa."; a que já está na pasta é ignorada sem erro (`incluidas` conta só as novas). Na pasta compartilhada, os dois põem.
+- 🆕 `d244fc8` **Clique direito na seleção** (`utils/pastas.ts#repassarCliqueDireito`, `MessageList.vue`, `ChatDaPasta.vue`, `MessageBubble.vue` com `data-tem-menu`) — extensão do computador; não é ID novo:
+  - numa linha **selecionada**, o clique direito **fora da bolha** (no vazio da linha) abre o **mesmo menu de ações** da mensagem (ENV-20), na posição do clique, como se fosse na bolha; o clique direito na própria bolha continua como antes;
+  - se a selecionada **não tem menu** (bolha de chamada ou mensagem oculta; `data-tem-menu` = `id > 0`, não chamada, não oculta), abre o da **selecionada mais próxima que tenha** (pela distância em linhas, para cima ou para baixo); se nenhuma selecionada tem menu, não abre nada;
+  - o Ctrl (ou Cmd) do clique vai junto: Ctrl + clique direito abre só as reações (ENV-20);
+  - fora da seleção, o vazio da linha não abre menu. Vale no chat da conversa direta e na pasta aberta (MSG-24). **Não muda o que o menu faz**: as ações continuam sendo da mensagem cujo menu abriu (uma só), não das selecionadas.
 
 **ENV-30 🆕 `f351190` Enviar localização ou trajeto** (`AnexoPopup.vue`, `LocalizacaoModal.vue`, `services/mapas.ts`, `utils/localizacao.ts`, `editor/PecaLocalizacao.vue`, `editor/pecas.ts`, `MessageInput.vue`; servidor `ac710eb`, migração 055)
 - **Entrada:** "+" → **"Localização"** (ícone de alfinete, vermelho), depois de "Código" e antes de "Votação"; em conversa direta e em grupo. Só com a permissão de uso **`localizacao`** (GER-09).
@@ -957,6 +989,7 @@ Hora (`HH:MM`) dentro da bolha (`MensagemStatus.vue`), posição conforme varian
   - áudio antigo, sem esses dados: barra simples; quando o player aparece na tela (com 200 px de folga), o web **busca só a duração**, sem tocar nem mostrar carregando;
   - gravação WebM do navegador não traz a duração no arquivo: o web pula para o fim para descobrir e volta ao começo (desiste em 10 s). A duração gravada no envio prevalece sobre a do elemento.
 - 🆕 `f351190` À direita da barra (ou da onda), o botão de **velocidade** "1x" / "1,5x" / "2x" / "3x", a mesma para todos os áudios (ANX-18).
+- 🆕 `d244fc8` Áudio que **termina** passa a tocar o próximo (ANX-19).
 
 **ANX-11 Gravação de áudio** — 🆕 com o campo **vazio** a gravação é enviada na hora; com algo escrito ela **entra no campo** como peça e vai junto (ENV-21) (`useAudioRecording.ts`, `BarraGravacao.vue`, `MessageInput.vue`)
 - Exige contexto seguro ("Para gravar áudio por navegador, use HTTPS (ou localhost).") e `MediaRecorder` ("Gravação de áudio não suportada neste navegador.").
@@ -1006,6 +1039,15 @@ Hora (`HH:MM`) dentro da bolha (`MensagemStatus.vue`), posição conforme varian
 - Cada clique passa para a próxima: 1 → 1,5 → 2 → 3 → 1.
 - A velocidade é **uma só para todos os áudios**: vale na hora para o áudio do botão clicado e no próximo play de qualquer outro. Fica no navegador (`localStorage['conversa.velocidadeAudio']`; valor fora da lista volta a 1).
 
+**ANX-19 🆕 `d244fc8` Áudios em sequência** (`composables/useAudioPlayer.ts#tocarProximo`, `MessageList.vue` com `data-mensagem-item`)
+- Quando um áudio **chega ao fim** (evento `ended`; não conta o pulo ao fim feito só para medir a duração, ANX-10), o player procura o **próximo**:
+  1. o player de áudio seguinte **na mesma mensagem** (na ordem da tela);
+  2. senão, o **primeiro player de áudio da mensagem logo abaixo** (a seguinte, mais nova), **de quem for**, inclusive as minhas; separadores de dia e a linha "Últimas" são pulados.
+- Achou: toca, como se a pessoa clicasse (se ele já não estiver tocando). Valem as regras de sempre: um áudio por vez (`useAudioManager`), a velocidade escolhida (ANX-18) e o primeiro play de cada player chama `POST /mensagem/reproduzir` (ANX-10): ouvir em sequência marca como ouvidos os áudios recebidos que tocaram.
+- **Para** quando a mensagem de baixo não tem áudio (não procura mais adiante) ou quando não há mensagem abaixo. Vale para arquivo de áudio e gravação (`AudioPlayerArquivo` e `AudioPlayerGravacao`, os dois com `data-media-player`); o "primeiro player" é o primeiro que aparece na mensagem, que pode ser o de uma citação.
+- Só no **chat** (`MessageList`: o chat do app, o popup e o chat completo da chamada). Na pasta aberta (MSG-24), na página de Anexos e no chat da ligação só leitura (CHA-26) o áudio não continua.
+- Sem botão nem preferência: é sempre assim. Sem API.
+
 ### 3.6 PES — Pesquisa
 
 **PES-01 Pesquisa na conversa**
@@ -1036,6 +1078,7 @@ Arquivos centrais: `stores/call.ts`, `CallWindow.vue`, `components/CallBar.vue`,
 - Som de chamando (`/chamando.mp3`, loop) até alguém atender. Se o navegador bloquear autoplay, toca no primeiro clique/tecla.
 - 🆕 `8b43965` Começando **com a tela** (CHA-02): se a pessoa **fecha a escolha da tela sem escolher** (`NotAllowedError`), a chamada simplesmente não começa (o estado volta ao inicial), **sem mensagem de erro**.
 - 🆕 `9c6e8a6` (servidor `ef13c22`) **Permissões de uso** (GER-09): "Chamada de voz" só com `chamada_audio`; "Chamada de video" só com `chamada_video` (CON-09). O `PUT /chamada/iniciar` confere pelo tipo (sem `tipo`, 2 participantes = áudio) e responde 403 "Você não tem permissão para: fazer chamadas de áudio." / "… fazer chamadas de vídeo e ligar o vídeo na chamada.". Atender não pede permissão.
+- 🆕 `d244fc8` Logo que o `PUT /chamada/iniciar` responde, quem liga **já assina (WHEP) a transmissão de cada convidado que está tocando** (status Pendente), tentando até ela aparecer, sem tocar nem mostrar nada; quando o convidado atende, essa conexão passa a valer (CHA-27, §5.10).
 
 **CHA-02 Iniciar compartilhando a tela** — botão "Compartilhar tela" no cabeçalho: chamada de **vídeo** com a tela no lugar da câmera + microfone (+ som do sistema misturado, CHA-15).
 - 🆕 `964ed72` No **celular** (tela < 768 px ou só toque) a janela da chamada **não tem** "Compartilhar tela" (os navegadores de celular não compartilham tela; CHA-11). O botão "Compartilhar tela" do **cabeçalho** da conversa, porém, continua aparecendo no celular (lacuna do web; o `ChatHeader` não confere o aparelho).
@@ -1047,17 +1090,20 @@ Arquivos centrais: `stores/call.ts`, `CallWindow.vue`, `components/CallBar.vue`,
   - botões **Recusar** (vermelho) e **Atender** (verde); em vídeo, **"Atender só assistindo"** (entra com a câmera desligada e em tela única em quem ligou).
 - **Sem resposta em 30 s** → recusa automática com `nao_atendeu` (vira chamada perdida nas atividades).
 - Aviso 51 da própria chamada que eu fiz é ignorado. Aviso 51 de uma chamada em que já estou → só sincroniza peers.
+- 🆕 `d244fc8` **Enquanto toca, a conexão já é preparada** (`prepararRecebimento`, CHA-27, §5.10): assina (WHEP) quem já está na chamada, **abre o microfone e a câmera** (vídeo → só áudio → nada) e **publica (WHIP) com as trilhas desligadas** (vai silêncio e quadro preto). Nenhum aviso nem rota da chamada é chamado antes do atender: para o servidor a pessoa continua Pendente. No navegador, o pedido de permissão do microfone/câmera (se ainda não foi dado) aparece **já enquanto toca**, e a luz da câmera acende.
 
 **CHA-04 Atender**
 - Mídia: vídeo+áudio → só áudio → **sem mídia (somente recepção)**. `POST /chamada/entrar {id}` → `ativa`, cronômetro, publica (WHIP) se tem mídia, `GET /chamada/dados`, sincroniza peers (3 tentativas com espera crescente).
 - Chamada de vídeo sem enviar vídeo (só assistindo, sem câmera, sem mídia) → pede **tela única** em quem ligou, já antes de conectar (aplicado quando o primeiro participante chega).
 - Falha → desfaz tudo e mostra o erro.
+- 🆕 `d244fc8` **Atender usa o que o toque preparou** (CHA-27, §5.10): espera o preparo terminar, se ainda estava abrindo a câmera ou publicando; só abre a mídia se o preparo não abriu; **liga as trilhas** (áudio sempre; vídeo menos em "Atender só assistindo") **sem renegociar**; `POST /chamada/entrar`; `ativa`, cronômetro e o som de aguardar conexão se o áudio do outro lado ainda não chegou; só publica de novo se o preparo não publicou ou se a publicação dele caiu; passa as pré-assinaturas para os peers; `GET /chamada/dados` e sincroniza peers (3 tentativas). Falha agora também fecha publicação e pré-assinaturas.
 
-**CHA-05 Recusar** — `POST /chamada/recusar {id, nao_atendeu?}`; para o toque.
+**CHA-05 Recusar** — `POST /chamada/recusar {id, nao_atendeu?}`; para o toque. 🆕 `d244fc8` Depois da resposta (ou do erro), fecha a publicação do toque e as pré-assinaturas e solta o microfone e a câmera (vale também para os 30 s sem resposta). Nenhuma chamada a mais ao servidor nem ao MediaMTX (o fim é só `pc.close()`).
 
 **CHA-06 Ocupado** — chega 51 enquanto estou em chamada ou tocando → recusa automática com `nao_atendeu: true` sem tocar.
 
-**CHA-07 Atendida/recusada em outro aparelho ou aba** — WS 54 (`UsuarioEntrou`) ou 53 (`UsuarioRecusou`) com o **meu** `usuario_id` enquanto estou `recebendo` (e não fui eu que atendi aqui) → para de tocar e volta a `inativo`.
+**CHA-07 Atendida/recusada em outro aparelho ou aba** — WS 54 (`UsuarioEntrou`) ou 53 (`UsuarioRecusou`) com o **meu** `usuario_id` enquanto estou `recebendo` (e não fui eu que atendi aqui) → para de tocar e volta a `inativo`. 🆕 `d244fc8` Também fecha a publicação do toque e as pré-assinaturas e solta microfone e câmera. **Atenção:** cada aba que toca publica no **mesmo caminho** `call-<id>-u-<meu id>`; o MediaMTX fica com a última publicação (troca a anterior). Ver §5.10 (outro aparelho da mesma pessoa).
+- 🆕 `d244fc8` Chega também o 52 (`ChamadaFinalizada`, quem ligou cancelou) enquanto toca: a mesma limpeza.
 
 **CHA-08 Chamadas pendentes** — ao conectar o WS (e no polling sem WS): `GET /chamadas/pendentes` → `[{id, tipo, status, criado_em, criado_por, conversa_id, ...}]`; a primeira: se criada há **> 25 s** → recusa com `nao_atendeu`; senão passa a tocar como CHA-03.
 
@@ -1070,16 +1116,18 @@ Arquivos centrais: `stores/call.ts`, `CallWindow.vue`, `components/CallBar.vue`,
 - WS 52 (`ChamadaFinalizada`) → encerra tudo.
 - Sair: `POST /chamada/sair {id}`. Existe também `POST /chamada/finalizar {id}` (encerra para todos) na store, **sem botão na UI**.
 - A cada 4 s em chamada ativa, sincroniza peers com `GET /chamada/dados` (reconecta quem caiu ou está sem trilhas).
+- 🆕 `d244fc8` WS 54 de outro: se eu estava `chamando`, além de `ativa` e do cronômetro, **toca o som de aguardar conexão** (`/aguardando.mp3`) se ainda não chegou áudio de ninguém (até 10 s, CHA-27); e, se há **pré-assinatura** de quem entrou, ela vira o peer na hora (`conectarPeer` → `tomarPreConexao`), antes da sincronização de sempre. Sempre que os dados da chamada mudam com ela `chamando` ou `ativa` (resposta do `PUT /chamada/iniciar`, sincronização de 4 s, WS 53/55, "Chamar de novo", adicionar participante), cada convidado ainda Pendente ganha a sua pré-assinatura, e a de quem passou a outro status que não "Entrou" fecha.
 
 **CHA-11 Controles da chamada** — 🆕 `eaa8bac`: os liga/desliga (microfone, câmera, som, tela, chat, ponteiro) viraram **pílulas com ícone + chave** (verde ligada, cinza desligada; `role="switch"`, `aria-checked`), e a cor do botão não muda mais com o estado. Antes, 🆕 cores: microfone, câmera e som ficam **vermelhos quando desligados**; tela, chat e ponteiro ficam **azuis quando ligados**; os demais ficam neutros (`CallWindow.vue`, `CallControlButton.vue`)
 - Microfone (liga/desliga a trilha), Câmera (só vídeo), Compartilhar tela (só vídeo), Chat da chamada (com contador de não lidas), Ponteiro (só quando alguém compartilha a tela), Áudio de saída (silencia os outros), Adicionar usuário (só `ativa`), Voltar ao grid (em destaque), Minimizar/Expandir, Sair (vermelho).
 - Cabeçalho: indicador, "Chamando..." / "Em chamada" / "Encerrando...", duração `mm:ss` ou `hh:mm:ss`, "Vídeo"/"Áudio", "N pessoa(s)".
 - Tiles: nome ("<eu> (você)"); sem vídeo → iniciais; erro de conexão em faixa vermelha (`erroMsg`, ex.: "Erro ao conectar com <nome>: …"; 404 de WHEP não vira erro, tenta de novo).
+- 🆕 `d244fc8` **Vídeo inteiro, sem corte:** os quatro `<video>` da janela (o meu e os dos outros, na grade/destaque e na faixa lateral) passaram de `object-cover` para **`object-contain`**: a imagem inteira aparece, com faixas onde a proporção não bate (antes era cortada para encher o tile). Vale em todos os modos (CHA-12) e casa com o ponteiro, que já descontava essas faixas (CHA-17).
 - 🆕 `964ed72` **Celular** (tela < 768 px ou só toque): sem o botão "Compartilhar tela"; o "Minimizar" chama-se **"Voltar ao chat"** (deixa a chamada na barra do topo, CHA-13). Na **aba própria** do computador (CHA-13) não há "Minimizar".
 - 🆕 `769bd7d` A grade também tem os tiles dos convidados fora da chamada (CHA-25), que contam no número de colunas.
 - 🆕 `9c6e8a6` "Compartilhar tela" só com a permissão de uso `compartilhar_tela` (GER-09, CHA-02).
 
-**CHA-12 Modos de exibição** (só vídeo, janela não flutuante) — **Grade** ("Todos os participantes lado a lado"), **Destaque** ("Um participante grande e os demais na lateral"), **Tela única** ("Só um participante, ocupando toda a área", setas "Participante anterior"/"Proximo participante"). Clique num tile destaca; clique no destaque volta à grade. Grade: 1 col (1), 2 col (2–4), 3 col (≤6), 4 col (mais). Se o destacado sai em tela única, o pedido fica pendente e volta quando ele reconectar.
+**CHA-12 Modos de exibição** (só vídeo, janela não flutuante) — **Grade** ("Todos os participantes lado a lado"), **Destaque** ("Um participante grande e os demais na lateral"), **Tela única** ("Só um participante, ocupando toda a área", setas "Participante anterior"/"Proximo participante"). Clique num tile destaca; clique no destaque volta à grade. Grade: 1 col (1), 2 col (2–4), 3 col (≤6), 4 col (mais). Se o destacado sai em tela única, o pedido fica pendente e volta quando ele reconectar. 🆕 `d244fc8` Em todos os modos o vídeo aparece inteiro (`object-contain`, CHA-11).
 
 **CHA-13 Janela flutuante e barra** — 🆕 `e33ecba`: no computador, a chamada de vídeo abre numa **janela popup** (fim do item). Vídeo minimizado no desktop: janela flutuante arrastável pelo cabeçalho e redimensionável pelas bordas/cantos. `CallBar` (áudio sempre; vídeo minimizado): status, duração, tipo, nº de pessoas, avatares (anel verde em quem fala); em áudio: microfone, saída, adicionar, botão "Vídeo" (upgrade) e sair; em vídeo: "Abrir chamada" e sair. No celular a chamada minimizada fica só na barra.
 - 🆕 `769bd7d` Enquanto o vídeo é ligado numa chamada de áudio, a barra mostra a etapa no lugar de "Vídeo"/"Áudio" (CHA-16).
@@ -1151,6 +1199,7 @@ Arquivos centrais: `stores/call.ts`, `CallWindow.vue`, `components/CallBar.vue`,
 - Na grade aparecem, além de quem está conectado, os convidados que **não estão** na chamada (menos eu e quem já tem peer): status **Pendente** (o telefone deles está tocando) ou **Recusou sem nunca ter entrado** (`entrou_em` vazio). Quem entrou e saiu não aparece aqui.
 - Tile apagado com as iniciais e o nome embaixo; Pendente mostra **"Chamando..."** (piscando); quem não atendeu mostra **"Não atendeu"** e o botão verde **"Chamar de novo"** (desabilitado até a resposta do servidor).
 - API: `POST /chamada/chamar-novamente {chamada_id, usuario_id}` → `Chamada` (a lista nova substitui a atual). O servidor volta o convidado a Pendente, **faz tocar de novo** no aparelho dele (WS 51) e manda aos demais o sinal WS 57 `{acao:'participantes'}`, que faz cada um reler `GET /chamada/dados` (CHA-17). Só vale para quem recusou/não atendeu e nunca entrou, com a chamada em andamento; senão o servidor recusa com "Só dá para chamar de novo quem não atendeu, com a chamada em andamento.". Erro aparece na faixa vermelha (`erroMsg`, fallback "Erro ao chamar de novo").
+- 🆕 `d244fc8` Cada convidado **Pendente** da grade já tem a sua pré-assinatura (WHEP tentando até ele publicar); o chamado de novo volta a Pendente e ganha outra (CHA-27).
 
 **CHA-26 🆕 `964ed72` Chat da ligação só leitura na bolha e no histórico** (`ChatDaChamada.vue`) — 🆕 `e33ecba`: conteúdos como no chat (imagem com visualizador, áudio, arquivo, figurinha), 24rem
 - Onde: dentro da bolha da ligação (MSG-13, botão "Ver chat da chamada" / "Esconder o chat da chamada") e embaixo do item do histórico (CHA-22). Só aparece quando a mensagem traz `chat_chamada_id` (conteúdo tipo 6) ou o item traz `conversa_chat_id` — o servidor manda só para quem é membro do chat e só quando o chat não é a própria conversa da ligação (CHA-18).
@@ -1160,28 +1209,78 @@ Arquivos centrais: `stores/call.ts`, `CallWindow.vue`, `components/CallBar.vue`,
 - 🆕 `e33ecba` **Conteúdos como no chat:** cada mensagem mostra autor e hora e, embaixo, os conteúdos com o mesmo componente do chat (`MessageContent`): texto (com menções e código), **imagem** (sem moldura; clique abre o **visualizador** do app, na bolha e no histórico), **áudio** com o player, **arquivo** com o download, **figurinha** etc. Os resumos em texto ("📷 Imagem", "📎 …", "🎤 …", "📊 Votação") **saíram**. Ficam de fora as ocultas e as sem conteúdo. Altura máxima **24rem** (era 16rem), com rolagem.
 - 🆕 `6d20ff7` (servidor) Como cada ligação nova tem o seu grupo (CHA-18), o chat aparece aqui sempre que foi aberto na ligação e a pessoa é membro dele.
 
+**CHA-27 🆕 `d244fc8` Conexão pronta enquanto toca e som de aguardar conexão** (`stores/call.ts`: `preConexoes`, `prepararRecebimento`, `aguardandoConexao`; `composables/useCallPopup.ts`; `public/aguardando.mp3`) — o protocolo, com as linhas do código, está na §5.10
+- **O que muda para quem usa:** atender fica quase instantâneo. Enquanto o telefone toca, as conexões WebRTC já ficam de pé por trás (fora da grade, sem tocar nem mostrar nada); atender só **liga as trilhas** que já estavam publicadas e passa a tocar/mostrar quem já estava assinado.
+- **Quem recebe** (estado `recebendo`, CHA-03): assina quem já está na chamada (status "Entrou"), abre microfone e câmera e publica com as trilhas **desligadas** (silêncio e quadro preto). Ao atender (CHA-04), liga as trilhas sem renegociar.
+- **Quem está na chamada** (quem ligou, em `chamando`, e quem já está `ativa`): assina cada convidado que ainda não atendeu (Pendente), tentando até a transmissão dele aparecer (CHA-01, CHA-25). No 54 dele, essa assinatura vira o peer (CHA-10).
+- **Som de aguardar conexão:** atendeu (quem recebe, logo depois do `POST /chamada/entrar`) ou alguém atendeu (quem ligou, no 54 que tira de `chamando`) e ainda **não chegou nenhum pacote de áudio** do outro lado (nenhuma trilha de áudio viva e sem `muted`, nos peers nem nas pré-assinaturas) → toca **`/aguardando.mp3`** em loop (~1 MB, estático da página, como `/toque.mp3` e `/chamando.mp3`). Para no **primeiro áudio que chega** (`onunmute` de qualquer trilha de áudio recebida) ou em **10 s** (`ESPERA_CONEXAO_MS`), porque quem entra sem microfone nunca manda áudio; sai da chamada também para. Sem texto na tela.
+- **Quando não toca:** quando o áudio já estava chegando pela pré-assinatura (o caso normal entre dois navegadores: o outro lado já publicou enquanto tocava). Toca, por exemplo, quando o outro lado só publica **depois** de entrar (o app Android, §17) ou não tem microfone (até os 10 s).
+- **Limpeza:** recusar, os 30 s, cancelar (52), atendida ou recusada em outra aba ou aparelho (53/54 com o meu id), sair e qualquer encerramento fecham a publicação do toque e todas as pré-assinaturas (`resetarEstado` → `fecharPreConexoes`) e soltam microfone e câmera.
+- **Sem rota nem evento novo:** só `GET /ice` e WHIP/WHEP no MediaMTX, mais cedo. Sem teste unitário novo no web para isso.
+
 ### 3.8 SIP — Telefonia SIP (ramal)
 
-**SIP-01 Configuração do ramal** (aba Voip)
-- "Configuracao de ramal" (etiqueta "Asterisk / VueSIP"): "Ramal SIP", "Usuario de autenticacao", "Senha SIP", "Nome de exibicao", "Dominio SIP", "Servidor WebSocket" (ex. `wss://pbx.exemplo.com:8089/ws`), checkbox "Configuracao SIP ativa para este usuario".
-- Validação: "Preencha ao menos ramal, senha SIP, dominio e servidor WebSocket.". Botão "Criar configuracao SIP" / "Salvar configuracao SIP"; "Nenhuma alteracao para salvar."; mensagens de sucesso.
-- API: `GET /sip` → `SipConfig` ou `{}` (sem ramal → null); `PUT /sip {sip_user, auth_user, sip_password, display_name, domain, ws_server, ativo}`; `PATCH /sip {id, ...só o que mudou}`.
-- 🆕 `9c6e8a6` (servidor `ef13c22`) **Permissão de uso `telefonia`** (GER-09): sem ela, a aba Voip some (§2.5), o `GET /sip` devolve `{}` (o ramal não registra e o item "Ramal" da barra some, SIP-02) e `PUT`/`PATCH /sip` respondem 403 "Você não tem permissão para: usar a telefonia (sip).".
+**SIP-01 Configuração do ramal** (aba Voip) — 🆕 `8385b22`: **a pessoa não configura mais o próprio ramal**; a aba Voip ficou **só leitura** e quem configura é o administrador (SIP-06). A descrição abaixo, até o 🆕, é histórica.
+- ~~"Configuracao de ramal" (etiqueta "Asterisk / VueSIP"): "Ramal SIP", "Usuario de autenticacao", "Senha SIP", "Nome de exibicao", "Dominio SIP", "Servidor WebSocket" (ex. `wss://pbx.exemplo.com:8089/ws`), checkbox "Configuracao SIP ativa para este usuario".~~
+- ~~Validação: "Preencha ao menos ramal, senha SIP, dominio e servidor WebSocket.". Botão "Criar configuracao SIP" / "Salvar configuracao SIP"; "Nenhuma alteracao para salvar."; mensagens de sucesso.~~
+- API: `GET /sip` → `SipConfig` ou `{}` (sem ramal → null); ~~`PUT /sip {sip_user, auth_user, sip_password, display_name, domain, ws_server, ativo}`; `PATCH /sip {id, ...só o que mudou}`~~ (🆕 `8385b22`, servidor `be17b8e`: as duas rotas **saíram**).
+- 🆕 `9c6e8a6` (servidor `ef13c22`) **Permissão de uso `telefonia`** (GER-09): sem ela, a aba Voip some (§2.5), o `GET /sip` devolve `{}` (o ramal não registra e o item "Ramal" da barra some, SIP-02) e ~~`PUT`/`PATCH /sip` respondem 403 "Você não tem permissão para: usar a telefonia (sip)."~~ (as duas rotas saíram em `be17b8e`).
+- 🆕 `8385b22` **Chamadas › Voip, só leitura** (`ConfiguracaoVoip.vue`; descrição da sub-aba **"Seu ramal SIP, configurado pelo administrador"**, §2.5; continua pedindo a permissão de uso `telefonia`):
+  - cartão **"Ramal SIP"** com o texto **"Configurado pelo administrador, em Pessoas › Usuários."** e, à direita, a pílula do estado com uma bolinha: **"Sem ramal"** (cinza), **"Desativado"** (ramal com `ativo: false`, cinza), **"Registrado"** (verde), **"Conectando"** (amarela) ou **"Não registrado"** (vermelha);
+  - **"Carregando..."** enquanto lê; sem ramal: **"Você ainda não tem um ramal. Peça ao administrador para configurar."**;
+  - com ramal, só os dados, sem campos: **"Ramal"** (`sip_user`), **"Nome de exibição"** (`display_name` ou o ramal), **"Domínio"**, **"Servidor WebSocket"** e **"Mídia"**: **"STUN e TURN (<turn_server>)"** ou **"Somente STUN"** (SIP-05). A senha não aparece;
+  - o erro do registro (`sip.erro`, SIP-02) numa caixa vermelha;
+  - botão **"Reconectar"** (**"Conectando..."** enquanto registra), só com o ramal ativo: registra de novo (`sip.inicializarSessao(true)`);
+  - ao abrir, se o ramal ainda não foi lido, chama `GET /sip`. A tela não salva nada.
+- 🆕 `8385b22` (servidor `be17b8e`) **`GET /sip` traz também o TURN do PABX:** `turn_server`, `turn_user` e `turn_password` (com a senha, só para o dono, para o navegador registrar e usar o TURN), além de `sip_password` como antes. Sem a permissão `telefonia`, continua `{}`.
 
 **SIP-02 Registro automático**
 - No início da sessão, ao montar a lista e ao fechar as Configurações (forçando reconexão): carrega `GET /sip`; se `ativo` → pede permissão de microfone, cria `UserAgent` (`sip:<sip_user>@<domain>`, transporte `ws_server`, auth `auth_user||sip_user` + senha, display name), `Registerer.register()`, espera até 10 s ("O ramal SIP nao concluiu o registro a tempo."). Inativo → encerra.
 - Status: barra (bolinha), discador ("Sem configuracao", "Ramal inativo", "Registrado", "Conectando", "Conectado sem registro", "Falha na conexao", "Desconectado"). Erros: "Conexao WebSocket perdida.", "Falha na conexao WebSocket: …".
+- 🆕 `8385b22` O `UserAgent` nasce com o ICE do próprio ramal (`sessionDescriptionHandlerFactoryOptions.peerConnectionConfiguration = iceDoRamal(config)`, SIP-05), fixo para a sessão. Também registra de novo: o "Reconectar" da aba Voip (SIP-01) e o administrador salvando ou excluindo **o próprio** ramal (SIP-06); mexer no ramal de outra pessoa não mexe no registro deste navegador. A pílula da aba Voip usa outros textos ("Sem ramal", "Desativado", "Registrado", "Conectando", "Não registrado").
 
 **SIP-03 Discador** (`SipDialerModal.vue`)
 - Janela flutuante arrastável: "Ramal" + número do ramal, status, campo "Digite o numero" (teclado de telefone), apagar último dígito, teclado 1–9/*/0/# com letras (ABC… e "+" no 0) e tom DTMF local (duas senoides 100 ms).
 - "Ligar" ("Conectando..." enquanto registra) → `INVITE sip:<numero>@<domain>` só áudio; "Discando..." + destino + tom de discagem sintetizado (3 bipes a cada 2 s); "Cancelar".
 - Em chamada: "Chamada em andamento" + destino, mutar/desmutar, "Encerrar chamada"; teclas enviam **DTMF in-band** (`RTCDTMFSender.insertDTMF`, 100 ms, gap 70 ms).
 - Falha antes de estabelecer: "Chamada não completada — destino indisponível ou ocupado."; fim de chamada estabelecida toca tom de ocupado (4 bipes 425 Hz).
+- 🆕 `8385b22` **Destino** (`utils/sip.ts#destinoSip`): aceita o número (`*43`), o endereço sem `sip:` (`*43@voip.empresa.com`) ou o completo (`sip:*43@voip.empresa.com`). Regra: `trim`, tira um `sip:` ou `sips:` do começo (sem diferenciar maiúscula), tira todos os espaços; vazio → nada; com `@` → `sip:<texto>`; sem `@` → `sip:<texto>@<domínio do ramal>` (o `sips:` digitado vira `sip:`). O discador mostra esse destino embaixo do número (sem número: "sip:numero@dominio"); destino que o sip.js não aceita: "Numero de destino invalido.". ~~`INVITE sip:<numero>@<domain>`~~ → `INVITE <destinoSip(numero, domain)>`, ainda só áudio.
+- 🆕 `8385b22` O áudio de quem **atende** (e da chamada que eu fiz) toca pelo **`remoteMediaStream` do sip.js** (`sessionDescriptionHandler.remoteMediaStream`) num `<audio>` próprio; o web não troca mais o `ontrack` da `RTCPeerConnection` (trocar perdia o áudio quando o Asterisk manda a trilha sem stream).
 
 **SIP-04 Chamada SIP recebida** (`SipIncomingCallModal.vue`)
 - Modal "Chamada recebida" com nome (display name ou usuário da URI, "Desconhecido") e número; toque sintetizado (2 bipes 440 Hz a cada 3 s); "Recusar" / "Atender". Atender abre o discador mostrando "Conectando..." e depois a chamada.
+- 🆕 `8385b22` Atender não busca mais o `GET /ice` antes (SIP-05); o áudio toca pelo `remoteMediaStream` (SIP-03).
 
-**SIP-05 ICE do SIP** — antes de cada chamada SIP o cliente busca `GET /ice` e passa como `peerConnectionConfiguration` (commit `bc11b32`, removeu TURN fixo).
+**SIP-05 ICE do SIP** — ~~antes de cada chamada SIP o cliente busca `GET /ice` e passa como `peerConnectionConfiguration` (commit `bc11b32`, removeu TURN fixo).~~ 🆕 `8385b22`: o SIP **não usa mais o `GET /ice`** (o TURN do Conversa só repassa até o MediaMTX e pode estar em "só relay", §5.2):
+- `utils/sip.ts#iceDoRamal(config)` → `{iceServers, iceTransportPolicy: 'all'}`, com `iceServers` = **`[{urls: 'stun:stun.l.google.com:19302'}]`** (STUN público do Google, "como no telefone de teste": o navegador descobre o próprio IP de fora e o Asterisk, com ICE, manda a mídia direto) e, **só se o ramal tem `turn_server`, `turn_user` e `turn_password`**, depois dele `{urls: turn_server, username: turn_user, credential: turn_password}` (o TURN do **próprio PABX**; incompleto não entra, porque o navegador recusaria o servidor sem credencial);
+- vai uma vez, ao criar o `UserAgent` (SIP-02), e vale para as chamadas feitas e recebidas; não há mais `renovarConfigRTC` antes de cada chamada.
+
+**SIP-06 🆕 `8385b22` Ramal de cada pessoa configurado pelo administrador** (`ConfiguracaoSipUsuario.vue`, `ConfiguracaoAcessos.vue`, `utils/sip.ts#problemaRamal`; servidor `be17b8e`, `src/sip.ts`, migração 057)
+- **Permissão de administração `sip`** ("Configurar a telefonia (SIP) das pessoas"; nome curto no web **"Configurar o SIP"**), no grupo "Administração" das caixas (CFG-08, CFG-11). Na migração, quem tinha `permissoes` ganhou. Usar o ramal continua pedindo a de uso `telefonia` (GER-09).
+- **Onde:** Pessoas › Usuários (CFG-11): com a permissão `sip`, o painel aberto de cada **pessoa** ganha no topo as abas (`role="tablist"`) **"Acessos"** (as caixas de sempre, CFG-08) e **"Telefonia (SIP)"**. Bot não tem ramal (sem abas); sem a permissão, o painel fica como antes. A aba escolhida é uma só para a lista (abrir outra pessoa mantém a aba).
+- **Aba "Telefonia (SIP)"** (**"Carregando..."** enquanto lê):
+  - **"Ramal"** (placeholder "1001"); **"Senha do ramal"** (placeholder **"Salva (vazio mantém)"** quando há senha salva, senão "Senha do ramal"); **"Domínio SIP"** ("voip.empresa.com"); **"Servidor WebSocket"** ("wss://voip.empresa.com:8089/ws"); **"Usuário de autenticação"** (placeholder = o ramal, ou "O mesmo do ramal"); **"Nome de exibição"** (placeholder = o nome da pessoa);
+  - quadro **"TURN do PABX (opcional; vazio = somente STUN)"**: **"Servidor"** ("turns:voip.empresa.com:443"), **"Usuário"** e **"Senha"** ("Salva (vazio mantém)" quando há), os dois desabilitados sem servidor;
+  - caixa **"Ramal ativo (registra ao entrar no app)"** (marcada no ramal novo);
+  - botões **"Excluir ramal"** (vermelho, só se existe) e **"Criar ramal"** / **"Salvar ramal"** (**"Salvando..."**);
+  - mensagens: **"Ramal salvo."**, **"Ramal excluído."**; erros numa caixa vermelha (a mensagem do servidor, ou **"Erro ao carregar o ramal"** / **"Erro ao salvar o ramal"** / **"Erro ao excluir o ramal"**);
+  - excluir pede a confirmação de perigo **"Excluir o ramal de <nome>?"** / **"A pessoa deixa de registrar o ramal e de fazer e receber ligações pela telefonia."** / **"Excluir"**; depois o formulário volta a ser de ramal novo.
+- **As senhas nunca voltam para a tela** (só `tem_senha` e `tem_senha_turn`); deixar o campo vazio **mantém a salva** (vai `null`).
+- **Conferência antes de salvar** (`problemaRamal`, a mesma regra do servidor, `conferirRamal`; a primeira que falhar):
+  1. ramal vazio ou com espaço, `@` ou `:` → **"Ramal inválido: informe só o número ou nome do ramal, sem espaços."**;
+  2. usuário de autenticação com espaço, `@` ou `:` → **"Usuário de autenticação inválido."**;
+  3. ramal novo sem senha → **"Informe a senha do ramal."**;
+  4. domínio fora de `^[a-z0-9.-]+(:\d+)?$` (sem diferenciar maiúscula) → **"Domínio SIP inválido (ex.: voip.empresa.com)."**;
+  5. WebSocket fora de `^wss?://[^\s/]+` → **"Servidor WebSocket inválido: deve começar com wss:// (ex.: wss://voip.empresa.com:8089/ws)."** (aceita `ws://` também);
+  6. TURN que não casa com `^turns?:[^\s]+$` → **"Servidor TURN inválido: deve começar com turn: ou turns: (ex.: turns:voip.empresa.com:443)."**;
+  7. TURN sem usuário → **"Informe o usuário do TURN."**.
+- **Salvar** manda `PUT /sip/usuario {usuario_id, sip_user, sip_password (ou null), domain, ws_server, auth_user (ou null), display_name (ou null), turn_server (ou null), turn_user, turn_password, ativo}`; sem servidor TURN, `turn_user` e `turn_password` vão `null` (e o servidor apaga a senha do TURN). Devolve o ramal como o administrador o vê. Mexer **no próprio** ramal registra de novo neste navegador (SIP-02).
+- **API (todas com a permissão `sip`):**
+  - `GET /sip/usuario?usuario_id=` → `SipUsuario {id, usuario_id, sip_user, auth_user, display_name, domain, ws_server, turn_server, turn_user, ativo, tem_senha, tem_senha_turn, criado_em, criado_por}` ou `{}` (sem ramal);
+  - `PUT /sip/usuario` cria ou altera (um ramal por pessoa): senha vazia mantém a salva; o ramal novo sem senha → 400 "Informe a senha do ramal."; pessoa que não existe → 404 "Usuário não encontrado."; os 400 da conferência acima;
+  - `DELETE /sip/usuario?usuario_id=` → `{}`.
+  - Saíram o `PUT /sip` e o `PATCH /sip` (cada um cadastrava o seu, SIP-01).
+- **Banco** (migração 057): permissão `sip`; colunas `turn_server`, `turn_user` e `turn_password` na tabela `sip`.
 
 ### 3.9 NOT — Notificações
 
@@ -1281,6 +1380,7 @@ Arquivos centrais: `stores/call.ts`, `CallWindow.vue`, `components/CallBar.vue`,
   - Sistema → **Sistema** (só a parte geral) e **IA › Servidor** (a parte de IA, `/config/ia`, CFG-07);
   - Acessos e Usuários → **Pessoas › Usuários**, uma tela só (CFG-08, CFG-11);
   - Bots, Conhecimento e Ferramentas → **IA › Bots**, **IA › Conhecimento**, **IA › Ferramentas** (CFG-12 a CFG-14).
+- 🆕 `8385b22` **Chamadas › Voip** vira só leitura, com a descrição **"Seu ramal SIP, configurado pelo administrador"** (SIP-01); o ramal de cada pessoa passa a ser configurado em **Pessoas › Usuários**, na aba "Telefonia (SIP)" do painel dela, com a permissão `sip` (SIP-06). Nenhuma sub-aba nova.
 
 **CFG-02 Tema escuro** — botão na aba Usuário ("Tema claro"/"Tema escuro"); padrão segue `prefers-color-scheme`; persistido em `theme`. Também aplicado no popup. 🆕 `9c6e8a6` O botão só aparece com a permissão de uso `cores` (GER-09; só o cliente confere). 🆕 `f351190` O botão **saiu da aba do perfil**: virou o par **"Claro"** (ícone de sol) / **"Escuro"** (ícone de lua) no topo de **Aparência › Tema**, à direita do título "Tema" (CFG-10), com `aria-pressed`; o ativo fica cheio na cor principal e clicar nele não faz nada. Sem `cores`, o menu Aparência inteiro some.
 
@@ -1342,6 +1442,7 @@ Arquivos centrais: `stores/call.ts`, `CallWindow.vue`, `components/CallBar.vue`,
   - o parágrafo "Abra uma pessoa para ver…" saiu; ficou **"Ninguém retira as próprias permissões: outra pessoa com a permissão Pessoas precisa fazer isso."**;
   - cada linha: nome, " (você)", a pílula **"Bot"** (nova), login, a pílula "Administração" e, à direita, **três colunas de largura fixa** (uma não empurra a outra): o **espaço** usado (ANX-17, `title` "Espaço dos arquivos que enviou"), a **data do cadastro** (`dd/mm/aaaa`, `title` "Usuário desde", vazia sem data, AUT-11) e **"N de T"**;
   - API: `GET /permissoes` → cada item de `usuarios` ganha **`criado_em`** (`Date | null`), **`bot`** e **`espaco`** (bytes); a descrição de `permissoes` passou a ser "Cadastrar pessoas e bots e conceder e retirar permissões".
+- 🆕 `8385b22` (servidor `be17b8e`, migração 057) **Painel da pessoa com abas:** quem tem a permissão `sip` vê, no topo do painel aberto de cada pessoa (não de bot), as abas **"Acessos"** (as caixas, como antes) e **"Telefonia (SIP)"** (o ramal dela, SIP-06). No grupo "Administração" das caixas entra **"Configurar o SIP"** (`sip`, descrição "Configurar a telefonia (SIP) das pessoas"): passam a ser 6 de administração.
 
 **CFG-09 🆕 `769bd7d` Aba Configurações › Privacidade** (`ConfiguracaoPrivacidade.vue`; seção de IA desde `f798e9c`)
 - Rota `/config/privacidade`; aba "Privacidade" / "Status, visto por último e aparecer offline"; para todos. "Carregando..." enquanto lê.
@@ -1378,6 +1479,7 @@ Arquivos centrais: `stores/call.ts`, `CallWindow.vue`, `components/CallBar.vue`,
   - o formulário "Novo usuário" ganha a seção **"Acessos"**, antes dos botões: dica **"Vem com todas as de uso marcadas e nenhuma de administração."** (pessoa) ou **"O bot só recebe permissões de uso; vem com o básico marcado."** (bot); **"Carregando as permissões..."** enquanto lê `GET /permissoes`; caixas em grupos — **"Administração"** (só para pessoa) e os grupos de uso de §6.2 —, com o nome curto e a descrição do servidor no `title`;
   - padrão marcado: pessoa com **todas as de uso**; bot com **`emoji`, `responder` e `reagir`**. Marcar ou desmarcar "É um bot de IA" volta ao padrão do tipo. "Criar" só fica habilitado com as permissões carregadas;
   - API: `PUT /usuario/novo` leva **`permissoes: string[]`**, na ordem em que ficaram marcadas (ex.: `['emoji', 'responder', 'reagir', 'parametros']`); sem a lista, o servidor usa o padrão. Servidor: código desconhecido → 400 "Permissão inválida: <código>"; bot com permissão de administração → 400 "Bot só recebe permissões de uso."; a lista **substitui** o padrão.
+- 🆕 `8385b22` Na seção "Acessos" do "Novo usuário" (pessoa), o grupo "Administração" ganha **"Configurar o SIP"** (`sip`, desmarcada por padrão). O ramal da pessoa nova é criado depois, na aba "Telefonia (SIP)" do painel dela na lista (SIP-06), não no formulário.
 
 **CFG-12 🆕 `9c6e8a6` Aba Configurações › Bots** (`ConfiguracaoBots.vue`; permissão de administração `bots`, ou `permissoes`, que vê e edita todos; servidor `src/bots.ts`, migrações 047 e 050)
 - Texto: "Cada bot é um usuário do chat que responde com a IA. Ele aparece nos contatos: na conversa direta responde a toda mensagem; num grupo, quando é mencionado (@Nome) ou quando respondem a uma mensagem dele. O que ele pode fazer segue as permissões de uso dele." Com a IA desligada: "A IA está desligada: os bots não respondem e não dá para criar novos. Configure o servidor de IA em Sistema."
@@ -1424,7 +1526,7 @@ Arquivos centrais: `stores/call.ts`, `CallWindow.vue`, `components/CallBar.vue`,
 **GER-05 Menu de contexto nativo bloqueado** — exceto em campos de texto/conteúdo editável (clique direito abre os menus do app).
 **GER-06 Seções não implementadas** — tela "Em desenvolvimento".
 **GER-07 Avatares com fallback** — inicial do nome (primeira "letra" real, inclusive emoji); imagens que falham somem e fica a inicial. 🆕 `769bd7d`: num grupo com `emoji` (CON-15), o fallback é o **emoji do grupo** (em fonte maior) no lugar da inicial — lista, cabeçalho, painel do grupo e página de Anexos.
-**GER-08 🆕 `769bd7d` Recursos do servidor** (`composables/useRecursos.ts`) — `GET /recursos` → `{transcricao, ia}` diz o que está ligado no servidor (transcritor e servidor de IA configurados). Lido uma vez por janela, no primeiro uso (falha → tenta de novo no próximo uso; até lá, os dois `false`), e de novo depois de salvar a aba Sistema (CFG-07). Controla: botão "Transcrever" (ANX-12), botão "Resumir conversa" (CON-09/CON-14), a sugestão ao digitar (ENV-25) e a seção de IA da aba Privacidade (CFG-09). 🆕 `9c6e8a6` (servidor `ef13c22`) Ganha **`conhecimento`** (IA configurada **e** modelo de embeddings definido): liga o envio de documentos e a busca da aba Conhecimento (CFG-14). A `ia` também diz se os bots respondem e se dá para criar bots (CFG-11, CFG-12, CON-16). 🆕 `f351190` (servidor `ac710eb`) `conhecimento` passa a depender só de haver um servidor de embeddings (o próprio ou o da IA, CFG-07) e o modelo de embeddings.
+**GER-08 🆕 `769bd7d` Recursos do servidor** (`composables/useRecursos.ts`) — `GET /recursos` → `{transcricao, ia}` diz o que está ligado no servidor (transcritor e servidor de IA configurados). Lido uma vez por janela, no primeiro uso (falha → tenta de novo no próximo uso; até lá, os dois `false`), e de novo depois de salvar a aba Sistema (CFG-07). Controla: botão "Transcrever" (ANX-12), botão "Resumir conversa" (CON-09/CON-14), a sugestão ao digitar (ENV-25) e a seção de IA da aba Privacidade (CFG-09). 🆕 `9c6e8a6` (servidor `ef13c22`) Ganha **`conhecimento`** (IA configurada **e** modelo de embeddings definido): liga o envio de documentos e a busca da aba Conhecimento (CFG-14). A `ia` também diz se os bots respondem e se dá para criar bots (CFG-11, CFG-12, CON-16). 🆕 `f351190` (servidor `ac710eb`) `conhecimento` passa a depender só de haver um servidor de embeddings (o próprio ou o da IA, CFG-07) e o modelo de embeddings. 🆕 `57bd9f0` A `ia` também controla a seção "Sugestões da IA" do painel de pastas (CON-18).
 
 **GER-09 🆕 `9c6e8a6` Permissões de uso** (`utils/permissoesUso.ts`, `stores/auth.ts#pode`; servidor `ef13c22`, `src/permissoes.ts`, migrações 046, 048 e 049)
 - **O que é:** além das de administração, cada pessoa tem permissões do **uso do app**, marcadas por quem tem Acessos (CFG-08) ou, para bots, em Bots (CFG-12). Conta nova (cadastro ou administrador) começa com **todas**; quem já tinha conta recebeu todas na migração; o bot começa só com `emoji`, `responder` e `reagir`.
@@ -1434,6 +1536,7 @@ Arquivos centrais: `stores/call.ts`, `CallWindow.vue`, `components/CallBar.vue`,
   - **`usuarios` deixou de existir**: quem a tinha ganhou `permissoes`, que aparece como **"Pessoas"** (descrição "Cadastrar pessoas e bots e conceder e retirar permissões") e passa a cuidar também do cadastro de contas (CFG-11). As de administração ficam 5: `parametros` "Sistema", `permissoes` "Pessoas", `bots` "Bots", `ferramentas` "Ferramentas", `conhecimento` "Conhecimento". As permissões de uso de cada pessoa ficam em **Pessoas › Usuários** (CFG-08 dentro do CFG-11);
   - **código de uso novo `localizacao`** ("Localização e trajeto" / "Enviar localizações e trajetos"), no grupo **Enviar**, depois de "Arquivos": esconde "Localização" do "+" (ENV-30); o servidor confere o conteúdo tipo 9 no `PUT /mensagem`. Quem já tinha conta recebeu (menos os bots); conta nova de pessoa começa com ela; o bot, não;
   - passam a ser **27 códigos de uso** (a tabela abaixo ganhou a linha `localizacao`).
+- 🆕 `8385b22` (servidor `be17b8e`, migração 057) Código de **administração** novo **`sip`** ("Configurar o SIP" / "Configurar a telefonia (SIP) das pessoas"; quem tinha `permissoes` ganhou): as de administração passam a ser **6** (`parametros`, `permissoes`, `bots`, `ferramentas`, `conhecimento`, `sip`) e o total, **33** (6 + 27 de uso). Responde "Acesso negado!" sem ela, como as outras de administração. Ver SIP-06. A de uso `telefonia` não mudou (usar o ramal; a aba Voip).
 - **Os 26 códigos** (🆕 `f351190` 27), nos grupos da tela (nome curto do web → descrição do servidor → o que muda):
 
 | Grupo | Código | Nome no web | Descrição (servidor) | Web esconde ou trava | Servidor confere |
@@ -1494,7 +1597,8 @@ Arquivos centrais: `stores/call.ts`, `CallWindow.vue`, `components/CallBar.vue`,
 | 🆕 Novos em `e33ecba`…`8b43965` | ENV-27, ENV-28, CFG-10 | 3 |
 | 🆕 Novos em `9c6e8a6` | CON-16, ANX-16, ATV-04, ATV-05, CFG-11, CFG-12, CFG-13, CFG-14, GER-09, GER-10 | 10 |
 | 🆕 Novos em `f351190` | AUT-11, CON-17, MSG-23, MSG-24, MSG-25, ENV-29, ENV-30, ANX-17, ANX-18 | 9 |
-| **Total** | | **172** |
+| 🆕 Novos em `8385b22`…`57bd9f0` | SIP-06, CHA-27, ANX-19, CON-18 | 4 |
+| **Total** | | **176** (era 172; +4) |
 
 ---
 
@@ -1513,7 +1617,7 @@ Fonte única: `src/services/conversaApi.ts` (+ `eden.ts`). "Params" = query stri
 | 5 | PATCH | `/usuario` | body `{id, nome?, email?, telefone?, avatar_anexo_id?: number\|null}`; 🆕 `769bd7d` também `mostrar_visto_em?, mostrar_na_conversa?, aparecer_offline?` | — (🆕 `9c6e8a6` cada campo pede a sua permissão de uso: `nome`, `email` (também `telefone`), `avatar`, `privacidade`; 403 sem ela) | AUT-06, AUT-08, CFG-09 |
 | 6 | GET | `/usuario/contatos` | — | `Contato[]` (🆕 `9c6e8a6` + `bot: boolean`; sem os bots excluídos; 🆕 `f351190` + `criado_em`; relido no WS 66 e ao reconectar o WS) | CON-11, CON-16, AUT-11 |
 | 7 | GET | ~~`/contatos/online`~~ → 🆕 `769bd7d` `/contatos/presenca` | — | ~~`number[]`~~ → `[{usuario_id, estado: 'ativo'\|'ausente'\|'offline', visto_em}]` | PRE-01 |
-| 8 | GET | `/usuario/permissoes` | — | `string[]` (🆕 `9c6e8a6` até 32 códigos: 6 de administração e 26 de uso; 🆕 `f351190` 5 e 27: sai `usuarios`, entra `localizacao`) | AUT-09, GER-09 |
+| 8 | GET | `/usuario/permissoes` | — | `string[]` (🆕 `9c6e8a6` até 32 códigos: 6 de administração e 26 de uso; 🆕 `f351190` 5 e 27: sai `usuarios`, entra `localizacao`; 🆕 `8385b22` 33: 6 e 27, entra `sip`) | AUT-09, GER-09 |
 | 9 | GET | `/conversas` | — | `Conversa[]` | CON-01 |
 | 10 | GET | `/conversa/usuarios` | `conversa` | `[{id, usuario_id, nome, avatar_url}]` | CON-08, CHA-01; 🆕 `e33ecba` ENV-24/ENV-27 (modal "Quem precisa confirmar"), MSG-22 (foto nas respostas) |
 | 11 | PUT | `/conversa` | body `{descricao, tipo}` (1 direta, 2 grupo) | `{id, ...}` (🆕 `9c6e8a6` grupo pede a permissão de uso `grupo`) | CON-06, CON-07 |
@@ -1553,10 +1657,10 @@ Fonte única: `src/services/conversaApi.ts` (+ `eden.ts`). "Params" = query stri
 | 44 | POST | `/chamada/video` | body `{id}` | — (🆕 `6d20ff7` também troca o tipo da chamada para vídeo; 🆕 `9c6e8a6` pede `chamada_video`) | CHA-15/16 |
 | 45 | GET | `/chamadas/pendentes` | — | `ChamadaPendente[]` | CHA-08 |
 | 46 | GET | `/chamadas` | `participante, de, ate` | `ChamadaHistoricoItem[]` (🆕 `964ed72` com `conversa_chat_id`) | CHA-22, CHA-26 |
-| 47 | GET | `/ice` | — | `{iceServers: RTCIceServer[], iceTransportPolicy}` | §5, SIP-05 |
-| 48 | GET | `/sip` | — | `SipConfig` ou `{}` (🆕 `9c6e8a6` `{}` também sem a permissão `telefonia`) | SIP-01/02 |
-| 49 | PUT | `/sip` | body `{sip_user, auth_user, sip_password, display_name, domain, ws_server, ativo}` | `SipConfig` (🆕 `9c6e8a6` pede `telefonia`) | SIP-01 |
-| 50 | PATCH | `/sip` | body `{id, ...campos}` | — (🆕 `9c6e8a6` pede `telefonia`) | SIP-01 |
+| 47 | GET | `/ice` | — | `{iceServers: RTCIceServer[], iceTransportPolicy}` (🆕 servidor `383eaaa`: cada `urls` vem como **lista**, `turn:<host>:3478?transport=udp` primeiro e depois o TCP, `turn:<host>:3478?transport=tcp`, ou o `turns:<host>:<porta>?transport=tcp` da borda em produção) | §5; ~~SIP-05~~ (🆕 `8385b22` o SIP não usa mais) |
+| 48 | GET | `/sip` | — | `SipConfig` ou `{}` (🆕 `9c6e8a6` `{}` também sem a permissão `telefonia`; 🆕 `8385b22` + `turn_server`, `turn_user`, `turn_password`, com as senhas, só para o dono) | SIP-01/02/05 |
+| 49 | PUT | ~~`/sip`~~ | ~~body `{sip_user, auth_user, sip_password, display_name, domain, ws_server, ativo}`~~ | ~~`SipConfig` (🆕 `9c6e8a6` pede `telefonia`)~~ 🆕 `8385b22` (servidor `be17b8e`) **saiu**: o ramal é do administrador (rota 109) | ~~SIP-01~~ |
+| 50 | PATCH | ~~`/sip`~~ | ~~body `{id, ...campos}`~~ | ~~— (🆕 `9c6e8a6` pede `telefonia`)~~ 🆕 `8385b22` (servidor `be17b8e`) **saiu** (rota 109) | ~~SIP-01~~ |
 | 51 | GET | `/atividades` | `antes, limite` | `Atividade[]` (🆕 `9c6e8a6` ~~`nova`~~ → `pendente`; tipo 5) | ATV-01 |
 | 52 | GET | `/atividades/novas` | — | `{quantidade}` (🆕 `9c6e8a6` as pendentes, só de conversas de que participa) | ATV-02 |
 | 53 | POST | `/atividades/vistas` | — | `{vistas_em}` (🆕 `9c6e8a6` o web não chama mais; não muda o contador) | ATV-02 |
@@ -1614,10 +1718,15 @@ Fonte única: `src/services/conversaApi.ts` (+ `eden.ts`). "Params" = query stri
 | 105 🆕 | GET | `/pasta/mensagens` | `id, antes` (0 = as mais recentes; senão o id da mais antiga carregada) | `Mensagem[]` (até 50, da mais antiga para a mais nova) | MSG-24 (`f351190`) |
 | 106 🆕 | PUT | `/pasta/mensagens` | body `{pasta_id, mensagens: number[]}` (1 a 500) | `{pasta_id, incluidas}` (WS 67 com `acao: 'incluir'`) | ENV-29 (`f351190`) |
 | 107 🆕 | DELETE | `/pasta/mensagens` | **corpo JSON** `{pasta_id, mensagens: number[]}` (1 a 500; não vai na consulta) | `{pasta_id, tiradas}` (WS 67 com `acao: 'tirar'`) | MSG-24 (`f351190`) |
+| 108 🆕 | GET | `/sip/usuario` | `usuario_id` (administração: `sip`) | `SipUsuario {id, usuario_id, sip_user, auth_user, display_name, domain, ws_server, turn_server, turn_user, ativo, tem_senha, tem_senha_turn, criado_em, criado_por}` (as senhas nunca vêm) ou `{}` (sem ramal) | SIP-06 (`8385b22`, servidor `be17b8e`) |
+| 109 🆕 | PUT | `/sip/usuario` | body `{usuario_id, sip_user, auth_user, sip_password, display_name, domain, ws_server, turn_server, turn_user, turn_password, ativo?}` (`sip`; os textos opcionais vão `null`; senha `null`/vazia mantém a salva; sem `turn_server`, a senha do TURN é apagada) | `SipUsuario` (cria ou altera: um ramal por pessoa; 400 da conferência, "Informe a senha do ramal." no novo sem senha; 404 "Usuário não encontrado.") | SIP-06 (`8385b22`) |
+| 110 🆕 | DELETE | `/sip/usuario` | `usuario_id` (`sip`) | `{}` | SIP-06 (`8385b22`) |
+| 111 🆕 | POST | `/pastas/sugerir` | body `{conversa_id, ignorar?: number[]}` (até 2000 ids; IA ligada) | `SugestoesPastas {id, conversa_id, status: 'processando'\|'concluido'\|'erro', analisadas, sugestoes: [{mensagem_id, pasta_id, autor, texto}], erro}` (400 "IA não configurada: …" / "Crie uma pasta antes de pedir sugestões."; a mesma análise se já há uma em `processando`) | CON-18 (`57bd9f0`, servidor `b104db8`) |
+| 112 🆕 | GET | `/pastas/sugestao` | `id` (texto, da rota 111) | `SugestoesPastas` (404 "Sugestão não encontrada (pode ter expirado). Peça de novo."; guardada na memória do servidor por 30 min) | CON-18 (`57bd9f0`; a cada 2 s até sair de `processando`) |
 
-As rotas da votação (`GET/PUT/PATCH /enquete`, `POST /enquete/votar`, `POST /enquete/encerrar`) estão em ENV-22 e MSG-20 (§10), fora desta tabela. 🆕 `9c6e8a6` O `PUT /enquete` pede a permissão de uso `votacao` (GER-09). As rotas 72 e 75 a 97 são de administração (cadastro de usuários e bots, CFG-11 a CFG-14); no celular ficam fora do escopo (§7). 🆕 `f351190` As rotas 99 e 100 também são de administração; as das pastas (101 a 107) e a 98 valem para o celular. O `DELETE /pasta/mensagens` (107) é o único `DELETE` com corpo JSON.
+As rotas da votação (`GET/PUT/PATCH /enquete`, `POST /enquete/votar`, `POST /enquete/encerrar`) estão em ENV-22 e MSG-20 (§10), fora desta tabela. 🆕 `9c6e8a6` O `PUT /enquete` pede a permissão de uso `votacao` (GER-09). As rotas 72 e 75 a 97 são de administração (cadastro de usuários e bots, CFG-11 a CFG-14); no celular ficam fora do escopo (§7). 🆕 `f351190` As rotas 99 e 100 também são de administração; as das pastas (101 a 107) e a 98 valem para o celular. O `DELETE /pasta/mensagens` (107) é o único `DELETE` com corpo JSON. 🆕 `8385b22` As rotas 108 a 110 são de administração (ramal de cada pessoa, permissão `sip`; fora do escopo do celular, §7); as 49 e 50 saíram do servidor. 🆕 `57bd9f0` As rotas 111 e 112 valem para o celular (sugestões de pasta, CON-18).
 
-Fora da API: `POST /webrtc/<caminho>/whip` e `POST /webrtc/<caminho>/whep` (MediaMTX, `Content-Type: application/sdp`, sem Bearer) — §5; `GET /figurinhas/<pacote>/<nome>.json` (estático da página; 🆕 `d202c06` só `noto/<nome>`); 🆕 `d202c06` `GET /emojis/pt.json` (catálogo do seletor, ENV-03); 🆕 `964ed72` `/chamada.html` (aba da chamada, CHA-13; 🆕 `e33ecba` janela popup); `/notification.mp3`, `/toque.mp3`, `/chamando.mp3`, `/logo.png` (estáticos); 🆕 `9c6e8a6` `/fontes/office/*.woff2` e `fontes.css` (fontes do visualizador do Office, ANX-16).
+Fora da API: `POST /webrtc/<caminho>/whip` e `POST /webrtc/<caminho>/whep` (MediaMTX, `Content-Type: application/sdp`, sem Bearer) — §5 (🆕 `d244fc8` agora também **enquanto toca**: quem recebe publica e assina, e quem está na chamada assina quem ainda não atendeu, §5.10); `GET /figurinhas/<pacote>/<nome>.json` (estático da página; 🆕 `d202c06` só `noto/<nome>`); 🆕 `d202c06` `GET /emojis/pt.json` (catálogo do seletor, ENV-03); 🆕 `964ed72` `/chamada.html` (aba da chamada, CHA-13; 🆕 `e33ecba` janela popup); `/notification.mp3`, `/toque.mp3`, `/chamando.mp3`, 🆕 `d244fc8` `/aguardando.mp3` (som de aguardar conexão, CHA-27), `/logo.png` (estáticos); 🆕 `9c6e8a6` `/fontes/office/*.woff2` e `fontes.css` (fontes do visualizador do Office, ANX-16).
 
 🆕 `f351190` **Serviços externos chamados direto do navegador** (sem passar pela API, sem Bearer; localização, ENV-30 e MSG-25):
 - busca de endereço: `GET https://nominatim.openstreetmap.org/search?format=jsonv2&limit=6&accept-language=pt-BR&q=<texto>` → `[{lat, lon, display_name}]` (lat e lon em texto);
@@ -1625,6 +1734,8 @@ Fora da API: `POST /webrtc/<caminho>/whip` e `POST /webrtc/<caminho>/whep` (Medi
 - rota de carro: `GET https://router.project-osrm.org/route/v1/driving/<lngA>,<latA>;<lngB>,<latB>?overview=full&geometries=polyline` → `{code, routes: [{geometry, distance, duration}]}`;
 - mapa: `https://tile.openstreetmap.org/{z}/{x}/{y}.png`; satélite `https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}`, com `…/Reference/World_Transportation/MapServer/tile/{z}/{y}/{x}` e `…/Reference/World_Boundaries_and_Places/MapServer/tile/{z}/{y}/{x}` por cima;
 - links "Abrir no Google Maps": `https://www.google.com/maps/search/?api=1&query=<lat>%2C<lng>` e `https://www.google.com/maps/dir/?api=1&origin=<lat>%2C<lng>&destination=<lat>%2C<lng>&travelmode=driving`.
+
+🆕 `8385b22` **Telefonia (SIP), fora da API e do MediaMTX:** o WebSocket do PABX (`ws_server` do ramal), o STUN público `stun:stun.l.google.com:19302` e, se o ramal tiver, o TURN do PABX (`turn_server`, com `turn_user`/`turn_password`) — SIP-05.
 
 ### 4.2 Eventos WebSocket
 
@@ -1667,6 +1778,8 @@ Enum: `TipoEventoSocket` em `src/types/api.ts`. Mensagens são JSON.
 
 Eventos 51–57 só são tratados depois que o handler de chamada é registrado em `iniciarSessao` (o popup de chat não registra — chamadas não tocam no popup). Tipo 6 não existe no enum do cliente.
 
+🆕 `8385b22`…`57bd9f0`: **nenhum evento novo nem mudado.** A pré-conexão da chamada (CHA-27) não manda sinal 57 nem nada pelo WebSocket: usa só `GET /ice` e WHIP/WHEP; o 51, o 53, o 54 e o 52 continuam os mesmos, só que a limpeza que eles disparam agora fecha também a publicação do toque e as pré-assinaturas. As sugestões de pasta (CON-18) são por consulta (rota 112), sem evento.
+
 ---
 
 ## 5. WebRTC / MediaMTX / WHIP / WHEP
@@ -1685,7 +1798,9 @@ Arquivo: `src/stores/call.ts`. Não há malha P2P: cada participante **publica u
 
 - `GET /ice` a **cada nova RTCPeerConnection** (credenciais TURN temporárias) → `{iceServers, iceTransportPolicy}` (`relay` quando o parâmetro "Forçar relay pelo TURN" está ligado).
 - Falha ou lista vazia → `VITE_STUN_URL` se configurado, senão nenhum.
-- O mesmo `GET /ice` alimenta o SIP.
+- ~~O mesmo `GET /ice` alimenta o SIP.~~ 🆕 `8385b22`: o SIP usa o ICE do próprio ramal (STUN do Google e o TURN do PABX, SIP-05); o `GET /ice` ficou só para as chamadas do Conversa.
+- 🆕 servidor `383eaaa` (o web não mudou): o coturn passa a aceitar **UDP** na 3478 (antes só TCP) e o `GET /ice` manda `urls` como **lista**: `turn:<host>:3478?transport=udp` primeiro e, de reserva para redes que barram UDP, `turn:<host>:3478?transport=tcp` (ou `turns:<host>:<CONVERSA_TURN_PORTA>?transport=tcp`, na borda com TLS, em produção). Credencial igual (`<expiração unix>:<id>`, HMAC-SHA1, 1 h). O firewall precisa liberar a 3478/UDP.
+- 🆕 `d244fc8` Com a pré-conexão (§5.10), cada tentativa de pré-assinatura enquanto toca cria uma `RTCPeerConnection` e, portanto, faz um `GET /ice`.
 
 ### 5.3 Publicação (WHIP)
 
@@ -1695,7 +1810,7 @@ Arquivo: `src/stores/call.ts`. Não há malha P2P: cada participante **publica u
 - **Opus estéreo**: com a qualidade "Música", o SDP do offer recebe `stereo=1;sprop-stereo=1` no `a=fmtp` do Opus. Os offers de WHEP sempre pedem estéreo (para aceitar quem envia música).
 - **Parâmetros de envio** (`sender.setParameters`): áudio `maxBitrate` 32k/64k/128k; vídeo `maxBitrate` conforme banda (Automático = sem limite, 500k, 3M) e `maxFramerate` = fps escolhido; com tela: 15 fps + `degradationPreference: maintain-resolution` (Nitidez) ou 30 fps + `maintain-framerate` (Fluidez).
 - Captura: áudio `{echoCancellation, noiseSuppression, autoGainControl, channelCount: 2 se música senão 1}`; vídeo `{width/height ideal pela resolução (640×360, 1280×720, 1920×1080), frameRate {ideal, max}, facingMode:'user' em celular}`.
-- **Quando publica**: logo após `PUT /chamada/iniciar` (quem liga), logo após `POST /chamada/entrar` (quem atende, se tem mídia), ao ativar microfone/câmera em "somente recepção", ao fazer upgrade para vídeo (republica), ao compartilhar tela sem câmera (republica + `POST /chamada/video`).
+- **Quando publica**: logo após `PUT /chamada/iniciar` (quem liga), ~~logo após `POST /chamada/entrar` (quem atende, se tem mídia)~~ 🆕 `d244fc8` **enquanto toca** (quem recebe, com as trilhas desligadas; ao atender só as liga, e só publica depois do `POST /chamada/entrar` se o preparo não publicou ou se a publicação dele caiu — §5.10), ao ativar microfone/câmera em "somente recepção", ao fazer upgrade para vídeo (republica), ao compartilhar tela sem câmera (republica + `POST /chamada/video`).
 - **Recuperação**: `connectionState` `failed`/`disconnected` da publicação → fecha e republica, depois sincroniza peers (2 tentativas).
 - 🆕 `769bd7d` **Republicar sem interromper** (ligar o vídeo, CHA-16): a publicação nova vai ao **mesmo caminho** WHIP antes de fechar a antiga (o MediaMTX troca uma pela outra; a antiga perde o monitor de queda para não ser "recuperada"); se o MediaMTX recusar, fecha a antiga e publica de novo.
 
@@ -1706,6 +1821,7 @@ Arquivo: `src/stores/call.ts`. Não há malha P2P: cada participante **publica u
 - Trilhas recebidas vão para um `MediaStream` por peer; áudio toca num `HTMLAudioElement` dedicado (CHA-23); vídeos sempre mudos.
 - Reconexão: `failed`/`disconnected` → fecha e reassina após 2 s; chamada de vídeo sem trilha de vídeo 5 s depois de conectar → reassina; sincronização periódica (4 s) com `GET /chamada/dados` reassina peers com conexão `failed/disconnected/closed`, sem áudio vivo ou (vídeo) sem vídeo vivo, e desconecta quem não está mais com status "Entrou" (3).
 - Reassinar de propósito: ao receber `VideoAtivado` (56) já em vídeo. 🆕 `769bd7d`: agora **sempre** no 56 (também em áudio) e **sem cortar** (`trocarAssinatura`): a assinatura nova entra no lugar da antiga, que só fecha depois; o áudio segue pela antiga enquanto isso. Se a troca falha, reassina do jeito antigo.
+- 🆕 `d244fc8` **Pré-assinaturas** (`preConexoes`, §5.10): as mesmas `RTCPeerConnection` de recepção, feitas **antes** de a pessoa entrar (quem recebe assina quem já está; quem está assina quem toca), guardadas fora de `peers` (sem áudio tocando nem tile). O `conectarPeer` usa a que já está de pé (`tomarPreConexao`) em vez de assinar de novo; a que ainda não conectou é descartada e ele assina como antes.
 
 ### 5.5 Compartilhamento de tela
 
@@ -1723,6 +1839,8 @@ Medido no cliente sobre as trilhas de áudio (local e recebidas) com `AnalyserNo
 
 O cliente não grava nada nem tem botão de gravar: o **MediaMTX grava** as transmissões (por isso a preferência de codec). A retenção é o parâmetro do sistema "Guardar as gravações por (dias)" (CFG-07). O web não lista nem reproduz gravações.
 
+🆕 `d244fc8` Como quem recebe passa a publicar **enquanto toca** (§5.10) e o MediaMTX grava todo caminho `call-*` (`record: yes` em `bin/mediamtx/mediamtx.docker.yml`), o trecho do toque (silêncio e quadro preto) também é gravado em `call-<id>-u-<quem recebe>`, inclusive quando a pessoa **recusa** ou não atende.
+
 ### 5.9 Estados e máquina da chamada (resumo)
 
 ```
@@ -1732,6 +1850,40 @@ recebendo --(recusar | 30 s | 53/54 meus de outro aparelho)--> inativo
 chamando --(cancelar)--> inativo
 ativa --(sair | 52 | último outro saiu | recusa em direta)--> encerrando --> inativo
 ```
+
+🆕 `d244fc8` Os estados não mudaram. O que muda é o que acontece **dentro** de `recebendo` (publica com as trilhas desligadas e pré-assina) e de `chamando`/`ativa` (pré-assina quem está tocando), e o som de aguardar conexão na entrada em `ativa` (§5.10).
+
+### 5.10 🆕 `d244fc8` Pré-conexão enquanto toca (protocolo)
+
+Referência para o Android interoperar. Linhas de `src/stores/call.ts` em `57bd9f0` (o arquivo não mudou depois de `d244fc8`). Os caminhos são os de sempre (§5.1): `call-<chamada>-u-<usuario>`.
+
+**Quem recebe** (evento 51 → `recebendo`):
+1. `tratarEventoChamada`, caso `ChamadaRecebida` (l. 1803–1841): `GET /chamada/dados`, estado `recebendo`, temporizador de 30 s, e **`preparacao = prepararRecebimento()`** (l. 1836). Vale também para a chamada pendente achada ao conectar (`verificarChamadasPendentes`, CHA-08), que passa pelo mesmo caso. O ocupado (CHA-06) não prepara nada.
+2. `prepararRecebimento` (l. 716–755):
+   - **pré-assina (WHEP)** cada participante com status **"Entrou"** (em geral quem ligou; num grupo, todos os que já estão) com `preConectar` (l. 720–723);
+   - **abre a mídia** com o tipo da chamada (`getUserMedia`; vídeo → só áudio → nada); sem nenhuma, fica só a recepção (l. 725–735). Se parou de tocar enquanto abria, solta a mídia e sai (l. 736–739);
+   - **desliga todas as trilhas** (`track.enabled = false`, l. 740): o WebRTC manda **silêncio no áudio e quadro preto no vídeo**, com as trilhas presentes no SDP;
+   - **publica (WHIP)** com `publicarLocalNaSala` (l. 743–754): `GET /ice`, oferta com no máximo uma trilha de cada tipo, espera da coleta de ICE (até 5 s), `POST /webrtc/call-<id>-u-<eu>/whip`. Se parou de tocar enquanto publicava, fecha essa `RTCPeerConnection` (l. 745–749); senão ela vira `pcPublicacaoLocal`. Falha só vai para o console (atender publica de novo).
+   - **Nada é mandado pelo WebSocket nem às rotas da chamada:** o servidor continua com a pessoa **Pendente**; o 54 só sai no `POST /chamada/entrar`, como antes.
+3. **Atender** (`aceitarChamada`, l. 1143–1223): espera a `preparacao` (l. 1151); abre a mídia só se o preparo não abriu (l. 1156–1174); **liga as trilhas** — áudio sempre, vídeo só se não for "Atender só assistindo" (l. 1176–1177) —, **sem renegociar** (o mesmo `RTCPeerConnection`, o mesmo SDP: quem já assinou passa a receber o som e a imagem de verdade); **`POST /chamada/entrar`** (l. 1181); `ativa`, cronômetro e **`iniciarEsperaConexao`** (l. 1182–1184); se a publicação do preparo está `failed`/`disconnected`/`closed` (outra aba da mesma pessoa publicou no mesmo caminho e o MediaMTX ficou com a dela), fecha (l. 1196–1199) e **só então publica de novo** (l. 1203–1210; sem preparo, é a publicação de antes, agora depois do `entrar`); **`promoverPreConexoes`** (l. 1212: cada pré-assinatura vira peer pelo `conectarPeer`); `GET /chamada/dados` e `sincronizarPeersComRetentativas` (l. 1213–1214).
+4. **Não atendeu:** recusar e os 30 s (`recusarChamada`, l. 1226–1238): `POST /chamada/recusar {id, nao_atendeu?}` e, depois (no `finally`), `desconectarTodosPeers` (fecha a publicação) + `liberarMidiaLocal` + `resetarEstado` (`fecharPreConexoes`, l. 1055). Cancelada por quem ligou (52, l. 1843–1851), recusada em outra aba ou aparelho (53 com o meu id, l. 1855–1860) e atendida em outra aba ou aparelho (54 com o meu id, sem ser esta aba que atendeu, l. 1882–1891): a mesma limpeza, sem chamada nenhuma ao servidor. Encerrar é só `pc.close()` (sem `DELETE` no WHIP/WHEP, §5.1).
+
+**Quem está na chamada** (quem ligou, em `chamando`; e quem já está `ativa`):
+1. Um `watch` em `chamada.value?.usuarios` (l. 664–673) roda **toda vez que os dados da chamada são trocados** com o estado `chamando` ou `ativa`: no fim do `iniciarChamada` (l. 1121, a resposta do `PUT /chamada/iniciar`), na sincronização de 4 s, no 53 e no 55 (que releem os dados), no "Chamar de novo", ao adicionar alguém e no sinal `participantes`. Para cada outro participante: **Pendente** → `preConectar(id)`; qualquer status que não seja Pendente nem **Entrou** (recusou, saiu…) → `fecharPreConexao(id)`. Quem passou a "Entrou" fica com a sua (o 54 a promove).
+2. `preConectar` (l. 594–623): se ainda não há pré-assinatura nem peer dessa pessoa, cria a entrada e, **em laço**, chama `assinarDePeer(id)` (l. 481–579: `GET /ice`, `RTCPeerConnection` `recvonly` com áudio e, em vídeo, vídeo, oferta com Opus estéreo, espera do ICE até 5 s, e **`POST …/call-<id>-u-<usuario>/whep` até 12 vezes a cada 0,8 s (áudio) ou 40 a cada 1 s (vídeo)**). Sem resposta OK: fecha a conexão, espera **1 s** e tenta de novo, **enquanto a entrada continuar a mesma e a chamada for a mesma**. Na prática, o MediaMTX recebe um `POST …/whep` (que dá 404) a cada 0,8–1 s enquanto o convidado não publica, com um `GET /ice` a cada rodada. Conectou: guarda `pc` e `stream` na entrada (l. 607–608) e vigia o estado: `failed`/`disconnected`/`closed` → fecha e começa de novo (l. 610–616: "outra aba da pessoa passou a transmitir no lugar desta").
+3. As trilhas que chegam vão para o `MediaStream` da entrada, **sem tocar** (nenhum `<audio>` é ligado) e sem tile.
+4. **No 54 de quem atendeu** (l. 1894–1909): se eu estava `chamando`, `ativa`, cronômetro e `iniciarEsperaConexao` (l. 1895–1897); com uma pré-assinatura dele, `conectarPeer` (l. 1904–1907), que chama `tomarPreConexao` (l. 642–654, usada na l. 786): a conectada (estado diferente de `failed`/`closed`) vira o `rxPc` do peer, com o áudio tocando na hora; a que ainda não conectou é **descartada** e o `conectarPeer` assina do zero (`assinarDePeer`). Depois, `sincronizarPeersComRetentativas` como sempre.
+5. Detalhe: a rodada de `assinarDePeer` que estava em andamento quando a entrada foi tirada **continua tentando até acabar** (até ~10 s em áudio, ~40 s em vídeo, mais o ICE); se conseguir, fecha a conexão na hora (l. 603–606). Pode haver, por instantes, uma segunda sessão WHEP de leitura da mesma transmissão.
+
+**Som de aguardar conexão** (l. 681–706; `useCallPopup.ts`, l. 10 e 113–119):
+- `iniciarEsperaConexao` (l. 693–698) roda ao atender (l. 1184) e, em quem ligou, no 54 que tira de `chamando` (l. 1897); não roda para quem entra depois. Se já há áudio chegando (`audioRemotoChegou`, l. 685–691: alguma trilha de áudio `live` e não `muted` nos peers ou nas pré-assinaturas), não faz nada; senão liga `aguardandoConexao` e marca **10 s** (`ESPERA_CONEXAO_MS`, l. 683).
+- `useCallPopup` toca **`/aguardando.mp3` em loop** enquanto `estado === 'ativa' && aguardandoConexao`.
+- Para (`encerrarEsperaConexao`, l. 700–706): no `onunmute` de **qualquer** trilha de áudio recebida (l. 516–520), nos 10 s, ou no `resetarEstado` (l. 1057).
+
+**Consequências para quem fala com o web:**
+- Do lado de quem recebe no web, a transmissão **`call-<id>-u-<quem recebe>` existe no MediaMTX antes do atender**, com trilhas mudas (silêncio e preto) e gravada (§5.8). Uma assinatura WHEP dela dá **200** enquanto toca: **não é sinal de que a pessoa atendeu** — o sinal continua sendo o 54 (e o status "Entrou" em `GET /chamada/dados`).
+- Do lado de quem está na chamada no web, a transmissão de quem toca é **assinada (e reassinada) sem parar** até aparecer; um cliente que só publica depois de entrar (o Android hoje) é achado na primeira publicação, e o web pode tocar `/aguardando.mp3` entre o 54 e o primeiro áudio.
+- **Mesma pessoa em dois lugares** (aba do web e o celular tocando juntos): a aba publica no caminho dela enquanto toca; quem atender em outro lugar publica no **mesmo caminho** e o MediaMTX (1.16.2, `overridePublisher` no padrão, ligado) fica com a **mais nova**, derrubando a outra. A aba só fecha a dela quando recebe o 54 com o próprio id; se o preparo dela ainda estava publicando (o `POST …/whip` sai depois da espera do ICE, e a l. 745 só confere o estado **depois** da resposta), a publicação atrasada pode **derrubar a do outro aparelho** e fechar logo em seguida. Quem já tinha assinado a da aba (por exemplo, a pré-assinatura de quem ligou) fica com uma conexão que cai e precisa assinar de novo. O web trata (pré-assinatura reassina no `failed`/`disconnected`/`closed`; peer reassina pelo `monitorarAssinatura` e pela sincronização de 4 s), com alguns segundos de silêncio.
 
 ---
 
@@ -1785,6 +1937,8 @@ ativa --(sair | 52 | último outro saiu | recusa em direta)--> encerrando --> in
 | 🆕 Localização — janela (`f351190`) | "+" › "Localização"; "Enviar localização" / "Editar localização", "Local" / "Trajeto", selos "•", "A", "B"; placeholders "Endereço, lugar ou coordenadas", "Origem: endereço, lugar ou coordenadas", "Destino: endereço, lugar ou coordenadas"; "Buscar", "Usar minha posição"; "Buscando...", "Calculando a rota...", "<d> · <t> de carro", "Sem rota pelas ruas: <d> em linha reta"; dicas "Sem GPS? Busque o endereço, digite as coordenadas ou clique no mapa." / "Clique no mapa para marcar a origem, ou busque o endereço." ("o destino"); avisos "Nada encontrado com esse endereço.", "A busca de endereço não respondeu.", "A busca de endereço falhou.", "Este dispositivo não informa a posição.", "O acesso à localização foi negado.", "Não foi possível obter a posição deste dispositivo.", "Sem acesso à posição." (+ " Busque o endereço, digite as coordenadas ou clique no mapa."); botões "Cancelar", "Inserir na mensagem", "Enviar" / "Salvar"; peça "Localização" / "Trajeto", "Editar localização", "Remover localização" |
 | 🆕 Localização — bolha (`f351190`) | "Ampliar mapa", "Abrir no Google Maps", "Satélite" / "Mapa" (`title` "Ver a imagem de satélite" / "Ver o mapa de ruas"), "Trajeto · 12,3 km · 18 min de carro" / "Trajeto · 12,3 km em linha reta" / "Trajeto", selos "A" / "B", "Localização" (conteúdo inválido); atribuições "© OpenStreetMap", "Imagens © Esri, Maxar, Earthstar Geographics"; distância "850 m" / "12,3 km" / "150 km", tempo "1 min" / "1 h 30 min" / "2 h"; visualizador "Fechar" |
 | 🆕 Velocidade do áudio (`f351190`) | botão "Velocidade": "1x", "1,5x", "2x", "3x" |
+| 🆕 Sugestões da IA nas pastas (`57bd9f0`) | seção "Sugestões da IA"; botão "Sugerir pastas" / "Analisando..." (`title` "A IA olha as mensagens recentes que ainda não estão em pasta e sugere a pasta de cada uma pelo assunto"); "Analisando as mensagens que ainda não estão em pasta..."; "Nenhuma sugestão pendente." / "As mensagens recentes já estão em pastas."; cartão "<autor>: <texto>", ✓ `title` "Pôr em <pasta>", ✕ `title` "Ignorar"; "Aceitar todas (N)"; erros "Erro ao pedir sugestões", "Erro ao consultar as sugestões", diálogo "Não foi possível pôr na pasta"; servidor "IA não configurada: defina o endereço e o modelo nas configurações do sistema.", "Crie uma pasta antes de pedir sugestões.", "Sugestão não encontrada (pode ter expirado). Peça de novo." |
+| 🆕 Áudios em sequência (`d244fc8`) | sem texto (ANX-19) |
 
 ### 6.2 Conversas, chamadas, atividades
 
@@ -1805,7 +1959,7 @@ ativa --(sair | 52 | último outro saiu | recusa em direta)--> encerrando --> in
 - 🆕 `9c6e8a6` Login: "Não tem conta? Criar conta" só com o cadastro aberto; cadastro fechado (servidor) "O cadastro está fechado: peça a um administrador para criar sua conta."; bot no login "Bot não entra pelo login.".
 - 🆕 `9c6e8a6` Perfil sem permissão: "Você não tem permissão para mudar o nome" / "Você não tem permissão para mudar o e-mail" (`title` do campo), "Você não tem permissão para mudar o avatar."; Privacidade "Você não tem permissão para mudar a privacidade.".
 - 🆕 `9c6e8a6` Nomes curtos das permissões (`utils/permissoesUso.ts`), por grupo:
-  - **Administração:** "Sistema", "Acessos" (🆕 `f351190` → **"Pessoas"**), "Bots", ~~"Usuários"~~ (🆕 `f351190` a permissão saiu), "Ferramentas", "Conhecimento";
+  - **Administração:** "Sistema", "Acessos" (🆕 `f351190` → **"Pessoas"**), "Bots", ~~"Usuários"~~ (🆕 `f351190` a permissão saiu), "Ferramentas", "Conhecimento", 🆕 `8385b22` **"Configurar o SIP"**;
   - **Enviar:** "Emojis no texto", "Figurinhas", "Imagens", "Vídeos", "Áudios e gravações", "Arquivos", 🆕 `f351190` **"Localização e trajeto"**;
   - **Mensagens:** "Responder", "Encaminhar", "Reagir", "Agendar mensagens", "Pedir confirmação de leitura", "Ocultar mensagens";
   - **Grupos:** "Criar grupos", "Postagens", "Votações";
@@ -1822,6 +1976,9 @@ ativa --(sair | 52 | último outro saiu | recusa em direta)--> encerrando --> in
 - 🆕 `f351190` Ferramentas: pílula "Embutida", "Interna, sem endereço externo", "Ver", "Vem com o Conversa e não se altera nem se remove: serve de exemplo de como fica uma ferramenta configurada. Os bots a usam quando têm uma base ligada, em Bots.", método "Interna", "Nenhum: ela não chama endereço externo.", "Como o modelo recebe (com as bases cadastradas)", "Fechar"; lista vazia "Nenhuma API externa cadastrada ainda: use Nova ferramenta para cadastrar a primeira.".
 - 🆕 `f351190` Lista de conversas: "Gravando áudio..." (três pontinhos vermelhos, no lugar de "Digitando...").
 - 🆕 `f351190` Anexos: o texto "Selecione um contato ou grupo para ver os anexos" saiu (a página abre com os anexos de todas as conversas).
+- 🆕 `8385b22` Chamadas › Voip (só leitura): sub-aba "Seu ramal SIP, configurado pelo administrador"; "Ramal SIP", "Configurado pelo administrador, em Pessoas › Usuários.", pílula "Sem ramal" / "Desativado" / "Registrado" / "Conectando" / "Não registrado", "Carregando...", "Você ainda não tem um ramal. Peça ao administrador para configurar.", "Ramal", "Nome de exibição", "Domínio", "Servidor WebSocket", "Mídia" ("STUN e TURN (<servidor>)" / "Somente STUN"), "Reconectar" / "Conectando...". Saíram "Configuracao de ramal", "Asterisk / VueSIP", "Configuracao SIP ativa para este usuario", "Criar configuracao SIP" / "Salvar configuracao SIP", "Nenhuma alteracao para salvar.", "Preencha ao menos ramal, senha SIP, dominio e servidor WebSocket.".
+- 🆕 `8385b22` Pessoas › Usuários › aba "Telefonia (SIP)" (abas "Acessos" / "Telefonia (SIP)"): "Ramal", "Senha do ramal" ("Salva (vazio mantém)"), "Domínio SIP", "Servidor WebSocket", "Usuário de autenticação" ("O mesmo do ramal"), "Nome de exibição", "TURN do PABX (opcional; vazio = somente STUN)", "Servidor", "Usuário", "Senha", "Ramal ativo (registra ao entrar no app)", "Excluir ramal", "Criar ramal" / "Salvar ramal" / "Salvando...", "Ramal salvo.", "Ramal excluído.", "Erro ao carregar o ramal", "Erro ao salvar o ramal", "Erro ao excluir o ramal"; confirmação "Excluir o ramal de <nome>?" / "A pessoa deixa de registrar o ramal e de fazer e receber ligações pela telefonia." / "Excluir"; conferência (SIP-06): "Ramal inválido: informe só o número ou nome do ramal, sem espaços.", "Usuário de autenticação inválido.", "Informe a senha do ramal.", "Domínio SIP inválido (ex.: voip.empresa.com).", "Servidor WebSocket inválido: deve começar com wss:// (ex.: wss://voip.empresa.com:8089/ws).", "Servidor TURN inválido: deve começar com turn: ou turns: (ex.: turns:voip.empresa.com:443).", "Informe o usuário do TURN.".
+- 🆕 `d244fc8` Chamada: sem texto novo; som `/aguardando.mp3` depois de atender, até chegar o áudio do outro lado (no máximo 10 s, CHA-27).
 
 ### 6.3 Regras de comportamento críticas
 
@@ -1852,6 +2009,10 @@ ativa --(sair | 52 | último outro saiu | recusa em direta)--> encerrando --> in
 25. 🆕 `f351190` **A permissão `usuarios` não existe mais:** cadastrar contas pede `permissoes` ("Pessoas"); o nome da permissão `permissoes` na tela é "Pessoas".
 26. 🆕 `f351190` **Contatos sempre frescos:** reler `GET /usuario/contatos` no WS 66 e a cada reconexão do WebSocket (a busca e as menções procuram neles).
 27. 🆕 `f351190` **`DELETE /pasta/mensagens` leva corpo JSON** (`{pasta_id, mensagens}`), ao contrário dos outros `DELETE`, que usam a consulta.
+28. 🆕 `d244fc8` **Transmissão publicada não quer dizer atendida:** o web que recebe publica `call-<id>-u-<eu>` (mudo) **enquanto toca**. Quem atendeu é quem mandou o 54 / está "Entrou" nos dados da chamada; nunca deduzir pelo WHEP que respondeu (§5.10).
+29. 🆕 `d244fc8` **Mesmo caminho, uma publicação só:** duas abas ou aparelhos da mesma pessoa publicam no mesmo `call-<id>-u-<usuario>` e o MediaMTX fica com a mais nova. Publicação ou assinatura que cai (`failed`/`disconnected`) precisa ser refeita (§5.10).
+30. 🆕 `8385b22` **O ramal SIP é do administrador:** a pessoa só vê (Chamadas › Voip) e reconecta; não há mais `PUT`/`PATCH /sip`. O ICE do SIP é o do ramal (STUN do Google + TURN do PABX), não o `GET /ice` (SIP-05).
+31. 🆕 `57bd9f0` **Sugestão de pasta não põe nada sozinha:** só quando a pessoa pede, e cada uma é confirmada (✓, `PUT /pasta/mensagens`) ou ignorada (✕, guardada no aparelho por pessoa e conversa e mandada em `ignorar` na próxima análise) — CON-18.
 
 ---
 
@@ -1923,6 +2084,14 @@ ativa --(sair | 52 | último outro saiu | recusa em direta)--> encerrando --> in
 | 🆕 Menus com sub-abas nas Configurações (CFG-01, `f351190`) | O Android tem a sua lista (Perfil, Aparência, Notificações, Chamadas, Permissões, Servidor, Sistema, Acessos, Sobre) | **Não copiar a estrutura.** Só o nome: "Acessos" passa a ser **"Pessoas"** (a permissão `permissoes`), e cada item segue a sua permissão |
 | 🆕 Pessoas › Usuários numa tela só, embeddings próprios, ferramenta embutida, destaque na busca do conhecimento (CFG-07, CFG-11, CFG-13, CFG-14, `f351190`) | Administração | **Fora do escopo do celular.** Na tela Acessos do Android, só acompanhar os nomes ("Pessoas", sem "Usuários", com "Localização e trajeto") e, se quiser, o selo "Bot" e as colunas de espaço e de data |
 | 🆕 Página de Anexos de todas as conversas (ANX-13, `f351190`) | O Android só tem os anexos de uma conversa | Opcional; `GET /anexos?conversa=0` já devolve os de todas, com `conversa_id` e `conversa_descricao` (vazia na direta: usar o nome da conversa) |
+| 🆕 Abrir microfone e câmera e publicar enquanto toca (CHA-27, `d244fc8`) | Tocando, o app costuma estar em segundo plano (push, notificação de tela cheia) | **Não copiar agora:** abrir microfone/câmera com o app em segundo plano esbarra nas regras de serviço em primeiro plano do Android 14+ (tipos `microphone`/`camera` não sobem do segundo plano) e acende a câmera antes de a pessoa decidir. O que vale copiar: **pré-assinar** quem já está na chamada enquanto toca (só recepção, sem permissão nova; opcional) e **publicar antes do `POST /chamada/entrar`** ao atender (§17) |
+| 🆕 Som de aguardar conexão (`/aguardando.mp3`, CHA-27) | Media3 / `ToneGenerator` | Opcional: o mesmo arquivo embarcado no APK (como o toque), tocado depois de atender (ou no 54, em quem ligou) até o primeiro áudio de alguém (`audioLevel` do `getStats` acima de zero, ou a primeira trilha remota) ou 10 s |
+| 🆕 Vídeo inteiro nos tiles (`object-contain`, CHA-11) | `SurfaceViewRenderer` | `setScalingType(RendererCommon.ScalingType.SCALE_ASPECT_FIT)` nos tiles (o `SCALE_ASPECT_FILL` corta, como o `object-cover` antigo) |
+| 🆕 Áudios em sequência (ANX-19, `d244fc8`) | `PlayerAudio` (Media3), um áudio por vez | No fim (`STATE_ENDED`), tocar o próximo áudio da mesma mensagem ou o primeiro da mensagem logo abaixo (a seguinte, mais nova), só no chat; parar quando a de baixo não tem áudio |
+| 🆕 Clique direito no vazio da linha selecionada (ENV-29, `d244fc8`) | Sem clique direito | **Não se aplica**: no Android o menu abre pelo toque longo na bolha, e a seleção é por toque |
+| 🆕 Sugestões da IA no painel de pastas (CON-18, `57bd9f0`) | Folha de pastas (bottom sheet) | Na folha "Pastas" da conversa direta, a seção "Sugestões da IA" com "Sugerir pastas", os cartões com ✓/✕ e "Aceitar todas (N)", com os mesmos textos; as ignoradas no DataStore (ou Room) por usuário e conversa, até 2000 ids |
+| 🆕 Ramal de cada pessoa pelo administrador (SIP-06, `8385b22`) | Administração | **Fora do escopo do celular** (como Usuários, Bots etc.). No Android, só o nome da permissão `sip` ("Configurar o SIP") na tela Acessos |
+| 🆕 Voip só leitura e ICE do ramal (SIP-01, SIP-05, `8385b22`) | SIP ainda não feito (etapa 9) | Quando for feito: **sem** tela para a pessoa cadastrar o ramal (as rotas saíram); tela Voip só com os dados, o estado e "Reconectar"; ICE = STUN do Google + TURN do PABX vindo do `GET /sip` (não o `GET /ice`); o destino pela regra do `destinoSip` |
 
 ---
 
@@ -2433,3 +2602,75 @@ Um commit do web, de 2026-10-16 22:49, que acompanha o do servidor **`ac710eb`**
 - **User-Agent num app nativo:** o navegador manda o dele (e o Referer) para o Nominatim, o OSRM e os tiles do OSM; o app precisa mandar um próprio, que identifique o Conversa, ou corre o risco de ser bloqueado. Uso leve: busca só quando a pessoa pede, rota uma vez por trajeto, tiles em cache.
 - **`pastas` é opcional:** sem a chave, a mensagem não está em nenhuma pasta; a lista vem só com as pastas que a pessoa enxerga, e a pasta que some (WS 67) precisa sair das marcas.
 - **Texto inconsistente no web:** em Sistema › Cadastro, o web ainda diz "só quem tem a permissão Usuários cria contas, em Pessoas › Usuários", mas a permissão agora é `permissoes` ("Pessoas"). Se o Android mostrar esse texto, usar "a permissão Pessoas".
+
+## 17. Atualização de 2026-10-19 — commits `8385b22`, `d244fc8` e `57bd9f0`
+
+Três commits do web, de 2026-10-18, que acompanham os do servidor **`be17b8e`** (ramal SIP pelo administrador, migração 057), **`383eaaa`** (TURN em UDP na 3478) e **`b104db8`** (sugestão de pasta pela IA). Há **4 IDs novos** e o total passa de 172 para **176**. Os textos foram conferidos no código do web (`git show` de cada commit e os arquivos de `src/` em `57bd9f0`), as regras no servidor (`git show be17b8e 383eaaa b104db8`: `src/sip.ts`, `src/chamadas.ts#servidoresIce`, `src/sugestoesPastas.ts`, migração 057; `bin/mediamtx/mediamtx.docker.yml`) e a chamada linha a linha no `src/stores/call.ts` (§5.10).
+- Nenhum evento WebSocket novo ou mudado; o push não mudou.
+- Os testes novos do web (`sip.test.ts`, `sipConfiguracao.test.ts`, `sugestoesPastas.test.ts` e casos em `pastas.test.ts`, `sipStore.test.ts` e `servicos.test.ts`) ficam fora do escopo do Android; as regras que eles fixam estão nos IDs. A pré-conexão da chamada **não** ganhou teste unitário no web.
+- O estado do Android citado abaixo é o do último commit, **`e900caf`** (2026-10-17). Mudanças sem commit na árvore de trabalho não foram consideradas.
+
+### Commits
+- **`8385b22`** (2026-10-18 14:32) — "Telefonia SIP configurada pelo administrador e chamadas funcionando como no telefone de teste": permissão de administração `sip`; abas "Acessos" e "Telefonia (SIP)" no painel de cada pessoa em Pessoas › Usuários (ramal, senha, domínio, WebSocket, usuário de autenticação, nome de exibição, TURN do PABX opcional, ativo; as senhas não voltam); Chamadas › Voip só leitura, com o estado e "Reconectar"; a mídia do SIP pelo STUN e pelo TURN do PABX, não pelo TURN do Conversa; o áudio de quem atende pelo `remoteMediaStream` do sip.js; destino com o número ou o endereço completo; conferência dos campos antes de salvar.
+- **`d244fc8`** (2026-10-18 14:32) — "Chamada já conectada enquanto toca, áudios em sequência e clique direito na seleção": pré-conexões enquanto toca (`preConexoes`), `public/aguardando.mp3` até 10 s, vídeos da chamada com `object-contain`, o áudio que termina toca o próximo, clique direito no vazio da linha selecionada abre o menu da mensagem.
+- **`57bd9f0`** (2026-10-18 15:51) — "Sugestões da IA no painel de pastas: confirmar ou ignorar cada uma": "Sugerir pastas" no pé do painel, ✓ e ✕ por sugestão, "Aceitar todas", ignoradas no navegador por pessoa e conversa.
+- Servidor **`be17b8e`** (14:32): `GET`/`PUT`/`DELETE /sip/usuario`; saem `PUT` e `PATCH /sip`; `turn_*` no ramal e no `GET /sip`; `conferirRamal`. **`383eaaa`** (14:32): coturn com UDP e TCP na 3478; `GET /ice` com `urls` em lista, o UDP primeiro. **`b104db8`** (15:51): `POST /pastas/sugerir` e `GET /pastas/sugestao`.
+
+### Como os IDs foram escolhidos
+- **SIP-06** (e não CFG-15): a tela fica em Pessoas › Usuários, mas é o ramal SIP de cada pessoa; o grupo SIP já tem a configuração (SIP-01) e o ICE (SIP-05), que mudaram junto. A aba Voip só leitura ficou em **SIP-01** (é a mesma tela, refeita), não um ID novo.
+- **CHA-27**: um ID só para a pré-conexão e o som de aguardar conexão, porque o som é a parte visível do mesmo mecanismo (toca quando a pré-conexão não trouxe o áudio a tempo). O protocolo detalhado está na **§5.10**.
+- **ANX-19**: áudios em sequência, comportamento novo do player (ANX-10).
+- **CON-18**: as sugestões ficam no painel de pastas (CON-17), mas são uma funcionalidade à parte (rotas, estados, armazenamento).
+- **Sem ID novo:** o clique direito na seleção é uma extensão do computador do **ENV-29** (e do MSG-24); o `object-contain` entrou no **CHA-11**.
+
+### IDs novos (4)
+- **SIP-06** — ramal de cada pessoa configurado pelo administrador (permissão `sip`, aba "Telefonia (SIP)", `GET`/`PUT`/`DELETE /sip/usuario`). Administração (web): fora do escopo do celular.
+- **CHA-27** — conexão pronta enquanto toca (quem recebe publica mudo e pré-assina; quem está na chamada pré-assina quem toca) e `/aguardando.mp3` até o primeiro áudio (10 s). **Vale para o celular** (interoperabilidade; copiar é opcional).
+- **ANX-19** — o áudio que termina toca o próximo (o seguinte da mensagem ou o primeiro da mensagem de baixo). **Vale para o celular.**
+- **CON-18** — sugestões da IA no painel de pastas ("Sugerir pastas", ✓/✕, "Aceitar todas", ignoradas por pessoa e conversa). **Vale para o celular.**
+
+### IDs alterados
+- **SIP-01** — a aba Voip ficou só leitura ("Ramal SIP", estado, "Reconectar"); `PUT`/`PATCH /sip` saíram; `GET /sip` com `turn_*`. **SIP-02** — `UserAgent` com o ICE do ramal; registra de novo no "Reconectar" e quando o administrador mexe no próprio ramal. **SIP-03** — destino pelo `destinoSip`; áudio pelo `remoteMediaStream`. **SIP-04** — sem `GET /ice` ao atender. **SIP-05** — STUN do Google + TURN do PABX (`iceDoRamal`), não mais o `GET /ice`.
+- **AUT-09 / GER-09** — 33 códigos: 6 de administração (entra `sip`, "Configurar o SIP") e 27 de uso. **CFG-01** — Voip só leitura, descrição nova. **CFG-08** — abas "Acessos" / "Telefonia (SIP)" no painel da pessoa; "Configurar o SIP" no grupo Administração. **CFG-11** — "Configurar o SIP" no "Novo usuário".
+- **CHA-01** — quem liga pré-assina os convidados. **CHA-03** — tocando, abre microfone/câmera, publica mudo e pré-assina. **CHA-04** — atender usa o preparo, liga as trilhas sem renegociar, só republica se precisar, promove as pré-assinaturas, som de aguardar. **CHA-05 / CHA-07** — recusar, 30 s, 52 e atendida/recusada em outro lugar fecham a publicação do toque e as pré-assinaturas. **CHA-10** — no 54, a pré-assinatura vira o peer; som de aguardar em quem ligou. **CHA-11 / CHA-12** — vídeo com `object-contain`. **CHA-25** — convidados Pendentes pré-assinados.
+- **CON-17** — seção "Sugestões da IA" no pé do painel. **GER-08** — `ia` também liga as sugestões de pasta.
+- **ENV-29 / MSG-24** — clique direito no vazio da linha selecionada abre o menu (o da mais próxima com menu, se ela não tem). **ANX-10** — o áudio que termina toca o próximo (ANX-19).
+- §1.2 (stores `call`, `sip`, `pastas`; chave `conversa.sugestoesIgnoradas.<usuário>.<conversa>`), §2.4 (`ConfiguracaoVoip`, `ConfiguracaoSipUsuario` e linhas alteradas), §2.5 (Voip e Pessoas), §4.1 (rotas 8, 47, 48; 49 e 50 saíram; novas 108 a 112; `/aguardando.mp3`; WHIP/WHEP enquanto toca; serviços do SIP), §4.2 (nenhum evento novo), §5.2/§5.3/§5.4/§5.8/§5.9 e a **§5.10 nova**, §6 (textos e regras 28 a 31), §7 (adaptações novas) e a contagem.
+
+### O que muda para o Android
+
+**Interoperabilidade da chamada (CHA-27) — nada precisa mudar para continuar funcionando.** A pré-conexão do web só usa o que já existia (`GET /ice`, `POST …/whip` e `POST …/whep` nos caminhos `call-<id>-u-<usuario>`); não há sinal 57 nem rota nova, e o servidor continua vendo quem recebe como **Pendente** até o `POST /chamada/entrar` (o 54 sai na mesma hora de antes). O Android (`GerenciadorChamadas`, `MidiaWebRtc`) já publica logo depois do `PUT /chamada/iniciar` (`ligar`, l. 172) e só assina quem está "Entrou" (`sincronizar`), então:
+- **Android liga, web recebe:** enquanto toca, o web já assina a transmissão do Android (que existe desde o início) e publica a dele, muda. Ao atender, o web liga as trilhas **antes** do `POST /chamada/entrar`; o Android recebe o 54, assina (`ficarAtiva` → `sincronizar`) e acha a transmissão **já publicada e com som e imagem de verdade**: o primeiro `POST …/whep` dá 200, sem os 404 de antes. Do lado do web, o áudio do Android já estava chegando pela pré-assinatura: toca na hora, sem o som de aguardar.
+- **Web liga, Android recebe:** enquanto o Android toca, o web fica mandando `POST …/call-<id>-u-<android>/whep` (404) a cada 0,8 s (áudio) ou 1 s (vídeo), com um `GET /ice` por rodada; isso não chega ao Android. O Android atende com `remoto.entrar(id)` **e só depois** `midia.publicar(id, eu)` (`atender`, l. 205–217): o web recebe o 54, entra em `ativa` e, como ainda não chegou áudio do Android, **toca `/aguardando.mp3`** até o primeiro pacote de áudio (alguns segundos: `GET /ice`, coleta de ICE de até alguns segundos e o WHIP) ou até 10 s. A pré-assinatura do web conecta assim que o Android publica (ou, se ainda não tinha conectado no 54, o web descarta e assina do zero, com as tentativas de sempre). Android **sem microfone** (só recepção) → o web toca o som os 10 s inteiros.
+- **Melhoria opcional no Android** (não obrigatória): no `atender`, **publicar antes do `entrar`** (como o web faz agora). Assim, quando o 54 chega ao web, a pré-assinatura já está com o áudio do Android e o som de aguardar não toca. Se o `entrar` falhar, o `encerrar` já desfaz a publicação. **Não** é recomendado copiar o preparo inteiro (abrir microfone e câmera e publicar enquanto toca) — ver §7. Pré-assinar quem está na chamada enquanto toca (só recepção) é possível, mas o ganho no celular é pequeno.
+- **A transmissão de quem recebe no web existe antes do atender** (muda, e gravada pelo MediaMTX, §5.8): o Android **não** pode usar um WHEP que responde como sinal de "atendeu" (hoje não usa: assina só quem está "Entrou"). Manter assim.
+- **Mesma pessoa no web e no celular tocando juntos** (o caso a testar): a aba do web publica muda em `call-<id>-u-<pessoa>` enquanto toca. Atendendo **no Android**, o Android publica no mesmo caminho e o MediaMTX fica com a mais nova; a aba só fecha a dela quando recebe o 54 com o próprio id. Duas corridas possíveis (§5.10): (1) quem ligou assina logo depois do 54 e pega a publicação muda da aba, que cai em seguida; (2) o preparo da aba ainda estava publicando quando a pessoa atendeu no celular, e o `POST …/whip` atrasado da aba **troca a publicação do Android** e fecha logo depois. O Android já se recupera nos dois casos — publicação `FAILED` republica na hora, `DISCONNECTED` depois de 2 s (`MidiaWebRtc.aoMudarPublicacao`); assinatura `FAILED`/`DISCONNECTED` refaz depois de 2 s (`refazer`), e o monitor de 4 s reassina quem falhou —, mas com alguns segundos de silêncio. Vale um teste manual: web aberto e celular logados na mesma conta, atender no celular **logo** que tocar (no primeiro ou segundo toque), nos dois sentidos (quem liga no web e no Android). Publicar antes do `entrar` (acima) diminui a corrida (1).
+- **Vídeo inteiro (CHA-11):** o Android usa `SCALE_ASPECT_FILL` nos tiles e `SCALE_ASPECT_FIT` só na tela compartilhada (`TelaChamada.kt#VideoDaTrilha`, parâmetro `ajustar`). Para ficar igual ao web, `ajustar = true` em todos (opcional; é escolha visual).
+- **`GET /ice` (servidor `383eaaa`):** `urls` passa a vir sempre em **lista**, com o TURN em UDP primeiro. O Android **já aceita** texto ou lista (`ServidorIceDto.urls: JsonElement`, teste `ice com urls em texto ou lista` no `DesserializacaoTest`) e passa todas ao `PeerConnection.IceServer.builder(urls)`: nada a mudar. Conferir no teste manual em rede que bloqueia UDP que o TCP de reserva ainda conecta.
+
+**IDs novos**
+- **CON-18:** o Android já tem pastas (`2a58133`: `feature/chat/.../Pastas.kt`, `PastasViewModel`, `core/data/.../pastas/PastasRepositorio.kt`). Acrescentar:
+  - as rotas 111 e 112 no `ConversaApi` e o DTO `SugestoesPastas {id, conversa_id, status, analisadas, sugestoes:[{mensagem_id, pasta_id, autor, texto}], erro}` (com teste de desserialização);
+  - na folha de pastas da conversa direta, com `recursos.ia` (o `RecursosRepositorio` que o resumo já usa) e pelo menos uma pasta, a seção "Sugestões da IA": "Sugerir pastas" / "Analisando...", consulta a cada 2 s até sair de `processando` (parar ao sair da conversa e descartar resposta de outra conversa), os textos de resultado, os cartões com ✓ (`PUT /pasta/mensagens`, que o repositório já tem, e tirar da lista) e ✕, e "Aceitar todas (N)" com uma chamada por pasta;
+  - as ignoradas no DataStore (ou Room) **por usuário e conversa**, sem repetir, até 2000, mandadas em `ignorar`;
+  - erros com a mensagem do servidor (textos de §6.1).
+- **ANX-19:** no `PlayerAudio`/`PlayerMedia3` (`core/media`), avisar o fim do áudio (`STATE_ENDED`) para a tela do chat tocar o próximo: o seguinte da mesma mensagem ou o primeiro da mensagem logo abaixo (a seguinte, mais nova), de quem for; parar se ela não tem áudio. Só no chat (não na pasta aberta nem nos anexos). Cada áudio que toca segue marcando `POST /mensagem/reproduzir` como hoje.
+- **CHA-27:** ver a interoperabilidade acima; o som de aguardar é opcional (§7).
+- **SIP-06:** fora do escopo do celular (administração).
+
+**IDs alterados**
+- **SIP-01 / SIP-02 / SIP-03 / SIP-05** (o SIP é da etapa 9, ainda não feito): **Achado:** o `ConversaApi` declara `incluirSip` (`PUT /sip`) e `alterarSip` (`PATCH /sip`), que **saíram do servidor** (sem uso no código hoje): tirar. O `SipDto` não tem `turn_server`, `turn_user` e `turn_password`: acrescentar (o `GET /sip` traz as senhas ao dono). Quando a etapa 9 for feita: tela Voip só de leitura ("Ramal SIP", os dados, a pílula de estado e "Reconectar"), sem cadastro pela pessoa; ICE do SIP = STUN `stun:stun.l.google.com:19302` + o TURN do PABX quando os três campos vierem (`iceTransportPolicy: all`), **não** o `GET /ice`; destino pela regra do `destinoSip` (com teste unitário; a regex entra no `RegexNoAndroidTest`).
+- **AUT-09 / GER-09 / CFG-08:** acrescentar `SIP = "sip"` ao `CodigoPermissao` (`core/model/.../Sistema.kt`) e o nome **"Configurar o SIP"** no `AcessosTela.kt#nomeDaPermissao` (hoje cai no `else` e mostra a descrição do servidor, "Configurar a telefonia (SIP) das pessoas", no grupo Administração — não quebra). A aba "Telefonia (SIP)" do painel da pessoa é administração: fora do escopo.
+- **CON-17 / GER-08:** a seção de sugestões (CON-18) entra na folha de pastas e depende de `recursos.ia`.
+- **CHA-01 / CHA-03 / CHA-04 / CHA-05 / CHA-07 / CHA-10 / CHA-25:** nada obrigatório (interoperabilidade acima); a melhoria opcional é publicar antes do `entrar`.
+- **CHA-11 / CHA-12:** opcional, `SCALE_ASPECT_FIT` em todos os tiles.
+- **ENV-29 / MSG-24:** não se aplica (sem clique direito; o Android seleciona por toque).
+- **ANX-10:** ver ANX-19.
+- **CFG-01 / CFG-11:** não se aplicam (estrutura e administração do web).
+
+**Pontos de atenção**
+- **WHEP 200 não é "atendeu":** a transmissão de quem recebe no web existe enquanto toca (muda). Atendeu é o 54 / "Entrou".
+- **Mesmo caminho, uma publicação:** web e celular da mesma pessoa disputam `call-<id>-u-<usuario>`; o Android já republica e reassina quando cai, mas o caso merece o teste manual descrito acima.
+- **Som de aguardar no web quando o outro lado é o Android:** é esperado com a ordem atual do `atender` (entrar e depois publicar); some com a melhoria opcional.
+- **`PUT`/`PATCH /sip` não existem mais:** não implementar a tela de cadastro do ramal no celular; tirar as duas funções do `ConversaApi`.
+- **Gravação do toque:** o MediaMTX grava a publicação muda de quem recebe no web, mesmo quando recusa (§5.8). Não afeta o Android, mas aumenta o volume de `gravacoes`.

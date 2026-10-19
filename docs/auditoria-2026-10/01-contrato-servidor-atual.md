@@ -1,8 +1,8 @@
 # Contrato atual do servidor Conversa (referência para o cliente Android Kotlin)
 
-> Auditoria de 2026-10-06. Fonte: repositório `conversa` (servidor Bun + Elysia), último commit lido 🆕 **`ac710eb`** ("Pastas de mensagens, localização e trajeto, espaço usado e ajustes de IA e acessos", 2026-10-16 22:48), atualizado a partir de `7f670c3`, em 2026-10-13 de `5cad911`/`779c8ed` (este só mexe no `bin/iniciar-desenvolvimento.bat`), em 2026-10-15 de `12cf0cf` (commits `6d20ff7` e `e25c4db`), em 2026-10-15 (noite) de `e25c4db` (commit `ef13c22`) e, 🆕 em 2026-10-16, de `ef13c22` (commit `ac710eb`). Migrações aplicadas até a versão 🆕 **56** (`migracoes/000.sql` … `056.sql`). Mudanças desde `7f670c3` estão marcadas com 🆕 (quando não é o `8031fa5`, o commit vem junto) e resumidas na §20.
+> Auditoria de 2026-10-06. Fonte: repositório `conversa` (servidor Bun + Elysia), último commit lido ~~🆕 **`ac710eb`** ("Pastas de mensagens, localização e trajeto, espaço usado e ajustes de IA e acessos", 2026-10-16 22:48)~~ 🆕 **`b104db8`** ("Sugestão de pasta pela IA para as mensagens que ainda não estão em pasta", 2026-10-18 15:51), atualizado a partir de `7f670c3`, em 2026-10-13 de `5cad911`/`779c8ed` (este só mexe no `bin/iniciar-desenvolvimento.bat`), em 2026-10-15 de `12cf0cf` (commits `6d20ff7` e `e25c4db`), em 2026-10-15 (noite) de `e25c4db` (commit `ef13c22`), 🆕 em 2026-10-16, de `ef13c22` (commit `ac710eb`) e, 🆕 em 2026-10-19, de `ac710eb` (commits `be17b8e`, `383eaaa` e `b104db8`, todos de 2026-10-18). Migrações aplicadas até a versão ~~🆕 **56** (`migracoes/000.sql` … `056.sql`)~~ 🆕 **57** (`migracoes/000.sql` … `057.sql`). Mudanças desde `7f670c3` estão marcadas com 🆕 (quando não é o `8031fa5`, o commit vem junto) e resumidas na §20.
 >
-> 🆕 Números de linha: as citações `arquivo:linha` sem 🆕 foram lidas em `7f670c3`/`5cad911`. Os commits de outubro (`b8ea0c2` … `e25c4db`) deslocaram as linhas de `rotas.ts`, `mensagens.ts`, `websocket.ts`, `chamadas.ts`, `conversas.ts`, `usuarios.ts`, `parametros.ts` e 🆕 `atividades.ts`; 🆕 o `ef13c22` deslocou de novo `rotas.ts`, `mensagens.ts`, `atividades.ts`, `usuarios.ts`, `permissoes.ts`, `chamadas.ts`, `conversas.ts`, `parametros.ts`, `esquemas.ts` e `docker-compose.yml`; 🆕 o `ac710eb` deslocou `rotas.ts`, `mensagens.ts`, `permissoes.ts`, `usuarios.ts`, `parametros.ts`, `esquemas.ts`, `websocket.ts`, `bots.ts`, `anexos.ts`, `ia.ts`, `resumos.ts`, `conhecimento.ts`, `configuracao.ts` e `conversas.ts` e criou `pastas.ts`. Nas partes novas, a referência é pelo nome da função (e, no `ac710eb`, também pela linha, quando ajuda).
+> 🆕 Números de linha: as citações `arquivo:linha` sem 🆕 foram lidas em `7f670c3`/`5cad911`. Os commits de outubro (`b8ea0c2` … `e25c4db`) deslocaram as linhas de `rotas.ts`, `mensagens.ts`, `websocket.ts`, `chamadas.ts`, `conversas.ts`, `usuarios.ts`, `parametros.ts` e 🆕 `atividades.ts`; 🆕 o `ef13c22` deslocou de novo `rotas.ts`, `mensagens.ts`, `atividades.ts`, `usuarios.ts`, `permissoes.ts`, `chamadas.ts`, `conversas.ts`, `parametros.ts`, `esquemas.ts` e `docker-compose.yml`; 🆕 o `ac710eb` deslocou `rotas.ts`, `mensagens.ts`, `permissoes.ts`, `usuarios.ts`, `parametros.ts`, `esquemas.ts`, `websocket.ts`, `bots.ts`, `anexos.ts`, `ia.ts`, `resumos.ts`, `conhecimento.ts`, `configuracao.ts` e `conversas.ts` e criou `pastas.ts`; 🆕 `be17b8e` … `b104db8` deslocaram `rotas.ts` (o `/ice` foi para a linha 329 e o `/sip` para a 333), `esquemas.ts`, `sip.ts`, `chamadas.ts` (`servidoresIce`, linha 640), `permissoes.ts` e `tabelas.ts`, tiraram `validarSipUsuario` de `autorizacao.ts` e criaram `sugestoesPastas.ts` (297 linhas). Nas partes novas, a referência é pelo nome da função (e, no `ac710eb` 🆕 e nos três commits seguintes, também pela linha, quando ajuda).
 >
 > Todas as referências `arquivo:linha` são relativas à raiz do repositório do servidor (`C:\Users\danie\Desktop\GIT\conversa-projeto\conversa`). Quando algo vem do cliente web de referência (`conversa-web`), isso é dito explicitamente: o servidor não define, a página é que usa assim.
 >
@@ -43,7 +43,7 @@
 |---|---|---|---|---|---|
 | `postgres` | postgres:15-alpine | 5432 | `127.0.0.1:5433` | Banco. `TZ: UTC` | `docker-compose.yml:31-46` |
 | `minio` | quay.io/minio/minio | 9000 (S3), 9001 (console) | `127.0.0.1:9000`, `127.0.0.1:9001` | Armazenamento dos anexos. Credenciais geradas em `/dados/minio-usuario` e `/dados/minio-senha` | `docker-compose.yml:52-79` |
-| `coturn` | coturn/coturn | 3478/tcp | `3478:3478/tcp` (pública) | TURN só TCP, sem TLS (TLS na borda em produção). IP fixo `172.30.0.10` na rede `conversa-rtc` | `docker-compose.yml:86-110`, `bin/coturn/turnserver.conf` |
+| `coturn` | coturn/coturn | 3478/tcp 🆕 `383eaaa` e 3478/udp | `3478:3478/tcp` 🆕 e `3478:3478/udp` (públicas, em todas as interfaces) | ~~TURN só TCP~~ 🆕 `383eaaa`: TURN sobre **UDP e TCP** na 3478 (saiu o `no-udp`), sem TLS (o TLS do TCP fica na borda em produção). Relay continua só por UDP e só até o MediaMTX. IP fixo `172.30.0.10` na rede `conversa-rtc` | `docker-compose.yml:86-110` (🆕 portas em `:104-105`), `bin/coturn/turnserver.conf` (🆕 escuta em `:13-17`) |
 | `mediamtx` | `bin/mediamtx/Dockerfile` (bluenviron/mediamtx:1.16.2) | 8889 (WebRTC HTTP), 8189/udp (mídia, interna) | `127.0.0.1:8889` | Servidor WebRTC (WHIP/WHEP) e gravação das chamadas. IP fixo `172.30.0.20` | `docker-compose.yml:116-130`, `bin/mediamtx/mediamtx.docker.yml` |
 | 🆕 `ef13c22` `qdrant` | qdrant/qdrant:v1.13.6 | 6333 (HTTP) | `127.0.0.1:6333` | Banco de vetores da **base de conhecimento dos bots** (§13.9): os trechos dos documentos com os embeddings. A API grava e busca por HTTP (`CONVERSA_QDRANT`); o painel fica em `/dashboard`. O cliente não fala com ele | `docker-compose.yml:136-146` (em `ef13c22`) |
 | `api` | Bun + Elysia | 8080 (HTTP + WebSocket) | `127.0.0.1:8080` | API REST em `/api` e WebSocket em `/ws/`. 🆕 `ef13c22`: depende também do `qdrant` (`service_started`) | `docker-compose.yml:134-160`, `src/servidor.ts:31` |
@@ -66,13 +66,13 @@ Todas as URLs são relativas à origem que o cliente usou (ex.: `https://192.168
 | `/storage/*` | `minio:9000/` (prefixo removido) | URLs pré-assinadas do MinIO; upload até 1024 MB; `Content-Security-Policy: sandbox` (exceto PDF) | `bin/nginx/nginx.conf:121-133`, `src/minio.ts:7`, `:33-46` |
 | `/webrtc/*` | `mediamtx:8889/` (prefixo removido) | WHIP/WHEP do MediaMTX. Sem autenticação | `bin/nginx/nginx.conf:135-140` |
 | `/` | Vite (dev) ou `bin/web` (prod) | Página web (SPA). Figurinhas Lottie em `/figurinhas/<pacote>/<nome>.json` (servidas pela página, ver §10.6) | `bin/nginx/desenvolvimento/pagina.conf`, `bin/nginx/producao/pagina.conf` |
-| TURN | `turn:<host>:3478?transport=tcp` (dev) ou `turns:<host>:<CONVERSA_TURN_PORTA>?transport=tcp` (prod) | Fora do nginx: dev vai direto ao coturn; prod passa pela borda com TLS | `src/chamadas.ts:576-594`, `SETUP.md:91-95,130` |
+| TURN | ~~`turn:<host>:3478?transport=tcp` (dev) ou `turns:<host>:<CONVERSA_TURN_PORTA>?transport=tcp` (prod)~~ 🆕 `383eaaa`: primeiro `turn:<host>:3478?transport=udp` (dev e prod), depois `turn:<host>:3478?transport=tcp` (dev) ou `turns:<host>:<CONVERSA_TURN_PORTA>?transport=tcp` (prod) | Fora do nginx: dev vai direto ao coturn; prod: o TCP passa pela borda com TLS e o 🆕 UDP vai **direto** (sem TLS) para `IP_DA_MAQUINA:3478`, se o firewall repassar (§9.5) | `src/chamadas.ts:576-594` (🆕 `:640-661`), `SETUP.md:91-95,130` (🆕 `:102`) |
 | Gravações | **não expostas** | Ficam no volume `conversa-gravacoes`; nenhum endpoint as serve | `README`/`SETUP.md:197-210` |
 
 ### 1.3 Desenvolvimento x produção, TLS
 
 - **Desenvolvimento**: o nginx escuta em **443 com TLS** usando `bin/cert/cert.pem`/`key.pem`, gerados pelo `bin/setup-cert.bat` com **mkcert** (`bin/nginx/desenvolvimento/servidor.conf:1-7`, `SETUP.md:52`). HTTP na 443 recebe redirect 301 para HTTPS. O Android precisa confiar na CA raiz do mkcert (ex.: `network_security_config` com CA do usuário/da app em build de debug). A página vem do Vite.
-- **Produção**: o nginx escuta em **80 sem TLS**; uma borda (nginx externo) termina o TLS e repassa com `X-Forwarded-Proto: https` (`bin/nginx/producao/servidor.conf`, `SETUP.md:101-130`). Para chamadas, a borda também precisa de uma porta TCP pública com TLS repassada para `:3478` (`CONVERSA_TURN_PORTA`, ex.: 8443) — `SETUP.md:91-95`.
+- **Produção**: o nginx escuta em **80 sem TLS**; uma borda (nginx externo) termina o TLS e repassa com `X-Forwarded-Proto: https` (`bin/nginx/producao/servidor.conf`, `SETUP.md:101-130`). Para chamadas, a borda também precisa de uma porta TCP pública com TLS repassada para `:3478` (`CONVERSA_TURN_PORTA`, ex.: 8443) — `SETUP.md:91-95`. 🆕 `383eaaa`: o `SETUP.md` pede também liberar a **3478 UDP** no firewall, com repasse direto para `IP_DA_MAQUINA:3478` (sem TLS); sem isso o UDP anunciado no `GET /ice` não conecta e fica o TCP (§9.5, S41 do doc 08).
 - O protocolo usado nas URLs geradas vem de `X-Forwarded-Proto` (padrão `https` se ausente) — `src/contexto.ts:10`. O nginx passa `$proto_original` (`bin/nginx/nginx.conf:35-38`, `:93`).
 - Variáveis de ambiente da API: `CONVERSA_SERVER`, `CONVERSA_PORT`, `CONVERSA_DATABASE`, `CONVERSA_USERNAME`, `CONVERSA_PASSWORD`, `CONVERSA_PORTA_HTTP` (8080), `CONVERSA_S3_INTERNO`, `CONVERSA_TURN_PORTA`, `CONVERSA_DADOS` (`/dados`), `CONVERSA_GRAVACOES` (`/gravacoes`) — `src/configuracao.ts:57-86`. 🆕 `ef13c22`: + `CONVERSA_QDRANT` (padrão `http://127.0.0.1:6333`; no compose, `http://qdrant:6333`) — `configuracao.ts` (`definirAmbiente`).
 
@@ -207,11 +207,13 @@ Validação (`src/esquemas.ts:1-14`):
 
 ## 4. Tabela de TODAS as rotas REST
 
-Prefixo `/api` em todas (`src/rotas.ts:28`). "Token" = exige `Authorization: Bearer`. Total: ~~82 rotas (2 públicas + 80 autenticadas)~~ ~~🆕 `ef13c22`: **109 rotas** (3 públicas + 106 autenticadas)~~ 🆕 `ac710eb`: **119 rotas** em `src/rotas.ts` (**3 públicas + 116 autenticadas**; as 5 de enquete 🆕 estão como 65–69, as 13 de outubro 🆕 `b8ea0c2`/`ea02f57`/`12cf0cf`/`6d20ff7` como 70–82, na ordem dos commits, as 27 do 🆕 `ef13c22` como 83–109 e as 10 do 🆕 `ac710eb` como 110–119, as duas levas na ordem de `rotas.ts`), mais a documentação `/api/docs` e `/api/docs/json` (públicas, do plugin OpenAPI) e o WebSocket `/ws/`. Linhas que mudaram de comportamento em outubro têm 🆕 e o commit no `#`.
+Prefixo `/api` em todas (`src/rotas.ts:28`). "Token" = exige `Authorization: Bearer`. Total: ~~82 rotas (2 públicas + 80 autenticadas)~~ ~~🆕 `ef13c22`: **109 rotas** (3 públicas + 106 autenticadas)~~ ~~🆕 `ac710eb`: **119 rotas** em `src/rotas.ts` (**3 públicas + 116 autenticadas**)~~ 🆕 `b104db8`: **122 rotas** em `src/rotas.ts` (**3 públicas + 119 autenticadas**; as 5 de enquete 🆕 estão como 65–69, as 13 de outubro 🆕 `b8ea0c2`/`ea02f57`/`12cf0cf`/`6d20ff7` como 70–82, na ordem dos commits, as 27 do 🆕 `ef13c22` como 83–109 e as 10 do 🆕 `ac710eb` como 110–119, as duas levas na ordem de `rotas.ts`; 🆕 as 3 do `be17b8e` como 120–122 e as 2 do `b104db8` como 123–124; as linhas **63–64** (`PUT`/`PATCH /sip`) ficam riscadas, com o número, porque as rotas saíram no `be17b8e`), mais a documentação `/api/docs` e `/api/docs/json` (públicas, do plugin OpenAPI) e o WebSocket `/ws/`. Linhas que mudaram de comportamento em outubro têm 🆕 e o commit no `#`.
 
 🆕 `ef13c22` **Permissões de uso:** a partir deste commit, várias rotas do chat respondem **403** quando falta ao usuário a permissão de uso correspondente (coluna "Permissão / regra"; lista completa em §13.1). Fora do modo aberto, toda conta tem todas as de uso até um administrador retirar; bots começam só com `emoji`, `responder` e `reagir`.
 
 🆕 `ac710eb` **Resumo do commit para esta tabela:** 10 rotas novas (110–119: espaço usado, 7 de pastas, ferramentas embutidas e teste dos embeddings); a permissão de administração `usuarios` deixou de existir (o que ela liberava passou para `permissoes`); a de uso `localizacao` é nova; e há dois eventos novos, **WS 66** (contatos mudaram, a todas as conexões) e **WS 67** (pastas mudaram).
+
+🆕 `be17b8e` · `383eaaa` · `b104db8` **Resumo dos commits para esta tabela:** 5 rotas novas e 2 removidas (total 119 → **122**). (1) `be17b8e` (migração 057): o ramal SIP de cada pessoa passa a ser configurado **só pelo administrador**, com a permissão de administração nova **`sip`** (quem tinha `permissoes` ganhou): **`GET`, `PUT` e `DELETE /sip/usuario`** (linhas 120–122); **`PUT /sip` e `PATCH /sip` saíram** (linhas 63–64, agora 404); o ramal ganha o TURN próprio do PABX (`turn_server`, `turn_user`, `turn_password`), que o `GET /sip` (linha 62) devolve ao dono, com as senhas; ao administrador as senhas nunca voltam (só `tem_senha`/`tem_senha_turn`). (2) `383eaaa`: sem rota nova; o **`GET /ice`** (linha 61) passa a mandar `urls` como **array**, com o TURN **UDP** primeiro e o TCP (ou o `turns` da borda) depois, e o coturn passa a aceitar UDP. (3) `b104db8`: **`POST /pastas/sugerir`** e **`GET /pastas/sugestao`** (linhas 123–124), a sugestão de pasta pela IA (§10.17.1), em segundo plano e na memória por 30 min, como o resumo. **Nenhum evento WebSocket novo** e nenhuma das rotas novas ou mudadas dispara WebSocket ou push (conferido: `sip.ts` e `sugestoesPastas.ts` não importam nada de `websocket.ts`).
 
 Legenda de efeitos: **WS n** = evento WebSocket tipo n (§6.4); **FCM** = push.
 
@@ -277,10 +279,10 @@ Legenda de efeitos: **WS n** = evento WebSocket tipo n (§6.4); **FCM** = push.
 | 58 | GET | `/chamadas/pendentes` | token | – | – | chamadas tocando para o usuário (§9.6) | – | – | `rotas.ts:194` |
 | 59 🆕 `a40fd47` | GET | `/chamadas` | token | `participante=0`, `de=''`, `ate=''` | – | histórico (§9.7) — 🆕 com `conversa_chat_id` | – | – | `rotas.ts:196` |
 | 60 🆕 `6d20ff7` `ef13c22` | POST | `/chamada/video` | token | – | `id` | `{}` | participante (404); 🆕 `ef13c22` permissão `chamada_video` (403, depois do 404) | **WS 56** aos outros participantes; 🆕 grava `chamada.tipo = 2` se era 1 (áudio que ganhou vídeo vira vídeo na mensagem e no histórico, §9.2) | `rotas.ts:198` |
-| 61 | GET | `/ice` | token | – | – | `{iceServers, iceTransportPolicy}` | – | – | `rotas.ts:203` |
-| 62 🆕 `ef13c22` | GET | `/sip` | token | – | – | linha `sip` ou `{}` — 🆕 `{}` também sem a permissão `telefonia` | – | – | `rotas.ts:207` |
-| 63 🆕 `ef13c22` | PUT | `/sip` | token | – | §14 | linha `sip` | 🆕 `telefonia` (403) | – | `rotas.ts:209` |
-| 64 🆕 `ef13c22` | PATCH | `/sip` | token | – | `id` + campos | linha `sip` | dono (403); 🆕 `telefonia` (403) | – | `rotas.ts:211` |
+| 61 🆕 `383eaaa` | GET | `/ice` | token | – | – | `{iceServers, iceTransportPolicy}` — 🆕 `383eaaa`: `iceServers[].urls` passou de string a **array** `[turn:…:3478?transport=udp, turn:…:3478?transport=tcp \| turns:…:<porta>?transport=tcp]` (§9.5) | – | – | `rotas.ts:203` (🆕 `:329`), `chamadas.ts:640-661` |
+| 62 🆕 `ef13c22` `be17b8e` | GET | `/sip` | token | – | – | linha `sip` ou `{}` — 🆕 `{}` também sem a permissão `telefonia`; 🆕 `be17b8e` com `turn_server`, `turn_user` e `turn_password` (a senha do TURN em texto puro, como a do ramal) | – | – | `rotas.ts:207` (🆕 `:333`), `sip.ts:12-34` |
+| 63 🆕 `ef13c22` 🆕 `be17b8e` **(removida)** | ~~PUT~~ | ~~`/sip`~~ | ~~token~~ | – | ~~§14~~ | ~~linha `sip`~~ | ~~🆕 `telefonia` (403)~~ 🆕 `be17b8e`: **a rota não existe mais** → 404 `Rota PUT:/api/sip não encontrada`; a pessoa não cadastra o próprio ramal: o administrador usa a linha 121 | – | ~~`rotas.ts:209`~~ |
+| 64 🆕 `ef13c22` 🆕 `be17b8e` **(removida)** | ~~PATCH~~ | ~~`/sip`~~ | ~~token~~ | – | ~~`id` + campos~~ | ~~linha `sip`~~ | ~~dono (403); 🆕 `telefonia` (403)~~ 🆕 `be17b8e`: **a rota não existe mais** → 404 `Rota PATCH:/api/sip não encontrada` (`validarSipUsuario` saiu de `autorizacao.ts`) | – | ~~`rotas.ts:211`~~ |
 | 65 🆕 (`8031fa5`) 🆕 `ef13c22` | PUT | `/enquete` | token | – | `conversa_id`, `pergunta` (≤ 300), `opcoes: string[]` (2–12, cada ≤ 200), `multipla: bool` | mensagem criada + `enquete_id` | membro; 🆕 `ef13c22` `votacao` (403); **só grupo** (400) | cria a mensagem tipo 8 (WS 2, push, WS 3 como uma mensagem normal) | `rotas.ts` (`8031fa5`), `enquetes.ts:12-45` |
 | 66 🆕 | GET | `/enquete` | token | `id` | – | `Enquete` (§10.13) | membro da conversa (403); 404 | – | `enquetes.ts:54-78` |
 | 67 🆕 | POST | `/enquete/votar` | token | – | `enquete_id`, `opcoes: int[]` (≤ 12; vazio tira o voto) | `Enquete` (§10.13) | membro; escolha única aceita 1 (400) | **WS 62** a **todos** os membros (inclusive quem votou) | `enquetes.ts:82-116` |
@@ -336,8 +338,13 @@ Legenda de efeitos: **WS n** = evento WebSocket tipo n (§6.4); **FCM** = push.
 | 117 🆕 `ac710eb` | DELETE | `/pasta/mensagens` | token | – | **corpo JSON** `pasta_id`, `mensagens: int[]` (1..500) | `{pasta_id, tiradas}` | quem enxerga a pasta (404/403) | **WS 67** `acao: "tirar"` | `rotas.ts:223`, `pastas.ts:165-174` (`tirarMensagensPasta`) |
 | 118 🆕 `ac710eb` | GET | `/ferramentas/embutidas` | token | – | – | `[{nome, descricao, origem, parametros, definicao}]` (§13.11) | `ferramentas` (403) | – | `rotas.ts:272`, `bots.ts:635-650` (`ferramentasEmbutidas`) |
 | 119 🆕 `ac710eb` | POST | `/parametros/ia/testar-embeddings` | token | – | `url`, `url_ia`, `modelo`, `token?` | `{ok, dimensoes, erro, milissegundos}` (§13.10) | `parametros` (403); endereço sem http/https (400) | chama o servidor de embeddings (até 60 s) | `rotas.ts:286`, `parametros.ts:117-132` (`testarEmbeddings`) |
+| 120 🆕 `be17b8e` | GET | `/sip/usuario` | token | `usuario_id` | – | ramal da pessoa na visão do administrador (§14): `{id, usuario_id, sip_user, auth_user, display_name, domain, ws_server, turn_server, turn_user, ativo, tem_senha, tem_senha_turn, criado_em, criado_por}`, **sem as senhas**; `{}` sem ramal (e também para conta inexistente) | `sip` (403 `Acesso negado!`) | – | `rotas.ts:335`, `sip.ts:39-59` (`sipDoUsuario`) |
+| 121 🆕 `be17b8e` | PUT | `/sip/usuario` | token | – | `usuario_id`, `sip_user`, `domain`, `ws_server` (obrigatórios); `auth_user?`, `sip_password?`, `display_name?`, `turn_server?`, `turn_user?`, `turn_password?` (`string\|null`); `ativo?: bool` | o mesmo objeto do `GET /sip/usuario`, já salvo | `sip` (403); campo inválido (400, mensagens em §14); conta inexistente (404 `Usuário não encontrado.`); ramal novo sem senha (400 `Informe a senha do ramal.`) | cria ou altera (um ramal por pessoa); senha vazia mantém a salva; sem TURN, a senha do TURN sai; **sem WebSocket** ao dono | `rotas.ts:337`, `sip.ts:63-115` (`conferirRamal`, `salvarSipDoUsuario`) |
+| 122 🆕 `be17b8e` | DELETE | `/sip/usuario` | token | `usuario_id` | – | `{}` (sempre, mesmo sem ramal ou com conta inexistente) | `sip` (403) | apaga o ramal; **sem WebSocket** | `rotas.ts:339`, `sip.ts:117-121` (`excluirSipDoUsuario`) |
+| 123 🆕 `b104db8` | POST | `/pastas/sugerir` | token | – | `conversa_id`, `ignorar?: int[]` (≤ 2000; `null` não) | `{id, conversa_id, status, analisadas, sugestoes, erro}` (§10.17.1) | membro (403); IA desligada (400); nenhuma pasta que a pessoa enxergue na conversa (400 `Crie uma pasta antes de pedir sugestões.`; em grupo também) | gera em segundo plano (memória, 30 min; IA até 5 min); nada a analisar → `concluido` na hora, sem chamar a IA; pedido igual em andamento → o mesmo `id`; **não** põe nada na pasta | `rotas.ts:226`, `sugestoesPastas.ts:84-116` (`pedirSugestoes`) |
+| 124 🆕 `b104db8` | GET | `/pastas/sugestao` | token | `id` (uuid) | – | o mesmo objeto (§10.17.1) | só quem pediu; vencida, inexistente ou perdida num reinício (404 `Sugestão não encontrada (pode ter expirado). Peça de novo.`) | – | `rotas.ts:228`, `sugestoesPastas.ts:118-124` (`consultarSugestoes`) |
 
-Todas as rotas de `src/rotas.ts` estão na tabela acima; nenhuma foi omitida (~~🆕 conferido em `e25c4db`: 82 chamadas `.get/.post/.put/.patch/.delete`~~ ~~🆕 conferido em `ef13c22`: **109** chamadas, 27 a mais que as 82 de `e25c4db`~~ 🆕 conferido em `ac710eb` por script: **119** chamadas `.get/.post/.put/.patch/.delete`, as 109 de `ef13c22` mais as 10 novas; nenhuma rota saiu).
+Todas as rotas de `src/rotas.ts` estão na tabela acima; nenhuma foi omitida (~~🆕 conferido em `e25c4db`: 82 chamadas `.get/.post/.put/.patch/.delete`~~ ~~🆕 conferido em `ef13c22`: **109** chamadas, 27 a mais que as 82 de `e25c4db`~~ ~~🆕 conferido em `ac710eb` por script: **119** chamadas `.get/.post/.put/.patch/.delete`, as 109 de `ef13c22` mais as 10 novas; nenhuma rota saiu~~ 🆕 conferido em `b104db8` por script: `grep -cE "^\s*\.(get|post|put|patch|delete)\(" src/rotas.ts` dá **122** (e **119** no `git show ac710eb:src/rotas.ts`): as 119 de `ac710eb`, menos `PUT`/`PATCH /sip` (2 que saíram), mais `GET`/`PUT`/`DELETE /sip/usuario` e `POST /pastas/sugerir`/`GET /pastas/sugestao` (5 novas). As públicas continuam 3).
 
 ---
 
@@ -386,16 +393,16 @@ Ver §8.
 Ver §9.
 
 ### 5.6 Permissões, parâmetros, atividades, SIP
-Ver §13, §12, §14.
+Ver §13, §12, §14. 🆕 `be17b8e`: o ramal SIP passou a ser do administrador (permissão `sip`, rotas `/sip/usuario`), §14.
 
 ### 5.7 🆕 IA (resumo e sugestão), recursos
-Ver §13.3–§13.6.
+Ver §13.3–§13.6. 🆕 `b104db8`: sugestão de pasta pela IA em §10.17.1.
 
 ### 5.8 🆕 Bots de IA, ferramentas externas e base de conhecimento (`ef13c22`)
 Ver §13.7–§13.9. Cadastro pelo administrador: §2.6. 🆕 `ac710eb`: servidor de embeddings próprio e teste em §13.10; ferramentas embutidas em §13.11.
 
 ### 5.9 🆕 Pastas, localização e espaço usado (`ac710eb`)
-Pastas de mensagens: §10.17. Localização e trajeto (conteúdo tipo 9): §10.16. Espaço usado: §8.7.
+Pastas de mensagens: §10.17 (🆕 `b104db8`: sugestão de pasta pela IA em §10.17.1). Localização e trajeto (conteúdo tipo 9): §10.16. Espaço usado: §8.7.
 
 ---
 
@@ -434,6 +441,8 @@ Erros de leitura (`src/websocket.ts:60-68`):
 > 🆕 `ef13c22`: **nenhum tipo novo**; o `websocket.ts` não mudou. Mudaram só os gatilhos de tipos que já existiam: o **61** sai em mais situações (atividades pendentes, §12) e o **4** ("digitando") também vem de **bots** enquanto pensam (§13.7). Mensagens de bots geram WS 2, 3 e 61 como as de qualquer pessoa.
 >
 > 🆕 `ac710eb`: **dois tipos novos**, os dois só servidor → cliente: **66** `ContatosAtualizados` (`websocket.ts:31-32`, `notificarContatos` em `:219-224`) e **67** `PastasAtualizadas` (`websocket.ts:33-35`, `notificarPastas` em `:215-217`). Payloads em §6.6. Os outros tipos não mudaram (a mensagem de localização gera WS 2/3/61 como qualquer mensagem).
+>
+> 🆕 `be17b8e` … `b104db8`: **nenhum tipo novo** e o `websocket.ts` não mudou. As rotas novas (`/sip/usuario`, `/pastas/sugerir`, `/pastas/sugestao`) **não mandam nenhum evento**; aceitar uma sugestão de pasta é o `PUT /pasta/mensagens`, com o WS 67 de sempre.
 
 | Nome | Valor | Direção |
 |---|---|---|
@@ -760,17 +769,31 @@ Implicações para o cliente:
 
 `src/chamadas.ts:562-594`, `tests/configuracao.test.ts:172-197`.
 
+~~Formato até `ac710eb`:~~
+
 ```json
 {
   "iceServers": [ { "urls": "turns:meu.dominio:8443?transport=tcp", "username": "1791234567:7", "credential": "base64(HMAC-SHA1)" } ],
   "iceTransportPolicy": "relay"
 }
 ```
-- `urls` é **string** (não array). Dev: `turn:<host>:3478?transport=tcp`; prod: `turns:<host>:<CONVERSA_TURN_PORTA>?transport=tcp`. `<host>` = hostname do `Host` da requisição.
+
+🆕 `383eaaa` (`chamadas.ts:640-661`, `tests/configuracao.test.ts:172-197`) — formato atual, produção com `CONVERSA_TURN_PORTA=8443`:
+
+```json
+{
+  "iceServers": [ { "urls": [ "turn:meu.dominio:3478?transport=udp", "turns:meu.dominio:8443?transport=tcp" ],
+                    "username": "1791234567:7", "credential": "base64(HMAC-SHA1)" } ],
+  "iceTransportPolicy": "relay"
+}
+```
+
+- ~~`urls` é **string** (não array). Dev: `turn:<host>:3478?transport=tcp`; prod: `turns:<host>:<CONVERSA_TURN_PORTA>?transport=tcp`.~~ 🆕 `383eaaa`: `urls` é **array** de 2 strings, sempre nesta ordem: (1) `turn:<host>:3478?transport=udp` (dev **e** prod, sem TLS, direto no coturn); (2) dev: `turn:<host>:3478?transport=tcp`; prod: `turns:<host>:<CONVERSA_TURN_PORTA>?transport=tcp`. Continua **um** item em `iceServers`, com a mesma credencial para os dois endereços. `<host>` = hostname do `Host` da requisição.
+- 🆕 `383eaaa` O coturn escuta UDP e TCP na 3478 (`turnserver.conf:13-17`, saiu o `no-udp`) e o compose publica `3478:3478/udp` (`docker-compose.yml:105`). Em produção, o UDP **não passa pela borda**: o firewall precisa repassar a 3478 UDP direto para a máquina (`SETUP.md:102`). Sem esse caminho (firewall fechado, rede que barra UDP, ou o Tailscale Funnel, que só repassa TCP), o candidato UDP não sai e vale o TCP; quem espera a coleta terminar sem trickle (o web e o Android, ambos até **5 s**) pode esperar o limite inteiro (S41 do doc 08). O comentário do servidor diz que o UDP vem primeiro "para o áudio não atrasar" (sem retransmissão e bloqueio em fila do TCP).
 - Credencial temporária do coturn (`use-auth-secret`): `username = "<expira_unix>:<usuario_id>"` com validade **1 hora**; `credential = base64(HMAC-SHA1(segredo, username))`. Pedir de novo a cada chamada.
 - `iceTransportPolicy`: `"relay"` se o parâmetro `turn_forcar_relay = '1'` (padrão da migração 023), senão `"all"`.
 - Sem segredo do TURN (fora do Docker): `{"iceServers":[],"iceTransportPolicy":"all"}`.
-- **Na prática a mídia só funciona por relay**: o MediaMTX anuncia apenas o IP do container (172.30.0.20), alcançável somente pelo coturn (`bin/mediamtx/mediamtx.docker.yml:20-24`); o coturn só aceita TCP do cliente e só retransmite (UDP) para o MediaMTX (`bin/coturn/turnserver.conf:15-17,36-41`). Use `iceTransportPolicy = RELAY` sempre, e TURN sobre TCP/TLS.
+- **Na prática a mídia só funciona por relay**: o MediaMTX anuncia apenas o IP do container (172.30.0.20), alcançável somente pelo coturn (`bin/mediamtx/mediamtx.docker.yml:20-24`); o coturn ~~só aceita TCP do cliente e~~ só retransmite (UDP) para o MediaMTX (`bin/coturn/turnserver.conf:15-17,36-41`; 🆕 `383eaaa`: o coturn passa a aceitar do cliente UDP **e** TCP, e o relay continua só UDP e só até o MediaMTX, `:33-41`). Use `iceTransportPolicy = RELAY` sempre, e ~~TURN sobre TCP/TLS~~ 🆕 passe **todos** os `urls` ao `IceServer` (UDP primeiro, TCP/TLS de reserva).
 
 ### 9.6 Chamadas pendentes — `GET /api/chamadas/pendentes`
 
@@ -1247,7 +1270,7 @@ Resposta: uma linha por conversa que tenha mensagem **de outra pessoa**, já vis
   - `mensagens` = **todas** as linhas de `pasta_mensagem` da pasta, sem filtro: conta mensagens **ocultas** e agendadas da outra pessoa que ainda não saíram, e pode ser maior que o que `GET /pasta/mensagens` devolve (pegadinha 90).
 - **Quem vê:** o dono, sempre; a outra pessoa da conversa, só se `compartilhada`. Pasta que a pessoa não enxerga → **404** `Pasta não encontrada!`; pasta visível de uma conversa da qual a pessoa saiu → **403** `Acesso negado!` (`lerPasta`, `pastas.ts:48-59`).
 - **Quem muda:** só o dono renomeia, troca a cor, liga/desliga o compartilhamento e exclui; a outra pessoa leva 403 `Só quem criou a pasta pode mudá-la.` (`lerPastaDoDono`). Na **compartilhada**, os **dois** põem e tiram mensagens, inclusive as que o outro pôs.
-- **Rotas** (linhas 111–117 da §4):
+- **Rotas** (linhas 111–117 da §4; 🆕 `b104db8`: e as sugestões da IA, 123–124, §10.17.1):
   - `GET /api/pastas?conversa=N` → `PastaResposta[]` (as próprias e as compartilhadas pela outra pessoa), por `lower(nome), id`, sem paginação. Não membro → 403. Em grupo → `[]`.
   - `PUT /api/pasta` `{ conversa_id, nome, cor?, compartilhada? }` → `PastaResposta` com `mensagens: 0`. Erros, nesta ordem: 403 `Acesso negado!` (não membro); 400 `Pastas só existem nas conversas diretas.`; 400 `Informe o nome da pasta.` (vazio ou só espaços); 400 `O nome da pasta pode ter até 60 caracteres.` (depois do `trim`); 400 `Cada pessoa pode ter até 50 pastas por conversa.` (contam só as que a pessoa criou naquela conversa). O nome é gravado com `trim`; nomes repetidos são aceitos.
   - `PATCH /api/pasta` `{ id, nome?, cor?, compartilhada? }` → `PastaResposta` com a contagem atual. Só o que vem muda (`cor: ""` tira a cor); sem nada, responde e avisa do mesmo jeito. Deixar de compartilhar: a outra pessoa deixa de ver a pasta, e as mensagens que ela pôs **continuam** lá para o dono.
@@ -1265,6 +1288,41 @@ Resposta: uma linha por conversa que tenha mensagem **de outra pessoa**, já vis
 - **Aviso:** **WS 67** (§6.6) ao criar, alterar e excluir pasta e ao pôr ou tirar mensagens; compartilhada → os dois membros (inclusive quem fez), privada → só o dono. Recarregue `GET /pastas` e as marcas.
 - **O que não avisa nem limpa:** ocultar uma mensagem (ela continua nas pastas); apagar uma agendada antes de sair (sai das pastas pelo cascade, sem aviso); sair da conversa (as pastas continuam; a pessoa que saiu passa a levar 403, e uma pasta compartilhada dela continua visível e editável para quem ficou, mas ninguém mais a renomeia ou exclui).
 - **Limites:** nome até 60; cor até 20; 50 pastas por pessoa por conversa; até 500 ids por chamada de pôr/tirar; sem limite de mensagens por pasta. Não há rota de pastas de todas as conversas.
+- 🆕 `b104db8` **Sugestão de pasta pela IA:** §10.17.1 (linhas 123–124 da §4).
+
+#### 10.17.1 🆕 Sugestão de pasta pela IA — `POST /api/pastas/sugerir` e `GET /api/pastas/sugestao` (`b104db8`)
+
+`sugestoesPastas.ts` (inteiro, 297 linhas: `pedirSugestoes` `:84-116`, `consultarSugestoes` `:118-124`, `pastasComExemplos` `:178-215`, `mensagensSemPasta` `:219-255`, `lerSugestoes` `:278-297`); esquema `sugerirPastas` (`esquemas.ts:172`; o GET reaproveita o `consultarResumo`, `:170`); rotas `rotas.ts:226-228`. Testes: `tests/sugestoesPastas.test.ts`. No web: "Sugerir pastas" no pé do painel de pastas (`conversa-web` `57bd9f0`, `src/stores/pastas.ts`).
+
+- **O que é:** quando a pessoa pede, a IA olha as mensagens recentes da conversa que ainda não estão em nenhuma pasta que ela enxerga e diz, pelo assunto, em qual pasta cada uma combina. **Nada entra na pasta sozinho**: a pessoa confirma com `PUT /pasta/mensagens` (§10.17) ou ignora. Como o resumo (§13.5): assíncrono, em segundo plano, só na memória, por 30 min.
+- **Quem pode:** qualquer membro da conversa (não há permissão de uso para isso). Exige a IA configurada (`GET /recursos` → `ia: true`) e ao menos **uma pasta** que a pessoa enxergue na conversa (dela ou compartilhada pela outra pessoa).
+- **Pedir** — `POST /api/pastas/sugerir`:
+  ```json
+  { "conversa_id": 42, "ignorar": [1201, 1205] }
+  ```
+  - `ignorar` (opcional; até **2000** ids; `null` ou mais de 2000 → 400 de validação): mensagens que a pessoa já dispensou e que não devem voltar. O servidor **não guarda** essa lista: o cliente manda a cada pedido. O web guarda no navegador, por pessoa e conversa (`conversa.sugestoesIgnoradas.<usuário>.<conversa>`, as últimas 2000). Ids de outra conversa ou inexistentes não dão erro.
+  - Erros, nesta ordem: 403 `Acesso negado!` (não membro, ou `conversa_id` ≤ 0); 400 `IA não configurada: defina o endereço e o modelo nas configurações do sistema.`; 400 `Crie uma pasta antes de pedir sugestões.` (nenhuma pasta visível; num **grupo** é sempre este, porque grupo não tem pasta). Entre a IA e a pasta: se já há um pedido **em andamento** da mesma pessoa para a mesma conversa, a resposta é esse pedido (mesmo `id`, sem olhar o `ignorar` novo).
+- **Consultar** — `GET /api/pastas/sugestao?id=<uuid>`, até `status` sair de `"processando"` (o web consulta a cada **2 s**). Outro usuário, id inexistente, vencido ou perdido num reinício da API → 404 `Sugestão não encontrada (pode ter expirado). Peça de novo.`; sem `id` → 400 de validação.
+- **Resposta (as duas rotas)**, nesta ordem de chaves (`resposta`, `sugestoesPastas.ts:79-82`):
+  ```json
+  { "id": "6f1d2c9e-2b7a-4c1e-9a55-0d4f3b8e7a10", "conversa_id": 42, "status": "concluido", "analisadas": 3,
+    "sugestoes": [
+      { "mensagem_id": 1203, "pasta_id": 7, "autor": "Bruno Souza", "texto": "A nota fiscal do fornecedor chegou" },
+      { "mensagem_id": 1207, "pasta_id": 9, "autor": "Ana Lima", "texto": "Reservei o hotel em Recife" } ],
+    "erro": "" }
+  ```
+  - `status`: `"processando"` | `"concluido"` | `"erro"`. O `POST` quase sempre volta `"processando"` com `sugestoes: []`; volta `"concluido"` na hora, sem chamar a IA, quando não há nenhuma mensagem para analisar (`analisadas: 0`).
+  - `analisadas` = quantas mensagens foram mandadas à IA (não o total da conversa; até 80).
+  - `sugestoes`: no máximo **uma** por mensagem (a primeira válida que a IA deu), **só** com ids de mensagens que foram mandadas e de pastas que a pessoa enxerga (o resto que a IA inventar é descartado), **na ordem das mensagens na conversa** (mais antiga primeiro). Mensagem sem sugestão não aparece. `autor` = nome completo (`usuario.nome`; não é o primeiro nome do `remetente` de `MensagemResposta`); `texto` = prévia do texto que foi para a IA (abaixo), não o `conteudo` cru: até **200** caracteres, e quando corta o 200º é `…`.
+  - `erro`: `""`, ou o motivo com `status: "erro"`: `O servidor de IA demorou demais para responder.` (limite de **5 min**, `ia.ts`, `TEMPO_LIMITE_MS`), `Não foi possível falar com o servidor de IA (<detalhe>).`, `O servidor de IA respondeu <status>: <até 300 caracteres>`, `O servidor de IA não devolveu texto.` ou `A resposta da IA não veio no formato esperado.`
+- **O que vai para a IA:**
+  - **pastas:** as que a pessoa enxerga na conversa (as dela e as compartilhadas), por `lower(nome), id`, cada uma com o nome e até **5** exemplos (as últimas mensagens da pasta pela data, sem ocultas e sem agendadas alheias que não saíram), cada exemplo até **300** caracteres; pasta sem exemplo (vazia, ou só com figurinhas e chamadas) vai como "(ainda sem mensagens)";
+  - **mensagens:** as **80** mais recentes (`coalesce(visivel_em, inserida) desc, id desc`) que não estão em nenhuma pasta que a pessoa enxerga, sem ocultas, sem agendadas alheias que ainda não saíram (as próprias entram) e sem as de `ignorar`; cada uma até **800** caracteres e o total até **24.000** (saem as mais antigas). Mensagem que está só numa pasta **privada da outra pessoa** conta como "sem pasta";
+  - o texto de cada conteúdo é o do resumo (`descreverConteudo`, §13.5): texto com `@Nome` no lugar de `@[Nome](id)`; `[imagem]`; `[arquivo: nome]`; `[áudio: "transcrição"]` ou `[áudio]`; `[votação: pergunta]`; `[localização: …]`/`[trajeto: …]`. Figurinha e chamada não têm texto: a mensagem fica de fora (e não conta em `analisadas`);
+  - o pedido usa `response_format` `json_schema` (`sugestao_pastas`, `strict: true`, `{"sugestoes":[{"mensagem":123,"pasta":4}]}`) e `reasoning_effort: "none"` (§13.4); as instruções mandam ignorar cumprimentos, agradecimentos e mensagens sem conteúdo e, na dúvida, não sugerir.
+- **Memória:** num `Map` do processo da API, por **30 min** a partir do pedido; a limpeza dos vencidos só roda no próximo `POST /pastas/sugerir` (de qualquer pessoa), então um `GET` com id antigo pode ainda responder. Reiniciar a API perde tudo (404). Depois de `"concluido"` ou `"erro"`, um novo `POST` chama a IA de novo (o resultado não fica guardado para reaproveitar).
+- **Sem WebSocket:** nenhum evento ao concluir (é polling) e nenhum ao pedir. Aceitar é o `PUT /pasta/mensagens` comum, que gera o WS 67 de sempre.
+- **Aceitar e ignorar (como o web faz):** ✓ = `PUT /pasta/mensagens {pasta_id, mensagens: [mensagem_id]}` e tirar da lista; "Aceitar todas" = uma chamada por pasta (a que falhar fica na lista); ✕ = guardar o `mensagem_id` na lista local de ignoradas (vai no próximo `ignorar`) e tirar da lista. O web só mostra sugestões cuja `pasta_id` ainda está em `GET /pastas`: a lista não é revista depois de pronta (pasta excluída ou deixada de compartilhar, ou mensagem posta em pasta ou ocultada depois do pedido, continuam nela). Trocar de conversa limpa as sugestões.
 
 ## 11. Conversas
 
@@ -1431,7 +1489,7 @@ Tabelas `permissao` (`codigo`, `descricao`) e `permissao_usuario` — `migracoes
 | `parametros` | Ver e alterar as configurações do sistema | `GET/PATCH /api/parametros` (🆕 `ac710eb` e `POST /parametros/ia/testar-embeddings`) |
 | `permissoes` | ~~Conceder e retirar permissões dos usuários~~ 🆕 `ac710eb` (migração 054): `Cadastrar pessoas e bots e conceder e retirar permissões` (o web chama de "Pessoas") | `GET /api/permissoes`, `PUT/DELETE /api/permissao/usuario`; 🆕 `ac710eb` também `PUT /usuario/novo` (§2.6) |
 
-🆕 `ef13c22` — **mais ~~4~~ 🆕 `ac710eb`: 3 de administração** (coluna `uso = false`; a `usuarios` saiu na 054):
+🆕 `ef13c22` — **mais ~~4~~ ~~🆕 `ac710eb`: 3~~ 🆕 `be17b8e`: 4 de administração** (coluna `uso = false`; a `usuarios` saiu na 054; 🆕 a `sip` entrou na 057):
 
 | Código | Descrição (banco) | Libera | Migração |
 |---|---|---|---|
@@ -1439,8 +1497,14 @@ Tabelas `permissao` (`codigo`, `descricao`) e `permissao_usuario` — `migracoes
 | ~~`usuarios`~~ | ~~Cadastrar usuários e bots~~ | ~~`PUT /usuario/novo` (§2.6)~~ 🆕 `ac710eb`: **não existe mais**; cadastrar passou para `permissoes` | 048 (🆕 apagada na 054) |
 | `ferramentas` | Cadastrar as ferramentas externas dos bots | rotas `/ferramenta*` (§13.8); 🆕 `ac710eb` `GET /ferramentas/embutidas` (§13.11) | 051 |
 | `conhecimento` | Cuidar das bases de conhecimento dos bots | rotas `/conhecimento/*` (§13.9) | 052 |
+| `sip` 🆕 `be17b8e` | Configurar a telefonia (SIP) das pessoas | `GET`/`PUT`/`DELETE /sip/usuario` (§14): ver, criar/alterar e excluir o ramal de **qualquer** pessoa (inclusive o próprio). Não libera usar a telefonia: isso continua sendo a de uso `telefonia` | 057 |
 
 Quem tem `permissoes` também cuida de **todos** os bots (listar, editar, excluir, liberar qualquer permissão de uso).
+
+🆕 `be17b8e` — **migração 057** (permissão `sip`): (1) cria `sip` (`uso = false`, descrição acima); (2) dá `sip` a **quem tinha `permissoes`** (no modo aberto ninguém tinha, então ninguém ganha — e o modo aberto **não** acaba, porque depende só de `permissoes`); (3) acrescenta `turn_server` varchar(300), `turn_user` varchar(200) e `turn_password` text à tabela `sip` (§14). Consequências:
+- só quem tem `sip` mexe nos ramais; a pessoa não cadastra mais o próprio (`PUT`/`PATCH /sip` saíram);
+- `GET /permissoes` traz o item `{ "codigo": "sip", "descricao": "Configurar a telefonia (SIP) das pessoas", "uso": false }` **por último** (maior `permissao.id`); `GET /usuario/permissoes` traz `sip` para quem a tem e para todos no modo aberto;
+- `PUT /usuario/novo` com `sip` na lista de um **bot** → 400 `Bot só recebe permissões de uso.` (é de administração); `PUT`/`DELETE /permissao/usuario` com `codigo: "sip"` funcionam como as outras.
 
 🆕 `ac710eb` — **migração 054** ("usuarios" juntada a "permissoes"): (1) quem tinha `usuarios` **ganhou `permissoes`**; (2) as concessões de `usuarios` foram apagadas e (3) a linha `usuarios` saiu da tabela `permissao`; (4) a descrição de `permissoes` mudou (acima). Consequências:
 - quem só cadastrava pessoas passou a poder também conceder e retirar **qualquer** permissão e a cuidar de todos os bots;
@@ -1469,7 +1533,7 @@ Quem tem `permissoes` também cuida de **todos** os bots (listar, editar, exclui
 | `chamada_audio` | Fazer chamadas de áudio | `PUT /chamada/iniciar` com `tipo` 1 |
 | `chamada_video` | Fazer chamadas de vídeo e ligar o vídeo na chamada | `PUT /chamada/iniciar` com `tipo` 2; `POST /chamada/video` |
 | `compartilhar_tela` | Compartilhar a tela nas chamadas | **não conferida** no servidor (só o cliente) |
-| `telefonia` | Usar a telefonia (SIP) | `GET /sip` (devolve `{}`), `PUT`/`PATCH /sip` (§14) |
+| `telefonia` | Usar a telefonia (SIP) | `GET /sip` (devolve `{}`), ~~`PUT`/`PATCH /sip`~~ (§14) — 🆕 `be17b8e`: só o `GET /sip`; as duas outras saíram. Quem configura o ramal é quem tem `sip` (administração), e o `PUT /sip/usuario` **não** confere se a pessoa tem `telefonia` |
 | `ocultar` | Ocultar as próprias mensagens | `DELETE /mensagem` |
 | `nome` | Alterar o próprio nome (era `perfil`, renomeada na 049) | `PATCH /usuario` com `nome` |
 | `email` | Alterar o próprio e-mail e telefone | `PATCH /usuario` com `email` ou `telefone` |
@@ -1481,8 +1545,9 @@ Quem tem `permissoes` também cuida de **todos** os bots (listar, editar, exclui
 | `localizacao` 🆕 `ac710eb` | Enviar localizações e trajetos | `PUT /mensagem`: conteúdo 9 (§10.16); não no encaminhamento. Migração 055 |
 
 - **Quem tem o quê:** as contas que já existiam ganharam todas as de uso nas migrações 046, 048 e 049 (🆕 `ac710eb`: e `localizacao` na 055 — só pessoas; nenhum bot). Conta nova (cadastro ou `PUT /usuario/novo`) ganha todas (`concederPermissoesUso`) — 🆕 `ac710eb`: salvo se o `PUT /usuario/novo` mandar a lista `permissoes` (§2.6). Bot novo começa só com `emoji`, `responder` e `reagir` — e só as que quem o criou tem (§13.7).
-- 🆕 `ac710eb` **Contagem:** 27 de uso (as 26 do `ef13c22` + `localizacao`) e 5 de administração (`parametros`, `permissoes`, `bots`, `ferramentas`, `conhecimento`). Ordem do `permissao.id` (a de `GET /usuario/permissoes`): `parametros`, `permissoes`, as 18 de uso da 046, `bots`, as 6 de uso da 048, as 2 da 049, `ferramentas`, `conhecimento`, `localizacao`.
-- **Modo aberto** continua igual: enquanto ninguém tem `permissoes`, todos podem tudo (inclusive as de uso e as de administração novas). 🆕 `ac710eb`: a lista do modo aberto em `GET /usuario/permissoes` passa a ter `localizacao` e não tem mais `usuarios`.
+- ~~🆕 `ac710eb` **Contagem:** 27 de uso (as 26 do `ef13c22` + `localizacao`) e 5 de administração (`parametros`, `permissoes`, `bots`, `ferramentas`, `conhecimento`). Ordem do `permissao.id` (a de `GET /usuario/permissoes`): `parametros`, `permissoes`, as 18 de uso da 046, `bots`, as 6 de uso da 048, as 2 da 049, `ferramentas`, `conhecimento`, `localizacao`.~~
+- 🆕 `be17b8e` **Contagem:** **33** códigos — 27 de uso (sem mudança) e **6 de administração** (`parametros`, `permissoes`, `bots`, `ferramentas`, `conhecimento`, `sip`). Ordem do `permissao.id` (a de `GET /usuario/permissoes`): `parametros`, `permissoes`, as 18 de uso da 046, `bots`, as 6 de uso da 048, as 2 da 049, `ferramentas`, `conhecimento`, `localizacao`, `sip` (`tests/permissoes.test.ts:31`, `TODAS`).
+- **Modo aberto** continua igual: enquanto ninguém tem `permissoes`, todos podem tudo (inclusive as de uso e as de administração novas). 🆕 `ac710eb`: a lista do modo aberto em `GET /usuario/permissoes` passa a ter `localizacao` e não tem mais `usuarios`. 🆕 `be17b8e`: e passa a ter `sip` — no modo aberto **qualquer conta** vê, muda e apaga o ramal de qualquer pessoa (S40 do doc 08).
 - **Ninguém retira as próprias permissões:** `DELETE /permissao/usuario` com `usuario_id` = o próprio → 400 `Você não pode retirar as próprias permissões.` (`permissoes.ts`, `retirarPermissao`). Outra pessoa com `permissoes` precisa fazer.
 - **Para o cliente:** leia `GET /usuario/permissoes` depois do login (e ao voltar ao app) para esconder o que a pessoa não pode fazer. Não há evento quando um administrador muda as permissões: trate o 403 com a mensagem do servidor.
 
@@ -1499,7 +1564,7 @@ Rotas:
 
 | Nome | Significado | Exposto em `GET /parametros` | Alterável por `PATCH` | Origem |
 |---|---|---|---|---|
-| `versao` | versão das migrações aplicadas (~~🆕 hoje `43`~~ ~~🆕 `ef13c22`: hoje `52`~~ 🆕 `ac710eb`: hoje `56`) | não | não | `src/migracoes.ts` |
+| `versao` | versão das migrações aplicadas (~~🆕 hoje `43`~~ ~~🆕 `ef13c22`: hoje `52`~~ ~~🆕 `ac710eb`: hoje `56`~~ 🆕 `be17b8e`: hoje `57`) | não | não | `src/migracoes.ts` |
 | `jwt_token` | segredo do JWT (gerado se vazio/padrão) | **nunca** | não | `015.sql`, `configuracao.ts:151-158` |
 | `fcm_project_id` | Firebase project id | sim | sim | `015.sql` |
 | `fcm_client_email` | e-mail da conta de serviço (precisa ter `@`) | sim | sim | `015.sql` |
@@ -1533,10 +1598,10 @@ Removidos por migrações: `s3_endpoint`, `s3_accesskey`, `s3_secretkey`, `turn_
 ### 13.4 🆕 Servidor de IA e teste — `POST /api/parametros/ia/testar` (`b8ea0c2`, `ea7e974`)
 
 - O servidor fala com um servidor de IA **compatível com a OpenAI** (`POST <ia_url>/v1/chat/completions`; se `ia_url` já termina em `/v1`, não repete — `ia.ts`, `enderecoCompletions`). Exemplos citados no código: vLLM, Ollama, LM Studio, OpenAI. `temperature: 0.2`, `stream: false`, `Authorization: Bearer <ia_token>` se houver.
-- `ea7e974`: o resumo pede `response_format: {type:"json_schema", …}`; a sugestão pede `reasoning_effort: "none"`. Se o servidor de IA responder **400**, o pedido é refeito **sem** esses extras. Interno: o cliente não fala com a IA.
-- Tempos-limite: **5 min** no resumo, **60 s** no teste, **10 s** na sugestão.
+- `ea7e974`: o resumo pede `response_format: {type:"json_schema", …}`; a sugestão pede `reasoning_effort: "none"`. 🆕 `b104db8`: a sugestão de pasta (§10.17.1) pede **os dois** (o commit diz que, com o Gemma 4, sem o raciocínio as mesmas respostas saem em cerca de 25 s, contra 85 s com ele). Se o servidor de IA responder **400**, o pedido é refeito **sem** esses extras. Interno: o cliente não fala com a IA.
+- Tempos-limite: **5 min** no resumo, **60 s** no teste, **10 s** na sugestão; 🆕 `b104db8`: **5 min** na sugestão de pasta (o padrão de `completar`).
 - **Testar** — `POST /api/parametros/ia/testar {url, modelo, token?}`: permissão `parametros` (403); `url` sem http/https → 400 `Endereço do servidor de IA inválido (use http:// ou https://).`. `token` vazio usa o salvo. Manda "Responda apenas: ok" e responde **sempre 200**: `{ "ok": bool, "resposta": "<até 200 caracteres>", "erro": "<motivo>", "milissegundos": int }`. Falhas (sem conexão, tempo esgotado, status ≠ 2xx, modelo vazio) vêm em `ok:false` + `erro`.
-- Sem `ia_url`/`ia_modelo` salvos, resumo e sugestão respondem 400 `IA não configurada: defina o endereço e o modelo nas configurações do sistema.` (o teste usa o que vem no corpo). Confira antes com `GET /recursos`.
+- Sem `ia_url`/`ia_modelo` salvos, resumo e sugestão (🆕 `b104db8`: e a sugestão de pasta) respondem 400 `IA não configurada: defina o endereço e o modelo nas configurações do sistema.` (o teste usa o que vem no corpo). Confira antes com `GET /recursos`.
 
 ### 13.5 🆕 Resumo da conversa por IA — `POST` e `GET /api/conversa/resumo` (`b8ea0c2`, `ea7e974`)
 
@@ -1556,7 +1621,7 @@ Removidos por migrações: `s3_endpoint`, `s3_accesskey`, `s3_secretkey`, `turn_
   - `erro` preenchido quando `status: "erro"` (sem conexão, tempo esgotado, resposta fora do formato, ou `A IA não encontrou assuntos para resumir.`).
 - **O que vai para a IA:** as mensagens não ocultas do período (`'recentes'` = sem limite de data), visíveis para o usuário (agendadas dele entram), até **400 mensagens**; cada uma vira uma linha `[id] dd/mm hh:mm Nome: texto`, cortada em **1.500 caracteres**; o total fica em **48.000 caracteres** (saem as mais antigas). Texto com menção vira `@Nome`; imagem `[imagem]`; arquivo `[arquivo: nome]`; áudio com transcrição pronta `[áudio: "…"]`; votação `[votação: pergunta]`; 🆕 `ac710eb` localização `[localização: nome (lat, lng)]` ou `[trajeto: A (…) → B (…), 2,5 km]` (§10.16); figurinha e chamada são ignoradas. **Respostas de postagem entram** (não há filtro), então `assuntos[].mensagens` pode ter ids que não estão em `GET /mensagens`.
 - **Período vazio** (nenhuma mensagem com texto aproveitável): volta na hora com `status: "concluido"`, `mensagens: 0`, `assuntos: []`, sem chamar a IA.
-- **Só na memória** do processo da API: some ao reiniciar a API e vale por **30 min** (a limpeza dos vencidos roda a cada novo pedido). Não há evento WebSocket ao concluir (S21 do doc 08). O web guarda o resultado no IndexedDB (`conversa-web` `05507a0`).
+- **Só na memória** do processo da API: some ao reiniciar a API e vale por **30 min** (a limpeza dos vencidos roda a cada novo pedido). Não há evento WebSocket ao concluir (S21 do doc 08). O web guarda o resultado no IndexedDB (`conversa-web` `05507a0`). 🆕 `b104db8`: a sugestão de pasta pela IA (§10.17.1) segue o mesmo modelo (segundo plano, `Map` na memória, 30 min, polling, 404 ao reiniciar) e usa o mesmo `descreverConteudo` para o texto das mensagens; o resumo em si não mudou.
 
 ### 13.6 🆕 Sugestão de texto — `POST /api/ia/sugestao` (`ea02f57`)
 
@@ -1650,12 +1715,49 @@ Removidos por migrações: `s3_endpoint`, `s3_accesskey`, `s3_secretkey`, `turn_
 
 Código: `src/sip.ts`, `migracoes/016.sql`. Um ramal por usuário (índice único `ux_sip_usuario`).
 
-Campos da tabela `sip`: `id`, `usuario_id`, `sip_user` varchar(100), `auth_user` varchar(100) nulo, `sip_password` texto, `display_name` varchar(100) nulo, `domain` varchar(150), `ws_server` varchar(255), `ativo` bool (padrão true), `criado_em`, `criado_por`.
+Campos da tabela `sip`: `id`, `usuario_id`, `sip_user` varchar(100), `auth_user` varchar(100) nulo, `sip_password` texto, `display_name` varchar(100) nulo, `domain` varchar(150), `ws_server` varchar(255), `ativo` bool (padrão true), `criado_em`, `criado_por`. 🆕 `be17b8e` (057): + `turn_server` varchar(300), `turn_user` varchar(200), `turn_password` text (nulos). O modelo atual (só o administrador configura) está em §14.1; o que segue logo abaixo é o de antes, com o que mudou riscado.
 
-- `GET /api/sip` → linha completa (inclui **`sip_password` em texto puro**) ou `{}` se não há ramal. 🆕 `ef13c22`: também `{}` para quem **não tem a permissão de uso `telefonia`**, mesmo com ramal cadastrado (não dá para distinguir de "sem ramal"; confira `GET /usuario/permissoes`).
-- `PUT /api/sip` corpo `{ "sip_user", "auth_user"?: str|null, "sip_password", "display_name"?: str|null, "domain", "ws_server", "ativo"?: bool }` → linha criada; `usuario_id` sempre do token (campo enviado é ignorado). Segundo PUT do mesmo usuário → **500** (unique). 🆕 `ef13c22`: sem `telefonia` → 403 `Você não tem permissão para: usar a telefonia (sip).`
-- `PATCH /api/sip` corpo `{ "id", ...campos opcionais }` → linha alterada; só o dono (403). 🆕 `ef13c22`: e `telefonia` (403).
+- `GET /api/sip` → linha completa (inclui **`sip_password` em texto puro**) ou `{}` se não há ramal. 🆕 `ef13c22`: também `{}` para quem **não tem a permissão de uso `telefonia`**, mesmo com ramal cadastrado (não dá para distinguir de "sem ramal"; confira `GET /usuario/permissoes`). 🆕 `be17b8e`: a linha passa a trazer também `turn_server`, `turn_user` e `turn_password` (esta em texto puro, como a `sip_password`), §14.1.
+- ~~`PUT /api/sip` corpo `{ "sip_user", "auth_user"?: str|null, "sip_password", "display_name"?: str|null, "domain", "ws_server", "ativo"?: bool }` → linha criada; `usuario_id` sempre do token (campo enviado é ignorado). Segundo PUT do mesmo usuário → **500** (unique). 🆕 `ef13c22`: sem `telefonia` → 403 `Você não tem permissão para: usar a telefonia (sip).`~~ 🆕 `be17b8e`: **removida** (404 `Rota PUT:/api/sip não encontrada`).
+- ~~`PATCH /api/sip` corpo `{ "id", ...campos opcionais }` → linha alterada; só o dono (403). 🆕 `ef13c22`: e `telefonia` (403).~~ 🆕 `be17b8e`: **removida** (404 `Rota PATCH:/api/sip não encontrada`).
 - O servidor só guarda a configuração; o registro SIP (ex.: SIP sobre WebSocket em `ws_server`) é feito pelo cliente direto no PBX.
+
+### 14.1 🆕 Ramal configurado só pelo administrador (`be17b8e`, migração 057)
+
+`sip.ts` (inteiro, 121 linhas: `sip` `:12-34`, `sipDoUsuario` `:39-59`, `conferirRamal` `:63-83`, `salvarSipDoUsuario` `:87-115`, `excluirSipDoUsuario` `:117-121`); esquemas `sipUsuario` e `salvarSipUsuario` (`esquemas.ts:180-195`); rotas `rotas.ts:333-339`. Testes: `tests/usuarios.test.ts` (`describe('SIP')`) e `tests/permissoes.test.ts` (`sem telefonia, o ramal não volta e não se cadastra`). No web: Pessoas › Usuários › aba "Telefonia (SIP)"; Chamadas › Voip fica só leitura (`conversa-web` `8385b22`).
+
+- **Quem faz o quê:** a **pessoa** só lê o próprio ramal (`GET /sip`, com a permissão de uso `telefonia`) para registrar e ligar. **Quem tem `sip`** (administração, §13.1) vê, cria/altera e exclui o ramal de **qualquer** pessoa pelas rotas `/sip/usuario` (inclusive o próprio). Sem `sip` → 403 `Acesso negado!` nas três, até no próprio ramal. Um ramal por pessoa (índice único `ux_sip_usuario`).
+- **Tabela `sip`** (§16): + `turn_server` varchar(300) nulo, `turn_user` varchar(200) nulo, `turn_password` text nulo — o **TURN próprio do PABX** (opcional). O coturn do Conversa não serve para a telefonia: ele só repassa até o MediaMTX (`057.sql`); sem TURN do PABX, a mídia vai pelo STUN.
+- **`GET /api/sip`** (o dono) → a linha inteira, **com as duas senhas em texto puro**, nesta ordem:
+  ```json
+  { "id": 3, "usuario_id": 7, "sip_user": "1001", "auth_user": null, "sip_password": "segredo",
+    "display_name": null, "domain": "pbx.empresa.com", "ws_server": "wss://pbx.empresa.com:8089/ws",
+    "turn_server": "turns:pbx.empresa.com:443", "turn_user": "webrtc", "turn_password": "turno",
+    "ativo": true, "criado_em": "2026-10-18T18:32:56.123Z", "criado_por": 1 }
+  ```
+  - `{}` sem ramal **ou** sem `telefonia` (o ramal continua salvo: devolver `telefonia` volta a funcionar sem recadastrar). `ativo: false` também volta (o cliente não deve registrar). `turn_*` podem vir `null`. `criado_por` = quem **criou** o ramal: o administrador (nos ramais cadastrados antes do `be17b8e` pelo `PUT /sip`, a própria pessoa); alterar não muda.
+  - Como o web usa (cliente, não servidor — `conversa-web/src/utils/sip.ts`, `iceDoRamal`): ICE das chamadas SIP = `stun:stun.l.google.com:19302` e, com `turn_server` + `turn_user` + `turn_password`, `{urls: turn_server, username: turn_user, credential: turn_password}`; `iceTransportPolicy: "all"`. O `GET /ice` do Conversa **não** entra nas chamadas SIP.
+- **`GET /api/sip/usuario?usuario_id=N`** (administrador) → o mesmo ramal **sem** `sip_password` e `turn_password` e com dois booleanos, nesta ordem:
+  ```json
+  { "id": 3, "usuario_id": 7, "sip_user": "1001", "auth_user": null, "display_name": null,
+    "domain": "pbx.empresa.com", "ws_server": "wss://pbx.empresa.com:8089/ws",
+    "turn_server": "turns:pbx.empresa.com:443", "turn_user": "webrtc", "ativo": true,
+    "tem_senha": true, "tem_senha_turn": true, "criado_em": "2026-10-18T18:32:56.123Z", "criado_por": 1 }
+  ```
+  `{}` sem ramal — e também para `usuario_id` que não existe (não há 404). Não há rota que liste quem tem ramal: a tela pergunta pessoa a pessoa.
+- **`PUT /api/sip/usuario`** (administrador) — cria ou altera o ramal da pessoa (um por pessoa) e devolve o objeto do `GET /sip/usuario` já salvo:
+  ```json
+  { "usuario_id": 7, "sip_user": "1001", "auth_user": null, "sip_password": "segredo", "display_name": null,
+    "domain": "pbx.empresa.com", "ws_server": "wss://pbx.empresa.com:8089/ws",
+    "turn_server": "turns:pbx.empresa.com:443", "turn_user": "webrtc", "turn_password": "turno", "ativo": true }
+  ```
+  - Obrigatórios: `usuario_id` (int), `sip_user`, `domain`, `ws_server` (string). Opcionais `string|null`: `auth_user`, `sip_password`, `display_name`, `turn_server`, `turn_user`, `turn_password`; `ativo?: bool` (`null` não). Sem `maxLength` no esquema: acima das colunas (100/100/100/150/255/300/200) → 500 do Postgres.
+  - **Ordem das checagens e mensagens** (400, salvo indicado): `sip` (403 `Acesso negado!`) → `sip_user` vazio ou com espaço, `@` ou `:` → `Ramal inválido: informe só o número ou nome do ramal, sem espaços.` → `auth_user` preenchido com espaço, `@` ou `:` → `Usuário de autenticação inválido.` → `domain` fora de `^[a-z0-9.-]+(:\d+)?$` (sem diferenciar maiúsculas) → `Domínio SIP inválido (ex.: voip.empresa.com).` → `ws_server` que não começa com `ws://` ou `wss://` + host → `Servidor WebSocket inválido: deve começar com wss:// (ex.: wss://voip.empresa.com:8089/ws).` (`ws://` também passa, e só o começo é conferido) → `turn_server` preenchido fora de `^turns?:[^\s]+$` → `Servidor TURN inválido: deve começar com turn: ou turns: (ex.: turns:voip.empresa.com:443).` → `turn_server` sem `turn_user` → `Informe o usuário do TURN.` → conta inexistente → **404** `Usuário não encontrado.` (com ponto, não `!`) → ramal **novo** sem `sip_password` → `Informe a senha do ramal.` Nada é aparado (`trim`): espaço no começo já reprova.
+  - **O que é gravado** (é um "substituir", não um "mesclar"): `sip_user`, `domain`, `ws_server` como vieram; `auth_user`, `display_name` e `turn_server` vazios, nulos **ou omitidos** viram `null`; `turn_user` só fica com `turn_server` (senão `null`); `sip_password` e `turn_password` vazios, nulos ou omitidos **mantêm a salva**; sem `turn_server`, `turn_password` é apagada; `ativo` omitido mantém o atual (ramal novo: `true`, padrão da tabela). TURN sem senha é aceito (`tem_senha_turn: false`). A pessoa pode **não** ter `telefonia`: o servidor não confere.
+- **`DELETE /api/sip/usuario?usuario_id=N`** (administrador) → `{}` sempre (com ou sem ramal, conta existente ou não).
+- **Sem WebSocket e sem push** em nenhuma das três: o app do dono só vê a mudança ao reler `GET /sip` (S40 do doc 08).
+- **Senhas:** nunca voltam ao administrador pela API (`tem_senha`, `tem_senha_turn`); voltam em texto puro ao dono em `GET /sip`. No banco ficam em texto puro em `sip` e, pelos gatilhos de auditoria (`013.sql`, que só pulam `senha` e `conteudo`), também em `auditoria.alteracao` a cada troca e em `auditoria.exclusao` ao excluir (S40).
+- **Modo aberto** (§13.1): todos têm `sip`, então qualquer conta vê, muda e apaga o ramal de qualquer pessoa.
 
 ---
 
@@ -1707,7 +1809,7 @@ Código: `src/websocket.ts` (`presencaReal`, `presencaVisivel`, `atualizarPresen
 
 ## 16. Modelo de dados (tabelas)
 
-Resumo das tabelas do schema `public` (migrações 000–~~🆕043~~ ~~🆕 `ef13c22`: 052~~ 🆕 `ac710eb`: 056):
+Resumo das tabelas do schema `public` (migrações 000–~~🆕043~~ ~~🆕 `ef13c22`: 052~~ ~~🆕 `ac710eb`: 056~~ 🆕 `be17b8e`: 057):
 
 | Tabela | Colunas principais | Observações |
 |---|---|---|
@@ -1732,14 +1834,14 @@ Resumo das tabelas do schema `public` (migrações 000–~~🆕043~~ ~~🆕 `ef1
 | `chamada_usuario` | `id`, `chamada_id`, `usuario_id`, `status`, `adicionado_por`, `adicionado_em`, `entrou_em`, `saiu_em`, `recusou_em` | `recusou_em` nunca é gravado (vem do evento) |
 | `chamada_evento` | `id`, `chamada_id`, `usuario_id`, `tipo`, `criado_em`, `criado_por` | |
 | `atividade` | `id` bigserial, `usuario_id`, `tipo` int2, `autor_id`, `conversa_id`, `mensagem_id`, `chamada_id`, `emoji`, `criado_em`; 🆕 `044.sql`: `concluida_em` timestamp nulo | 🆕 `ef13c22`: tipo 5 (confirmação); pendente até concluir (§12). A 044 concluiu as já vistas |
-| `permissao`, `permissao_usuario` | §13.1; 🆕 `046.sql`: `permissao.uso` bool (false) | ~~🆕 `ef13c22`: 26 de uso + 6 de administração~~ 🆕 `ac710eb`: 27 de uso + 5 de administração (§13.1): `054.sql` apagou `usuarios` (quem tinha ganhou `permissoes`) e mudou a descrição de `permissoes`; `055.sql` criou `localizacao` e a concedeu a todas as pessoas (bots não) |
+| `permissao`, `permissao_usuario` | §13.1; 🆕 `046.sql`: `permissao.uso` bool (false) | ~~🆕 `ef13c22`: 26 de uso + 6 de administração~~ ~~🆕 `ac710eb`: 27 de uso + 5 de administração~~ (§13.1). 🆕 `ac710eb`: `054.sql` apagou `usuarios` (quem tinha ganhou `permissoes`) e mudou a descrição de `permissoes`; `055.sql` criou `localizacao` e a concedeu a todas as pessoas (bots não); 🆕 `be17b8e`: **27 de uso + 6 de administração** — `057.sql` criou `sip` e a deu a quem tinha `permissoes` |
 | `bot` 🆕 | `id`, `usuario_id`→usuario (único), `instrucoes` text, `ativo` bool (true), `criado_em`, `criado_por`; 🆕 `050.sql`: `excluido_em` timestamp nulo | `047.sql` (`ef13c22`), §13.7 |
 | `ferramenta` 🆕 | `id`, `nome`(60, único), `descricao`, `metodo`(`GET`/`POST`), `url`, `cabecalhos` jsonb, `parametros` jsonb, `ativo`, `criado_em`, `criado_por` | `051.sql` (`ef13c22`), §13.8 |
 | `bot_ferramenta` 🆕 | `id`, `bot_id`, `ferramenta_id` (único pelos dois; cascade) | `051.sql` |
 | `conhecimento_base` 🆕 | `id`, `nome`(100, único), `descricao`, `criado_em`, `criado_por` | `052.sql` (`ef13c22`), §13.9 |
 | `conhecimento_documento` 🆕 | `id`, `base_id` (cascade), `nome`(255), `texto`, `trechos`, `status` int2 (1 processando, 2 pronto, 3 erro), `erro`, `criado_em`, `criado_por` | `052.sql` |
 | `bot_conhecimento` 🆕 | `id`, `bot_id`, `base_id` (único pelos dois; cascade) | `052.sql` |
-| `sip` | §14 | |
+| `sip` | §14; 🆕 `057.sql` (`be17b8e`): `turn_server` varchar(300), `turn_user` varchar(200), `turn_password` text (nulos) | um por usuário (`ux_sip_usuario`, `020.sql`); gatilhos de auditoria (`016.sql`) guardam as senhas trocadas e a linha excluída (§14.1) |
 | `parametros` | `id`, `nome`(50, único), `valor`(5000) | 🆕 `041.sql`: `ia_url`, `ia_token`, `ia_modelo` (vazios); 🆕 `048.sql`: `cadastro_aberto` (`'1'`); 🆕 `052.sql`: `ia_modelo_embeddings` (vazio); 🆕 `053.sql` (`ac710eb`): `ia_embeddings_url`, `ia_embeddings_token` (vazios) |
 | `enquete` 🆕 | `id`, `conversa_id`, `mensagem_id`, `pergunta`(300), `multipla`, `criado_em`, `criado_por`; 🆕 `036.sql`: `encerra_em`, `encerrada_em`, `encerrada_por` | `035.sql`, `036.sql` |
 | `enquete_opcao` 🆕 | `id`, `enquete_id`, `ordem`, `texto`(200) | |
@@ -1748,7 +1850,7 @@ Resumo das tabelas do schema `public` (migrações 000–~~🆕043~~ ~~🆕 `ef1
 
 Todas as colunas `timestamp` (sem fuso) guardam UTC; `visivel_em` é `timestamptz`.
 
-🆕 Fora do banco (só na memória do processo da API): o estado de presença e as conversas abertas (§15) e os resumos por IA (§13.5). 🆕 `ef13c22`: também a fila dos bots (o que cada bot está respondendo, §13.7) e a fila de indexação dos documentos (§13.9) — reiniciar a API perde o que estava em andamento. Os trechos com os vetores ficam no **Qdrant** (volume `conversa-qdrant`).
+🆕 Fora do banco (só na memória do processo da API): o estado de presença e as conversas abertas (§15) e os resumos por IA (§13.5). 🆕 `ef13c22`: também a fila dos bots (o que cada bot está respondendo, §13.7) e a fila de indexação dos documentos (§13.9) — reiniciar a API perde o que estava em andamento. Os trechos com os vetores ficam no **Qdrant** (volume `conversa-qdrant`). 🆕 `b104db8`: também as sugestões de pasta pela IA (§10.17.1), num `Map` de `sugestoesPastas.ts`, por 30 min; a lista de ignoradas não fica em lugar nenhum do servidor (só no cliente).
 
 ---
 
@@ -1777,12 +1879,12 @@ Atraso máximo para uma agendada "sair": ~60 s após `visivel_em`. 🆕 `ef13c22
 8. **Mensagens**: render dos 8 tipos (o 8, enquete, é 🆕; 🆕 `ac710eb`: são 9, com a localização); resposta/encaminhamento com cadeia; reações; ocultas (`excluida_em`); menções; código; figurinhas Lottie embutidas; agendamento; pesquisa (🆕 `6d20ff7`: na pesquisa de uma conversa, resultados dos chats das ligações vêm com outro `conversa_id` — abrir a conversa do resultado); galeria de anexos.
 9. **Anexos**: SHA-256, `PUT /anexo` → PUT na URL → `POST /anexo/confirmar?identificador=`; download via `GET /anexo` com cache por identificador; miniaturas locais.
 10. **Transcrição**: `PUT` + polling do `GET`.
-11. **Chamadas**: tocar ao receber WS 51 (e consultar `/chamadas/pendentes` ao abrir o app); timeout de 30 s com `nao_atendeu:true`; WHIP/WHEP com TURN relay TCP/TLS e H264; reagir a 52/53/54/55/56/57; resumo tipo 6; histórico; chat da chamada; tela/ponteiro.
+11. **Chamadas**: tocar ao receber WS 51 (e consultar `/chamadas/pendentes` ao abrir o app); timeout de 30 s com `nao_atendeu:true`; WHIP/WHEP com TURN relay TCP/TLS (🆕 `383eaaa`: `urls` em array, UDP primeiro e TCP/TLS de reserva — passar todos) e H264; reagir a 52/53/54/55/56/57; resumo tipo 6; histórico; chat da chamada; tela/ponteiro.
 12. **Atividades**: lista paginada, contador, ~~marcar vistas~~, WS 61. 🆕 `e25c4db`: usar o ~~`nova`~~ e o `/atividades/novas` do servidor (resposta/menção lida no chat deixa de ser nova e o contador cai sozinho); reler o contador no WS 61 que chega depois de visualizar mensagens. 🆕 `ef13c22`: ler **`pendente`** (não existe mais `nova`); abrir a aba **não** zera o contador (`/atividades/vistas` não conta mais); concluir à mão (`POST /atividade/concluir`, inclusive ao abrir uma chamada perdida); mandar `POST /atividades/reacoes-vistas` com as próprias mensagens reagidas que aparecem no chat; tratar o tipo **5** ("pediu confirmação de leitura", resolvido ao confirmar).
 13. **Presença**: `/contatos/online` + WS 60 (🆕 ampliada no item 18); digitando/gravando (HTTP + WS 4/5 com expiração local).
 14. **Perfil**: alterar nome/e-mail/telefone/avatar, senha; exclusão de conta (409).
 15. **Configurações administrativas** (opcional no Android): permissões e parâmetros conforme `/usuario/permissoes`.
-16. **SIP** (se usado): ler `/sip` e registrar no PBX.
+16. **SIP** (se usado): ler `/sip` e registrar no PBX. 🆕 `be17b8e`: só leitura para a pessoa (não há mais `PUT`/`PATCH /sip`); respeitar `ativo`; usar o TURN do PABX (`turn_server`/`turn_user`/`turn_password`) + STUN nas chamadas SIP, não o `GET /ice`; reler `/sip` ao abrir e ao voltar ao app (não há evento quando o administrador muda o ramal). Opcional, administração: aba de ramal por pessoa com `GET`/`PUT`/`DELETE /sip/usuario` (permissão `sip`; senhas em branco mantêm as salvas).
 17. 🆕 **Enquetes**: criar em grupos (`PUT /enquete`, com data final opcional), bolha tipo 8 lendo `GET /enquete?id=`, votar (`POST /enquete/votar`, a lista substitui o voto), reler ao receber WS 62; não permitir encaminhar enquete; 🆕 `5cad911` encerrar (`POST /enquete/encerrar`), mudar a data final (`PATCH /enquete`) e tratar o prazo vencido como encerrada.
 18. 🆕 `b8ea0c2` **Presença**: mandar o tipo 63 (`ativo:false` em segundo plano/ocioso, `ativo:true` + conversa aberta ao voltar); estado inicial por `GET /contatos/presenca` e `GET /conversa/presentes`; tratar WS 60 novo (`estado`, `visto_em` que pode vir `null` sem apagar o conhecido), WS 63 e o WS 60 do próprio usuário logo após o login; tela de privacidade (`GET /usuario/privacidade` + `PATCH /usuario`).
 19. 🆕 `b8ea0c2` **Confirmação de leitura**: opção "pedir confirmação" no envio (`pede_confirmacao`), botão "Confirmar leitura" para os destinatários (`POST /mensagem/confirmar`), lista de quem confirmou (`confirmacao`), WS 8. 🆕 `6d20ff7`: escolher quem confirma (`confirmacao_usuarios`); pedir depois, até 24 h após o envio, só nas próprias mensagens (`POST /mensagem/pedir-confirmacao`); botão só com `pode_confirmar` (e nunca em mensagem oculta); mostrar `destinatarios` × `usuarios` ("x de `total`"); aplicar o WS 65.
@@ -1796,11 +1898,13 @@ Atraso máximo para uma agendada "sair": ~60 s após `visivel_em`. 🆕 `ef13c22
 27. 🆕 `ef13c22` **Áudio**: ler `duracao` e `intensidade` dos conteúdos (duração e onda sem baixar o arquivo); opcional: mandar os dois no `PUT /anexo` ao enviar gravações e áudios.
 28. 🆕 `ef13c22` **Bots**: marcar bots na lista de contatos/conversas (por `bot: true` de `/usuario/contatos`); "digitando" demorado do bot; não oferecer ligação para bot; tirar bots da lista padrão de confirmação de leitura.
 29. 🆕 `ef13c22` (opcional, administração) cadastro de pessoas e bots (`PUT /usuario/novo`), bots, ferramentas e base de conhecimento — telas do web.
-30. 🆕 `ac710eb` **Pastas** (só conversa direta): painel com `GET /pastas`; criar, renomear, cor, compartilhar e excluir (só o dono); pôr e tirar várias mensagens de uma vez (`PUT`/`DELETE /pasta/mensagens`, este com corpo); marcas nas bolhas pela chave `pastas`; tela da pasta paginada (`GET /pasta/mensagens?antes=`); recarregar no WS 67 (§10.17).
+30. 🆕 `ac710eb` **Pastas** (só conversa direta): painel com `GET /pastas`; criar, renomear, cor, compartilhar e excluir (só o dono); pôr e tirar várias mensagens de uma vez (`PUT`/`DELETE /pasta/mensagens`, este com corpo); marcas nas bolhas pela chave `pastas`; tela da pasta paginada (`GET /pasta/mensagens?antes=`); recarregar no WS 67 (§10.17). 🆕 `b104db8` (opcional, com `ia: true` e alguma pasta): "Sugerir pastas" — `POST /pastas/sugerir` com a lista local de ignoradas, polling de `GET /pastas/sugestao` até sair de `processando`, ✓ por `PUT /pasta/mensagens`, ✕ guardando o id localmente (§10.17.1).
 31. 🆕 `ac710eb` **Localização e trajeto** (tipo 9): bolha de ponto e de trajeto (mapa, distância, duração, abrir no app de mapas); envio com o mesmo formato e as mesmas regras do servidor (sem `null`); esconder sem a permissão `localizacao`; prévia "localização"; decidir de onde vêm mapa, busca de endereço e rota (o servidor não oferece — §10.16, S36 do doc 08).
 32. 🆕 `ac710eb` **Contatos ao vivo**: recarregar `/usuario/contatos` no WS 66 (e ao reconectar); "Usuário desde" com `criado_em`.
 33. 🆕 `ac710eb` **Espaço usado** na aba Conta (`GET /usuario/espaco`, §8.7).
 34. 🆕 `ac710eb` (opcional, administração) "Pessoas" = permissão `permissoes` (não existe mais `usuarios`); cadastro com lista de permissões; servidor de embeddings próprio e teste; ferramentas embutidas.
+35. 🆕 `be17b8e` **Permissão `sip`** (administração) nas telas de acessos: rótulo próprio (ou a `descricao` do servidor) e grupo de administração.
+36. 🆕 `383eaaa` **ICE**: ler `urls` como string **ou** array (hoje array de 2) e passar todos ao `PeerConnection.IceServer`; manter o relay-only.
 
 ---
 
@@ -1848,17 +1952,17 @@ Atraso máximo para uma agendada "sair": ~60 s após `visivel_em`. 🆕 `ef13c22
 33. `tipo` da chamada é ambíguo (áudio/vídeo para o cliente, simples/grupo para a regra de status). O chamador **precisa se incluir** em `usuarios`.
 34. Chamada que termina por saída não envia WS 52 — tratar WS 55.
 35. Ações de chamada para quem não participa → **404**, não 403.
-36. `/ice` devolve `urls` string única e credencial de 1 h; mídia só funciona via relay (TURN TCP/TLS). VP8 não é gravado — preferir **H264**.
+36. `/ice` devolve ~~`urls` string única~~ 🆕 `383eaaa`: `urls` **array** (UDP e depois TCP/TLS, pegadinha 112) e credencial de 1 h; mídia só funciona via relay (TURN ~~TCP/TLS~~ 🆕 UDP ou TCP/TLS). VP8 não é gravado — preferir **H264**.
 37. MediaMTX sem autenticação e `GET /anexo` sem checagem de conversa (qualquer usuário logado com o identificador/caminho acessa) — não confiar nisso como privacidade.
 38. `PUT /anexo` com `existe:true` devolve URL de **GET** (não de upload) e não informa `upload_status`; se o anexo existente falhou (status 2), não há como reenviar pelo mesmo identificador. Verifique com `/anexo/existe` antes.
 39. `POST /anexo/confirmar` recebe `identificador` na **query**.
 40. URLs do MinIO dependem do `Host` da requisição e expiram (upload 300 s, download/avatares 600 s). Não reescrever host; não cachear URL.
 41. Corpo JSON máximo **1 MB** em `/api/*`; login limitado a 10/min por IP (resposta 503 do nginx, não JSON).
-42. Strings maiores que as colunas (dispositivo 50/15, extensão 10, emoji 10, descrição 100...) e duplicidades não tratadas (e-mail, SIP, permissão via FK) viram **500** com mensagem do Postgres.
+42. Strings maiores que as colunas (dispositivo 50/15, extensão 10, emoji 10, descrição 100...) e duplicidades não tratadas (e-mail, ~~SIP~~, permissão via FK) viram **500** com mensagem do Postgres. 🆕 `be17b8e`: o "segundo `PUT /sip`" não existe mais (o `PUT /sip/usuario` altera o que existe), mas os campos do ramal continuam sem limite de tamanho no esquema (500 acima das colunas).
 43. Erros sempre `{ "error": "..." }`; mensagens em português e com acentos — não usar o texto como chave lógica (exceto quando documentado, ex.: `Upload ainda não foi concluído`).
 44. WebSocket: ~~login sem confirmação~~ 🆕 `b8ea0c2`: o login é confirmado indiretamente por um WS 60 sobre o próprio usuário (na primeira conexão chegam dois, §6.2); `tipo 9` fora do enum; token expirado não derruba a conexão; `/ws` sem barra final não funciona.
 45. Certificado de desenvolvimento é mkcert — configurar confiança no build de debug.
-46. Não existe: refresh de token, logout, edição de mensagem, listagem de agendadas, administradores de grupo, miniaturas, evento de saída de membro, evento de fim de transcrição. 🆕 `b8ea0c2`: **passaram a existir** imagem/emoji de grupo (§11.5), estado "ausente" e "visto por último" (§15.1) — os itens "avatar de grupo" e "status ausente/visto por último" saíram desta lista. Também não há evento de fim do resumo por IA (polling, §13.5). 🆕 `ef13c22`: nem evento quando o administrador muda as permissões de alguém (§13.1) ou quando termina a indexação de um documento (§13.9).
+46. Não existe: refresh de token, logout, edição de mensagem, listagem de agendadas, administradores de grupo, miniaturas, evento de saída de membro, evento de fim de transcrição. 🆕 `b8ea0c2`: **passaram a existir** imagem/emoji de grupo (§11.5), estado "ausente" e "visto por último" (§15.1) — os itens "avatar de grupo" e "status ausente/visto por último" saíram desta lista. Também não há evento de fim do resumo por IA (polling, §13.5). 🆕 `ef13c22`: nem evento quando o administrador muda as permissões de alguém (§13.1) ou quando termina a indexação de um documento (§13.9). 🆕 `be17b8e`/`b104db8`: nem quando o administrador muda ou apaga o ramal SIP de alguém (§14.1), nem quando termina a sugestão de pasta pela IA (§10.17.1).
 47. 🆕 Enquete (tipo 8) não pode ser enviada por `PUT /mensagem` nem encaminhada (400); a criação é só por `PUT /enquete`, e só em grupo.
 48. 🆕 `POST /enquete/votar` **substitui** o voto (não é toggle de uma opção): mande sempre a lista completa das opções marcadas.
 49. 🆕 `d4435db` Reações: no máximo **5 emojis diferentes por pessoa** na mesma mensagem (o 6º → 400). Confira antes da reação otimista, como o web.
@@ -1891,14 +1995,14 @@ Atraso máximo para uma agendada "sair": ~60 s após `visivel_em`. 🆕 `ef13c22
 72. 🆕 `ef13c22` **`GET /atividades` não tem mais `nova`**: a chave virou **`pendente`**, com outro sentido (pendência até concluir, §12). Um DTO que lê `nova` com valor padrão recebe sempre o padrão, sem erro. E `POST /atividades/vistas` **não zera mais** o contador: o número só cai quando cada atividade é resolvida (lida no chat, confirmada) ou concluída (`/atividade/concluir`, `/atividades/reacoes-vistas`).
 73. 🆕 `ef13c22` Tipo de atividade **5** (pediram a confirmação de leitura) é novo. Trate tipos desconhecidos sem quebrar. A tipo 5 só deixa de ser pendente com a **confirmação** (ou concluída à mão, que não confirma).
 74. 🆕 `ef13c22` Reação (1) e chamada perdida (4) **nunca** deixam de ser pendentes sozinhas: o cliente precisa chamar `POST /atividades/reacoes-vistas` (com as próprias mensagens reagidas que mostrou) ou `POST /atividade/concluir`. Sem isso, o contador só cresce.
-75. 🆕 `ef13c22` **403 novos, por falta de permissão de uso**, também para quem é membro, autor ou dono: `PUT /mensagem`, `DELETE /mensagem`, `PUT /mensagem/reacao`, `PUT /conversa` (grupo), `PUT /enquete`, `POST /mensagem/pedir-confirmacao`, `PUT /chamada/iniciar`, `POST /chamada/video`, `PATCH /usuario`, `POST /alterar-senha`, `PUT`/`PATCH /sip`. A mensagem (`Você não tem permissão para: …`) é para mostrar ao usuário; o 403 **não** é sessão expirada. Envio otimista precisa desfazer a bolha.
+75. 🆕 `ef13c22` **403 novos, por falta de permissão de uso**, também para quem é membro, autor ou dono: `PUT /mensagem`, `DELETE /mensagem`, `PUT /mensagem/reacao`, `PUT /conversa` (grupo), `PUT /enquete`, `POST /mensagem/pedir-confirmacao`, `PUT /chamada/iniciar`, `POST /chamada/video`, `PATCH /usuario`, `POST /alterar-senha`, ~~`PUT`/`PATCH /sip`~~ (🆕 `be17b8e`: rotas removidas, 404). A mensagem (`Você não tem permissão para: …`) é para mostrar ao usuário; o 403 **não** é sessão expirada. Envio otimista precisa desfazer a bolha.
 76. 🆕 `ef13c22` `PATCH /usuario` confere a permissão de cada **chave enviada**, mesmo que o valor não mude: mandar nome e e-mail juntos exige `nome` **e** `email`; `telefone` conta como `email`. Mande só o que mudou.
 77. 🆕 `ef13c22` A permissão `emoji` vale para **qualquer** caractere `\p{Extended_Pictographic}` no texto — inclusive `©`, `®`, `™` e algumas setas. Quem não tem `emoji` leva 403 por um "©". Não vale para reações, título de postagem, pergunta/opções de votação nem emoji de grupo.
 78. 🆕 `ef13c22` Tirar a própria reação também pede `reagir`; ocultar (e apagar agendada) pede `ocultar`. Quem perde a permissão fica sem desfazer.
 79. 🆕 `ef13c22` Encaminhar (`mensagem_referencia.tipo = 2`) pede **só** `encaminhar`: não confere os conteúdos (que vêm do cliente), nem agendar, postagem ou confirmação (S28 do doc 08).
 80. 🆕 `ef13c22` Vídeo × arquivo é decidido pela **extensão do anexo** (`mp4`, `webm`, `ogg`, `mov`, `m4v`, `mkv` → `video`; o resto → `arquivo`). Um `.ogg` de áudio enviado como arquivo (tipo 3) pede `video`.
 81. 🆕 `ef13c22` `PUT /chamada/iniciar` **sem `tipo`** com 3+ pessoas em `usuarios` vale `tipo = 2` e pede `chamada_video`, mesmo que a ideia fosse áudio. Mande sempre o `tipo`.
-82. 🆕 `ef13c22` `GET /sip` devolve `{}` tanto "sem ramal" quanto "sem permissão `telefonia`".
+82. 🆕 `ef13c22` `GET /sip` devolve `{}` tanto "sem ramal" quanto "sem permissão `telefonia`". 🆕 `be17b8e`: continua assim, e o ramal não some ao tirar `telefonia` (devolver a permissão volta a registrar sem recadastrar).
 83. 🆕 `ef13c22` **Bots são usuários comuns**: estão em `/usuario/contatos` (só ali com `bot: true` — 🆕 `ac710eb`: e, na administração, em `GET /permissoes`), podem ser o `destinatario_id` de uma conversa direta, mandam mensagens, reações, figurinhas e votações, e "digitam" (WS 4) por minutos. Nunca ficam online, nunca atendem chamada, nunca marcam `recebida` e só marcam `visualizada` a mensagem que os chamou — então, em grupo com bot, o status agregado do remetente (`recebida`/`visualizada`) **não fecha** (S27 do doc 08).
 84. 🆕 `ef13c22` Pedir confirmação de leitura **sem lista** num grupo com bot põe o bot em `destinatarios`, e ele nunca confirma ("x de y" não fecha). Mande `confirmacao_usuarios` sem os bots.
 85. 🆕 `ef13c22` Login de bot → 401 `Bot não entra pelo login.` (como login errado, não sessão expirada).
@@ -1925,6 +2029,21 @@ Atraso máximo para uma agendada "sair": ~60 s após `visivel_em`. 🆕 `ef13c22
 104. 🆕 `ac710eb` `PUT /usuario/novo` com **`permissoes: []`** cria a conta **sem nenhuma permissão** (a lista vazia não é "o padrão"); para o padrão, omita a chave. Bot com permissão de administração na lista → 400 antes de criar.
 105. 🆕 `ac710eb` `GET /usuario/espaco` é só do próprio usuário (sem parâmetro). Conta cada arquivo uma vez por pessoa, inclusive de mensagens ocultas e uploads que não terminaram, e o mesmo arquivo enviado por duas pessoas conta para as duas. Não é o espaço ocupado no servidor.
 
+### 🆕 Ramal pelo administrador, TURN por UDP e sugestão de pasta pela IA (`be17b8e`, `383eaaa`, `b104db8`)
+106. 🆕 `be17b8e` **`PUT /sip` e `PATCH /sip` não existem mais**: dão **404** `Rota PUT:/api/sip não encontrada` (não 403). A pessoa não cadastra nem altera o próprio ramal; quem tem `sip` faz isso por `PUT /sip/usuario`. Métodos de cliente para as rotas antigas ficam mortos; não ofereça "cadastrar meu ramal" (no máximo, "peça ao administrador").
+107. 🆕 `be17b8e` `GET /sip` passou a trazer **duas** senhas em texto puro (`sip_password` e `turn_password`) e `turn_server`/`turn_user`, que podem vir `null`. Nunca registre em log nem guarde fora do armazenamento cifrado. `ativo: false` também volta: não registre. `{}` continua sendo "sem ramal" **ou** "sem `telefonia`".
+108. 🆕 `be17b8e` `PUT /sip/usuario` **substitui** o ramal, não mescla: `auth_user`, `display_name`, `turn_server` e `turn_user` omitidos (ou `""`) viram `null`, e tirar o `turn_server` apaga também a senha do TURN. Só as senhas (vazias, `null` ou omitidas) e o `ativo` (omitido) ficam como estavam. Mande sempre o formulário inteiro. A resposta (e o `GET /sip/usuario`) **nunca** traz as senhas: use `tem_senha`/`tem_senha_turn` para mostrar "salva (em branco mantém)".
+109. 🆕 `be17b8e` Validação do ramal: a mensagem diz "deve começar com wss://", mas `ws://` também passa, e só o **começo** do `ws_server` é conferido; nada é aparado (espaço no começo reprova). Conta inexistente → **404** `Usuário não encontrado.` (com ponto; o de `/permissao/usuario` é com `!`), mas só depois de conferir os campos. `GET`/`DELETE /sip/usuario` de quem não existe ou não tem ramal → `{}` com 200. TURN sem senha é aceito.
+110. 🆕 `be17b8e` **Mudar ou apagar o ramal de alguém não avisa ninguém** (sem WebSocket, sem push): o app do dono continua registrado com os dados antigos até reler `GET /sip`. Releia ao abrir, ao voltar ao primeiro plano e quando o PABX recusar o registro (S40 do doc 08).
+111. 🆕 `be17b8e` Código de permissão novo, **`sip`** (administração, `uso: false`), o **último** de `GET /permissoes` e presente em `GET /usuario/permissoes` de quem o tem (e de todos no modo aberto). Tela com mapa fixo de rótulos precisa de um para ele, ou cair na `descricao` (`Configurar a telefonia (SIP) das pessoas`). Não substitui `telefonia`: quem configura ramais não ganha o direito de usar a telefonia.
+112. 🆕 `383eaaa` **`iceServers[].urls` agora é array** (`["turn:<host>:3478?transport=udp", "turn:<host>:3478?transport=tcp"]`; em produção o segundo é `turns:<host>:<porta>?transport=tcp`). DTO que lê `urls` como `String` quebra no parse; leia string **ou** array e passe **todos** ao mesmo `IceServer` (não filtre por `transport=tcp`). O UDP pode não ter caminho (firewall, rede que barra UDP, Tailscale Funnel): aí vale o TCP, e a coleta sem trickle pode esperar o limite inteiro (5 s no web e no Android).
+113. 🆕 `b104db8` **Sugestão de pasta é assíncrona**, como o resumo: o `POST /pastas/sugerir` volta `processando` (ou já `concluido`, sem chamar a IA, quando não há o que analisar) e o cliente consulta `GET /pastas/sugestao?id=` até mudar (o web, a cada 2 s). Pode levar até **5 min**; reiniciar a API dá 404 (peça de novo). "30 min" é o mínimo, não o máximo: a limpeza só roda no próximo `POST` de qualquer pessoa.
+114. 🆕 `b104db8` **Nada entra na pasta sozinho** e **o servidor não guarda o "ignorar"**: aceitar é o `PUT /pasta/mensagens` comum (uma chamada por pasta); ignorar é guardar o `mensagem_id` no aparelho e mandá-lo em `ignorar` a cada pedido (até 2000; `null` → 400). O que foi ignorado no web **volta** no Android, e vice-versa (S42 do doc 08).
+115. 🆕 `b104db8` Pedir de novo enquanto o anterior está em `processando` (mesma pessoa e conversa) devolve **o mesmo** `id`, com o `ignorar` do **primeiro** pedido. Depois de pronto, cada `POST` chama a IA de novo (nada é reaproveitado): não re-poste para "atualizar" a lista.
+116. 🆕 `b104db8` Num **grupo**, `POST /pastas/sugerir` dá 400 `Crie uma pasta antes de pedir sugestões.` (não diz que pasta é só da conversa direta). Antes disso: não membro → 403; IA desligada → 400 `IA não configurada: …`. Mostre "Sugerir pastas" só na direta, com `ia: true` e alguma pasta.
+117. 🆕 `b104db8` Em cada sugestão, `texto` **não** é o conteúdo da mensagem: é o texto que foi para a IA (`@Nome` nas menções, `[imagem]`, `[arquivo: nome]`, `[áudio: "…"]`, `[votação: …]`, `[localização: …]`), cortado em 200 caracteres com `…`; `autor` é o **nome completo** (não o primeiro nome do `remetente`). `analisadas` não é o total da conversa (até 80, sem figurinhas e chamadas, que nunca são sugeridas, e menos se passar de 24.000 caracteres).
+118. 🆕 `b104db8` A lista **não é revista** depois de pronta: a pasta pode ter sido excluída ou deixada de compartilhar, e a mensagem pode já estar numa pasta ou ter sido ocultada. Filtre pelas pastas atuais (`GET /pastas`) e trate `incluidas: 0` como "já estava". A sugestão pode apontar para a pasta **compartilhada da outra pessoa** (os dois põem mensagens nela); mensagem que está só numa pasta **privada** da outra pessoa conta como "sem pasta" e pode ser sugerida.
+
 ---
 
 ## 20. Histórico de atualizações deste documento
@@ -1946,3 +2065,6 @@ Atraso máximo para uma agendada "sair": ~60 s após `visivel_em`. 🆕 `ef13c22
 | 2026-10-15 🆕 | `e25c4db` — "Atividade de resposta ou menção já lida no chat deixa de contar como nova" (2026-10-14) | `nova` em `GET /atividades` e a contagem de `GET /atividades/novas` deixam de fora resposta/menção cuja mensagem o usuário já visualizou (resposta de postagem: sem resposta do autor por ler); **WS 61** também depois de `POST /mensagem/visualizar` e `POST /postagem/visualizar` que marcaram mensagem com atividade ligada. Sem rota nova. §4, §6.6, §10.5, §10.15, §12, pegadinha 71 |
 | 2026-10-15 (noite) 🆕 | `ef13c22` — "Bots de IA com ferramentas e base de conhecimento, permissões de uso e cadastro pelo administrador" (2026-10-15) | **27 rotas novas** (83–109; total **109**: 3 públicas + 106 autenticadas): `GET /cadastro` (pública), `PUT /usuario/novo`, 7 de bots, 10 de base de conhecimento, 6 de ferramentas externas, `POST /atividade/concluir` e `POST /atividades/reacoes-vistas`. **Permissões de uso** (26 códigos; 403 com a descrição em `PUT /mensagem`, `DELETE /mensagem`, reação, grupo, votação, confirmação, chamadas, perfil, senha e SIP) e 4 de administração novas (`bots`, `usuarios`, `ferramentas`, `conhecimento`); ninguém retira as próprias (400). **Atividades**: `nova` → **`pendente`** (pendência até concluir), tipo **5** (confirmação pedida), `POST /atividades/vistas` não zera mais, contador só de conversas em que ainda é membro. **Áudio**: `PUT /anexo` aceita `duracao`/`intensidade`; `conteudos[]` ganham as duas chaves. **Cadastro**: `cadastro_aberto` (403 no `PUT /usuario` fechado). **Bots de IA**: usuários comuns que respondem na direta, quando mencionados ou respondidos; `bot` em `/usuario/contatos`; login de bot → 401. Parâmetros `cadastro_aberto` e `ia_modelo_embeddings`; `GET /recursos` com `conhecimento`. Sem tipo de WebSocket novo (WS 61 e 4 com gatilhos novos). Docker: serviço `qdrant` e volumes `conversa-postgres`/`conversa-minio`/`conversa-qdrant` (`bin\renomear-volumes.bat`). Migrações `044`–`052`. §1, §2.1, §2.5–§2.6, §3, §4, §5.1, §6, §7.1, §8, §9.2, §10.2–§10.3, §10.9, §10.12–§10.15, §11, §12, §13.1–§13.3, §13.7–§13.9, §14, §15.1, §16–§18, pegadinhas 14, 46, 72–87 |
 | 2026-10-16 🆕 | `ac710eb` — "Pastas de mensagens, localização e trajeto, espaço usado e ajustes de IA e acessos" (2026-10-16 22:48) | **10 rotas novas** (110–119; total **119**: 3 públicas + 116 autenticadas): `GET /usuario/espaco`, 7 de **pastas** (`GET /pastas`, `PUT`/`PATCH`/`DELETE /pasta`, `GET`/`PUT`/`DELETE /pasta/mensagens` — este com corpo JSON), `GET /ferramentas/embutidas` e `POST /parametros/ia/testar-embeddings`. **Pastas de mensagens** na conversa direta (migração 056, tabelas `pasta` e `pasta_mensagem`): só o dono muda; compartilhada, os dois põem e tiram; chave `pastas` nas mensagens; **WS 67** `PastasAtualizadas`. **Localização e trajeto**: conteúdo **tipo 9** (JSON com 1 ou 2 pontos, rota, distância e duração, conferido no servidor: 400 `Localização inválida!`), permissão de uso **`localizacao`** (migração 055; pessoas sim, bots não), prévia/push `localização`, descrição no resumo e no histórico dos bots. **Espaço usado** por pessoa (`/usuario/espaco`; `espaco` em `GET /permissoes`). **Servidor de embeddings próprio** (migração 053: `ia_embeddings_url`, `ia_embeddings_token`; `GET /recursos` → `conhecimento` sem depender de `ia`). **Permissão `usuarios` juntada a `permissoes`** (migração 054; `PUT /usuario/novo` pede `permissoes` e aceita a lista `permissoes`; pode encerrar o modo aberto). **WS 66** `ContatosAtualizados` (conta criada, renomeada ou excluída, a todas as conexões). `criado_em` em `/usuario/contatos`; `criado_em`, `bot` e `espaco` em `GET /permissoes`. Migrações `053`–`056`. §2.5–§2.6, §4, §5.1, §5.8–§5.9, §6.4, §6.6–§6.7, §7.2, §8.7, §10.1–§10.3, §10.9, §10.11, §10.16–§10.17, §11.2, §12, §13.1–§13.3, §13.5, §13.7–§13.11, §16, §18, pegadinhas 13, 83, 88–105 |
+| 2026-10-19 🆕 | `be17b8e` — "Ramal SIP de cada pessoa configurado só pelo administrador (migração 057)" (2026-10-18 14:32) | **3 rotas novas** (120–122: `GET`, `PUT` e `DELETE /sip/usuario`) e **2 removidas** (63–64: `PUT` e `PATCH /sip`, agora 404). Permissão de administração nova **`sip`** (`Configurar a telefonia (SIP) das pessoas`), dada a quem tinha `permissoes`; 27 de uso + 6 de administração. Ramal com TURN do PABX opcional (`turn_server`, `turn_user`, `turn_password`, migração 057); `GET /sip` devolve as duas senhas ao dono; ao administrador só `tem_senha`/`tem_senha_turn`; senha vazia mantém a salva; validação de ramal, domínio, `wss://` e `turn:`/`turns:` (400) e 404 para conta inexistente. Sem WebSocket. §1.3, §4, §5.6, §13.1, §13.2, §14, §14.1, §16, §18, pegadinhas 42, 75, 82, 106–111 |
+| 2026-10-19 🆕 | `383eaaa` — "TURN sobre UDP na 3478, com o TCP de reserva" (2026-10-18 14:32) | Sem rota nova. `GET /ice`: `urls` passa de string a **array**, com `turn:<host>:3478?transport=udp` primeiro e o TCP (dev) ou o `turns` da borda (prod) depois. coturn aceita UDP e TCP na 3478; compose publica `3478/udp`; `SETUP.md` pede a 3478 UDP no firewall, com repasse direto. §1.1–§1.3, §4, §9.5, §18, pegadinhas 36, 112 |
+| 2026-10-19 🆕 | `b104db8` — "Sugestão de pasta pela IA para as mensagens que ainda não estão em pasta" (2026-10-18 15:51) | **2 rotas novas** (123–124: `POST /pastas/sugerir`, `GET /pastas/sugestao`; total **122**: 3 públicas + 119 autenticadas). A IA sugere a pasta de cada uma das 80 mensagens mais recentes sem pasta (menos as de `ignorar`), conhecendo cada pasta pelo nome e por até 5 mensagens; uma pasta por mensagem, só ids enviados; em segundo plano, na memória por 30 min, com polling; nada entra na pasta sem o `PUT /pasta/mensagens`. Sem WebSocket, sem migração. §4, §5.7, §5.9, §10.17, §10.17.1, §13.4, §13.5, §16, §18, pegadinhas 113–118 |

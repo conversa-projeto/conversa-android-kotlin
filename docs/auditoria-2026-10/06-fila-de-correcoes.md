@@ -227,6 +227,7 @@
 - [x] **FC-222 · P2 · 🆕 `ac710eb` Contatos relidos pelo WS 66 e na reconexão** (CON-11, AUT-11): `{"tipo":66}` quando uma conta é criada, renomeada ou excluída → `GET /usuario/contatos`; reler também ao reconectar (como o web); guardar o `criado_em` ("Usuário desde"). ✔ 08e2e77
 - [x] **FC-223 · P2 · 🆕 `ac710eb`/`f351190` Pastas de mensagens** (CON-17): só na direta; folha "Pastas de mensagens" no "⋮"; criar (nome até 60), renomear, cor (paleta do web), compartilhar com a outra pessoa, excluir (só o dono, com confirmação); WS 67 relê a lista; limites e mensagens do servidor (doc 01 §10.17). ✔ 2a58133
 - [x] **FC-224 · P3 · 🆕 `f351190` "Gravando áudio…" na lista de conversas** (CON-01, ENV-16): pontinhos e texto na cor de gravando, com prioridade sobre o "digitando". ✔ 08e2e77
+- [ ] **FC-225 · P3 · 🆕 `b104db8`/`57bd9f0` Sugestões de pasta pela IA** (CON-18): com a IA ligada e alguma pasta, "Sugerir pastas" na folha de pastas; `POST /pastas/sugerir` (com `ignorar`) e `GET /pastas/sugestao` até sair de "processando" (doc 01 §10.17); cada sugestão com quem escreveu, a prévia e a pasta, ✓ põe na pasta (`PUT /pasta/mensagens`) e ✕ ignora (guardado por pessoa e conversa, como no web); "Aceitar todas" faz uma chamada por pasta. Nada entra na pasta sem a pessoa confirmar.
 
 ## Bloco E — Mensagens: núcleo (F2)
 
@@ -332,6 +333,7 @@
 - [x] **FC-422 · P3 · 🆕 `f351190` Velocidade do áudio** (ANX-18): botão 1x → 1,5x → 2x → 3x, a mesma para todos os áudios, guardada no aparelho. ✔ 08e2e77
 - [x] **FC-423 · P3 · 🆕 `ac710eb` Espaço usado** (ANX-17): `GET /usuario/espaco` → "Armazenamento" no Perfil, com o texto do web. ✔ 08e2e77
 - [ ] **FC-424 · P3 · 🆕 `f351190` Anexos de todas as conversas** (ANX-13): `GET /anexos?conversa=0`, com o nome da conversa em cada item; avaliar onde entra no app (o web tem a aba Anexos na barra).
+- [ ] **FC-425 · P3 · 🆕 `d244fc8` Áudios em sequência** (ANX-19): o áudio que termina toca o próximo, o seguinte na mesma mensagem ou o primeiro da mensagem de baixo (no `PlayerAudio` único do app).
 
 ## Bloco G — Ações sobre mensagens (F4)
 
@@ -438,6 +440,7 @@
   - Atender e recusar pelo sistema, Bluetooth e carro; FGS `phoneCall`/`microphone`/`camera` com o tipo certo.
 - [ ] **FC-702 · P0 · ICE/TURN** (Q1).
   - `GET /api/ice` (camelCase) **antes de cada** PeerConnection. Respeitar "Forçar relay" (`iceTransportPolicy`).
+  - 🆕 `383eaaa`: cada servidor vem com **duas URLs** em `urls` (lista), o `turn:…:3478?transport=udp` primeiro e o TCP (ou o `turns:` da borda) de reserva. O app já lia `urls` como texto ou lista (`DesserializacaoTest`); no emulador só o TCP passa pelo `adb reverse`. **Medir:** onde o UDP não tem caminho (emulador, Tailscale Funnel, firewall), a coleta sem trickle pode esperar os 5 s inteiros (`ESPERA_ICE_MS`) a cada WHIP/WHEP; ver S41 (doc 08).
   - **CP:** chamada em 4G ↔ Wi-Fi com áudio nos dois lados.
 - [ ] **FC-703 · P0 · WHIP/WHEP** (transplantar `WhipWhepClient`).
   - Publicar em `/webrtc/call-<chamada>-u-<eu>/whip`; assistir `/webrtc/call-<chamada>-u-<outro>/whep`.
@@ -500,6 +503,8 @@
 - [ ] **FC-726 · P2 · 🆕 `769bd7d` Convidados fora da chamada** (CHA-25): na grade, "Chamando..." e "Não atendeu" com "Chamar de novo" (`POST /chamada/chamar-novamente {chamada_id, usuario_id}`); WS 57 `{acao:"participantes"}` → reler `GET /chamada/dados`.
 - [ ] **FC-727 · P2 · 🆕 `964ed72` Chat da ligação só leitura** (CHA-26, MSG-13, CHA-22): "Ver chat da chamada"/"Esconder o chat da chamada" na bolha da ligação (`chat_chamada_id`) e no histórico (`conversa_chat_id`); "Ninguém escreveu no chat da chamada."; "Abrir o chat completo". 🆕 `e33ecba`: os conteúdos aparecem como no chat (imagem com visualizador, áudio, arquivo, figurinha).
 - [ ] **FC-728 · P3 · 🆕 `769bd7d` Etapas ao ligar o vídeo** (CHA-16): "Abrindo a câmera...", "Enviando o vídeo...", "Recebendo o vídeo dos participantes..."; republicar sem derrubar o áudio.
+- [ ] **FC-729 · P2 · 🆕 `d244fc8` Chamada já conectada enquanto toca** (CHA-27): o web prepara a chamada durante o toque (microfone, câmera, publicação e assinaturas) e atender só liga as trilhas; se o primeiro áudio do outro lado ainda não chegou, toca um som de aguardar (até 10 s). Interoperabilidade (doc 03 §5.10): **nada é obrigatório no app**. O web que recebe publica enquanto toca, com as trilhas desligadas, e só manda o `entrar` ao atender; o 54 continua sendo o único sinal de que a pessoa atendeu (um WHEP com 200 não é). Quando o web liga e o Android atende, o web toca o som de espera do 54 até o primeiro áudio do Android, porque o app faz `entrar` e só depois publica (`GerenciadorChamadas.atender`). Melhoria opcional: publicar antes do `entrar`. Não copiar o preparo inteiro (abrir câmera e microfone enquanto toca): serviço em primeiro plano do Android 14+ e a câmera acendendo antes da decisão. Testar à mão a mesma conta no web e no celular, atendendo no primeiro toque (o MediaMTX fica com a publicação mais nova).
+- [ ] **FC-730 · P3 · 🆕 `d244fc8` Vídeo da câmera inteiro na chamada** (CHA-11): o web passou a mostrar o vídeo sem corte (`object-contain`); o app enche a área com a câmera (`SCALE_ASPECT_FILL`) e só ajusta sem corte na tela compartilhada. Avaliar se segue o web (no celular, cortar é o comum).
 
 ## Bloco J — Atividades, pesquisa, perfil, configurações (F7)
 
@@ -529,14 +534,17 @@
 - [x] **FC-814 · P1 · 🆕 `ef13c22`/`9c6e8a6` Permissões de uso** (GER-09): `GET /usuario/permissoes`; esconder ou travar cada ação; mostrar a mensagem do 403; no perfil, mandar só as chaves que mudaram (TODO 8.9). ✔ 946c410
 - [ ] **FC-815 · P3 · 🆕 `9c6e8a6` Administração de usuários, bots, ferramentas e conhecimento** (CFG-11…14): avaliar se fica só no web, junto da FC-812.
 - [x] **FC-816 · P2 · 🆕 `ac710eb` Permissões e Acessos depois da junção** (GER-09, CFG-08, AUT-11): `usuarios` saiu (quem tinha ganhou `permissoes`, que o web chama de "Pessoas"); `localizacao` entra no grupo Enviar ("Localização e trajeto"); a lista de Acessos mostra o espaço, o "Usuário desde" e o selo "Bot"; textos do modo aberto com "Pessoas". ✔ 08e2e77
+- [ ] **FC-817 · P3 · 🆕 `be17b8e`/`8385b22` Telefonia (SIP) de cada pessoa pelo administrador** (SIP-06, CFG-08): com a permissão de administração `sip` (migração 057), o painel da pessoa nos Acessos ganha a aba "Telefonia (SIP)": ramal, senha, domínio, WebSocket, usuário de autenticação, nome de exibição, TURN do PABX e ativo; `GET`/`PUT`/`DELETE /sip/usuario`, as senhas nunca voltam. Junto, o rótulo próprio de `sip` nos Acessos (hoje aparece a descrição do servidor, no grupo Administração, sem quebrar). Depende da decisão sobre a administração no app (FC-812, FC-815).
 
 ## Bloco K — SIP e extras (F8)
 
 - [ ] **FC-900 · P2 · Configuração SIP** (SIP-01).
-  - `GET/PUT/PATCH /sip`. O segundo PUT dá 500 (unique): usar PATCH se já existe.
+  - ~~`GET/PUT/PATCH /sip`. O segundo PUT dá 500 (unique): usar PATCH se já existe.~~
+  - 🆕 `be17b8e`/`8385b22`: cada um **não cadastra mais** o próprio ramal (saíram `PUT` e `PATCH /sip`); quem configura é o administrador (FC-817). O app só lê `GET /sip` e mostra o ramal, o estado do registro e "Reconectar", como a aba Voip do web, que ficou só leitura. Tirar `incluirSip`/`alterarSip` do `ConversaApi` (as rotas não existem mais).
 - [ ] **FC-901 · P3 · Telefonia SIP nativa** (SIP-02..05).
   - **Spike técnico primeiro:** Linphone SDK (licença GPL/comercial — avaliar) ou PJSIP.
   - Precisa de transporte WSS e ICE via `/ice`; integrar com Core-Telecom.
+  - 🆕 `be17b8e`/`8385b22`: a mídia vai pelo STUN e pelo TURN **do PABX** (`turn_server`, `turn_user`, `turn_password` do `GET /sip`, opcionais), não pelo TURN do Conversa. O destino aceita o número (`*43`) ou o endereço completo (`sip:*43@dominio`).
 - [ ] **FC-902 · P3 · Compartilhar a tela do celular** (CHA-02, CHA-15): `MediaProjection` + captura de áudio.
 - [ ] **FC-903 · P3 · Bubbles / multi-janela** (CON-10).
 - [ ] **FC-904 · P3 · Cor de destaque personalizada** (CFG-05).

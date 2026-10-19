@@ -487,6 +487,7 @@
 - [x] Áudio de outro não ouvido: botão verde; o primeiro play chama `POST /mensagem/reproduzir {conversa, mensagem}` — verde = `waveform` do FMX (o FMX não tem cor de "não ouvido"); `MensagensRepositorio.marcarReproduzida` (Room otimista + uma chamada; não marca lida) (+ testes). No emulador: `mensagem_status.reproduzida` gravado só no áudio tocado ✔ 1ceaad0
 - [x] Parar o áudio ao sair da conversa ou ao começar uma chamada — 🔄 sair da conversa: `ChatViewModel.onCleared` para o áudio dela (+ teste; no emulador, 0 players ativos depois de voltar); a chamada (etapa 6) deve chamar `PlayerAudio.parar()` — concluído depois (conferido em 2026-10-09): a chamada para o áudio ao começar (`SistemaChamada`) ✔ 5837aec
 - [x] 🆕 `f351190` Velocidade do áudio: botão 1x → 1,5x → 2x → 3x no player, a mesma para todos os áudios, guardada no aparelho (ANX-18, FC-422) — `PlayerAudio.velocidade` (`SharedPreferences`), botão "1x" ao lado da barra; no emulador, 1x → 1,5x → 2x → 3x → 1x ✔ 08e2e77
+- [ ] 🆕 `d244fc8` Áudios em sequência: o áudio que termina toca o próximo, o seguinte na mesma mensagem ou o primeiro da mensagem de baixo; para se essa não tiver áudio (ANX-19, FC-425)
 
 ### 4.6 Gravação de áudio (FC-406, ANX-11, ENV-16)
 - [x] Transplantar o `AudioRecorderHelper` (pegar `Exception` em `start()`, #48) — `GravadorMediaRecorder` (`:core:media`): AAC/M4A mono 64 kbps (toca no web, no Windows e no Android), qualquer `Exception` ao abrir o microfone vira "Não foi possível iniciar a gravação"; pausa = fecha o trecho e `juntarTrechos` (MediaMuxer, sem recodificar) monta o arquivo. No emulador: 2 trechos juntados = 42,42 s contínuos (1827 quadros AAC) ✔ 399bae5
@@ -613,6 +614,7 @@
 
 - [x] Criar os módulos `:core:webrtc` e `:feature:chamada` (adiados da 1.2) — `:core:webrtc` com a interface `MidiaChamada` (a implementação WebRTC é a 6.1); `:feature:chamada` com o `GerenciadorChamadas` ✔ ceeec72
 ### 6.1 Infra de mídia (FC-703, FC-704)
+- [ ] 🆕 `383eaaa` Medir o tempo da publicação e da assinatura com o TURN por UDP: o `GET /ice` manda o UDP primeiro e o TCP de reserva; onde o UDP não passa (emulador, Tailscale Funnel), a coleta sem trickle pode esperar os 5 s inteiros a cada WHIP/WHEP (FC-702, S41)
 - [x] Transplantar o `WhipWhepClient` para `:core:webrtc`, usando o OkHttp compartilhado — reescrito como `ClienteWhipWhep` (o legado aceitava qualquer certificado): OkHttp do app (o token só vai para `/api`), sem trickle ICE (+ testes com MockWebServer) ✔ cf43b1f
 - [x] WHIP/WHEP: ler o header `Location` e fazer `DELETE` ao encerrar — o MediaMTX responde o caminho a partir da raiz dele; atrás do nginx vira `<base>/webrtc/...` (+ teste). No emulador, contra o web (Chrome com câmera falsa): depois de sair, o stream some do MediaMTX (404) ✔ cf43b1f
 - [x] `PeerConnectionFactory` e `EglBase` únicos por processo — `FabricaWebRtc` (`io.github.webrtc-sdk:android` 144.7559.15) ✔ cf43b1f
@@ -666,6 +668,8 @@
 - [x] Atender: mídia vídeo+áudio → só áudio → só recepção (fallback) → `POST /chamada/entrar {id}` → publicar → assinar os outros — No emulador, contra o web (Chrome com câmera falsa): atendeu e falou nos dois sentidos ✔ cf43b1f
 - [x] "Atender" pela notificação usa `PendingIntent.getActivity` ou Telecom (nunca broadcast → activity, #3) — abre a `ChamadaActivity` com `ACAO_ATENDER`; "Recusar" e "Desligar" vão por um receiver (sem abrir tela). No emulador: "Answer" na notificação abriu a tela já atendendo; o web ficou "ativa" ✔ 5837aec
 - [x] Recusar: **um** `POST /chamada/recusar {id}` (`GerenciadorChamadas`, com teste): recusar duas vezes, ou recusar e desligar, manda um só ✔ ceeec72
+- [ ] 🆕 `d244fc8` (opcional) Publicar antes do `POST /chamada/entrar` ao atender: o web que ligou toca um som de espera do 54 até o primeiro áudio do outro lado (até 10 s). Não abrir câmera e microfone enquanto toca, como o web faz (serviço em primeiro plano do Android 14+) (CHA-27, FC-729)
+- [ ] 🆕 `d244fc8` **Teste:** a mesma conta no web e no celular, atendendo no celular no primeiro toque: a aba prepara a chamada durante o toque e publica no mesmo caminho; o app precisa se recuperar se a publicação dele cair (CHA-27, FC-729)
 
 ### 6.6 Regras automáticas (FC-708, FC-709, FC-710, ATV-03)
 - [x] 51 durante outra chamada ou toque → `recusar {nao_atendeu:true}` sem tocar (`GerenciadorChamadas`, com teste) ✔ ceeec72
@@ -714,6 +718,7 @@
 - [x] Receber o WS 56: já em vídeo → reassinar quem republicou; senão, modal "<nome> ativou o vídeo" com "Apenas assistir" / "Transmitir também" (15 s → "Apenas assistir") — No emulador, contra o web (Chrome com câmera falsa): o modal apareceu; "Apenas assistir" mostrou o vídeo do web com a câmera do app desligada ✔ cf43b1f
 - [x] FGS com o tipo `camera` adicionado quando o vídeo liga — o `ServicoChamada` refaz o `startForeground` quando a câmera liga ou desliga. No emulador, numa chamada de vídeo em grupo (app + B e C no web): `phoneCall|microphone|camera` (0xC4) ✔ 482037d
 - [x] 🆕 `769bd7d` Ao ligar o vídeo, mostrar as etapas "Abrindo a câmera...", "Enviando o vídeo...", "Recebendo o vídeo dos participantes..." e republicar sem derrubar o áudio (CHA-16, FC-728) — `EtapaVideo` da mídia ao `EstadoChamada.etapaVideo` (+ 2 testes), pílula no topo do vídeo; `trocarPublicacao` (a nova entra antes de a antiga sair) e `assinar(trocar)` (a antiga toca até a nova conectar). Achados: o `comVideo` desfeito pelo `sincronizar` no meio e o quadro preto de quem publica só áudio (`sdpEnviaVideo` agora exige a trilha, + teste). No emulador contra o web: as três etapas; no MediaMTX, publicação e assinatura novas antes de as antigas saírem ✔ af5d9e1
+- [ ] 🆕 `d244fc8` Avaliar o vídeo da câmera inteiro, sem corte, como o web passou a mostrar (`SCALE_ASPECT_FIT` nos tiles; hoje só a tela compartilhada) (CHA-11, FC-730)
 
 ### 6.12 Minimizar (FC-717, CHA-13, AND-06)
 - [x] Picture-in-Picture em chamada de vídeo (`setAutoEnterEnabled` no Android 12+) — só o vídeo principal na janela; antes do 12, pelo `onUserLeaveHint`; com `setSourceRectHint` (a área do vídeo). A `ChamadaActivity` tem tarefa própria: o PiP leva só a chamada e o app continua usável. No emulador: "início" e "voltar" numa chamada de vídeo → janela flutuante (`pinned`) com o vídeo do B; a chamada seguiu; ao encerrar, o PiP fechou ✔ add5196
@@ -869,6 +874,7 @@
 - [x] Selecionar: toque longo › "Selecionar"; barra "N selecionadas" com "Pôr na pasta" e "×"; só mensagens salvas ✔ 2a58133
 - [x] Marcas na bolha: até 3 bolinhas na cor da pasta (atrás do ✓ na enviada; ao lado e tocáveis na recebida) ✔ 2a58133
 - [x] Pasta aberta: as mensagens dela (50 por página, `antes`), sem campo; "Ver na conversa", "Tirar da pasta" (uma ou várias), voltar — com "Responder" e "Selecionar" no toque longo ✔ 2a58133
+- [ ] 🆕 `b104db8`/`57bd9f0` Sugestões de pasta pela IA, com a IA ligada e alguma pasta: "Sugerir pastas" na folha; `POST /pastas/sugerir` (com `ignorar`) e `GET /pastas/sugestao` a cada 2 s até sair de "processando"; cada sugestão com quem escreveu, a prévia e a pasta, ✓ põe na pasta e ✕ ignora (guardado no aparelho por pessoa e conversa); "Aceitar todas" com uma chamada por pasta (CON-18, FC-225)
 - [ ] **Teste:** criar, compartilhar e pôr mensagens com o web do outro lado (WS 67 nos dois sentidos) — no emulador, com o C pela API (WS 67 nos dois sentidos); falta com o web, que estava fora do ar
 
 ---
@@ -925,6 +931,7 @@
 - [x] 🆕 `ef13c22`/`9c6e8a6` Acessos com as permissões de uso: são 32 (6 de administração + 26 de uso, `uso` no `GET /permissoes`); a linha de caixas por pessoa passa da tela. Como o web: lista de pessoas que se abre ("Administração", "N de M"), com os grupos Administração, Enviar, Mensagens, Grupos, Chamadas, Configurações e Outras e os nomes curtos; as próprias permissões marcadas ficam travadas ("Você não pode retirar as próprias permissões") (CFG-08, FC-813) — `gruposDePermissoes`, `quantasDe`, `temAdministracao`, `propriaMarcada` (+ 2 testes); `PermissaoDto.uso`. No emulador: "26 de 32" por pessoa e, aberta, os grupos com as próprias marcadas travadas ✔ 91d5681
 - [ ] 🆕 `9c6e8a6` Usuários, Bots, Ferramentas e Conhecimento (administração): avaliar se ficam só no web, junto da FC-812 (CFG-11…14, FC-815)
 - [x] 🆕 `ac710eb` Acessos depois da junção: sem `usuarios`, `permissoes` como "Pessoas" (textos do modo aberto), `localizacao` no grupo Enviar ("Localização e trajeto"); espaço, "Usuário desde" e selo "Bot" em cada pessoa (CFG-08, GER-09, AUT-11, FC-816) — no emulador, "Ninguém tem a permissão Pessoas ainda", "200.9 MB · Usuário desde 07/10/2026", "Localização e trajeto" no fim do Enviar e a administração sem "Usuários" ✔ 08e2e77
+- [ ] 🆕 `be17b8e`/`8385b22` Telefonia (SIP) de cada pessoa: com a permissão de administração `sip` (migração 057), a aba "Telefonia (SIP)" no painel da pessoa (ramal, senha, domínio, WebSocket, usuário de autenticação, nome de exibição, TURN do PABX, ativo; `GET`/`PUT`/`DELETE /sip/usuario`) e o rótulo próprio de `sip` (hoje vem a descrição do servidor) — depende da decisão sobre a administração no app (SIP-06, FC-817, FC-812, FC-815)
 
 ### 8.6 Anexos da conversa (FC-809, ANX-13)
 - [x] A partir do perfil ou do grupo: "Ver anexos" (🆕 `eaa8bac`: no web, os anexos ficam dentro do painel do grupo) — folha do perfil (lista e cabeçalho) e item nos dados do grupo ✔ 95b9bb5
@@ -959,8 +966,8 @@
 
 ## Etapa 9 — Extras (avaliar antes de fazer)
 
-- [ ] Ramal SIP — configuração: `GET /sip`; `PUT /sip` (se não existe) ou `PATCH /sip {id, …}` (se existe)
-- [ ] Ramal SIP — spike: Linphone SDK (licença GPL/comercial) vs PJSIP; transporte WSS + ICE via `/ice`
+- [ ] Ramal SIP — configuração: `GET /sip`; ~~`PUT /sip` (se não existe) ou `PATCH /sip {id, …}` (se existe)~~ — 🆕 `be17b8e`/`8385b22`: só leitura (o ramal, o estado do registro e "Reconectar"); quem configura é o administrador (8.5, SIP-06). Tirar `incluirSip`/`alterarSip` do `ConversaApi` e pôr `turn_server`/`turn_user`/`turn_password` no `SipDto`
+- [ ] Ramal SIP — spike: Linphone SDK (licença GPL/comercial) vs PJSIP; transporte WSS + ~~ICE via `/ice`~~ 🆕 `be17b8e`/`8385b22` STUN e o TURN do PABX (do `GET /sip`); o destino aceita o número ou o endereço SIP completo
 - [ ] Ramal SIP — registro, discador com DTMF, chamada recebida, integração com o Telecom
 - [ ] Compartilhar a tela do celular (`MediaProjection` + FGS `mediaProjection` + captura de áudio)
 - [ ] Bubbles para conversas

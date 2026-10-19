@@ -1,6 +1,6 @@
 # 08 — Pendências no servidor (`conversa`) que afetam o Android
 
-**Data:** 2026-10-06 (🆕 S17–S22 em 2026-10-13, servidor em `12cf0cf`; 🆕 S11 e S20 revistas e S25 em 2026-10-15, servidor em `e25c4db`; 🆕 S26–S30 e notas em S4, S7, S10, S11, S12, S19 e S25 em 2026-10-15 (noite), servidor em `ef13c22`; 🆕 S31–S39 e notas em S4, S7, S10, S12, S16, S27 e S28 em 2026-10-16, servidor em `ac710eb`) · **Origem:** leitura de `conversa/src/*.ts` durante a auditoria (detalhes e linhas no doc 01).
+**Data:** 2026-10-06 (🆕 S17–S22 em 2026-10-13, servidor em `12cf0cf`; 🆕 S11 e S20 revistas e S25 em 2026-10-15, servidor em `e25c4db`; 🆕 S26–S30 e notas em S4, S7, S10, S11, S12, S19 e S25 em 2026-10-15 (noite), servidor em `ef13c22`; 🆕 S31–S39 e notas em S4, S7, S10, S12, S16, S27 e S28 em 2026-10-16, servidor em `ac710eb`; 🆕 S40–S42 e notas em S4, S7, S12, S21 e S28 em 2026-10-19, servidor em `b104db8`) · **Origem:** leitura de `conversa/src/*.ts` durante a auditoria (detalhes e linhas no doc 01).
 
 > **Nenhuma alteração foi feita no servidor.** Esta lista serve para planejar o trabalho no repositório `conversa`. Itens marcados como **bloqueante** impedem uma funcionalidade P0 do Android.
 
@@ -43,6 +43,7 @@
    - 🆕 2026-10-15 (`ef13c22`): agora isso também **dribla as permissões de uso** — ver S28, item 1.
 4. 🆕 2026-10-15 (`ef13c22`): **ferramentas externas dos bots** fazem o servidor chamar qualquer endereço http(s), inclusive a rede interna — ver S29.
 5. 🆕 2026-10-16 (`ac710eb`): os testes de IA e de embeddings mandam o **token salvo** para o endereço que veio na tela — ver S39. E a localização do usuário vai do aparelho para serviços públicos de terceiros (mapa, endereço, rota) — ver S36.
+6. 🆕 2026-10-19 (`be17b8e`): o ramal SIP agora é do administrador, mas a **senha salva continua valendo** quando ele troca o servidor do ramal (o app do dono usa a senha antiga com o servidor novo), e as senhas do ramal e do TURN ficam em texto puro também nas tabelas de **auditoria** — ver S40.
 
 ### S5 · Figurinhas não são servidas pelo servidor de produção
 
@@ -62,6 +63,7 @@
 - **Proposta:** validar o tamanho no `esquemas.ts` (`maxLength`) e mapear `unique_violation` → **409** e `foreign_key_violation` → **400/404**, com mensagens em português. O Android passa a mostrar mensagens corretas sem precisar adivinhar.
 - 🆕 2026-10-15 (`ef13c22`): o cadastro pelo administrador (`PUT /usuario/novo`) usa a mesma rotina do cadastro (`criarConta`): e-mail repetido continua dando **500**. As rotas novas de bots, ferramentas e base de conhecimento já validam tamanho e duplicidade com 400 em português.
 - 🆕 2026-10-16 (`ac710eb`): as rotas de pastas validam o nome (até 60) e a cor (até 20) com 400. Já o `PATCH /parametros` não limita o tamanho dos campos: um endereço ou token com mais de **5000** caracteres (a coluna `parametros.valor`, migração 005) dá **500** com a mensagem do Postgres. Vale também para `ia_embeddings_url` e `ia_embeddings_token`, novos. Na prática, raro (só administração).
+- 🆕 2026-10-19 (`be17b8e`): o "segundo `PUT /sip`" saiu junto com a rota; o `PUT /sip/usuario` altera o ramal que já existe. Mas o esquema `salvarSipUsuario` (`esquemas.ts:181-195`) continua sem `maxLength`: `sip_user`, `auth_user`, `display_name` (100), `domain` (150), `ws_server` (255), `turn_server` (300) e `turn_user` (200) acima do limite dão **500** com o texto do Postgres. E `salvarSipDoUsuario` (`sip.ts:87-115`) lê e depois insere sem transação: dois primeiros salvamentos ao mesmo tempo para a mesma pessoa dão 500 (`ux_sip_usuario`).
 
 ### S8 · Criação de conversa não atômica
 
@@ -103,6 +105,7 @@
   - Versão da API no login ou em `/recursos`.
 - 🆕 2026-10-15 (`ef13c22`): o commit trocou uma chave de resposta (`nova` → `pendente` em `GET /atividades`) sem versão nem aviso, e o OpenAPI não pega isso porque as respostas não têm esquema (S26). É o caso que esta pendência queria evitar.
 - 🆕 2026-10-16 (`ac710eb`): de novo, sem versão: o código `usuarios` deixou de existir (S35), entraram chaves em respostas antigas (`pastas` nas mensagens; `criado_em` nos contatos; `criado_em`, `bot` e `espaco` em `GET /permissoes`) e dois tipos de WebSocket (66 e 67). O OpenAPI mostra as rotas novas, mas não as respostas, e o WebSocket continua fora dele.
+- 🆕 2026-10-19 (`be17b8e`, `383eaaa`): mais duas mudanças incompatíveis sem versão: **`PUT` e `PATCH /sip` saíram** (404), e o **`urls` do `GET /ice` mudou de tipo** (string → array), numa resposta que o OpenAPI não descreve. Um cliente que lia `urls` como texto quebra no parse da chamada; o Android novo só não quebra porque já lia string ou lista (`ChamadaDtos.kt`, `ServidorIceDto.urls: JsonElement`). Entrou também um código de permissão (`sip`).
 
 ### S13 · JWT sem renovação
 
@@ -162,6 +165,7 @@
 
 - **Hoje:** os resumos ficam num `Map` em `resumos.ts` (30 min de validade). Reiniciar a API (ou ter mais de um processo) perde o resumo pronto ou em andamento: o `GET /conversa/resumo?id=` passa a dar **404** e o cliente precisa pedir de novo (e esperar a IA, que pode levar minutos). Não há evento ao concluir (só polling).
 - **Proposta:** gravar os resumos numa tabela (com o período e as mensagens usadas) e avisar a conclusão por WebSocket; ou, no mínimo, documentar o 404 como "peça de novo" (é o que a mensagem já diz).
+- 🆕 2026-10-19 (`b104db8`): a **sugestão de pasta pela IA** copiou o mesmo modelo (`sugestoesPastas.ts`, `analises`, `VALIDADE_MS`): `Map` na memória, 30 min, polling em `GET /pastas/sugestao`, 404 depois de reiniciar a API, sem evento ao concluir. Nos dois, a limpeza dos vencidos só roda no **próximo pedido** (`esquecerVencidos`, chamada só em `pedirResumo`, `resumos.ts:80-97`; `esquecerVencidas`, chamada só em `pedirSugestoes`, `sugestoesPastas.ts:72-77,89`), e as consultas (`consultarResumo`, `consultarSugestoes`) não olham a idade: os 30 min são um mínimo, e um `GET` com id antigo continua respondendo até alguém pedir outro. Outras arestas da sugestão em S42.
 
 ### S22 · Tipo 63 aceita `conversa_id` de conversa alheia 🆕 (2026-10-13, `b8ea0c2`)
 
@@ -228,7 +232,8 @@
   6. **Vídeo pela extensão:** `ogg` conta como vídeo (um áudio `.ogg` enviado como arquivo pede `video`); anexo desconhecido conta como `arquivo`.
   7. **Sem aviso:** não há evento quando um administrador muda as permissões de alguém; o cliente só descobre no 403 ou ao reler `GET /usuario/permissoes`.
   8. 🆕 2026-10-16 (`ac710eb`) **A nova `localizacao` também é driblada pelo encaminhamento** (item 1): uma mensagem marcada como encaminhada com conteúdo tipo 9 só pede `encaminhar`. O servidor ainda confere o **formato** da localização (400), mas não a permissão. E a ordem é "formato antes da permissão": quem não tem `localizacao` e manda um JSON errado leva 400, não 403.
-  9. 🆕 2026-10-16 (`ac710eb`) **Pastas não têm permissão de uso:** qualquer pessoa cria e compartilha pastas na conversa direta; o administrador não tem como desligar.
+  9. 🆕 2026-10-16 (`ac710eb`) **Pastas não têm permissão de uso:** qualquer pessoa cria e compartilha pastas na conversa direta; o administrador não tem como desligar. 🆕 2026-10-19 (`b104db8`): o mesmo vale para a **sugestão de pasta pela IA** (`POST /pastas/sugerir` só confere se a pessoa é membro): com a IA ligada, qualquer pessoa manda as mensagens da conversa direta para o servidor de IA quantas vezes quiser (S42), como já acontecia com o resumo.
+  10. 🆕 2026-10-19 (`be17b8e`) **Ramal sem a permissão de uso:** `PUT /sip/usuario` não confere se a pessoa tem `telefonia`. O administrador salva o ramal, a pessoa recebe `{}` em `GET /sip` e a resposta do `PUT` não avisa que falta a permissão. É de propósito no teste (`permissoes.test.ts`, "o ramal fica salvo"), mas confunde.
 - **Efeito:** o item 1 anula as permissões de conteúdo para quem conhece a API; os itens 2–4 dão 403 em situações que o usuário não entende; o item 7 deixa botões aparecendo até o 403.
 - **Proposta:** (1) no encaminhamento, copiar os conteúdos da mensagem original no servidor (e conferir o acesso a ela) em vez de aceitar os do cliente, e conferir `agendar`/`postagem`/`confirmacao` também no encaminhamento; (2) usar uma checagem de emoji de verdade (`\p{Emoji_Presentation}` ou `\p{Extended_Pictographic}` sem os símbolos de texto) e conferir também título, votação e emoji do grupo; (3) liberar o "desfazer" sem a permissão; (4) conferir só os campos que mudam; (5) conferir `compartilhar_tela` no sinal `{acao:'tela'}` (WS 57); (6) tirar `ogg` da lista de vídeo; (7) um WS (por exemplo 61 ou um tipo novo) ao mudar as permissões da pessoa; 🆕 (8) a proposta (1) resolve também o tipo 9 (copiar o conteúdo da original); (9) se a organização quiser controlar, uma permissão de uso `pastas`.
 
@@ -322,12 +327,41 @@
 - **Efeito:** os tokens nunca saem pela API (`GET /parametros` só diz se estão preenchidos), mas quem tem a permissão `parametros` — ou qualquer conta no modo aberto — consegue lê-los apontando o teste para um servidor seu. Contraria a própria regra do commit de que o token da IA não vai para outro host.
 - **Proposta:** só usar o token salvo quando o endereço do teste for igual ao salvo; com outro endereço, exigir o token digitado.
 
+### S40 · Ramal SIP pelo administrador: sem aviso ao dono, senha salva reaproveitada com outro servidor e senhas na auditoria 🆕 (2026-10-19, `be17b8e`)
+
+- **Hoje** (`sip.ts:87-121`, `salvarSipDoUsuario` e `excluirSipDoUsuario`; `migracoes/013.sql`, `auditoria.fn_alteracao` e `fn_exclusao`; `migracoes/016.sql`, gatilhos da tabela `sip`; doc 01 §14.1):
+  1. **Sem aviso ao dono:** `sip.ts` não usa nada de `websocket.ts`. Quando o administrador cria, muda, desliga (`ativo: false`) ou apaga o ramal de alguém, o app dessa pessoa continua registrado com os dados antigos (ou não registra o ramal novo) até reler `GET /sip` por conta própria. O mesmo quando se tira ou devolve `telefonia` (S28, item 7).
+  2. **Senha salva reaproveitada com outro servidor:** com `sip_password`/`turn_password` vazios, o `PUT /sip/usuario` mantém as senhas salvas (`sip.ts:101-102`) mesmo quando `domain`, `ws_server` ou `turn_server` mudam. O administrador nunca vê as senhas (é a intenção do commit), mas pode apontar o ramal de alguém para um `ws_server` ou `turn_server` dele: o app do dono passa a se autenticar ali com a senha do PABX (a resposta digest do SIP e o `MESSAGE-INTEGRITY` do TURN são calculados com ela), o que permite tentar descobrir a senha fora de linha ou repassar o desafio ao PABX verdadeiro. No **modo aberto**, qualquer conta faz isso com qualquer ramal (`validarPermissoes` volta sem conferir). É o mesmo padrão da S39.
+  3. **Senhas em texto puro na auditoria:** os gatilhos da `sip` (`016.sql`) usam `fn_alteracao`, que só deixa de fora `id`, `senha`, `conteudo`, `criado_em` e `criado_por` (`013.sql`): cada troca de `sip_password` ou `turn_password` grava o valor **antigo e o novo** em `auditoria.alteracao`; e `DELETE /sip/usuario` grava a linha inteira, com as duas senhas, em `auditoria.exclusao` (`fn_exclusao` só tira `senha` e `conteudo`). "As senhas nunca voltam" vale para a API, não para o banco nem para os backups.
+  4. **Arestas:** `GET`/`DELETE /sip/usuario` com conta inexistente respondem `{}` com 200 (só o `PUT` dá 404); nada impede ramal para **bot** (inclusive excluído); `ws://` passa (`conferirRamal`, `sip.ts:74`, regex `^wss?:\/\/[^\s/]+`, sem âncora no fim), embora a mensagem peça `wss://` e o navegador numa página HTTPS não abra `ws://`; TURN sem senha é aceito; não há rota que liste quem tem ramal (a tela do administrador pergunta pessoa a pessoa). Tamanhos e corrida no primeiro salvamento: S7.
+- **Efeito para o Android:** por causa do item 1, o app relê `GET /sip` ao abrir, ao voltar ao primeiro plano e quando o PABX recusar o registro. Os itens 2 e 3 são do servidor (o app não tem como se defender, além de só registrar com `wss://`).
+- **Proposta:** (1) um evento ao dono quando o ramal dele muda ou some (pode ser o mesmo tipo novo da S28, item 7, "suas permissões ou sua telefonia mudaram"); (2) exigir a senha de novo (ou apagá-la) quando `domain` ou `ws_server` mudam, e a do TURN quando `turn_server` muda; (3) tirar `sip_password` e `turn_password` da auditoria, como `senha`, ou gravar só "mudou"; (4) 404 em `GET`/`DELETE` para conta inexistente, recusar bot (400), exigir `wss://` com a regex ancorada, e uma listagem sem senhas (ex.: `GET /sip/usuarios`) para a tela.
+
+### S41 · TURN por UDP: anunciado sempre, sem como desligar 🆕 (2026-10-19, `383eaaa`)
+
+- **Hoje** (`chamadas.ts:640-661`, `servidoresIce`; `bin/coturn/turnserver.conf:13-17`; `docker-compose.yml:104-105`; `SETUP.md:53,102`):
+  1. O `GET /ice` manda **sempre** `turn:<host>:3478?transport=udp` como primeiro endereço, em desenvolvimento e em produção, sem parâmetro nem variável para tirá-lo. Em produção ele só funciona se o firewall repassar a 3478 UDP direto para a máquina (o UDP não passa pela borda com TLS), e a lista de requisitos do `SETUP.md` (`:53`) ainda fala só da porta TCP. Quem usa o Tailscale Funnel (o caminho de teste citado no `turnserver.conf`) não tem como abrir o UDP: o Funnel só repassa TCP.
+  2. O compose publica `3478/udp` em todas as interfaces, como já fazia com o TCP.
+- **Efeito:** onde o UDP não tem caminho, o cliente tenta o UDP e fica com o TCP; a chamada funciona. Mas o web (`esperarICE`, `conversa-web/src/stores/call.ts`) e o Android (`core/webrtc/…/FabricaWebRtc.kt`, `ESPERA_ICE_MS = 5_000L`) não usam trickle ICE: esperam a coleta terminar, até 5 s, antes de mandar a oferta ao MediaMTX. Com um endereço que nunca responde, a coleta só termina quando a alocação UDP desiste, então cada publicação e cada assinatura pode esperar o limite inteiro. **Não medido**: o tempo que o libwebrtc leva para desistir depende da versão.
+- **Proposta:** uma variável ou parâmetro (ex.: `CONVERSA_TURN_UDP`, ou `turn_udp` nos parâmetros) para anunciar ou não o UDP; acrescentar a 3478 UDP aos requisitos do `SETUP.md`.
+
+### S42 · Sugestão de pasta pela IA: ignoradas só no cliente, pedidos sem limite e arestas 🆕 (2026-10-19, `b104db8`)
+
+- **Hoje** (`sugestoesPastas.ts`; `esquemas.ts:172`; doc 01 §10.17.1):
+  1. **"Ignorar" só no cliente:** o servidor não guarda as sugestões dispensadas; cada cliente manda a própria lista em `ignorar` (o web guarda no `localStorage`, por pessoa e conversa, as últimas 2000). O que a pessoa dispensou no web **volta** no Android (e em outro navegador, ou depois de limpar os dados), e o teto de 2000 ids por pedido (esquema) faz as dispensadas mais antigas voltarem com o tempo.
+  2. **Pedido repetido ignora o `ignorar` novo:** com um pedido da mesma pessoa e conversa em `processando`, o `POST` devolve esse (`sugestoesPastas.ts:90-94`) sem olhar a lista nova: o que ela dispensou nesse meio-tempo volta na resposta.
+  3. **Sem limite nem reaproveitamento:** fora o "um em andamento por pessoa e conversa", não há limite. Cada `POST` depois de pronto chama a IA de novo (até 24.000 caracteres e até 5 min), e a pessoa pode ter um pedido em andamento em cada conversa direta ao mesmo tempo. Um cliente com defeito (ou alguém de propósito) ocupa o servidor de IA, que é o mesmo dos bots, do resumo e da sugestão de texto. O resumo (`resumos.ts`) tem a mesma falta.
+  4. **Grupo com a mensagem errada:** pastas só existem na conversa direta, mas `pedirSugestoes` não confere o tipo da conversa: num grupo cai em `Crie uma pasta antes de pedir sugestões.` (`:96-99`), e não em `Pastas só existem nas conversas diretas.` como o `PUT /pasta` (`pastas.ts:98-101`).
+  5. **Lista não revista na consulta:** `consultarSugestoes` (`:118-124`) devolve o que ficou pronto sem conferir de novo — pasta excluída ou deixada de compartilhar, mensagem já posta em pasta ou ocultada depois do pedido — nem se a pessoa ainda é membro: quem saiu da conversa continua lendo, pelo `id`, as prévias (até 200 caracteres) enquanto a análise estiver na memória.
+- **Efeito para o Android:** guardar a lista de ignoradas no aparelho, sem sincronizar com o web; filtrar as sugestões pelas pastas atuais; não repetir o `POST` para "atualizar".
+- **Proposta:** (1) guardar as dispensadas no servidor (por pessoa e conversa), o que dispensa o `ignorar`; (2) com pedido em andamento, recusar (409) ou começar outro quando o `ignorar` mudou; (3) um limite por pessoa (ex.: um pedido por minuto) e um teto de pedidos simultâneos à IA, reaproveitando o resultado pronto quando nada mudou; (4) conferir `conversa.tipo = 1` e responder como o `PUT /pasta`; (5) na consulta, tirar as sugestões cuja pasta a pessoa não enxerga mais ou cuja mensagem já está em pasta, e conferir que ela ainda é membro.
+
 ## Prioridade sugerida no servidor
 
 | Ordem | Itens | Por quê |
 |---|---|---|
 | 1 | S1, S2, 🆕 S18 | Sem eles, o Android não toca nem notifica de forma confiável |
-| 2 | S4, 🆕 S22, 🆕 `ef13c22` S29, S28 (item 1; 🆕 `ac710eb` e item 8), 🆕 `ac710eb` S39, S36 | Segurança (ouvir chamadas e baixar anexos alheios; presença em conversa alheia; 🆕 servidor chamando a rede interna; encaminhamento driblando as permissões; 🆕 token salvo indo a endereço digitado; coordenadas indo a serviços de terceiros) |
+| 2 | S4, 🆕 S22, 🆕 `ef13c22` S29, S28 (item 1; 🆕 `ac710eb` e item 8), 🆕 `ac710eb` S39, S36, 🆕 `be17b8e` S40 (itens 2 e 3) | Segurança (ouvir chamadas e baixar anexos alheios; presença em conversa alheia; 🆕 servidor chamando a rede interna; encaminhamento driblando as permissões; 🆕 token salvo indo a endereço digitado; coordenadas indo a serviços de terceiros; 🆕 senha do ramal reaproveitada com outro servidor e guardada na auditoria) |
 | 3 | S3, S13, 🆕 S17, 🆕 `ef13c22` S26, 🆕 `ac710eb` S35 | Qualidade das notificações, do contador de não lidas (🆕 e do de atividades) e da sessão no celular; 🆕 mudança de acesso feita pela migração, sem aviso |
-| 4 | S7, S8, S9, S11, 🆕 S19, S20 (🆕 2026-10-15: só o caso do chat de outra ligação), 🆕 `ef13c22` S27, S28 (itens 2–7 e 🆕 9), 🆕 `ac710eb` S31, S32, S33, S34, S37 | Robustez para todos os clientes |
+| 4 | S7, S8, S9, S11, 🆕 S19, S20 (🆕 2026-10-15: só o caso do chat de outra ligação), 🆕 `ef13c22` S27, S28 (itens 2–7 e 🆕 9), 🆕 `ac710eb` S31, S32, S33, S34, S37, 🆕 `be17b8e`…`b104db8` S40 (itens 1 e 4), S41, S42 | Robustez para todos os clientes |
 | 5 | S5, S6, S10, S12, S14, S15, S16, 🆕 S21, 🆕 S25, 🆕 `ef13c22` S30, 🆕 `ac710eb` S38 | Higiene e evolução |
