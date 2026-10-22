@@ -5400,6 +5400,145 @@
         "operationId": "deleteApiPastaMensagens"
       }
     },
+    "/api/pastas/sugerir": {
+      "post": {
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": [
+                  "conversa_id"
+                ],
+                "properties": {
+                  "conversa_id": {
+                    "anyOf": [
+                      {
+                        "format": "integer",
+                        "default": 0,
+                        "type": "string"
+                      },
+                      {
+                        "type": "integer"
+                      }
+                    ]
+                  },
+                  "ignorar": {
+                    "maxItems": 2000,
+                    "type": "array",
+                    "items": {
+                      "anyOf": [
+                        {
+                          "format": "integer",
+                          "default": 0,
+                          "type": "string"
+                        },
+                        {
+                          "type": "integer"
+                        }
+                      ]
+                    }
+                  }
+                }
+              }
+            },
+            "application/x-www-form-urlencoded": {
+              "schema": {
+                "type": "object",
+                "required": [
+                  "conversa_id"
+                ],
+                "properties": {
+                  "conversa_id": {
+                    "anyOf": [
+                      {
+                        "format": "integer",
+                        "default": 0,
+                        "type": "string"
+                      },
+                      {
+                        "type": "integer"
+                      }
+                    ]
+                  },
+                  "ignorar": {
+                    "maxItems": 2000,
+                    "type": "array",
+                    "items": {
+                      "anyOf": [
+                        {
+                          "format": "integer",
+                          "default": 0,
+                          "type": "string"
+                        },
+                        {
+                          "type": "integer"
+                        }
+                      ]
+                    }
+                  }
+                }
+              }
+            },
+            "multipart/form-data": {
+              "schema": {
+                "type": "object",
+                "required": [
+                  "conversa_id"
+                ],
+                "properties": {
+                  "conversa_id": {
+                    "anyOf": [
+                      {
+                        "format": "integer",
+                        "default": 0,
+                        "type": "string"
+                      },
+                      {
+                        "type": "integer"
+                      }
+                    ]
+                  },
+                  "ignorar": {
+                    "maxItems": 2000,
+                    "type": "array",
+                    "items": {
+                      "anyOf": [
+                        {
+                          "format": "integer",
+                          "default": 0,
+                          "type": "string"
+                        },
+                        {
+                          "type": "integer"
+                        }
+                      ]
+                    }
+                  }
+                }
+              }
+            }
+          }
+        },
+        "operationId": "postApiPastasSugerir"
+      }
+    },
+    "/api/pastas/sugestao": {
+      "get": {
+        "parameters": [
+          {
+            "name": "id",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "operationId": "getApiPastasSugestao"
+      }
+    },
     "/api/usuario/permissoes": {
       "get": {
         "operationId": "getApiUsuarioPermissoes"
@@ -8299,6 +8438,30 @@
     "/api/sip": {
       "get": {
         "operationId": "getApiSip"
+      }
+    },
+    "/api/sip/usuario": {
+      "get": {
+        "parameters": [
+          {
+            "name": "usuario_id",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "anyOf": [
+                {
+                  "format": "integer",
+                  "default": 0,
+                  "type": "string"
+                },
+                {
+                  "type": "integer"
+                }
+              ]
+            }
+          }
+        ],
+        "operationId": "getApiSipUsuario"
       },
       "put": {
         "requestBody": {
@@ -8308,12 +8471,24 @@
               "schema": {
                 "type": "object",
                 "required": [
+                  "usuario_id",
                   "sip_user",
-                  "sip_password",
                   "domain",
                   "ws_server"
                 ],
                 "properties": {
+                  "usuario_id": {
+                    "anyOf": [
+                      {
+                        "format": "integer",
+                        "default": 0,
+                        "type": "string"
+                      },
+                      {
+                        "type": "integer"
+                      }
+                    ]
+                  },
                   "sip_user": {
                     "type": "string"
                   },
@@ -8325,7 +8500,11 @@
                     ]
                   },
                   "sip_password": {
-                    "type": "string"
+                    "nullable": true,
+                    "type": [
+                      "string",
+                      "null"
+                    ]
                   },
                   "display_name": {
                     "nullable": true,
@@ -8339,6 +8518,27 @@
                   },
                   "ws_server": {
                     "type": "string"
+                  },
+                  "turn_server": {
+                    "nullable": true,
+                    "type": [
+                      "string",
+                      "null"
+                    ]
+                  },
+                  "turn_user": {
+                    "nullable": true,
+                    "type": [
+                      "string",
+                      "null"
+                    ]
+                  },
+                  "turn_password": {
+                    "nullable": true,
+                    "type": [
+                      "string",
+                      "null"
+                    ]
                   },
                   "ativo": {
                     "type": "boolean"
@@ -8350,12 +8550,24 @@
               "schema": {
                 "type": "object",
                 "required": [
+                  "usuario_id",
                   "sip_user",
-                  "sip_password",
                   "domain",
                   "ws_server"
                 ],
                 "properties": {
+                  "usuario_id": {
+                    "anyOf": [
+                      {
+                        "format": "integer",
+                        "default": 0,
+                        "type": "string"
+                      },
+                      {
+                        "type": "integer"
+                      }
+                    ]
+                  },
                   "sip_user": {
                     "type": "string"
                   },
@@ -8367,7 +8579,11 @@
                     ]
                   },
                   "sip_password": {
-                    "type": "string"
+                    "nullable": true,
+                    "type": [
+                      "string",
+                      "null"
+                    ]
                   },
                   "display_name": {
                     "nullable": true,
@@ -8381,6 +8597,27 @@
                   },
                   "ws_server": {
                     "type": "string"
+                  },
+                  "turn_server": {
+                    "nullable": true,
+                    "type": [
+                      "string",
+                      "null"
+                    ]
+                  },
+                  "turn_user": {
+                    "nullable": true,
+                    "type": [
+                      "string",
+                      "null"
+                    ]
+                  },
+                  "turn_password": {
+                    "nullable": true,
+                    "type": [
+                      "string",
+                      "null"
+                    ]
                   },
                   "ativo": {
                     "type": "boolean"
@@ -8392,12 +8629,24 @@
               "schema": {
                 "type": "object",
                 "required": [
+                  "usuario_id",
                   "sip_user",
-                  "sip_password",
                   "domain",
                   "ws_server"
                 ],
                 "properties": {
+                  "usuario_id": {
+                    "anyOf": [
+                      {
+                        "format": "integer",
+                        "default": 0,
+                        "type": "string"
+                      },
+                      {
+                        "type": "integer"
+                      }
+                    ]
+                  },
                   "sip_user": {
                     "type": "string"
                   },
@@ -8409,7 +8658,11 @@
                     ]
                   },
                   "sip_password": {
-                    "type": "string"
+                    "nullable": true,
+                    "type": [
+                      "string",
+                      "null"
+                    ]
                   },
                   "display_name": {
                     "nullable": true,
@@ -8424,6 +8677,27 @@
                   "ws_server": {
                     "type": "string"
                   },
+                  "turn_server": {
+                    "nullable": true,
+                    "type": [
+                      "string",
+                      "null"
+                    ]
+                  },
+                  "turn_user": {
+                    "nullable": true,
+                    "type": [
+                      "string",
+                      "null"
+                    ]
+                  },
+                  "turn_password": {
+                    "nullable": true,
+                    "type": [
+                      "string",
+                      "null"
+                    ]
+                  },
                   "ativo": {
                     "type": "boolean"
                   }
@@ -8432,168 +8706,29 @@
             }
           }
         },
-        "operationId": "putApiSip"
+        "operationId": "putApiSipUsuario"
       },
-      "patch": {
-        "requestBody": {
-          "required": true,
-          "content": {
-            "application/json": {
-              "schema": {
-                "type": "object",
-                "required": [
-                  "id"
-                ],
-                "properties": {
-                  "id": {
-                    "anyOf": [
-                      {
-                        "format": "integer",
-                        "default": 0,
-                        "type": "string"
-                      },
-                      {
-                        "type": "integer"
-                      }
-                    ]
-                  },
-                  "sip_user": {
-                    "type": "string"
-                  },
-                  "auth_user": {
-                    "nullable": true,
-                    "type": [
-                      "string",
-                      "null"
-                    ]
-                  },
-                  "sip_password": {
-                    "type": "string"
-                  },
-                  "display_name": {
-                    "nullable": true,
-                    "type": [
-                      "string",
-                      "null"
-                    ]
-                  },
-                  "domain": {
-                    "type": "string"
-                  },
-                  "ws_server": {
-                    "type": "string"
-                  },
-                  "ativo": {
-                    "type": "boolean"
-                  }
+      "delete": {
+        "parameters": [
+          {
+            "name": "usuario_id",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "anyOf": [
+                {
+                  "format": "integer",
+                  "default": 0,
+                  "type": "string"
+                },
+                {
+                  "type": "integer"
                 }
-              }
-            },
-            "application/x-www-form-urlencoded": {
-              "schema": {
-                "type": "object",
-                "required": [
-                  "id"
-                ],
-                "properties": {
-                  "id": {
-                    "anyOf": [
-                      {
-                        "format": "integer",
-                        "default": 0,
-                        "type": "string"
-                      },
-                      {
-                        "type": "integer"
-                      }
-                    ]
-                  },
-                  "sip_user": {
-                    "type": "string"
-                  },
-                  "auth_user": {
-                    "nullable": true,
-                    "type": [
-                      "string",
-                      "null"
-                    ]
-                  },
-                  "sip_password": {
-                    "type": "string"
-                  },
-                  "display_name": {
-                    "nullable": true,
-                    "type": [
-                      "string",
-                      "null"
-                    ]
-                  },
-                  "domain": {
-                    "type": "string"
-                  },
-                  "ws_server": {
-                    "type": "string"
-                  },
-                  "ativo": {
-                    "type": "boolean"
-                  }
-                }
-              }
-            },
-            "multipart/form-data": {
-              "schema": {
-                "type": "object",
-                "required": [
-                  "id"
-                ],
-                "properties": {
-                  "id": {
-                    "anyOf": [
-                      {
-                        "format": "integer",
-                        "default": 0,
-                        "type": "string"
-                      },
-                      {
-                        "type": "integer"
-                      }
-                    ]
-                  },
-                  "sip_user": {
-                    "type": "string"
-                  },
-                  "auth_user": {
-                    "nullable": true,
-                    "type": [
-                      "string",
-                      "null"
-                    ]
-                  },
-                  "sip_password": {
-                    "type": "string"
-                  },
-                  "display_name": {
-                    "nullable": true,
-                    "type": [
-                      "string",
-                      "null"
-                    ]
-                  },
-                  "domain": {
-                    "type": "string"
-                  },
-                  "ws_server": {
-                    "type": "string"
-                  },
-                  "ativo": {
-                    "type": "boolean"
-                  }
-                }
-              }
+              ]
             }
           }
-        },
-        "operationId": "patchApiSip"
+        ],
+        "operationId": "deleteApiSipUsuario"
       }
     }
   },

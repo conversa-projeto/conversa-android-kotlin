@@ -457,6 +457,7 @@
 
 ### 4.2 Fila e envio de anexos (FC-401, FC-402, ANX-01, ANX-03)
 - [x] Botão de anexo → Galeria (Photo Picker múltiplo), Câmera, Documento (`OpenMultipleDocuments`) — `BotaoAnexar` no campo; `takePersistableUriPermission` (o envio pode ser depois, pelo WorkManager); câmera grava em `cache/camera` pelo `FileProvider` (sem permissão de câmera). No emulador: 2 fotos da galeria, PDF por documento e foto da câmera enviados ✔ 389e66d
+- [ ] 🆕 `77c7821` Câmera com foto **ou vídeo** e prévia com legenda ("Adicione uma legenda...", "Refazer", "Enviar" na hora, o arquivo antes da legenda); o item aparece com a permissão `imagem` ou `video` (ANX-20, FC-426)
 - [x] Fila acima do campo: miniaturas (imagem), ícone + nome + tamanho (outros), "Remover" — `FilaAnexos`; Enviar habilitado só com anexos (testado no emulador) ✔ 389e66d
 - [x] 🆕 Devolver o acesso aos arquivos ao sair da fila (enviada, descartada ou removida do campo) e apagar a foto da câmera; o Android limita as permissões guardadas por app — `FontesArquivo.liberar` + `EnvioMensagens.desistirDoArquivo`; arquivo ainda usado por outra mensagem da fila não é liberado (+ teste; no emulador a foto some de `cache/camera` ao enviar e ao remover) ✔ 389e66d
 - [x] Tipo: `image/*` → 2; `audio/*` → 4; gravação do microfone → **5**; resto → 3 (vídeo = 3 com extensão) — `tipoPorMime` + `ehVideo` (extensão, como o web) em `core/model/Chat.kt` (+ teste); a gravação é sempre 5
@@ -820,6 +821,7 @@
 - [x] ` ```mermaid ` → WebView offline com mermaid.js embutido (P2) — mermaid 12.0.0 (o do web, conferido pelo sha512) nos assets, 1,87 MB no APK; também os diagramas dentro de ```md; inválido fica como código ✔ cba9d66
 - [x] Rótulos das setas legíveis (achado no uso: "Sim"/"Não" em caixas pretas) — as cores translúcidas (`divisorLista`) iam ao mermaid sem a transparência; `corHex` as compõe sobre o fundo (+ teste). No emulador, tema claro: os rótulos em cinza claro ✔ 3dc8674
 - [x] Esqueleto de carregamento ("shimmer") enquanto o Markdown e o diagrama não aparecem (pedido em 2026-10-09: a demora deixava um vazio) — `EsqueletoCarregando` no `core:ui`: formas cinza que pulsam de leve com um brilho passando na diagonal; linhas de texto no slot `loading` do Markdown e um bloco de 120 dp no lugar do diagrama até o mermaid avisar a altura. No emulador: o diagrama dentro de um ```md levou ~4 s, com o esqueleto no lugar ✔ ec69ba8
+- [ ] 🆕 `3689155` Tabelas CSV e TSV: ```csv/```tsv como tabela no `BlocoCodigo` ("Visualizar" por padrão, "Código", "Copiar" com os dados originais), com o leitor do `tabelaCsv.ts` portado e testado (MSG-26, FC-529)
 
 ### 7.10 Detalhe de status e agendamento (FC-513, FC-514)
 - [x] Toque no ✓ → bottom sheet: `GET /mensagem/status/detalhe?id=` (aqui os campos são **datas**) ✔ f3cab38
@@ -834,6 +836,7 @@
 - [x] Atalhos `:)` → 🙂 etc. (tabela do `emojiAtalhos.ts`), só como palavra solta e fora de código ✔ c2a31d6
 - [x] Colar texto com mais de 10 linhas → sugerir "Enviar como código" ✔ c2a31d6
 - [x] Tela "Inserir código" simples (linguagem + texto monoespaçado) ✔ c2a31d6
+- [ ] 🆕 `3689155` Tabela colada (do Excel, do Sheets ou em CSV) abre o "Inserir código" já com `tsv`/`csv`, antes do teste de texto longo; `csv` e `tsv` na lista de linguagens (ENV-09, ENV-10, FC-529)
 - [x] 🆕 `7322e83` Rascunho por conversa (FC-519, ENV-23): texto com menções, fila de anexos e resposta/encaminhamento pendente guardados no aparelho; restaurar ao abrir a conversa; apagar ao enviar ✔ 217be62
 
 ### 7.12 Votação em grupo (FC-516, FC-517, FC-518, MSG-20, ENV-22)

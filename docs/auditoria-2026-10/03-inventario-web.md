@@ -1,6 +1,6 @@
 # 03 — Inventário de funcionalidades e comportamento do cliente web (conversa-web)
 
-> Auditoria de 2026-10-06. Fonte: `C:\Users\danie\Desktop\GIT\conversa-projeto\conversa-web` no commit `bfb79d8` (2026-10-06, "Abas Sistema e Acessos nas configurações; Equipes sai da barra"), **atualizado com `39d06f9`** (2026-10-06 21:22, "Campo de mensagem rico, votação em grupo e chat completo na chamada"). Itens novos ou alterados por esse commit estão marcados com 🆕; o resumo está na §10. **Atualizado de novo em 2026-10-08** com `eaa8bac` e `785bdef` (2026-10-07 20:30 e 20:41): as marcações citam o commit (🆕 `eaa8bac`) e o resumo está na §11. Depois vieram `7322e83` e `e8d82cb` (§12, total 137). **Atualizado de novo em 2026-10-13** até o commit **`d202c06`** (2026-10-11 18:00, "Postagens em grupo, todos os emojis, figurinhas Noto e pesquisa nova"), com `769bd7d`, `05507a0`, `f798e9c`, `964ed72` e `d202c06` (servidor até `12cf0cf`): 13 IDs novos, total **150**; as marcações citam o commit (🆕 `769bd7d`) e o resumo está na §13. **Atualizado de novo em 2026-10-15** até o commit **`8b43965`** (2026-10-14 20:39, "Temas prontos, balões com cores próprias, seletor de emoji rápido e ajustes"), com `e33ecba` e `8b43965` (servidor até `e25c4db`, com `6d20ff7`): 3 IDs novos, total **153**; as marcações citam o commit (🆕 `e33ecba`) e o resumo está na §14. **Atualizado de novo em 2026-10-15 (noite)** com o commit **`9c6e8a6`** (2026-10-15 22:42, "Bots de IA com ferramentas e base de conhecimento, permissões de uso e cadastro pelo administrador"; servidor até `ef13c22`): 10 IDs novos, total **163**; as marcações citam o commit (🆕 `9c6e8a6`) e o resumo está na §15. **Atualizado de novo em 2026-10-16 (noite)** com o commit **`f351190`** (2026-10-16 22:49, "Pastas de mensagens, localização e trajeto, espaço usado e menu das Configurações"; servidor até `ac710eb`): 9 IDs novos, total **172**; as marcações citam o commit (🆕 `f351190`) e o resumo está na §16. **Atualizado de novo em 2026-10-19** com os commits **`8385b22`**, **`d244fc8`** e **`57bd9f0`** (2026-10-18, "Telefonia SIP configurada pelo administrador…", "Chamada já conectada enquanto toca, áudios em sequência e clique direito na seleção" e "Sugestões da IA no painel de pastas…"; servidor até `b104db8`, com `be17b8e` e `383eaaa`): 4 IDs novos, total **176**; as marcações citam o commit (🆕 `d244fc8`) e o resumo está na §17. Foram lidos `CLAUDE.md`, `README.md`, todo o `src/`, `chat-popup.html`, `public/firebase-messaging-sw.js`, `package.json`, `vite.config.ts`, os nomes dos testes em `tests/unit/` (589 casos) e o `git show --stat` de todos os commits desde 2026-09-12.
+> Auditoria de 2026-10-06. Fonte: `C:\Users\danie\Desktop\GIT\conversa-projeto\conversa-web` no commit `bfb79d8` (2026-10-06, "Abas Sistema e Acessos nas configurações; Equipes sai da barra"), **atualizado com `39d06f9`** (2026-10-06 21:22, "Campo de mensagem rico, votação em grupo e chat completo na chamada"). Itens novos ou alterados por esse commit estão marcados com 🆕; o resumo está na §10. **Atualizado de novo em 2026-10-08** com `eaa8bac` e `785bdef` (2026-10-07 20:30 e 20:41): as marcações citam o commit (🆕 `eaa8bac`) e o resumo está na §11. Depois vieram `7322e83` e `e8d82cb` (§12, total 137). **Atualizado de novo em 2026-10-13** até o commit **`d202c06`** (2026-10-11 18:00, "Postagens em grupo, todos os emojis, figurinhas Noto e pesquisa nova"), com `769bd7d`, `05507a0`, `f798e9c`, `964ed72` e `d202c06` (servidor até `12cf0cf`): 13 IDs novos, total **150**; as marcações citam o commit (🆕 `769bd7d`) e o resumo está na §13. **Atualizado de novo em 2026-10-15** até o commit **`8b43965`** (2026-10-14 20:39, "Temas prontos, balões com cores próprias, seletor de emoji rápido e ajustes"), com `e33ecba` e `8b43965` (servidor até `e25c4db`, com `6d20ff7`): 3 IDs novos, total **153**; as marcações citam o commit (🆕 `e33ecba`) e o resumo está na §14. **Atualizado de novo em 2026-10-15 (noite)** com o commit **`9c6e8a6`** (2026-10-15 22:42, "Bots de IA com ferramentas e base de conhecimento, permissões de uso e cadastro pelo administrador"; servidor até `ef13c22`): 10 IDs novos, total **163**; as marcações citam o commit (🆕 `9c6e8a6`) e o resumo está na §15. **Atualizado de novo em 2026-10-16 (noite)** com o commit **`f351190`** (2026-10-16 22:49, "Pastas de mensagens, localização e trajeto, espaço usado e menu das Configurações"; servidor até `ac710eb`): 9 IDs novos, total **172**; as marcações citam o commit (🆕 `f351190`) e o resumo está na §16. **Atualizado de novo em 2026-10-19** com os commits **`8385b22`**, **`d244fc8`** e **`57bd9f0`** (2026-10-18, "Telefonia SIP configurada pelo administrador…", "Chamada já conectada enquanto toca, áudios em sequência e clique direito na seleção" e "Sugestões da IA no painel de pastas…"; servidor até `b104db8`, com `be17b8e` e `383eaaa`): 4 IDs novos, total **176**; as marcações citam o commit (🆕 `d244fc8`) e o resumo está na §17. **Atualizado de novo em 2026-10-22** com os commits **`77c7821`** e **`3689155`** (2026-10-19 21:15, "Câmera no "+": foto ou vídeo direto da câmera, com prévia e legenda" e "Tabelas CSV e TSV nas mensagens e tabela colada vira bloco de tabela"; o servidor não mudou, segue em `b104db8`): 2 IDs novos, total **178**; as marcações citam o commit (🆕 `77c7821`) e o resumo está na §18. Foram lidos `CLAUDE.md`, `README.md`, todo o `src/`, `chat-popup.html`, `public/firebase-messaging-sw.js`, `package.json`, `vite.config.ts`, os nomes dos testes em `tests/unit/` (589 casos) e o `git show --stat` de todos os commits desde 2026-09-12.
 >
 > Objetivo: servir de **checklist de paridade** para o app Android (`conversa-android-kotlin`). Cada funcionalidade tem um ID (ex.: `MSG-07`) para ser marcada como "feito / parcial / falta" na comparação com o Android.
 >
@@ -27,6 +27,7 @@
 15. [🆕 Atualização de 2026-10-15 (noite) — commit `9c6e8a6`](#15-atualização-de-2026-10-15-noite--commit-9c6e8a6)
 16. [🆕 Atualização de 2026-10-16 (noite) — commit `f351190`](#16-atualização-de-2026-10-16-noite--commit-f351190)
 17. [🆕 Atualização de 2026-10-19 — commits `8385b22`, `d244fc8` e `57bd9f0`](#17-atualização-de-2026-10-19--commits-8385b22-d244fc8-e-57bd9f0)
+18. [🆕 Atualização de 2026-10-22 — commits `77c7821` e `3689155`](#18-atualização-de-2026-10-22--commits-77c7821-e-3689155)
 
 ---
 
@@ -46,7 +47,8 @@
 | Upload | MinIO por URL pré-assinada, `XMLHttpRequest` (progresso) | `conversaApi.ts#uploadMinio` |
 | Hash | `hash-wasm` SHA-256 em blocos de 2 MB (deduplicação) | `conversaApi.ts#sha256File` |
 | Código | highlight.js (sob demanda) + CodeMirror 6 (janela de código) | `composables/useCodeHighlight.ts`, `components/CodigoModal.vue` |
-| Markdown / diagramas | `marked` + `DOMPurify`, `mermaid` (securityLevel strict) | `composables/useMarkdown.ts`, `composables/useMermaid.ts` |
+| Markdown / diagramas | `marked` + `DOMPurify`, `mermaid` (securityLevel strict); 🆕 `3689155` tabelas CSV/TSV montadas em Markdown GFM e desenhadas pelo mesmo `marked` (MSG-26) | `composables/useMarkdown.ts`, `composables/useMermaid.ts`, 🆕 `utils/tabelaCsv.ts` |
+| 🆕 `77c7821` Câmera | `<input type="file" capture="environment">` no celular; `getUserMedia` + canvas (foto JPEG) + `MediaRecorder` (vídeo webm/mp4) no computador (ANX-20) | `composables/useCamera.ts`, `components/CameraModal.vue` |
 | PDF | `pdfjs-dist` 6 | `components/VisualizadorPdf.vue` |
 | 🆕 `9c6e8a6` Arquivos do Office | `@silurus/ooxml` 0.88.0 (leitor em Rust/WASM, desenho em canvas); fontes substitutas em `public/fontes/office` (sem Google Fonts) | `components/VisualizadorOffice.vue`, `utils/fontesOffice.ts` |
 | 🆕 `f351190` Mapas | Leaflet 1.9.4 (chunk `leaflet`, só carrega quando aparece uma localização); ruas do OpenStreetMap e satélite da Esri; busca de endereço no Nominatim e rota no OSRM, chamados direto do navegador (ENV-30, MSG-25) | `components/MapaLeaflet.vue`, `services/mapas.ts`, `utils/localizacao.ts` |
@@ -78,7 +80,7 @@ https://HOST
 | `atividades` (`stores/atividades.ts`) | lista paginada, contador de novas, tela aberta; 🆕 `9c6e8a6` o contador (`novas`) passa a contar as **pendentes**, `marcarVistas` saiu e entrou `concluir(id)` (ATV-02, ATV-04) | memória |
 | 🆕 `f351190` `pastas` (`stores/pastas.ts`) | pastas da conversa direta aberta (`lista`, `porId`), painel aberto, mensagens selecionadas no chat, arraste em andamento, pasta aberta e as mensagens dela, com a paginação (CON-17, ENV-29, MSG-24); 🆕 `57bd9f0` a última análise das sugestões da IA (`analise`) e as sugestões ainda sem resposta (`sugestoesPendentes`, CON-18) | memória (🆕 `57bd9f0` as sugestões ignoradas ficam no `localStorage`, CON-18) |
 
-Estados globais fora do Pinia (composables singleton): tema (`useTheme`, chave `theme` = `dark`/`light`), cores personalizadas (`useCoresPersonalizadas`, chave própria no localStorage, por tema; 🆕 `8b43965` por cima do tema pronto escolhido, chave `conversa.temaCores`, CFG-10), qualidade das chamadas (`useConfigChamada`, chave `conversa.chamada`), uploads ativos (`useUploadProgress`), áudio tocando (`useAudioManager`), relógio compartilhado (`useAgora`), conexão lenta (`useConexao`). 🆕 `769bd7d`…`d202c06`: recursos do servidor (`useRecursos`, GER-08), sugestão da IA (`useSugestaoIa`, chave `conversa.sugestoesIa`), catálogo e recentes de emojis (`useEmojis`, chave `conversa.emojisRecentes`), aba própria da chamada (`useAbaChamada`). 🆕 `9c6e8a6`: `useRecursos` ganha `conhecimento`; barra de navegação oculta no computador (chave `conversa.menuOculto`, GER-10). 🆕 `f351190`: velocidade dos áudios, a mesma para todos (`useAudioPlayer`, chave `conversa.velocidadeAudio`, ANX-18). 🆕 `57bd9f0`: as sugestões de pasta ignoradas, por pessoa e conversa (chave `conversa.sugestoesIgnoradas.<usuarioId>.<conversaId>`, lista JSON de ids de mensagem, as 2000 últimas, CON-18). IndexedDB: rascunhos (ENV-23) e o último resumo de cada conversa (banco `conversa-resumos`, CON-14).
+Estados globais fora do Pinia (composables singleton): tema (`useTheme`, chave `theme` = `dark`/`light`), cores personalizadas (`useCoresPersonalizadas`, chave própria no localStorage, por tema; 🆕 `8b43965` por cima do tema pronto escolhido, chave `conversa.temaCores`, CFG-10), qualidade das chamadas (`useConfigChamada`, chave `conversa.chamada`), uploads ativos (`useUploadProgress`), áudio tocando (`useAudioManager`), relógio compartilhado (`useAgora`), conexão lenta (`useConexao`). 🆕 `769bd7d`…`d202c06`: recursos do servidor (`useRecursos`, GER-08), sugestão da IA (`useSugestaoIa`, chave `conversa.sugestoesIa`), catálogo e recentes de emojis (`useEmojis`, chave `conversa.emojisRecentes`), aba própria da chamada (`useAbaChamada`). 🆕 `9c6e8a6`: `useRecursos` ganha `conhecimento`; barra de navegação oculta no computador (chave `conversa.menuOculto`, GER-10). 🆕 `f351190`: velocidade dos áudios, a mesma para todos (`useAudioPlayer`, chave `conversa.velocidadeAudio`, ANX-18). 🆕 `57bd9f0`: as sugestões de pasta ignoradas, por pessoa e conversa (chave `conversa.sugestoesIgnoradas.<usuarioId>.<conversaId>`, lista JSON de ids de mensagem, as 2000 últimas, CON-18). 🆕 `77c7821`: celular ou computador e se há webcam (`useCamera`: `celular` calculado uma vez ao carregar; `temWebcam` pela lista de dispositivos, conferida de novo a cada `devicechange`; ANX-20). IndexedDB: rascunhos (ENV-23) e o último resumo de cada conversa (banco `conversa-resumos`, CON-14).
 
 ### 1.3 Como fala com a API (Eden)
 
@@ -143,7 +145,7 @@ Para exibir: `GET /anexo?identificador=` → `{url}` (pré-assinada; validade li
 
 ### 1.8 Carregamento sob demanda
 
-Chunks manuais no Vite: `sipjs`, `framework`, `highlightjs`, `markdown`, `lottie`, `vendor-utils` (hash-wasm), `codemirror`. Componentes assíncronos: `SipDialerModal`, `SipIncomingCallModal`, `CodigoModal`, `AgendarMensagemModal`, `VisualizadorPdf`, `VisualizadorHtml`; 🆕 `9c6e8a6` `VisualizadorOffice` (um chunk por formato, cada um com o seu `.wasm`, sem CDN); 🆕 `f351190` chunk `leaflet`, com `LocalizacaoModal` e `ConteudoLocalizacao` assíncronos (o mapa só carrega quando aparece uma localização). Irrelevante para o Android, mas indica o que é "pesado" e opcional.
+Chunks manuais no Vite: `sipjs`, `framework`, `highlightjs`, `markdown`, `lottie`, `vendor-utils` (hash-wasm), `codemirror`. Componentes assíncronos: `SipDialerModal`, `SipIncomingCallModal`, `CodigoModal`, `AgendarMensagemModal`, `VisualizadorPdf`, `VisualizadorHtml`; 🆕 `9c6e8a6` `VisualizadorOffice` (um chunk por formato, cada um com o seu `.wasm`, sem CDN); 🆕 `f351190` chunk `leaflet`, com `LocalizacaoModal` e `ConteudoLocalizacao` assíncronos (o mapa só carrega quando aparece uma localização); 🆕 `77c7821` `CameraModal` (ANX-20). Irrelevante para o Android, mas indica o que é "pesado" e opcional.
 
 ---
 
@@ -210,13 +212,14 @@ Desktop: barra vertical à esquerda. Celular (< 768 px): barra horizontal no rod
 | `DetalheStatusMensagem` | hover 300 ms / clique no ✓ da própria mensagem | etapas de entrega |
 | `MensagemAcoes` (menu + `EmojiPicker`) | botão ⋯ ao passar o mouse ou clique direito na bolha | reações rápidas + ações |
 | `DialogoConfirmacao` | Ocultar / cancelar agendada / erros de download | diálogo do app |
-| `AnexoPopup` | botão "Anexar" | Arquivo / Código (hoje: Arquivo, Código, 🆕 `f351190` **Localização**, Votação e Postagem em grupo, Confirmar leitura) |
+| `AnexoPopup` | botão "Anexar" | Arquivo / Código (hoje: Arquivo, 🆕 `77c7821` **Câmera** — com `imagem` ou `video`; no computador, só com webcam —, Código, 🆕 `f351190` **Localização**, Votação e Postagem em grupo, Confirmar leitura) |
+| 🆕 `77c7821` `CameraModal` | "+" › "Câmera": no computador, abre direto; no celular, depois que a câmera do sistema devolve a foto ou o vídeo | tela inteira preta: "Câmera" (webcam ao vivo, disparador, "Trocar de câmera") ou "Enviar" (prévia com "Refazer", legenda "Adicione uma legenda..." e o botão "Enviar", que manda na hora) — ANX-20 |
 | 🆕 `f351190` `LocalizacaoModal` | "+" › "Localização", ou "Editar localização" na peça do campo | "Enviar localização" / "Editar localização": Local ou Trajeto, busca, posição, mapa; "Inserir na mensagem" ou "Enviar" (ENV-30) |
 | 🆕 `f351190` `VisualizadorLocalizacao` | clique no mapa da bolha | mapa grande com arrastar, zoom e satélite; "Abrir no Google Maps" (MSG-25) |
 | 🆕 `f351190` `PainelPastas` | botão "Pastas de mensagens" do cabeçalho (direta), ou ao selecionar mensagens | pastas da conversa: criar, abrir, opções, soltar mensagens (CON-17); 🆕 `57bd9f0` no pé, a seção "Sugestões da IA" com "Sugerir pastas" (CON-18) |
 | 🆕 `f351190` `ChatDaPasta` | clique numa pasta do painel ou na marca da bolha recebida | só as mensagens da pasta, sem campo; "Voltar ao chat" (MSG-24) |
 | `EmojiPicker` (com abas Emojis/Figurinhas) | botão "Emoji" | |
-| `CodigoModal` | Anexar → Código, ou colar texto > 10 linhas; 🆕 `e33ecba` também "Editar código" na peça do campo | editor CodeMirror; 🆕 `e33ecba` "Inserir na mensagem" (vira a peça `codigo`, ENV-28) ou "Enviar"; editando, só "Salvar" (ENV-10) |
+| `CodigoModal` | Anexar → Código, ou colar texto > 10 linhas; 🆕 `e33ecba` também "Editar código" na peça do campo | editor CodeMirror; 🆕 `e33ecba` "Inserir na mensagem" (vira a peça `codigo`, ENV-28) ou "Enviar"; editando, só "Salvar" (ENV-10); 🆕 `3689155` linguagens `csv` e `tsv` no fim da lista (a tabela colada não passa por ela: vira a peça direto, ENV-09) |
 | `AgendarMensagemModal` | botão relógio "Agendar mensagem" (aparece com conteúdo) | data + hora |
 | `MencaoDropdown` | digitar `@` | até 6 contatos |
 | `BarraGravacao` | microfone | gravação de áudio |
@@ -607,6 +610,7 @@ Hora (`HH:MM`) dentro da bolha (`MensagemStatus.vue`), posição conforme varian
 - Destaque de sintaxe (highlight.js; aliases js/ts/py/sh/cs/delphi/md/html/xml/texto…).
 - Bloco longo: recolhido em altura máxima (~240 px) com degradê e botão "Expandir código"/"Recolher código", re-medido quando muda de tamanho.
 - Blocos ` ```md ` / ` ```markdown ` aparecem **formatados** (marked GFM + breaks, sanitizado, links em nova aba) e ` ```mermaid ` como **diagrama** (também dentro de Markdown); alternância "Visualizar" / "Código". O diagrama usa as cores do tema atual.
+- 🆕 `3689155` ` ```csv ` e ` ```tsv ` são o terceiro tipo com "Visualizar" / "Código": aparecem como **tabela** (MSG-26). No modo "Código" eles vão **sem destaque de sintaxe** (`plaintext`); "Copiar" copia sempre os dados originais. Dentro de um ` ```md `, um ` ```csv ` continua como código (só o mermaid vira desenho dentro do Markdown).
 
 **MSG-16 Mensagem oculta** (antigo "excluída") — `BolhaExcluida.vue`
 - Mostra "Mensagem oculta" + hora/status. Clique alterna revelar/ocultar o conteúdo original ("Mensagem oculta" continua no topo); clicar em controles do conteúdo (botões, links, áudio, vídeo, imagem) não alterna. Tooltip "Clique para ver o conteúdo" / "Clique para ocultar o conteúdo".
@@ -713,6 +717,29 @@ Hora (`HH:MM`) dentro da bolha (`MensagemStatus.vue`), posição conforme varian
   - trajeto: `https://www.google.com/maps/dir/?api=1&origin=<lat>%2C<lng>&destination=<lat>%2C<lng>&travelmode=driving`.
 - **Resumos:** **"Localização"** na notificação (NOT-02), no resumo da citação (`messageReferences.ts`, MSG-19), na prévia das atividades (ATV-01) e **"[Localização]"** no painel do chat da chamada (CHA-18). A barra "respondendo a" e o encaminhar (`resumoMensagem`, ENV-06/ENV-08) não mudaram e mostram "Arquivo". No servidor, a prévia da conversa (`ultima_mensagem_texto`) e o push dizem "localização".
 
+**MSG-26 🆕 `3689155` Tabelas CSV e TSV nos blocos de código** (`utils/tabelaCsv.ts`, `MessageContent.vue`; desenhada pelo `carregarMarkdown` do MSG-15)
+- **Quais blocos:** ` ```csv ` e ` ```tsv ` (a linguagem sem diferenciar maiúsculas, `ehLinguagemTabela`), detectados como os outros blocos (MSG-15). O bloco guarda **os dados originais**: é o que vai na mensagem (texto tipo 1 com a cerca) e o que o "Copiar" copia; a tabela é só a forma de mostrar. Nada muda no servidor; cliente que não conhece mostra como código.
+- **Na bolha**, como os ` ```md ` e ` ```mermaid `:
+  - cabeçalho com a linguagem como foi escrita (ex.: "csv"), a alternância **"Visualizar"** / **"Código"** e **"Copiar"** ("Copiado!" por 2 s);
+  - **abre em "Visualizar"** (a tabela); até o Markdown carregar (sob demanda), aparece o código, sem a alternância. "Código" mostra o texto cru **sem destaque**. A escolha não fica guardada;
+  - tabela larga **rola na horizontal** dentro do bloco (`overflow-x-auto`); alta, recolhe em ~240 px com o degradê e "Expandir código" / "Recolher código" (MSG-15);
+  - estilo: bordas em todas as células (cor `surface-300`), `px-2 py-1`; o cabeçalho em negrito, à esquerda;
+  - bloco sem nenhuma coluna (vazio): sem tabela e sem a alternância, só o código.
+- **Como a tabela é montada** (`tabelaParaMarkdown(texto, linguagem)` → Markdown GFM → `marked` + `DOMPurify`):
+  - separador: **tab** no `tsv`; no `csv`, o de `separadorCsv` (abaixo);
+  - **a primeira linha é o cabeçalho**; linhas vazias (todas as células em branco) ficam de fora;
+  - número de colunas = o da **linha mais longa**; as mais curtas ganham células vazias no fim (`item,qtd\nA,1\nB` → `| item | qtd |`, `| --- | ---: |`, `| A | 1 |`, `| B |  |`);
+  - **coluna só de números fica à direita** (`---:`): todos os valores **não vazios do corpo** (com `trim`) casam com `^[-+]?(R\$\s*)?\d[\d.,\s]*%?$` (ex.: "10", "-1.234,56", "R$ 10,00", "15%"); coluna sem nenhum valor no corpo fica à esquerda. Só as células do corpo vão à direita: o cabeçalho continua à esquerda (o estilo `text-left` do `th` vence o `align`);
+  - cada célula: `trim()`; os caracteres `` \ ` * _ [ ] < > | ~ & `` ganham uma `\` antes (aparecem como são, sem virar formatação nem HTML: "9996 liga para o *43" não vira itálico, `<b>` aparece escrito); a quebra de linha dentro da célula vira `<br>`.
+- **Leitura das células** (`lerTabela(texto, separador)`, como o CSV do Excel):
+  - **aspa no começo da célula** abre um trecho entre aspas: dentro dele, o separador e a quebra de linha são texto (é assim que o Excel copia a célula que tem Enter) e `""` vira `"`; a aspa seguinte fecha, e o que vier depois, até o separador, continua na mesma célula. Aspa no meio da célula é texto. Aspa que não fecha: o resto do texto vai para a célula;
+  - o separador fecha a célula; `\n`, `\r` ou `\r\n` fecham a linha;
+  - exemplos dos testes: `a;b\r\n\nc;d\n` → `[[a,b],[c,d]]`; `"x;y";"com ""aspas"""\n"duas\nlinhas";z` → `[["x;y", "com \"aspas\""], ["duas\nlinhas", "z"]]`.
+- **Separador do CSV** (`separadorCsv`): lê o texto com `;` e com `,`; fica o que der **o mesmo número de colunas em todas as linhas, com 2 ou mais**; se os dois derem (ou nenhum), fica o que der **mais colunas na primeira linha** e, no empate, o **`;`** (o Excel em português usa `;` com a vírgula decimal: `nome;valor\nA;1,5\nB;2,25` → `;`; `nome,valor\nA,1\nB,2` → `,`).
+- **Entradas:** o bloco cercado escrito à mão, a janela "Inserir código" com a linguagem `csv`/`tsv` (ENV-10) e a **tabela colada** no campo, que vira a peça de código direto (ENV-09, ENV-28).
+- Sem limite de linhas nem de colunas no `tabelaCsv.ts`. Os resumos (citação, notificação) não mudaram: o bloco conta como código.
+- Testes do web: `tests/unit/tabelaCsv.test.ts` (leitura, separador, montagem, escape, `pareceTabela`).
+
 ### 3.4 ENV — Mensagens: composição e ações
 
 **ENV-01 Enviar texto** — 🆕 o campo agora é rico (ENV-21); só texto continua indo como antes (`MessageInput.vue`, `stores/chat.ts#enviarMensagemComConteudos`)
@@ -769,11 +796,18 @@ Hora (`HH:MM`) dentro da bolha (`MensagemStatus.vue`), posição conforme varian
 - Destinos: todas as conversas exceto a de origem (rótulos "Grupo existente" / "Conversa direta existente", etiqueta "Conversa") + contatos sem conversa direta ("Novo chat direto"/email, etiqueta "Contato"). "Nenhum destino encontrado.".
 - API: `PUT /mensagem` no destino com os conteúdos copiados (reordenados 1..n) e `mensagem_referencia {tipo:2, origem_mensagem_id}`; contato sem conversa → cria a direta antes. Depois abre o destino.
 
-**ENV-09 Colar código e colar texto longo** (`MessageInput.vue#aoColarNoChat`, `utils/codeBlocks.ts`)
+**ENV-09 Colar código e colar texto longo** (`MessageInput.vue#aoColarNoChat`, `utils/codeBlocks.ts`) — 🆕 `3689155`: tabela colada (Excel, Sheets, CSV) vira a peça de código `tsv`/`csv`, sem a janela (ver o fim do item)
 - Texto colado com **mais de 10 linhas** → abre a janela "Inserir código" já preenchida, com linguagem detectada (`markdown` se contém ` ``` `; `texto` se é desenho ASCII; senão heurística). **Cancelar cola o texto como estava** (a janela é só sugestão). 🆕 `e33ecba`: **"Inserir na mensagem"** põe o código colado no campo como **peça** (ENV-28), no ponto do cursor; "Enviar" manda só o código, na hora (ENV-10).
 - Texto com cara de código (≥ 2 linhas, metade com cara de código + sinal forte; ou ≥ 50% desenho ASCII; ou ≥ 50% comandos de terminal) → entra como texto e logo vira bloco cercado com a linguagem detectada (Ctrl+Z volta ao texto cru).
 - Cerca = uma crase a mais que a maior sequência de crases do código (mín. 3).
 - Detecção de linguagem: JSON válido; regras para html, sql, pascal, csharp, typescript, python, javascript, css, bash; senão highlight.js (relevância ≥ 3) ou `texto`.
+- 🆕 `3689155` **Tabela colada** (`utils/tabelaCsv.ts#pareceTabela`), conferida **antes** do texto longo e do código: vira **direto a peça `codigo`** no campo (ENV-28), no ponto do cursor, com a linguagem **`tsv`** ou **`csv`** e o texto colado (sem as linhas em branco do começo e os espaços do fim), **sem abrir a janela**, mesmo com mais de 10 linhas. Na mensagem aparece como tabela (MSG-26). É tabela quando:
+  - tem **2 linhas ou mais** (precisa haver `\n` depois de tirar as pontas);
+  - **com tab** (Excel, Google Sheets, tabela de página): lido com tab, todas as linhas com **o mesmo número de colunas, 2 ou mais** → `tsv`; senão não é tabela (não tenta o CSV);
+  - **sem tab:** não vale se alguma linha começa com ` ``` ` ou se `pareceCodigo` (as regras do bullet acima); o separador é o de `separadorCsv` (MSG-26); todas as linhas com o mesmo número de colunas (2 ou mais) e **nenhuma célula começando com espaço** (para frases como "Oi, tudo bem?\nSim, e você?" não virarem tabela) → `csv`;
+  - não viram tabela (testes): `a\tb` (uma linha), `a\tb\nc` (colunas diferentes), `const a = f(x,y);\nconst b = g(z,w);` (código), `linha um\nlinha dois` (sem separador);
+  - **pegadinha:** o teste de código só vale para o CSV — um texto em que **toda linha tem o mesmo número de tabs** (ex.: código com um tab de recuo em todas as linhas) entra como `tsv`;
+  - ordem no colar: as peças copiadas do próprio campo e os **arquivos** colados vêm antes; se a área de transferência traz um arquivo, ele entra e a tabela não.
 
 **ENV-10 Janela "Inserir código"** (`CodigoModal.vue`)
 - Seletor de linguagem (`texto, javascript, typescript, python, sql, json, html, css, bash, csharp, pascal, markdown, mermaid` + a detectada, se fora da lista), editor CodeMirror (tema claro/escuro), placeholder "Cole ou escreva seu código aqui...", "Cancelar"/"Enviar", **Ctrl/Cmd+Enter envia**. Enviar **envia imediatamente** a mensagem com o bloco cercado (substitui o texto do campo).
@@ -783,6 +817,7 @@ Hora (`HH:MM`) dentro da bolha (`MensagemStatus.vue`), posição conforme varian
   - **"Inserir na mensagem"** vira a peça `codigo` no campo (ENV-28), que vai junto com o resto; editando, **"Salvar"** troca a peça;
   - **"Enviar"** manda **só o bloco cercado, na hora**, numa mensagem só dele, e **não limpa mais o campo**: o que já estava escrito fica lá (o que estiver pendente acima do campo — resposta, confirmação, postagem — vai com ele, porque o envio passa pelo mesmo `chat.enviarMensagemComConteudos`);
   - **Ctrl/Cmd+Enter agora insere** (ou salva, editando), em vez de enviar.
+- 🆕 `3689155` A lista ganha **`csv`** e **`tsv`** no fim (`texto, javascript, typescript, python, sql, json, html, css, bash, csharp, pascal, markdown, mermaid, csv, tsv`), sem destaque no editor; o bloco enviado com elas aparece como tabela (MSG-26).
 
 **ENV-11 Colar imagem** — imagem na área de transferência entra na fila de anexos como `print-<timestamp>.<ext>` (ext pelo mime).
 
@@ -890,6 +925,7 @@ Hora (`HH:MM`) dentro da bolha (`MensagemStatus.vue`), posição conforme varian
 - **Peça** (até `max-w-md`; selecionada fica azul, com anel): cabeçalho com o ícone de código, **"<linguagem> · 1 linha"** / **"<linguagem> · N linhas"** (sem linguagem: **"texto"**), e os botões **"Editar código"** (lápis) e **"Remover código"** (×) — `title`/`aria-label` com esses textos; embaixo, a **prévia das 4 primeiras linhas** em fonte monoespaçada, com **"…"** quando há mais.
 - **Não se edita dentro do campo** (peça "átomo"): "Editar código" abre a mesma janela com o título **"Editar código"** e só **"Cancelar"** / **"Salvar"**; salvar troca a peça. Como as outras peças, apaga-se como um caractere, seleciona-se e arrasta-se para mudar a ordem; o rascunho (ENV-23) guarda a peça.
 - **No envio** (`blocosDoDocumento`), **cada peça vira um conteúdo próprio tipo 1** com o bloco cercado: `<cerca><linguagem>\n<código>\n<cerca>` (cerca = uma crase a mais que a maior sequência de crases do código, mínimo 3); o texto antes e depois vira conteúdos tipo 1 separados, na ordem do campo. Peça com código vazio é descartada.
+- 🆕 `3689155` A **tabela colada** (ENV-09) entra direto como esta peça, com a linguagem `tsv` ou `csv` (ex.: **"tsv · 3 linhas"**), sem passar pela janela; "Editar código" abre a janela com essa linguagem. No envio vira ` ```tsv ` / ` ```csv ` (com os tabs do TSV preservados) e aparece como tabela (MSG-26).
 
 **ENV-29 🆕 `f351190` Selecionar mensagens e pôr na pasta** (`composables/useSelecaoMensagens.ts`, `MessageList.vue`, `utils/pastas.ts`, `PainelPastas.vue`; servidor `ac710eb`)
 - Só na conversa **direta** com as pastas carregadas (CON-17); no grupo não há seleção. Mensagem ainda enviando (id ≤ 0) não se seleciona.
@@ -973,7 +1009,7 @@ Hora (`HH:MM`) dentro da bolha (`MensagemStatus.vue`), posição conforme varian
 - 🆕 `eaa8bac` Links `#...` rolam dentro do próprio documento (um script injetado logo depois do `<head>`); antes, no `srcdoc`, eles abriam o Conversa dentro do quadro.
 - 🆕 `8b43965` **Ver o fonte:** com o HTML carregado, um botão na barra (ícone `</>`, antes de "Baixar") alterna entre a página e o **fonte** como veio no arquivo, com destaque de sintaxe (highlight.js `html`, quebra de linha); `title` **"Ver fonte"** / **"Ver página"** (destacado enquanto mostra o fonte).
 
-**ANX-08 Markdown e Mermaid** — dentro de blocos de código (MSG-15). Não há visualizador de **arquivo** `.md` anexado (só para blocos no texto).
+**ANX-08 Markdown e Mermaid** — dentro de blocos de código (MSG-15). Não há visualizador de **arquivo** `.md` anexado (só para blocos no texto). 🆕 `3689155` Também as tabelas ` ```csv ` / ` ```tsv ` (MSG-26), só em blocos no texto: o **arquivo** `.csv` anexado continua só com "Download".
 
 **ANX-09 Download** — "Download" em arquivos: busca a URL assinada, baixa como blob e dispara `<a download=nome>`; falha → abre a URL em nova aba; erro → aviso "Não foi possível baixar".
 
@@ -1047,6 +1083,34 @@ Hora (`HH:MM`) dentro da bolha (`MensagemStatus.vue`), posição conforme varian
 - **Para** quando a mensagem de baixo não tem áudio (não procura mais adiante) ou quando não há mensagem abaixo. Vale para arquivo de áudio e gravação (`AudioPlayerArquivo` e `AudioPlayerGravacao`, os dois com `data-media-player`); o "primeiro player" é o primeiro que aparece na mensagem, que pode ser o de uma citação.
 - Só no **chat** (`MessageList`: o chat do app, o popup e o chat completo da chamada). Na pasta aberta (MSG-24), na página de Anexos e no chat da ligação só leitura (CHA-26) o áudio não continua.
 - Sem botão nem preferência: é sempre assim. Sem API.
+
+**ANX-20 🆕 `77c7821` Câmera no "+": foto ou vídeo na hora, com prévia e legenda** (`AnexoPopup.vue`, `CameraModal.vue`, `composables/useCamera.ts`, `MessageInput.vue#abrirCamera`/`capturarNoCelular`/`onEnviarCamera`)
+- **Entrada:** "+" → **"Câmera"** (ícone de câmera, na cor principal), **depois de "Arquivo" e antes de "Código"**, em conversa direta e em grupo. Aparece com a permissão de uso **`imagem` ou `video`** (GER-09) **e**, no computador, só se houver webcam.
+- **Celular ou computador** (`useCamera`):
+  - **celular** = user agent com `android|iphone|ipad|ipod|mobile` (sem diferenciar maiúsculas) **ou** tela só de toque (`(hover: none) and (pointer: coarse)`); calculado uma vez, ao carregar;
+  - **webcam** (só no computador): `navigator.mediaDevices.enumerateDevices()` com algum `videoinput` (a lista vem sem nomes antes da permissão, mas já diz se há câmera), conferida de novo a cada `devicechange`: ligar ou desligar a webcam mostra ou esconde o item. Erro, ou navegador sem `mediaDevices` (página sem HTTPS), → sem webcam, e o item some.
+- **No celular — câmera do sistema:** um `<input type="file" capture="environment">` escondido, com `accept` = `image/*` (com `imagem`) e/ou `video/*` (com `video`), separados por vírgula; o que a câmera oferece (foto, vídeo ou os dois) fica com o navegador e o sistema. Cancelar a câmera não faz nada. O arquivo que volta passa pela permissão do tipo dele (mime `image/` → `imagem`; `video/` ou extensão de vídeo → `video`): barrado, nada abre e aparece acima do campo **"Você não tem permissão para enviar imagens."** (ou "vídeos"); senão abre **só a prévia** (abaixo).
+- **No computador — tela da webcam** (`CameraModal`, carregada sob demanda; tela inteira, fundo preto):
+  - barra de cima: o título **"Câmera"** (na prévia, **"Enviar"**) e o × (`title` **"Fechar"**); **Esc** também fecha. Fechar descarta tudo (a gravação em andamento para sem virar arquivo) e desliga a câmera;
+  - **abrir a câmera:** `getUserMedia` com `video` = `{width: {ideal: 1280}, height: {ideal: 720}}` (depois de trocar de câmera, `{deviceId: {exact: <id>}}`); com a permissão `video` pede também o **áudio** e, se falhar (sem microfone ou negado), abre só o vídeo: grava **sem som**. Falhou: o texto **"Não foi possível abrir a câmera. Confira a permissão do navegador."** no meio da tela, e o disparador fica desabilitado;
+  - a imagem ao vivo aparece **espelhada**, mas a **foto sai sem espelhar** (desenhada do vídeo como a câmera vê);
+  - **disparador** redondo (borda branca e círculo branco; gravando, um **quadrado vermelho** menor) e, com **mais de uma câmera** e sem gravar, o botão **"Trocar de câmera"** (`title`) à direita, que passa à próxima `videoinput`, em ciclo;
+  - **com `imagem` e `video`:** **clique** (soltar antes de **300 ms**) tira a **foto**; **segurar** 300 ms começa a **gravar**, e soltar sobre o botão para; **arrastar para fora do botão** enquanto grava **trava** a gravação (continua sozinha) e o **próximo clique** para; sair do botão antes dos 300 ms cancela (nem foto, nem vídeo). O menu de contexto do botão é bloqueado;
+  - **só `video`:** cada clique liga ou desliga a gravação (sem segurar nem travar); **só `imagem`:** o clique tira a foto;
+  - **dica** embaixo do botão (e `title` dele): **"Clique para tirar uma foto, segure para gravar um vídeo"**; gravando, **"Solte para parar ou arraste para fora para travar"**; travada, **"Gravação travada: clique para parar"**; só vídeo, **"Clique para gravar um vídeo"** / gravando **"Clique para parar"**; só foto, **"Clique para tirar uma foto"**;
+  - **gravando:** no alto, uma pílula com um ponto vermelho piscando e o tempo **`mm:ss`** (`formatarDuracao`: "00:07", "01:30"), contado de segundo em segundo. **Sem limite de tempo** no código;
+  - **foto:** um canvas do tamanho do vídeo, **JPEG com qualidade 0,92**, arquivo **`foto-<Date.now()>.jpg`** (`image/jpeg`);
+  - **vídeo:** `MediaRecorder` com o primeiro formato aceito entre **`video/webm;codecs=vp9,opus`**, **`video/webm`** e **`video/mp4`** (nenhum: o padrão do navegador); arquivo **`video-<Date.now()>.webm`** (ou **`.mp4`**, se o mime tiver `mp4`), com o mime sem os parâmetros (`video/webm`);
+  - capturou: a câmera desliga e aparece a prévia.
+- **Prévia** (nos dois; no celular é a única tela), título "Enviar": a foto inteira (`object-contain`) ou o vídeo (controles do navegador, começa a tocar); embaixo, **"Refazer"**, o campo da legenda (placeholder **"Adicione uma legenda..."**, já com o foco; **Enter envia**) e o botão redondo de enviar (`title` **"Enviar"**).
+  - **"Refazer"** descarta a captura e a legenda: no computador volta à webcam ao vivo; no celular fecha a prévia e abre de novo a câmera do sistema.
+- **"Enviar" manda na hora**, numa mensagem só dela, **sem passar pelo campo** (o que estava escrito fica lá). Os conteúdos são **o arquivo (ordem 1)** e, com legenda (`trim()`, não vazia), **a legenda como texto tipo 1 (ordem 2)**. Vai pelo mesmo `chat.enviarMensagemComConteudos` (ENV-21):
+  - a foto vai como **Imagem (2)** e o vídeo como **Arquivo (3)** com a extensão `webm`/`mp4` (ANX-03);
+  - upload com deduplicação e progresso (ANX-02) e mensagem otimista;
+  - o que estiver pendente acima do campo (resposta, confirmação de leitura, postagem) vai junto, como no "Enviar" do código (ENV-10); erro aparece acima do campo, como qualquer envio.
+- **Na conversa:** a foto sem legenda (e sem resposta) é a bolha de imagem (MSG-07); o vídeo, ou qualquer um com legenda, vai na bolha padrão, com o texto embaixo; no visualizador (ANX-04) a legenda aparece como a legenda da foto ou do vídeo.
+- **Servidor:** confere como sempre (ENV-01): a imagem pede `imagem`; o tipo 3 com extensão de vídeo pede `video`.
+- Sem teste unitário novo no web (o `tests/unit/webrtcFalso.ts` só ganhou `enumerateDevices` e `addEventListener` falsos).
 
 ### 3.6 PES — Pesquisa
 
@@ -1543,8 +1607,8 @@ Arquivos centrais: `stores/call.ts`, `CallWindow.vue`, `components/CallBar.vue`,
 |---|---|---|---|---|---|
 | Enviar | `emoji` | Emojis no texto | Enviar emojis no texto das mensagens | aba "Emojis" do seletor (ENV-03) | `PUT /mensagem` com texto que tem emoji |
 | Enviar | `figurinha` | Figurinhas | Enviar figurinhas | aba "Figurinhas" (ENV-04) | `PUT /mensagem` tipo 7 |
-| Enviar | `imagem` | Imagens | Enviar imagens | arquivo de imagem no campo (ENV-21) | tipo 2 |
-| Enviar | `video` | Vídeos | Enviar vídeos | arquivo de vídeo no campo | tipo 3 com extensão de vídeo |
+| Enviar | `imagem` | Imagens | Enviar imagens | arquivo de imagem no campo (ENV-21); 🆕 `77c7821` a foto da "Câmera" do "+" (o item some sem `imagem` **e** sem `video`, ANX-20) | tipo 2 |
+| Enviar | `video` | Vídeos | Enviar vídeos | arquivo de vídeo no campo; 🆕 `77c7821` o vídeo da "Câmera" (ANX-20) | tipo 3 com extensão de vídeo |
 | Enviar | `audio` | Áudios e gravações | Enviar áudios e gravações de voz | microfone (ANX-11), arquivo de áudio | tipos 4 e 5 |
 | Enviar | `arquivo` | Arquivos | Enviar arquivos (documentos e outros) | outros arquivos; "Arquivo" do "+" some sem nenhuma das quatro | tipo 3 sem extensão de vídeo |
 | Enviar 🆕 `f351190` | `localizacao` | Localização e trajeto | Enviar localizações e trajetos | "Localização" do "+" (ENV-30) | tipo 9 |
@@ -1598,7 +1662,8 @@ Arquivos centrais: `stores/call.ts`, `CallWindow.vue`, `components/CallBar.vue`,
 | 🆕 Novos em `9c6e8a6` | CON-16, ANX-16, ATV-04, ATV-05, CFG-11, CFG-12, CFG-13, CFG-14, GER-09, GER-10 | 10 |
 | 🆕 Novos em `f351190` | AUT-11, CON-17, MSG-23, MSG-24, MSG-25, ENV-29, ENV-30, ANX-17, ANX-18 | 9 |
 | 🆕 Novos em `8385b22`…`57bd9f0` | SIP-06, CHA-27, ANX-19, CON-18 | 4 |
-| **Total** | | **176** (era 172; +4) |
+| 🆕 Novos em `77c7821` e `3689155` | ANX-20, MSG-26 | 2 |
+| **Total** | | **178** (era 176; +2) |
 
 ---
 
@@ -1910,13 +1975,15 @@ Referência para o Android interoperar. Linhas de `src/stores/call.ts` em `57bd9
 | Detalhe status (direta) | "Enviada", "Recebida", "Visualizada", "Ouvida", "Oculta", "Aguardando" |
 | Detalhe status (grupo) | "Visualizada por (N)", "Recebida por (N)", "Aguardando (N)" |
 | Digitando | "Digitando..." / "<nome> está digitando..." / "<a> e <b> estão digitando..." / "<a>, <b> e <c> estão digitando..." / "<a>, <b>, <c> e outras N pessoas estão digitando..." (idem "gravando áudio") |
-| Código | "Copiar"/"Copiado!", "Expandir código"/"Recolher código", "Visualizar"/"Código" |
-| 🆕 Janela e peça de código (`e33ecba`) | janela "Inserir código" / "Editar código", placeholder "Cole ou escreva seu código aqui...", botões "Cancelar", "Inserir na mensagem", "Enviar" / "Salvar"; peça "<linguagem> · 1 linha" / "<linguagem> · N linhas" (sem linguagem "texto"), "Editar código", "Remover código", prévia com "…" depois da 4ª linha |
+| Código | "Copiar"/"Copiado!", "Expandir código"/"Recolher código", "Visualizar"/"Código" (🆕 `3689155` também nos blocos `csv`/`tsv`, MSG-26) |
+| 🆕 Janela e peça de código (`e33ecba`) | janela "Inserir código" / "Editar código", placeholder "Cole ou escreva seu código aqui...", botões "Cancelar", "Inserir na mensagem", "Enviar" / "Salvar"; peça "<linguagem> · 1 linha" / "<linguagem> · N linhas" (sem linguagem "texto"), "Editar código", "Remover código", prévia com "…" depois da 4ª linha; 🆕 `3689155` linguagens "csv" e "tsv" no fim da lista (peça da tabela colada: "tsv · N linhas" / "csv · N linhas") |
+| 🆕 Tabela CSV/TSV (`3689155`) | sem texto novo: cabeçalho do bloco "csv" / "tsv", "Visualizar" (padrão) / "Código", "Copiar" / "Copiado!" (copia os dados originais), "Expandir código" / "Recolher código" (MSG-26) |
 | Transcrição | "Transcrever", "Transcrevendo...", "(nenhuma fala reconhecida)", "Não foi possível transcrever. Tentar de novo" |
 | Arquivo | "Abrir" (PDF/HTML; 🆕 `9c6e8a6` também Office), "Download", ~~"Baixar video"~~ (🆕 `9c6e8a6` virou o botão "Baixar vídeo" do player), "Toque para abrir" / "Toque para carregar"; 🆕 `8b43965` HTML "Ver fonte" / "Ver página" |
 | Agendar | "Agendar mensagem", "Data", "Hora", "Cancelar", "Agendar"; erros "Data/hora inválida", "O envio deve ser no mínimo 5 minutos no futuro", "O envio não pode ser mais de 1 ano no futuro" |
 | Resumos de conteúdo | notificação: "Imagem", "Gravacao de audio", "Audio", "Figurinha", "Arquivo"; resposta/encaminhar (`resumoMensagem`): texto, "Imagem", "Áudio", "Arquivo"; código: "Código (linguagem)"; 🆕 `f351190` localização: "Localização" (notificação, resumo da citação, atividades) e "[Localização]" (chat da chamada); a barra de resposta e o encaminhar continuam com "Arquivo" |
-| 🆕 Menu "+" | "Arquivo", "Código", 🆕 `f351190` "Localização", "Votação" (grupo), "Postagem" (grupo), "Confirmar leitura" |
+| 🆕 Menu "+" | "Arquivo", 🆕 `77c7821` "Câmera", "Código", 🆕 `f351190` "Localização", "Votação" (grupo), "Postagem" (grupo), "Confirmar leitura" |
+| 🆕 Câmera (`77c7821`) | título "Câmera" (webcam) / "Enviar" (prévia), × "Fechar"; "Trocar de câmera"; dicas "Clique para tirar uma foto, segure para gravar um vídeo", "Solte para parar ou arraste para fora para travar", "Gravação travada: clique para parar", "Clique para gravar um vídeo" / "Clique para parar" (só vídeo), "Clique para tirar uma foto" (só foto); tempo gravando "mm:ss" ("00:07"); erro "Não foi possível abrir a câmera. Confira a permissão do navegador."; prévia "Refazer", placeholder "Adicione uma legenda...", botão "Enviar" (`title`); no celular, barrado pela permissão: "Você não tem permissão para enviar imagens." / "… vídeos."; arquivos `foto-<ms>.jpg` e `video-<ms>.webm` / `.mp4` |
 | 🆕 Confirmação de leitura | faixa "A mensagem vai pedir confirmação de leitura" (× "Não pedir confirmação"); quem recebe "Confirmar leitura" / "Leitura confirmada"; quem enviou "Aguardando confirmação" / "Confirmada por N de T" / "Confirmada por N"; erro "Não foi possível confirmar a leitura" |
 | 🆕 Confirmação com lista (`e33ecba`) | faixa em grupo "A mensagem vai pedir confirmação de leitura de todos" / "… de 1 pessoa" / "… de N pessoas" + "Escolher"; modal "Quem precisa confirmar", "Fechar", "Filtrar por nome", "Todos (N)", "Carregando participantes", "Ninguém com “<termo>”", "Cancelar", "Pronto" / "Pedir confirmação"; dica do chip "Falta confirmar"; menu "Pedir confirmação de leitura"; erro "Não foi possível pedir a confirmação" (fallback "Erro ao pedir a confirmação") |
 | 🆕 Postagem | faixa "Postagem: as respostas ficam embaixo dela", "Título (opcional)" (× "Não postar"); cartão "Postagem · Você" / "Postagem · <nome>", "Nenhuma resposta ainda" / "1 resposta" / "N respostas", "1 nova" / "N novas", "Ver todas as N" / "Mostrar menos", "Mensagem apagada", "Responder à postagem", botão "Responder" (🆕 `e33ecba` saiu com o campo do cartão); notificação "<nome> respondeu a uma postagem" |
@@ -2013,6 +2080,8 @@ Referência para o Android interoperar. Linhas de `src/stores/call.ts` em `57bd9
 29. 🆕 `d244fc8` **Mesmo caminho, uma publicação só:** duas abas ou aparelhos da mesma pessoa publicam no mesmo `call-<id>-u-<usuario>` e o MediaMTX fica com a mais nova. Publicação ou assinatura que cai (`failed`/`disconnected`) precisa ser refeita (§5.10).
 30. 🆕 `8385b22` **O ramal SIP é do administrador:** a pessoa só vê (Chamadas › Voip) e reconecta; não há mais `PUT`/`PATCH /sip`. O ICE do SIP é o do ramal (STUN do Google + TURN do PABX), não o `GET /ice` (SIP-05).
 31. 🆕 `57bd9f0` **Sugestão de pasta não põe nada sozinha:** só quando a pessoa pede, e cada uma é confirmada (✓, `PUT /pasta/mensagens`) ou ignorada (✕, guardada no aparelho por pessoa e conversa e mandada em `ignorar` na próxima análise) — CON-18.
+32. 🆕 `77c7821` **Câmera manda na hora, fora do campo:** a foto ou o vídeo vai numa mensagem só dele, com o **arquivo primeiro e a legenda depois** (texto tipo 1); a foto é Imagem (2) e o vídeo é Arquivo (3) com extensão de vídeo. O texto do campo fica; o que está pendente acima dele (resposta, confirmação, postagem) vai junto. O item aparece com `imagem` **ou** `video` (ANX-20).
+33. 🆕 `3689155` **Tabela é um bloco de código** ` ```csv ` / ` ```tsv ` com os dados originais: nada novo no servidor. Mostrar como tabela (primeira linha = cabeçalho, linhas curtas completadas, coluna só de números à direita), abrir em "Visualizar" e copiar os dados originais. Colar texto com tab (ou CSV sem espaço depois do separador), em 2 linhas ou mais com as mesmas colunas, vira esse bloco (MSG-26, ENV-09).
 
 ---
 
@@ -2092,6 +2161,11 @@ Referência para o Android interoperar. Linhas de `src/stores/call.ts` em `57bd9
 | 🆕 Sugestões da IA no painel de pastas (CON-18, `57bd9f0`) | Folha de pastas (bottom sheet) | Na folha "Pastas" da conversa direta, a seção "Sugestões da IA" com "Sugerir pastas", os cartões com ✓/✕ e "Aceitar todas (N)", com os mesmos textos; as ignoradas no DataStore (ou Room) por usuário e conversa, até 2000 ids |
 | 🆕 Ramal de cada pessoa pelo administrador (SIP-06, `8385b22`) | Administração | **Fora do escopo do celular** (como Usuários, Bots etc.). No Android, só o nome da permissão `sip` ("Configurar o SIP") na tela Acessos |
 | 🆕 Voip só leitura e ICE do ramal (SIP-01, SIP-05, `8385b22`) | SIP ainda não feito (etapa 9) | Quando for feito: **sem** tela para a pessoa cadastrar o ramal (as rotas saíram); tela Voip só com os dados, o estado e "Reconectar"; ICE = STUN do Google + TURN do PABX vindo do `GET /sip` (não o `GET /ice`); o destino pela regra do `destinoSip` |
+| 🆕 Câmera do celular por `<input capture>` (ANX-20, `77c7821`) | Intents do sistema | `ActivityResultContracts.TakePicture` (foto, já usado) e `CaptureVideo` (vídeo), os dois para um arquivo do `FileProvider`; com as duas permissões, escolher foto ou vídeo antes (não há um intent só para os dois). Depois, a mesma prévia do web: legenda, "Refazer" (reabre a câmera do sistema) e "Enviar" na hora |
+| 🆕 Tela da webcam do computador: segurar para gravar, arrastar para travar, "Trocar de câmera", espelho, `MediaRecorder` webm (ANX-20) | No celular o web usa a câmera do sistema | **Não se aplica** (é o caminho do computador). Uma câmera dentro do app (CameraX) com o mesmo gesto é opcional, não é paridade |
+| 🆕 Detecção de webcam pelo `devicechange` (ANX-20) | Todo celular tem câmera | **Não se aplica**; o item depende só das permissões `imagem`/`video` (e, se quiser, de `PackageManager.FEATURE_CAMERA_ANY`) |
+| 🆕 Tabela CSV/TSV desenhada como Markdown no `marked` (MSG-26, `3689155`) | Compose | Grade própria em Compose direto das células (`lerTabela`), com rolagem horizontal, cabeçalho em negrito e números à direita — o escape das células só existe no web por causa do Markdown; ou montar o Markdown e passar ao `multiplatform-markdown-renderer` do ```md, se ele desenhar tabela GFM |
+| 🆕 Tabela colada vira peça de código (ENV-09, `3689155`) | Sem a peça de código no campo (FC-416) | Conferir `pareceTabela` antes do `textoLongo` no `InputTransformation` do campo; até a peça existir, abrir o "Inserir código" já preenchido com `tsv`/`csv`. Conferir no aparelho o que os apps de planilha põem na área de transferência (em geral, texto com tab) |
 
 ---
 
@@ -2167,10 +2241,11 @@ Commit **`39d06f9`** — "Campo de mensagem rico, votação em grupo e chat comp
 - 🆕 `e33ecba`: nova peça **`codigo`** (`PecaCodigo`): o código inserido pela janela fica no campo como bloco, com prévia, "Editar código" e "Remover código", e vai como um conteúdo tipo 1 próprio, com a cerca (ENV-28). Nova faixa acima do campo **"Respondendo à postagem de <remetente>"** (× "Não responder à postagem"): a próxima mensagem, com qualquer conteúdo, vai com `postagem_id` (MSG-22). A faixa da confirmação, em grupo, ganha " de todos" / " de N pessoas" e "Escolher", e o envio pode levar `confirmacao_usuarios` (ENV-24).
 - 🆕 `9c6e8a6`: cada arquivo que entra no campo (seletor, colar, arrastar) pede a sua **permissão de uso** (`imagem`, `video`, `audio` ou `arquivo`, GER-09); os barrados não entram e aparece acima do campo "Você não tem permissão para enviar <tipos>.". No "+", "Arquivo" some sem nenhuma das quatro; "Votação", "Postagem" e "Confirmar leitura" somem sem `votacao`, `postagem` e `confirmacao`. Áudio entra no envio com `duracao` e `intensidade` (§1.7).
 - 🆕 `f351190`: nova peça **`localizacao`** (`PecaLocalizacao`): a localização inserida pela janela fica no campo como bloco, com "Localização" / "Trajeto", o resumo, "Editar localização" e "Remover localização", e vai como um conteúdo **tipo 9** próprio, na ordem do campo (ENV-30). O "+" ganha **"Localização"** depois de "Código" (some sem `localizacao`). Com uma pasta aberta (MSG-24), o campo fica **escondido**, com o rascunho guardado.
+- 🆕 `77c7821`: o "+" ganha **"Câmera"** depois de "Arquivo" (com `imagem` ou `video`; no computador, só com webcam). A foto ou o vídeo **não entra no campo**: a prévia com legenda manda na hora, numa mensagem só dela, [arquivo, legenda] (ANX-20). 🆕 `3689155`: **tabela colada** (Excel, Sheets, CSV) entra como a peça `codigo` com a linguagem `tsv`/`csv`, sem a janela (ENV-09, ENV-28), e aparece como tabela na mensagem (MSG-26).
 - **Figurinha** (ENV-04) e **gravação** (ANX-11) com o campo **vazio** são enviadas na hora, sozinhas; com algo escrito, entram como peça.
 - **Emoji** entra no ponto do cursor (o cursor é guardado quando o campo perde o foco).
 - **Placeholder:** "Digite uma mensagem". Altura máxima de 40% da tela, com rolagem.
-- **Botão "+" (Anexar)** abre o `AnexoPopup` com: **Arquivo**, **Código** e (só em grupo) **Votação** (hoje: Arquivo, Código, 🆕 `f351190` Localização, Votação e Postagem em grupo, Confirmar leitura).
+- **Botão "+" (Anexar)** abre o `AnexoPopup` com: **Arquivo**, **Código** e (só em grupo) **Votação** (hoje: Arquivo, 🆕 `77c7821` Câmera, Código, 🆕 `f351190` Localização, Votação e Postagem em grupo, Confirmar leitura).
 - **Agendar** e **Enviar** aparecem quando há conteúdo; sem conteúdo aparece o microfone.
 - **Android:** é o equivalente a um campo de composição com "chips" de anexos intercalados. Sugestão de implementação:
   - um `LazyColumn` de blocos editáveis (texto / anexo / figurinha) acima do teclado, com a ordem preservada;
@@ -2674,3 +2749,59 @@ Três commits do web, de 2026-10-18, que acompanham os do servidor **`be17b8e`**
 - **Som de aguardar no web quando o outro lado é o Android:** é esperado com a ordem atual do `atender` (entrar e depois publicar); some com a melhoria opcional.
 - **`PUT`/`PATCH /sip` não existem mais:** não implementar a tela de cadastro do ramal no celular; tirar as duas funções do `ConversaApi`.
 - **Gravação do toque:** o MediaMTX grava a publicação muda de quem recebe no web, mesmo quando recusa (§5.8). Não afeta o Android, mas aumenta o volume de `gravacoes`.
+
+## 18. Atualização de 2026-10-22 — commits `77c7821` e `3689155`
+
+Dois commits do web, de 2026-10-19 21:15 (intervalo `57bd9f0..3689155`). **O servidor não mudou** (segue em `b104db8`): nenhuma rota, evento WebSocket ou push novo; os dois usam o que já existia (`PUT /anexo`, `PUT /mensagem`, conteúdos 1, 2 e 3). Há **2 IDs novos** e o total passa de 176 para **178**. Os textos foram conferidos no código do web (`git show 77c7821 3689155` e os arquivos de `src/` em `3689155`: `CameraModal.vue`, `useCamera.ts`, `AnexoPopup.vue`, `MessageInput.vue`, `tabelaCsv.ts`, `MessageContent.vue`, `CodigoModal.vue`, `stores/chat.ts`, `useMarkdown.ts`) e nos testes novos (`tests/unit/tabelaCsv.test.ts`).
+- O `CLAUDE.md` do web ganhou os itens "Câmera" e "Tabelas CSV/TSV" na lista do chat.
+- A câmera **não** ganhou teste unitário no web (só os falsos de `enumerateDevices`/`addEventListener` no `tests/unit/webrtcFalso.ts`).
+- O estado do Android citado abaixo é o do último commit, **`62a371b`** (2026-10-19). Mudanças sem commit na árvore de trabalho não foram consideradas.
+
+### Commits
+- **`77c7821`** — "Câmera no "+": foto ou vídeo direto da câmera, com prévia e legenda": item "Câmera" no "+" (com `imagem` ou `video`); no celular, a câmera do sistema por `<input capture="environment">`; no computador, só com webcam (`useCamera`, `devicechange`), a tela `CameraModal` com a webcam ao vivo (clique tira a foto, segurar grava, arrastar para fora trava, troca de câmera); nos dois, a prévia com legenda, "Refazer" e "Enviar", que manda na hora [arquivo, legenda].
+- **`3689155`** — "Tabelas CSV e TSV nas mensagens e tabela colada vira bloco de tabela": ` ```csv ` / ` ```tsv ` como tabela, com "Visualizar"/"Código" e "Copiar" dos dados originais (`utils/tabelaCsv.ts`); tabela colada (tab do Excel/Sheets, ou CSV) entra como a peça `codigo` com a linguagem `tsv`/`csv`; `csv` e `tsv` na lista da janela de código.
+
+### Como os IDs foram escolhidos
+- **ANX-20** (e não ENV-31): é captura de mídia, como a gravação de áudio (ANX-11), e produz um anexo (imagem ou vídeo); o "+" é só a entrada. O envio passa pelos blocos do ENV-21, que só ganhou a linha do "+".
+- **MSG-26**: a tabela é um modo novo de mostrar os blocos, com leitor próprio (aspas, separador, alinhamento, escape) que o Android precisa portar e testar — como o Markdown e o Mermaid, que têm o ANX-08 à parte do MSG-15. O MSG-15 e o ANX-08 só ganharam a referência.
+- **Sem ID novo:** a tabela colada é mais uma regra do colar (**ENV-09**, que já junta as regras de texto longo e de código); a peça é a mesma do **ENV-28**; `csv`/`tsv` na lista são do **ENV-10**.
+
+### IDs novos (2)
+- **ANX-20** — "+" › "Câmera": foto ou vídeo, prévia com legenda ("Adicione uma legenda..."), "Refazer" e "Enviar" na hora, [arquivo, legenda]; no celular pela câmera do sistema, no computador pela webcam (segurar grava, arrastar trava). **Vale para o celular** (o caminho do celular: câmera do sistema + prévia).
+- **MSG-26** — tabelas ` ```csv ` / ` ```tsv ` na bolha ("Visualizar" padrão, "Código", "Copiar" dos dados originais; cabeçalho, números à direita, rolagem horizontal; leitor com aspas e separador `;`/`,`). **Vale para o celular.**
+
+### IDs alterados
+- **ENV-09** — tabela colada vira a peça `codigo` `tsv`/`csv` direto, antes do texto longo e do código (`pareceTabela`). **ENV-10** — `csv` e `tsv` no fim da lista de linguagens. **ENV-28** — a peça da tabela colada ("tsv · N linhas"). **ENV-21** (§10) — "Câmera" no "+", depois de "Arquivo"; a captura não entra no campo.
+- **MSG-15** — `csv`/`tsv` são o terceiro tipo com "Visualizar"/"Código"; "Código" sem destaque. **ANX-08** — também as tabelas; o arquivo `.csv` continua só com "Download".
+- **GER-09** — `imagem` e `video` também valem para a "Câmera" (o item some sem as duas).
+- §1.1 (câmera; `tabelaCsv.ts`), §1.2 (`useCamera`), §1.8 (`CameraModal` assíncrono), §2.4 (`AnexoPopup`, `CameraModal` novo, `CodigoModal`), §6.1 (menu "+", textos da câmera e da tabela), §6.3 (regras 32 e 33), §7 (adaptações novas) e a contagem.
+
+### O que muda para o Android
+
+**IDs novos**
+- **ANX-20 (câmera):** o Android já tem "Câmera" no "+" (`feature/chat/.../CampoMensagem.kt`: `ActivityResultContracts.TakePicture`, l. 939; o item, l. 965), mas **só foto, só com `imagem`**, e a foto vai para a **faixa de anexos** acima do campo e sai junto com o texto no Enviar — e o `EnvioMensagens.enviar` (`core/data/.../mensagens/EnvioMensagens.kt`, l. 170–172) põe **o texto primeiro e os anexos depois**. O web, no celular, também usa a câmera do sistema, então a paridade é:
+  - mostrar o item com **`imagem` ou `video`** (hoje só `imagem`);
+  - **vídeo:** `ActivityResultContracts.CaptureVideo()` (`ACTION_VIDEO_CAPTURE`) para um arquivo do `FileProvider`, como a foto (`video-<ms>.mp4`); com as duas permissões, escolher antes foto ou vídeo (não há um intent só para os dois; ou um `Intent.createChooser` com os dois). Só `imagem` → foto direto; só `video` → vídeo direto. O web não tem texto para essa escolha (deixa o sistema decidir): os rótulos, se houver, são do Android;
+  - **prévia com legenda** (tela cheia, fundo preto), com os textos do web: título "Enviar", × "Fechar", a foto inteira ou o vídeo (Media3), "Refazer" (descarta e reabre a câmera do sistema), o campo "Adicione uma legenda..." (com o foco; a ação de enviar do teclado envia) e o botão "Enviar";
+  - **"Enviar" manda na hora, fora da faixa e do campo** (o texto do campo fica), com **o arquivo na ordem 1 e a legenda (`trim`, se não vazia) na ordem 2** — o contrário da ordem do envio normal do Android: precisa de um caminho próprio (ou de um parâmetro de ordem) no `EnvioMensagens`. A foto como Imagem (2) e o vídeo como Arquivo (3) com a extensão (`mp4`, que o servidor reconhece como vídeo); levar o que estiver pendente (resposta, confirmação, postagem), como o envio normal;
+  - conferir a permissão do arquivo que voltou: "Você não tem permissão para enviar imagens." / "… vídeos." (GER-09);
+  - cancelar a câmera não faz nada (já é assim: o arquivo vazio é apagado).
+  - **Decisão:** trocar o comportamento atual (foto na faixa, com o texto) pelo do web (prévia e envio na hora), ou manter a faixa como atalho e acrescentar a prévia. O web não põe a captura no campo.
+  - **Não se aplica:** a tela da webcam do computador (segurar para gravar, arrastar para travar, "Trocar de câmera", espelho, `MediaRecorder` webm, as dicas "Clique para tirar uma foto, segure para gravar um vídeo" etc.) e a detecção de webcam (§7).
+- **MSG-26 (tabela):** o `BlocoCodigo.kt` (`feature/chat`) liga o `AlternarVisual` só para `markdown || mermaid` (l. 117); um ` ```csv ` hoje aparece como código, sem quebrar. Fazer:
+  - `ehLinguagemTabela` no `core:model` (`DestaqueCodigo.kt`, ao lado de `ehLinguagemMarkdown`, l. 224, e `ehLinguagemMermaid`, l. 227) e os portes de `lerTabela`, `separadorCsv` e da montagem (cabeçalho, completar as linhas curtas, alinhamento por `NUMERO`), com **teste unitário** — os casos de `tests/unit/tabelaCsv.test.ts` servem de exemplo. A regex `^[-+]?(R\$\s*)?\d[\d.,\s]*%?$` entra no `RegexNoAndroidTest` (o `\s` do JS pega o espaço não separável U+00A0, o da JVM não, o do ICU sim: decidir e testar no aparelho);
+  - no `BlocoCodigo`, a tabela como terceiro visual: **padrão "Visualizar"**, "Código" sem destaque, "Copiar" com os dados originais (o botão já copia `codigo.conteudo`), recolhida em 240 dp como os outros e com **rolagem horizontal** (essencial na tela estreita);
+  - desenho: uma grade em Compose direto das células (cabeçalho em negrito, bordas, coluna de números à direita só no corpo), sem passar por Markdown — o escape das células só existe no web por causa dele; ou montar o Markdown e passar ao `multiplatform-markdown-renderer-m3` já usado no ```md (conferir se a versão do `libs.versions.toml` desenha tabela GFM com alinhamento).
+
+**IDs alterados**
+- **ENV-09 (tabela colada):** no `transformacaoDoCampo` (`feature/chat/.../InserirCodigo.kt`, l. 93; o `textoLongo` na l. 97), conferir `pareceTabela(inserido)` **antes** do texto longo. O Android ainda não tem a peça de código no campo (ENV-28, FC-416) e o "Código" envia o bloco na hora: até a peça existir, abrir o "Inserir código" já preenchido com a linguagem `tsv`/`csv` (como o texto longo faz). O `pareceTabela` do CSV usa o `pareceCodigo` (ENV-09), que o Android **não tem**: portar junto (no mínimo a recusa de linha com ```), senão "const a = f(x,y);\nconst b = g(z,w);" vira tabela. O `InputTransformation` vê qualquer inserção de mais de um caractere (colar ou teclado); a regra pede quebra de linha e separador numa inserção só, então digitar não dispara.
+- **ENV-10:** acrescentar `csv` e `tsv` no fim de `LINGUAGENS_CODIGO` (`core/model/.../Atalhos.kt`, l. 68), na ordem do web.
+- **ENV-28:** quando a peça existir, a da tabela mostra "tsv · N linhas" como as outras; o `blocoDeCodigo` precisa manter os tabs (hoje só tira o `\n` do fim).
+- **MSG-15 / ANX-08:** ver MSG-26.
+- **ENV-21 / GER-09:** "Câmera" no "+" com `imagem` **ou** `video`.
+
+**Pontos de atenção**
+- **Ordem dos conteúdos da câmera:** arquivo primeiro, legenda depois; o envio normal do Android põe o texto antes dos anexos (a ordem da antiga fila do web, ANX-01). Quem recebe vê a bolha padrão (foto e, embaixo, o texto), e o visualizador usa os textos da mensagem como legenda (ANX-04): não existe campo "legenda" no servidor.
+- **Vídeo da câmera do sistema é Arquivo (3):** a extensão decide no servidor (`mp4, webm, ogg, mov, m4v, mkv` = vídeo, ENV-01); um formato fora da lista (ex.: `3gp`) pede a permissão `arquivo`.
+- **A tabela é só texto:** ` ```tsv ` com os dados originais dentro, sem nada novo no servidor; versões antigas mostram como código. Os tabs do TSV precisam sobreviver ao campo, ao rascunho e ao envio.
+- **Pegadinha do TSV:** o teste de código não vale com tab — texto em que toda linha tem o mesmo número de tabs entra como tabela no web. Copiar essa regra igual (para os dois clientes concordarem) ou acrescentar o `pareceCodigo` também no TSV; se mudar, registrar como diferença.

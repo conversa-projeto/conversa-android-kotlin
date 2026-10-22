@@ -334,6 +334,7 @@
 - [x] **FC-423 · P3 · 🆕 `ac710eb` Espaço usado** (ANX-17): `GET /usuario/espaco` → "Armazenamento" no Perfil, com o texto do web. ✔ 08e2e77
 - [ ] **FC-424 · P3 · 🆕 `f351190` Anexos de todas as conversas** (ANX-13): `GET /anexos?conversa=0`, com o nome da conversa em cada item; avaliar onde entra no app (o web tem a aba Anexos na barra).
 - [ ] **FC-425 · P3 · 🆕 `d244fc8` Áudios em sequência** (ANX-19): o áudio que termina toca o próximo, o seguinte na mesma mensagem ou o primeiro da mensagem de baixo (no `PlayerAudio` único do app).
+- [ ] **FC-426 · P3 · 🆕 `77c7821` Câmera com foto ou vídeo, prévia e legenda** (ANX-20, ENV-21): o web abre a câmera do sistema no celular e mostra a prévia com "Adicione uma legenda...", "Refazer" e "Enviar", que manda na hora [arquivo, legenda] (o arquivo antes do texto). No app: escolher foto (`TakePicture`) ou vídeo (`CaptureVideo`); tela de prévia própria fora da fila de anexos; um caminho de envio com o arquivo primeiro (o `EnvioMensagens.enviar` de hoje põe o texto antes); o item aparece com `imagem` ou `video`; texto de erro "Não foi possível abrir a câmera." sem a parte do navegador. Decidir se a foto continua indo para a fila, como hoje.
 
 ## Bloco G — Ações sobre mensagens (F4)
 
@@ -401,6 +402,7 @@
 - [ ] **FC-526 · P3 · 🆕 `e33ecba` Código como peça no campo** (ENV-28): "Inserir na mensagem" na janela de código; no campo simplificado, o bloco cercado entra como texto no cursor; com campo por blocos, a peça com prévia, editar e remover — depende de FC-416.
 - [x] **FC-527 · P2 · 🆕 `f351190` Selecionar mensagens e pôr na pasta** (ENV-29): no celular, toque longo › "Selecionar"; barra "N selecionadas" com "Pôr na pasta" (as pastas da conversa) e "×"; só mensagens salvas (id > 0); `PUT /pasta/mensagens` (até 500). ✔ 2a58133
 - [x] **FC-528 · P2 · 🆕 `ac710eb`/`f351190` Enviar localização ou trajeto** (ENV-30): "+" › "Localização" (permissão de uso `localizacao`); Local ou Trajeto; busca de endereço (Nominatim), coordenadas digitadas, minha posição (permissão de localização do aparelho), rota de carro (OSRM); "Enviar" na hora ("Inserir na mensagem" depende da FC-416); JSON no formato que o servidor confere, sem `null`. ✔ e0d3300
+- [ ] **FC-529 · P3 · 🆕 `3689155` Tabelas CSV e TSV** (MSG-26, ENV-09, ENV-10, MSG-15): portar o `tabelaCsv.ts` para o `core:model` com os testes do web (aspas com `""`, linhas por `\n`/`\r`/`\r\n`, separador `;` ou `,` pelo número de colunas, cabeçalho na primeira linha, colunas numéricas à direita; a regex de número entra no `RegexNoAndroidTest`); a tabela como terceiro visual do `BlocoCodigo` ("Visualizar" por padrão, rolagem horizontal, "Copiar" com os dados originais); `csv` e `tsv` em `LINGUAGENS_CODIGO`; colar tabela (2+ linhas com as mesmas 2+ colunas; com tab vira `tsv`, sem tab vira `csv` se não parecer código) abre o "Inserir código" já com a linguagem, antes do teste de texto longo.
 
 ## Bloco H — Notificações e push (F5)
 

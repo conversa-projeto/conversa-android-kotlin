@@ -86,6 +86,8 @@ A coluna **Fase** indica em que fase do plano da nova base (doc 07) a funcionali
 >
 > 🆕 **Atualizado em 2026-10-19** com o servidor `b104db8` e o web `57bd9f0` (ramal SIP configurado só pelo administrador, com a permissão `sip`; TURN por UDP com o TCP de reserva; sugestões de pasta pela IA; chamada já conectada enquanto toca; áudios em sequência): +4 funcionalidades (CON-18, ANX-19, CHA-27, SIP-06), de 172 para 176. Notas em SIP-01, SIP-05, CHA-11, CFG-08 e ENV-29.
 >
+> 🆕 **Atualizado em 2026-10-22** com o web `3689155` (o servidor não mudou): câmera no "+" com foto ou vídeo, prévia e legenda; tabelas CSV/TSV nos blocos de código e tabela colada virando bloco: +2 funcionalidades (ANX-20, MSG-26), de 176 para 178. ANX-20 fica 🟡 (o app já tira foto pela câmera do sistema). Notas em ENV-09, ENV-10 e MSG-15.
+>
 > **Leitura (legado):** só 2 de 137 funcionalidades estão íntegras. 42 existem de alguma forma (🟡+🔴), mas 16 delas quebram contra o servidor atual. 79 nunca existiram no Android. (🆕 2026-10-09: o placar ainda não contava o ENV-23, ⬜ no legado.)
 
 ### Nova base (2026-10-09, etapas 1–8 do `TODO.md`; 🆕 revisto em 2026-10-13, 2026-10-15, com o servidor `ef13c22` e com o `ac710eb`)
@@ -94,9 +96,9 @@ A coluna **Fase** indica em que fase do plano da nova base (doc 07) a funcionali
 |---|---|---|---|---|---|---|
 | AUT | 11 | 11 | 0 | 0 | 0 | 0 |
 | CON | 18 | 15 | 1 | 0 | 2 | 0 |
-| MSG | 25 | 25 | 0 | 0 | 0 | 0 |
+| MSG | 26 | 25 | 0 | 0 | 1 | 0 |
 | ENV | 30 | 27 | 0 | 2 | 0 | 1 |
-| ANX | 19 | 16 | 1 | 0 | 1 | 1 |
+| ANX | 20 | 16 | 2 | 0 | 1 | 1 |
 | PES | 2 | 2 | 0 | 0 | 0 | 0 |
 | CHA | 27 | 24 | 0 | 0 | 3 | 0 |
 | SIP | 6 | 0 | 0 | 0 | 6 | 0 |
@@ -105,13 +107,13 @@ A coluna **Fase** indica em que fase do plano da nova base (doc 07) a funcionali
 | ATV | 5 | 5 | 0 | 0 | 0 | 0 |
 | CFG | 14 | 6 | 1 | 0 | 5 | 2 |
 | GER | 10 | 8 | 0 | 0 | 0 | 2 |
-| **Total** | **176** | **147** | **3** | **3** | **17** | **6** |
+| **Total** | **178** | **147** | **4** | **3** | **18** | **6** |
 
 > Requisitos exclusivos do Android (AND, fora da contagem): 16 — 13 ✅, 2 🟡, 1 ⛔, 0 ⬜, 0 ➖.
 >
-> **Leitura:** 🆕 (2026-10-15, depois do servidor `ef13c22` e do web `9c6e8a6`) 131 de 163 funcionalidades estão prontas na nova base, e 6 estão em parte. A sincronização trouxe 10 funcionalidades (bots, permissões de uso, administração e atividades pendentes); a quebra das atividades (`nova` → `pendente`) já foi corrigida (`2219208`). Ficaram em parte o cadastro fechado (AUT-02), a duração e a onda do áudio (ANX-10, ANX-11); a tela de Acessos com as 32 permissões (CFG-08) já voltou a ✅. 🆕 (2026-10-16) As permissões de uso (GER-09), o cadastro fechado (AUT-02) a conversa com bot (CON-16) a duração e a onda do áudio (ANX-10, ANX-11) o resumo e a sugestão por IA (CON-14, ENV-25, falta conferir com um servidor de IA) e os recursos do servidor (GER-08) ficaram prontos: 139 de 163. 🆕 (2026-10-17, servidor `ac710eb` e web `f351190`) Com as 9 funcionalidades novas e os 4 IDs que voltaram a 🟡, são 135 prontas de 172. Com os ajustes do sincronismo (contatos pelo WS 66, "Gravando áudio…" na lista, velocidade do áudio, espaço usado, "Usuário desde" e os Acessos), 141 de 172. Com a localização e o trajeto na conversa (MSG-25), 142 de 172; com o envio (ENV-30), 143; com as pastas de mensagens (CON-17, MSG-23, MSG-24, ENV-29), 147. 🆕 (2026-10-19, servidor `b104db8` e web `57bd9f0`) Com as 4 funcionalidades novas (CON-18, ANX-19, CHA-27, SIP-06), 147 de 176.
+> **Leitura:** 🆕 (2026-10-15, depois do servidor `ef13c22` e do web `9c6e8a6`) 131 de 163 funcionalidades estão prontas na nova base, e 6 estão em parte. A sincronização trouxe 10 funcionalidades (bots, permissões de uso, administração e atividades pendentes); a quebra das atividades (`nova` → `pendente`) já foi corrigida (`2219208`). Ficaram em parte o cadastro fechado (AUT-02), a duração e a onda do áudio (ANX-10, ANX-11); a tela de Acessos com as 32 permissões (CFG-08) já voltou a ✅. 🆕 (2026-10-16) As permissões de uso (GER-09), o cadastro fechado (AUT-02) a conversa com bot (CON-16) a duração e a onda do áudio (ANX-10, ANX-11) o resumo e a sugestão por IA (CON-14, ENV-25, falta conferir com um servidor de IA) e os recursos do servidor (GER-08) ficaram prontos: 139 de 163. 🆕 (2026-10-17, servidor `ac710eb` e web `f351190`) Com as 9 funcionalidades novas e os 4 IDs que voltaram a 🟡, são 135 prontas de 172. Com os ajustes do sincronismo (contatos pelo WS 66, "Gravando áudio…" na lista, velocidade do áudio, espaço usado, "Usuário desde" e os Acessos), 141 de 172. Com a localização e o trajeto na conversa (MSG-25), 142 de 172; com o envio (ENV-30), 143; com as pastas de mensagens (CON-17, MSG-23, MSG-24, ENV-29), 147. 🆕 (2026-10-19, servidor `b104db8` e web `57bd9f0`) Com as 4 funcionalidades novas (CON-18, ANX-19, CHA-27, SIP-06), 147 de 176. 🆕 (2026-10-22, web `3689155`) Com a câmera (ANX-20, em parte: só foto) e as tabelas CSV/TSV (MSG-26), 147 de 178.
 > - **Bloqueadas (⛔):** dependem de algo fora do app: o push (Firebase, NOT-04) ou a decisão do campo rico (FC-416).
-> - **Por fazer (⬜):** 🆕 as sugestões de pasta pela IA (CON-18), os áudios em sequência (ANX-19), a chamada já conectada enquanto toca (CHA-27), a etapa 9 (SIP, compartilhar tela, Bubbles), a administração de usuários, bots, ferramentas e conhecimento (CFG-11…14, a avaliar) e um item P3 fora do TODO.
+> - **Por fazer (⬜):** 🆕 as tabelas CSV/TSV (MSG-26), as sugestões de pasta pela IA (CON-18), os áudios em sequência (ANX-19), a chamada já conectada enquanto toca (CHA-27), a etapa 9 (SIP, compartilhar tela, Bubbles), a administração de usuários, bots, ferramentas e conhecimento (CFG-11…14, a avaliar) e um item P3 fora do TODO.
 > - **Falta conferir:** as células com "falta conferir" ou "em aparelho" estão prontas, mas esperam um teste que o emulador não permite.
 
 ---
@@ -173,7 +175,7 @@ A coluna **Fase** indica em que fase do plano da nova base (doc 07) a funcionali
 | MSG-12 | Menções `@[Nome](id)` | ⬜ | ✅ 7.7 · `76a7357` | Aparece o texto cru | Renderizar `@Nome` clicável → conversa direta | F4 | P1 |
 | MSG-13 | Mensagem de chamada (tipo 6, JSON) | ⬜ | ✅ 3.5 | Aparece vazia | Bolha "Chamada de áudio/vídeo" com duração e status — 🆕 `964ed72`: "Ver chat da chamada" na bolha com `chat_chamada_id` (CHA-26) | F2 | P0 |
 | MSG-14 | Mensagem só de emojis (fonte grande) | ⬜ | ✅ 3.3 | — | Detectar com `BreakIterator`/regex de emoji | F2 | P2 |
-| MSG-15 | Blocos de código (destaque, copiar, recolher, Markdown, Mermaid) | ⬜ | ✅ 7.9 · código `74ce225`, Markdown `26f4ea2`, Mermaid `cba9d66` | Aparecem os ``` crus | Parser idêntico ao web (`codeBlocks.ts`). Destaque: lib leve ou WebView com highlight.js. Markdown: Markwon/compose-markdown. Mermaid: WebView offline | F4 | P1 (código/markdown), P2 (mermaid) |
+| MSG-15 | Blocos de código (destaque, copiar, recolher, Markdown, Mermaid) | ⬜ | ✅ 7.9 · código `74ce225`, Markdown `26f4ea2`, Mermaid `cba9d66` | Aparecem os ``` crus | Parser idêntico ao web (`codeBlocks.ts`). Destaque: lib leve ou WebView com highlight.js. Markdown: Markwon/compose-markdown. Mermaid: WebView offline — 🆕 `3689155`: ```csv/```tsv como tabela (MSG-26) | F4 | P1 (código/markdown), P2 (mermaid) |
 | MSG-16 | Mensagem oculta ("Mensagem oculta", toque para revelar) | 🔴 | ✅ 3.4 | **Mostra o conteúdo original** (doc 02 Q6) | Ler `excluida_em`; bolha própria — 🆕 `eaa8bac`: votação oculta revelada mostra o resumo (pergunta + votos) | F2 | **P0** |
 | MSG-17 | Selo de mensagem agendada | ⬜ | ✅ 7.10 · `f3cab38` | — | "Agendada para hoje HH:MM / amanhã / dd/MM" — 🆕 `7322e83`: a agendada sai do chat; relógio com o número ao lado do microfone (campo vazio) e folha "Mensagens agendadas" (horário, resumo, "Cancelar") | F4 | P2 |
 | MSG-18 | Modo conexão lenta | ➖ | ✅ 4.10 · `d9d03f1` | — | Usar `ConnectivityManager` (rede limitada/economia de dados) → "Toque para carregar" | F3 | P3 |
@@ -184,6 +186,7 @@ A coluna **Fase** indica em que fase do plano da nova base (doc 07) a funcionali
 | MSG-23 🆕 | Marcas das pastas na bolha (até 3 bolinhas na cor da pasta; atrás do ✓ na enviada, ao lado e clicáveis na recebida) | ⬜ | ✅ 7.14 · `2a58133` | — | Ler `pastas` (opcional) nas mensagens; atualizar pelo WS 67 e pelas respostas de pôr e tirar — 🆕 `ac710eb`/`f351190` | F4 | P3 |
 | MSG-24 🆕 | Pasta aberta por cima do chat, sem campo ("Ver na conversa", "Tirar da pasta", tirar várias, 50 por página) | ⬜ | ✅ 7.14 · `2a58133` | — | Tela da pasta com `GET /pasta/mensagens?id=&antes=`, menu sem "Pedir confirmação" nem "Ocultar" — 🆕 `ac710eb`/`f351190` | F4 | P2 |
 | MSG-25 🆕 | Localização e trajeto na conversa (bolha com mapa, visualizador com satélite, "Abrir no Google Maps") | ⬜ | ✅ 4.12 · `eaa4f42` · falta conferir a pinça em aparelho | — | Conteúdo tipo 9 (JSON dentro do `conteudo`); mapa de tiles do OSM com User-Agent do app e a atribuição; rótulo "Localização" nas prévias — 🆕 `ac710eb`/`f351190` | F3 | P1 |
+| MSG-26 🆕 | Tabelas CSV e TSV nos blocos de código (cabeçalho, números à direita, "Visualizar"/"Código", "Copiar" dos dados) | ⬜ | ⬜ 7.9 (FC-529) | — | Portar o `tabelaCsv.ts` (aspas, separador `;` ou `,` pelo número de colunas, cabeçalho, alinhamento) com os testes do web; a tabela como terceiro visual do `BlocoCodigo` — 🆕 `3689155` | F4 | P3 |
 
 ## ENV — Composição e ações
 
@@ -197,8 +200,8 @@ A coluna **Fase** indica em que fase do plano da nova base (doc 07) a funcionali
 | ENV-06 | Responder | ⬜ | ✅ 7.3 · `cdfb8cf` | Código morto envia `referencia` (errado; o servidor espera `mensagem_referencia`) | Gesto de deslizar para responder + barra acima do campo | F4 | P0 |
 | ENV-07 | Responder no privado | ⬜ | ✅ 7.6 · `19add2b` | — | Igual ao web (encaminhada com `tipo:2`) | F4 | P2 |
 | ENV-08 | Encaminhar | ⬜ | ✅ 7.6 · `19add2b` | — | Tela de destino (conversas + contatos) | F4 | P1 |
-| ENV-09 | Colar texto longo → janela de código | ➖ | ✅ 7.11 · `c2a31d6` | — | Detectar colagem grande (`onPaste` via `ContentReceiver`) e sugerir "enviar como código" | F4 | P3 |
-| ENV-10 | Janela "Inserir código" | ➖ | ✅ 7.11 · `c2a31d6` | — | Tela simples com seletor de linguagem e monoespaçado (sem CodeMirror) | F4 | P3 |
+| ENV-09 | Colar texto longo → janela de código | ➖ | ✅ 7.11 · `c2a31d6` | — | Detectar colagem grande (`onPaste` via `ContentReceiver`) e sugerir "enviar como código" — 🆕 `3689155`: no web, tabela colada (Excel, Sheets, CSV) vira direto um bloco `tsv`/`csv`, sem janela (FC-529) | F4 | P3 |
+| ENV-10 | Janela "Inserir código" | ➖ | ✅ 7.11 · `c2a31d6` | — | Tela simples com seletor de linguagem e monoespaçado (sem CodeMirror) — 🆕 `3689155`: `csv` e `tsv` no fim da lista de linguagens (FC-529) | F4 | P3 |
 | ENV-11 | Colar imagem | ➖ | ✅ 4.10 · `d9d03f1` | — | `contentReceiver` (Compose) para imagens do teclado e da área de transferência | F3 | P2 |
 | ENV-12 | Atalhos de teclado | ➖ | ➖ não previsto (teclado físico) | — | Só suporte básico a teclado físico (Enter envia é opcional) | — | P3 |
 | ENV-13 | Agendar mensagem (`visivel_em`) | ⬜ | ✅ 7.10 · `f3cab38` | Modelo morto tem o campo | Toque longo no "Enviar" → seletor de data e hora; mesmas validações (≥ 5 min, ≤ 1 ano) — 🆕 `7322e83`: depois de agendar, a mensagem vai para o relógio, não para o chat | F4 | P2 |
@@ -243,6 +246,7 @@ A coluna **Fase** indica em que fase do plano da nova base (doc 07) a funcionali
 | ANX-17 🆕 | Espaço usado pelos arquivos que a pessoa enviou (Perfil; coluna em Pessoas) | ⬜ | ✅ 8.3 · `08e2e77` | — | `GET /usuario/espaco` → `{bytes}`; seção "Armazenamento" no Perfil — 🆕 `ac710eb`/`f351190` | F7 | P3 |
 | ANX-18 🆕 | Velocidade do áudio (1x, 1,5x, 2x, 3x; a mesma para todos os áudios) | ⬜ | ✅ 4.5 · `08e2e77` | — | Botão no player; `setPlaybackSpeed` do Media3; guardar no aparelho — 🆕 `f351190` | F3 | P3 |
 | ANX-19 🆕 | Áudios em sequência (o que termina toca o próximo: na mesma mensagem ou na de baixo) | ⬜ | ⬜ 4.5 (FC-425) | — | Ligar o fim do áudio no `PlayerAudio` à lista do chat — 🆕 `d244fc8` | F3 | P3 |
+| ANX-20 🆕 | Câmera no "+": foto ou vídeo, prévia com legenda, "Refazer" e "Enviar" na hora | ⬜ | 🟡 4.2 · só foto, que vai para a fila de anexos (FC-426) | — | Vídeo pelo `CaptureVideo` (escolher antes, não há um intent para os dois); prévia própria com legenda; envio [arquivo, legenda], o arquivo antes do texto; item visível com `imagem` ou `video` — 🆕 `77c7821` | F3 | P3 |
 
 ## PES — Pesquisa
 

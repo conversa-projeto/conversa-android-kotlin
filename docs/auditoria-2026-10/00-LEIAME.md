@@ -16,9 +16,11 @@
 > 🆕 **Atualização 2026-10-17:** servidor `ac710eb` (pastas de mensagens na direta, localização e trajeto no conteúdo tipo 9, espaço usado por pessoa, servidor de embeddings próprio, a permissão `usuarios` juntada a `permissoes`, contatos pelo WS 66; migrações 053–056) e web `f351190` (as telas disso, com mapa Leaflet, busca no Nominatim e rota no OSRM; velocidade do áudio; anexos de todas as conversas; configurações em menus com sub-abas). Agora são **119 rotas** e **172 funcionalidades** (+AUT-11, CON-17, MSG-23, MSG-24, MSG-25, ENV-29, ENV-30, ANX-17, ANX-18). Novos FC-222, FC-223, FC-224, FC-318, FC-319, FC-422, FC-423, FC-424, FC-527, FC-528 e FC-816; pendências do servidor S31–S39.
 >
 > 🆕 **Atualização 2026-10-19:** servidor `b104db8` (ramal SIP de cada pessoa configurado só pelo administrador, com a permissão de administração `sip` e o TURN do PABX, migração 057; saíram `PUT`/`PATCH /sip`; TURN por UDP na 3478 com o TCP de reserva, e o `urls` do `GET /ice` virou lista; sugestão de pasta pela IA) e web `57bd9f0` (a telefonia nas Pessoas e a aba Voip só leitura; a chamada já conectada enquanto toca, com o som de aguardar; áudios em sequência; as sugestões no painel de pastas). Agora são **122 rotas** e **176 funcionalidades** (+CON-18, ANX-19, CHA-27, SIP-06). Novos FC-225, FC-425, FC-729, FC-730 e FC-817, notas na FC-702, FC-900 e FC-901; pendências do servidor S40–S42. Nada quebra no app: o `urls` em lista já era lido e o `sip` cai no grupo Administração dos Acessos.
+>
+> 🆕 **Atualização 2026-10-22:** só o web mudou, `3689155` (câmera no "+" com foto ou vídeo, prévia e legenda; tabelas CSV/TSV nos blocos de código e tabela colada virando bloco). Agora são **178 funcionalidades** (+ANX-20, MSG-26). Novos FC-426 e FC-529. O OpenAPI pendente do sincronismo anterior foi baixado (123 entradas).
 
 **Escopo:** `conversa-android-kotlin` (branch `novo`, último commit `e3e2a65` em 2026-04-26) comparado a
-`conversa` (servidor, HEAD `7f670c3` → 🆕 `8031fa5` → 🆕 `5cad911` → 🆕 `779c8ed` → 🆕 `12cf0cf` → 🆕 `e25c4db` → 🆕 `ef13c22` → 🆕 `ac710eb` → 🆕 `b104db8`) e `conversa-web` (HEAD `bfb79d8` → 🆕 `39d06f9` → 🆕 `785bdef` → 🆕 `e8d82cb` → 🆕 `d202c06` → 🆕 `8b43965` → 🆕 `9c6e8a6` → 🆕 `f351190` → 🆕 `57bd9f0`), de 2026-10-06 a 2026-10-08 (🆕 sincronizado de novo em 2026-10-13).
+`conversa` (servidor, HEAD `7f670c3` → 🆕 `8031fa5` → 🆕 `5cad911` → 🆕 `779c8ed` → 🆕 `12cf0cf` → 🆕 `e25c4db` → 🆕 `ef13c22` → 🆕 `ac710eb` → 🆕 `b104db8`) e `conversa-web` (HEAD `bfb79d8` → 🆕 `39d06f9` → 🆕 `785bdef` → 🆕 `e8d82cb` → 🆕 `d202c06` → 🆕 `8b43965` → 🆕 `9c6e8a6` → 🆕 `f351190` → 🆕 `57bd9f0` → 🆕 `3689155`), de 2026-10-06 a 2026-10-08 (🆕 sincronizado de novo em 2026-10-13).
 **Método:** leitura integral do código dos três repositórios, do histórico Git do servidor desde abril (Delphi → Node → Bun/Elysia) e build real do Android (`assembleDebug`, sucesso, JDK 21 do Android Studio). Nenhum código foi alterado; só esta pasta foi criada.
 
 ---
@@ -30,9 +32,9 @@
 | 00 | `00-LEIAME.md` | Este índice, o resumo executivo e a **decisão recomendada** |
 | 01 | `01-contrato-servidor-atual.md` | **Fonte da verdade** do contrato atual do servidor: 67 rotas (🆕 82 em 2026-10-15; 119 em 2026-10-17), WebSocket, FCM, anexos/MinIO, chamadas/MediaMTX, gravação, permissões, parâmetros e 46 "pegadinhas" para clientes |
 | 02 | `02-mudancas-servidor-desde-abril.md` | O que mudou no servidor desde a última versão do Android, endpoint por endpoint, com as **quebras confirmadas** |
-| 03 | `03-inventario-web.md` | As **136 funcionalidades** (🆕 153 em 2026-10-15; 172 em 2026-10-17; 176 em 2026-10-19) do cliente web (IDs AUT/CON/MSG/ENV/ANX/PES/CHA/SIP/NOT/PRE/ATV/CFG/GER), textos de UI e detalhes de WebRTC: é o checklist de paridade |
+| 03 | `03-inventario-web.md` | As **136 funcionalidades** (🆕 153 em 2026-10-15; 172 em 2026-10-17; 176 em 2026-10-19; 178 em 2026-10-22) do cliente web (IDs AUT/CON/MSG/ENV/ANX/PES/CHA/SIP/NOT/PRE/ATV/CFG/GER), textos de UI e detalhes de WebRTC: é o checklist de paridade |
 | 04 | `04-auditoria-android.md` | Auditoria interna do app Android: estado do repo, build, arquitetura, **57 problemas** (#1–#57) com severidade e arquivo:linha, e avaliação "evoluir x recomeçar" |
-| 05 | `05-matriz-paridade.md` | Cruzamento das 136 funcionalidades (🆕 176) do web com o estado no Android (o que existe, o que está quebrado, o que falta) |
+| 05 | `05-matriz-paridade.md` | Cruzamento das 136 funcionalidades (🆕 178) do web com o estado no Android (o que existe, o que está quebrado, o que falta) |
 | 06 | `06-fila-de-correcoes.md` | **A fila de trabalho**, priorizada e numerada (FC-xxx), com dependências e critério de pronto |
 | 07 | `07-plano-nova-base.md` | Arquitetura proposta para o app novo, estrutura de módulos, bibliotecas, fases e o que transplantar do código atual |
 | 08 | `08-pendencias-servidor.md` | Problemas e lacunas **no servidor** encontrados durante a auditoria e que bloqueiam ou afetam o Android |
