@@ -4,7 +4,7 @@
 - **Tipo:** documentação
 - **Itens:** linhas 🆕 no `TODO.md` (4.2, 7.9 e 7.11); FC-426 e FC-529; ANX-20 e MSG-26; o OpenAPI pendente de 2026-10-19
 - **Branch:** `reescrita`
-- **Commits:** (preencher)
+- **Commits:** `ad23ba6`
 - **Commits de origem** (pull `--ff-only` em 2026-10-22; o servidor não mudou desde `b104db8`):
   - **Web (`57bd9f0` → `3689155`), os dois de 2026-10-19:**
     - `77c7821` "Câmera no "+": foto ou vídeo direto da câmera, com prévia e legenda";
