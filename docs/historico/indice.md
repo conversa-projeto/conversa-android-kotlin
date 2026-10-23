@@ -101,6 +101,7 @@
 - 2026-10-15 · [Convidados fora da chamada na grade, com "Chamar de novo"](2026-10-15-18-convidados-na-grade-e-chamar-de-novo.md) — `POST /chamada/chamar-novamente` e WS 57 `participantes`; na grade, "Chamando…" ou "Não atendeu" com "Chamar de novo"; o seletor de modos conta os convidados; testado no emulador
 - 2026-10-15 · [Etapas ao ligar o vídeo e troca sem intervalo](2026-10-15-19-etapas-do-video-e-troca-sem-intervalo.md) — "Abrindo a câmera…", "Enviando o vídeo…", "Recebendo o vídeo dos participantes…"; publicação e assinaturas novas entram antes de as antigas saírem; corrige o `comVideo` desfeito no meio e o quadro preto de quem publica só áudio; testado no emulador contra o web
 - 2026-10-22 · [Espera do ICE com o TURN por UDP: medida e encurtada](2026-10-22-07-espera-do-ice-com-turn-udp.md) — no emulador, 5,3 s por WHIP/WHEP com o UDP primeiro (0,1 s só com o TCP); a oferta agora sai 1 s depois do primeiro candidato do TURN (1,3 s); `EsperaColeta` com teste
+- 2026-10-23 · [Coturn local com a porta UDP](2026-10-23-04-coturn-com-udp-local.md) — o contêiner do coturn recriado com a 3478/UDP (servidor `383eaaa`); ligação de teste pelo relay no emulador; guia do emulador atualizado
 
 ## Ações sobre mensagens (etapa 7)
 - 2026-10-08 · [Etapa 7 — menu da mensagem, reações, ocultar e copiar](2026-10-08-19-etapa-7-menu-reacoes-ocultar.md) — toque longo com reações rápidas, seletor de emoji, chips e "quem reagiu", WS 7, Ocultar com a confirmação do web e Copiar (texto ou imagem)

@@ -17,7 +17,7 @@ O servidor de dev atende em HTTPS (nginx, porta 443) com certificado do **mkcert
 
 A mídia das chamadas passa pelo TURN do coturn, na porta 3478. 🆕 Desde o servidor `383eaaa` (2026-10-19) ele aceita UDP e TCP, e `GET /api/ice` responde as duas URLs, o UDP primeiro: `["turn:localhost:3478?transport=udp", "turn:localhost:3478?transport=tcp"]`.
 - **No emulador, só o TCP chega:** o `adb reverse` só leva TCP, então o candidato UDP falha e a chamada usa o TCP. Continue com `adb reverse tcp:3478 tcp:3478`. A oferta sai 1 s depois do candidato TCP, sem esperar o UDP desistir (medido: 1,3 s até o WHIP; eram 5,3 s).
-- **Para o UDP valer no Docker local,** o contêiner do coturn precisa ser recriado com a porta `3478/udp` publicada (`env -u CONVERSA_DATABASE -u CONVERSA_PORTA docker compose up -d coturn`, em `../conversa`).
+- **No Docker local, o coturn publica a `3478/udp`** desde 2026-10-23 (recriado com `env -u CONVERSA_DATABASE -u CONVERSA_PORTA docker compose up -d --no-deps coturn`, em `../conversa`). Num aparelho na mesma rede, o UDP responde; no emulador, continua só o TCP.
 
 ## Passo a passo
 
