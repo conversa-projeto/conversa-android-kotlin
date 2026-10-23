@@ -4,7 +4,7 @@
 - **Tipo:** código
 - **Itens:** `TODO.md` 4.2 (a linha 🆕 `77c7821`); FC-426; ANX-20
 - **Branch:** `reescrita`
-- **Commits:** (preencher)
+- **Commits:** `0128e8a`
 
 ## Contexto
 No web (`77c7821`), "+" › "Câmera":
