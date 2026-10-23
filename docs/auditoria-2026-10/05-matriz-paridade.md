@@ -245,7 +245,7 @@ A coluna **Fase** indica em que fase do plano da nova base (doc 07) a funcionali
 | ANX-16 🆕 | Visualizador de arquivos do Office (`.docx`, `.xlsx`, `.pptx`) | ⬜ | ➖ | — | No celular, "Abrir com…" outro app; o web desenha com `@silurus/ooxml` — 🆕 `9c6e8a6` | F3 | P3 |
 | ANX-17 🆕 | Espaço usado pelos arquivos que a pessoa enviou (Perfil; coluna em Pessoas) | ⬜ | ✅ 8.3 · `08e2e77` | — | `GET /usuario/espaco` → `{bytes}`; seção "Armazenamento" no Perfil — 🆕 `ac710eb`/`f351190` | F7 | P3 |
 | ANX-18 🆕 | Velocidade do áudio (1x, 1,5x, 2x, 3x; a mesma para todos os áudios) | ⬜ | ✅ 4.5 · `08e2e77` | — | Botão no player; `setPlaybackSpeed` do Media3; guardar no aparelho — 🆕 `f351190` | F3 | P3 |
-| ANX-19 🆕 | Áudios em sequência (o que termina toca o próximo: na mesma mensagem ou na de baixo) | ⬜ | ✅ 4.5 · `HASH_X` | — | Ligar o fim do áudio no `PlayerAudio` à lista do chat — 🆕 `d244fc8` | F3 | P3 |
+| ANX-19 🆕 | Áudios em sequência (o que termina toca o próximo: na mesma mensagem ou na de baixo) | ⬜ | ✅ 4.5 · `8935111` | — | Ligar o fim do áudio no `PlayerAudio` à lista do chat — 🆕 `d244fc8` | F3 | P3 |
 | ANX-20 🆕 | Câmera no "+": foto ou vídeo, prévia com legenda, "Refazer" e "Enviar" na hora | ⬜ | 🟡 4.2 · só foto, que vai para a fila de anexos (FC-426) | — | Vídeo pelo `CaptureVideo` (escolher antes, não há um intent para os dois); prévia própria com legenda; envio [arquivo, legenda], o arquivo antes do texto; item visível com `imagem` ou `video` — 🆕 `77c7821` | F3 | P3 |
 
 ## PES — Pesquisa

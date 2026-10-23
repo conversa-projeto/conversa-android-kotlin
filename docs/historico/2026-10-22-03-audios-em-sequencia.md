@@ -4,7 +4,7 @@
 - **Tipo:** código
 - **Itens:** `TODO.md` 4.5 (a linha 🆕 `d244fc8`); FC-425; ANX-19
 - **Branch:** `reescrita`
-- **Commits:** (preencher)
+- **Commits:** `8935111`
 
 ## Contexto
 No web (`d244fc8`), o áudio que termina toca o próximo: o seguinte na mesma mensagem ou, na mensagem logo abaixo (de quem for, inclusive as próprias), o primeiro dela. Se essa mensagem não tem áudio, a sequência para. No app, cada áudio parava no fim.
