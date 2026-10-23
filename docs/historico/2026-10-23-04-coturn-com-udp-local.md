@@ -4,7 +4,7 @@
 - **Tipo:** ambiente de desenvolvimento e documentação
 - **Itens:** FC-702 (TURN por UDP do servidor `383eaaa`); `docs/desenvolvimento/emulador.md`
 - **Branch:** `reescrita`
-- **Commits:** `HASH_X`
+- **Commits:** `8597a5a`
 
 ## Contexto
 Desde o servidor `383eaaa` (2026-10-19), o `docker-compose.yml` publica a 3478 em TCP e em UDP, e o `GET /ice` manda o UDP primeiro. O contêiner `coturn` do Docker local não tinha sido recriado e publicava só a 3478/TCP. A pessoa liberou as pendências opcionais em 2026-10-23.
