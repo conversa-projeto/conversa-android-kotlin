@@ -21,7 +21,7 @@ O `app/lint.xml` trata `InsecureBaseConfiguration` como erro (FC-102). Em `f4a9b
 - **Ignorar só no arquivo do debug, em vez de baixar a severidade no `lint.xml`:** a regra continua valendo para o release e para qualquer outra configuração.
 
 ## Pendências
-- **Versões novas de bibliotecas,** para avaliar à parte:
+- ~~**Versões novas de bibliotecas,** para avaliar à parte~~ (feito em 2026-10-23, histórico 2026-10-23-03):
   - Kotlin 2.4.20 → 2.4.21;
   - OkHttp 5.5.0 → 5.5.1;
   - DataStore 1.2.1 → 1.3.0;

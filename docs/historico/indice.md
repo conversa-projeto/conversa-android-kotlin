@@ -32,6 +32,7 @@
 - 2026-10-06 · [Etapa 0 — preservação, limpeza e organização do repositório](2026-10-06-05-etapa-0-repositorio.md) — branch/tag legado, 11 stashes em tags e patches, limpeza, wrapper versionado, docs em `docs/legado/`, ADR 0001, README; push pendente
 - 2026-10-16 · [Volumes do Docker renomeados e as variáveis antigas do shell](2026-10-16-02-volumes-renomeados.md) — `renomear-volumes.bat` com cópia de segurança antes; variáveis `CONVERSA_*` antigas levaram a API à base `conversa` (desfeito pela cópia); o guia passa a usar `env -u`
 - 2026-10-17 · [Branch `apresentacao` juntada na `reescrita`](2026-10-17-21-junta-apresentacao-na-reescrita.md) — merge `--no-ff` depois da Localização; um conflito no `RedeModulo` (log sem os mapas + `ConfiancaServidor`, os dois mantidos)
+- 2026-10-23 · [Atualiza Kotlin, OkHttp, DataStore, Tink, serialização e Markdown](2026-10-23-03-atualiza-bibliotecas.md) — Kotlin 2.4.21, OkHttp 5.5.1, DataStore 1.3.0, Tink 1.24.0, kotlinx-serialization 1.12.0, markdown-renderer 0.46.0; 623 testes e lint ok; sessão e Markdown conferidos no emulador
 
 ## Fundação (etapa 1)
 - 2026-10-07 · [Etapa 1 — fundação do app novo](2026-10-07-02-etapa-1-fundacao.md) — 8 módulos, rede (67 rotas), WebSocket, Room, sessão cifrada, sync, design system, tela Servidor; 65 testes passando
