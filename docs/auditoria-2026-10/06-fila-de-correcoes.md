@@ -442,11 +442,11 @@
   - Atender e recusar pelo sistema, Bluetooth e carro; FGS `phoneCall`/`microphone`/`camera` com o tipo certo.
 - [ ] **FC-702 · P0 · ICE/TURN** (Q1).
   - `GET /api/ice` (camelCase) **antes de cada** PeerConnection. Respeitar "Forçar relay" (`iceTransportPolicy`).
-  - 🆕 `383eaaa`: cada servidor vem com **duas URLs** em `urls` (lista), o `turn:…:3478?transport=udp` primeiro e o TCP (ou o `turns:` da borda) de reserva. O app já lia `urls` como texto ou lista (`DesserializacaoTest`); no emulador só o TCP passa pelo `adb reverse`. **Medir:** onde o UDP não tem caminho (emulador, Tailscale Funnel, firewall), a coleta sem trickle pode esperar os 5 s inteiros (`ESPERA_ICE_MS`) a cada WHIP/WHEP; ver S41 (doc 08).
+  - 🆕 `383eaaa`: cada servidor vem com **duas URLs** em `urls` (lista), o `turn:…:3478?transport=udp` primeiro e o TCP (ou o `turns:` da borda) de reserva. O app já lia `urls` como texto ou lista (`DesserializacaoTest`); no emulador só o TCP passa pelo `adb reverse`. **Medir:** onde o UDP não tem caminho (emulador, Tailscale Funnel, firewall), a coleta sem trickle pode esperar os 5 s inteiros (`ESPERA_ICE_MS`) a cada WHIP/WHEP; ver S41 (doc 08). ✔ HASH_X: medido no emulador, 5,3 s com o UDP primeiro e 0,1 s só com o TCP; a `EsperaColeta` manda a oferta com a coleta completa ou 1 s depois do primeiro candidato do TURN (1,3 s no emulador).
   - **CP:** chamada em 4G ↔ Wi-Fi com áudio nos dois lados.
 - [ ] **FC-703 · P0 · WHIP/WHEP** (transplantar `WhipWhepClient`).
   - Publicar em `/webrtc/call-<chamada>-u-<eu>/whip`; assistir `/webrtc/call-<chamada>-u-<outro>/whep`.
-  - Sem trickle: esperar o gathering com `GATHER_ONCE`, até 5 s.
+  - Sem trickle: esperar o gathering com `GATHER_ONCE`, até 5 s (🆕 2026-10-22: ou 1 s depois do primeiro candidato do TURN, FC-702).
   - Retentativas de WHEP: vídeo 40×1 s, áudio 12×0,8 s.
   - Ler o `Location` e fazer `DELETE` ao sair (#12).
   - Lock só para estado, nunca durante a rede (#18).

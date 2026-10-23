@@ -6,8 +6,12 @@ import javax.inject.Inject
 import javax.inject.Singleton
 import kotlin.coroutines.resume
 import kotlin.coroutines.resumeWithException
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.filter
 import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.flow.merge
 import kotlinx.coroutines.suspendCancellableCoroutine
 import kotlinx.coroutines.withTimeoutOrNull
 import org.webrtc.DataChannel
@@ -92,15 +96,13 @@ internal class Observador(
     private val aoMudarConexao: (PeerConnection.PeerConnectionState) -> Unit = {},
     private val aoReceberTrilha: (MediaStreamTrack) -> Unit = {},
 ) : PeerConnection.Observer {
-    private val coleta = MutableStateFlow(PeerConnection.IceGatheringState.NEW)
+    private val espera = EsperaColeta()
 
-    /** Sem trickle ICE: espera a coleta terminar, até [ESPERA_ICE_MS] (a alocação do TURN sobre TLS passa de 3 s). */
-    suspend fun esperarColeta() {
-        withTimeoutOrNull(ESPERA_ICE_MS) { coleta.first { it == PeerConnection.IceGatheringState.COMPLETE } }
-    }
+    /** Sem trickle ICE: espera a coleta, como diz a [EsperaColeta]. */
+    suspend fun esperarColeta() = espera.esperar()
 
     override fun onIceGatheringChange(estado: PeerConnection.IceGatheringState) {
-        coleta.value = estado
+        espera.aoMudarColeta(completa = estado == PeerConnection.IceGatheringState.COMPLETE)
     }
 
     override fun onConnectionChange(estado: PeerConnection.PeerConnectionState) = aoMudarConexao(estado)
@@ -115,7 +117,7 @@ internal class Observador(
 
     override fun onIceConnectionReceivingChange(recebendo: Boolean) = Unit
 
-    override fun onIceCandidate(candidato: IceCandidate) = Unit
+    override fun onIceCandidate(candidato: IceCandidate) = espera.aoCandidato(candidato.sdp)
 
     override fun onIceCandidatesRemoved(candidatos: Array<out IceCandidate>) = Unit
 
@@ -126,11 +128,43 @@ internal class Observador(
     override fun onDataChannel(canal: DataChannel) = Unit
 
     override fun onRenegotiationNeeded() = Unit
+}
+
+/**
+ * Quando mandar a oferta sem trickle ICE: com a coleta completa ou [FOLGA_DEPOIS_DO_RELAY_MS] depois do
+ * primeiro candidato do TURN, até [ESPERA_ICE_MS] (a alocação do TURN sobre TLS passa de 3 s).
+ * O `GET /ice` manda o TURN por UDP primeiro (servidor `383eaaa`). Onde o UDP não tem caminho (emulador,
+ * Tailscale Funnel, firewall), a coleta só termina quando a alocação UDP desiste, e cada WHIP/WHEP esperava
+ * os 5 s inteiros: 5,3 s medidos no emulador, contra 0,1 s com o `/ice` só com o TCP (FC-702, S41).
+ */
+internal class EsperaColeta {
+    private val completa = MutableStateFlow(false)
+    private val comRelay = MutableStateFlow(false)
+
+    fun aoMudarColeta(completa: Boolean) {
+        this.completa.value = completa
+    }
+
+    fun aoCandidato(sdp: String) {
+        if (ehCandidatoRelay(sdp)) comRelay.value = true
+    }
+
+    suspend fun esperar() {
+        withTimeoutOrNull(ESPERA_ICE_MS) {
+            merge(completa.filter { it }.map { }, comRelay.filter { it }.map { delay(FOLGA_DEPOIS_DO_RELAY_MS) }).first()
+        }
+    }
 
     companion object {
         const val ESPERA_ICE_MS = 5_000L
+
+        /** Com o UDP funcionando, o candidato dele chega antes do TCP; 1 s cobre a diferença. */
+        const val FOLGA_DEPOIS_DO_RELAY_MS = 1_000L
     }
 }
+
+/** `candidate:… typ relay …`: o candidato do TURN. */
+internal fun ehCandidatoRelay(sdp: String): Boolean = " typ relay " in "$sdp "
 
 internal suspend fun PeerConnection.criarOferta(): SessionDescription = suspendCancellableCoroutine { continuacao ->
     createOffer(

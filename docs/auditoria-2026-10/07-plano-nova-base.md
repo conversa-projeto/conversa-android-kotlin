@@ -138,7 +138,7 @@ Na (re)conexão, no retorno ao foreground e ao receber push, executa **em parale
   - Opus em 32/64/128 kbps, conforme a configuração.
   - Câmera 360p/720p a 15/24 fps (padrão do celular: 360p a 15 fps, como no web).
 - `AssinanteWhep` por participante: PC `RECV_ONLY`; o peer é registrado **antes** do `setRemoteDescription`.
-- ICE: `GET /api/ice` a cada PC; `GATHER_ONCE`; espera até 5 s; sem trickle (o MediaMTX aceita PATCH, mas o web não usa; manter igual).
+- ICE: `GET /api/ice` a cada PC; `GATHER_ONCE`; espera até 5 s (🆕 2026-10-22: ou 1 s depois do primeiro candidato do TURN, para não esperar o UDP que não tem caminho; FC-702); sem trickle (o MediaMTX aceita PATCH, mas o web não usa; manter igual).
 - Retentativas: WHEP 404 → vídeo 40×1 s, áudio 12×0,8 s; ICE `FAILED` → refazer o PC daquele peer.
 
 ### 3.6 Anexos (`:core:media`)
