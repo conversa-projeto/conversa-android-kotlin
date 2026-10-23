@@ -125,6 +125,7 @@
 - 2026-10-17 · [Pastas de mensagens na conversa direta](2026-10-17-05-pastas-de-mensagens.md) — "⋮" › "Pastas de mensagens" (criar, renomear, cor, compartilhar, excluir), toque longo › "Selecionar" e "Pôr na pasta", bolinhas nas bolhas, pasta aberta por cima do chat e WS 67; Room v13; testado no emulador (com o C pela API)
 - 2026-10-22 · [Tabelas CSV e TSV nos blocos de código](2026-10-22-04-tabelas-csv-tsv.md) — ```csv/```tsv como tabela (grade em Compose, números à direita, "Visualizar"/"Código"); tabela colada abre o "Inserir código" com `tsv`/`csv`; `csv` e `tsv` nas linguagens; testado no emulador
 - 2026-10-22 · [Sugestões de pasta pela IA](2026-10-22-06-sugestoes-de-pasta-pela-ia.md) — "Sugestões da IA" na folha de pastas (com a IA ligada e alguma pasta): "Sugerir pastas" consultado a cada 2 s, ✓ põe, ✕ ignora (guardado no aparelho), "Aceitar todas"; testado no emulador com a resposta simulada
+- 2026-10-22 · [Campo de mensagem religava o teclado a cada letra](2026-10-22-09-teclado-religado-a-cada-letra.md) — o destaque das menções era um `OutputTransformation` novo a cada recomposição; letras perdidas e, no celular, o teclado abrindo e fechando; guardado com `remember`; regra no `CLAUDE.md`
 
 ## Atividades, pesquisa, perfil e configurações (etapa 8)
 - 2026-10-08 · [Etapa 8 — aba Atividades](2026-10-08-37-etapa-8-atividades.md) — módulo `:feature:atividades`: lista por dia com selos, prévias e "Nova", paginação, abrir marca como vistas e o WS 61 relê com a aba aberta; corrigido o POST de vistas (o OkHttp recusava POST sem corpo)

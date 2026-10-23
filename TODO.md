@@ -801,6 +801,7 @@
 ### 7.7 Menções (FC-508, ENV-05, MSG-12)
 - [x] Ao digitar `@` + texto → popup com até 6 contatos/membros (nome/login) — `SugestoesDeMencao` acima do campo, com os contatos (como o web); `mencaoDigitada` faz o papel do regex do web (`@` + letras, números, "_" e espaços até o cursor) sem regex ✔ 76a7357
 - [x] Escolher → inserir `@Nome` destacado no campo; guardar o id — o "@termo" vira "@Nome "; destaque por `OutputTransformation` (azul, seminegrito); texto compartilhado com "@[Nome](id)" volta a "@Nome" com o id ✔ 76a7357
+- [x] Correção (2026-10-22): o destaque era um `OutputTransformation` novo a cada recomposição, e o campo religava o teclado a cada letra (letras perdidas; no celular, o teclado abria e fechava a cada toque) — guardado com `remember` ✔ HASH_X
 - [x] No envio: converter para `@[Nome](id)`; "@Ana" não casa com "@Anabela" — `textoParaEnvio`. No emulador: "O @[Teste Android B](2) td" no servidor ✔ 76a7357
 - [x] Renderizar `@[Nome](id)` como `@Nome` clicável → abrir a conversa direta — já existia desde a etapa 3 (`SegmentoTexto.Mencao`); no emulador o toque abriu a direta com o B ✔ 76a7357
 - [x] Testes do parser (portar `mencoesTexto.ts`) — `Mencoes.kt` + `MencoesTest` (7 testes) ✔ 76a7357

@@ -567,6 +567,10 @@ private fun LinhaDoCampo(
             if (segurando != null) {
                 IndicadorSegurando(segurando)
             } else {
+                // Guardado: uma transformação nova a cada recomposição (cada letra) religa o teclado ao campo,
+                // e o teclado perde letras ou fecha e abre a cada toque.
+                val cor = MaterialTheme.colorScheme.primary
+                val destaque = remember(mencoes, cor) { destaqueDasMencoes(mencoes, cor) }
                 TextField(
                     state = texto,
                     placeholder = { Text(stringResource(R.string.digite_uma_mensagem)) },
@@ -579,7 +583,7 @@ private fun LinhaDoCampo(
                         unfocusedIndicatorColor = Color.Transparent,
                     ),
                     keyboardOptions = KeyboardOptions(capitalization = KeyboardCapitalization.Sentences),
-                    outputTransformation = destaqueDasMencoes(mencoes, MaterialTheme.colorScheme.primary),
+                    outputTransformation = destaque,
                     inputTransformation = transformacao,
                     modifier = Modifier
                         .fillMaxWidth()
