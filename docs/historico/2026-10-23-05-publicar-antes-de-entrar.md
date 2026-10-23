@@ -4,7 +4,7 @@
 - **Tipo:** código
 - **Itens:** `TODO.md` 6.x (a linha 🆕 `d244fc8` "(opcional) Publicar antes do `POST /chamada/entrar`"); FC-729; CHA-27
 - **Branch:** `reescrita`
-- **Commits:** `HASH_X`
+- **Commits:** `f2e2b10`
 
 ## Contexto
 No web (`d244fc8`), quem liga pré-assina quem foi chamado. Quando alguém atende (o 54) e ainda não chegou áudio dele, o web toca um som de espera por até 10 s. O app fazia `POST /chamada/entrar` e só depois publicava, então o web que ligava para o celular sempre tocava esse som até a publicação do app aparecer. A FC-729 marcava como melhoria opcional publicar antes do `entrar`, sem copiar o preparo inteiro durante o toque (abrir câmera e microfone enquanto toca).
