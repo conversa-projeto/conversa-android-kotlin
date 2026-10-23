@@ -10,6 +10,7 @@ import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.runtime.CompositionLocalProvider
 import androidx.core.splashscreen.SplashScreen.Companion.installSplashScreen
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import com.conversa.app.core.data.presenca.UsoDoApp
 import com.conversa.app.core.data.sistema.SistemaRepositorio
 import com.conversa.app.core.model.PermissoesDeUso
 import com.conversa.app.core.model.PreferenciaTema
@@ -27,6 +28,8 @@ class MainActivity : ComponentActivity() {
     private val viewModel: MainViewModel by viewModels()
 
     @Inject lateinit var sistema: SistemaRepositorio
+
+    @Inject lateinit var uso: UsoDoApp
 
     override fun onCreate(savedInstanceState: Bundle?) {
         val splash = installSplashScreen()
@@ -62,5 +65,11 @@ class MainActivity : ComponentActivity() {
         super.onNewIntent(intent)
         viewModel.receberLink(intent.data)
         viewModel.receberCompartilhamento(lerCompartilhamento(intent))
+    }
+
+    /** Toque ou tecla em qualquer tela: em uso (a presença fica parada depois de 30 s sem nada, PRE-02). */
+    override fun onUserInteraction() {
+        super.onUserInteraction()
+        uso.marcarUso()
     }
 }

@@ -13,9 +13,22 @@ class PresencaTest {
     @Test
     fun `nesta conversa vem antes do estado, e depois ativo e ausente`() {
         val ativo = PresencaContato(EstadoPresenca.ATIVO)
-        assertThat(subtituloPresenca(ativo, nestaConversa = true, agora, zona)).isEqualTo(SubtituloPresenca.NestaConversa)
+        assertThat(subtituloPresenca(ativo, nestaConversa = true, agora, zona)).isEqualTo(SubtituloPresenca.NestaConversa())
         assertThat(subtituloPresenca(ativo, nestaConversa = false, agora, zona)).isEqualTo(SubtituloPresenca.AtivoAgora)
-        assertThat(subtituloPresenca(PresencaContato(EstadoPresenca.AUSENTE), false, agora, zona)).isEqualTo(SubtituloPresenca.Ausente)
+        assertThat(subtituloPresenca(PresencaContato(EstadoPresenca.AUSENTE), false, agora, zona)).isEqualTo(SubtituloPresenca.Ausente())
+    }
+
+    @Test
+    fun `ausente e nesta conversa com a pessoa ausente levam o visto por ultimo (web 17c49a4)`() {
+        val visto = Instant.parse("2026-10-15T14:05:00Z") // 11:05 em São Paulo
+        val ausente = PresencaContato(EstadoPresenca.AUSENTE, visto)
+        assertThat(subtituloPresenca(ausente, nestaConversa = false, agora, zona))
+            .isEqualTo(SubtituloPresenca.Ausente(SubtituloPresenca.VistoHoje("11:05")))
+        assertThat(subtituloPresenca(ausente, nestaConversa = true, agora, zona))
+            .isEqualTo(SubtituloPresenca.NestaConversa(SubtituloPresenca.VistoHoje("11:05")))
+        // Ativa na conversa: só "nesta conversa", mesmo com o visto de uma saída anterior.
+        assertThat(subtituloPresenca(PresencaContato(EstadoPresenca.ATIVO, visto), nestaConversa = true, agora, zona))
+            .isEqualTo(SubtituloPresenca.NestaConversa())
     }
 
     @Test

@@ -18,6 +18,7 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.core.net.toUri
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.conversa.app.core.data.preferencias.PreferenciasRepositorio
+import com.conversa.app.core.data.presenca.UsoDoApp
 import com.conversa.app.core.data.sistema.SistemaRepositorio
 import com.conversa.app.core.data.tempoReal.MonitorPrimeiroPlano
 import com.conversa.app.core.model.PermissoesDeUso
@@ -45,6 +46,8 @@ class ChamadaActivity : ComponentActivity() {
     @Inject lateinit var preferencias: PreferenciasRepositorio
 
     @Inject lateinit var sistema: SistemaRepositorio
+
+    @Inject lateinit var uso: UsoDoApp
 
     /** "Atender" da notificação: atende assim que a tela abre. */
     private val pedidoAtender = mutableStateOf(false)
@@ -108,6 +111,12 @@ class ChamadaActivity : ComponentActivity() {
         if (area == areaDoVideo) return
         areaDoVideo = area
         if (podePip && Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) setPictureInPictureParams(parametrosPip(true))
+    }
+
+    /** Toque na tela da chamada também é uso (PRE-02). */
+    override fun onUserInteraction() {
+        super.onUserInteraction()
+        uso.marcarUso()
     }
 
     override fun onUserLeaveHint() {

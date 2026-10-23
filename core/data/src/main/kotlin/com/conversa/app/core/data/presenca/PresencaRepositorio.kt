@@ -35,9 +35,10 @@ import kotlinx.coroutines.launch
  *   vem quando muda). Só vale para quem tem conversa direta com o usuário; o meu próprio
  *   estado chega pelo WS 60 logo depois do login no socket.
  * - Quem está com cada conversa aberta: `GET /conversa/presentes` ao abrir + WS 63 `aberta`.
- * - A minha presença (PRE-02): WS 63 `{ativo, conversa_id}`, ativo com o app na frente e a
- *   conversa que está na tela; só quando muda, e de novo a cada login no socket. Sem isso o
- *   servidor considera o aparelho ativo enquanto o socket está aberto (até em segundo plano).
+ * - A minha presença (PRE-02): WS 63 `{ativo, conversa_id}`, ativo com o app na frente e em uso
+ *   ([UsoDoApp]: parado depois de 30 s, como o web) e a conversa que está na tela, mesmo parado;
+ *   só quando muda, e de novo a cada login no socket. Sem isso o servidor considera o aparelho
+ *   ativo enquanto o socket está aberto (até em segundo plano).
  * - Digitando/gravando: WS 4/5. Não existe "parou de digitar": cada aviso vale
  *   [EXPIRACAO_MS] (mesmo tempo do web) e some antes se chegar mensagem nova.
  */
@@ -48,6 +49,7 @@ class PresencaRepositorio @Inject constructor(
     private val sessao: SessaoRepositorio,
     private val primeiroPlano: MonitorPrimeiroPlano,
     private val emTela: ConversaEmTela,
+    private val uso: UsoDoApp,
     @EscopoAplicacao private val escopo: CoroutineScope,
 ) {
     private val _presencas = MutableStateFlow<Map<Long, PresencaContato>>(emptyMap())
@@ -82,9 +84,12 @@ class PresencaRepositorio @Inject constructor(
         iniciado = true
         tempoReal.eventos.onEach(::tratar).launchIn(escopo)
         tempoReal.estado.onEach { if (it != EstadoConexao.CONECTADO) logado.value = false }.launchIn(escopo)
+        // Na frente, conta o tempo parado; em segundo plano, para (a volta começa em uso).
+        primeiroPlano.emPrimeiroPlano.onEach { if (it) uso.marcarUso() else uso.pausar() }.launchIn(escopo)
         // A minha presença: nulo enquanto o socket não está logado (aí o próximo login reenvia).
-        combine(logado, primeiroPlano.emPrimeiroPlano, emTela.id) { ok, visivel, conversa ->
-            if (ok) MinhaPresenca(visivel, conversa.takeIf { visivel }) else null
+        // Parado na frente: ausente, mas ainda com a conversa aberta (web `17c49a4`, servidor `331083b`).
+        combine(logado, primeiroPlano.emPrimeiroPlano, emTela.id, uso.parado) { ok, visivel, conversa, parado ->
+            if (ok) MinhaPresenca(visivel && !parado, conversa.takeIf { visivel }) else null
         }
             .distinctUntilChanged()
             .onEach { presenca -> presenca?.let { tempoReal.enviarPresenca(it.ativo, it.conversaId) } }

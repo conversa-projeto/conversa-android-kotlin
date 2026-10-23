@@ -53,6 +53,8 @@
     <string name="online">online</string>
     <!-- Presença na direta (PRE-03, web ChatHeader.vue) -->
     <string name="nesta_conversa">nesta conversa</string>
+    <!-- "ausente · visto por último …" e "nesta conversa · visto por último …" (web 17c49a4) -->
+    <string name="presenca_com_visto">%1$s · %2$s</string>
     <string name="ativo_agora">ativo agora</string>
     <string name="visto_hoje">visto por último hoje às %1$s</string>
     <string name="visto_ontem">visto por último ontem às %1$s</string>

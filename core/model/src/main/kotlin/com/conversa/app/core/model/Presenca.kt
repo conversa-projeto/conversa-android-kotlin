@@ -38,40 +38,46 @@ fun Map<Long, PresencaContato>.estadoDe(usuarioId: Long?): EstadoPresenca =
 
 /** O subtítulo da conversa direta, na ordem do web. */
 sealed interface SubtituloPresenca {
-    /** A outra pessoa está com esta conversa aberta. */
-    data object NestaConversa : SubtituloPresenca
+    /** A outra pessoa está com esta conversa aberta; ausente, vem também o "visto por último" (web `17c49a4`). */
+    data class NestaConversa(val visto: VistoPorUltimo? = null) : SubtituloPresenca
 
     data object AtivoAgora : SubtituloPresenca
 
-    data object Ausente : SubtituloPresenca
+    /** "ausente", com o "visto por último" quando se sabe (web `17c49a4`). */
+    data class Ausente(val visto: VistoPorUltimo? = null) : SubtituloPresenca
 
     /** "visto por último hoje às HH:mm". */
-    data class VistoHoje(val hora: String) : SubtituloPresenca
+    data class VistoHoje(val hora: String) : VistoPorUltimo
 
     /** "visto por último ontem às HH:mm". */
-    data class VistoOntem(val hora: String) : SubtituloPresenca
+    data class VistoOntem(val hora: String) : VistoPorUltimo
 
     /** "visto por último em dd/MM às HH:mm" (com o ano, se não for o deste ano). */
-    data class VistoEm(val data: String, val hora: String) : SubtituloPresenca
+    data class VistoEm(val data: String, val hora: String) : VistoPorUltimo
 
     /** Offline sem "visto por último" (ou escondido): nada. */
     data object Nenhum : SubtituloPresenca
 }
+
+/** Um "visto por último …": sozinho (offline) ou depois do "ausente" e do "nesta conversa" (" · "). */
+sealed interface VistoPorUltimo : SubtituloPresenca
 
 private val HORA = DateTimeFormatter.ofPattern("HH:mm")
 private val DIA_MES = DateTimeFormatter.ofPattern("dd/MM")
 private val DIA_MES_ANO = DateTimeFormatter.ofPattern("dd/MM/yyyy")
 
 fun subtituloPresenca(presenca: PresencaContato?, nestaConversa: Boolean, agora: Instant, zona: ZoneId): SubtituloPresenca {
-    if (nestaConversa) return SubtituloPresenca.NestaConversa
+    val visto = presenca?.vistoEm?.let { vistoPorUltimo(it, agora, zona) }
+    val ausente = presenca?.estado == EstadoPresenca.AUSENTE
+    if (nestaConversa) return SubtituloPresenca.NestaConversa(visto.takeIf { ausente })
     return when (presenca?.estado) {
         EstadoPresenca.ATIVO -> SubtituloPresenca.AtivoAgora
-        EstadoPresenca.AUSENTE -> SubtituloPresenca.Ausente
-        else -> presenca?.vistoEm?.let { vistoPorUltimo(it, agora, zona) } ?: SubtituloPresenca.Nenhum
+        EstadoPresenca.AUSENTE -> SubtituloPresenca.Ausente(visto)
+        else -> visto ?: SubtituloPresenca.Nenhum
     }
 }
 
-private fun vistoPorUltimo(visto: Instant, agora: Instant, zona: ZoneId): SubtituloPresenca {
+private fun vistoPorUltimo(visto: Instant, agora: Instant, zona: ZoneId): VistoPorUltimo {
     val momento = visto.atZone(zona)
     val hoje: LocalDate = agora.atZone(zona).toLocalDate()
     val hora = HORA.format(momento)

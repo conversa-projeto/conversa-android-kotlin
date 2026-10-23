@@ -55,7 +55,7 @@
     <string name="privacidade_resumo">Status, visto por último e aparecer offline</string>
     <string name="privacidade_carregando">Carregando…</string>
     <string name="privacidade_status">Status</string>
-    <string name="privacidade_status_texto">Os contatos veem você ativo com o Conversa aberto e em uso, ausente quando ele está escondido ou parado há 5 minutos. Valem para todos os seus aparelhos e mudam na hora.</string>
+    <string name="privacidade_status_texto">Os contatos veem você ativo com o Conversa aberto e em uso, ausente quando ele está escondido ou parado há 30 segundos. Valem para todos os seus aparelhos e mudam na hora.</string>
     <string name="privacidade_offline">Aparecer offline</string>
     <string name="privacidade_offline_descricao">Para os outros você fica offline, sem visto por último nem a conversa aberta.</string>
     <string name="privacidade_visto">Mostrar o visto por último</string>

@@ -23,6 +23,7 @@ import com.conversa.app.core.data.mensagens.PostagemEnvio
 import com.conversa.app.core.data.mensagens.ReferenciaPendente
 import com.conversa.app.core.data.notificacoes.ConversaEmTela
 import com.conversa.app.core.data.presenca.PresencaRepositorio
+import com.conversa.app.core.data.presenca.UsoDoApp
 import com.conversa.app.core.data.rascunhos.Rascunho
 import com.conversa.app.core.data.rascunhos.RascunhosRepositorio
 import com.conversa.app.core.data.rede.EconomiaDados
@@ -311,6 +312,7 @@ class ChatViewModel @Inject constructor(
     private val relogio: Clock,
     private val rascunhos: RascunhosRepositorio,
     private val enquetes: EnquetesRepositorio,
+    private val uso: UsoDoApp,
 ) : ViewModel() {
     val conversaId: Long = checkNotNull(salvo["conversaId"])
     private val eu: Long = sessao.sessao.value?.usuarioId ?: 0
@@ -1264,6 +1266,8 @@ class ChatViewModel @Inject constructor(
     private var pendente = false
 
     fun aoDigitar(texto: String) {
+        // O teclado não passa pelas telas do app: digitar também é uso (presença parada em 30 s, PRE-02).
+        uso.marcarUso()
         if (texto.isBlank()) return
         if (janela?.isActive == true) {
             pendente = true

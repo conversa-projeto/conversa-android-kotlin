@@ -90,6 +90,7 @@ class ChatViewModelTest {
     }
     private val player = PlayerFalso()
     private val enquetes = mockk<com.conversa.app.core.data.enquetes.EnquetesRepositorio>(relaxed = true)
+    private val uso = mockk<com.conversa.app.core.data.presenca.UsoDoApp>(relaxed = true)
     private val rascunhos = mockk<com.conversa.app.core.data.rascunhos.RascunhosRepositorio>(relaxed = true) {
         coEvery { ler(any()) } returns null
     }
@@ -146,6 +147,7 @@ class ChatViewModelTest {
             Clock.fixed(agora, ZoneOffset.UTC),
             rascunhos,
             enquetes,
+            uso,
         )
         backgroundScope.launch { vm.estado.collect {} }
         return vm
@@ -212,6 +214,8 @@ class ChatViewModelTest {
         advanceTimeBy(10_000)
         runCurrent()
         coVerify(exactly = 2) { mensagens.avisarDigitando(42) }
+        // Cada mudança do texto conta como uso (presença parada em 30 s, PRE-02), até a em branco.
+        io.mockk.verify(exactly = 7) { uso.marcarUso() }
     }
 
     @Test

@@ -41,7 +41,8 @@ class PresencaRepositorioTest {
     private val primeiroPlano = mockk<MonitorPrimeiroPlano> { every { emPrimeiroPlano } returns visivel }
     private val emTela = ConversaEmTela()
 
-    private fun criar(escopo: CoroutineScope) = PresencaRepositorio(api, tempoReal, sessao, primeiroPlano, emTela, escopo)
+    private fun criar(escopo: CoroutineScope, uso: UsoDoApp = UsoDoApp(escopo)) =
+        PresencaRepositorio(api, tempoReal, sessao, primeiroPlano, emTela, uso, escopo)
 
     @Test
     fun `estado e visto por ultimo vem da API e mudam com o evento 60, sem perder o meu`() = runTest {
@@ -129,6 +130,38 @@ class PresencaRepositorioTest {
         eventos.emit(EventoSocket.StatusUsuario(7, online = true, estado = "ausente"))
         runCurrent()
         verify(exactly = 2) { tempoReal.enviarPresenca(false, null) }
+        escopo.cancel()
+    }
+
+    @Test
+    fun `parado 30 s na frente vai como ausente, ainda com a conversa, e o uso volta a ativo (web 17c49a4)`() = runTest {
+        val escopo = escopoDoTeste()
+        val uso = UsoDoApp(escopo)
+        val presenca = criar(escopo, uso)
+        presenca.iniciar()
+        emTela.apareceu(42)
+        runCurrent()
+        eventos.emit(EventoSocket.StatusUsuario(7, online = true, estado = "ativo"))
+        runCurrent()
+        verify(exactly = 1) { tempoReal.enviarPresenca(true, 42) }
+
+        advanceTimeBy(UsoDoApp.TEMPO_PARADO_MS + 1)
+        runCurrent()
+        verify(exactly = 1) { tempoReal.enviarPresenca(false, 42) }
+
+        uso.marcarUso()
+        runCurrent()
+        verify(exactly = 2) { tempoReal.enviarPresenca(true, 42) }
+
+        // Segundo plano: sem a conversa e sem contar; a volta começa em uso, sem passar por parado.
+        visivel.value = false
+        runCurrent()
+        verify(exactly = 1) { tempoReal.enviarPresenca(false, null) }
+        advanceTimeBy(UsoDoApp.TEMPO_PARADO_MS * 2)
+        visivel.value = true
+        runCurrent()
+        verify(exactly = 3) { tempoReal.enviarPresenca(true, 42) }
+        verify(exactly = 1) { tempoReal.enviarPresenca(false, 42) }
         escopo.cancel()
     }
 

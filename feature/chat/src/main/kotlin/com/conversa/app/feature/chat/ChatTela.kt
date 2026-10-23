@@ -92,6 +92,7 @@ import com.conversa.app.core.model.RotuloDia
 import com.conversa.app.core.model.SubtituloPresenca
 import com.conversa.app.core.model.TipoChamada
 import com.conversa.app.core.model.TipoConteudo
+import com.conversa.app.core.model.VistoPorUltimo
 import com.conversa.app.core.model.fichaDaConversa
 import com.conversa.app.core.model.rotuloDia
 import com.conversa.app.core.model.subtituloPresenca
@@ -845,7 +846,7 @@ private fun Cabecalho(estado: ChatUiState, acoes: AcoesChat) {
                             val subtitulo =
                                 subtituloPresenca(estado.presencaDoOutro, estado.outroNestaConversa, Instant.now(), ZoneId.systemDefault())
                             textoDoSubtitulo(subtitulo)?.let { texto ->
-                                Subtitulo(texto, destaque = subtitulo == SubtituloPresenca.NestaConversa)
+                                Subtitulo(texto, destaque = subtitulo is SubtituloPresenca.NestaConversa)
                             }
                         }
                     }
@@ -992,13 +993,23 @@ private fun SeparadorNaoLidas() {
 /** O texto do subtítulo da direta (web `ChatHeader.vue`); nulo = nada. */
 @Composable
 private fun textoDoSubtitulo(subtitulo: SubtituloPresenca): String? = when (subtitulo) {
-    SubtituloPresenca.NestaConversa -> stringResource(R.string.nesta_conversa)
+    is SubtituloPresenca.NestaConversa -> comVisto(stringResource(R.string.nesta_conversa), subtitulo.visto)
     SubtituloPresenca.AtivoAgora -> stringResource(R.string.ativo_agora)
-    SubtituloPresenca.Ausente -> stringResource(com.conversa.app.core.ui.R.string.ausente)
-    is SubtituloPresenca.VistoHoje -> stringResource(R.string.visto_hoje, subtitulo.hora)
-    is SubtituloPresenca.VistoOntem -> stringResource(R.string.visto_ontem, subtitulo.hora)
-    is SubtituloPresenca.VistoEm -> stringResource(R.string.visto_em, subtitulo.data, subtitulo.hora)
+    is SubtituloPresenca.Ausente -> comVisto(stringResource(com.conversa.app.core.ui.R.string.ausente), subtitulo.visto)
+    is VistoPorUltimo -> textoDoVisto(subtitulo)
     SubtituloPresenca.Nenhum -> null
+}
+
+/** "ausente · visto por último …" e "nesta conversa · visto por último …" (web `17c49a4`). */
+@Composable
+private fun comVisto(texto: String, visto: VistoPorUltimo?): String =
+    if (visto == null) texto else stringResource(R.string.presenca_com_visto, texto, textoDoVisto(visto))
+
+@Composable
+private fun textoDoVisto(visto: VistoPorUltimo): String = when (visto) {
+    is SubtituloPresenca.VistoHoje -> stringResource(R.string.visto_hoje, visto.hora)
+    is SubtituloPresenca.VistoOntem -> stringResource(R.string.visto_ontem, visto.hora)
+    is SubtituloPresenca.VistoEm -> stringResource(R.string.visto_em, visto.data, visto.hora)
 }
 
 /** "Você não tem permissão para enviar imagens, vídeos." (texto do web, GER-09). */
