@@ -4,7 +4,7 @@
 - **Tipo:** código
 - **Itens:** `TODO.md` 6.1 (a linha 🆕 `383eaaa` "Medir o tempo da publicação…"); FC-702; S41 (doc 08)
 - **Branch:** `reescrita`
-- **Commits:** `HASH_X`
+- **Commits:** `19ae919`
 
 ## Contexto
 Desde o servidor `383eaaa`, o `GET /ice` manda o TURN por UDP primeiro e o TCP de reserva. Sem trickle ICE, o app espera a coleta terminar (até 5 s) antes de mandar a oferta ao MediaMTX. Onde o UDP não tem caminho (emulador, Tailscale Funnel, firewall), a coleta só termina quando a alocação UDP desiste. Faltava medir quanto isso custa a cada WHIP/WHEP.
