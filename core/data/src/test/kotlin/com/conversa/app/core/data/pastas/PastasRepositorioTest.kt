@@ -3,13 +3,18 @@ package com.conversa.app.core.data.pastas
 import com.conversa.app.core.database.dao.MensagemDao
 import com.conversa.app.core.database.entidades.PastasDaMensagem
 import com.conversa.app.core.model.Pasta
+import com.conversa.app.core.model.StatusSugestoes
+import com.conversa.app.core.model.SugestaoPasta
 import com.conversa.app.core.network.api.ConversaApi
 import com.conversa.app.core.network.dto.AlterarPastaRequisicao
 import com.conversa.app.core.network.dto.CriarPastaRequisicao
 import com.conversa.app.core.network.dto.IdDto
 import com.conversa.app.core.network.dto.MensagensDaPastaRequisicao
 import com.conversa.app.core.network.dto.PastaDto
+import com.conversa.app.core.network.dto.PedirSugestoesPastasRequisicao
 import com.conversa.app.core.network.dto.PorNaPastaDto
+import com.conversa.app.core.network.dto.SugestaoPastaDto
+import com.conversa.app.core.network.dto.SugestoesPastasDto
 import com.conversa.app.core.network.dto.TirarDaPastaDto
 import com.conversa.app.core.network.realtime.EventoSocket
 import com.google.common.truth.Truth.assertThat
@@ -100,5 +105,29 @@ class PastasRepositorioTest {
         repo.aoAviso(EventoSocket.PastasAtualizadas(9, 4, listOf(30), "tirar"))
         coVerify { dao.atualizarPastas(30, "") }
         coVerify(exactly = 0) { api.pastas(9) }
+    }
+
+    @Test
+    fun `sugestoes da IA - pede com as ignoradas e le o resultado`() = runTest {
+        coEvery { api.pedirSugestoesPastas(PedirSugestoesPastasRequisicao(5, listOf(1201))) } returns
+            SugestoesPastasDto("abc", 5, "processando", 0)
+        val pedido = repo.pedirSugestoes(5, listOf(1201)).getOrThrow()
+        assertThat(pedido.status).isEqualTo(StatusSugestoes.PROCESSANDO)
+        assertThat(pedido.id).isEqualTo("abc")
+
+        coEvery { api.sugestoesPastas("abc") } returns SugestoesPastasDto(
+            "abc",
+            5,
+            "concluido",
+            3,
+            listOf(SugestaoPastaDto(1203, 2, "Bruno Souza", "A nota fiscal chegou")),
+        )
+        val pronta = repo.consultarSugestoes("abc").getOrThrow()
+        assertThat(pronta.status).isEqualTo(StatusSugestoes.CONCLUIDO)
+        assertThat(pronta.analisadas).isEqualTo(3)
+        assertThat(pronta.sugestoes).containsExactly(SugestaoPasta(1203, 2, "Bruno Souza", "A nota fiscal chegou"))
+        // Status que o app não conhece conta como erro.
+        coEvery { api.sugestoesPastas("x") } returns SugestoesPastasDto("x", 5, "outro", erro = "falhou")
+        assertThat(repo.consultarSugestoes("x").getOrThrow().status).isEqualTo(StatusSugestoes.ERRO)
     }
 }

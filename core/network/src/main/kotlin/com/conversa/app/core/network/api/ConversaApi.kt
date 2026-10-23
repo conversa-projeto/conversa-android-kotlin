@@ -56,6 +56,7 @@ import com.conversa.app.core.network.dto.PastaDto
 import com.conversa.app.core.network.dto.PedirConfirmacaoRequisicao
 import com.conversa.app.core.network.dto.PedirResumoRequisicao
 import com.conversa.app.core.network.dto.PedirSugestaoRequisicao
+import com.conversa.app.core.network.dto.PedirSugestoesPastasRequisicao
 import com.conversa.app.core.network.dto.PermissaoUsuarioDto
 import com.conversa.app.core.network.dto.PermissoesDto
 import com.conversa.app.core.network.dto.PorNaPastaDto
@@ -75,6 +76,7 @@ import com.conversa.app.core.network.dto.StatusDetalheDto
 import com.conversa.app.core.network.dto.StatusMensagemDto
 import com.conversa.app.core.network.dto.SucessoDto
 import com.conversa.app.core.network.dto.SugestaoDto
+import com.conversa.app.core.network.dto.SugestoesPastasDto
 import com.conversa.app.core.network.dto.TirarDaPastaDto
 import com.conversa.app.core.network.dto.TranscricaoDto
 import com.conversa.app.core.network.dto.UrlAnexoDto
@@ -444,4 +446,12 @@ interface ConversaApi {
     /** DELETE com corpo JSON (pegadinha 88). */
     @HTTP(method = "DELETE", path = "pasta/mensagens", hasBody = true)
     suspend fun tirarDaPasta(@Body corpo: MensagensDaPastaRequisicao): TirarDaPastaDto
+
+    /** A IA sugere a pasta das mensagens recentes que ainda não estão em pasta (🆕 `b104db8`); roda em segundo plano. */
+    @POST("pastas/sugerir")
+    suspend fun pedirSugestoesPastas(@Body corpo: PedirSugestoesPastasRequisicao): SugestoesPastasDto
+
+    /** A análise em andamento ou pronta (30 min na memória do servidor; depois, 404). */
+    @GET("pastas/sugestao")
+    suspend fun sugestoesPastas(@Query("id") id: String): SugestoesPastasDto
 }

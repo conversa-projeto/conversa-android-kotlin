@@ -2,8 +2,10 @@ package com.conversa.app.core.data.pastas
 
 import com.conversa.app.core.database.dao.MensagemDao
 import com.conversa.app.core.model.LIMITE_MENSAGENS_POR_VEZ
+import com.conversa.app.core.model.LIMITE_SUGESTOES_IGNORADAS
 import com.conversa.app.core.model.Mensagem
 import com.conversa.app.core.model.Pasta
+import com.conversa.app.core.model.SugestoesPastas
 import com.conversa.app.core.model.ordenarPastas
 import com.conversa.app.core.model.pastasDepois
 import com.conversa.app.core.model.pastasDoTexto
@@ -12,6 +14,7 @@ import com.conversa.app.core.network.api.ConversaApi
 import com.conversa.app.core.network.dto.AlterarPastaRequisicao
 import com.conversa.app.core.network.dto.CriarPastaRequisicao
 import com.conversa.app.core.network.dto.MensagensDaPastaRequisicao
+import com.conversa.app.core.network.dto.PedirSugestoesPastasRequisicao
 import com.conversa.app.core.network.dto.paraModelo
 import com.conversa.app.core.network.http.chamarApi
 import com.conversa.app.core.network.realtime.EventoSocket
@@ -87,6 +90,14 @@ class PastasRepositorio @Inject constructor(private val api: ConversaApi, privat
     /** `GET /pasta/mensagens`: 50 por página, da mais antiga para a mais nova; [antes] = a mais antiga já carregada. */
     suspend fun mensagens(pastaId: Long, antes: Long = 0): Result<List<Mensagem>> =
         chamarApi { api.mensagensDaPasta(pastaId, antes) }.map { lista -> lista.map { it.paraModelo() } }
+
+    /** Pede à IA as sugestões de pasta (só com a IA ligada e alguma pasta); [ignorar], as que a pessoa dispensou. */
+    suspend fun pedirSugestoes(conversaId: Long, ignorar: List<Long>): Result<SugestoesPastas> =
+        chamarApi { api.pedirSugestoesPastas(PedirSugestoesPastasRequisicao(conversaId, ignorar.takeLast(LIMITE_SUGESTOES_IGNORADAS))) }
+            .map { it.paraModelo() }
+
+    /** A análise pedida, até sair de "processando". */
+    suspend fun consultarSugestoes(id: String): Result<SugestoesPastas> = chamarApi { api.sugestoesPastas(id) }.map { it.paraModelo() }
 
     /** WS 67: põe ou tira a marca das mensagens e relê as pastas da conversa, se ela já foi aberta. */
     suspend fun aoAviso(evento: EventoSocket.PastasAtualizadas) {

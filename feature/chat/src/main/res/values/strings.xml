@@ -440,6 +440,17 @@
     <string name="pasta_falha_por">Não foi possível pôr na pasta: %1$s</string>
     <string name="pasta_falha_tirar">Não foi possível tirar da pasta: %1$s</string>
     <string name="pasta_falha_carregar">Não foi possível carregar as pastas: %1$s</string>
+    <!-- Sugestões de pasta pela IA (CON-18), textos do web -->
+    <string name="pasta_sugestoes_titulo">Sugestões da IA</string>
+    <string name="pasta_sugerir">Sugerir pastas</string>
+    <string name="pasta_sugerir_analisando">Analisando…</string>
+    <string name="pasta_sugestoes_analisando">Analisando as mensagens que ainda não estão em pasta…</string>
+    <string name="pasta_sugestoes_nenhuma">Nenhuma sugestão pendente.</string>
+    <string name="pasta_sugestoes_ja_em_pastas">As mensagens recentes já estão em pastas.</string>
+    <string name="pasta_sugestao_autor">%1$s:</string>
+    <string name="pasta_sugestao_por">Pôr em %1$s</string>
+    <string name="pasta_sugestao_ignorar">Ignorar</string>
+    <string name="pasta_sugestoes_aceitar_todas">Aceitar todas (%1$d)</string>
     <!-- Velocidade do áudio (web `f351190`) -->
     <string name="velocidade_audio">Velocidade: %1$s</string>
     <!-- Sugestão de texto da IA (ENV-25) -->

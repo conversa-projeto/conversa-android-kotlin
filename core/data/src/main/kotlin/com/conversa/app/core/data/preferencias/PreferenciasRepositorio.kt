@@ -21,6 +21,15 @@ class PreferenciasRepositorio @Inject constructor(private val store: Preferencia
     /** "Sugerir a continuação ao digitar" (ENV-25), preferência do aparelho. */
     val sugestoesIa: Flow<Boolean> = store.sugestoesIa.distinctUntilChanged()
 
+    /** As sugestões de pasta da IA que a pessoa ignorou nesta conversa (CON-18): vão no `ignorar` da próxima análise. */
+    suspend fun sugestoesIgnoradas(usuario: Long, conversa: Long): List<Long> =
+        store.sugestoesIgnoradas(usuario, conversa).orEmpty().split(',').mapNotNull { it.trim().toLongOrNull() }
+
+    suspend fun ignorarSugestoes(usuario: Long, conversa: Long, mensagens: List<Long>) {
+        val juntas = com.conversa.app.core.model.juntarIgnoradas(sugestoesIgnoradas(usuario, conversa), mensagens)
+        store.salvarSugestoesIgnoradas(usuario, conversa, juntas.joinToString(","))
+    }
+
     suspend fun alterarSugestoesIa(ligadas: Boolean) = store.salvarSugestoesIa(ligadas)
 
     /** "Receber com o app fechado" (ADR 0002, opção A), preferência do aparelho. */

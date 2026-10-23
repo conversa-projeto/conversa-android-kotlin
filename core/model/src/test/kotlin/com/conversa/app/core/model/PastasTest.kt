@@ -38,4 +38,10 @@ class PastasTest {
         assertThat(pastasDepois(listOf(1, 3), 1, incluir = false)).containsExactly(3L)
         assertThat(pastasDepois(emptyList(), 1, incluir = false)).isEmpty()
     }
+
+    @Test
+    fun `ignoradas juntam sem repetir e ficam as ultimas`() {
+        assertThat(juntarIgnoradas(listOf(1, 2), listOf(2, 3))).containsExactly(1L, 2L, 3L).inOrder()
+        assertThat(juntarIgnoradas(listOf(1, 2, 3), listOf(4), limite = 3)).containsExactly(2L, 3L, 4L).inOrder()
+    }
 }

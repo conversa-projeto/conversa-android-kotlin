@@ -74,3 +74,28 @@ fun pastasDoTexto(texto: String): List<Long> = if (texto.isEmpty()) {
 /** As pastas de uma mensagem depois de pôr ([incluir]) ou tirar da pasta [pastaId], em ordem. */
 fun pastasDepois(atuais: List<Long>, pastaId: Long, incluir: Boolean): List<Long> =
     if (incluir) (atuais + pastaId).distinct().sorted() else atuais.filter { it != pastaId }
+
+// --- Sugestões de pasta pela IA (CON-18; contrato §10.17.1; web `57bd9f0`) ---
+
+/** Uma mensagem que a IA sugere pôr numa pasta: [texto] é a prévia que foi para a IA (até 200 caracteres). */
+data class SugestaoPasta(val mensagemId: Long, val pastaId: Long, val autor: String, val texto: String)
+
+enum class StatusSugestoes { PROCESSANDO, CONCLUIDO, ERRO }
+
+/** Uma análise pedida (`POST /pastas/sugerir`): roda em segundo plano até sair de [StatusSugestoes.PROCESSANDO]. */
+data class SugestoesPastas(
+    val id: String,
+    val status: StatusSugestoes,
+    /** Quantas mensagens a IA olhou; 0 com as recentes todas em pastas. */
+    val analisadas: Int,
+    val sugestoes: List<SugestaoPasta>,
+    /** A mensagem do servidor de IA quando deu erro. */
+    val erro: String,
+)
+
+/** As ignoradas guardadas no aparelho, por pessoa e conversa: as mais recentes, como o web. */
+const val LIMITE_SUGESTOES_IGNORADAS = 2000
+
+/** Junta as ignoradas agora às de antes, sem repetir, ficando com as últimas [limite]. */
+fun juntarIgnoradas(antes: List<Long>, agora: List<Long>, limite: Int = LIMITE_SUGESTOES_IGNORADAS): List<Long> =
+    (antes + agora).distinct().takeLast(limite)

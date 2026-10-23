@@ -80,4 +80,10 @@ class TextoTest {
     fun `mencao dentro de texto com codigo`() {
         assertThat(resumirTexto("@[Ana](7) olha\n```\nx\n```")).isEqualTo("@Ana olha Código")
     }
+
+    @Test
+    fun `espacos juntos - quebras e tabulacoes viram um espaco, como o HTML mostra`() {
+        assertThat(juntarEspacos("  Teste\tResultado\n9996 liga\u00A0 para  ")).isEqualTo("Teste Resultado 9996 liga para")
+        assertThat(juntarEspacos(" \n ")).isEmpty()
+    }
 }

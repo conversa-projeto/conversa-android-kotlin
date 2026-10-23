@@ -7,6 +7,7 @@ import androidx.datastore.preferences.core.edit
 import androidx.datastore.preferences.core.longPreferencesKey
 import androidx.datastore.preferences.core.stringPreferencesKey
 import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.map
 
 /**
@@ -42,6 +43,14 @@ class PreferenciasStore(private val dataStore: DataStore<Preferences>) {
 
     suspend fun salvarConfigChamada(texto: String) {
         dataStore.edit { it[CONFIG_CHAMADA] = texto }
+    }
+
+    /** As sugestões de pasta da IA que a pessoa ignorou (CON-18), ids separados por vírgula, por pessoa e conversa. */
+    suspend fun sugestoesIgnoradas(usuario: Long, conversa: Long): String? =
+        dataStore.data.first()[stringPreferencesKey("sugestoes_ignoradas_${usuario}_$conversa")]
+
+    suspend fun salvarSugestoesIgnoradas(usuario: Long, conversa: Long, ids: String) {
+        dataStore.edit { it[stringPreferencesKey("sugestoes_ignoradas_${usuario}_$conversa")] = ids }
     }
 
     /** "Sugerir a continuação ao digitar" (ENV-25): ligada até a pessoa desligar, como o web. */

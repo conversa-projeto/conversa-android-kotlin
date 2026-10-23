@@ -1,6 +1,9 @@
 package com.conversa.app.core.network.dto
 
 import com.conversa.app.core.model.Pasta
+import com.conversa.app.core.model.StatusSugestoes
+import com.conversa.app.core.model.SugestaoPasta
+import com.conversa.app.core.model.SugestoesPastas
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
 
@@ -41,3 +44,38 @@ data class PorNaPastaDto(@SerialName("pasta_id") val pastaId: Long, val incluida
 
 @Serializable
 data class TirarDaPastaDto(@SerialName("pasta_id") val pastaId: Long, val tiradas: Int = 0)
+
+/** `POST /pastas/sugerir` (🆕 `b104db8`): [ignorar] são as que a pessoa já dispensou (até 2000; nunca `null`). */
+@Serializable
+data class PedirSugestoesPastasRequisicao(@SerialName("conversa_id") val conversaId: Long, val ignorar: List<Long> = emptyList())
+
+@Serializable
+data class SugestaoPastaDto(
+    @SerialName("mensagem_id") val mensagemId: Long,
+    @SerialName("pasta_id") val pastaId: Long,
+    val autor: String = "",
+    val texto: String = "",
+)
+
+/** O mesmo objeto no `POST /pastas/sugerir` e no `GET /pastas/sugestao` (contrato §10.17.1). */
+@Serializable
+data class SugestoesPastasDto(
+    val id: String,
+    @SerialName("conversa_id") val conversaId: Long = 0,
+    val status: String = "",
+    val analisadas: Int = 0,
+    val sugestoes: List<SugestaoPastaDto> = emptyList(),
+    val erro: String = "",
+)
+
+fun SugestoesPastasDto.paraModelo() = SugestoesPastas(
+    id = id,
+    status = when (status) {
+        "processando" -> StatusSugestoes.PROCESSANDO
+        "concluido" -> StatusSugestoes.CONCLUIDO
+        else -> StatusSugestoes.ERRO
+    },
+    analisadas = analisadas,
+    sugestoes = sugestoes.map { SugestaoPasta(it.mensagemId, it.pastaId, it.autor, it.texto) },
+    erro = erro,
+)

@@ -3,9 +3,15 @@ package com.conversa.app.feature.chat
 import androidx.lifecycle.SavedStateHandle
 import com.conversa.app.core.data.SessaoRepositorio
 import com.conversa.app.core.data.pastas.PastasRepositorio
+import com.conversa.app.core.data.preferencias.PreferenciasRepositorio
+import com.conversa.app.core.data.sistema.RecursosRepositorio
 import com.conversa.app.core.model.Mensagem
 import com.conversa.app.core.model.Pasta
+import com.conversa.app.core.model.Recursos
 import com.conversa.app.core.model.Sessao
+import com.conversa.app.core.model.StatusSugestoes
+import com.conversa.app.core.model.SugestaoPasta
+import com.conversa.app.core.model.SugestoesPastas
 import com.conversa.app.core.network.http.ErroApi
 import com.conversa.app.core.testing.RegraDispatcherPrincipal
 import com.google.common.truth.Truth.assertThat
@@ -17,7 +23,9 @@ import java.time.Instant
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.test.advanceTimeBy
 import kotlinx.coroutines.test.advanceUntilIdle
+import kotlinx.coroutines.test.runCurrent
 import kotlinx.coroutines.test.runTest
 import org.junit.Rule
 import org.junit.Test
@@ -36,7 +44,11 @@ class PastasViewModelTest {
     }
     private val sessao = mockk<SessaoRepositorio> { every { sessao } returns MutableStateFlow(Sessao("t", 7, "Ana")) }
 
-    private fun criar() = PastasViewModel(SavedStateHandle(mapOf("conversaId" to 5L)), repositorio, sessao)
+    private val ia = MutableStateFlow<Recursos?>(Recursos(transcricao = false, ia = true))
+    private val recursos = mockk<RecursosRepositorio> { every { this@mockk.recursos } returns ia }
+    private val preferencias = mockk<PreferenciasRepositorio>(relaxed = true) { coEvery { sugestoesIgnoradas(7, 5) } returns listOf(1199L) }
+
+    private fun criar() = PastasViewModel(SavedStateHandle(mapOf("conversaId" to 5L)), repositorio, sessao, recursos, preferencias)
 
     private fun mensagem(id: Long) = Mensagem(
         id, 7, "Ana", 5,
@@ -128,5 +140,62 @@ class PastasViewModelTest {
         lista.value = emptyList()
         advanceUntilIdle()
         assertThat(vm.aberta.value).isNull()
+    }
+
+    @Test
+    fun `sugestoes da IA - consulta ate ficar pronta, aceitar poe na pasta e ignorar guarda no aparelho`() = runTest {
+        val outra = Pasta(3, 5, 7, "Viagem", "", false, 0)
+        lista.value = listOf(pasta, outra)
+        val s1 = SugestaoPasta(1201, 2, "Bruno", "nota fiscal")
+        val s2 = SugestaoPasta(1202, 3, "Bruno", "passagem")
+        val s3 = SugestaoPasta(1203, 2, "Ana", "boleto")
+        val sumida = SugestaoPasta(1204, 99, "Ana", "pasta que não existe mais")
+        coEvery { repositorio.pedirSugestoes(5, listOf(1199L)) } returns
+            Result.success(SugestoesPastas("abc", StatusSugestoes.PROCESSANDO, 0, emptyList(), ""))
+        coEvery { repositorio.consultarSugestoes("abc") } returnsMany listOf(
+            Result.success(SugestoesPastas("abc", StatusSugestoes.PROCESSANDO, 0, emptyList(), "")),
+            Result.success(SugestoesPastas("abc", StatusSugestoes.CONCLUIDO, 4, listOf(s1, s2, s3, sumida), "")),
+        )
+        coEvery { repositorio.por(any(), any()) } returns Result.success(Unit)
+        val vm = criar()
+        vm.usarConversa(true)
+        advanceUntilIdle()
+        assertThat(vm.iaLigada.value).isTrue()
+
+        vm.sugerirPastas()
+        runCurrent()
+        assertThat(vm.sugestoes.value!!.status).isEqualTo(StatusSugestoes.PROCESSANDO)
+        // Duas consultas, de 2 em 2 s, até sair de "processando".
+        advanceTimeBy(PastasViewModel.INTERVALO_CONSULTA_SUGESTOES_MS * 2 + 1)
+        runCurrent()
+        coVerify(exactly = 2) { repositorio.consultarSugestoes("abc") }
+        assertThat(vm.sugestoes.value!!.status).isEqualTo(StatusSugestoes.CONCLUIDO)
+        // A da pasta que não existe mais não aparece.
+        assertThat(vm.sugestoes.value!!.sugestoes).containsExactly(s1, s2, s3).inOrder()
+
+        vm.aceitarSugestao(s1)
+        advanceUntilIdle()
+        coVerify { repositorio.por(pasta, listOf(1201L)) }
+        assertThat(vm.sugestoes.value!!.sugestoes).containsExactly(s2, s3).inOrder()
+
+        vm.ignorarSugestao(s2)
+        advanceUntilIdle()
+        coVerify { preferencias.ignorarSugestoes(7, 5, listOf(1202L)) }
+
+        vm.aceitarTodasSugestoes()
+        advanceUntilIdle()
+        coVerify { repositorio.por(pasta, listOf(1203L)) }
+        assertThat(vm.sugestoes.value!!.sugestoes).isEmpty()
+    }
+
+    @Test
+    fun `sugestoes da IA - erro do servidor aparece na folha`() = runTest {
+        coEvery { repositorio.pedirSugestoes(any(), any()) } returns
+            Result.failure(ErroApi.Servidor(400, "Crie uma pasta antes de pedir sugestões."))
+        val vm = criar()
+        vm.sugerirPastas()
+        advanceUntilIdle()
+        assertThat(vm.sugestoes.value!!.status).isEqualTo(StatusSugestoes.ERRO)
+        assertThat(vm.sugestoes.value!!.erro).contains("Crie uma pasta")
     }
 }

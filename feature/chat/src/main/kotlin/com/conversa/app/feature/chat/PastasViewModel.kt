@@ -5,16 +5,22 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.conversa.app.core.data.SessaoRepositorio
 import com.conversa.app.core.data.pastas.PastasRepositorio
+import com.conversa.app.core.data.preferencias.PreferenciasRepositorio
+import com.conversa.app.core.data.sistema.RecursosRepositorio
 import com.conversa.app.core.model.LIMITE_NOME_PASTA
 import com.conversa.app.core.model.MENSAGENS_POR_PAGINA_PASTA
 import com.conversa.app.core.model.Mensagem
 import com.conversa.app.core.model.Pasta
+import com.conversa.app.core.model.StatusSugestoes
+import com.conversa.app.core.model.SugestaoPasta
 import com.conversa.app.core.network.http.mensagemAmigavel
 import com.conversa.app.core.network.http.paraErroApi
 import dagger.hilt.android.lifecycle.HiltViewModel
 import javax.inject.Inject
 import kotlinx.coroutines.ExperimentalCoroutinesApi
+import kotlinx.coroutines.Job
 import kotlinx.coroutines.channels.Channel
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
@@ -36,6 +42,16 @@ data class FalhaPasta(val acao: AcaoPasta, val motivo: String)
 
 enum class AcaoPasta { CRIAR, RENOMEAR, MUDAR, COR, EXCLUIR, POR, TIRAR, CARREGAR }
 
+/** A última análise das sugestões da IA (CON-18): o estado, quantas mensagens olhou, o erro e as sugestões pendentes. */
+data class SugestoesUi(
+    val status: StatusSugestoes,
+    val analisadas: Int = 0,
+    val erro: String = "",
+    val sugestoes: List<SugestaoPasta> = emptyList(),
+    /** Pondo na pasta: ✓ e "Aceitar todas" esperam. */
+    val aceitando: Boolean = false,
+)
+
 /** A pasta aberta por cima do chat (MSG-24): as mensagens dela, da mais antiga para a mais nova. */
 data class PastaAbertaUi(
     val pasta: Pasta,
@@ -54,8 +70,13 @@ data class PastaAbertaUi(
  */
 @OptIn(ExperimentalCoroutinesApi::class)
 @HiltViewModel
-class PastasViewModel @Inject constructor(salvo: SavedStateHandle, private val repositorio: PastasRepositorio, sessao: SessaoRepositorio) :
-    ViewModel() {
+class PastasViewModel @Inject constructor(
+    salvo: SavedStateHandle,
+    private val repositorio: PastasRepositorio,
+    sessao: SessaoRepositorio,
+    recursos: RecursosRepositorio,
+    private val preferencias: PreferenciasRepositorio,
+) : ViewModel() {
     private val conversaId: Long = checkNotNull(salvo["conversaId"])
     private val direta = MutableStateFlow(false)
 
@@ -80,6 +101,18 @@ class PastasViewModel @Inject constructor(salvo: SavedStateHandle, private val r
 
     /** A pasta aberta já apareceu na lista (só então sumir dela fecha a pasta). */
     private var abertaNaLista = false
+
+    /** A IA do servidor está ligada: a folha oferece "Sugerir pastas" (CON-18). */
+    val iaLigada: StateFlow<Boolean> = recursos.recursos.map { it?.ia == true }.stateIn(viewModelScope, SharingStarted.Eagerly, false)
+
+    private val _sugestoes = MutableStateFlow<SugestoesUi?>(null)
+
+    /** A última análise pedida, só com as sugestões de pastas que ainda existem (como o web). */
+    val sugestoes: StateFlow<SugestoesUi?> = combine(_sugestoes, pastas) { sugestoes, lista ->
+        sugestoes?.copy(sugestoes = sugestoes.sugestoes.filter { sugestao -> lista.any { it.id == sugestao.pastaId } })
+    }.stateIn(viewModelScope, SharingStarted.Eagerly, null)
+
+    private var consultaSugestoes: Job? = null
 
     private val _falhas = Channel<FalhaPasta>(Channel.BUFFERED)
     val falhas: Flow<FalhaPasta> = _falhas.receiveAsFlow()
@@ -135,6 +168,72 @@ class PastasViewModel @Inject constructor(salvo: SavedStateHandle, private val r
 
     fun excluir(pasta: Pasta) {
         viewModelScope.launch { repositorio.excluir(pasta).onFailure { falhar(AcaoPasta.EXCLUIR, it) } }
+    }
+
+    // --- Sugestões da IA (CON-18, web `57bd9f0`) ---
+
+    /**
+     * "Sugerir pastas": a IA olha as mensagens recentes que ainda não estão em pasta (menos as que a
+     * pessoa já ignorou) e sugere a pasta de cada uma; a análise roda no servidor e é consultada a
+     * cada 2 s até ficar pronta. Nada entra na pasta sem a pessoa confirmar.
+     */
+    fun sugerirPastas() {
+        consultaSugestoes?.cancel()
+        _sugestoes.value = SugestoesUi(StatusSugestoes.PROCESSANDO)
+        consultaSugestoes = viewModelScope.launch {
+            var resposta = repositorio.pedirSugestoes(conversaId, preferencias.sugestoesIgnoradas(eu.value, conversaId))
+            while (true) {
+                val analise = resposta.getOrElse { erro ->
+                    _sugestoes.value = SugestoesUi(StatusSugestoes.ERRO, erro = erro.paraErroApi().mensagemAmigavel())
+                    return@launch
+                }
+                _sugestoes.value = SugestoesUi(analise.status, analise.analisadas, analise.erro, analise.sugestoes)
+                if (analise.status != StatusSugestoes.PROCESSANDO) return@launch
+                delay(INTERVALO_CONSULTA_SUGESTOES_MS)
+                resposta = repositorio.consultarSugestoes(analise.id)
+            }
+        }
+    }
+
+    /** ✓: põe a mensagem na pasta sugerida e tira a sugestão. */
+    fun aceitarSugestao(sugestao: SugestaoPasta) {
+        val pasta = pastas.value.find { it.id == sugestao.pastaId } ?: return
+        _sugestoes.update { it?.copy(aceitando = true) }
+        viewModelScope.launch {
+            repositorio.por(pasta, listOf(sugestao.mensagemId))
+                .onSuccess { tirarSugestoes(listOf(sugestao.mensagemId)) }
+                .onFailure { falhar(AcaoPasta.POR, it) }
+            _sugestoes.update { it?.copy(aceitando = false) }
+        }
+    }
+
+    /** "Aceitar todas": uma chamada por pasta; a que falhar fica na lista. */
+    fun aceitarTodasSugestoes() {
+        val porPasta = sugestoes.value?.sugestoes.orEmpty().groupBy { it.pastaId }
+        _sugestoes.update { it?.copy(aceitando = true) }
+        viewModelScope.launch {
+            for ((pastaId, daPasta) in porPasta) {
+                val pasta = pastas.value.find { it.id == pastaId } ?: continue
+                val ids = daPasta.map { it.mensagemId }
+                val resultado = repositorio.por(pasta, ids)
+                if (resultado.isFailure) {
+                    falhar(AcaoPasta.POR, resultado.exceptionOrNull()!!)
+                    break
+                }
+                tirarSugestoes(ids)
+            }
+            _sugestoes.update { it?.copy(aceitando = false) }
+        }
+    }
+
+    /** ✕: some da lista e fica guardada no aparelho, para a próxima análise não a trazer de volta. */
+    fun ignorarSugestao(sugestao: SugestaoPasta) {
+        tirarSugestoes(listOf(sugestao.mensagemId))
+        viewModelScope.launch { preferencias.ignorarSugestoes(eu.value, conversaId, listOf(sugestao.mensagemId)) }
+    }
+
+    private fun tirarSugestoes(mensagens: List<Long>) {
+        _sugestoes.update { atual -> atual?.copy(sugestoes = atual.sugestoes.filter { it.mensagemId !in mensagens }) }
     }
 
     // --- Seleção no chat ---
@@ -262,5 +361,10 @@ class PastasViewModel @Inject constructor(salvo: SavedStateHandle, private val r
 
     private fun falhar(acao: AcaoPasta, erro: Throwable) {
         _falhas.trySend(FalhaPasta(acao, erro.paraErroApi().mensagemAmigavel()))
+    }
+
+    companion object {
+        /** O web consulta a análise a cada 2 s. */
+        const val INTERVALO_CONSULTA_SUGESTOES_MS = 2_000L
     }
 }

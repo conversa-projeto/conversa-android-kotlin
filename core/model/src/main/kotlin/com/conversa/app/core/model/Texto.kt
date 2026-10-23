@@ -121,7 +121,7 @@ fun resumirCodigo(texto: String): String = separarBlocosDeCodigo(texto)
     .let(::juntarEspacos)
 
 /** Troca cada sequência de espaços (inclusive Unicode, como no `\s` do JS) por um espaço só, e apara. */
-private fun juntarEspacos(texto: String): String = buildString(texto.length) {
+fun juntarEspacos(texto: String): String = buildString(texto.length) {
     var emEspaco = false
     for (c in texto) {
         if (c.isWhitespace()) {

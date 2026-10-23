@@ -19,6 +19,7 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.statusBarsPadding
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.LazyListScope
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.selection.toggleable
@@ -35,12 +36,14 @@ import androidx.compose.material.icons.automirrored.outlined.Reply
 import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.Folder
 import androidx.compose.material.icons.outlined.Add
+import androidx.compose.material.icons.outlined.Check
 import androidx.compose.material.icons.outlined.CheckCircle
 import androidx.compose.material.icons.outlined.Group
 import androidx.compose.material.icons.outlined.MoreVert
 import androidx.compose.material.icons.outlined.RemoveCircleOutline
 import androidx.compose.material.icons.outlined.Search
 import androidx.compose.material3.AlertDialog
+import androidx.compose.material3.Button
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.DropdownMenu
 import androidx.compose.material3.DropdownMenuItem
@@ -50,6 +53,7 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.ModalBottomSheet
+import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
@@ -77,18 +81,25 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.semantics
+import androidx.compose.ui.text.SpanStyle
+import androidx.compose.ui.text.buildAnnotatedString
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.style.TextOverflow
+import androidx.compose.ui.text.withStyle
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.Dialog
 import androidx.compose.ui.window.DialogProperties
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.conversa.app.core.model.CORES_PASTA
 import com.conversa.app.core.model.CodigoPermissao
 import com.conversa.app.core.model.ItemChat
 import com.conversa.app.core.model.LIMITE_NOME_PASTA
 import com.conversa.app.core.model.Mensagem
 import com.conversa.app.core.model.Pasta
+import com.conversa.app.core.model.StatusSugestoes
 import com.conversa.app.core.model.argbDaPasta
+import com.conversa.app.core.model.juntarEspacos
 import com.conversa.app.core.model.montarItensChat
 import com.conversa.app.core.model.pastasDaMensagem
 import com.conversa.app.core.ui.componentes.LocalPermissoesDeUso
@@ -267,6 +278,8 @@ internal fun FolhaPastas(
     var criando by rememberSaveable { mutableStateOf(false) }
     var renomeando by remember { mutableStateOf<Pasta?>(null) }
     var excluindo by remember { mutableStateOf<Pasta?>(null) }
+    val iaLigada by viewModel.iaLigada.collectAsStateWithLifecycle()
+    val sugestoes by viewModel.sugestoes.collectAsStateWithLifecycle()
     ModalBottomSheet(onDismissRequest = aoFechar) {
         Column(Modifier.fillMaxWidth().padding(bottom = 16.dp)) {
             Row(Modifier.fillMaxWidth().padding(start = 20.dp, end = 8.dp), verticalAlignment = Alignment.CenterVertically) {
@@ -293,7 +306,7 @@ internal fun FolhaPastas(
                     modifier = Modifier.padding(horizontal = 20.dp, vertical = 12.dp),
                 )
             }
-            LazyColumn(Modifier.heightIn(max = 480.dp)) {
+            LazyColumn(Modifier.heightIn(max = 560.dp)) {
                 items(pastas, key = { it.id }) { pasta ->
                     LinhaDaPasta(
                         pasta = pasta,
@@ -309,6 +322,8 @@ internal fun FolhaPastas(
                         aoExcluir = { excluindo = pasta },
                     )
                 }
+                // Sugestões da IA (CON-18): só com a IA ligada e alguma pasta, quando a pessoa pede.
+                if (iaLigada && pastas.isNotEmpty()) sugestoesDaIa(sugestoes, pastas, viewModel)
             }
         }
     }
@@ -347,6 +362,116 @@ internal fun FolhaPastas(
             },
             dismissButton = { TextButton(onClick = { excluindo = null }) { Text(stringResource(R.string.cancelar)) } },
         )
+    }
+}
+
+/**
+ * "Sugestões da IA" no pé da folha (web `PainelPastas.vue`): "Sugerir pastas" ("Analisando…"
+ * enquanto a IA trabalha), o resultado ou o erro, cada sugestão com quem escreveu, a prévia, a pasta,
+ * ✓ (pôr) e ✕ (ignorar), e "Aceitar todas (N)" com mais de uma.
+ */
+private fun LazyListScope.sugestoesDaIa(sugestoes: SugestoesUi?, pastas: List<Pasta>, viewModel: PastasViewModel) {
+    val analisando = sugestoes?.status == StatusSugestoes.PROCESSANDO
+    val pendentes = sugestoes?.sugestoes.orEmpty()
+    item(key = "sugestoes-titulo") {
+        Column(Modifier.fillMaxWidth().padding(horizontal = 20.dp).padding(top = 8.dp)) {
+            HorizontalDivider(color = ConversaTema.cores.divisorLista)
+            Text(
+                stringResource(R.string.pasta_sugestoes_titulo),
+                style = MaterialTheme.typography.labelMedium,
+                color = ConversaTema.cores.textoTerciario,
+                modifier = Modifier.padding(top = 10.dp, bottom = 6.dp),
+            )
+            OutlinedButton(onClick = viewModel::sugerirPastas, enabled = !analisando, modifier = Modifier.fillMaxWidth()) {
+                Text(stringResource(if (analisando) R.string.pasta_sugerir_analisando else R.string.pasta_sugerir))
+            }
+            val aviso = when {
+                analisando -> stringResource(R.string.pasta_sugestoes_analisando)
+                sugestoes?.status == StatusSugestoes.ERRO -> sugestoes.erro
+                sugestoes?.status == StatusSugestoes.CONCLUIDO && pendentes.isEmpty() ->
+                    stringResource(
+                        if (sugestoes.analisadas >
+                            0
+                        ) {
+                            R.string.pasta_sugestoes_nenhuma
+                        } else {
+                            R.string.pasta_sugestoes_ja_em_pastas
+                        },
+                    )
+                else -> null
+            }
+            if (aviso != null) {
+                Text(
+                    aviso,
+                    style = MaterialTheme.typography.bodySmall,
+                    color = if (sugestoes?.status ==
+                        StatusSugestoes.ERRO
+                    ) {
+                        MaterialTheme.colorScheme.error
+                    } else {
+                        ConversaTema.cores.textoTerciario
+                    },
+                    modifier = Modifier.padding(top = 6.dp),
+                )
+            }
+        }
+    }
+    items(pendentes, key = { "sugestao-${it.mensagemId}" }) { sugestao ->
+        val pasta = pastas.find { it.id == sugestao.pastaId } ?: return@items
+        Column(
+            Modifier
+                .fillMaxWidth()
+                .padding(horizontal = 20.dp, vertical = 3.dp)
+                .clip(RoundedCornerShape(8.dp))
+                .background(ConversaTema.cores.campoEntrada)
+                .padding(start = 10.dp, top = 8.dp, end = 4.dp),
+        ) {
+            Text(
+                buildAnnotatedString {
+                    withStyle(SpanStyle(fontWeight = FontWeight.Medium)) {
+                        append(stringResource(R.string.pasta_sugestao_autor, sugestao.autor))
+                    }
+                    append(" ")
+                    append(juntarEspacos(sugestao.texto))
+                },
+                style = MaterialTheme.typography.bodySmall,
+                maxLines = 3,
+                overflow = TextOverflow.Ellipsis,
+            )
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                Icon(Icons.Filled.Folder, contentDescription = null, tint = corDaPasta(pasta.cor), modifier = Modifier.size(16.dp))
+                Text(
+                    pasta.nome,
+                    style = MaterialTheme.typography.labelMedium,
+                    maxLines = 1,
+                    overflow = TextOverflow.Ellipsis,
+                    modifier = Modifier.padding(start = 6.dp).weight(1f),
+                )
+                IconButton(onClick = { viewModel.aceitarSugestao(sugestao) }, enabled = sugestoes?.aceitando != true) {
+                    Icon(
+                        Icons.Outlined.Check,
+                        contentDescription = stringResource(R.string.pasta_sugestao_por, pasta.nome),
+                        tint = ConversaTema.cores.chamadaAtender,
+                    )
+                }
+                IconButton(onClick = { viewModel.ignorarSugestao(sugestao) }) {
+                    Icon(
+                        Icons.Filled.Close,
+                        contentDescription = stringResource(R.string.pasta_sugestao_ignorar),
+                        tint = ConversaTema.cores.textoTerciario,
+                    )
+                }
+            }
+        }
+    }
+    if (pendentes.size > 1) {
+        item(key = "sugestoes-todas") {
+            Button(
+                onClick = viewModel::aceitarTodasSugestoes,
+                enabled = sugestoes?.aceitando != true,
+                modifier = Modifier.fillMaxWidth().padding(horizontal = 20.dp, vertical = 6.dp),
+            ) { Text(stringResource(R.string.pasta_sugestoes_aceitar_todas, pendentes.size)) }
+        }
     }
 }
 
