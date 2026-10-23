@@ -4,7 +4,7 @@
 - **Tipo:** dependências
 - **Itens:** a pendência do histórico 2026-10-22-08 (os avisos `NewerVersionAvailable` e `GradleDependency` do lint)
 - **Branch:** `reescrita`
-- **Commits:** `HASH_X`
+- **Commits:** `c5c3e9d`
 
 ## Contexto
 O lint de 2026-10-22 apontou 11 versões novas (9 `NewerVersionAvailable`, 2 `GradleDependency`). Ficaram anotadas como pendência para avaliar à parte.
