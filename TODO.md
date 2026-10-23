@@ -877,7 +877,7 @@
 - [x] Selecionar: toque longo › "Selecionar"; barra "N selecionadas" com "Pôr na pasta" e "×"; só mensagens salvas ✔ 2a58133
 - [x] Marcas na bolha: até 3 bolinhas na cor da pasta (atrás do ✓ na enviada; ao lado e tocáveis na recebida) ✔ 2a58133
 - [x] Pasta aberta: as mensagens dela (50 por página, `antes`), sem campo; "Ver na conversa", "Tirar da pasta" (uma ou várias), voltar — com "Responder" e "Selecionar" no toque longo ✔ 2a58133
-- [x] 🆕 `b104db8`/`57bd9f0` Sugestões de pasta pela IA, com a IA ligada e alguma pasta: "Sugerir pastas" na folha; `POST /pastas/sugerir` (com `ignorar`) e `GET /pastas/sugestao` a cada 2 s até sair de "processando"; cada sugestão com quem escreveu, a prévia e a pasta, ✓ põe na pasta e ✕ ignora (guardado no aparelho por pessoa e conversa); "Aceitar todas" com uma chamada por pasta (CON-18, FC-225) ✔ HASH_X (falta conferir com um servidor de IA; no emulador, com a resposta simulada)
+- [x] 🆕 `b104db8`/`57bd9f0` Sugestões de pasta pela IA, com a IA ligada e alguma pasta: "Sugerir pastas" na folha; `POST /pastas/sugerir` (com `ignorar`) e `GET /pastas/sugestao` a cada 2 s até sair de "processando"; cada sugestão com quem escreveu, a prévia e a pasta, ✓ põe na pasta e ✕ ignora (guardado no aparelho por pessoa e conversa); "Aceitar todas" com uma chamada por pasta (CON-18, FC-225) ✔ b8695b5 (falta conferir com um servidor de IA; no emulador, com a resposta simulada)
 - [ ] **Teste:** criar, compartilhar e pôr mensagens com o web do outro lado (WS 67 nos dois sentidos) — no emulador, com o C pela API (WS 67 nos dois sentidos); falta com o web, que estava fora do ar
 
 ---

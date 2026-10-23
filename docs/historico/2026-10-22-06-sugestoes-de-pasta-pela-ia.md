@@ -4,7 +4,7 @@
 - **Tipo:** código
 - **Itens:** `TODO.md` 7.14 (a linha 🆕 `b104db8`/`57bd9f0`); FC-225; CON-18
 - **Branch:** `reescrita`
-- **Commits:** `HASH_X`
+- **Commits:** `b8695b5`
 
 ## Contexto
 No web (`57bd9f0`, servidor `b104db8`), o painel de pastas tem "Sugestões da IA":
