@@ -96,7 +96,7 @@ A coluna **Fase** indica em que fase do plano da nova base (doc 07) a funcionali
 |---|---|---|---|---|---|---|
 | AUT | 11 | 11 | 0 | 0 | 0 | 0 |
 | CON | 18 | 15 | 1 | 0 | 2 | 0 |
-| MSG | 26 | 25 | 0 | 0 | 1 | 0 |
+| MSG | 26 | 26 | 0 | 0 | 0 | 0 |
 | ENV | 30 | 27 | 0 | 2 | 0 | 1 |
 | ANX | 20 | 17 | 2 | 0 | 0 | 1 |
 | PES | 2 | 2 | 0 | 0 | 0 | 0 |
@@ -107,13 +107,13 @@ A coluna **Fase** indica em que fase do plano da nova base (doc 07) a funcionali
 | ATV | 5 | 5 | 0 | 0 | 0 | 0 |
 | CFG | 14 | 6 | 1 | 0 | 5 | 2 |
 | GER | 10 | 8 | 0 | 0 | 0 | 2 |
-| **Total** | **178** | **148** | **4** | **3** | **17** | **6** |
+| **Total** | **178** | **149** | **4** | **3** | **16** | **6** |
 
 > Requisitos exclusivos do Android (AND, fora da contagem): 16 — 13 ✅, 2 🟡, 1 ⛔, 0 ⬜, 0 ➖.
 >
-> **Leitura:** 🆕 (2026-10-15, depois do servidor `ef13c22` e do web `9c6e8a6`) 131 de 163 funcionalidades estão prontas na nova base, e 6 estão em parte. A sincronização trouxe 10 funcionalidades (bots, permissões de uso, administração e atividades pendentes); a quebra das atividades (`nova` → `pendente`) já foi corrigida (`2219208`). Ficaram em parte o cadastro fechado (AUT-02), a duração e a onda do áudio (ANX-10, ANX-11); a tela de Acessos com as 32 permissões (CFG-08) já voltou a ✅. 🆕 (2026-10-16) As permissões de uso (GER-09), o cadastro fechado (AUT-02) a conversa com bot (CON-16) a duração e a onda do áudio (ANX-10, ANX-11) o resumo e a sugestão por IA (CON-14, ENV-25, falta conferir com um servidor de IA) e os recursos do servidor (GER-08) ficaram prontos: 139 de 163. 🆕 (2026-10-17, servidor `ac710eb` e web `f351190`) Com as 9 funcionalidades novas e os 4 IDs que voltaram a 🟡, são 135 prontas de 172. Com os ajustes do sincronismo (contatos pelo WS 66, "Gravando áudio…" na lista, velocidade do áudio, espaço usado, "Usuário desde" e os Acessos), 141 de 172. Com a localização e o trajeto na conversa (MSG-25), 142 de 172; com o envio (ENV-30), 143; com as pastas de mensagens (CON-17, MSG-23, MSG-24, ENV-29), 147. 🆕 (2026-10-19, servidor `b104db8` e web `57bd9f0`) Com as 4 funcionalidades novas (CON-18, ANX-19, CHA-27, SIP-06), 147 de 176. 🆕 (2026-10-22, web `3689155`) Com a câmera (ANX-20, em parte: só foto) e as tabelas CSV/TSV (MSG-26), 147 de 178; com os áudios em sequência (ANX-19), 148.
+> **Leitura:** 🆕 (2026-10-15, depois do servidor `ef13c22` e do web `9c6e8a6`) 131 de 163 funcionalidades estão prontas na nova base, e 6 estão em parte. A sincronização trouxe 10 funcionalidades (bots, permissões de uso, administração e atividades pendentes); a quebra das atividades (`nova` → `pendente`) já foi corrigida (`2219208`). Ficaram em parte o cadastro fechado (AUT-02), a duração e a onda do áudio (ANX-10, ANX-11); a tela de Acessos com as 32 permissões (CFG-08) já voltou a ✅. 🆕 (2026-10-16) As permissões de uso (GER-09), o cadastro fechado (AUT-02) a conversa com bot (CON-16) a duração e a onda do áudio (ANX-10, ANX-11) o resumo e a sugestão por IA (CON-14, ENV-25, falta conferir com um servidor de IA) e os recursos do servidor (GER-08) ficaram prontos: 139 de 163. 🆕 (2026-10-17, servidor `ac710eb` e web `f351190`) Com as 9 funcionalidades novas e os 4 IDs que voltaram a 🟡, são 135 prontas de 172. Com os ajustes do sincronismo (contatos pelo WS 66, "Gravando áudio…" na lista, velocidade do áudio, espaço usado, "Usuário desde" e os Acessos), 141 de 172. Com a localização e o trajeto na conversa (MSG-25), 142 de 172; com o envio (ENV-30), 143; com as pastas de mensagens (CON-17, MSG-23, MSG-24, ENV-29), 147. 🆕 (2026-10-19, servidor `b104db8` e web `57bd9f0`) Com as 4 funcionalidades novas (CON-18, ANX-19, CHA-27, SIP-06), 147 de 176. 🆕 (2026-10-22, web `3689155`) Com a câmera (ANX-20, em parte: só foto) e as tabelas CSV/TSV (MSG-26), 147 de 178; com os áudios em sequência (ANX-19), 148; com as tabelas CSV/TSV (MSG-26), 149.
 > - **Bloqueadas (⛔):** dependem de algo fora do app: o push (Firebase, NOT-04) ou a decisão do campo rico (FC-416).
-> - **Por fazer (⬜):** 🆕 as tabelas CSV/TSV (MSG-26), as sugestões de pasta pela IA (CON-18), a chamada já conectada enquanto toca (CHA-27), a etapa 9 (SIP, compartilhar tela, Bubbles), a administração de usuários, bots, ferramentas e conhecimento (CFG-11…14, a avaliar) e um item P3 fora do TODO.
+> - **Por fazer (⬜):** 🆕 as sugestões de pasta pela IA (CON-18), a chamada já conectada enquanto toca (CHA-27), a etapa 9 (SIP, compartilhar tela, Bubbles), a administração de usuários, bots, ferramentas e conhecimento (CFG-11…14, a avaliar) e um item P3 fora do TODO.
 > - **Falta conferir:** as células com "falta conferir" ou "em aparelho" estão prontas, mas esperam um teste que o emulador não permite.
 
 ---
@@ -186,7 +186,7 @@ A coluna **Fase** indica em que fase do plano da nova base (doc 07) a funcionali
 | MSG-23 🆕 | Marcas das pastas na bolha (até 3 bolinhas na cor da pasta; atrás do ✓ na enviada, ao lado e clicáveis na recebida) | ⬜ | ✅ 7.14 · `2a58133` | — | Ler `pastas` (opcional) nas mensagens; atualizar pelo WS 67 e pelas respostas de pôr e tirar — 🆕 `ac710eb`/`f351190` | F4 | P3 |
 | MSG-24 🆕 | Pasta aberta por cima do chat, sem campo ("Ver na conversa", "Tirar da pasta", tirar várias, 50 por página) | ⬜ | ✅ 7.14 · `2a58133` | — | Tela da pasta com `GET /pasta/mensagens?id=&antes=`, menu sem "Pedir confirmação" nem "Ocultar" — 🆕 `ac710eb`/`f351190` | F4 | P2 |
 | MSG-25 🆕 | Localização e trajeto na conversa (bolha com mapa, visualizador com satélite, "Abrir no Google Maps") | ⬜ | ✅ 4.12 · `eaa4f42` · falta conferir a pinça em aparelho | — | Conteúdo tipo 9 (JSON dentro do `conteudo`); mapa de tiles do OSM com User-Agent do app e a atribuição; rótulo "Localização" nas prévias — 🆕 `ac710eb`/`f351190` | F3 | P1 |
-| MSG-26 🆕 | Tabelas CSV e TSV nos blocos de código (cabeçalho, números à direita, "Visualizar"/"Código", "Copiar" dos dados) | ⬜ | ⬜ 7.9 (FC-529) | — | Portar o `tabelaCsv.ts` (aspas, separador `;` ou `,` pelo número de colunas, cabeçalho, alinhamento) com os testes do web; a tabela como terceiro visual do `BlocoCodigo` — 🆕 `3689155` | F4 | P3 |
+| MSG-26 🆕 | Tabelas CSV e TSV nos blocos de código (cabeçalho, números à direita, "Visualizar"/"Código", "Copiar" dos dados) | ⬜ | ✅ 7.9 · `HASH_X` | — | Portar o `tabelaCsv.ts` (aspas, separador `;` ou `,` pelo número de colunas, cabeçalho, alinhamento) com os testes do web; a tabela como terceiro visual do `BlocoCodigo` — 🆕 `3689155` | F4 | P3 |
 
 ## ENV — Composição e ações
 

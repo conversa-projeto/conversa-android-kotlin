@@ -54,6 +54,8 @@ import com.conversa.app.core.model.TipoToken
 import com.conversa.app.core.model.destacarCodigo
 import com.conversa.app.core.model.ehLinguagemMarkdown
 import com.conversa.app.core.model.ehLinguagemMermaid
+import com.conversa.app.core.model.ehLinguagemTabela
+import com.conversa.app.core.model.montarTabela
 import com.conversa.app.core.ui.componentes.EsqueletoCarregando
 import com.conversa.app.core.ui.tema.ConversaTema
 import com.mikepenz.markdown.compose.components.markdownComponents
@@ -77,7 +79,7 @@ private val ALTURA_RECOLHIDO = 240.dp
 private const val COPIADO_MS = 2_000L
 
 /**
- * Bloco de código na bolha (MSG-15, TODO 7.9), como o `MessageContent.vue`: cabeçalho com a
+ * Bloco de código na bolha (MSG-15, TODO 7.9; tabelas CSV/TSV, MSG-26), como o `MessageContent.vue`: cabeçalho com a
  * linguagem ("code" sem ela) e "Copiar" → "Copiado!"; o código com destaque de sintaxe, rolagem
  * horizontal e, acima de 240 dp, recolhido com "Expandir código" / "Recolher código".
  */
@@ -101,6 +103,10 @@ internal fun BlocoCodigo(codigo: SegmentoCodigo.Codigo) {
     val markdown = ehLinguagemMarkdown(codigo.linguagem)
     var mermaidFalhou by remember(codigo.conteudo) { mutableStateOf(false) }
     val mermaid = ehLinguagemMermaid(codigo.linguagem) && !mermaidFalhou
+    // ```csv/```tsv como tabela (MSG-26, web `3689155`); sem nenhuma célula, fica como código.
+    val tabela = remember(codigo.conteudo, codigo.linguagem) {
+        codigo.linguagem?.takeIf(::ehLinguagemTabela)?.let { montarTabela(codigo.conteudo, it) }
+    }
     var verCodigo by rememberSaveable(codigo.conteudo) { mutableStateOf(false) }
     Column(Modifier.fillMaxWidth().clip(RoundedCornerShape(8.dp)).background(corFundo)) {
         Row(
@@ -114,7 +120,7 @@ internal fun BlocoCodigo(codigo: SegmentoCodigo.Codigo) {
                 color = ConversaTema.cores.textoTerciario,
                 modifier = Modifier.weight(1f),
             )
-            if (markdown || mermaid) AlternarVisual(verCodigo) { verCodigo = it }
+            if (markdown || mermaid || tabela != null) AlternarVisual(verCodigo) { verCodigo = it }
             Text(
                 stringResource(if (copiado) R.string.copiado else R.string.copiar),
                 style = MaterialTheme.typography.labelSmall,
@@ -143,6 +149,11 @@ internal fun BlocoCodigo(codigo: SegmentoCodigo.Codigo) {
                         .fillMaxWidth()
                         .recolhivel(expandido, ALTURA_RECOLHIDO) { if (it) longo = true }
                         .padding(10.dp),
+                )
+            } else if (tabela != null && !verCodigo) {
+                TabelaNaBolha(
+                    tabela,
+                    Modifier.recolhivel(expandido, ALTURA_RECOLHIDO) { if (it) longo = true }.padding(10.dp),
                 )
             } else if (mermaid && !verCodigo) {
                 DiagramaMermaid(

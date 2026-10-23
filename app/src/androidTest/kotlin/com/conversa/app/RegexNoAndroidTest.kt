@@ -5,9 +5,12 @@ import com.conversa.app.core.model.Contato
 import com.conversa.app.core.model.PontoMapa
 import com.conversa.app.core.model.SegmentoTexto
 import com.conversa.app.core.model.contatoCombina
+import com.conversa.app.core.model.ehNumeroDeTabela
 import com.conversa.app.core.model.ehSoEmoji
 import com.conversa.app.core.model.lerCoordenadas
 import com.conversa.app.core.model.normalizarBusca
+import com.conversa.app.core.model.pareceCodigo
+import com.conversa.app.core.model.pareceTabela
 import com.conversa.app.core.model.resumirTexto
 import com.conversa.app.core.model.separarTexto
 import com.conversa.app.core.model.temBlocoDeCodigo
@@ -40,5 +43,11 @@ class RegexNoAndroidTest {
         // Coordenadas digitadas na busca da localização (ENV-30): ponto ou vírgula, e o separador.
         assertThat(lerCoordenadas("-23,55; -46,63")).isEqualTo(PontoMapa(-23.55, -46.63))
         assertThat(lerCoordenadas("Praça da Sé")).isNull()
+        // Tabelas (MSG-26): número com o espaço não separável do Excel, e a colagem que parece código não vira tabela.
+        assertThat(ehNumeroDeTabela("R$\u00A01.234,56")).isTrue()
+        assertThat(ehNumeroDeTabela("10 reais")).isFalse()
+        assertThat(pareceCodigo("function soma(a, b) {\n  return a + b;\n}")).isTrue()
+        assertThat(pareceTabela("nome;idade\nAna;30")?.linguagem).isEqualTo("csv")
+        assertThat(pareceTabela("const a = f(x,y);\nconst b = g(z,w);")).isNull()
     }
 }

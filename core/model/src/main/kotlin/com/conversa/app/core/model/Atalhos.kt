@@ -67,6 +67,8 @@ fun substituirAtalhoNoFim(texto: String): String {
 /** Linguagens do "Inserir código" (as do `CodigoModal.vue`). */
 val LINGUAGENS_CODIGO = listOf(
     "texto", "javascript", "typescript", "python", "sql", "json", "html", "css", "bash", "csharp", "pascal", "markdown", "mermaid",
+    // Tabelas (MSG-26, web `3689155`): no fim, como no web.
+    "csv", "tsv",
 )
 
 /** Mais de 10 linhas: colar sugere "Inserir código" (`textoLongo` do web). */

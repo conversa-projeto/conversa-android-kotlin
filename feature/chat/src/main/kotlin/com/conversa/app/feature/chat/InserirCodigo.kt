@@ -32,6 +32,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.conversa.app.core.model.LINGUAGENS_CODIGO
 import com.conversa.app.core.model.blocoDeCodigo
+import com.conversa.app.core.model.pareceTabela
 import com.conversa.app.core.model.substituirAtalhoAntesDoCursor
 import com.conversa.app.core.model.textoLongo
 
@@ -43,8 +44,12 @@ import com.conversa.app.core.model.textoLongo
 @Composable
 internal fun InserirCodigo(codigoInicial: String, aoEnviar: (String) -> Unit, aoCancelar: () -> Unit) {
     val codigo = rememberTextFieldState(codigoInicial)
-    // Com ``` dentro, o texto colado é Markdown (como o web); sem detecção automática de linguagem.
-    var linguagem by rememberSaveable { mutableStateOf(if (codigoInicial.lines().any { it.startsWith("```") }) "markdown" else "texto") }
+    // Tabela colada já vem como `csv`/`tsv` (MSG-26); com ``` dentro, o texto colado é Markdown (como o web).
+    var linguagem by rememberSaveable {
+        mutableStateOf(
+            pareceTabela(codigoInicial)?.linguagem ?: if (codigoInicial.lines().any { it.startsWith("```") }) "markdown" else "texto",
+        )
+    }
     var escolhendo by rememberSaveable { mutableStateOf(false) }
     AlertDialog(
         onDismissRequest = aoCancelar,
@@ -85,8 +90,8 @@ internal fun InserirCodigo(codigoInicial: String, aoEnviar: (String) -> Unit, ao
 }
 
 /**
- * Campo de mensagem (7.11): texto colado com mais de 10 linhas não entra (vai para o
- * "Inserir código", [aoColarLongo]); espaço ou quebra logo depois de um atalho (":)",
+ * Campo de mensagem (7.11): texto colado com mais de 10 linhas, ou que é uma tabela (Excel,
+ * Sheets, CSV; MSG-26), não entra (vai para o "Inserir código", [aoColarLongo]); espaço ou quebra logo depois de um atalho (":)",
  * "<3"…) troca o atalho pelo emoji, fora de código, como o web.
  */
 @OptIn(ExperimentalFoundationApi::class)
@@ -94,7 +99,7 @@ internal fun transformacaoDoCampo(aoColarLongo: (String) -> Unit) = InputTransfo
     if (changes.changeCount != 1) return@InputTransformation
     val faixa = changes.getRange(0)
     val inserido = asCharSequence().substring(faixa.min, faixa.max)
-    if (inserido.length > 1 && textoLongo(inserido)) {
+    if (inserido.length > 1 && (pareceTabela(inserido) != null || textoLongo(inserido))) {
         revertAllChanges()
         aoColarLongo(inserido)
         return@InputTransformation

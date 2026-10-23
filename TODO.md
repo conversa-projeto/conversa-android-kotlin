@@ -821,7 +821,7 @@
 - [x] ` ```mermaid ` → WebView offline com mermaid.js embutido (P2) — mermaid 12.0.0 (o do web, conferido pelo sha512) nos assets, 1,87 MB no APK; também os diagramas dentro de ```md; inválido fica como código ✔ cba9d66
 - [x] Rótulos das setas legíveis (achado no uso: "Sim"/"Não" em caixas pretas) — as cores translúcidas (`divisorLista`) iam ao mermaid sem a transparência; `corHex` as compõe sobre o fundo (+ teste). No emulador, tema claro: os rótulos em cinza claro ✔ 3dc8674
 - [x] Esqueleto de carregamento ("shimmer") enquanto o Markdown e o diagrama não aparecem (pedido em 2026-10-09: a demora deixava um vazio) — `EsqueletoCarregando` no `core:ui`: formas cinza que pulsam de leve com um brilho passando na diagonal; linhas de texto no slot `loading` do Markdown e um bloco de 120 dp no lugar do diagrama até o mermaid avisar a altura. No emulador: o diagrama dentro de um ```md levou ~4 s, com o esqueleto no lugar ✔ ec69ba8
-- [ ] 🆕 `3689155` Tabelas CSV e TSV: ```csv/```tsv como tabela no `BlocoCodigo` ("Visualizar" por padrão, "Código", "Copiar" com os dados originais), com o leitor do `tabelaCsv.ts` portado e testado (MSG-26, FC-529)
+- [x] 🆕 `3689155` Tabelas CSV e TSV: ```csv/```tsv como tabela no `BlocoCodigo` ("Visualizar" por padrão, "Código", "Copiar" com os dados originais), com o leitor do `tabelaCsv.ts` portado e testado (MSG-26, FC-529) — 🔄 grade em Compose (`TabelaNaBolha`), sem passar por Markdown; no emulador, ```csv com `;`, "R$" e aspas ✔ HASH_X
 
 ### 7.10 Detalhe de status e agendamento (FC-513, FC-514)
 - [x] Toque no ✓ → bottom sheet: `GET /mensagem/status/detalhe?id=` (aqui os campos são **datas**) ✔ f3cab38
@@ -836,7 +836,7 @@
 - [x] Atalhos `:)` → 🙂 etc. (tabela do `emojiAtalhos.ts`), só como palavra solta e fora de código ✔ c2a31d6
 - [x] Colar texto com mais de 10 linhas → sugerir "Enviar como código" ✔ c2a31d6
 - [x] Tela "Inserir código" simples (linguagem + texto monoespaçado) ✔ c2a31d6
-- [ ] 🆕 `3689155` Tabela colada (do Excel, do Sheets ou em CSV) abre o "Inserir código" já com `tsv`/`csv`, antes do teste de texto longo; `csv` e `tsv` na lista de linguagens (ENV-09, ENV-10, FC-529)
+- [x] 🆕 `3689155` Tabela colada (do Excel, do Sheets ou em CSV) abre o "Inserir código" já com `tsv`/`csv`, antes do teste de texto longo; `csv` e `tsv` na lista de linguagens (ENV-09, ENV-10, FC-529) — com o `pareceCodigo` do web; no emulador, o texto com tabs colado abriu com `tsv` e foi como tabela ✔ HASH_X
 - [x] 🆕 `7322e83` Rascunho por conversa (FC-519, ENV-23): texto com menções, fila de anexos e resposta/encaminhamento pendente guardados no aparelho; restaurar ao abrir a conversa; apagar ao enviar ✔ 217be62
 
 ### 7.12 Votação em grupo (FC-516, FC-517, FC-518, MSG-20, ENV-22)
