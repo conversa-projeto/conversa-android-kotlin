@@ -4,7 +4,7 @@
 - **Tipo:** configuração
 - **Itens:** FC-102 (lint de segurança como erro); a decisão do histórico 2026-10-17-20
 - **Branch:** `reescrita`
-- **Commits:** `HASH_X`
+- **Commits:** `ffbb812`
 
 ## Contexto
 O `app/lint.xml` trata `InsecureBaseConfiguration` como erro (FC-102). Em `f4a9be3` (a apresentação, juntada em `ca13388`), a configuração de rede **só do debug** passou a aceitar HTTP sem TLS em qualquer endereço, para o servidor interno sem a borda TLS. A decisão está no histórico 2026-10-17-20. Desde então, o `:app:lintDebug` parava com 1 erro nesse arquivo.
