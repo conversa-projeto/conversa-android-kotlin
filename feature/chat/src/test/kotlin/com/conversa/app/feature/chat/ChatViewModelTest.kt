@@ -408,6 +408,30 @@ class ChatViewModelTest {
     }
 
     @Test
+    fun `audio que termina toca o seguinte da conversa e para na mensagem sem audio`() = runTest {
+        coEvery { arquivos.baixar(any(), any()) } returns Result.success(java.io.File("/cache/a.webm"))
+        val texto = mensagem(3, 8, lida = true)
+        lista.value = listOf(audio(1, 8), audio(2, 7), texto, audio(4, 8))
+        val vm = criar()
+        advanceUntilIdle()
+
+        vm.alternarAudio(audio(1, 8), audio(1, 8).conteudos[0])
+        advanceUntilIdle()
+        // Terminou o 1: toca o 2 (o meu, logo abaixo).
+        player.terminados.emit("42:1:1")
+        advanceUntilIdle()
+        assertThat(player.tocados.map { it.first }).containsExactly("42:1:1", "42:2:1").inOrder()
+        // Terminou o 2: a mensagem de baixo é texto, a sequência para (o 4 não toca).
+        player.terminados.emit("42:2:1")
+        advanceUntilIdle()
+        assertThat(player.tocados.map { it.first }).containsExactly("42:1:1", "42:2:1").inOrder()
+        // Áudio de outra conversa não mexe nesta.
+        player.terminados.emit("77:1:1")
+        advanceUntilIdle()
+        assertThat(player.tocados).hasSize(2)
+    }
+
+    @Test
     fun `audio - pula so no que esta no player, guarda a duracao e para ao sair da conversa`() = runTest {
         coEvery { arquivos.baixar(any(), any()) } returns Result.success(java.io.File("/cache/a.webm"))
         val vm = criar()
@@ -932,6 +956,7 @@ class ChatViewModelTest {
     private class PlayerFalso : PlayerAudio {
         override val estado = MutableStateFlow(EstadoAudio())
         override val falhas = MutableSharedFlow<String>()
+        override val terminados = MutableSharedFlow<String>(extraBufferCapacity = 4)
         val tocados = mutableListOf<Pair<String, String>>()
 
         override fun tocar(chave: String, uri: String) {

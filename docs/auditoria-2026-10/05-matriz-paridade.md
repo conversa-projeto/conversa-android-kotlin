@@ -98,7 +98,7 @@ A coluna **Fase** indica em que fase do plano da nova base (doc 07) a funcionali
 | CON | 18 | 15 | 1 | 0 | 2 | 0 |
 | MSG | 26 | 25 | 0 | 0 | 1 | 0 |
 | ENV | 30 | 27 | 0 | 2 | 0 | 1 |
-| ANX | 20 | 16 | 2 | 0 | 1 | 1 |
+| ANX | 20 | 17 | 2 | 0 | 0 | 1 |
 | PES | 2 | 2 | 0 | 0 | 0 | 0 |
 | CHA | 27 | 24 | 0 | 0 | 3 | 0 |
 | SIP | 6 | 0 | 0 | 0 | 6 | 0 |
@@ -107,13 +107,13 @@ A coluna **Fase** indica em que fase do plano da nova base (doc 07) a funcionali
 | ATV | 5 | 5 | 0 | 0 | 0 | 0 |
 | CFG | 14 | 6 | 1 | 0 | 5 | 2 |
 | GER | 10 | 8 | 0 | 0 | 0 | 2 |
-| **Total** | **178** | **147** | **4** | **3** | **18** | **6** |
+| **Total** | **178** | **148** | **4** | **3** | **17** | **6** |
 
 > Requisitos exclusivos do Android (AND, fora da contagem): 16 — 13 ✅, 2 🟡, 1 ⛔, 0 ⬜, 0 ➖.
 >
-> **Leitura:** 🆕 (2026-10-15, depois do servidor `ef13c22` e do web `9c6e8a6`) 131 de 163 funcionalidades estão prontas na nova base, e 6 estão em parte. A sincronização trouxe 10 funcionalidades (bots, permissões de uso, administração e atividades pendentes); a quebra das atividades (`nova` → `pendente`) já foi corrigida (`2219208`). Ficaram em parte o cadastro fechado (AUT-02), a duração e a onda do áudio (ANX-10, ANX-11); a tela de Acessos com as 32 permissões (CFG-08) já voltou a ✅. 🆕 (2026-10-16) As permissões de uso (GER-09), o cadastro fechado (AUT-02) a conversa com bot (CON-16) a duração e a onda do áudio (ANX-10, ANX-11) o resumo e a sugestão por IA (CON-14, ENV-25, falta conferir com um servidor de IA) e os recursos do servidor (GER-08) ficaram prontos: 139 de 163. 🆕 (2026-10-17, servidor `ac710eb` e web `f351190`) Com as 9 funcionalidades novas e os 4 IDs que voltaram a 🟡, são 135 prontas de 172. Com os ajustes do sincronismo (contatos pelo WS 66, "Gravando áudio…" na lista, velocidade do áudio, espaço usado, "Usuário desde" e os Acessos), 141 de 172. Com a localização e o trajeto na conversa (MSG-25), 142 de 172; com o envio (ENV-30), 143; com as pastas de mensagens (CON-17, MSG-23, MSG-24, ENV-29), 147. 🆕 (2026-10-19, servidor `b104db8` e web `57bd9f0`) Com as 4 funcionalidades novas (CON-18, ANX-19, CHA-27, SIP-06), 147 de 176. 🆕 (2026-10-22, web `3689155`) Com a câmera (ANX-20, em parte: só foto) e as tabelas CSV/TSV (MSG-26), 147 de 178.
+> **Leitura:** 🆕 (2026-10-15, depois do servidor `ef13c22` e do web `9c6e8a6`) 131 de 163 funcionalidades estão prontas na nova base, e 6 estão em parte. A sincronização trouxe 10 funcionalidades (bots, permissões de uso, administração e atividades pendentes); a quebra das atividades (`nova` → `pendente`) já foi corrigida (`2219208`). Ficaram em parte o cadastro fechado (AUT-02), a duração e a onda do áudio (ANX-10, ANX-11); a tela de Acessos com as 32 permissões (CFG-08) já voltou a ✅. 🆕 (2026-10-16) As permissões de uso (GER-09), o cadastro fechado (AUT-02) a conversa com bot (CON-16) a duração e a onda do áudio (ANX-10, ANX-11) o resumo e a sugestão por IA (CON-14, ENV-25, falta conferir com um servidor de IA) e os recursos do servidor (GER-08) ficaram prontos: 139 de 163. 🆕 (2026-10-17, servidor `ac710eb` e web `f351190`) Com as 9 funcionalidades novas e os 4 IDs que voltaram a 🟡, são 135 prontas de 172. Com os ajustes do sincronismo (contatos pelo WS 66, "Gravando áudio…" na lista, velocidade do áudio, espaço usado, "Usuário desde" e os Acessos), 141 de 172. Com a localização e o trajeto na conversa (MSG-25), 142 de 172; com o envio (ENV-30), 143; com as pastas de mensagens (CON-17, MSG-23, MSG-24, ENV-29), 147. 🆕 (2026-10-19, servidor `b104db8` e web `57bd9f0`) Com as 4 funcionalidades novas (CON-18, ANX-19, CHA-27, SIP-06), 147 de 176. 🆕 (2026-10-22, web `3689155`) Com a câmera (ANX-20, em parte: só foto) e as tabelas CSV/TSV (MSG-26), 147 de 178; com os áudios em sequência (ANX-19), 148.
 > - **Bloqueadas (⛔):** dependem de algo fora do app: o push (Firebase, NOT-04) ou a decisão do campo rico (FC-416).
-> - **Por fazer (⬜):** 🆕 as tabelas CSV/TSV (MSG-26), as sugestões de pasta pela IA (CON-18), os áudios em sequência (ANX-19), a chamada já conectada enquanto toca (CHA-27), a etapa 9 (SIP, compartilhar tela, Bubbles), a administração de usuários, bots, ferramentas e conhecimento (CFG-11…14, a avaliar) e um item P3 fora do TODO.
+> - **Por fazer (⬜):** 🆕 as tabelas CSV/TSV (MSG-26), as sugestões de pasta pela IA (CON-18), a chamada já conectada enquanto toca (CHA-27), a etapa 9 (SIP, compartilhar tela, Bubbles), a administração de usuários, bots, ferramentas e conhecimento (CFG-11…14, a avaliar) e um item P3 fora do TODO.
 > - **Falta conferir:** as células com "falta conferir" ou "em aparelho" estão prontas, mas esperam um teste que o emulador não permite.
 
 ---
@@ -245,7 +245,7 @@ A coluna **Fase** indica em que fase do plano da nova base (doc 07) a funcionali
 | ANX-16 🆕 | Visualizador de arquivos do Office (`.docx`, `.xlsx`, `.pptx`) | ⬜ | ➖ | — | No celular, "Abrir com…" outro app; o web desenha com `@silurus/ooxml` — 🆕 `9c6e8a6` | F3 | P3 |
 | ANX-17 🆕 | Espaço usado pelos arquivos que a pessoa enviou (Perfil; coluna em Pessoas) | ⬜ | ✅ 8.3 · `08e2e77` | — | `GET /usuario/espaco` → `{bytes}`; seção "Armazenamento" no Perfil — 🆕 `ac710eb`/`f351190` | F7 | P3 |
 | ANX-18 🆕 | Velocidade do áudio (1x, 1,5x, 2x, 3x; a mesma para todos os áudios) | ⬜ | ✅ 4.5 · `08e2e77` | — | Botão no player; `setPlaybackSpeed` do Media3; guardar no aparelho — 🆕 `f351190` | F3 | P3 |
-| ANX-19 🆕 | Áudios em sequência (o que termina toca o próximo: na mesma mensagem ou na de baixo) | ⬜ | ⬜ 4.5 (FC-425) | — | Ligar o fim do áudio no `PlayerAudio` à lista do chat — 🆕 `d244fc8` | F3 | P3 |
+| ANX-19 🆕 | Áudios em sequência (o que termina toca o próximo: na mesma mensagem ou na de baixo) | ⬜ | ✅ 4.5 · `HASH_X` | — | Ligar o fim do áudio no `PlayerAudio` à lista do chat — 🆕 `d244fc8` | F3 | P3 |
 | ANX-20 🆕 | Câmera no "+": foto ou vídeo, prévia com legenda, "Refazer" e "Enviar" na hora | ⬜ | 🟡 4.2 · só foto, que vai para a fila de anexos (FC-426) | — | Vídeo pelo `CaptureVideo` (escolher antes, não há um intent para os dois); prévia própria com legenda; envio [arquivo, legenda], o arquivo antes do texto; item visível com `imagem` ou `video` — 🆕 `77c7821` | F3 | P3 |
 
 ## PES — Pesquisa

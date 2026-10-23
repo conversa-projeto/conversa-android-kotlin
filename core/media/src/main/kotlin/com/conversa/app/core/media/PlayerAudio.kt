@@ -51,6 +51,9 @@ interface PlayerAudio {
     /** Chave do áudio que não pôde ser tocado (arquivo inválido, formato não suportado). */
     val falhas: SharedFlow<String>
 
+    /** Chave do áudio que tocou até o fim (parar ou trocar não conta): a conversa toca o próximo (ANX-19). */
+    val terminados: SharedFlow<String> get() = NENHUM_TERMINADO
+
     /** Começa [uri] (arquivo local) do início, no lugar do que estiver tocando. */
     fun tocar(chave: String, uri: String)
 
@@ -69,6 +72,8 @@ interface PlayerAudio {
 }
 
 private val VELOCIDADE_NORMAL: StateFlow<Float> = MutableStateFlow(1f)
+
+private val NENHUM_TERMINADO: SharedFlow<String> = MutableSharedFlow()
 
 /**
  * [PlayerAudio] com o Media3 (ExoPlayer), criado na primeira vez que toca. Pede o foco
@@ -94,6 +99,9 @@ class PlayerMedia3 @Inject constructor(@ApplicationContext private val contexto:
     private val _falhas = MutableSharedFlow<String>(extraBufferCapacity = 4)
     override val falhas: SharedFlow<String> = _falhas.asSharedFlow()
 
+    private val _terminados = MutableSharedFlow<String>(extraBufferCapacity = 4)
+    override val terminados: SharedFlow<String> = _terminados.asSharedFlow()
+
     private val escopo = CoroutineScope(SupervisorJob() + Dispatchers.Main.immediate)
     private var acompanhamento: Job? = null
     private var instancia: ExoPlayer? = null
@@ -113,6 +121,7 @@ class PlayerMedia3 @Inject constructor(@ApplicationContext private val contexto:
                     player.pause()
                     player.seekTo(0)
                     _estado.update { it.copy(tocando = false, posicaoMs = 0) }
+                    _estado.value.chave?.let { _terminados.tryEmit(it) }
                 }
                 else -> Unit
             }

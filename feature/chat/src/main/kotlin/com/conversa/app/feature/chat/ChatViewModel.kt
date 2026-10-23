@@ -51,6 +51,7 @@ import com.conversa.app.core.model.listaDeConfirmacao
 import com.conversa.app.core.model.local
 import com.conversa.app.core.model.montarItensChat
 import com.conversa.app.core.model.podeReagir
+import com.conversa.app.core.model.proximoAudio
 import com.conversa.app.core.model.reacoesDeOutros
 import com.conversa.app.core.model.separarAgendadas
 import com.conversa.app.core.network.dto.localizacaoParaJson
@@ -1091,6 +1092,17 @@ class ChatViewModel @Inject constructor(
         }
         viewModelScope.launch {
             player.falhas.collect { chave -> if (chave.startsWith(prefixoAudio)) eventos.enviar(EventoChat.AudioFalhou) }
+        }
+        // Áudios em sequência (ANX-19, web `d244fc8`): o que terminou chama o seguinte da mensagem ou o da mensagem de baixo.
+        viewModelScope.launch {
+            player.terminados.collect { chave ->
+                if (!chave.startsWith(prefixoAudio)) return@collect
+                val partes = chave.removePrefix(prefixoAudio).split(':')
+                val mensagemId = partes.getOrNull(0)?.toLongOrNull() ?: return@collect
+                val ordem = partes.getOrNull(1)?.toIntOrNull() ?: return@collect
+                val doChat = estado.value.itens.mapNotNull { (it as? ItemChat.Bolha)?.mensagem }
+                proximoAudio(doChat, mensagemId, ordem)?.let { (mensagem, conteudo) -> alternarAudio(mensagem, conteudo) }
+            }
         }
     }
 
