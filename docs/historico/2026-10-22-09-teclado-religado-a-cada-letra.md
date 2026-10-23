@@ -4,7 +4,7 @@
 - **Tipo:** código (correção)
 - **Itens:** `TODO.md` 7.7 (menções; linha nova da correção); FC-508
 - **Branch:** `reescrita`
-- **Commits:** `HASH_X`
+- **Commits:** `dfd7923`
 
 ## Contexto
 No celular, ao digitar no campo de mensagem do chat, o teclado abria e fechava sem parar, a cada toque. A pessoa notou com um servidor de IA ligada, mas a IA não era a causa.
