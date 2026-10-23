@@ -4,7 +4,7 @@
 - **Tipo:** código
 - **Itens:** `TODO.md` 2.11 (as duas linhas 🆕 `17c49a4`) e 8.5 (o texto do Status); FC-226; PRE-02, PRE-03 e CFG-09
 - **Branch:** `reescrita`
-- **Commits:** `HASH_X`
+- **Commits:** `7726b40`
 
 ## Contexto
 Na sincronização de hoje (2026-10-23-01), o web `17c49a4` e o servidor `331083b` mudaram a presença:
