@@ -130,6 +130,7 @@ private fun nomeDaPermissao(permissao: PermissaoSistema): String {
         CodigoPermissao.BOTS -> R.string.acessos_permissao_bots
         CodigoPermissao.FERRAMENTAS -> R.string.acessos_permissao_ferramentas
         CodigoPermissao.CONHECIMENTO -> R.string.acessos_permissao_conhecimento
+        CodigoPermissao.SIP -> R.string.acessos_permissao_sip
         CodigoPermissao.EMOJI -> R.string.acessos_permissao_emoji
         CodigoPermissao.FIGURINHA -> R.string.acessos_permissao_figurinha
         CodigoPermissao.IMAGEM -> R.string.acessos_permissao_imagem

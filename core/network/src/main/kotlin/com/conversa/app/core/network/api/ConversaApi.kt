@@ -393,14 +393,9 @@ interface ConversaApi {
 
     // --- SIP ---
 
+    /** O próprio ramal, para registrar e ligar (🆕 `be17b8e`: só leitura; quem configura é o administrador, `/sip/usuario`). */
     @GET("sip")
     suspend fun sip(): SipDto
-
-    @PUT("sip")
-    suspend fun incluirSip(@Body corpo: SipDto): SipDto
-
-    @PATCH("sip")
-    suspend fun alterarSip(@Body corpo: SipDto): SipDto
 
     // --- Enquetes (votação em grupo) ---
 

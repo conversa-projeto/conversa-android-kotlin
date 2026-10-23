@@ -186,6 +186,7 @@
     <string name="acessos_usuario_desde">Usuário desde %1$s</string>
     <string name="acessos_permissao_ferramentas">Ferramentas</string>
     <string name="acessos_permissao_conhecimento">Conhecimento</string>
+    <string name="acessos_permissao_sip">Configurar o SIP</string>
     <string name="acessos_permissao_emoji">Emojis no texto</string>
     <string name="acessos_permissao_figurinha">Figurinhas</string>
     <string name="acessos_permissao_imagem">Imagens</string>

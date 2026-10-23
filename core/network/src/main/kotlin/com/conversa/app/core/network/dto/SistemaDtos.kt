@@ -99,7 +99,10 @@ data class AlterarParametrosRequisicao(
     @SerialName("cadastro_aberto") val cadastroAberto: Boolean? = null,
 )
 
-/** `GET /sip` devolve a linha ou `{}` (então tudo é opcional). */
+/**
+ * `GET /sip` devolve a linha ou `{}` (então tudo é opcional). 🆕 `be17b8e`: com o TURN do próprio PABX
+ * (opcional), que a mídia das chamadas SIP usa no lugar do TURN do Conversa (contrato §14.1).
+ */
 @Serializable
 data class SipDto(
     val id: Long? = null,
@@ -111,4 +114,7 @@ data class SipDto(
     val domain: String? = null,
     @SerialName("ws_server") val wsServer: String? = null,
     val ativo: Boolean? = null,
+    @SerialName("turn_server") val turnServer: String? = null,
+    @SerialName("turn_user") val turnUser: String? = null,
+    @SerialName("turn_password") val turnPassword: String? = null,
 )

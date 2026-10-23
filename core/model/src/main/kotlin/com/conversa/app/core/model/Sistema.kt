@@ -15,6 +15,9 @@ object CodigoPermissao {
     const val BOTS = "bots"
     const val FERRAMENTAS = "ferramentas"
     const val CONHECIMENTO = "conhecimento"
+
+    /** "Configurar o SIP": o ramal de cada pessoa (servidor `be17b8e`, migração 057). */
+    const val SIP = "sip"
     const val EMOJI = "emoji"
     const val FIGURINHA = "figurinha"
     const val IMAGEM = "imagem"

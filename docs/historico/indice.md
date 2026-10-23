@@ -140,6 +140,7 @@
 - 2026-10-16 · [Resumo da conversa por IA](2026-10-16-07-resumo-da-conversa.md) — "Resumir conversa" no "⋮" (só com a IA ligada): períodos, consulta a cada 2 s com a folha aberta, assuntos com pendências e "Ver na conversa"; o último resumo no Room (v11); falta conferir com um servidor de IA
 - 2026-10-16 · [Sugestão de texto da IA](2026-10-16-08-sugestao-de-texto-da-ia.md) — depois de 600 ms parado, com o cursor no fim, a continuação aparece num chip acima do campo (tocar insere); a chave "Sugerir a continuação ao digitar" na Privacidade; só com a IA do servidor; falta conferir com um servidor de IA
 - 2026-10-17 · [Ajustes do sincronismo `ac710eb`](2026-10-17-02-ajustes-do-sincronismo.md) — contatos relidos no WS 66 e na reconexão (Room v12 com o `criado_em`), "Gravando áudio…" na lista, velocidade do áudio, "Armazenamento" e "Usuário desde" no Perfil e na folha, Acessos com "Pessoas", `localizacao` e o espaço; testado no emulador
+- 2026-10-22 · [Ajustes do servidor `b104db8`: rotas de SIP e o nome de `sip`](2026-10-22-02-ajustes-sip-b104db8.md) — saem `incluirSip`/`alterarSip` (as rotas dão 404), o `SipDto` lê o TURN do PABX e os Acessos mostram "Configurar o SIP"; testado no emulador
 
 ## Extras — SIP, compartilhar tela (etapa 9)
 _(nada ainda)_

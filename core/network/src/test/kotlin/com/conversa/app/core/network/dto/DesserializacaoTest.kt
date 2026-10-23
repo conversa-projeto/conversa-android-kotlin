@@ -207,6 +207,18 @@ class DesserializacaoTest {
     }
 
     @Test
+    fun `sip do dono com o TURN do PABX`() {
+        val sip = ConversaJson.decodeFromString(
+            SipDto.serializer(),
+            """{"id":3,"usuario_id":7,"sip_user":"1001","auth_user":null,"sip_password":"segredo","domain":"pbx.empresa.com","ws_server":"wss://pbx.empresa.com:8089/ws","turn_server":"turns:pbx.empresa.com:443","turn_user":"webrtc","turn_password":"turno","ativo":true}""",
+        )
+        assertThat(sip.turnServer).isEqualTo("turns:pbx.empresa.com:443")
+        assertThat(sip.turnUser).isEqualTo("webrtc")
+        assertThat(sip.turnPassword).isEqualTo("turno")
+        assertThat(sip.authUser).isNull()
+    }
+
+    @Test
     fun `nulos nao sao enviados, a nao ser o nulo explicito`() {
         val semToken = ConversaJson.encodeToJsonElement(
             AlterarDispositivoRequisicao.serializer(),
