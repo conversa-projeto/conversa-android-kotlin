@@ -934,7 +934,7 @@
 - [x] 🆕 `ef13c22`/`9c6e8a6` Acessos com as permissões de uso: são 32 (6 de administração + 26 de uso, `uso` no `GET /permissoes`); a linha de caixas por pessoa passa da tela. Como o web: lista de pessoas que se abre ("Administração", "N de M"), com os grupos Administração, Enviar, Mensagens, Grupos, Chamadas, Configurações e Outras e os nomes curtos; as próprias permissões marcadas ficam travadas ("Você não pode retirar as próprias permissões") (CFG-08, FC-813) — `gruposDePermissoes`, `quantasDe`, `temAdministracao`, `propriaMarcada` (+ 2 testes); `PermissaoDto.uso`. No emulador: "26 de 32" por pessoa e, aberta, os grupos com as próprias marcadas travadas ✔ 91d5681
 - [ ] 🆕 `9c6e8a6` Usuários, Bots, Ferramentas e Conhecimento (administração): avaliar se ficam só no web, junto da FC-812 (CFG-11…14, FC-815)
 - [x] 🆕 `ac710eb` Acessos depois da junção: sem `usuarios`, `permissoes` como "Pessoas" (textos do modo aberto), `localizacao` no grupo Enviar ("Localização e trajeto"); espaço, "Usuário desde" e selo "Bot" em cada pessoa (CFG-08, GER-09, AUT-11, FC-816) — no emulador, "Ninguém tem a permissão Pessoas ainda", "200.9 MB · Usuário desde 07/10/2026", "Localização e trajeto" no fim do Enviar e a administração sem "Usuários" ✔ 08e2e77
-- [ ] 🆕 `be17b8e`/`8385b22` Telefonia (SIP) de cada pessoa: com a permissão de administração `sip` (migração 057), a aba "Telefonia (SIP)" no painel da pessoa (ramal, senha, domínio, WebSocket, usuário de autenticação, nome de exibição, TURN do PABX, ativo; `GET`/`PUT`/`DELETE /sip/usuario`) e o rótulo próprio de `sip` (feito: "Configurar o SIP", como o web, ✔ HASH_S) — a aba depende da decisão sobre a administração no app (SIP-06, FC-817, FC-812, FC-815)
+- [ ] 🆕 `be17b8e`/`8385b22` Telefonia (SIP) de cada pessoa: com a permissão de administração `sip` (migração 057), a aba "Telefonia (SIP)" no painel da pessoa (ramal, senha, domínio, WebSocket, usuário de autenticação, nome de exibição, TURN do PABX, ativo; `GET`/`PUT`/`DELETE /sip/usuario`) e o rótulo próprio de `sip` (feito: "Configurar o SIP", como o web, ✔ 6e93ca1) — a aba depende da decisão sobre a administração no app (SIP-06, FC-817, FC-812, FC-815)
 
 ### 8.6 Anexos da conversa (FC-809, ANX-13)
 - [x] A partir do perfil ou do grupo: "Ver anexos" (🆕 `eaa8bac`: no web, os anexos ficam dentro do painel do grupo) — folha do perfil (lista e cabeçalho) e item nos dados do grupo ✔ 95b9bb5
@@ -970,7 +970,7 @@
 ## Etapa 9 — Extras (avaliar antes de fazer)
 
 - [ ] Ramal SIP — configuração: `GET /sip`; ~~`PUT /sip` (se não existe) ou `PATCH /sip {id, …}` (se existe)~~ — 🆕 `be17b8e`/`8385b22`: só leitura (o ramal, o estado do registro e "Reconectar"); quem configura é o administrador (8.5, SIP-06).
-- [x] 🆕 `be17b8e` Tirar `incluirSip`/`alterarSip` do `ConversaApi` (as rotas dão 404) e pôr `turn_server`/`turn_user`/`turn_password` no `SipDto` (com teste) ✔ HASH_S
+- [x] 🆕 `be17b8e` Tirar `incluirSip`/`alterarSip` do `ConversaApi` (as rotas dão 404) e pôr `turn_server`/`turn_user`/`turn_password` no `SipDto` (com teste) ✔ 6e93ca1
 - [ ] Ramal SIP — spike: Linphone SDK (licença GPL/comercial) vs PJSIP; transporte WSS + ~~ICE via `/ice`~~ 🆕 `be17b8e`/`8385b22` STUN e o TURN do PABX (do `GET /sip`); o destino aceita o número ou o endereço SIP completo
 - [ ] Ramal SIP — registro, discador com DTMF, chamada recebida, integração com o Telecom
 - [ ] Compartilhar a tela do celular (`MediaProjection` + FGS `mediaProjection` + captura de áudio)

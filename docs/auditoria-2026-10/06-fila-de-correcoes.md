@@ -536,13 +536,13 @@
 - [x] **FC-814 · P1 · 🆕 `ef13c22`/`9c6e8a6` Permissões de uso** (GER-09): `GET /usuario/permissoes`; esconder ou travar cada ação; mostrar a mensagem do 403; no perfil, mandar só as chaves que mudaram (TODO 8.9). ✔ 946c410
 - [ ] **FC-815 · P3 · 🆕 `9c6e8a6` Administração de usuários, bots, ferramentas e conhecimento** (CFG-11…14): avaliar se fica só no web, junto da FC-812.
 - [x] **FC-816 · P2 · 🆕 `ac710eb` Permissões e Acessos depois da junção** (GER-09, CFG-08, AUT-11): `usuarios` saiu (quem tinha ganhou `permissoes`, que o web chama de "Pessoas"); `localizacao` entra no grupo Enviar ("Localização e trajeto"); a lista de Acessos mostra o espaço, o "Usuário desde" e o selo "Bot"; textos do modo aberto com "Pessoas". ✔ 08e2e77
-- [ ] **FC-817 · P3 · 🆕 `be17b8e`/`8385b22` Telefonia (SIP) de cada pessoa pelo administrador** (SIP-06, CFG-08): com a permissão de administração `sip` (migração 057), o painel da pessoa nos Acessos ganha a aba "Telefonia (SIP)": ramal, senha, domínio, WebSocket, usuário de autenticação, nome de exibição, TURN do PABX e ativo; `GET`/`PUT`/`DELETE /sip/usuario`, as senhas nunca voltam. O rótulo próprio de `sip` nos Acessos já está ("Configurar o SIP", como o web) ✔ HASH_S. Depende da decisão sobre a administração no app (FC-812, FC-815).
+- [ ] **FC-817 · P3 · 🆕 `be17b8e`/`8385b22` Telefonia (SIP) de cada pessoa pelo administrador** (SIP-06, CFG-08): com a permissão de administração `sip` (migração 057), o painel da pessoa nos Acessos ganha a aba "Telefonia (SIP)": ramal, senha, domínio, WebSocket, usuário de autenticação, nome de exibição, TURN do PABX e ativo; `GET`/`PUT`/`DELETE /sip/usuario`, as senhas nunca voltam. O rótulo próprio de `sip` nos Acessos já está ("Configurar o SIP", como o web) ✔ 6e93ca1. Depende da decisão sobre a administração no app (FC-812, FC-815).
 
 ## Bloco K — SIP e extras (F8)
 
 - [ ] **FC-900 · P2 · Configuração SIP** (SIP-01).
   - ~~`GET/PUT/PATCH /sip`. O segundo PUT dá 500 (unique): usar PATCH se já existe.~~
-  - 🆕 `be17b8e`/`8385b22`: cada um **não cadastra mais** o próprio ramal (saíram `PUT` e `PATCH /sip`); quem configura é o administrador (FC-817). O app só lê `GET /sip` e mostra o ramal, o estado do registro e "Reconectar", como a aba Voip do web, que ficou só leitura. Tirar `incluirSip`/`alterarSip` do `ConversaApi` (as rotas não existem mais) — feito, com o TURN do PABX no `SipDto` ✔ HASH_S.
+  - 🆕 `be17b8e`/`8385b22`: cada um **não cadastra mais** o próprio ramal (saíram `PUT` e `PATCH /sip`); quem configura é o administrador (FC-817). O app só lê `GET /sip` e mostra o ramal, o estado do registro e "Reconectar", como a aba Voip do web, que ficou só leitura. Tirar `incluirSip`/`alterarSip` do `ConversaApi` (as rotas não existem mais) — feito, com o TURN do PABX no `SipDto` ✔ 6e93ca1.
 - [ ] **FC-901 · P3 · Telefonia SIP nativa** (SIP-02..05).
   - **Spike técnico primeiro:** Linphone SDK (licença GPL/comercial — avaliar) ou PJSIP.
   - Precisa de transporte WSS e ICE via `/ice`; integrar com Core-Telecom.
