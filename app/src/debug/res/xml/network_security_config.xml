@@ -10,9 +10,11 @@
       `adb reverse tcp:8080 tcp:8080` + http://localhost:8080 (docs/desenvolvimento/emulador.md).
       O endereço com http:// precisa ser digitado (ou o app tenta sozinho quando o HTTPS não responde).
     Sem <debug-overrides> aqui: este arquivo já é só do debug (e o lint não aceita dois).
+    O lint trata InsecureBaseConfiguration como erro (app/lint.xml, FC-102); aqui ele é ignorado de
+    propósito (histórico 2026-10-17-20). O release continua só com HTTPS (src/main).
 -->
-<network-security-config>
-    <base-config cleartextTrafficPermitted="true">
+<network-security-config xmlns:tools="http://schemas.android.com/tools">
+    <base-config cleartextTrafficPermitted="true" tools:ignore="InsecureBaseConfiguration">
         <trust-anchors>
             <certificates src="system" />
             <certificates src="user" />
