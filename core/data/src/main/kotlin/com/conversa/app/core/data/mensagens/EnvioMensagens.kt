@@ -177,7 +177,8 @@ class EnvioMensagens @Inject constructor(
      * Com [postagem] (7.13): a nova já aparece como postagem, sem respostas; a resposta vai com
      * `postagem_id` e fica embaixo da postagem, fora do fluxo, até o servidor gravar. Com
      * [confirmacao] (FC-521), vai `pede_confirmacao` (e a lista, se houver). [localizacao] (ENV-30) é
-     * o JSON do conteúdo tipo 9, depois do texto, como a figurinha.
+     * o JSON do conteúdo tipo 9, depois do texto, como a figurinha. Com [legendaDepois] (a câmera,
+     * ANX-20), os anexos vêm antes do texto, como o web manda a foto ou o vídeo com a legenda.
      * Devolve o id local.
      */
     suspend fun enviar(
@@ -187,6 +188,7 @@ class EnvioMensagens @Inject constructor(
         referencia: ReferenciaPendente? = null,
         figurinha: String? = null,
         localizacao: String? = null,
+        legendaDepois: Boolean = false,
         visivelEm: Instant? = null,
         postagem: PostagemEnvio? = null,
         confirmacao: PedidoConfirmacao? = null,
@@ -209,11 +211,13 @@ class EnvioMensagens @Inject constructor(
             val conteudosEncaminhados = encaminhados.mapIndexed { i, conteudo ->
                 ConteudoEnvioDto(i + 1, conteudo.tipo.codigo, conteudo.conteudo)
             }
+            // A legenda da câmera vem depois dos anexos (ANX-20).
+            val anexosAntes = if (legendaDepois) anexosLocais.size else 0
             val conteudosTexto = conteudosEncaminhados + if (textoLimpo.isEmpty()) {
                 emptyList()
             } else {
                 listOf(
-                    ConteudoEnvioDto(encaminhados.size + 1, TipoConteudo.TEXTO.codigo, textoLimpo),
+                    ConteudoEnvioDto(encaminhados.size + anexosAntes + 1, TipoConteudo.TEXTO.codigo, textoLimpo),
                 )
             }
             // Figurinha (7.8) vai depois do texto, como no web: "pacote/nome", tipo 7. A localização também (tipo 9).
@@ -222,7 +226,14 @@ class EnvioMensagens @Inject constructor(
                 localizacao?.let { TipoConteudo.LOCALIZACAO to it },
             ).mapIndexed { i, (tipo, conteudo) -> ConteudoEnvioDto(conteudosTexto.size + i + 1, tipo.codigo, conteudo) }
             val pendentes = anexosLocais.mapIndexed { i, anexo ->
-                AnexoPendente(comFigurinha.size + i + 1, anexo.uri, anexo.nome, anexo.tamanho, anexo.mime, anexo.tipo.codigo)
+                AnexoPendente(
+                    (if (legendaDepois) encaminhados.size else comFigurinha.size) + i + 1,
+                    anexo.uri,
+                    anexo.nome,
+                    anexo.tamanho,
+                    anexo.mime,
+                    anexo.tipo.codigo,
+                )
             }
             val corpo = EnviarMensagemRequisicao(
                 conversaId,

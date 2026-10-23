@@ -71,6 +71,7 @@
 - 2026-10-17 · [Localização e trajeto na conversa](2026-10-17-03-localizacao-na-conversa.md) — conteúdo tipo 9: bolha com mapa de tiles (OSM, sem biblioteca), o nome ou A e B com o trajeto, "Abrir no Google Maps"; visualizador com ruas ou satélite (Esri); rótulo "Localização" nas prévias; testado no emulador
 - 2026-10-17 · [Enviar localização ou trajeto](2026-10-17-04-enviar-localizacao.md) — "+" › "Localização": Local ou Trajeto, busca no Nominatim, coordenadas, toque no mapa, minha posição (`LocationManager`, permissão no toque) e rota de carro no OSRM; mapas fora do log; testado no emulador (busca, trajeto com rota e GPS simulado)
 - 2026-10-22 · [Áudios em sequência](2026-10-22-03-audios-em-sequencia.md) — o áudio que termina toca o seguinte da mensagem ou o primeiro da mensagem de baixo (`PlayerAudio.terminados`, `proximoAudio`), como o web; testado no emulador
+- 2026-10-22 · [Câmera com foto ou vídeo, prévia e legenda](2026-10-22-05-camera-foto-ou-video.md) — "Tirar foto" ou "Gravar vídeo", a permissão de câmera pedida no toque, a prévia com legenda, "Refazer" e "Enviar" na hora (o arquivo antes da legenda), como o web; testado no emulador
 
 ## Notificações e push (etapa 5)
 - 2026-10-08 · [Etapa 5 — notificação de mensagem, canais, permissão e atalhos (sem o push)](2026-10-08-07-etapa-5-notificacoes-sem-push.md) — MessagingStyle por conversa com Responder/Marcar como lida, regra do web (som na frente, notificação em segundo plano), some ao ler/arquivar/abrir, atalhos; Firebase ⛔ (precisa do usuário); 214 testes

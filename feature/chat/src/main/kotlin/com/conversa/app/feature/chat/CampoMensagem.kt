@@ -1,7 +1,6 @@
 package com.conversa.app.feature.chat
 
 import android.Manifest
-import android.content.ActivityNotFoundException
 import android.content.Context
 import android.content.Intent
 import android.content.pm.PackageManager
@@ -132,7 +131,6 @@ import com.conversa.app.core.model.CodigoPermissao
 import com.conversa.app.core.model.Contato
 import com.conversa.app.core.model.MencaoInserida
 import com.conversa.app.core.model.Mensagem
-import com.conversa.app.core.model.TipoConteudo
 import com.conversa.app.core.model.TipoReferencia
 import com.conversa.app.core.model.dividirMencoes
 import com.conversa.app.core.model.extrairMencoesCruas
@@ -913,7 +911,6 @@ private fun BotaoAnexar(
     val contexto = LocalContext.current
     val avisos = LocalAvisos.current
     val escopo = rememberCoroutineScope()
-    val semCamera = stringResource(R.string.sem_app_de_camera)
     // Só o que a pessoa pode enviar (GER-09, como o `AnexoPopup` do web).
     val permissoes = LocalPermissoesDeUso.current
     var menu by remember { mutableStateOf(false) }
@@ -927,24 +924,14 @@ private fun BotaoAnexar(
             aoFechar = { figurinhas = false },
         )
     }
-    // Arquivo da foto: sobrevive à recriação da Activity enquanto a câmera está aberta.
-    var fotoPendente by rememberSaveable { mutableStateOf<String?>(null) }
+    // Câmera com foto ou vídeo, prévia e legenda (ANX-20).
+    val abrirCamera = rememberCameraDoCampo(acoes)
 
     val galeria = rememberLauncherForActivityResult(ActivityResultContracts.PickMultipleVisualMedia()) { uris ->
         acoes.aoAdicionarAnexos(manterAcesso(contexto, uris), null)
     }
     val documentos = rememberLauncherForActivityResult(ActivityResultContracts.OpenMultipleDocuments()) { uris ->
         acoes.aoAdicionarAnexos(manterAcesso(contexto, uris), null)
-    }
-    val camera = rememberLauncherForActivityResult(ActivityResultContracts.TakePicture()) { tirou ->
-        val arquivo = fotoPendente?.let(::File)
-        fotoPendente = null
-        if (arquivo == null) return@rememberLauncherForActivityResult
-        if (tirou && arquivo.length() > 0) {
-            acoes.aoAdicionarAnexos(listOf(uriCompartilhado(contexto, arquivo).toString()), TipoConteudo.IMAGEM)
-        } else {
-            arquivo.delete()
-        }
     }
 
     Box {
@@ -962,21 +949,13 @@ private fun BotaoAnexar(
                     },
                 )
             }
-            if (permissoes.pode(CodigoPermissao.IMAGEM)) {
+            if (permissoes.pode(CodigoPermissao.IMAGEM) || permissoes.pode(CodigoPermissao.VIDEO)) {
                 DropdownMenuItem(
                     text = { Text(stringResource(R.string.anexar_camera)) },
                     leadingIcon = { Icon(Icons.Outlined.PhotoCamera, contentDescription = null) },
                     onClick = {
                         menu = false
-                        val pasta = acoes.pastaCamera() ?: return@DropdownMenuItem
-                        val arquivo = File(pasta, "foto-${System.currentTimeMillis()}.jpg")
-                        fotoPendente = arquivo.path
-                        try {
-                            camera.launch(uriCompartilhado(contexto, arquivo))
-                        } catch (_: ActivityNotFoundException) {
-                            fotoPendente = null
-                            escopo.launch { avisos.mostrarErro(semCamera) }
-                        }
+                        abrirCamera()
                     },
                 )
             }

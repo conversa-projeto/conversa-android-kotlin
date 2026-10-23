@@ -398,6 +398,7 @@ fun ChatRotaTela(
                 aoCancelarResposta = viewModel::cancelarResposta,
                 aoEnviarFigurinha = viewModel::enviarFigurinha,
                 aoEscolherLocalizacao = { escolhendoLocalizacao = true },
+                aoEnviarDaCamera = { uri, tipo, legenda -> viewModel.enviarDaCamera(uri, tipo, legenda, permissoes) },
                 aoPostar = viewModel::postar,
                 aoMudarTituloPostagem = viewModel::tituloDaPostagem,
                 aoCancelarPostagem = viewModel::cancelarPostagem,
@@ -520,6 +521,8 @@ class AcoesChat(
     val aoEnviarFigurinha: (String) -> Unit = {},
     /** "+" › "Localização" (ENV-30): abre a janela de enviar. */
     val aoEscolherLocalizacao: () -> Unit = {},
+    /** "+" › "Câmera" (ANX-20): a foto ou o vídeo da prévia, o tipo (imagem forçada) e a legenda; vai na hora. */
+    val aoEnviarDaCamera: (String, com.conversa.app.core.model.TipoConteudo?, String) -> Unit = { _, _, _ -> },
     /** "+" › "Postagem" (7.13, só grupo). */
     val aoPostar: () -> Unit = {},
     /** O título digitado na faixa da postagem. */

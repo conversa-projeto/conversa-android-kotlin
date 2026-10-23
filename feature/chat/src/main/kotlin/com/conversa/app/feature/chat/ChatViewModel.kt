@@ -674,6 +674,28 @@ class ChatViewModel @Inject constructor(
         return anexos.filter { permissoes.pode(codigoDoAnexo(it.tipo, it.nome, it.mime)) }
     }
 
+    /**
+     * Câmera (ANX-20, web `77c7821`): a foto ou o vídeo da prévia vai na hora, com a legenda depois
+     * do arquivo, como no web (e como resposta, se houver uma pendente). [tipo] força a imagem.
+     */
+    fun enviarDaCamera(uri: String, tipo: TipoConteudo?, legenda: String, permissoes: PermissoesDeUso = PermissoesDeUso()) {
+        viewModelScope.launch {
+            val anexo = withContext(Dispatchers.IO) { fontes.descrever(uri, tipo) } ?: return@launch
+            val permitidos = semOsBarrados(listOf(anexo), permissoes)
+            if (permitidos.isEmpty()) return@launch
+            if (anexo.tamanho > AnexosRepositorio.LIMITE_BYTES) {
+                eventos.enviar(EventoChat.ArquivoGrande(anexo.nome))
+                return@launch
+            }
+            val resposta = respondendo.value
+            val postagem = pegarPostagem()
+            val confirmacao = pegarConfirmacao()
+            envio.enviar(conversaId, legenda, permitidos, resposta, legendaDepois = true, postagem = postagem, confirmacao = confirmacao)
+            if (respondendo.value == resposta) respondendo.value = null
+            if (postagem !is PostagemEnvio.Resposta) eventos.enviar(EventoChat.RolarAoFim)
+        }
+    }
+
     /** Pasta do cache onde a câmera grava a foto (compartilhada pelo FileProvider). */
     fun pastaCamera(): java.io.File = arquivos.pastaCamera
 

@@ -125,6 +125,12 @@
     <string name="anexar_camera">Câmera</string>
     <string name="anexar_documento">Documento</string>
     <string name="sem_app_de_camera">Nenhum app de câmera instalado.</string>
+    <!-- Câmera com foto ou vídeo (ANX-20), textos do web -->
+    <string name="camera_foto">Tirar foto</string>
+    <string name="camera_video">Gravar vídeo</string>
+    <string name="camera_legenda">Adicione uma legenda…</string>
+    <string name="camera_refazer">Refazer</string>
+    <string name="camera_sem_permissao">Não foi possível abrir a câmera. Confira a permissão de câmera do app.</string>
     <string name="remover_anexo">Remover %1$s</string>
     <string name="abrir">Abrir</string>
     <string name="abrir_com">Abrir com…</string>

@@ -300,6 +300,21 @@ class MensagensTest {
     }
 
     @Test
+    fun `da camera o arquivo vai antes da legenda`() = runTest {
+        val envio = envio()
+        val foto = AnexoLocal("content://x/foto.jpg", "foto.jpg", 10, "image/jpeg", TipoConteudo.IMAGEM)
+
+        val id = envio.enviar(42, "a vista", listOf(foto), legendaDepois = true)
+
+        assertThat(banco.mensagemDao().buscar(id)!!.paraModelo().conteudos.map { it.ordem to it.tipo })
+            .containsExactly(1 to TipoConteudo.IMAGEM, 2 to TipoConteudo.TEXTO).inOrder()
+        // Sem a legenda depois (o Enviar do campo), o texto vem primeiro, como antes.
+        val normal = envio.enviar(42, "oi", listOf(foto.copy(uri = "content://x/outra.jpg")))
+        assertThat(banco.mensagemDao().buscar(normal)!!.paraModelo().conteudos.map { it.ordem to it.tipo })
+            .containsExactly(1 to TipoConteudo.TEXTO, 2 to TipoConteudo.IMAGEM).inOrder()
+    }
+
+    @Test
     fun `localizacao vai sozinha como tipo 9 e a otimista ja mostra o mapa`() = runTest {
         val envio = envio()
         val json = """{"pontos":[{"lat":-23.55,"lng":-46.63,"nome":"Praça da Sé"}]}"""
