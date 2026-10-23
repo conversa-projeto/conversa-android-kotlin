@@ -32,10 +32,13 @@ No celular, ao digitar no campo de mensagem do chat, o teclado abria e fechava s
   - com a IA simulada: a sugestão "e mais um pouco" apareceu, sem nenhuma religação;
   - num grupo: "Oi @Teste Android C tudo bem", com a menção em azul e negrito, sem nenhuma religação ao continuar digitando.
 - `:feature:chat:testDebugUnitTest`, `ktlintCheck`, `:app:lintDebug` e `assembleDebug`.
+- **No celular da pessoa (Galaxy A25, Android 16, teclado SwiftKey), por depuração Wi-Fi, com o `ImeTracker`; a pessoa digitou a mesma frase no campo de mensagem:**
+  - versão antiga (debug de 2026-10-17): o teclado foi religado ao campo 29 vezes (`ATTACH_NEW_INPUT`) e escondido 28 vezes (`HIDE_SOFT_INPUT_BY_INSETS_API`), o pisca-pisca relatado;
+  - versão corrigida (`dfd7923`, instalada por cima com `adb install -r`, dados mantidos): 0 religações, 0 vezes escondido, mostrado uma vez no toque.
 - Os outros campos do app não têm o padrão: os de senha usam a API antiga (`PasswordVisualTransformation`, comparada pelo valor), e os `maxLength` também são comparados pelo valor.
 
 ## Decisões
 - **Sem teste automático:** seria preciso um teste de interface com o teclado de verdade, que o projeto ainda não tem (etapa 10). A regra no `CLAUDE.md` e o roteiro acima (digitar pelo adb e contar os `ATTACH_NEW_INPUT` do `ImeTracker`) ficam como proteção.
 
 ## Pendências
-- Conferir no celular da pessoa, com o teclado dela.
+- Nenhuma.
