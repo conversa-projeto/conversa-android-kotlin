@@ -4,7 +4,7 @@
 - **Tipo:** documentação
 - **Itens:** FC-226 (novo); notas em FC-216 e FC-729; PRE-01, PRE-02, PRE-03, CFG-09 e CHA-27; linhas 🆕 no `TODO.md` (2.11, 6.x e 8.5)
 - **Branch:** `reescrita`
-- **Commits:** `HASH_X`
+- **Commits:** `4191d1a`
 - **Commits de origem** (pull `--ff-only` em 2026-10-23):
   - **Servidor (`b104db8` → `331083b`):** `331083b` "Presença: a aba parada, mas visível, continua com a conversa aberta" (2026-10-22; só `src/websocket.ts` e o teste).
   - **Web (`3689155` → `17c49a4`), os dois de 2026-10-22:**
