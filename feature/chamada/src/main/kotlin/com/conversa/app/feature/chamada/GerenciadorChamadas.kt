@@ -202,6 +202,12 @@ class GerenciadorChamadas @Inject constructor(
                     },
                 )
             }
+            // Publica antes do `entrar` (FC-729, web `d244fc8`): o web que ligou já pré-assina e recebe o
+            // áudio sem tocar o som de espera. O `entrar` (o 54) continua sendo o sinal de que atendeu e
+            // espera a publicação até [ESPERA_PUBLICAR_ANTES_MS]; se o `entrar` falhar, o encerrar a desfaz.
+            val publicacao = if (local != MidiaLocal.NENHUMA) async { tentar { midia.publicar(id, eu) } } else null
+            withTimeoutOrNull(ESPERA_PUBLICAR_ANTES_MS) { publicacao?.await() }
+            if (!vivo(g)) return@launch
             try {
                 remoto.entrar(id)
             } catch (e: CancellationException) {
@@ -214,7 +220,7 @@ class GerenciadorChamadas @Inject constructor(
                 return@launch
             }
             if (!vivo(g)) return@launch
-            if (local != MidiaLocal.NENHUMA) tentar { midia.publicar(id, eu) }
+            publicacao?.await()
             if (!vivo(g)) return@launch
             ficarAtiva(id)
         }
@@ -803,6 +809,9 @@ class GerenciadorChamadas @Inject constructor(
 
         /** Como o web: 30 s tocando → "não atendeu". */
         const val TEMPO_TOCANDO_MS = 30_000L
+
+        /** Ao atender, quanto o `entrar` espera a publicação (FC-729); a coleta do ICE leva até 5 s no pior caso. */
+        const val ESPERA_PUBLICAR_ANTES_MS = 2_000L
 
         /** Sem ninguém atender (o outro sem app nem push): cancela. */
         const val TEMPO_SEM_RESPOSTA_MS = 45_000L

@@ -546,6 +546,9 @@ class GerenciadorChamadasTest {
         // O meu próprio 54 chega enquanto conecto: não é "atendeu em outro aparelho".
         evento(EventoSocket.UsuarioEntrou(RECEBIDA, EU))
         assertThat(g.estado.value.fase).isEqualTo(FaseChamada.CONECTANDO)
+        // Publica antes do `entrar` (FC-729): o web que ligou já recebe o áudio.
+        assertThat(midia.acoes).contains("publicar $RECEBIDA")
+        assertThat(remoto.chamadas).contains("entrar $RECEBIDA")
 
         portao.complete(Unit)
         runCurrent()
@@ -602,7 +605,28 @@ class GerenciadorChamadasTest {
         runCurrent()
 
         assertThat(g.estado.value.fase).isEqualTo(FaseChamada.INATIVO)
-        assertThat(midia.acoes.none { it.startsWith("publicar") }).isTrue()
+        // A publicação feita antes do `entrar` (FC-729) é desfeita pelo encerrar.
+        assertThat(midia.acoes).containsAtLeast("publicar $RECEBIDA", "encerrar").inOrder()
+    }
+
+    @Test
+    fun `atender - publicacao lenta nao segura o entrar mais que 2 s (FC-729)`() = runTest {
+        val g = criar()
+        tocando(g)
+        val publicacao = midia.portaoPublicar()
+
+        g.atender()
+        runCurrent()
+        assertThat(remoto.chamadas.none { it.startsWith("entrar") }).isTrue()
+
+        advanceTimeBy(GerenciadorChamadas.ESPERA_PUBLICAR_ANTES_MS + 1)
+        runCurrent()
+        assertThat(remoto.chamadas).contains("entrar $RECEBIDA")
+        // Ativa só quando a publicação termina.
+        assertThat(g.estado.value.fase).isEqualTo(FaseChamada.CONECTANDO)
+        publicacao.complete(Unit)
+        runCurrent()
+        assertThat(g.estado.value.fase).isEqualTo(FaseChamada.ATIVA)
     }
 
     @Test
@@ -1354,6 +1378,10 @@ class GerenciadorChamadasTest {
         var falharPublicar = false
         var portaoVideo: CompletableDeferred<Unit>? = null
         var portaoRecebendo: CompletableDeferred<Unit>? = null
+        private var portaoPublicacao: CompletableDeferred<Unit>? = null
+
+        /** Segura a próxima publicação até completar. */
+        fun portaoPublicar() = CompletableDeferred<Unit>().also { portaoPublicacao = it }
 
         override suspend fun abrirLocal(video: Boolean): MidiaLocal {
             acoes += "abrir video=$video"
@@ -1362,6 +1390,7 @@ class GerenciadorChamadasTest {
 
         override suspend fun publicar(chamadaId: Long, eu: Long) {
             acoes += "publicar $chamadaId"
+            portaoPublicacao?.await()
             if (falharPublicar) throw IOException("WHIP")
         }
 
