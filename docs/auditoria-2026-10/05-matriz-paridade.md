@@ -186,7 +186,7 @@ A coluna **Fase** indica em que fase do plano da nova base (doc 07) a funcionali
 | MSG-23 🆕 | Marcas das pastas na bolha (até 3 bolinhas na cor da pasta; atrás do ✓ na enviada, ao lado e clicáveis na recebida) | ⬜ | ✅ 7.14 · `2a58133` | — | Ler `pastas` (opcional) nas mensagens; atualizar pelo WS 67 e pelas respostas de pôr e tirar — 🆕 `ac710eb`/`f351190` | F4 | P3 |
 | MSG-24 🆕 | Pasta aberta por cima do chat, sem campo ("Ver na conversa", "Tirar da pasta", tirar várias, 50 por página) | ⬜ | ✅ 7.14 · `2a58133` | — | Tela da pasta com `GET /pasta/mensagens?id=&antes=`, menu sem "Pedir confirmação" nem "Ocultar" — 🆕 `ac710eb`/`f351190` | F4 | P2 |
 | MSG-25 🆕 | Localização e trajeto na conversa (bolha com mapa, visualizador com satélite, "Abrir no Google Maps") | ⬜ | ✅ 4.12 · `eaa4f42` · falta conferir a pinça em aparelho | — | Conteúdo tipo 9 (JSON dentro do `conteudo`); mapa de tiles do OSM com User-Agent do app e a atribuição; rótulo "Localização" nas prévias — 🆕 `ac710eb`/`f351190` | F3 | P1 |
-| MSG-26 🆕 | Tabelas CSV e TSV nos blocos de código (cabeçalho, números à direita, "Visualizar"/"Código", "Copiar" dos dados) | ⬜ | ✅ 7.9 · `HASH_X` | — | Portar o `tabelaCsv.ts` (aspas, separador `;` ou `,` pelo número de colunas, cabeçalho, alinhamento) com os testes do web; a tabela como terceiro visual do `BlocoCodigo` — 🆕 `3689155` | F4 | P3 |
+| MSG-26 🆕 | Tabelas CSV e TSV nos blocos de código (cabeçalho, números à direita, "Visualizar"/"Código", "Copiar" dos dados) | ⬜ | ✅ 7.9 · `9db5551` | — | Portar o `tabelaCsv.ts` (aspas, separador `;` ou `,` pelo número de colunas, cabeçalho, alinhamento) com os testes do web; a tabela como terceiro visual do `BlocoCodigo` — 🆕 `3689155` | F4 | P3 |
 
 ## ENV — Composição e ações
 

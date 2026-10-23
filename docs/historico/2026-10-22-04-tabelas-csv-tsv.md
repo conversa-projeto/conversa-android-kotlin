@@ -4,7 +4,7 @@
 - **Tipo:** código
 - **Itens:** `TODO.md` 7.9 e 7.11 (as linhas 🆕 `3689155`); FC-529; MSG-26, ENV-09, ENV-10
 - **Branch:** `reescrita`
-- **Commits:** (preencher)
+- **Commits:** `9db5551`
 
 ## Contexto
 No web (`3689155`):
