@@ -4,7 +4,7 @@
 - **Tipo:** documentação
 - **Itens:** FC-731 (novo); nota na FC-729; CHA-04, CHA-11, CHA-17 e CHA-27; linhas 🆕 no `TODO.md` (6.9, 6.13 e 6.x)
 - **Branch:** `reescrita`
-- **Commits:** `HASH_X`
+- **Commits:** `87c9753`
 - **Commits de origem** (pull `--ff-only` em 2026-10-27; o servidor não mudou desde `331083b`):
   - **Web (`17c49a4` → `1dab7dd`):**
     - `6117545` (2026-10-25) "Chamada sem atraso ao atender: a voz sai no clique, dos dois lados";
