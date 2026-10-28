@@ -4,7 +4,7 @@
 - **Tipo:** teste e documentação
 - **Itens:** `TODO.md` 7.14 e 4.12 (as linhas **Teste:** "com o web"); CON-17, ENV-30; FC-729 (CHA-27)
 - **Branch:** `reescrita`
-- **Commits:** `HASH_X`
+- **Commits:** `0cae929`
 
 ## Contexto
 Os testes rodaram em 2026-10-23, no fim da sessão. O registro ficou para hoje porque o computador ia desligar.

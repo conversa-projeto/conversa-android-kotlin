@@ -549,7 +549,7 @@
 - [x] Bolha: mapa de tiles do OSM (User-Agent do app, "© OpenStreetMap"), o nome do local ou A → B com a descrição do trajeto, e "Abrir no Google Maps" — 🔄 mapa próprio em Compose (tiles pelo Coil, rota e marcadores num Canvas), sem biblioteca de mapa ✔ eaa4f42
 - [x] Visualizador: o mapa grande com arrastar e pinça, ruas ou satélite (Esri), o nome e as coordenadas ou a descrição do trajeto — a pinça e o toque duplo ficam para conferir em aparelho ✔ eaa4f42
 - [x] Enviar: "+" › "Localização" (permissão de uso `localizacao`), Local ou Trajeto, busca de endereço (Nominatim) e coordenadas digitadas, toque no mapa para marcar, minha posição (permissão de localização do aparelho), rota de carro (OSRM) com debounce; "Enviar" ("Inserir na mensagem" depende da FC-416) — a permissão do aparelho é pedida no toque em "Usar minha posição"; os marcadores não se arrastam (tocar remarca) ✔ e0d3300
-- [x] **Teste:** local e trajeto nos dois sentidos com o web (bolha, visualizador, link) — no emulador, o app mandou e mostrou os dois (o JSON conferido pela API é o do web); aberto no web em 2026-10-23: bolha, visualizador e o link do trajeto e do local mandados pelo app ✔ HASH_X
+- [x] **Teste:** local e trajeto nos dois sentidos com o web (bolha, visualizador, link) — no emulador, o app mandou e mostrou os dois (o JSON conferido pela API é o do web); aberto no web em 2026-10-23: bolha, visualizador e o link do trajeto e do local mandados pelo app ✔ 0cae929
 
 ---
 
@@ -882,7 +882,7 @@
 - [x] Marcas na bolha: até 3 bolinhas na cor da pasta (atrás do ✓ na enviada; ao lado e tocáveis na recebida) ✔ 2a58133
 - [x] Pasta aberta: as mensagens dela (50 por página, `antes`), sem campo; "Ver na conversa", "Tirar da pasta" (uma ou várias), voltar — com "Responder" e "Selecionar" no toque longo ✔ 2a58133
 - [x] 🆕 `b104db8`/`57bd9f0` Sugestões de pasta pela IA, com a IA ligada e alguma pasta: "Sugerir pastas" na folha; `POST /pastas/sugerir` (com `ignorar`) e `GET /pastas/sugestao` a cada 2 s até sair de "processando"; cada sugestão com quem escreveu, a prévia e a pasta, ✓ põe na pasta e ✕ ignora (guardado no aparelho por pessoa e conversa); "Aceitar todas" com uma chamada por pasta (CON-18, FC-225) ✔ b8695b5 (falta conferir com um servidor de IA; no emulador, com a resposta simulada)
-- [x] **Teste:** criar, compartilhar e pôr mensagens com o web do outro lado (WS 67 nos dois sentidos) — no emulador, com o C pela API (WS 67 nos dois sentidos); com o web em 2026-10-23: pasta compartilhada criada no web apareceu no app; compartilhada e mensagem posta no app apareceram no web na hora ✔ HASH_X
+- [x] **Teste:** criar, compartilhar e pôr mensagens com o web do outro lado (WS 67 nos dois sentidos) — no emulador, com o C pela API (WS 67 nos dois sentidos); com o web em 2026-10-23: pasta compartilhada criada no web apareceu no app; compartilhada e mensagem posta no app apareceram no web na hora ✔ 0cae929
 
 ---
 
