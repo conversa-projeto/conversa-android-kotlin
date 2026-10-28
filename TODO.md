@@ -674,6 +674,7 @@
 - [x] 🆕 `d244fc8` (opcional) Publicar antes do `POST /chamada/entrar` ao atender: o web que ligou toca um som de espera do 54 até o primeiro áudio do outro lado (até 10 s). Não abrir câmera e microfone enquanto toca, como o web faz (serviço em primeiro plano do Android 14+) (CHA-27, FC-729) — o `entrar` espera a publicação até 2 s; no emulador: WHIP em 90,782 s e `entrar` em 90,807 s ✔ f2e2b10
 - [ ] 🆕 `d244fc8` **Teste:** a mesma conta no web e no celular, atendendo no celular no primeiro toque: a aba prepara a chamada durante o toque e publica no mesmo caminho; o app precisa se recuperar se a publicação dele cair (CHA-27, FC-729)
 - [ ] 🆕 `30035bb` Se o app passar a assinar durante o toque (FC-729): consumir o áudio assinado mudo enquanto toca; no web, sem isso, a voz chegava ~1 s atrasada ao atender (CHA-27)
+- [ ] 🆕 `6117545`/`c5487a9` **Teste:** repetir o atender com o web ligando: quem liga agora toca a pré-assinatura sem mudo e espera a que está conectando; a voz do celular deve sair sem o som de espera (CHA-27, FC-729)
 
 ### 6.6 Regras automáticas (FC-708, FC-709, FC-710, ATV-03)
 - [x] 51 durante outra chamada ou toque → `recusar {nao_atendeu:true}` sem tocar (`GerenciadorChamadas`, com teste) ✔ ceeec72
@@ -704,6 +705,7 @@
 - [x] Cores: microfone, câmera e som **vermelhos quando desligados**; tela, chat e ponteiro **azuis quando ligados**; demais neutros — microfone e câmera vermelhos quando desligados (cores do FMX); no Android não há "som desligado" (no lugar, o seletor de rota "Áudio saída"); tela e ponteiro chegam com o compartilhamento de tela (etapa 9); o chat abre a conversa, sem estado ligado/desligado ✔ cf43b1f
 - [x] `BackHandler`: voltar = minimizar (não encerra) — em vídeo vira picture-in-picture; em áudio a tela fecha e a faixa "Toque para voltar à chamada" leva de volta (6.12) ✔ add5196
 - [x] Tiles: nome ("Você"), iniciais sem vídeo, faixa vermelha de erro de conexão — grade de participantes, miniatura local com "Você"; sem vídeo do outro, avatar (não um quadro preto) ✔ cf43b1f
+- [ ] 🆕 `edb1785` Tile com vídeo: "Conectando o vídeo..." até o primeiro quadro, no lugar da tela preta (CHA-11, FC-731)
 - [ ] **Teste:** atender e desligar só com o TalkBack
 
 ### 6.10 Histórico de chamadas (FC-715, CHA-22)
@@ -739,6 +741,8 @@
 - [x] Somente recepção: entrar sem microfone/câmera; botões "Ativar microfone"/"Ativar câmera" — `GerenciadorChamadas.ativarTransmissao(video)` abre a mídia e publica (+ 3 testes); os botões aparecem com a chamada ativa e sem mídia ("Ativar câmera" só em vídeo), pedindo a permissão na hora. Não testado no emulador: as permissões já estão concedidas lá (não revogo pelo adb) ✔ 068e10b
 - [x] Tela remota compartilhada: WS 57 `{acao:"tela", ativa}` → destacar a tela — `EstadoChamada.telas` (+ teste); a tela entra em destaque e aparece inteira (sem cortar); ao parar, volta à grade e somem os ponteiros sobre ela. No emulador: o B compartilhou a tela pelo web e o app passou sozinho ao destaque com ela ✔ 3a9f39d
 - [x] Ponteiro remoto: WS 57 `{acao:"ponteiro", alvo, x, y}` → desenhar com nome e cor (`id % 5`); some em 5 s — `EstadoChamada.ponteiros` (+ teste: x/y nulos tiram; 5 s sem atualizar some); bolinha e nome sobre a área real da imagem (o renderizador informa a resolução; `areaDaImagem`, + teste); 5 cores do tema no lugar das do web. No emulador: o C apontou no meio da tela do B e o ponteiro "Teste Android C" apareceu no meio; sumiu em 5 s ✔ 3a9f39d
+- [ ] 🆕 `edb1785` Sinal WS 57 `{acao:"escolhendo", ativa}`: "Fulano está escolhendo a tela..." ("… estão …" com mais de um) até a tela aparecer, a escolha fechar ou a pessoa sair (CHA-17, FC-731)
+- [ ] 🆕 `edb1785` Ao ver a tela compartilhada de alguém, mandar uma vez por compartilhamento `{acao:"vendo", alvo}`; o web de quem compartilha mostra "Vendo sua tela:" com ✓ ou "(conectando...)" (CHA-17, FC-731)
 - [x] 🆕 `769bd7d` Convidados fora da chamada na grade: "Chamando..." e "Não atendeu" com "Chamar de novo" (`POST /chamada/chamar-novamente {chamada_id, usuario_id}`); WS 57 `{acao:"participantes"}` → reler `GET /chamada/dados` (CHA-25, FC-726) — `GerenciadorChamadas.chamarNovamente` e `convidadosAguardando` (+ 5 testes); quadro `ConvidadoAguardando` na grade; o seletor de modos conta os convidados (quem atende "só assistindo" abre em tela única). No emulador: o C recusou, "Chamar de novo" o fez tocar ("Chamando…"); a recusa (WS 53) e o "chamar de novo" do B (WS 57) atualizaram o quadro ✔ 15844e4
 
 ### 6.14 Matriz de testes manuais (FC-955)

@@ -865,6 +865,8 @@ Transporte no §6.5. Formato de `dados` usado pelo web (`conversa-web/src/types/
 | `{"acao":"ponteiro","alvo":<usuario_id dono da tela>,"x":0..1\|null,"y":0..1\|null}` | quem assiste a tela, no máximo a cada 40 ms; `x/y` nulos = ponteiro saiu | desenhar o ponteiro de `usuario_id` sobre a tela de `alvo`; some após 5 s sem atualização |
 | `{"acao":"chat","conversa_id":<int>}` | **o servidor**, ao criar o chat da chamada (🆕 `a40fd47`: ou ao reaproveitar a conversa da ligação — 🆕 `6d20ff7`: só quando ela é o chat de outra ligação) | todos passam a usar essa conversa como chat da chamada. 🆕 Quem não é membro dela recebe o aviso do mesmo jeito (§9.12) |
 | 🆕 `b8ea0c2` `{"acao":"participantes"}` | **o servidor**, em `POST /chamada/chamar-novamente` | alguém voltou a tocar: reler `GET /chamada/dados` para atualizar a lista (§9.14) |
+| 🆕 web `edb1785` `{"acao":"escolhendo","ativa":true\|false}` | quem abriu (`true`) ou fechou sem escolher (`false`) a escolha da tela; escolhida, o `{acao:"tela"}` substitui | mostrar "Fulano está escolhendo a tela..." até a tela aparecer, a escolha fechar ou a pessoa sair |
+| 🆕 web `edb1785` `{"acao":"vendo","alvo":<usuario_id dono da tela>}` | quem assiste, uma vez por compartilhamento, quando a tela aparece no quadro | quem compartilha marca essa pessoa com ✓ em "Vendo sua tela:" (sem o aviso, ela fica "(conectando...)") |
 
 ### 9.12 Chat da chamada — `PUT /api/chamada/chat`
 
