@@ -197,6 +197,8 @@ class ChamadaViewModel @Inject constructor(
 
     fun ativarTransmissao(video: Boolean) = gerenciador.ativarTransmissao(video)
 
+    fun avisarTelaVista(alvo: Long) = gerenciador.avisarTelaVista(alvo)
+
     /** Primeiro toque no campo do chat da chamada (6.13, web `eaa8bac`): cria o grupo e abre a conversa. */
     fun criarChat(aoAbrir: (Long) -> Unit, aoFalhar: () -> Unit) {
         viewModelScope.launch {
@@ -302,6 +304,7 @@ fun TelaChamadaRota(
                     // Chat já existe: a conversa completa; senão, a folha com o campo que cria o grupo (como o web).
                     aoChat = { estado.conversaChatId?.let { aoAbrirChat(it, false) } ?: run { escrevendoNoChat = true } },
                     aoMinimizar = aoMinimizar,
+                    aoTelaVista = viewModel::avisarTelaVista,
                 ),
             )
         }
@@ -471,6 +474,8 @@ private data class AcoesEmChamada(
     val aoChat: () -> Unit,
     /** Sai da tela sem encerrar: a chamada segue (faixa no topo do app ou picture-in-picture). */
     val aoMinimizar: () -> Unit,
+    /** A tela compartilhada dessa pessoa apareceu aqui (o web dela mostra quem já vê). */
+    val aoTelaVista: (Long) -> Unit,
 )
 
 /** Rotas de áudio do Telecom: as disponíveis e a de agora. */
@@ -527,11 +532,25 @@ private fun TelaEmChamada(
                     Text(nome, style = MaterialTheme.typography.titleMedium, textAlign = TextAlign.Center)
                 }
             } else {
-                CompositionLocalProvider(LocalTelasDaChamada provides TelasDaChamada(estado.telas, estado.ponteiros.values)) {
+                CompositionLocalProvider(
+                    LocalTelasDaChamada provides TelasDaChamada(estado.telas, estado.ponteiros.values, acoes.aoTelaVista),
+                ) {
                     Participantes(estado.exibicao, remotos, aguardando, nomes, egl, acoes)
                 }
             }
-            estado.etapaVideo?.let { etapa -> EtapaDoVideo(etapa, Modifier.align(Alignment.TopCenter).padding(top = 12.dp)) }
+            // Avisos no topo, um embaixo do outro (como o web): a etapa do vídeo e quem está escolhendo a tela.
+            // A miniatura local fica por cima de tudo (o vídeo é desenhado numa camada própria): os avisos desviam dela.
+            val comMiniatura = trilhas.videoLocal != null && estado.cameraLigada
+            Column(
+                Modifier.align(Alignment.TopCenter)
+                    .padding(top = 12.dp, start = 12.dp, end = if (comMiniatura) MARGEM_DA_MINIATURA else 12.dp)
+                    .zIndex(1f),
+                horizontalAlignment = Alignment.CenterHorizontally,
+                verticalArrangement = Arrangement.spacedBy(6.dp),
+            ) {
+                estado.etapaVideo?.let { etapa -> EtapaDoVideo(etapa) }
+                textoEscolhendo(estado.escolhendoTela, nomes)?.let { texto -> AvisoGirando(texto) }
+            }
             val videoLocal = trilhas.videoLocal
             if (videoLocal != null && estado.cameraLigada) {
                 // Miniatura local, com o nome "Você" (TODO 6.9).
@@ -556,7 +575,7 @@ private fun TelaEmChamada(
 
 /** Ligando o vídeo numa chamada de áudio: o que está acontecendo (FC-728, textos do web). */
 @Composable
-private fun EtapaDoVideo(etapa: EtapaVideo, modifier: Modifier) {
+private fun EtapaDoVideo(etapa: EtapaVideo) {
     val texto = stringResource(
         when (etapa) {
             EtapaVideo.CAMERA -> R.string.etapa_video_camera
@@ -564,8 +583,23 @@ private fun EtapaDoVideo(etapa: EtapaVideo, modifier: Modifier) {
             EtapaVideo.RECEBENDO -> R.string.etapa_video_recebendo
         },
     )
+    AvisoGirando(texto)
+}
+
+/** "Ana está escolhendo a tela..." / "Ana, Bruno estão escolhendo a tela..." (web `edb1785`); nulo = ninguém. */
+@Composable
+private fun textoEscolhendo(quem: Set<Long>, nomes: Map<Long, String>): String? {
+    if (quem.isEmpty()) return null
+    val padrao = stringResource(R.string.participante_sem_nome)
+    val lista = quem.map { id -> nomes[id]?.takeIf { it.isNotBlank() } ?: padrao }
+    return stringResource(if (lista.size > 1) R.string.escolhendo_tela_varios else R.string.escolhendo_tela_um, lista.joinToString(", "))
+}
+
+/** Aviso com um círculo girando, na pílula escura do topo da chamada. */
+@Composable
+private fun AvisoGirando(texto: String) {
     Row(
-        modifier.zIndex(1f).clip(RoundedCornerShape(50)).background(Color.Black.copy(alpha = 0.7f))
+        Modifier.clip(RoundedCornerShape(50)).background(Color.Black.copy(alpha = 0.7f))
             .padding(horizontal = 12.dp, vertical = 6.dp).semantics { liveRegion = LiveRegionMode.Polite },
         verticalAlignment = Alignment.CenterVertically,
         horizontalArrangement = Arrangement.spacedBy(8.dp),
@@ -854,6 +888,23 @@ private fun ConvidadoAguardando(participante: ParticipanteChamada, aoChamarDeNov
     }
 }
 
+/**
+ * Por cima do vídeo que ainda não mostrou nenhum quadro (texto do web). As cores são as do "Conectando…"
+ * do quadro sem vídeo, no mesmo fundo: o branco sumia no cinza do tema claro (o web corrigiu o mesmo no `1dab7dd`).
+ */
+@Composable
+private fun ConectandoVideo(modifier: Modifier) {
+    Column(
+        modifier.background(ConversaTema.cores.chamadaBarraInferior),
+        verticalArrangement = Arrangement.Center,
+        horizontalAlignment = Alignment.CenterHorizontally,
+    ) {
+        CircularProgressIndicator(Modifier.size(20.dp), strokeWidth = 2.dp)
+        Spacer(Modifier.height(8.dp))
+        Text(stringResource(R.string.conectando_video), style = MaterialTheme.typography.labelMedium)
+    }
+}
+
 @Composable
 private fun Participante(
     usuario: Long,
@@ -869,12 +920,30 @@ private fun Participante(
     // Tela compartilhada (6.13): a imagem inteira, sem cortar, com os ponteiros dos outros por cima.
     val ehTela = usuario in telas.telas
     var resolucao by remember { mutableStateOf<IntSize?>(null) }
+    // Até o primeiro quadro: "Conectando o vídeo..." no lugar da área escura (web `edb1785`).
+    var temQuadro by remember(trilha.video) { mutableStateOf(false) }
+    // A tela de quem compartilha apareceu aqui: o quadro mudou de tamanho depois do aviso `tela`
+    // (era a câmera, ou nada) ou, do mesmo tamanho, ~1 s depois; avisa quem compartilha (`vendo`).
+    val resolucaoNoAviso = remember(ehTela) { resolucao }
+    LaunchedEffect(ehTela, temQuadro, resolucao) {
+        if (!ehTela || !temQuadro) return@LaunchedEffect
+        if (resolucao == resolucaoNoAviso) delay(TEMPO_TELA_VISTA_MS)
+        telas.aoTelaVista(usuario)
+    }
     // Anel verde enquanto fala (6.13); por cima do vídeo.
     Box(modifier.clip(RoundedCornerShape(12.dp)).background(cores.chamadaBarraInferior).anelDeFala(trilha.falando)) {
         val video = trilha.video
         if (video != null) {
-            VideoDaTrilha(video, egl, modifier = Modifier.fillMaxSize(), ajustar = ehTela, aoResolucao = { resolucao = it })
+            VideoDaTrilha(
+                video,
+                egl,
+                modifier = Modifier.fillMaxSize(),
+                ajustar = ehTela,
+                aoResolucao = { resolucao = it },
+                aoPrimeiroQuadro = { temQuadro = true },
+            )
             if (ehTela) PonteirosSobreATela(telas.ponteiros.filter { it.alvo == usuario }, resolucao)
+            if (!temQuadro) ConectandoVideo(Modifier.matchParentSize())
         } else {
             Column(Modifier.align(Alignment.Center), horizontalAlignment = Alignment.CenterHorizontally) {
                 Avatar(nome, null, tamanho = tamanhoAvatar)
@@ -923,8 +992,11 @@ private fun VideoDaTrilha(
     /** Mostrar a imagem inteira (tela compartilhada) em vez de preencher cortando. */
     ajustar: Boolean = false,
     aoResolucao: ((IntSize) -> Unit)? = null,
+    /** O primeiro quadro apareceu (o renderer avisa uma vez). */
+    aoPrimeiroQuadro: (() -> Unit)? = null,
 ) {
     val avisarResolucao by rememberUpdatedState(aoResolucao)
+    val avisarPrimeiroQuadro by rememberUpdatedState(aoPrimeiroQuadro)
     key(trilha) {
         AndroidView(
             factory = { contexto ->
@@ -933,7 +1005,9 @@ private fun VideoDaTrilha(
                     init(
                         egl,
                         object : RendererCommon.RendererEvents {
-                            override fun onFirstFrameRendered() = Unit
+                            override fun onFirstFrameRendered() {
+                                principal.post { avisarPrimeiroQuadro?.invoke() }
+                            }
 
                             override fun onFrameResolutionChanged(largura: Int, altura: Int, rotacao: Int) {
                                 val tamanho = if (rotacao % 180 == 0) IntSize(largura, altura) else IntSize(altura, largura)
@@ -1299,7 +1373,17 @@ private fun Modifier.anelDeFala(falando: Boolean): Modifier =
     if (falando) border(3.dp, ConversaTema.cores.chamadaEmAndamento, RoundedCornerShape(12.dp)) else this
 
 /** Telas compartilhadas e ponteiros, para os quadros dos participantes (6.13). */
-private data class TelasDaChamada(val telas: Set<Long> = emptySet(), val ponteiros: Collection<PonteiroRemoto> = emptyList())
+/** O web espera ~1 s de quadros do mesmo tamanho para dar a tela como vista (`VideoRemoto.vue`). */
+private const val TEMPO_TELA_VISTA_MS = 1_000L
+
+/** A miniatura local (104 dp, a 12 dp da borda) e um respiro: os avisos do topo não passam por baixo dela. */
+private val MARGEM_DA_MINIATURA = 128.dp
+
+private data class TelasDaChamada(
+    val telas: Set<Long> = emptySet(),
+    val ponteiros: Collection<PonteiroRemoto> = emptyList(),
+    val aoTelaVista: (Long) -> Unit = {},
+)
 
 private val LocalTelasDaChamada = compositionLocalOf { TelasDaChamada() }
 

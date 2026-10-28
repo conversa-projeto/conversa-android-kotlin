@@ -104,6 +104,7 @@
 - 2026-10-22 · [Espera do ICE com o TURN por UDP: medida e encurtada](2026-10-22-07-espera-do-ice-com-turn-udp.md) — no emulador, 5,3 s por WHIP/WHEP com o UDP primeiro (0,1 s só com o TCP); a oferta agora sai 1 s depois do primeiro candidato do TURN (1,3 s); `EsperaColeta` com teste
 - 2026-10-23 · [Coturn local com a porta UDP](2026-10-23-04-coturn-com-udp-local.md) — o contêiner do coturn recriado com a 3478/UDP (servidor `383eaaa`); ligação de teste pelo relay no emulador; guia do emulador atualizado
 - 2026-10-23 · [Ao atender, publicar antes do `entrar`](2026-10-23-05-publicar-antes-de-entrar.md) — o `entrar` espera a publicação até 2 s (FC-729), e o web que liga não precisa tocar o som de espera; no emulador, WHIP antes do `entrar`; CHA-27 🟡
+- 2026-10-27 · ["Conectando o vídeo…", quem está escolhendo a tela e o aviso de quem já vê](2026-10-27-03-conectando-escolhendo-e-vendo-a-tela.md) — FC-731: sinais 57 `escolhendo` e `vendo`, aviso no topo e "Conectando o vídeo…" até o primeiro quadro; com o web, o A em "Vendo sua tela"; FC-729 repetida: som de espera de 5,3 s para 1,24 s
 
 ## Ações sobre mensagens (etapa 7)
 - 2026-10-08 · [Etapa 7 — menu da mensagem, reações, ocultar e copiar](2026-10-08-19-etapa-7-menu-reacoes-ocultar.md) — toque longo com reações rápidas, seletor de emoji, chips e "quem reagiu", WS 7, Ocultar com a confirmação do web e Copiar (texto ou imagem)

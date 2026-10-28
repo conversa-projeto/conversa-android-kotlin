@@ -20,6 +20,11 @@
     <string name="etapa_video_recebendo">Recebendo o vídeo dos participantes…</string>
     <string name="erro_chamar_de_novo">Erro ao chamar de novo</string>
     <string name="conectando">Conectando…</string>
+    <!-- Tela compartilhada e vídeo dos outros (web edb1785) -->
+    <string name="conectando_video">Conectando o vídeo…</string>
+    <string name="escolhendo_tela_um">%1$s está escolhendo a tela…</string>
+    <string name="escolhendo_tela_varios">%1$s estão escolhendo a tela…</string>
+    <string name="participante_sem_nome">Participante</string>
     <string name="em_chamada">Em chamada</string>
     <string name="encerrando">Encerrando…</string>
     <string name="em_espera">Chamada em espera</string>

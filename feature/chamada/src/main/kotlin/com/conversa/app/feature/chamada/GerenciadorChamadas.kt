@@ -45,9 +45,11 @@ import kotlinx.coroutines.withTimeoutOrNull
 import kotlinx.serialization.json.JsonObject
 import kotlinx.serialization.json.JsonPrimitive
 import kotlinx.serialization.json.booleanOrNull
+import kotlinx.serialization.json.buildJsonObject
 import kotlinx.serialization.json.contentOrNull
 import kotlinx.serialization.json.floatOrNull
 import kotlinx.serialization.json.longOrNull
+import kotlinx.serialization.json.put
 import timber.log.Timber
 
 /** Onde o gerenciador roda: uma coisa por vez. */
@@ -468,6 +470,8 @@ class GerenciadorChamadas @Inject constructor(
         val atual = _estado.value
         if (atual.chamadaId != id || quem == eu) return
         if (atual.fase != FaseChamada.CHAMANDO && atual.fase != FaseChamada.CONECTANDO && atual.fase != FaseChamada.ATIVA) return
+        telasVistas.remove(quem)
+        atualizar { it.copy(escolhendoTela = it.escolhendoTela - quem) }
         midia.desconectar(quem)
         val dados = atualizarDados(id) ?: return
         conferirSeAcabou(id, dados, eu)
@@ -490,7 +494,32 @@ class GerenciadorChamadas @Inject constructor(
         }
     }
 
-    /** WS 57 (contrato §9.11): chat da chamada, tela compartilhada e ponteiro remoto. */
+    /** Telas dos outros que eu já avisei que estou vendo (uma vez por compartilhamento). */
+    private val telasVistas = mutableSetOf<Long>()
+
+    /**
+     * A tela compartilhada de [alvo] apareceu aqui: avisa quem compartilha com o WS 57
+     * `{acao:"vendo", alvo}` (web `edb1785`), uma vez por compartilhamento. Sem o aviso, o web
+     * dele mostra este aparelho como "(conectando...)" em "Vendo sua tela:".
+     */
+    fun avisarTelaVista(alvo: Long) {
+        escopo.launch {
+            val atual = _estado.value
+            val id = atual.chamadaId ?: return@launch
+            if (alvo !in atual.telas || !telasVistas.add(alvo)) return@launch
+            val enviado = tempoReal.enviarSinal(
+                id,
+                buildJsonObject {
+                    put("acao", "vendo")
+                    put("alvo", alvo)
+                },
+            )
+            // Socket fechado: avisa na próxima vez que a tela aparecer.
+            if (!enviado) telasVistas.remove(alvo)
+        }
+    }
+
+    /** WS 57 (contrato §9.11): chat da chamada, tela compartilhada (e quem a escolhe) e ponteiro remoto. */
     private fun sinal(id: Long, quem: Long, dados: JsonObject, eu: Long) {
         if (_estado.value.chamadaId != id || quem == eu) return
         when ((dados["acao"] as? JsonPrimitive)?.contentOrNull) {
@@ -502,18 +531,30 @@ class GerenciadorChamadas @Inject constructor(
             "participantes" -> noTrabalho { atualizarDados(id) }
             "tela" -> {
                 val ativa = (dados["ativa"] as? JsonPrimitive)?.booleanOrNull == true
+                // Cada compartilhamento novo é avisado de novo (`vendo`).
+                if (!ativa) telasVistas.remove(quem)
                 atualizar { e ->
                     if (ativa) {
-                        // Tela nova: em destaque (TODO 6.13).
-                        e.copy(telas = e.telas + quem, exibicao = Exibicao(ModoExibicao.DESTAQUE, quem))
+                        // Tela nova: em destaque (TODO 6.13); o aviso da tela substitui o "escolhendo".
+                        e.copy(
+                            telas = e.telas + quem,
+                            escolhendoTela = e.escolhendoTela - quem,
+                            exibicao = Exibicao(ModoExibicao.DESTAQUE, quem),
+                        )
                     } else {
                         e.copy(
                             telas = e.telas - quem,
+                            escolhendoTela = e.escolhendoTela - quem,
                             ponteiros = e.ponteiros.filterValues { it.alvo != quem },
                             exibicao = if (e.exibicao.destaque == quem) Exibicao() else e.exibicao,
                         )
                     }
                 }
+            }
+            // Abriu (ou fechou sem escolher) a escolha da tela: "Fulano está escolhendo a tela..." (web `edb1785`).
+            "escolhendo" -> {
+                val ativa = (dados["ativa"] as? JsonPrimitive)?.booleanOrNull == true
+                atualizar { e -> e.copy(escolhendoTela = if (ativa) e.escolhendoTela + quem else e.escolhendoTela - quem) }
             }
             "ponteiro" -> {
                 val alvo = (dados["alvo"] as? JsonPrimitive)?.longOrNull
@@ -637,6 +678,7 @@ class GerenciadorChamadas @Inject constructor(
         geracao++
         cancelarTrabalho()
         midia.encerrar()
+        telasVistas.clear()
         _estado.value = EstadoChamada()
     }
 

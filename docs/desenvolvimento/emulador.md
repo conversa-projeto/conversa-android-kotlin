@@ -75,3 +75,11 @@ O mesmo roteiro vale para um celular na mesma rede Wi-Fi do PC, sem cabo:
 5. O app de teste (`com.conversa.conversa.dev`) fica ao lado do app oficial, sem dividir dados.
 
 Primeiro uso: 2026-10-09, Galaxy A25 (Android 16), conta `teste.android.b`, com o web na conta C ligando.
+
+## Emulador sem espaço
+
+O armazenamento interno do AVD é de 6 GB, e os apps do Google se atualizam sozinhos com a rede. Com menos de ~10% livre, a instalação falha ("not enough space" / `INSTALL_FAILED_INSUFFICIENT_STORAGE`), e reinstalar por cima precisa de espaço para o APK velho e o novo (o de debug tem ~145 MB).
+- Conferir: `adb shell dumpsys diskstats | grep Data-Free`.
+- Uma instalação que falhou pode deixar o APK em `/data/local/tmp` (`adb shell ls -la /data/local/tmp`).
+- Desinstalar o app de debug e instalar de novo também resolve, mas perde-se o endereço do servidor e o login (refazer como no passo a passo).
+- O que resolve de vez é aumentar o armazenamento do AVD no Device Manager do Android Studio, que fica a critério de quem usa o emulador.

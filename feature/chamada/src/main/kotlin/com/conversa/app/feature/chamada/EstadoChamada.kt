@@ -59,6 +59,8 @@ data class EstadoChamada(
     val exibicao: Exibicao = Exibicao(),
     /** Quem está compartilhando a tela (WS 57 `{acao:"tela"}`): a imagem dele é uma tela. */
     val telas: Set<Long> = emptySet(),
+    /** Quem está com a escolha da tela aberta (WS 57 `{acao:"escolhendo"}`, web `edb1785`). */
+    val escolhendoTela: Set<Long> = emptySet(),
     /** Ponteiros dos outros sobre as telas compartilhadas (somem em 5 s sem atualizar). */
     val ponteiros: Map<Long, PonteiroRemoto> = emptyMap(),
     /** Ligando o vídeo numa chamada de áudio: em que etapa está (FC-728); nulo fora disso. */

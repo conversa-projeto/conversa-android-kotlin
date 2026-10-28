@@ -25,6 +25,7 @@ import com.conversa.app.core.webrtc.MidiaLocal
 import com.google.common.truth.Truth.assertThat
 import io.mockk.every
 import io.mockk.mockk
+import io.mockk.verify
 import java.io.IOException
 import java.time.Clock
 import java.time.Instant
@@ -60,8 +61,12 @@ class GerenciadorChamadasTest {
     private val remoto = RemotoFalso()
     private val midia = MidiaFalsa()
 
+    private val tempoReal = mockk<RealtimeClient> {
+        every { eventos } returns this@GerenciadorChamadasTest.eventos
+        every { enviarSinal(any(), any()) } returns true
+    }
+
     private fun TestScope.criar(): GerenciadorChamadas {
-        val tempoReal = mockk<RealtimeClient> { every { eventos } returns this@GerenciadorChamadasTest.eventos }
         val sincronizacao = mockk<SyncManager> { every { chamadasPendentes } returns pendentes }
         val conexao = mockk<ConexaoTempoReal> { every { chamadaAtiva } returns this@GerenciadorChamadasTest.chamadaAtiva }
         val sessao = mockk<SessaoRepositorio> { every { sessao } returns sessaoAtual }
@@ -1118,6 +1123,63 @@ class GerenciadorChamadasTest {
         assertThat(g.estado.value.telas).isEmpty()
         assertThat(g.estado.value.ponteiros).isEmpty()
         assertThat(g.estado.value.exibicao).isEqualTo(Exibicao())
+    }
+
+    private fun sinalDe(quem: Long, acao: String, ativa: Boolean) = EventoSocket.SinalChamada(
+        RECEBIDA,
+        quem,
+        buildJsonObject {
+            put("acao", acao)
+            put("ativa", ativa)
+        },
+    )
+
+    @Test
+    fun `escolhendo a tela aparece ate a tela chegar, a escolha fechar ou a pessoa sair (web edb1785)`() = runTest {
+        val g = criar()
+        ativaRecebida(g, listOf(p(OUTRO, ENTROU), p(TERCEIRO, ENTROU)))
+
+        evento(sinalDe(OUTRO, "escolhendo", true))
+        evento(sinalDe(TERCEIRO, "escolhendo", true))
+        assertThat(g.estado.value.escolhendoTela).containsExactly(OUTRO, TERCEIRO)
+        // Escolheu: o aviso da tela substitui.
+        evento(sinalDe(OUTRO, "tela", true))
+        assertThat(g.estado.value.escolhendoTela).containsExactly(TERCEIRO)
+        // Fechou sem escolher.
+        evento(sinalDe(TERCEIRO, "escolhendo", false))
+        assertThat(g.estado.value.escolhendoTela).isEmpty()
+        // Saiu da chamada no meio da escolha.
+        evento(sinalDe(TERCEIRO, "escolhendo", true))
+        evento(EventoSocket.UsuarioSaiu(RECEBIDA, TERCEIRO))
+        assertThat(g.estado.value.escolhendoTela).isEmpty()
+    }
+
+    @Test
+    fun `ver a tela de alguem avisa quem compartilha uma vez por compartilhamento (web edb1785)`() = runTest {
+        val g = criar()
+        ativaRecebida(g, listOf(p(OUTRO, ENTROU), p(TERCEIRO, ENTROU)))
+        val vendo = buildJsonObject {
+            put("acao", "vendo")
+            put("alvo", OUTRO)
+        }
+
+        // Sem a tela do OUTRO: nada vai.
+        g.avisarTelaVista(OUTRO)
+        runCurrent()
+        verify(exactly = 0) { tempoReal.enviarSinal(any(), any()) }
+
+        evento(sinalDe(OUTRO, "tela", true))
+        g.avisarTelaVista(OUTRO)
+        g.avisarTelaVista(OUTRO)
+        runCurrent()
+        verify(exactly = 1) { tempoReal.enviarSinal(RECEBIDA, vendo) }
+
+        // Parou e voltou a compartilhar: avisa de novo.
+        evento(sinalDe(OUTRO, "tela", false))
+        evento(sinalDe(OUTRO, "tela", true))
+        g.avisarTelaVista(OUTRO)
+        runCurrent()
+        verify(exactly = 2) { tempoReal.enviarSinal(RECEBIDA, vendo) }
     }
 
     @Test
