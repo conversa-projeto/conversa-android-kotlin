@@ -4,7 +4,7 @@
 - **Tipo:** código
 - **Itens:** `TODO.md` 6.9 e 6.13 (as linhas 🆕 `edb1785`) e o teste 🆕 `6117545`/`c5487a9` do 6.x; FC-731; FC-729; CHA-11, CHA-17 e CHA-27
 - **Branch:** `reescrita`
-- **Commits:** `HASH_X`
+- **Commits:** `5b4032f`
 
 ## Contexto
 O web `edb1785` (sincronização 2026-10-27-02) trouxe três coisas que o app precisa acompanhar:
