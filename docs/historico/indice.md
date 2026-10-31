@@ -167,6 +167,7 @@ _(nada ainda)_
 - 2026-10-22 · [Lint do debug com HTTP sem TLS](2026-10-22-08-lint-do-debug-com-http.md) — `tools:ignore="InsecureBaseConfiguration"` só na configuração de rede do debug (decisão de 2026-10-17); o `lintDebug` voltou a passar; versões novas de bibliotecas anotadas
 - 2026-10-31 · [Registro do app: 7 dias de diagnóstico guardados no aparelho](2026-10-31-04-registro-do-app.md) — `:core:registro` (arquivo por dia, 7 dias, sigilo, falha fatal); HTTP, tempo real, sessão, envio, sincronização, notificações, chamadas, rede, energia, permissões, por que o processo morreu e travamentos; tela para ver, compartilhar e apagar; vale também no release; testado no celular
 - 2026-10-31 · [Registro do app: o tamanho em bytes abaixo de 1 kB](2026-10-31-05-registro-tamanho-em-bytes.md) — logo depois do Apagar a tela dizia "0 kB" com uma linha gravada; agora "121 B"
+- 2026-10-31 · [O Sigilo no RegexNoAndroidTest, rodado no emulador](2026-10-31-06-regex-do-sigilo-no-emulador.md) — `OK (1 test)` no Android 16; com o celular também no adb, só no emulador pelo `am instrument`; o guia do emulador ganhou esse caminho e o que fazer quando o `install -r` falta espaço
 
 ## App legado (hotfixes opcionais)
 _(nada ainda)_

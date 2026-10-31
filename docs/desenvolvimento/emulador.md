@@ -32,6 +32,11 @@ GPS simulado (enviar localização, ENV-30): o GPS do emulador só entrega uma p
 
 Atenção: `./gradlew :app:connectedDebugAndroidTest` **desinstala o app no fim**. Depois dele, o servidor e a sessão precisam ser configurados de novo.
 
+**Com o celular também ligado ao adb**, o `connectedDebugAndroidTest` roda em todos os aparelhos e desinstala o app em todos. Para rodar uma classe só no emulador, sem desinstalar:
+1. `./gradlew :app:assembleDebug :app:assembleDebugAndroidTest`;
+2. `adb -s emulator-5554 install -r app/build/outputs/apk/debug/app-debug.apk` e o mesmo com `app/build/outputs/apk/androidTest/debug/app-debug-androidTest.apk`;
+3. `adb -s emulator-5554 shell am instrument -w -r -e class com.conversa.app.RegexNoAndroidTest com.conversa.conversa.dev.test/androidx.test.runner.AndroidJUnitRunner`. No fim, `OK (1 test)`.
+
 ## Contas de teste (banco `conversa_dev`, só no servidor local)
 
 Criadas pelo próprio cadastro do app em 2026-10-07 (a C em 2026-10-08, para chamadas em grupo):
@@ -90,4 +95,6 @@ O armazenamento interno do AVD é de 6 GB, e os apps do Google se atualizam sozi
 - Conferir: `adb shell dumpsys diskstats | grep Data-Free`.
 - Uma instalação que falhou pode deixar o APK em `/data/local/tmp` (`adb shell ls -la /data/local/tmp`).
 - Desinstalar o app de debug e instalar de novo também resolve, mas perde-se o endereço do servidor e o login (refazer como no passo a passo).
+  - Em 2026-10-31, com 7% livre (~450 MB), o `install -r` falhou com `INSTALL_FAILED_INSUFFICIENT_STORAGE: Failed to override installation location`. O `pm trim-caches` liberou só ~8 MB. Desinstalar e instalar resolveu, embora o espaço livre quase não tenha mudado.
+  - O `uninstall -k` (manter os dados) não serve: no Android 16 ele guarda também o código, e o `install` falha igual.
 - O que resolve de vez é aumentar o armazenamento do AVD no Device Manager do Android Studio, que fica a critério de quem usa o emulador.

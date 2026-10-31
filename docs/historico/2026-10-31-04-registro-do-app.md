@@ -95,7 +95,7 @@ Antes, o app quase não registrava nada: eram 48 chamadas soltas do Timber, quas
   - `RegistroHttpTest` (6): endereço, URL assinada, mapas, tamanhos, eventos sem conteúdo, `ErroApi`;
   - `ResumoDaChamadaTest` (2);
   - o tipo do candidato no `EsperaColetaTest`;
-  - o `Sigilo` no `RegexNoAndroidTest` (regex do ICU), só compilado: o emulador estava desligado.
+  - o `Sigilo` no `RegexNoAndroidTest` (regex do ICU): no commit, só compilado (o emulador estava desligado); no mesmo dia, rodado no emulador (Android 16, API 36), `OK (1 test)` (histórico `2026-10-31-06`).
 - **Verificação completa:** `assembleDebug`, `testDebugUnitTest`, `:core:model:test`, `:core:testing:test`, `lintDebug` (só os avisos de antes: versões do AGP/Gradle, `UseKtx`, `CustomX509TrustManager`), `ktlintCheck`, `compileDebugAndroidTestKotlin` e `textos-repetidos`.
 - **No celular** (Galaxy A25, Android 16, depuração por Wi-Fi, conta B no servidor de dev):
   - **o arquivo:** `adb shell run-as com.conversa.conversa.dev cat files/registro/2026-10-31.log` mostrou a abertura completa;
@@ -120,4 +120,3 @@ Antes, o app quase não registrava nada: eram 48 chamadas soltas do Timber, quas
 
 ## Pendências
 - Usar no servidor do trabalho e, no próximo problema, mandar o zip (Configurações › Registro do app › Compartilhar).
-- Rodar o `RegexNoAndroidTest` no emulador (o `Sigilo` usa regex com `IGNORE_CASE`).
