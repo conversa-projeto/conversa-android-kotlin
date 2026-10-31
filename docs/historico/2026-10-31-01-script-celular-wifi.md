@@ -29,5 +29,8 @@ A pessoa pediu "o script pra fazer conexão adb via Wi-Fi". Em 2026-10-22 o pare
   - **pareamento:** `127.0.0.1:1` com um código falso mostrou "O pareamento falhou" e a orientação.
 - A conexão com o celular de verdade não foi repetida agora (o celular não estava ligado). O mesmo `adb pair` e `adb connect` funcionaram em 2026-10-22 com o Galaxy A25 (histórico 2026-10-22-09).
 
+## Depois (2026-10-31)
+- No mesmo dia, depois do pareamento, a descoberta pela rede **achou** o celular (192.168.2.8, o IP mudou) e o adb conectou sozinho. O `emulador.md` passou a dizer que a descoberta é instável neste PC, com as duas datas, e a usar o IP com `-s`, porque o aparelho aparece duas vezes no `adb devices`.
+
 ## Pendências
 - Nenhuma.

@@ -71,7 +71,7 @@ O mesmo roteiro vale para um celular na mesma rede Wi-Fi do PC, sem cabo. **Atal
 1. No celular (quem faz é a pessoa dona do aparelho): Opções do desenvolvedor → Depuração por Wi-Fi → "Parear o dispositivo com um código de pareamento".
 2. No PC, a própria pessoa digita o código: `adb pair IP:PORTA CÓDIGO` (no `cmd`, o adb fica em `"%LOCALAPPDATA%\Android\Sdk\platform-tools\adb.exe"`).
    - Depois, `adb connect` com o **"Endereço IP e porta"** do topo da tela de Depuração por Wi-Fi. Essa porta é outra, diferente da do pareamento, e muda cada vez que a depuração é ligada.
-   - A descoberta automática pela rede (`adb mdns services`) não achou o celular em 2026-10-22, com o PC no cabo e o celular no Wi-Fi do mesmo roteador.
+   - A descoberta automática pela rede (`adb mdns services`) é instável neste PC (no cabo, com o celular no Wi-Fi do mesmo roteador). Em 2026-10-22 não achou o celular, e o `adb connect` foi necessário. Em 2026-10-31 achou e conectou sozinho logo depois do pareamento (aparecem duas linhas no `adb devices`, o IP e o nome `adb-…._adb-tls-connect._tcp`; para os comandos, use o IP com `-s`).
 3. Com o emulador também ligado, todo comando leva o aparelho: `adb -s <serial>` ou `ANDROID_SERIAL=<serial>`.
 4. `adb reverse tcp:8081 tcp:8081` e `adb reverse tcp:3478 tcp:3478` funcionam pelo Wi-Fi: o `localhost` do app chega no PC pelo canal do adb, sem expor o servidor na rede. Se a depuração cair, refazer os dois.
 5. O app de teste (`com.conversa.conversa.dev`) fica ao lado do app oficial, sem dividir dados.
