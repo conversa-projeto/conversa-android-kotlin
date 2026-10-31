@@ -18,10 +18,9 @@ No teste do Apagar no celular (histórico `2026-10-31-04`), o arquivo ficou com 
 
 ## Como foi verificado
 - `:feature:config:testDebugUnitTest`, `ktlintCheck`, `:app:assembleDebug` e `:app:lintDebug`.
-- No celular, não deu: a depuração por Wi-Fi tinha caído (a porta 44717 recusava a conexão).
+- **No celular** (Galaxy A25, `adb install -r`, conta B no servidor de dev; a depuração por Wi-Fi tinha caído e foi reconectada pela pessoa):
+  - antes do Apagar, "Desde 31/10/2026 · 110 kB" (112 607 bytes);
+  - depois do Apagar, "Desde 31/10/2026 · 121 B", e o arquivo no aparelho tinha mesmo 121 bytes, com a linha "Registro apagado pela pessoa, na tela do registro".
 
 ## Decisões
 - A faixa de kB continua sem casas ("55 kB"): na tela, o tamanho é só uma noção de quanto o registro guarda. O pedido era só o caso abaixo de 1 kB.
-
-## Pendências / próximos passos
-- Conferir no celular, depois de reconectar (`ferramentas/celular-wifi.cmd`): Apagar e ver "121 B" na tela.
