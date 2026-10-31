@@ -4,7 +4,7 @@
 - **Tipo:** ferramenta de desenvolvimento e documentação
 - **Itens:** `docs/desenvolvimento/emulador.md` ("Aparelho de verdade pela depuração por Wi-Fi")
 - **Branch:** `reescrita`
-- **Commits:** `HASH_X`
+- **Commits:** `1bc15e0`
 
 ## Contexto
 A pessoa pediu "o script pra fazer conexão adb via Wi-Fi". Em 2026-10-22 o pareamento foi feito por um `.cmd` na pasta temporária da sessão, e a conexão pedia o "Endereço IP e porta" do celular: a descoberta pela rede (`adb mdns services`) não achou o aparelho, com o PC no cabo e o celular no Wi-Fi.
