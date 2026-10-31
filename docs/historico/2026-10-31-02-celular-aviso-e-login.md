@@ -4,7 +4,7 @@
 - **Tipo:** código (correções)
 - **Itens:** `TODO.md` 1.x (`SnackbarHost` global, GER-01), 2.2 (tela de login) e 2.3 (erros na inicialização, AUT-03); linhas novas das correções
 - **Branch:** `reescrita`
-- **Commits:** `HASH_X`
+- **Commits:** `a8ba3e2`
 
 ## Contexto
 A pessoa pediu para abrir o Conversa no celular (Galaxy A25, Android 16, teclado SwiftKey, depuração por Wi-Fi), apontar para o servidor de desenvolvimento e testar o envio de mensagens. Ela tinha tido problemas no teste da manhã, no servidor do trabalho.
