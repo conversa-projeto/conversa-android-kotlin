@@ -1005,7 +1005,7 @@
 - [x] 🆕 Tela "Registro do app" (Configurações e barra da tela Servidor): ver as últimas entradas, só avisos e erros, compartilhar o zip e apagar ✔ edadc75
 - [x] 🆕 O tamanho do registro em bytes abaixo de 1 kB ("121 B", não "0 kB" logo depois do Apagar) ✔ 88a2327
 - [x] **Teste:** no celular, o arquivo, o Compartilhar, o filtro "Só avisos e erros" (com avisos provocados parando o proxy de dev) e o Apagar (com o Cancelar) ✔ edadc75
-- [x] **Teste:** `RegexNoAndroidTest` no emulador (o `Sigilo`)
+- [x] **Teste:** `RegexNoAndroidTest` no emulador (o `Sigilo`) ✔ 2aa5387
 - [ ] **Teste:** no servidor do trabalho, mandar o zip no próximo problema
 - [ ] (Opcional) Crashlytics sem dados de mensagem — o registro do app já guarda as falhas fatais e os ANRs no aparelho
 - [ ] Manifest com as permissões mínimas: nada de `READ_MEDIA_*`, `SYSTEM_ALERT_WINDOW` ou `DISABLE_KEYGUARD`

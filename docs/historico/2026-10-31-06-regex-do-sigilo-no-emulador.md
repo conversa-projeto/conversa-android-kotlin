@@ -4,7 +4,7 @@
 - **Tipo:** documentação
 - **Itens:** `TODO.md`, Qualidade (a linha de teste do registro do app); pendência do histórico `2026-10-31-04`
 - **Branch:** `reescrita`
-- **Commits:** (preencher)
+- **Commits:** `2aa5387`
 
 ## Contexto
 O `Sigilo` do registro do app (histórico `2026-10-31-04`) esconde segredos com regex e `IGNORE_CASE`. No Android, o regex é o do ICU, e um padrão aceito pela JVM dos testes unitários pode fechar o app. Por isso, as verificações dele entraram no `RegexNoAndroidTest`. No commit do registro, o teste foi só compilado, porque o emulador estava desligado. A pessoa pediu para rodar.
