@@ -50,6 +50,7 @@ import androidx.compose.ui.semantics.liveRegion
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.ImeAction
+import androidx.compose.ui.text.input.KeyboardCapitalization
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.text.input.VisualTransformation
@@ -156,7 +157,7 @@ fun LoginTela(
                     label = { Text(stringResource(R.string.login_usuario)) },
                     singleLine = true,
                     enabled = !estado.entrando,
-                    keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Ascii, imeAction = ImeAction.Next),
+                    keyboardOptions = TECLADO_DO_USUARIO,
                     keyboardActions = KeyboardActions(onNext = { focoSenha.requestFocus() }),
                     modifier = Modifier
                         .fillMaxWidth()
@@ -230,3 +231,14 @@ private fun LoginTelaPreview() {
         )
     }
 }
+
+/**
+ * Teclado do campo de usuário (login e cadastro): o de e-mail, sem maiúscula nem correção automática.
+ * Com o padrão, o SwiftKey trocava "teste.android.b" por "teste. Android. b" e o servidor não achava a conta.
+ */
+internal val TECLADO_DO_USUARIO = KeyboardOptions(
+    capitalization = KeyboardCapitalization.None,
+    autoCorrectEnabled = false,
+    keyboardType = KeyboardType.Email,
+    imeAction = ImeAction.Next,
+)

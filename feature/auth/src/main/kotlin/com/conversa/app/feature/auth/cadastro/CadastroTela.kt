@@ -47,6 +47,7 @@ import com.conversa.app.core.ui.estado.ColetarEventos
 import com.conversa.app.core.ui.estado.resolver
 import com.conversa.app.core.ui.tema.ConversaTema
 import com.conversa.app.feature.auth.R
+import com.conversa.app.feature.auth.login.TECLADO_DO_USUARIO
 
 @Composable
 fun CadastroRotaTela(
@@ -122,7 +123,7 @@ fun CadastroTela(
                     label = { Text(stringResource(R.string.login_usuario)) },
                     singleLine = true,
                     enabled = !estado.cadastrando,
-                    keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Ascii, imeAction = ImeAction.Next),
+                    keyboardOptions = TECLADO_DO_USUARIO,
                     keyboardActions = proximo,
                     modifier = Modifier.fillMaxWidth().semantics { contentType = ContentType.NewUsername },
                 )

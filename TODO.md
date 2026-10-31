@@ -147,6 +147,7 @@
 - [x] Componente `Avatar(url, nome)` com fallback para a inicial — primeiro grafema, que funciona com emoji (GER-07) — `Avatar` + `inicialDoNome` (BreakIterator)
 - [x] Componente `ConfirmDialog` com variante "perigo" (foco em Cancelar) (GER-03) — `DialogoConfirmacao` e `DialogoAviso`
 - [x] `SnackbarHost` global para erros (GER-01) — `AreaDeAvisos` + `LocalAvisos` na raiz da `MainActivity`
+- [x] Correção (2026-10-31): os avisos ficam acima da barra de abas (`LocalBarraDeBaixo`); sem servidor, o aviso fixo "(tentando de novo…)" cobria as abas e bloqueava o toque ✔ HASH_X
 - [x] Componentes `EstadoVazio`, `EstadoErro` (com "Tentar de novo") e `Carregando` — `Carregando`, `EstadoVazio`, `EstadoErro`
 - [x] Ícones: adicionar `material-icons-extended`, ou vetores próprios — `material-icons-extended`
 - [x] Back preditivo: `android:enableOnBackInvokedCallback="true"` e `BackHandler` onde precisar — `enableOnBackInvokedCallback` no manifest; `BackHandler` entra quando alguma tela precisar
@@ -247,6 +248,7 @@
 ### 2.1 Login e entrada (FC-200, AUT-01)
 - [x] Tela Splash/decisão: sem servidor → Servidor; sem sessão → Login; com sessão → Principal — `MainViewModel` (splash fica até decidir)
 - [x] Tela Login: logo, "Usuário", "Senha", botão "Entrar"/"Entrando…", link "Não tem conta? Criar conta" — `LoginTela` (ícone + "Conversa", mostrar/esconder senha, autofill de usuário/senha, último login preenchido, servidor atual com "Trocar")
+- [x] Correção (2026-10-31): o campo de usuário (login e cadastro) com teclado de e-mail, sem maiúscula nem correção automática; o SwiftKey trocava "teste.android.b" por "teste. Android. b" ✔ HASH_X
 - [x] `POST /api/login {login, senha, dispositivo_id?}` (reenviar o `dispositivo_id` salvo) — `AutenticacaoRepositorio.entrar`
 - [x] Salvar o token e `dispositivo.id`; `trim()` no login — token na sessão cifrada; `dispositivo.id` nas preferências (sobrevive ao logout)
 - [x] Tratar 429/503 (limite de 10/min do nginx) → "Muitas tentativas, aguarde" — `ErroApi.MuitasTentativas` → "Muitas tentativas. Aguarde um minuto e tente de novo."

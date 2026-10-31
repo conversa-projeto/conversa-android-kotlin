@@ -52,6 +52,7 @@
 - 2026-10-16 · [Cadastro fechado pelo administrador](2026-10-16-04-cadastro-fechado.md) — o login lê `GET /cadastro` e esconde o "Criar conta" quando o cadastro está fechado; a seção "Cadastro" no Sistema liga e desliga; testado no emulador (fechado e religado)
 - 2026-10-16 · [Conversa com bot de IA](2026-10-16-05-conversa-com-bot.md) — `bot` nos contatos (Room v9); pílula "Bot" na direta, sem ligar nem pedir confirmação; grupos pedem confirmação sem os bots; bot fora do "Adicionar à chamada"; testado no emulador
 - 2026-10-23 · [Presença: visto por último no ausente e parado em 30 s](2026-10-23-02-presenca-visto-e-parado.md) — "ausente · visto por último …" e "nesta conversa · visto por último …"; o app fica parado depois de 30 s sem toque nem digitação, ainda na conversa (`UsoDoApp`); texto do Status com "30 segundos"; testado no emulador com o C pelo WebSocket
+- 2026-10-31 · [Celular: aviso por cima das abas e o teclado do campo de usuário](2026-10-31-02-celular-aviso-e-login.md) — sem servidor, o aviso fixo cobria as abas (agora fica acima); o SwiftKey estragava o login com ponto (teclado de e-mail sem correção); envio e recebimento testados no Galaxy A25 contra o servidor de dev
 
 ## Mensagens (etapa 3)
 - 2026-10-07 · [Etapa 3 — regras do chat, carregar, ler e enviar](2026-10-07-06-etapa-3-regras-e-dados.md) — classificação e links do web, paginação, fila de leitura, envio com WorkManager; status do WS 3 só nas minhas; 159 testes
