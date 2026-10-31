@@ -4,7 +4,7 @@
 - **Tipo:** correção
 - **Itens:** `TODO.md`, Qualidade (tela "Registro do app"); continua o histórico `2026-10-31-04`
 - **Branch:** `reescrita`
-- **Commits:** (preencher)
+- **Commits:** `88a2327`
 
 ## Contexto
 No teste do Apagar no celular (histórico `2026-10-31-04`), o arquivo ficou com uma linha (121 bytes), mas a tela dizia "0 kB": o `tamanhoLegivel` arredondava tudo abaixo de 1 MB para kB sem casas. Parecia que o registro tinha parado de gravar. A pessoa pediu para mostrar em bytes abaixo de 1 kB.
