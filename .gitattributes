@@ -5,3 +5,4 @@ gradlew text eol=lf
 *.bat text eol=crlf
 # Bibliotecas de terceiros embutidas: byte a byte como vieram (conferidas por hash)
 feature/chat/src/main/assets/mermaid/mermaid.min.js -text
+*.cmd text eol=crlf
