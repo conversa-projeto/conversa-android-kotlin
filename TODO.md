@@ -1003,7 +1003,8 @@
 - [x] 🆕 Registro do app (pedido de 2026-10-31): `:core:registro` grava tudo o que passa pelo Timber em `files/registro/AAAA-MM-DD.log`, por 7 dias (teto de 60 MB), com o `Sigilo` e a pilha da falha fatal ✔ edadc75
 - [x] 🆕 O que entra: cada requisição HTTP (tempos, conexão, erro), o tempo real (eventos sem conteúdo), sessão, sincronização, fila de envio e WorkManager, notificações, chamadas e mídia (ICE, WHIP/WHEP), conexão em segundo plano, aparelho, rede, energia, permissões, telas, por que o processo anterior terminou (ANR com pilhas) e a thread principal travada ✔ edadc75
 - [x] 🆕 Tela "Registro do app" (Configurações e barra da tela Servidor): ver as últimas entradas, só avisos e erros, compartilhar o zip e apagar ✔ edadc75
-- [ ] **Teste:** no celular, o filtro "Só avisos e erros" e o Apagar; no servidor do trabalho, mandar o zip no próximo problema; `RegexNoAndroidTest` no emulador (o `Sigilo`)
+- [x] **Teste:** no celular, o arquivo, o Compartilhar, o filtro "Só avisos e erros" (com avisos provocados parando o proxy de dev) e o Apagar (com o Cancelar) ✔ edadc75
+- [ ] **Teste:** no servidor do trabalho, mandar o zip no próximo problema; `RegexNoAndroidTest` no emulador (o `Sigilo`)
 - [ ] (Opcional) Crashlytics sem dados de mensagem — o registro do app já guarda as falhas fatais e os ANRs no aparelho
 - [ ] Manifest com as permissões mínimas: nada de `READ_MEDIA_*`, `SYSTEM_ALERT_WINDOW` ou `DISABLE_KEYGUARD`
 - [ ] Play Console: declarações de FGS (`phoneCall`, `microphone`, `camera`) e de full-screen intent

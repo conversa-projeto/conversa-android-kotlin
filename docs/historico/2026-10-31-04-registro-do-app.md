@@ -103,7 +103,11 @@ Antes, o app quase não registrava nada: eram 48 chamadas soltas do Timber, quas
     - a rede apareceu como "Wi-Fi; internet confirmada: sim", e as requisições com DNS/TCP/1º byte;
     - também vieram o WebSocket (conectado em 145 ms), a sessão, a sincronização e as telas;
   - **sem segredos:** nenhuma ocorrência de "token", "senha" nem "Bearer" no arquivo;
-  - **a tela:** aberta pelas Configurações. O Compartilhar abriu o menu do Android com `conversa-registro-2026-10-31-1645.zip` (fechado sem enviar). O filtro não foi tocado no aparelho: a pessoa passou a usar o celular.
+  - **a tela:** aberta pelas Configurações. O Compartilhar abriu o menu do Android com `conversa-registro-2026-10-31-1645.zip` (fechado sem enviar).
+  - **o filtro e o Apagar,** no mesmo dia, a pedido:
+    - **avisos de propósito:** o registro ainda não tinha avisos. O proxy de dev parou por ~20 s, e o app registrou as falhas com a causa (`W/TempoReal Falhou depois de 694 s conectado: EOFException`, `W/Http GET …/api/mensagens/novas?desde=… ✗ IOException…`, `W/Sync Falha em mensagens/novas: SemConexao ← …`, a faixa "fora do ar há mais de 5 s"). Com o proxy de volta, reconectou em 57 ms;
+    - **o filtro:** "Só avisos e erros" ligado deixou só as entradas W, com a faixa coral; desligado, voltaram as D e I;
+    - **apagar:** a confirmação "Apagar todo o registro deste aparelho? Não dá para desfazer." apareceu. "Cancelar" não apagou (o arquivo seguiu com 55 kB). "Apagar" deixou o arquivo só com `I/Registro … Registro apagado pela pessoa, na tela do registro`, e a tela com "0 kB" e essa entrada. O registro seguiu gravando depois (uma cópia do anterior ficou no PC).
 
 ## Decisões
 - **O registro vale também no release** e substitui o item "Timber: nada de log em release". O problema #4 do legado era log com senha, token e mensagens **no logcat**, que outros apps e o `adb` leem. Agora:
@@ -115,6 +119,5 @@ Antes, o app quase não registrava nada: eram 48 chamadas soltas do Timber, quas
 - **Uma linha por requisição, e não um log por etapa:** o resumo (com as etapas quando a conexão é nova ou falhou) diz o mesmo e cabe nos 7 dias com folga. Um dia de uso normal fica bem abaixo dos 5 MB.
 
 ## Pendências
-- Conferir no celular o filtro "Só avisos e erros" e o Apagar.
 - Usar no servidor do trabalho e, no próximo problema, mandar o zip (Configurações › Registro do app › Compartilhar).
 - Rodar o `RegexNoAndroidTest` no emulador (o `Sigilo` usa regex com `IGNORE_CASE`).
