@@ -12,6 +12,7 @@ import com.conversa.app.core.network.dto.LoginRequisicao
 import com.conversa.app.core.network.http.ErroApi
 import com.conversa.app.core.network.http.chamarApi
 import com.conversa.app.core.network.json.nuloExplicito
+import com.conversa.app.core.registro.resumoDoErro
 import javax.inject.Inject
 import javax.inject.Singleton
 import kotlinx.coroutines.flow.Flow
@@ -61,9 +62,17 @@ class AutenticacaoRepositorio @Inject constructor(
     suspend fun entrar(login: String, senha: String): Result<Sessao> {
         val usuario = login.trim()
         val dispositivoSalvo = preferencias.dispositivoId.first()
+        // O usuário como foi digitado ajuda a ver um teclado que trocou o texto ("teste. Android. b").
+        Timber.tag(TAG).i("Login como \"%s\" (dispositivo guardado: %s)", usuario, dispositivoSalvo)
         val resposta = chamarApi { api.login(LoginRequisicao(usuario, senha, dispositivoSalvo)) }
-            .getOrElse { return Result.failure(it) }
-        if (resposta.token.isBlank()) return Result.failure(RespostaLoginInvalidaException())
+            .getOrElse {
+                Timber.tag(TAG).i("Login recusado: %s", it.resumoDoErro())
+                return Result.failure(it)
+            }
+        if (resposta.token.isBlank()) {
+            Timber.tag(TAG).w("Login respondeu sem token")
+            return Result.failure(RespostaLoginInvalidaException())
+        }
 
         val dispositivoId = resposta.dispositivo?.id ?: dispositivoSalvo
         dispositivoId?.let { preferencias.salvarDispositivoId(it) }
@@ -91,6 +100,8 @@ class AutenticacaoRepositorio @Inject constructor(
     /** `PUT /usuario {nome, login, email, senha}` (rota pública). Não faz login. */
     suspend fun cadastrar(nome: String, login: String, email: String, senha: String): Result<Unit> =
         chamarApi { api.cadastrar(CadastroRequisicao(nome.trim(), login.trim(), email.trim(), senha)) }
+            .onSuccess { Timber.tag(TAG).i("Cadastro de \"%s\" aceito", login.trim()) }
+            .onFailure { Timber.tag(TAG).i("Cadastro de \"%s\" recusado: %s", login.trim(), it.resumoDoErro()) }
             .map { }
             .recoverCatching { erro ->
                 throw if (erro is ErroApi.Servidor && erro.ehEmailDuplicado()) EmailJaCadastradoException() else erro
@@ -121,12 +132,13 @@ class AutenticacaoRepositorio @Inject constructor(
      * sessão; quem escuta o fim da sessão fecha o socket e limpa o cache.
      */
     suspend fun sair() {
+        Timber.tag(TAG).i("Sair da conta (pedido da pessoa)")
         val id = sessao.sessao.value?.dispositivoId
         if (id != null) {
             val resultado = withTimeoutOrNull(TEMPO_LIMPAR_TOKEN_MS) {
                 chamarApi { api.alterarDispositivo(AlterarDispositivoRequisicao(id = id, tokenFcm = nuloExplicito)) }
             }
-            if (resultado?.isSuccess != true) Timber.i("Não foi possível limpar o token de push ao sair")
+            if (resultado?.isSuccess != true) Timber.tag(TAG).i("Não foi possível limpar o token de push ao sair")
         }
         sessao.encerrar(MotivoFimSessao.SAIU)
     }
@@ -134,6 +146,7 @@ class AutenticacaoRepositorio @Inject constructor(
     private fun ErroApi.Servidor.ehEmailDuplicado(): Boolean = status >= 500 && detalhe.contains("email", ignoreCase = true)
 
     companion object {
+        const val TAG = "Login"
         const val PLATAFORMA = "android"
         const val LIMITE_NOME = 50
         const val LIMITE_MODELO = 50

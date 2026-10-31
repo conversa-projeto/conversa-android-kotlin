@@ -15,6 +15,13 @@ class EsperaColetaTest {
     private val relayTcp = "candidate:2 1 udp 41885439 127.0.0.1 52000 typ relay raddr 0.0.0.0 rport 0 generation 0"
 
     @Test
+    fun `tipo do candidato para o registro, sem o endereco`() {
+        assertThat(tipoDoCandidato(host)).isEqualTo("host udp")
+        assertThat(tipoDoCandidato("candidate:3 1 TCP 1 10.0.0.1 9 typ relay tcptype passive")).isEqualTo("relay tcp")
+        assertThat(tipoDoCandidato("lixo")).isEqualTo("? ?")
+    }
+
+    @Test
     fun `coleta completa - manda na hora`() = runTest {
         val espera = EsperaColeta()
         launch {

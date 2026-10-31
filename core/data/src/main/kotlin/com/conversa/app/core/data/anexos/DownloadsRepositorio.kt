@@ -11,6 +11,7 @@ import androidx.annotation.RequiresApi
 import androidx.core.net.toUri
 import com.conversa.app.core.network.di.DespachanteEs
 import com.conversa.app.core.network.di.EscopoAplicacao
+import com.conversa.app.core.registro.resumoDoErro
 import dagger.Binds
 import dagger.Module
 import dagger.hilt.InstallIn
@@ -102,7 +103,7 @@ class DownloadsRepositorio @Inject constructor(
                 destino.concluir()
                 ResultadoDownload.Salvo(nome, destino.uri, mime)
             } catch (e: IOException) {
-                Timber.w("Não salvou em Downloads: %s", e.javaClass.simpleName)
+                Timber.w("Não salvou em Downloads: %s", e.resumoDoErro())
                 destino.descartar()
                 ResultadoDownload.Falhou(nome)
             }

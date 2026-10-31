@@ -1,6 +1,5 @@
 package com.conversa.app.core.network.di
 
-import com.conversa.app.core.network.BuildConfig
 import com.conversa.app.core.network.api.ConversaApi
 import com.conversa.app.core.network.auth.EventosSessao
 import com.conversa.app.core.network.auth.TokenProvider
@@ -8,8 +7,8 @@ import com.conversa.app.core.network.config.ServerConfigProvider
 import com.conversa.app.core.network.http.AutenticacaoInterceptor
 import com.conversa.app.core.network.http.BASE_FICTICIA
 import com.conversa.app.core.network.http.EnderecoInterceptor
+import com.conversa.app.core.network.http.RegistroHttp
 import com.conversa.app.core.network.json.ConversaJson
-import com.conversa.app.core.network.mapas.ehServicoDeMapa
 import com.conversa.app.core.network.realtime.RealtimeClient
 import com.conversa.app.core.network.tls.CertificadoConfiadoProvider
 import com.conversa.app.core.network.tls.ConfiancaServidor
@@ -28,7 +27,6 @@ import kotlinx.coroutines.SupervisorJob
 import kotlinx.serialization.json.Json
 import okhttp3.MediaType.Companion.toMediaType
 import okhttp3.OkHttpClient
-import okhttp3.logging.HttpLoggingInterceptor
 import retrofit2.Retrofit
 import retrofit2.converter.kotlinx.serialization.asConverterFactory
 
@@ -60,7 +58,8 @@ object RedeModulo {
 
     /**
      * O único OkHttpClient do app (REST, WebSocket, WHIP/WHEP, imagens).
-     * Log só no debug e sem o cabeçalho Authorization (problema #4 do legado).
+     * Cada requisição vira uma linha no registro do app ([RegistroHttp]): sem cabeçalhos, sem corpo e
+     * sem os valores que não são números (problema #4 do legado).
      * No debug, também o certificado próprio que a pessoa aceitou na tela Servidor ([ConfiancaServidor]).
      */
     @Provides
@@ -70,38 +69,29 @@ object RedeModulo {
         tokens: TokenProvider,
         eventos: EventosSessao,
         certificado: CertificadoConfiadoProvider,
-    ): OkHttpClient {
-        val log = HttpLoggingInterceptor().apply {
-            level = if (BuildConfig.DEBUG) HttpLoggingInterceptor.Level.BASIC else HttpLoggingInterceptor.Level.NONE
-            redactHeader("Authorization")
+    ): OkHttpClient = OkHttpClient.Builder()
+        .connectTimeout(15, TimeUnit.SECONDS)
+        .readTimeout(30, TimeUnit.SECONDS)
+        .writeTimeout(30, TimeUnit.SECONDS)
+        .pingInterval(20, TimeUnit.SECONDS)
+        .eventListenerFactory(RegistroHttp.FABRICA)
+        // Os tiles do OSM, o Nominatim e o OSRM públicos recusam o agente padrão das bibliotecas (localização, `ac710eb`).
+        .addInterceptor { cadeia -> cadeia.proceed(cadeia.request().newBuilder().header("User-Agent", AGENTE_DO_APP).build()) }
+        .addInterceptor(EnderecoInterceptor(config))
+        .addInterceptor(AutenticacaoInterceptor(tokens, eventos, config))
+        .apply {
+            if (ConfiancaServidor.PERMITIDA) {
+                val confianca = ConfiancaServidor({ certificado.impressao.value })
+                val fabrica = confianca.fabricaDeSockets()
+                val nomes = confianca.verificadorDeNome()
+                sslSocketFactory(fabrica, confianca)
+                hostnameVerifier(nomes)
+                // O vídeo (Media3) abre a URL pelo HttpsURLConnection: as mesmas regras valem lá.
+                HttpsURLConnection.setDefaultSSLSocketFactory(fabrica)
+                HttpsURLConnection.setDefaultHostnameVerifier(nomes)
+            }
         }
-        return OkHttpClient.Builder()
-            .connectTimeout(15, TimeUnit.SECONDS)
-            .readTimeout(30, TimeUnit.SECONDS)
-            .writeTimeout(30, TimeUnit.SECONDS)
-            .pingInterval(20, TimeUnit.SECONDS)
-            // Os tiles do OSM, o Nominatim e o OSRM públicos recusam o agente padrão das bibliotecas (localização, `ac710eb`).
-            .addInterceptor { cadeia -> cadeia.proceed(cadeia.request().newBuilder().header("User-Agent", AGENTE_DO_APP).build()) }
-            .addInterceptor(EnderecoInterceptor(config))
-            .addInterceptor(AutenticacaoInterceptor(tokens, eventos, config))
-            // Os mapas ficam fora do log: o endereço buscado e os tiles mostram onde a pessoa está olhando.
-            .addInterceptor { cadeia ->
-                if (ehServicoDeMapa(cadeia.request().url.host)) cadeia.proceed(cadeia.request()) else log.intercept(cadeia)
-            }
-            .apply {
-                if (ConfiancaServidor.PERMITIDA) {
-                    val confianca = ConfiancaServidor({ certificado.impressao.value })
-                    val fabrica = confianca.fabricaDeSockets()
-                    val nomes = confianca.verificadorDeNome()
-                    sslSocketFactory(fabrica, confianca)
-                    hostnameVerifier(nomes)
-                    // O vídeo (Media3) abre a URL pelo HttpsURLConnection: as mesmas regras valem lá.
-                    HttpsURLConnection.setDefaultSSLSocketFactory(fabrica)
-                    HttpsURLConnection.setDefaultHostnameVerifier(nomes)
-                }
-            }
-            .build()
-    }
+        .build()
 
     @Provides
     @Singleton

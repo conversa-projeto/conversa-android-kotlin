@@ -18,6 +18,7 @@ import coil3.request.transformations
 import coil3.toBitmap
 import coil3.transform.CircleCropTransformation
 import com.conversa.app.core.model.Conversa
+import com.conversa.app.core.registro.resumoDoErro
 import com.conversa.app.core.ui.componentes.inicialDoNome
 import com.conversa.app.core.ui.tema.coresDoTema
 import dagger.hilt.android.qualifiers.ApplicationContext
@@ -71,7 +72,7 @@ class IconesDeAvatar @Inject constructor(@ApplicationContext private val context
         } catch (e: CancellationException) {
             throw e
         } catch (e: Exception) {
-            Timber.w("Avatar da notificação: %s", e.javaClass.simpleName)
+            Timber.w("Avatar da notificação: %s", e.resumoDoErro())
             null
         }
         if (bitmap != null) fotos.put(chave, bitmap)

@@ -8,6 +8,7 @@ import com.conversa.app.core.data.SessaoRepositorio
 import com.conversa.app.core.data.mensagens.EnvioMensagens
 import com.conversa.app.core.data.mensagens.MensagensRepositorio
 import com.conversa.app.core.network.di.EscopoAplicacao
+import com.conversa.app.core.registro.resumoDoErro
 import dagger.hilt.android.AndroidEntryPoint
 import javax.inject.Inject
 import kotlinx.coroutines.CoroutineScope
@@ -59,7 +60,7 @@ class AcoesNotificacaoReceiver : BroadcastReceiver() {
                     }
                 }
             } catch (e: Exception) {
-                Timber.w("Ação da notificação falhou: %s", e.javaClass.simpleName)
+                Timber.w("Ação da notificação falhou: %s", e.resumoDoErro())
             } finally {
                 pendente.finish()
             }

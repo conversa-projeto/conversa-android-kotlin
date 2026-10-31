@@ -234,4 +234,20 @@
     <string name="perfil_sem_permissao_email">Você não tem permissão para mudar o e-mail</string>
     <string name="perfil_sem_permissao_avatar">Você não tem permissão para mudar o avatar.</string>
     <string name="privacidade_sem_permissao">Você não tem permissão para mudar a privacidade.</string>
+    <!-- Registro do app (só do Android; o web não tem) -->
+    <string name="registro_titulo">Registro do app</string>
+    <string name="registro_resumo">O que o app fez nos últimos 7 dias, para investigar problemas</string>
+    <string name="registro_explicacao">Fica só neste aparelho, por até 7 dias. Não guarda senhas, tokens nem o texto das mensagens. Para mandar a quem vai investigar, use Compartilhar.</string>
+    <string name="registro_desde">Desde %1$s · %2$s</string>
+    <string name="registro_vazio">Nada registrado ainda.</string>
+    <string name="registro_so_problemas">Só avisos e erros</string>
+    <string name="registro_ultimas">Na tela, a mais nova fica em cima (no máximo %1$d). O arquivo compartilhado tem tudo.</string>
+    <string name="registro_compartilhar">Compartilhar o registro</string>
+    <string name="registro_compartilhar_assunto">Registro do Conversa (%1$s)</string>
+    <string name="registro_preparando">Preparando o arquivo…</string>
+    <string name="registro_falhou">Não deu para preparar o arquivo do registro.</string>
+    <string name="registro_atualizar">Atualizar</string>
+    <string name="registro_apagar">Apagar o registro</string>
+    <string name="registro_apagar_confirmar">Apagar todo o registro deste aparelho? Não dá para desfazer.</string>
+    <string name="registro_apagar_botao">Apagar</string>
 </resources>

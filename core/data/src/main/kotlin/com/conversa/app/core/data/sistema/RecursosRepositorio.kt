@@ -5,6 +5,7 @@ import com.conversa.app.core.model.Recursos
 import com.conversa.app.core.network.api.ConversaApi
 import com.conversa.app.core.network.di.EscopoAplicacao
 import com.conversa.app.core.network.http.chamarApi
+import com.conversa.app.core.registro.resumoDoErro
 import javax.inject.Inject
 import javax.inject.Singleton
 import kotlinx.coroutines.CoroutineScope
@@ -55,7 +56,7 @@ class RecursosRepositorio @Inject constructor(
             Timber.d("Recursos do servidor: transcricao=%s ia=%s", it.transcricao, it.ia)
             _recursos.value = Recursos(transcricao = it.transcricao, ia = it.ia)
         }
-        .onFailure { Timber.d("Falha ao ler os recursos: %s", it.javaClass.simpleName) }
+        .onFailure { Timber.d("Falha ao ler os recursos: %s", it.resumoDoErro()) }
         .isSuccess
 
     companion object {

@@ -1,6 +1,7 @@
 package com.conversa.app.core.data.mensagens
 
 import android.content.Context
+import android.os.Build
 import androidx.hilt.work.HiltWorker
 import androidx.work.BackoffPolicy
 import androidx.work.Constraints
@@ -46,6 +47,7 @@ import com.conversa.app.core.network.dto.ReferenciaEnvioDto
 import com.conversa.app.core.network.http.ErroApi
 import com.conversa.app.core.network.http.chamarApi
 import com.conversa.app.core.network.json.ConversaJson
+import com.conversa.app.core.registro.resumoDoErro
 import dagger.assisted.Assisted
 import dagger.assisted.AssistedInject
 import dagger.hilt.android.qualifiers.ApplicationContext
@@ -54,6 +56,7 @@ import java.time.Instant
 import java.util.concurrent.TimeUnit
 import javax.inject.Inject
 import javax.inject.Singleton
+import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharedFlow
@@ -318,6 +321,25 @@ class EnvioMensagens @Inject constructor(
             )
             id
         }
+        val detalhes = listOfNotNull(
+            anexosLocais.takeIf { it.isNotEmpty() }?.let { lista ->
+                "${lista.size} anexo(s): " + lista.joinToString { "${it.tipo.name.lowercase()} ${it.tamanho} B" }
+            },
+            referencia?.tipo?.name?.lowercase(),
+            "figurinha".takeIf { figurinha != null },
+            "localização".takeIf { localizacao != null },
+            "programada".takeIf { visivelEm != null },
+            "postagem".takeIf { postagem != null },
+            "pede confirmação".takeIf { confirmacao != null },
+        )
+        Timber.tag(TAG).i(
+            "Na fila: mensagem local %d na conversa %d (%s)",
+            idLocal,
+            conversaId,
+            detalhes.joinToString("; ").ifEmpty {
+                "texto"
+            },
+        )
         agendador.agendar()
         return idLocal
     }
@@ -325,21 +347,37 @@ class EnvioMensagens @Inject constructor(
     /** Chamado pelo worker: sobe os anexos e manda tudo o que está na fila, em ordem. */
     suspend fun processarPendentes(): ResultadoEnvio = trava.withLock {
         var enviouAlguma = false
-        for (pendente in envioDao.todos()) {
+        val fila = envioDao.todos()
+        Timber.tag(TAG).i("Processando a fila de envio: %d pendente(s)", fila.size)
+        for (pendente in fila) {
             val mensagem = mensagemDao.buscar(pendente.mensagemIdLocal)
             if (mensagem == null) {
+                Timber.tag(TAG).i("Mensagem local %d sumiu do banco: sai da fila", pendente.mensagemIdLocal)
                 envioDao.remover(pendente.mensagemIdLocal)
                 liberarArquivos(pendente.payloadJson)
                 continue
             }
-            if (mensagem.mensagem.falhou) continue
+            if (mensagem.mensagem.falhou) {
+                Timber.tag(TAG).d("Mensagem local %d está como falhou: espera o \"Reenviar\"", pendente.mensagemIdLocal)
+                continue
+            }
             var pacote = ConversaJson.decodeFromString(PacoteEnvio.serializer(), pendente.payloadJson)
+            val inicio = System.currentTimeMillis()
+            Timber.tag(TAG).i(
+                "Enviando a mensagem local %d (conversa %d, tentativa %d, %d anexo(s), na fila desde %s)",
+                pendente.mensagemIdLocal,
+                pendente.conversaId,
+                pendente.tentativas + 1,
+                pacote.anexos.size,
+                pendente.criadoEm,
+            )
 
             // 1. Anexos que ainda não subiram.
             val falhaAnexo = try {
                 pacote = subirAnexos(pendente, pacote)
                 null
             } catch (_: FalhaDefinitiva) {
+                Timber.tag(TAG).w("Mensagem local %d: o anexo não tem como ir; marcada como falhou", pendente.mensagemIdLocal)
                 mensagemDao.marcarEnvio(pendente.mensagemIdLocal, enviando = false, falhou = true)
                 continue
             } catch (e: ErroApi) {
@@ -354,6 +392,12 @@ class EnvioMensagens @Inject constructor(
             // 2. A mensagem.
             val criada = resultado.getOrNull()
             if (criada != null) {
+                Timber.tag(TAG).i(
+                    "Mensagem local %d enviada: é a %d no servidor (%d ms)",
+                    pendente.mensagemIdLocal,
+                    criada.id,
+                    System.currentTimeMillis() - inicio,
+                )
                 trocarPelaReal(mensagem, criada.id, pacote)
                 envioDao.remover(pendente.mensagemIdLocal)
                 liberarArquivos(pendente.payloadJson)
@@ -361,15 +405,25 @@ class EnvioMensagens @Inject constructor(
                 enviouAlguma = true
                 continue
             }
-            when (val erro = resultado.exceptionOrNull()) {
-                is ErroApi.SemConexao -> return@withLock ResultadoEnvio.TENTAR_DEPOIS
+            val erro = resultado.exceptionOrNull()
+            Timber.tag(TAG).w(
+                "Mensagem local %d não foi (%d ms): %s",
+                pendente.mensagemIdLocal,
+                System.currentTimeMillis() - inicio,
+                erro?.resumoDoErro(),
+            )
+            when (erro) {
+                is ErroApi.SemConexao -> {
+                    Timber.tag(TAG).i("Sem conexão: o WorkManager tenta de novo depois")
+                    return@withLock ResultadoEnvio.TENTAR_DEPOIS
+                }
                 is ErroApi.SessaoExpirada -> return@withLock ResultadoEnvio.CONCLUIDO
                 is ErroApi.ServidorIndisponivel, is ErroApi.MuitasTentativas ->
                     if (!contarFalha(pendente)) return@withLock ResultadoEnvio.TENTAR_DEPOIS
                 is ErroApi.Servidor -> if (erro.status >= 500 && !contarFalha(pendente)) {
                     return@withLock ResultadoEnvio.TENTAR_DEPOIS
                 } else if (erro.status < 500) {
-                    Timber.w("Envio recusado pelo servidor (%d)", erro.status)
+                    Timber.tag(TAG).w("Envio recusado pelo servidor (%d): marcada como falhou", erro.status)
                     mensagemDao.marcarEnvio(pendente.mensagemIdLocal, enviando = false, falhou = true)
                     if (erro.status == 403) _recusas.tryEmit(RecusaEnvio(mensagem.mensagem.conversaId, erro.detalhe))
                 }
@@ -391,7 +445,7 @@ class EnvioMensagens @Inject constructor(
         for (anexo in pacote.anexos.filter { it.identificador == null }) {
             val fonte = fontes.abrir(anexo.uri)
             if (fonte == null) {
-                Timber.w("Anexo sem acesso (permissão do arquivo acabou)")
+                Timber.tag(TAG).w("Anexo %d sem acesso (a permissão do arquivo acabou)", anexo.ordem)
                 throw FalhaDefinitiva()
             }
             val base = jaEnviados
@@ -407,9 +461,14 @@ class EnvioMensagens @Inject constructor(
                     intensidadeParaTexto(medido.intensidade),
                 )
             }
+            val inicioAnexo = System.currentTimeMillis()
+            Timber.tag(TAG).i("Subindo o anexo %d (%s, %d B)", anexo.ordem, tipo.name.lowercase(), anexo.tamanho)
             val enviado = anexos.enviar(fonte, tipo, medido) { enviados, _ ->
                 _progresso.update { it + (pendente.mensagemIdLocal to ((base + enviados).toFloat() / total)) }
+            }.onSuccess {
+                Timber.tag(TAG).i("Anexo %d subiu em %d ms", anexo.ordem, System.currentTimeMillis() - inicioAnexo)
             }.getOrElse { erro ->
+                Timber.tag(TAG).w("Anexo %d não subiu: %s", anexo.ordem, erro.resumoDoErro())
                 when {
                     erro is ArquivoGrandeDemaisException -> throw FalhaDefinitiva()
                     erro is ErroApi.Servidor && erro.status < 500 -> throw FalhaDefinitiva()
@@ -438,7 +497,11 @@ class EnvioMensagens @Inject constructor(
     /** Conta uma falha do servidor; na [MAX_TENTATIVAS]ª desiste (marca `falhou`) e devolve `true`. */
     private suspend fun contarFalha(pendente: EnvioPendenteEntidade): Boolean {
         envioDao.contarTentativa(pendente.mensagemIdLocal)
-        if (pendente.tentativas + 1 < MAX_TENTATIVAS) return false
+        if (pendente.tentativas + 1 < MAX_TENTATIVAS) {
+            Timber.tag(TAG).i("Falha %d de %d: tenta de novo depois", pendente.tentativas + 1, MAX_TENTATIVAS)
+            return false
+        }
+        Timber.tag(TAG).w("Mensagem local %d: %d falhas, marcada como falhou", pendente.mensagemIdLocal, MAX_TENTATIVAS)
         mensagemDao.marcarEnvio(pendente.mensagemIdLocal, enviando = false, falhou = true)
         return true
     }
@@ -479,6 +542,7 @@ class EnvioMensagens @Inject constructor(
 
     /** "Reenviar" numa mensagem que falhou. */
     suspend fun reenviar(idLocal: Long) {
+        Timber.tag(TAG).i("Reenviar a mensagem local %d (pedido da pessoa)", idLocal)
         mensagemDao.marcarEnvio(idLocal, enviando = true, falhou = false)
         envioDao.zerarTentativas(idLocal)
         agendador.agendar()
@@ -486,6 +550,7 @@ class EnvioMensagens @Inject constructor(
 
     /** "Apagar" numa mensagem que falhou (ela nunca chegou ao servidor). */
     suspend fun descartar(idLocal: Long) {
+        Timber.tag(TAG).i("Apagar a mensagem local %d que não foi (pedido da pessoa)", idLocal)
         val pendente = envioDao.buscar(idLocal)
         envioDao.remover(idLocal)
         mensagemDao.remover(idLocal)
@@ -515,10 +580,15 @@ class EnvioMensagens @Inject constructor(
 
     /** Na abertura da sessão: se sobrou algo na fila (app morto no meio), agenda. */
     suspend fun retomar() {
-        if (envioDao.todos().isNotEmpty()) agendador.agendar()
+        val pendentes = envioDao.todos().size
+        if (pendentes > 0) {
+            Timber.tag(TAG).i("%d mensagem(ns) ficaram na fila: agendando o envio", pendentes)
+            agendador.agendar()
+        }
     }
 
     companion object {
+        const val TAG = "Envio"
         const val MAX_TENTATIVAS = 5
     }
 }
@@ -530,15 +600,29 @@ class EnvioWorker @AssistedInject constructor(
     @Assisted parametros: WorkerParameters,
     private val envio: EnvioMensagens,
 ) : CoroutineWorker(contexto, parametros) {
-    override suspend fun doWork(): Result = when (envio.processarPendentes()) {
-        ResultadoEnvio.CONCLUIDO -> Result.success()
-        ResultadoEnvio.TENTAR_DEPOIS -> Result.retry()
+    override suspend fun doWork(): Result {
+        Timber.tag(EnvioMensagens.TAG).i("EnvioWorker: execução %d", runAttemptCount + 1)
+        val resultado = try {
+            envio.processarPendentes()
+        } catch (e: CancellationException) {
+            // O sistema parou o trabalho (rede caiu, cota do WorkManager, app fechado à força).
+            // O motivo só existe no Android 12+.
+            val motivo = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) stopReason.toString() else "?"
+            Timber.tag(EnvioMensagens.TAG).w("EnvioWorker parado pelo sistema (motivo %s)", motivo)
+            throw e
+        }
+        Timber.tag(EnvioMensagens.TAG).i("EnvioWorker: %s", resultado)
+        return when (resultado) {
+            ResultadoEnvio.CONCLUIDO -> Result.success()
+            ResultadoEnvio.TENTAR_DEPOIS -> Result.retry()
+        }
     }
 }
 
 /** Agenda o [EnvioWorker] com rede. `APPEND_OR_REPLACE`: mensagens novas nunca ficam para trás. */
 class AgendadorEnvioWorkManager @Inject constructor(@ApplicationContext private val contexto: Context) : AgendadorEnvio {
     override fun agendar() {
+        Timber.tag(EnvioMensagens.TAG).d("Envio agendado no WorkManager (espera haver rede)")
         val pedido = OneTimeWorkRequestBuilder<EnvioWorker>()
             .setConstraints(Constraints.Builder().setRequiredNetworkType(NetworkType.CONNECTED).build())
             .setBackoffCriteria(BackoffPolicy.EXPONENTIAL, 10, TimeUnit.SECONDS)
@@ -547,10 +631,12 @@ class AgendadorEnvioWorkManager @Inject constructor(@ApplicationContext private 
     }
 
     override fun cancelar() {
+        Timber.tag(EnvioMensagens.TAG).i("Envio cancelado no WorkManager")
         WorkManager.getInstance(contexto).cancelUniqueWork(NOME)
     }
 
-    private companion object {
+    companion object {
+        /** O trabalho único do envio no WorkManager (o registro do app acompanha o estado dele). */
         const val NOME = "envio_mensagens"
     }
 }

@@ -20,6 +20,7 @@ import com.conversa.app.core.data.preferencias.PreferenciasRepositorio
 import com.conversa.app.core.data.tempoReal.ConexaoTempoReal
 import com.conversa.app.core.data.tempoReal.MonitorPrimeiroPlano
 import com.conversa.app.core.network.di.EscopoAplicacao
+import com.conversa.app.core.registro.resumoDoErro
 import dagger.hilt.android.AndroidEntryPoint
 import dagger.hilt.android.qualifiers.ApplicationContext
 import javax.inject.Inject
@@ -70,6 +71,7 @@ class ConexaoEmSegundoPlano @Inject constructor(
             combine(sessao.sessao, preferencias.conexaoSegundoPlano) { atual, ligada -> atual != null && ligada }
                 .distinctUntilChanged()
                 .collect { ligada ->
+                    Timber.tag(ServicoConexao.TAG).i("Conexão em segundo plano: %s", if (ligada) "ligada" else "desligada")
                     conexao.manterEmSegundoPlano.value = ligada
                     _ativa.value = ligada
                 }
@@ -109,11 +111,13 @@ class ServicoConexao : Service() {
     override fun onBind(intent: Intent?): IBinder? = null
 
     override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
+        Timber.tag(TAG).i("Serviço da conexão: início %d%s", startId, if (intent == null) " (recriado pelo sistema)" else "")
         // Primeiro sobe para primeiro plano (o Android exige em poucos segundos); depois confere se deve ficar.
         if (!promover()) return START_NOT_STICKY
         if (observacao == null) {
             observacao = escopo.launch(Dispatchers.Main) {
                 controle.ativa.filterNotNull().first { !it }
+                Timber.tag(TAG).i("Serviço da conexão: parando (desligada ou sem sessão)")
                 ServiceCompat.stopForeground(this@ServicoConexao, ServiceCompat.STOP_FOREGROUND_REMOVE)
                 stopSelf()
             }
@@ -122,6 +126,7 @@ class ServicoConexao : Service() {
     }
 
     override fun onDestroy() {
+        Timber.tag(TAG).i("Serviço da conexão: encerrado")
         observacao?.cancel()
         observacao = null
         super.onDestroy()
@@ -153,20 +158,21 @@ class ServicoConexao : Service() {
             true
         } catch (e: RuntimeException) {
             // Iniciado em segundo plano (o Android recusa): tenta de novo quando o app voltar para a frente.
-            Timber.w("Serviço da conexão recusado: %s", e.javaClass.simpleName)
+            Timber.tag(TAG).w("Serviço da conexão recusado: %s", e.resumoDoErro())
             stopSelf()
             false
         }
     }
 
     companion object {
+        const val TAG = "Conexao"
         private const val ID_NOTIFICACAO = 7100
 
         fun iniciar(contexto: Context) {
             try {
                 ContextCompat.startForegroundService(contexto, Intent(contexto, ServicoConexao::class.java))
             } catch (e: RuntimeException) {
-                Timber.w("Não deu para iniciar o serviço da conexão: %s", e.javaClass.simpleName)
+                Timber.tag(TAG).w("Não deu para iniciar o serviço da conexão: %s", e.resumoDoErro())
             }
         }
 
@@ -183,6 +189,16 @@ class ServicoConexao : Service() {
 class InicioDoAparelhoReceiver : BroadcastReceiver() {
     override fun onReceive(context: Context, intent: Intent) {
         if (intent.action == Intent.ACTION_BOOT_COMPLETED || intent.action == Intent.ACTION_MY_PACKAGE_REPLACED) {
+            Timber.tag(ServicoConexao.TAG).i(
+                "%s: subindo o serviço da conexão",
+                if (intent.action ==
+                    Intent.ACTION_BOOT_COMPLETED
+                ) {
+                    "Celular ligado"
+                } else {
+                    "App atualizado"
+                },
+            )
             ServicoConexao.iniciar(context)
         }
     }

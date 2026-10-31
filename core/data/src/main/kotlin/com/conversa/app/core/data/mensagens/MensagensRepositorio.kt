@@ -19,6 +19,7 @@ import com.conversa.app.core.network.dto.ReacaoRequisicao
 import com.conversa.app.core.network.dto.ReacoesVistasRequisicao
 import com.conversa.app.core.network.dto.VisualizarPostagemRequisicao
 import com.conversa.app.core.network.http.chamarApi
+import com.conversa.app.core.registro.resumoDoErro
 import java.time.Clock
 import javax.inject.Inject
 import javax.inject.Singleton
@@ -221,7 +222,7 @@ class MensagensRepositorio @Inject constructor(
         chamarApi { api.concluirReacoesVistas(ReacoesVistasRequisicao(chaves.map { it.first })) }
             .onFailure {
                 synchronized(reacoesAvisadas) { reacoesAvisadas.removeAll(chaves.toSet()) }
-                Timber.d("Falha ao avisar as reações vistas: %s", it.javaClass.simpleName)
+                Timber.d("Falha ao avisar as reações vistas: %s", it.resumoDoErro())
             }
     }
 
@@ -244,7 +245,7 @@ class MensagensRepositorio @Inject constructor(
             .onSuccess { recarregar(conversaId, postagemId) }
             .onFailure {
                 synchronized(postagensVistas) { postagensVistas.remove(chave) }
-                Timber.d("Falha ao marcar a postagem como vista: %s", it.javaClass.simpleName)
+                Timber.d("Falha ao marcar a postagem como vista: %s", it.resumoDoErro())
             }
     }
 
@@ -259,7 +260,7 @@ class MensagensRepositorio @Inject constructor(
                     .onFailure {
                         // Deixa pedir de novo na próxima vez que aparecer na tela.
                         synchronized(jaPedidas) { jaPedidas.remove(mensagem) }
-                        Timber.d("Falha ao marcar como lida: %s", it.javaClass.simpleName)
+                        Timber.d("Falha ao marcar como lida: %s", it.resumoDoErro())
                     }
             }
         }
@@ -279,7 +280,7 @@ class MensagensRepositorio @Inject constructor(
         for (postagemId in postagens.distinct()) {
             chamarApi { api.visualizarPostagem(VisualizarPostagemRequisicao(postagemId)) }
                 .onSuccess { conversaDao.descontarNaoLidas(conversaId, it.vistas) }
-                .onFailure { Timber.d("Falha ao marcar a postagem como vista: %s", it.javaClass.simpleName) }
+                .onFailure { Timber.d("Falha ao marcar a postagem como vista: %s", it.resumoDoErro()) }
             if (mensagemDao.buscar(postagemId) != null) recarregar(conversaId, postagemId)
         }
     }
@@ -310,7 +311,7 @@ class MensagensRepositorio @Inject constructor(
         chamarApi { api.reproduzir(MarcarStatusRequisicao(conversaId, mensagemId)) }
             .onFailure {
                 synchronized(jaReproduzidas) { jaReproduzidas.remove(mensagemId) }
-                Timber.d("Falha ao marcar como reproduzida: %s", it.javaClass.simpleName)
+                Timber.d("Falha ao marcar como reproduzida: %s", it.resumoDoErro())
             }
     }
 

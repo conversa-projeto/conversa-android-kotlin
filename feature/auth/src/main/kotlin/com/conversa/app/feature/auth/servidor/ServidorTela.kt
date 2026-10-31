@@ -15,6 +15,7 @@ import androidx.compose.foundation.text.selection.SelectionContainer
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
+import androidx.compose.material.icons.outlined.BugReport
 import androidx.compose.material.icons.outlined.CheckCircle
 import androidx.compose.material.icons.outlined.ErrorOutline
 import androidx.compose.material3.AlertDialog
@@ -53,6 +54,7 @@ import com.conversa.app.feature.auth.R
 fun ServidorRotaTela(
     aoSalvar: () -> Unit,
     aoVoltar: (() -> Unit)?,
+    aoAbrirRegistro: () -> Unit = {},
     viewModel: ServidorViewModel = hiltViewModel(),
 ) {
     val estado by viewModel.estado.collectAsStateWithLifecycle()
@@ -67,6 +69,7 @@ fun ServidorRotaTela(
         aoTestar = viewModel::testar,
         aoSalvar = viewModel::salvar,
         aoVoltar = aoVoltar,
+        aoAbrirRegistro = aoAbrirRegistro,
     )
     estado.certificadoParaConfiar?.let { impressao ->
         ConfiarNoCertificado(impressao, aoConfiar = viewModel::confiarNoCertificado, aoCancelar = viewModel::naoConfiarNoCertificado)
@@ -100,6 +103,7 @@ fun ServidorTela(
     aoTestar: () -> Unit,
     aoSalvar: () -> Unit,
     aoVoltar: (() -> Unit)?,
+    aoAbrirRegistro: () -> Unit = {},
 ) {
     val ocupado = estado.testando || estado.salvando
     Scaffold(
@@ -111,6 +115,12 @@ fun ServidorTela(
                         IconButton(onClick = aoVoltar) {
                             Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = stringResource(R.string.voltar))
                         }
+                    }
+                },
+                // Antes de entrar não há Configurações: o registro do app fica aqui também (o login leva a esta tela).
+                actions = {
+                    IconButton(onClick = aoAbrirRegistro) {
+                        Icon(Icons.Outlined.BugReport, contentDescription = stringResource(R.string.servidor_registro))
                     }
                 },
             )

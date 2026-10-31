@@ -15,6 +15,7 @@ import coil3.key.Keyer
 import coil3.request.Options
 import com.conversa.app.core.data.anexos.AnexosRepositorio
 import com.conversa.app.core.model.PREFIXO_LOCAL
+import com.conversa.app.core.registro.resumoDoErro
 import com.conversa.app.core.ui.componentes.QuadroVideo
 import java.io.IOException
 import kotlinx.coroutines.Dispatchers
@@ -82,7 +83,7 @@ class FetcherQuadroVideo(
             leitor.abrir()
             leitor.getScaledFrameAtTime(0, MediaMetadataRetriever.OPTION_CLOSEST_SYNC, LADO_MAXIMO, LADO_MAXIMO)
         } catch (e: Exception) {
-            Timber.d("Quadro do vídeo não saiu: %s", e.javaClass.simpleName)
+            Timber.d("Quadro do vídeo não saiu: %s", e.resumoDoErro())
             null
         } finally {
             leitor.release()

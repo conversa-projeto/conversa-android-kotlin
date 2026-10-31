@@ -20,6 +20,7 @@ import com.conversa.app.core.network.json.lerInstant
 import com.conversa.app.core.network.realtime.EstadoConexao
 import com.conversa.app.core.network.realtime.EventoSocket
 import com.conversa.app.core.network.realtime.RealtimeClient
+import com.conversa.app.core.registro.resumoDoErro
 import javax.inject.Inject
 import javax.inject.Singleton
 import kotlinx.coroutines.CoroutineScope
@@ -129,6 +130,8 @@ class SyncManager @Inject constructor(
 
     /** Sincronização completa (reconexão, volta ao primeiro plano, push). */
     suspend fun ressincronizar() {
+        val inicio = System.currentTimeMillis()
+        Timber.tag(TAG).d("Sincronização completa: começando")
         trava.withLock {
             coroutineScope {
                 listOf(
@@ -144,12 +147,16 @@ class SyncManager @Inject constructor(
                 ).awaitAll()
             }
         }
+        Timber.tag(TAG).i("Sincronização completa em %d ms", System.currentTimeMillis() - inicio)
     }
 
     suspend fun sincronizarConversas() {
         chamarApi { api.conversas() }
-            .onSuccess { lista -> conversaDao.substituirTodas(lista.map { it.paraEntidade() }) }
-            .onFailure { Timber.d("Falha ao sincronizar conversas: %s", it.javaClass.simpleName) }
+            .onSuccess { lista ->
+                conversaDao.substituirTodas(lista.map { it.paraEntidade() })
+                Timber.tag(TAG).d("Conversas: %d", lista.size)
+            }
+            .onFailure { Timber.tag(TAG).w("Falha ao sincronizar as conversas: %s", it.resumoDoErro()) }
     }
 
     private suspend fun sincronizarMensagensNovas() = trava.withLock { sincronizarMensagensNovasTravado() }
@@ -157,10 +164,11 @@ class SyncManager @Inject constructor(
     private suspend fun sincronizarMensagensNovasTravado() {
         val desde = syncEstadoDao.ler(CURSOR_MENSAGENS).orEmpty()
         val novas = chamarApi { api.mensagensNovas(desde) }.getOrElse {
-            Timber.d("Falha em mensagens/novas: %s", it.javaClass.simpleName)
+            Timber.tag(TAG).w("Falha em mensagens/novas: %s", it.resumoDoErro())
             return
         }
         if (novas.isEmpty()) return
+        Timber.tag(TAG).i("Mensagens novas em %d conversas: %s", novas.size, novas.joinToString { it.conversaId.toString() })
 
         val comNovasDeOutros = mutableSetOf<Long>()
         for (nova in novas) {
@@ -172,7 +180,10 @@ class SyncManager @Inject constructor(
         val maior = novas.maxByOrNull { lerInstant(it.ate) ?: java.time.Instant.EPOCH }?.ate
         if (maior != null) syncEstadoDao.gravar(SyncEstadoEntidade(CURSOR_MENSAGENS, maior))
         sincronizarConversas()
-        if (comNovasDeOutros.isNotEmpty()) _novasDeOutros.tryEmit(comNovasDeOutros)
+        if (comNovasDeOutros.isNotEmpty()) {
+            Timber.tag(TAG).d("Para avisar (de outras pessoas, não lidas): conversas %s", comNovasDeOutros.joinToString())
+            _novasDeOutros.tryEmit(comNovasDeOutros)
+        }
     }
 
     /**
@@ -199,6 +210,7 @@ class SyncManager @Inject constructor(
      * mensagens novas e chamadas pendentes. Quem chama é a [ConexaoTempoReal].
      */
     suspend fun atualizacaoPeriodica() {
+        Timber.tag(TAG).d("Atualização periódica (tempo real fora do ar)")
         sincronizarMensagensNovas()
         sincronizarChamadasPendentes()
     }
@@ -284,6 +296,7 @@ class SyncManager @Inject constructor(
     }
 
     companion object {
+        const val TAG = "Sync"
         const val CURSOR_MENSAGENS = "mensagens_novas_ate"
         private const val DEBOUNCE_MS = 300L
         private const val LOTE = 100

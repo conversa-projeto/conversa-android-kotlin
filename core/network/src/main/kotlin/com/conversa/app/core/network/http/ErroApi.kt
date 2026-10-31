@@ -1,6 +1,7 @@
 package com.conversa.app.core.network.http
 
 import com.conversa.app.core.network.json.ConversaJson
+import com.conversa.app.core.registro.DescricaoParaRegistro
 import java.io.IOException
 import kotlinx.coroutines.CancellationException
 import kotlinx.serialization.SerializationException
@@ -12,7 +13,17 @@ import retrofit2.HttpException
  * Erros da API já classificados. O servidor sempre responde `{ "error": "..." }`
  * (contrato §3); o nginx responde HTML quando a API está fora ou no limite de login.
  */
-sealed class ErroApi(mensagem: String, causa: Throwable? = null) : Exception(mensagem, causa) {
+sealed class ErroApi(mensagem: String, causa: Throwable? = null) :
+    Exception(mensagem, causa),
+    DescricaoParaRegistro {
+    /** No registro do app: o tipo, o status e o texto do servidor; a causa (rede) vem depois, pelo `resumoDoErro`. */
+    override fun paraRegistro(): String = when (this) {
+        is SessaoExpirada -> "SessaoExpirada" + detalhe?.let { ": $it" }.orEmpty()
+        is Servidor -> "Servidor $status: $detalhe"
+        is ServidorIndisponivel -> "ServidorIndisponivel" + status?.let { " $it" }.orEmpty()
+        else -> javaClass.simpleName
+    }
+
     /** 401 numa requisição autenticada: token vencido ou inválido. */
     class SessaoExpirada(val detalhe: String?) : ErroApi(detalhe ?: "Sessão expirada")
 

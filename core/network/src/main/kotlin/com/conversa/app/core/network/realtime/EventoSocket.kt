@@ -2,6 +2,7 @@ package com.conversa.app.core.network.realtime
 
 import com.conversa.app.core.network.json.ConversaJson
 import kotlinx.serialization.json.JsonObject
+import kotlinx.serialization.json.JsonPrimitive
 import kotlinx.serialization.json.booleanOrNull
 import kotlinx.serialization.json.contentOrNull
 import kotlinx.serialization.json.intOrNull
@@ -94,6 +95,46 @@ sealed interface EventoSocket {
     /** Tipo que o app ainda não conhece (o servidor evoluiu). */
     data class Desconhecido(val tipo: Int?, val json: String) : EventoSocket
 }
+
+/**
+ * O evento como vai para o registro do app: o tipo e os números (conversa, mensagem, chamada, quem).
+ * Nunca o título nem o texto da mensagem nova, o emoji da reação, os dados do sinal (só a ação)
+ * nem o JSON de um tipo desconhecido.
+ */
+fun EventoSocket.resumoParaRegistro(): String = when (this) {
+    is EventoSocket.ErroLogin -> "erro no login do socket: $mensagem"
+    is EventoSocket.ErroLeitura -> "o servidor não entendeu o que o app mandou: $mensagem"
+    is EventoSocket.NovaMensagem -> "mensagem nova"
+    is EventoSocket.StatusMensagens -> "status de ${mensagens.size} mensagens na conversa $conversaId"
+    is EventoSocket.Digitando -> "usuário $usuarioId digitando na conversa $conversaId"
+    is EventoSocket.GravandoAudio -> "usuário $usuarioId gravando áudio na conversa $conversaId"
+    is EventoSocket.Reacao ->
+        "reação ${if (adicionada) "posta" else "tirada"} pelo usuário $usuarioId na mensagem $mensagemId (conversa $conversaId)"
+    is EventoSocket.ConversaAtualizada -> "conversa $conversaId atualizada" + usuarioId?.let { " pelo usuário $it" }.orEmpty()
+    is EventoSocket.ChamadaRecebida -> "chamada $chamadaId recebida do usuário $usuarioId"
+    is EventoSocket.ChamadaFinalizada -> "chamada $chamadaId finalizada pelo usuário $usuarioId"
+    is EventoSocket.UsuarioRecusou -> "usuário $usuarioId recusou a chamada $chamadaId"
+    is EventoSocket.UsuarioEntrou -> "usuário $usuarioId entrou na chamada $chamadaId"
+    is EventoSocket.UsuarioSaiu -> "usuário $usuarioId saiu da chamada $chamadaId"
+    is EventoSocket.VideoAtivado -> "usuário $usuarioId ligou o vídeo na chamada $chamadaId"
+    is EventoSocket.SinalChamada -> "sinal ${acaoDoSinal(dados)} do usuário $usuarioId na chamada $chamadaId"
+    is EventoSocket.StatusUsuario -> "usuário $usuarioId está ${estado ?: if (online) "online" else "offline"}"
+    is EventoSocket.PresencaConversa -> "usuário $usuarioId ${if (aberta) "abriu" else "deixou"} a conversa $conversaId"
+    EventoSocket.NovaAtividade -> "atividades mudaram"
+    is EventoSocket.EnqueteAtualizada -> "enquete $enqueteId atualizada (conversa $conversaId)"
+    is EventoSocket.ConfirmacaoLeitura -> "usuário $usuarioId confirmou a leitura da mensagem $mensagemId (conversa $conversaId)"
+    is EventoSocket.PostagemAtualizada -> "postagem $postagemId respondida pelo usuário $usuarioId (conversa $conversaId)"
+    is EventoSocket.ConfirmacaoPedida -> "confirmação de leitura pedida na mensagem $mensagemId (conversa $conversaId)"
+    EventoSocket.ContatosAtualizados -> "contatos mudaram"
+    is EventoSocket.PastasAtualizadas ->
+        "pasta $pastaId da conversa $conversaId mudou" + acao?.let { " ($it ${mensagens.size} mensagens)" }.orEmpty()
+    is EventoSocket.Desconhecido -> "tipo desconhecido ${tipo ?: "?"}"
+}
+
+/** Só a ação do sinal (`tela`, `ponteiro`, `vendo`…): o resto pode ter coordenadas e textos. */
+fun acaoDoSinal(dados: JsonObject): String = (dados["acao"] as? JsonPrimitive)?.contentOrNull?.take(MAXIMO_ACAO) ?: "?"
+
+private const val MAXIMO_ACAO = 24
 
 object TipoSocket {
     const val ERRO = 0

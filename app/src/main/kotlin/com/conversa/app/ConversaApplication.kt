@@ -20,6 +20,7 @@ import com.conversa.app.core.data.sistema.SistemaRepositorio
 import com.conversa.app.core.data.tempoReal.ConexaoTempoReal
 import com.conversa.app.core.data.tempoReal.MonitorPrimeiroPlano
 import com.conversa.app.core.network.di.EscopoAplicacao
+import com.conversa.app.core.registro.Registro
 import com.conversa.app.core.ui.componentes.AnexoRemoto
 import com.conversa.app.feature.chamada.ApresentadorChamada
 import com.conversa.app.feature.chamada.GerenciadorChamadas
@@ -27,6 +28,7 @@ import com.conversa.app.feature.chamada.IntegracaoChamada
 import com.conversa.app.imagens.FetcherAnexo
 import com.conversa.app.imagens.FetcherQuadroVideo
 import com.conversa.app.notificacoes.NotificadorMensagens
+import com.conversa.app.registro.DiarioDoApp
 import dagger.Lazy
 import dagger.hilt.android.HiltAndroidApp
 import javax.inject.Inject
@@ -76,13 +78,19 @@ class ConversaApplication :
 
     @Inject lateinit var conexaoEmSegundoPlano: ConexaoEmSegundoPlano
 
+    @Inject lateinit var diario: DiarioDoApp
+
     @Inject @EscopoAplicacao
     lateinit var escopo: CoroutineScope
 
     override fun onCreate() {
-        super.onCreate()
-        // Log só no debug; no release nada vai para o logcat (problema #4 do legado).
+        // O registro do app (files/registro, 7 dias) vale no debug e no release. Liga antes do super (o Hilt),
+        // para pegar o que os singletons registram ao nascer. O logcat continua só no debug (problema #4 do legado).
+        val registro = Registro.de(this).also { it.iniciar() }
         if (BuildConfig.DEBUG) Timber.plant(Timber.DebugTree())
+        DiarioDoApp.registrarAbertura(this, registro)
+        super.onCreate()
+        diario.iniciar(this)
 
         CanaisNotificacao.criar(this)
         primeiroPlano.iniciar()

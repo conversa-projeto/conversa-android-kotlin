@@ -76,6 +76,7 @@ Instruções para quem trabalha neste repositório, pessoas ou agentes de IA. Le
 - `:core:ui` — tema (cores do FMX: `docs/design/cores.md`), componentes, `UiState`.
 - `:core:media` — mídia: `PlayerAudio` (Media3, um áudio por vez) e `GravadorAudio` (microfone em AAC/M4A, trechos juntados por `juntarTrechos`).
 - `:core:webrtc` — mídia da chamada: `MidiaChamada` e a implementação `MidiaWebRtc` (libwebrtc; publica por WHIP e assina por WHEP no MediaMTX; `ClienteWhipWhep` no OkHttp do app).
+- `:core:registro` — o registro do app: tudo o que passa pelo Timber vai para `files/registro/AAAA-MM-DD.log` (7 dias), com o `Sigilo` e a falha fatal; a tela fica em Configurações › Registro do app.
 - `:core:testing` — regras de teste e fixtures JSON do contrato.
 - `:feature:*` — uma por área (hoje: `auth` — servidor, login, cadastro; `conversas` — lista, nova conversa, grupos, membros; `chat` — a conversa aberta; `chamada` — o `GerenciadorChamadas`, dono da chamada, a `ChamadaActivity`, os botões de ligar e a integração com o sistema: toque, notificações, serviço e Core-Telecom; `atividades` — a aba Atividades; `pesquisa` — a pesquisa em todos os chats; `config` — o perfil e, no 8.5, as configurações).
 - Convention plugins em `build-logic/`. O app antigo está em `app-legado/`, fora do build.
@@ -90,6 +91,10 @@ Instruções para quem trabalha neste repositório, pessoas ou agentes de IA. Le
   - nada de `TrustManager` que aceita tudo;
   - nunca registrar em log token, senha ou conteúdo de mensagem;
   - nunca guardar a senha do usuário.
+- **Registro do app** (`:core:registro`, vale também no release; o logcat só no debug):
+  - registre com `Timber.tag("Area")` o que ajuda a investigar: ids, estados, tempos, tamanhos e o `erro.resumoDoErro()` (classe, mensagem e causas);
+  - nunca textos de mensagem, nomes de pessoas, conteúdo de sinais nem valores de extras;
+  - endereços HTTP já entram sozinhos (`RegistroHttp`); eventos do WebSocket, pelo `resumoParaRegistro()`.
 - **Textos de UI:** sempre em `strings.xml`. Quando existir no web, use o mesmo texto (doc 03 §6). Os nomes são globais no APK: um nome repetido em dois módulos com textos diferentes faz um módulo mostrar o texto do outro. Confira com `node ferramentas/textos-repetidos.mjs`.
 - **Testes:** parsers, mapeadores e a máquina de estados de chamada sempre com teste unitário.
 - **Regex:** o Android usa o regex do **ICU**, não o da JVM dos testes unitários. Um padrão aceito nos testes pode fechar o app (aconteceu com `(?U)`). Evite flags embutidas e classes de propriedade Unicode; não use `\w` (no ICU aceita acentos; use `[A-Za-z0-9_]`). Toda função nova com regex entra no `app/src/androidTest/.../RegexNoAndroidTest.kt`.

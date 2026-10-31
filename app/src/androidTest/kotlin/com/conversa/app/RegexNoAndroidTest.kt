@@ -14,6 +14,7 @@ import com.conversa.app.core.model.pareceTabela
 import com.conversa.app.core.model.resumirTexto
 import com.conversa.app.core.model.separarTexto
 import com.conversa.app.core.model.temBlocoDeCodigo
+import com.conversa.app.core.registro.Sigilo
 import com.google.common.truth.Truth.assertThat
 import org.junit.Test
 import org.junit.runner.RunWith
@@ -49,5 +50,11 @@ class RegexNoAndroidTest {
         assertThat(pareceCodigo("function soma(a, b) {\n  return a + b;\n}")).isTrue()
         assertThat(pareceTabela("nome;idade\nAna;30")?.linguagem).isEqualTo("csv")
         assertThat(pareceTabela("const a = f(x,y);\nconst b = g(z,w);")).isNull()
+        // O sigilo do registro do app: IGNORE_CASE e as classes de caracteres no ICU.
+        assertThat(Sigilo.esconder("Authorization: Bearer abc.def")).doesNotContain("abc.def")
+        assertThat(
+            Sigilo.esconder("{\"senha\":\"x1\"} ?X-Amz-Signature=ff&id=3"),
+        ).isEqualTo("{\"senha\":\"***\"} ?X-Amz-Signature=***&id=3")
+        assertThat(Sigilo.esconder("Token não informado")).isEqualTo("Token não informado")
     }
 }

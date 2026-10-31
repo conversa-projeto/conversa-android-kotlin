@@ -46,6 +46,7 @@ import kotlinx.coroutines.flow.launchIn
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.onEach
 import kotlinx.coroutines.withTimeoutOrNull
+import timber.log.Timber
 
 /** O que fazer com uma mensagem nova de outra pessoa (NOT-01/NOT-02, como o web). */
 enum class AvisoMensagem { NOTIFICAR, SOM, NADA }
@@ -117,7 +118,9 @@ class NotificadorMensagens @Inject constructor(
 
     suspend fun avisar(conversaId: Long) {
         val conversa = conversas.observar(conversaId).first() ?: return
-        when (decidirAviso(conversa.arquivada, primeiroPlano.emPrimeiroPlano.value, emTela.id.value == conversaId)) {
+        val aviso = decidirAviso(conversa.arquivada, primeiroPlano.emPrimeiroPlano.value, emTela.id.value == conversaId)
+        registrarDecisao("Mensagem nova", conversa, aviso)
+        when (aviso) {
             AvisoMensagem.NADA -> Unit
             AvisoMensagem.SOM -> tocarSom()
             AvisoMensagem.NOTIFICAR -> montar(conversa)
@@ -131,7 +134,9 @@ class NotificadorMensagens @Inject constructor(
      */
     suspend fun avisarResposta(resposta: RespostaDePostagem) {
         val conversa = conversas.observar(resposta.conversaId).first() ?: return
-        when (decidirAviso(conversa.arquivada, primeiroPlano.emPrimeiroPlano.value, emTela.id.value == conversa.id)) {
+        val aviso = decidirAviso(conversa.arquivada, primeiroPlano.emPrimeiroPlano.value, emTela.id.value == conversa.id)
+        registrarDecisao("Resposta na postagem ${resposta.postagemId}", conversa, aviso)
+        when (aviso) {
             AvisoMensagem.NADA -> Unit
             AvisoMensagem.SOM -> tocarSom()
             AvisoMensagem.NOTIFICAR -> {
@@ -150,7 +155,20 @@ class NotificadorMensagens @Inject constructor(
     fun postagensAvisadas(conversaId: Long): Set<Long> =
         synchronized(respostasAvisadas) { respostasAvisadas[conversaId].orEmpty().mapNotNullTo(mutableSetOf()) { it.postagemId } }
 
+    private fun registrarDecisao(oQue: String, conversa: Conversa, aviso: AvisoMensagem) {
+        Timber.tag(REGISTRO).i(
+            "%s na conversa %d: %s (arquivada: %s, app na frente: %s, conversa na tela: %s)",
+            oQue,
+            conversa.id,
+            aviso.name.lowercase(),
+            conversa.arquivada,
+            primeiroPlano.emPrimeiroPlano.value,
+            emTela.id.value == conversa.id,
+        )
+    }
+
     fun cancelar(conversaId: Long) {
+        Timber.tag(REGISTRO).d("Notificação da conversa %d tirada", conversaId)
         synchronized(respostasAvisadas) { respostasAvisadas.remove(conversaId) }
         gerenciador.cancel(TAG, conversaId.toInt())
     }
@@ -213,7 +231,10 @@ class NotificadorMensagens @Inject constructor(
     }.getOrDefault(emptySet())
 
     private suspend fun mostrar(conversa: Conversa, linhas: List<Linha>) {
-        if (!podeNotificar()) return
+        if (!podeNotificar()) {
+            Timber.tag(REGISTRO).w("Notificação da conversa %d não mostrada: notificações desligadas ou sem permissão", conversa.id)
+            return
+        }
         val grupo = conversa.tipo == TipoConversa.GRUPO
         val eu = Person.Builder().setName(contexto.getString(R.string.notificacao_voce)).setKey("eu").build()
         val estilo = NotificationCompat.MessagingStyle(eu).setGroupConversation(grupo)
@@ -243,6 +264,7 @@ class NotificadorMensagens @Inject constructor(
             .build()
         @Suppress("MissingPermission") // conferida em podeNotificar
         gerenciador.notify(TAG, conversa.id.toInt(), notificacao)
+        Timber.tag(REGISTRO).i("Notificação da conversa %d: %d linha(s), %d não lida(s)", conversa.id, linhas.size, conversa.naoLidas)
     }
 
     /** Corpo como o web: texto resumido ou o tipo ("Imagem", "Gravação de áudio"…). */
@@ -348,6 +370,9 @@ class NotificadorMensagens @Inject constructor(
 
     companion object {
         const val TAG = "conversa"
+
+        /** A tag no registro do app (a [TAG] é a da notificação no Android). */
+        private const val REGISTRO = "Notificacao"
         const val MAX_NA_NOTIFICACAO = 7
         private const val TEMPO_RESPOSTA_VISIVEL_MS = 2_000L
         private const val ATALHOS_RECENTES = 4

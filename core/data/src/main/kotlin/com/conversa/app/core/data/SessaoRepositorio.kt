@@ -5,6 +5,7 @@ import com.conversa.app.core.model.Sessao
 import com.conversa.app.core.network.auth.EventosSessao
 import com.conversa.app.core.network.auth.TokenProvider
 import com.conversa.app.core.network.di.EscopoAplicacao
+import com.conversa.app.core.registro.Sigilo
 import javax.inject.Inject
 import javax.inject.Singleton
 import kotlinx.coroutines.CoroutineScope
@@ -24,6 +25,7 @@ enum class MotivoFimSessao { SAIU, EXPIROU }
  * Sessão do usuário. Guarda o token cifrado ([SessaoStore]) e o mantém em memória
  * para o [TokenProvider] (leitura síncrona nos interceptadores).
  * Um 401 em qualquer requisição autenticada encerra a sessão (contrato §2.4).
+ * O token em uso fica no [Sigilo]: se aparecer em alguma linha do registro do app, vira `***`.
  */
 @Singleton
 class SessaoRepositorio @Inject constructor(
@@ -45,6 +47,14 @@ class SessaoRepositorio @Inject constructor(
     init {
         escopo.launch {
             store.sessao.collect { gravada ->
+                if (!_carregada.value) {
+                    Timber.tag(TAG).i(
+                        if (gravada == null) "Sem sessão guardada" else "Sessão guardada: usuário %d, dispositivo %s",
+                        gravada?.usuarioId,
+                        gravada?.dispositivoId,
+                    )
+                }
+                Sigilo.guardar(TAG, gravada?.token)
                 tokenAtual = gravada?.token
                 _sessao.value = gravada
                 _carregada.value = true
@@ -53,7 +63,7 @@ class SessaoRepositorio @Inject constructor(
         escopo.launch {
             eventos.sessaoExpirada.collect {
                 if (tokenAtual != null) {
-                    Timber.i("Sessão expirada (401)")
+                    Timber.tag(TAG).w("O servidor recusou o token (401): a sessão acabou")
                     encerrar(MotivoFimSessao.EXPIROU)
                 }
             }
@@ -63,15 +73,22 @@ class SessaoRepositorio @Inject constructor(
     override fun token(): String? = tokenAtual
 
     suspend fun salvar(sessao: Sessao) {
+        Timber.tag(TAG).i("Sessão nova: usuário %d, dispositivo %s", sessao.usuarioId, sessao.dispositivoId)
+        Sigilo.guardar(TAG, sessao.token)
         tokenAtual = sessao.token
         _sessao.value = sessao
         store.salvar(sessao)
     }
 
     suspend fun encerrar(motivo: MotivoFimSessao = MotivoFimSessao.SAIU) {
+        Timber.tag(TAG).i("Fim da sessão: %s", if (motivo == MotivoFimSessao.SAIU) "a pessoa saiu" else "expirou")
         tokenAtual = null
         _sessao.value = null
         store.limpar()
         _fim.tryEmit(motivo)
+    }
+
+    companion object {
+        const val TAG = "Sessao"
     }
 }

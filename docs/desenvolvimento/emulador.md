@@ -78,6 +78,12 @@ O mesmo roteiro vale para um celular na mesma rede Wi-Fi do PC, sem cabo. **Atal
 
 Primeiro uso: 2026-10-09, Galaxy A25 (Android 16), conta `teste.android.b`, com o web na conta C ligando.
 
+## Registro do app (o que aconteceu nos últimos 7 dias)
+
+O app guarda o próprio registro em `files/registro/AAAA-MM-DD.log` (histórico `2026-10-31-04`): requisições, tempo real, envio, chamadas, rede, energia, por que o processo morreu… Diferente do logcat, que só guarda alguns minutos.
+- Pelo app: Configurações › Registro do app (ou o ícone de inseto na tela Servidor, antes de entrar) › Compartilhar, que gera um zip.
+- Pelo adb, no build de debug: `adb shell run-as com.conversa.conversa.dev ls files/registro` e `adb shell run-as com.conversa.conversa.dev cat files/registro/2026-10-31.log` (no Git Bash, com `MSYS_NO_PATHCONV=1`).
+
 ## Emulador sem espaço
 
 O armazenamento interno do AVD é de 6 GB, e os apps do Google se atualizam sozinhos com a rede. Com menos de ~10% livre, a instalação falha ("not enough space" / `INSTALL_FAILED_INSUFFICIENT_STORAGE`), e reinstalar por cima precisa de espaço para o APK velho e o novo (o de debug tem ~145 MB).

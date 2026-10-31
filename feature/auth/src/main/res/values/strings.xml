@@ -49,4 +49,6 @@
     <string name="cadastro_email_invalido">Informe um e-mail válido.</string>
     <string name="cadastro_senha_curta">A senha deve ter pelo menos 4 caracteres.</string>
     <string name="cadastro_email_repetido">E-mail já cadastrado.</string>
+    <!-- Registro do app (só do Android): dá para abrir antes de entrar, pela tela do servidor -->
+    <string name="servidor_registro">Registro do app</string>
 </resources>

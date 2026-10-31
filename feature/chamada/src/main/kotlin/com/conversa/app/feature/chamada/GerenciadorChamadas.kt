@@ -11,6 +11,7 @@ import com.conversa.app.core.model.TipoChamada
 import com.conversa.app.core.network.di.EscopoAplicacao
 import com.conversa.app.core.network.realtime.EventoSocket
 import com.conversa.app.core.network.realtime.RealtimeClient
+import com.conversa.app.core.registro.resumoDoErro
 import com.conversa.app.core.webrtc.EtapaVideo
 import com.conversa.app.core.webrtc.MidiaChamada
 import com.conversa.app.core.webrtc.MidiaLocal
@@ -39,6 +40,7 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asSharedFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.distinctUntilChanged
+import kotlinx.coroutines.flow.drop
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withTimeoutOrNull
@@ -90,7 +92,7 @@ class GerenciadorChamadas @Inject constructor(
 ) {
     private val escopo = CoroutineScope(
         SupervisorJob(escopoApp.coroutineContext[Job]) + despachante +
-            CoroutineExceptionHandler { _, e -> Timber.e(e, "Falha no gerenciador de chamadas") },
+            CoroutineExceptionHandler { _, e -> Timber.tag(TAG).e(e, "Falha no gerenciador de chamadas") },
     )
 
     private val _estado = MutableStateFlow(EstadoChamada())
@@ -122,6 +124,10 @@ class GerenciadorChamadas @Inject constructor(
         iniciado = true
         escopo.launch { tempoReal.eventos.collect { evento -> escopo.launch { tratar(evento) } } }
         escopo.launch { sincronizacao.chamadasPendentes.collect { lista -> escopo.launch { avaliarPendentes(lista) } } }
+        // Cada mudança da chamada vai para o registro do app (fase, participantes, mídia).
+        escopo.launch {
+            _estado.map { it.resumoParaRegistro() }.distinctUntilChanged().drop(1).collect { Timber.tag(TAG).i("Estado: %s", it) }
+        }
         // O WebSocket fica ligado em segundo plano enquanto houver chamada.
         escopo.launch {
             _estado.map { it.fase != FaseChamada.INATIVO }.distinctUntilChanged().collect { conexao.chamadaAtiva.value = it }
@@ -135,6 +141,7 @@ class GerenciadorChamadas @Inject constructor(
 
     /** Liga para [participantes] (eu entro sozinho na lista). Só sem outra chamada. */
     fun ligar(tipo: TipoChamada, participantes: List<Long>, conversaId: Long?) {
+        Timber.tag(TAG).i("Ligar (%s) para %s, conversa %s", tipo.name.lowercase(), participantes.joinToString(), conversaId)
         escopo.launch {
             val eu = eu() ?: return@launch
             if (_estado.value.fase != FaseChamada.INATIVO) {
@@ -177,6 +184,7 @@ class GerenciadorChamadas @Inject constructor(
 
     /** Atende a chamada que está tocando. [soAssistir]: entra com a câmera desligada. */
     fun atender(soAssistir: Boolean = false) {
+        Timber.tag(TAG).i(if (soAssistir) "Atender só assistindo" else "Atender")
         escopo.launch {
             val atual = _estado.value
             val id = atual.chamadaId ?: return@launch
@@ -230,11 +238,13 @@ class GerenciadorChamadas @Inject constructor(
 
     /** Recusa a chamada que está tocando: **um** `POST /chamada/recusar`. */
     fun recusar() {
+        Timber.tag(TAG).i("Recusar")
         escopo.launch { if (_estado.value.fase == FaseChamada.RECEBENDO) recusarAgora(naoAtendeu = false) }
     }
 
     /** O botão vermelho: cancela (chamando), recusa (tocando) ou sai (na chamada). */
     fun desligar() {
+        Timber.tag(TAG).i("Desligar")
         escopo.launch { desligarAgora() }
     }
 
@@ -841,11 +851,13 @@ class GerenciadorChamadas @Inject constructor(
     } catch (e: CancellationException) {
         throw e
     } catch (e: Exception) {
-        Timber.w("Chamada: %s", e.javaClass.simpleName)
+        Timber.tag(TAG).w("Falhou: %s", e.resumoDoErro())
         null
     }
 
     companion object {
+        const val TAG = "Chamada"
+
         /** Onde o "Chamar de novo" vale: liguei, atendi ou estou na chamada. */
         private val FASES_CHAMAR_DE_NOVO = setOf(FaseChamada.CHAMANDO, FaseChamada.CONECTANDO, FaseChamada.ATIVA)
 

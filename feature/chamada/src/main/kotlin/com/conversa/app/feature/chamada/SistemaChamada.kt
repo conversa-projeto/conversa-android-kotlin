@@ -39,6 +39,7 @@ import com.conversa.app.core.data.tempoReal.MonitorPrimeiroPlano
 import com.conversa.app.core.media.PlayerAudio
 import com.conversa.app.core.model.TipoChamada
 import com.conversa.app.core.network.di.EscopoAplicacao
+import com.conversa.app.core.registro.resumoDoErro
 import com.conversa.app.core.webrtc.MidiaChamada
 import dagger.hilt.android.AndroidEntryPoint
 import dagger.hilt.android.qualifiers.ApplicationContext
@@ -145,7 +146,7 @@ class TomDeChamada @Inject constructor(@ApplicationContext private val contexto:
                     play()
                 }
             } catch (e: RuntimeException) {
-                Timber.w("Toque indisponível: %s", e.javaClass.simpleName)
+                Timber.w("Toque indisponível: %s", e.resumoDoErro())
                 null
             }
         }
@@ -165,7 +166,7 @@ class TomDeChamada @Inject constructor(@ApplicationContext private val contexto:
         chamando = try {
             ToneGenerator(AudioManager.STREAM_VOICE_CALL, VOLUME_CHAMANDO).apply { startTone(ToneGenerator.TONE_SUP_RINGTONE) }
         } catch (e: RuntimeException) {
-            Timber.w("Tom de chamando indisponível: %s", e.javaClass.simpleName)
+            Timber.w("Tom de chamando indisponível: %s", e.resumoDoErro())
             null
         }
     }
@@ -349,7 +350,7 @@ class TelecomChamadas @Inject constructor(
             gerente.registerAppWithTelecom(CallsManager.CAPABILITY_BASELINE or CallsManager.CAPABILITY_SUPPORTS_VIDEO_CALLING)
             true
         } catch (e: RuntimeException) {
-            Timber.w("Telecom indisponível: %s", e.javaClass.simpleName)
+            Timber.w("Telecom indisponível: %s", e.resumoDoErro())
             false
         }
     }
@@ -408,7 +409,7 @@ class TelecomChamadas @Inject constructor(
                 }
             } catch (e: Exception) {
                 if (e is kotlinx.coroutines.CancellationException) throw e
-                Timber.w("Telecom recusou a chamada: %s", e.javaClass.simpleName)
+                Timber.w("Telecom recusou a chamada: %s", e.resumoDoErro())
             } finally {
                 _rotas.value = emptyList()
                 _rotaAtual.value = null
@@ -513,7 +514,7 @@ class ServicoChamada : Service() {
             ServiceCompat.startForeground(this, NotificacoesChamada.ID_EM_ANDAMENTO, notificacoes.emAndamento(estado), tipos)
         } catch (e: RuntimeException) {
             // Sem como ficar em primeiro plano (ex.: começou em segundo plano): a chamada segue, só sem o serviço.
-            Timber.w("Serviço da chamada recusado: %s", e.javaClass.simpleName)
+            Timber.w("Serviço da chamada recusado: %s", e.resumoDoErro())
             stopSelf()
         }
     }
@@ -531,7 +532,7 @@ class ServicoChamada : Service() {
             try {
                 ContextCompat.startForegroundService(contexto, Intent(contexto, ServicoChamada::class.java))
             } catch (e: RuntimeException) {
-                Timber.w("Não deu para iniciar o serviço da chamada: %s", e.javaClass.simpleName)
+                Timber.w("Não deu para iniciar o serviço da chamada: %s", e.resumoDoErro())
             }
         }
     }

@@ -78,6 +78,31 @@ data class EstadoChamada(
 }
 
 /**
+ * O estado numa linha, para o registro do app: fase, chamada, tipo, quem ligou, a mídia daqui e
+ * cada participante com o status. Sem nomes e sem as posições dos ponteiros (mudam o tempo todo).
+ */
+fun EstadoChamada.resumoParaRegistro(): String {
+    if (fase == FaseChamada.INATIVO) return "sem chamada"
+    return buildString {
+        append(fase.name.lowercase())
+        chamadaId?.let { append(" chamada ").append(it) }
+        append(" (").append(tipo.name.lowercase())
+        remetenteId?.let { append(", ligou: ").append(it) }
+        append("); mídia ").append(midiaLocal.name.lowercase())
+        append(", microfone ").append(if (microfoneLigado) "ligado" else "mudo")
+        append(", câmera ").append(if (cameraLigada) "ligada" else "desligada")
+        dados?.participantes?.takeIf { it.isNotEmpty() }?.let { lista ->
+            append("; participantes: ").append(lista.joinToString { "${it.usuarioId} ${it.status.name.lowercase()}" })
+        }
+        if (telas.isNotEmpty()) append("; compartilhando a tela: ").append(telas.joinToString())
+        if (escolhendoTela.isNotEmpty()) append("; escolhendo a tela: ").append(escolhendoTela.joinToString())
+        etapaVideo?.let { append("; ligando o vídeo: ").append(it.name.lowercase()) }
+        pedidoVideo?.let { append("; pedido de vídeo de ").append(it.usuarioId) }
+        if (exibicao.modo != ModoExibicao.GRADE) append("; exibição ").append(exibicao.modo.name.lowercase())
+    }
+}
+
+/**
  * Convidados fora da chamada (FC-726, web `participantesAguardando`): tocando, ou que recusaram
  * sem nunca ter entrado (estes podem ser chamados de novo). Sem mim e sem quem já está [conectados].
  */

@@ -16,6 +16,7 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.outlined.KeyboardArrowRight
 import androidx.compose.material.icons.automirrored.outlined.Logout
 import androidx.compose.material.icons.outlined.AdminPanelSettings
+import androidx.compose.material.icons.outlined.BugReport
 import androidx.compose.material.icons.outlined.Call
 import androidx.compose.material.icons.outlined.Dns
 import androidx.compose.material.icons.outlined.Info
@@ -66,6 +67,7 @@ class AcoesConfiguracoes(
     val aoAbrirChamadas: () -> Unit = {},
     val aoAbrirSistema: () -> Unit = {},
     val aoAbrirAcessos: () -> Unit = {},
+    val aoAbrirRegistro: () -> Unit = {},
     val aoFotoFalhar: () -> Unit = {},
     val aoAlterarTema: (PreferenciaTema) -> Unit = {},
     val aoSair: () -> Unit = {},
@@ -82,6 +84,7 @@ fun ConfiguracoesRotaTela(
     aoAbrirChamadas: () -> Unit,
     aoAbrirSistema: () -> Unit,
     aoAbrirAcessos: () -> Unit,
+    aoAbrirRegistro: () -> Unit,
     modifier: Modifier = Modifier,
     viewModel: ConfiguracoesViewModel = hiltViewModel(),
 ) {
@@ -98,6 +101,7 @@ fun ConfiguracoesRotaTela(
             aoAbrirChamadas = aoAbrirChamadas,
             aoAbrirSistema = aoAbrirSistema,
             aoAbrirAcessos = aoAbrirAcessos,
+            aoAbrirRegistro = aoAbrirRegistro,
             aoFotoFalhar = viewModel::fotoFalhou,
             aoAlterarTema = viewModel::alterarTema,
             aoSair = viewModel::sair,
@@ -179,6 +183,12 @@ internal fun ConfiguracoesTela(estado: ConfiguracoesUiState, acoes: AcoesConfigu
                     acoes.aoAbrirAcessos,
                 )
             }
+            Item(
+                Icons.Outlined.BugReport,
+                stringResource(R.string.registro_titulo),
+                stringResource(R.string.registro_resumo),
+                acoes.aoAbrirRegistro,
+            )
             Item(Icons.Outlined.Info, stringResource(R.string.config_sobre), versaoDoApp(), acoes.aoAbrirSobre)
             HorizontalDivider()
             ListItem(

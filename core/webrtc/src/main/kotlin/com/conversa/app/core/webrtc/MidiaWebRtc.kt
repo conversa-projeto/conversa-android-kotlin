@@ -12,6 +12,8 @@ import com.conversa.app.core.network.api.ConversaApi
 import com.conversa.app.core.network.di.EscopoAplicacao
 import com.conversa.app.core.network.dto.paraModelo
 import com.conversa.app.core.network.http.chamarApi
+import com.conversa.app.core.registro.Sigilo
+import com.conversa.app.core.registro.resumoDoErro
 import dagger.Binds
 import dagger.Module
 import dagger.hilt.InstallIn
@@ -97,7 +99,7 @@ class MidiaWebRtc @Inject constructor(
 ) : MidiaChamada {
     private val vez = Dispatchers.Default.limitedParallelism(1)
     private val raiz = SupervisorJob(escopoApp.coroutineContext[Job])
-    private val escopo = CoroutineScope(raiz + vez + CoroutineExceptionHandler { _, e -> Timber.w(e, "Mídia da chamada") })
+    private val escopo = CoroutineScope(raiz + vez + CoroutineExceptionHandler { _, e -> Timber.tag(TAG_MIDIA).w(e, "Mídia da chamada") })
 
     private val _trilhas = MutableStateFlow(TrilhasChamada())
     val trilhas: StateFlow<TrilhasChamada> = _trilhas.asStateFlow()
@@ -223,7 +225,7 @@ class MidiaWebRtc @Inject constructor(
             } catch (e: CancellationException) {
                 throw e
             } catch (e: Exception) {
-                Timber.w("Republicar com vídeo falhou: %s", e.javaClass.simpleName)
+                Timber.tag(TAG_MIDIA).w("Republicar com vídeo falhou: %s", e.resumoDoErro())
             }
         }
         // Assina todos de novo, agora com vídeo; cada assinatura antiga toca até a nova conectar.
@@ -274,7 +276,7 @@ class MidiaWebRtc @Inject constructor(
                 l.fonteAudio = fonte
                 l.audio = webrtc.fabrica.createAudioTrack("audio0", fonte)
             } catch (e: RuntimeException) {
-                Timber.w("Microfone indisponível: %s", e.javaClass.simpleName)
+                Timber.tag(TAG_MIDIA).w("Microfone indisponível: %s", e.resumoDoErro())
             }
         }
         if (video && l.video == null && permitido(Manifest.permission.CAMERA)) abrirCamera(l)
@@ -298,7 +300,7 @@ class MidiaWebRtc @Inject constructor(
             l.video = webrtc.fabrica.createVideoTrack("video0", fonte)
             l.capturando = true
         } catch (e: RuntimeException) {
-            Timber.w("Câmera indisponível: %s", e.javaClass.simpleName)
+            Timber.tag(TAG_MIDIA).w("Câmera indisponível: %s", e.resumoDoErro())
         }
     }
 
@@ -364,12 +366,22 @@ class MidiaWebRtc @Inject constructor(
         val l = local
         val trilhas = listOfNotNull(l?.audio, l?.video)
         if (trilhas.isEmpty()) throw IOException("Nada para publicar")
+        val inicio = SystemClock.elapsedRealtime()
+        Timber.tag(TAG_MIDIA).i(
+            "Publicando na chamada %d: %s%s",
+            chamadaId,
+            if (l?.audio != null) "áudio" else "sem áudio",
+            if (l?.video != null) " e vídeo" else "",
+        )
         val ice = buscarIce()
         checar(s)
         publicacao?.let(::descartarPublicacao)
         publicacao = null
         var criada: Publicacao? = null
-        val observador = Observador(aoMudarConexao = { estado -> escopo.launch { criada?.let { aoMudarPublicacao(it, estado, s) } } })
+        val observador = Observador(
+            rotulo = "publicação",
+            aoMudarConexao = { estado -> escopo.launch { criada?.let { aoMudarPublicacao(it, estado, s) } } },
+        )
         val pc = webrtc.fabrica.createPeerConnection(configuracao(ice), observador) ?: throw IOException("PeerConnection")
         val pub = Publicacao(pc, observador).also {
             criada = it
@@ -389,7 +401,13 @@ class MidiaWebRtc @Inject constructor(
         pub.observador.esperarColeta()
         checar(s, pub)
         val sdp = pc.localDescription?.description ?: throw IOException("Sem oferta")
+        val antesDoWhip = SystemClock.elapsedRealtime()
         val resposta = whip.publicar(caminhoStream(chamadaId, eu), sdp)
+        Timber.tag(TAG_MIDIA).i(
+            "Publicação: WHIP respondeu em %d ms (%d ms desde o começo)",
+            SystemClock.elapsedRealtime() - antesDoWhip,
+            SystemClock.elapsedRealtime() - inicio,
+        )
         if (s != sessaoAtual() || publicacao !== pub) {
             resposta.recurso?.let(::excluirDepois)
             throw CancellationException("Publicação substituída")
@@ -417,7 +435,7 @@ class MidiaWebRtc @Inject constructor(
             } catch (e: CancellationException) {
                 throw e
             } catch (e: Exception) {
-                Timber.w("Troca da publicação recusada: %s", e.javaClass.simpleName)
+                Timber.tag(TAG_MIDIA).w("Troca da publicação recusada: %s", e.resumoDoErro())
                 soltarPublicacaoAnterior()
                 publicarAgora(s)
             }
@@ -453,7 +471,7 @@ class MidiaWebRtc @Inject constructor(
             } catch (e: CancellationException) {
                 throw e
             } catch (e: Exception) {
-                Timber.w("Republicar falhou: %s", e.javaClass.simpleName)
+                Timber.tag(TAG_MIDIA).w("Republicar falhou: %s", e.resumoDoErro())
             } finally {
                 republicando = false
             }
@@ -463,7 +481,7 @@ class MidiaWebRtc @Inject constructor(
     private fun preferirGravaveis(transceptor: RtpTransceiver) {
         val codecs = webrtc.fabrica.getRtpSenderCapabilities(MediaStreamTrack.MediaType.MEDIA_TYPE_VIDEO).codecs
         val resultado = transceptor.setCodecPreferences(ordenarGravaveis(codecs) { it.mimeType })
-        if (resultado.isError) Timber.w("Preferência de codec recusada")
+        if (resultado.isError) Timber.tag(TAG_MIDIA).w("Preferência de codec recusada")
     }
 
     /** Bitrate do Opus, fps e teto de banda do vídeo, como o `aplicarParametrosEnvio` do web (8.5). */
@@ -508,7 +526,7 @@ class MidiaWebRtc @Inject constructor(
             } catch (e: CancellationException) {
                 throw e
             } catch (e: Exception) {
-                Timber.w("WHEP falhou: %s", e.javaClass.simpleName)
+                Timber.tag(TAG_MIDIA).w("Assinatura de %d falhou: %s", usuario, e.resumoDoErro())
                 if (assinaturas[usuario] === a) {
                     a.falhou = true
                     soltarSubstituida(usuario)
@@ -525,9 +543,12 @@ class MidiaWebRtc @Inject constructor(
     }
 
     private suspend fun conectarAssinatura(a: Assinatura, s: Long) {
+        val inicio = SystemClock.elapsedRealtime()
+        Timber.tag(TAG_MIDIA).i("Assinando %d na chamada %d (%s)", a.usuario, chamadaId, if (a.comVideo) "com vídeo" else "só áudio")
         val ice = buscarIce()
         checar(s, a)
         val observador = Observador(
+            rotulo = "assinatura de ${a.usuario}",
             aoMudarConexao = { estado -> escopo.launch { aoMudarAssinatura(a, estado, s) } },
             aoReceberTrilha = { trilha -> escopo.launch { aoReceberTrilha(a, trilha, s) } },
         )
@@ -556,7 +577,16 @@ class MidiaWebRtc @Inject constructor(
                 resposta?.recurso?.let(::excluirDepois)
                 throw CancellationException("Assinatura substituída")
             }
-            if (resposta != null) break
+            if (resposta != null) {
+                Timber.tag(TAG_MIDIA).i(
+                    "Assinatura de %d: WHEP respondeu na tentativa %d (%d ms desde o começo)",
+                    a.usuario,
+                    tentativa,
+                    SystemClock.elapsedRealtime() - inicio,
+                )
+                break
+            }
+            Timber.tag(TAG_MIDIA).d("Assinatura de %d: tentativa %d de %d sem resposta", a.usuario, tentativa, tentativas)
             delay(intervalo)
         }
         if (resposta == null) throw StreamAusente()
@@ -712,8 +742,20 @@ class MidiaWebRtc @Inject constructor(
 
     // --- Utilidades ---
 
-    private suspend fun buscarIce(): ServidoresIce =
-        chamarApi { api.ice() }.map { it.paraModelo() }.getOrElse { ServidoresIce(emptyList(), somenteRelay = false) }
+    private suspend fun buscarIce(): ServidoresIce = chamarApi { api.ice() }.map { it.paraModelo() }
+        .onSuccess { ice ->
+            // As credenciais do TURN nunca entram no registro, nem por engano.
+            ice.servidores.forEachIndexed { i, servidor -> Sigilo.guardar("turn-$i", servidor.credencial) }
+            Timber.tag(TAG_MIDIA).d(
+                "ICE: %s%s",
+                ice.servidores.flatMap { it.urls }.joinToString().ifEmpty { "nenhum servidor" },
+                if (ice.somenteRelay) " (só pelo TURN)" else "",
+            )
+        }
+        .getOrElse {
+            Timber.tag(TAG_MIDIA).w("GET /ice falhou: %s; segue sem TURN", it.resumoDoErro())
+            ServidoresIce(emptyList(), somenteRelay = false)
+        }
 
     private fun configuracao(ice: ServidoresIce): PeerConnection.RTCConfiguration {
         val servidores = ice.servidores.filter { it.urls.isNotEmpty() }.map { servidor ->

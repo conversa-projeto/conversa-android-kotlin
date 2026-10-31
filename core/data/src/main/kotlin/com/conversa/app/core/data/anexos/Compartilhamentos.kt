@@ -3,6 +3,7 @@ package com.conversa.app.core.data.anexos
 import android.content.Context
 import androidx.core.net.toUri
 import com.conversa.app.core.network.di.DespachanteEs
+import com.conversa.app.core.registro.resumoDoErro
 import dagger.hilt.android.qualifiers.ApplicationContext
 import java.io.File
 import javax.inject.Inject
@@ -89,7 +90,7 @@ class Compartilhamentos @Inject constructor(
                 ?: return null
             origem.copy(uri = arquivos.uriCompartilhado(destino), tamanho = destino.length())
         } catch (e: Exception) {
-            Timber.w("Não copiou o compartilhado: %s", e.javaClass.simpleName)
+            Timber.w("Não copiou o compartilhado: %s", e.resumoDoErro())
             destino.delete()
             null
         }

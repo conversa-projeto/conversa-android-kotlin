@@ -20,8 +20,10 @@ import com.conversa.app.core.ui.tema.BarrasDoSistema
 import com.conversa.app.core.ui.tema.ConversaTema
 import com.conversa.app.feature.chamada.ComBannerDaChamada
 import com.conversa.app.navegacao.ConversaNavHost
+import com.conversa.app.registro.DiarioDoApp
 import dagger.hilt.android.AndroidEntryPoint
 import javax.inject.Inject
+import timber.log.Timber
 
 @AndroidEntryPoint
 class MainActivity : ComponentActivity() {
@@ -63,6 +65,7 @@ class MainActivity : ComponentActivity() {
     /** `singleTask`: links com o app aberto chegam aqui. */
     override fun onNewIntent(intent: Intent) {
         super.onNewIntent(intent)
+        Timber.tag("Ciclo").i("MainActivity recebeu: %s", DiarioDoApp.resumoDoIntent(intent))
         viewModel.receberLink(intent.data)
         viewModel.receberCompartilhamento(lerCompartilhamento(intent))
     }

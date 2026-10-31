@@ -10,3 +10,8 @@
 
 # DTOs do contrato (nomes dos campos vêm de @SerialName, mas mantemos por segurança)
 -keep class com.conversa.app.core.network.dto.** { *; }
+
+# Registro do app (files/registro/): as pilhas de erro e as tags do Timber precisam dos nomes das
+# classes e das linhas para fazer sentido sem o mapping do R8. Só não renomeia; o R8 ainda tira o que não é usado.
+-keepattributes SourceFile, LineNumberTable
+-keepnames class com.conversa.app.** { *; }

@@ -45,6 +45,7 @@ dependencies {
     implementation(projects.core.database)
     implementation(projects.core.data)
     implementation(projects.core.ui)
+    implementation(projects.core.registro)
     implementation(projects.feature.auth)
     implementation(projects.feature.conversas)
     implementation(projects.feature.chat)

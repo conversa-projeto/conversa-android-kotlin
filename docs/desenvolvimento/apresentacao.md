@@ -51,3 +51,7 @@ Para apresentar ou testar o app num **celular real**, contra um servidor Convers
   - se também falhar, é a configuração de mídia do servidor (MediaMTX e TURN), não o app;
   - se o servidor usar `turns:` (TURN com TLS, a variável `CONVERSA_TURN_PORTA`) com certificado próprio, a chamada pelo relay pode falhar (histórico `2026-10-17-20`, pendências).
 - **Trocar de servidor:** na tela de login, toque no "Servidor: …"; logado, Configurações › Servidor.
+- **Qualquer outro problema:** logo depois, abra Configurações › Registro do app › Compartilhar e mande o zip a quem vai investigar.
+  - Sem conseguir entrar, o mesmo registro fica no ícone de inseto da tela Servidor.
+  - Ele guarda 7 dias, sem senhas, tokens nem o texto das mensagens.
+  - Não saia da conta antes: o registro fica, mas a mensagem que não foi se perde.

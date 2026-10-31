@@ -16,6 +16,7 @@ import com.conversa.app.core.database.ConversaBanco
 import com.conversa.app.core.network.di.EscopoAplicacao
 import com.conversa.app.core.network.http.ErroApi
 import com.conversa.app.core.network.http.paraErroApi
+import com.conversa.app.core.registro.resumoDoErro
 import javax.inject.Inject
 import javax.inject.Singleton
 import kotlinx.coroutines.CoroutineScope
@@ -70,18 +71,29 @@ class IniciadorSessao @Inject constructor(
                 _falha.value = null
                 _carregada.value = false
                 if (usuario == null) return@collectLatest
+                Timber.tag(TAG).i("Iniciando a sessão do usuário %d", usuario)
+                val inicio = System.currentTimeMillis()
                 launch {
                     autenticacao.registrarDispositivo()
-                        .onFailure { Timber.d("Registro do dispositivo falhou: %s", it.javaClass.simpleName) }
+                        .onSuccess { Timber.tag(TAG).d("Dispositivo registrado no servidor") }
+                        .onFailure { Timber.tag(TAG).w("Registro do dispositivo falhou: %s", it.resumoDoErro()) }
                 }
+                var tentativa = 1
                 while (true) {
                     val erro = carregar() ?: break
                     if (erro is ErroApi.SessaoExpirada) break
+                    Timber.tag(TAG).w(
+                        "Carga da sessão falhou (tentativa %d): %s; de novo em %d s",
+                        tentativa++,
+                        erro.resumoDoErro(),
+                        INTERVALO_MS / 1000,
+                    )
                     _falha.value = erro
                     delay(INTERVALO_MS)
                 }
                 _falha.value = null
                 _carregada.value = true
+                Timber.tag(TAG).i("Sessão carregada em %d ms (conversas e contatos)", System.currentTimeMillis() - inicio)
                 // Mensagens que ficaram na fila (app fechado no meio do envio).
                 envio.retomar()
             }
@@ -96,6 +108,8 @@ class IniciadorSessao @Inject constructor(
     }
 
     companion object {
+        const val TAG = "Sessao"
+
         /** Igual ao web: tenta de novo a cada 5 s. */
         const val INTERVALO_MS = 5_000L
     }
@@ -128,6 +142,7 @@ class LimpezaSessao @Inject constructor(
     }
 
     suspend fun limpar() {
+        Timber.tag(IniciadorSessao.TAG).i("Limpando os dados da sessão (fila de envio, cache, arquivos e banco)")
         agendadorEnvio.cancelar()
         presenca.limpar()
         sincronizacao.limpar()
@@ -136,5 +151,6 @@ class LimpezaSessao @Inject constructor(
         transcricoes.limpar()
         withContext(Dispatchers.IO) { arquivos.limpar() }
         withContext(Dispatchers.IO) { banco.clearAllTables() }
+        Timber.tag(IniciadorSessao.TAG).i("Dados da sessão limpos")
     }
 }

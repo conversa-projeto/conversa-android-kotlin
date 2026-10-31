@@ -13,12 +13,13 @@ android {
 
 dependencies {
     api(projects.core.model)
+    // O ErroApi se descreve no registro (DescricaoParaRegistro); quem usa o ErroApi vê a interface.
+    api(projects.core.registro)
     api(libs.kotlinx.coroutines.core)
     api(libs.kotlinx.serialization.json)
     api(libs.okhttp)
     api(libs.retrofit)
     implementation(libs.retrofit.kotlinx.serialization)
-    implementation(libs.okhttp.logging)
     implementation(libs.timber)
 
     testImplementation(projects.core.testing)

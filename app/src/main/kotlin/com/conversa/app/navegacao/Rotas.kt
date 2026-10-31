@@ -85,6 +85,10 @@ data object RotaSistema
 @Serializable
 data object RotaAcessos
 
+/** Registro do app: o que ficou guardado no aparelho nos últimos 7 dias (das Configurações e da tela Servidor). */
+@Serializable
+data object RotaRegistro
+
 /** Anexos de uma conversa (8.6): "Ver anexos" do perfil da pessoa ou dos dados do grupo. */
 @Serializable
 data class RotaAnexos(val conversaId: Long)

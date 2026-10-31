@@ -1,6 +1,9 @@
 package com.conversa.app.navegacao
 
+import android.os.Bundle
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.DisposableEffect
+import androidx.navigation.NavController
 import androidx.navigation.NavDestination.Companion.hasRoute
 import androidx.navigation.NavHostController
 import androidx.navigation.compose.NavHost
@@ -26,6 +29,7 @@ import com.conversa.app.feature.config.PerfilRotaTela
 import com.conversa.app.feature.config.PermissoesRotaTela
 import com.conversa.app.feature.config.PrivacidadeRotaTela
 import com.conversa.app.feature.config.QualidadeChamadasRotaTela
+import com.conversa.app.feature.config.RegistroRotaTela
 import com.conversa.app.feature.config.SistemaRotaTela
 import com.conversa.app.feature.config.SobreRotaTela
 import com.conversa.app.feature.conversas.enviarpara.EnviarParaRotaTela
@@ -35,10 +39,20 @@ import com.conversa.app.feature.conversas.membros.MembrosRotaTela
 import com.conversa.app.feature.conversas.novaconversa.NovaConversaRotaTela
 import com.conversa.app.feature.pesquisa.PesquisaRotaTela
 import com.conversa.app.principal.PrincipalTela
+import timber.log.Timber
 
 @Composable
 fun ConversaNavHost(destinoInicial: Any, principal: MainViewModel) {
     val nav = rememberNavController()
+
+    // Cada tela aberta vai para o registro do app: a rota e os números dela (conversa 8), sem textos.
+    DisposableEffect(nav) {
+        val ouvinte = NavController.OnDestinationChangedListener { _, destino, argumentos ->
+            Timber.tag("Tela").i("%s", resumoDaRota(destino.route, argumentos))
+        }
+        nav.addOnDestinationChangedListener(ouvinte)
+        onDispose { nav.removeOnDestinationChangedListener(ouvinte) }
+    }
 
     ColetarEventos(principal.navegacao.fluxo) { evento ->
         when (evento) {
@@ -57,6 +71,7 @@ fun ConversaNavHost(destinoInicial: Any, principal: MainViewModel) {
                     if (rota.podeVoltar) nav.popBackStack() else nav.irParaRaiz(RotaLogin())
                 },
                 aoVoltar = if (rota.podeVoltar) ({ nav.popBackStack() }) else null,
+                aoAbrirRegistro = { nav.navigate(RotaRegistro) },
             )
         }
         composable<RotaLogin> { entrada ->
@@ -115,6 +130,7 @@ fun ConversaNavHost(destinoInicial: Any, principal: MainViewModel) {
                         aoAbrirChamadas = { nav.navigate(RotaQualidadeChamadas) },
                         aoAbrirSistema = { nav.navigate(RotaSistema) },
                         aoAbrirAcessos = { nav.navigate(RotaAcessos) },
+                        aoAbrirRegistro = { nav.navigate(RotaRegistro) },
                         modifier = modificador,
                     )
                 },
@@ -171,6 +187,7 @@ fun ConversaNavHost(destinoInicial: Any, principal: MainViewModel) {
         composable<RotaQualidadeChamadas> { QualidadeChamadasRotaTela(aoVoltar = { nav.popBackStack() }) }
         composable<RotaSistema> { SistemaRotaTela(aoVoltar = { nav.popBackStack() }) }
         composable<RotaAcessos> { AcessosRotaTela(aoVoltar = { nav.popBackStack() }) }
+        composable<RotaRegistro> { RegistroRotaTela(aoVoltar = { nav.popBackStack() }) }
         composable<RotaPerfil> { PerfilRotaTela(aoVoltar = { nav.popBackStack() }) }
         composable<RotaMembros> { entrada ->
             val conversaId = entrada.toRoute<RotaMembros>().conversaId
@@ -207,4 +224,20 @@ private fun NavHostController.abrirConversa(rota: RotaChat) {
     val topo = currentBackStackEntry?.takeIf { it.destination.hasRoute<RotaChat>() }?.toRoute<RotaChat>()
     if (topo != null && topo.conversaId == rota.conversaId && rota.mensagemId == 0L) return
     navigate(rota) { if (topo != null) popUpTo<RotaChat> { inclusive = true } }
+}
+
+/**
+ * A tela no registro do app: o nome da rota (`RotaConversa`) e só os argumentos que são números ou
+ * sim/não (`conversaId=8`); textos (um aviso, um termo) ficam de fora.
+ */
+internal fun resumoDaRota(rota: String?, argumentos: Bundle?): String {
+    val nome = rota?.substringBefore('/')?.substringBefore('?')?.substringAfterLast('.') ?: "?"
+    val numeros = argumentos?.keySet()?.sorted()?.mapNotNull { chave ->
+        @Suppress("DEPRECATION")
+        when (val valor = argumentos.get(chave)) {
+            is Number, is Boolean -> "$chave=$valor"
+            else -> null
+        }
+    }.orEmpty()
+    return if (numeros.isEmpty()) nome else "$nome (${numeros.joinToString()})"
 }

@@ -2,6 +2,7 @@ package com.conversa.app.core.webrtc
 
 import android.content.Context
 import dagger.hilt.android.qualifiers.ApplicationContext
+import java.util.concurrent.ConcurrentHashMap
 import javax.inject.Inject
 import javax.inject.Singleton
 import kotlin.coroutines.resume
@@ -28,6 +29,7 @@ import org.webrtc.RtpTransceiver
 import org.webrtc.SdpObserver
 import org.webrtc.SessionDescription
 import org.webrtc.audio.JavaAudioDeviceModule
+import timber.log.Timber
 
 /**
  * O que o módulo de áudio do aparelho faz (8.5): eco e ruído pelo hardware, quando houver,
@@ -93,19 +95,38 @@ private val GRAVAVEIS = listOf("video/H264", "video/VP9")
 
 /** Observa uma `PeerConnection`: coleta de ICE, estado da conexão e trilhas recebidas. */
 internal class Observador(
+    /** Quem é esta conexão no registro do app ("publicação", "assinatura de 7"). */
+    private val rotulo: String,
     private val aoMudarConexao: (PeerConnection.PeerConnectionState) -> Unit = {},
     private val aoReceberTrilha: (MediaStreamTrack) -> Unit = {},
 ) : PeerConnection.Observer {
     private val espera = EsperaColeta()
+    private val inicio = System.nanoTime()
+
+    /** Quantos candidatos de cada tipo ("relay udp": 1), para o registro; nunca os endereços. */
+    private val candidatos = ConcurrentHashMap<String, Int>()
 
     /** Sem trickle ICE: espera a coleta, como diz a [EsperaColeta]. */
-    suspend fun esperarColeta() = espera.esperar()
+    suspend fun esperarColeta() {
+        val antes = System.nanoTime()
+        espera.esperar()
+        Timber.tag(TAG_MIDIA).d(
+            "%s: oferta pronta depois de %d ms de coleta (candidatos: %s)",
+            rotulo,
+            (System.nanoTime() - antes) / 1_000_000,
+            candidatos.entries.sortedBy { it.key }.joinToString { "${it.value} ${it.key}" }.ifEmpty { "nenhum" },
+        )
+    }
 
     override fun onIceGatheringChange(estado: PeerConnection.IceGatheringState) {
+        Timber.tag(TAG_MIDIA).d("%s: coleta ICE %s em %d ms", rotulo, estado, (System.nanoTime() - inicio) / 1_000_000)
         espera.aoMudarColeta(completa = estado == PeerConnection.IceGatheringState.COMPLETE)
     }
 
-    override fun onConnectionChange(estado: PeerConnection.PeerConnectionState) = aoMudarConexao(estado)
+    override fun onConnectionChange(estado: PeerConnection.PeerConnectionState) {
+        Timber.tag(TAG_MIDIA).i("%s: conexão %s em %d ms", rotulo, estado, (System.nanoTime() - inicio) / 1_000_000)
+        aoMudarConexao(estado)
+    }
 
     override fun onTrack(transceiver: RtpTransceiver) {
         transceiver.receiver.track()?.let(aoReceberTrilha)
@@ -113,11 +134,16 @@ internal class Observador(
 
     override fun onSignalingChange(estado: PeerConnection.SignalingState) = Unit
 
-    override fun onIceConnectionChange(estado: PeerConnection.IceConnectionState) = Unit
+    override fun onIceConnectionChange(estado: PeerConnection.IceConnectionState) {
+        Timber.tag(TAG_MIDIA).d("%s: ICE %s", rotulo, estado)
+    }
 
     override fun onIceConnectionReceivingChange(recebendo: Boolean) = Unit
 
-    override fun onIceCandidate(candidato: IceCandidate) = espera.aoCandidato(candidato.sdp)
+    override fun onIceCandidate(candidato: IceCandidate) {
+        candidatos.merge(tipoDoCandidato(candidato.sdp), 1, Int::plus)
+        espera.aoCandidato(candidato.sdp)
+    }
 
     override fun onIceCandidatesRemoved(candidatos: Array<out IceCandidate>) = Unit
 
@@ -165,6 +191,16 @@ internal class EsperaColeta {
 
 /** `candidate:… typ relay …`: o candidato do TURN. */
 internal fun ehCandidatoRelay(sdp: String): Boolean = " typ relay " in "$sdp "
+
+/** "relay udp", "host tcp": o tipo e o transporte do candidato (`candidate:<id> <comp> <transporte> … typ <tipo>`), sem o endereço. */
+internal fun tipoDoCandidato(sdp: String): String {
+    val partes = sdp.trim().split(' ')
+    val tipo = partes.indexOf("typ").takeIf { it >= 0 }?.let { partes.getOrNull(it + 1) } ?: "?"
+    return "$tipo ${partes.getOrNull(2)?.lowercase() ?: "?"}"
+}
+
+/** A tag da mídia da chamada no registro do app. */
+internal const val TAG_MIDIA = "Midia"
 
 internal suspend fun PeerConnection.criarOferta(): SessionDescription = suspendCancellableCoroutine { continuacao ->
     createOffer(
