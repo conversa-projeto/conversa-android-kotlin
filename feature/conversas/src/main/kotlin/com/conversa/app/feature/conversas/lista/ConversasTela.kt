@@ -339,39 +339,48 @@ private fun LinhaConversa(
             modifier = toqueNoAvatar,
         )
         Column(Modifier.weight(1f)) {
-            Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(6.dp)) {
-                Text(
-                    item.titulo,
-                    style = MaterialTheme.typography.titleMedium,
-                    fontWeight = if (item.naoLidas > 0) FontWeight.Bold else FontWeight.Normal,
-                    maxLines = 1,
-                    overflow = TextOverflow.Ellipsis,
-                    modifier = Modifier.weight(1f, fill = false),
-                )
-                // Grupo: o ícone de pessoas com "Conversa em grupo" (web `e33ecba`), no lugar da etiqueta.
-                if (item.grupo) {
-                    Icon(
-                        Icons.Outlined.Group,
-                        contentDescription = stringResource(R.string.conversa_em_grupo),
-                        modifier = Modifier.size(16.dp),
-                        tint = ConversaTema.cores.iconeDiscreto,
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                // O nome e os ícones ocupam todo o espaço até a hora, que fica sempre encostada na direita.
+                // (Com o nome e um espaçador dividindo o espaço por peso, cada um ficava com metade: a hora
+                // de um nome curto não chegava na borda, e um nome longo cortava cedo.)
+                Row(
+                    Modifier.weight(1f),
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.spacedBy(6.dp),
+                ) {
+                    Text(
+                        item.titulo,
+                        style = MaterialTheme.typography.titleMedium,
+                        fontWeight = if (item.naoLidas > 0) FontWeight.Bold else FontWeight.Normal,
+                        maxLines = 1,
+                        overflow = TextOverflow.Ellipsis,
+                        modifier = Modifier.weight(1f, fill = false),
                     )
+                    // Grupo: o ícone de pessoas com "Conversa em grupo" (web `e33ecba`), no lugar da etiqueta.
+                    if (item.grupo) {
+                        Icon(
+                            Icons.Outlined.Group,
+                            contentDescription = stringResource(R.string.conversa_em_grupo),
+                            modifier = Modifier.size(16.dp),
+                            tint = ConversaTema.cores.iconeDiscreto,
+                        )
+                    }
+                    if (mostrarArquivada && item.arquivada) Etiqueta(stringResource(R.string.etiqueta_arquivada))
+                    if (item.fixada) {
+                        Icon(
+                            Icons.Outlined.PushPin,
+                            contentDescription = stringResource(R.string.fixada),
+                            modifier = Modifier.size(16.dp),
+                            tint = ConversaTema.cores.iconeDiscreto,
+                        )
+                    }
                 }
-                if (mostrarArquivada && item.arquivada) Etiqueta(stringResource(R.string.etiqueta_arquivada))
-                if (item.fixada) {
-                    Icon(
-                        Icons.Outlined.PushPin,
-                        contentDescription = stringResource(R.string.fixada),
-                        modifier = Modifier.size(16.dp),
-                        tint = ConversaTema.cores.iconeDiscreto,
-                    )
-                }
-                Box(Modifier.weight(1f))
                 item.rotulo?.let {
                     Text(
                         textoDoRotulo(it),
                         style = MaterialTheme.typography.labelSmall,
                         color = if (item.naoLidas > 0) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurfaceVariant,
+                        modifier = Modifier.padding(start = 8.dp),
                     )
                 }
             }

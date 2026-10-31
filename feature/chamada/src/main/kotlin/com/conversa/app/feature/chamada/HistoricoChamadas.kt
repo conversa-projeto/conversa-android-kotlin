@@ -348,20 +348,22 @@ private fun LinhaChamada(chamada: ChamadaHistorico, eu: Long, aoAbrir: () -> Uni
             Row(verticalAlignment = Alignment.CenterVertically) {
                 Icon(seta, contentDescription = descricaoSeta, tint = corSeta, modifier = Modifier.size(16.dp))
                 Spacer(Modifier.width(6.dp))
+                // O nome ocupa todo o espaço até a hora, que fica sempre encostada na direita (com o nome e um
+                // espaçador dividindo o espaço por peso, a hora de um nome curto não chegava na borda).
                 Text(
                     nome,
                     style = MaterialTheme.typography.bodyLarge,
                     color = if (perdida) cores.chamadaPerdida else MaterialTheme.colorScheme.onSurface,
                     maxLines = 1,
                     overflow = TextOverflow.Ellipsis,
-                    modifier = Modifier.weight(1f, fill = false),
+                    modifier = Modifier.weight(1f),
                 )
-                Spacer(Modifier.weight(1f))
                 chamada.criadoEm?.let {
                     Text(
                         FORMATO_HORA.format(it.atZone(java.time.ZoneId.systemDefault())),
                         style = MaterialTheme.typography.labelSmall,
                         color = MaterialTheme.colorScheme.onSurfaceVariant,
+                        modifier = Modifier.padding(start = 8.dp),
                     )
                 }
             }
