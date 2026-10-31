@@ -4,7 +4,7 @@
 - **Tipo:** correção
 - **Itens:** `TODO.md` 2.6 (lista de conversas, CON-01) e o histórico de chamadas (6.x); linha nova da correção
 - **Branch:** `reescrita`
-- **Commits:** `HASH_X`
+- **Commits:** `a2c879c`
 
 ## Contexto
 A pessoa notou no celular (Galaxy A25) que, na lista de conversas, algumas datas e horas ficavam desalinhadas. No print, o "15:48" do "Teste Android C" e o "15/10/26" do "Aniversario" terminavam mais à esquerda que as outras datas. Os nomes longos também cortavam cedo, com espaço sobrando ("Grupo de te…", "Grupo criad…").
