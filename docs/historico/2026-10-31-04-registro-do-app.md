@@ -4,7 +4,7 @@
 - **Tipo:** código + decisão
 - **Itens:** `TODO.md` "Qualidade" (Timber, Crashlytics) e linhas novas; problema #4 do legado (log com segredos); módulo novo `:core:registro`
 - **Branch:** `reescrita`
-- **Commits:** `HASH_X`
+- **Commits:** `edadc75`
 
 ## Contexto
 De manhã, no servidor do trabalho, a pessoa teve problemas no celular. À tarde, o logcat só guardava os últimos ~20 minutos, e a causa não pôde ser vista (histórico `2026-10-31-02`, pendências). Ela pediu um registro interno do app, guardado por até 7 dias, com "todo tipo de informação importante" ("não seja mesquinho").

@@ -999,10 +999,10 @@
 - [ ] Acessibilidade: TalkBack nas telas críticas, alvos de 48 dp, `contentDescription`, contraste
 - [ ] R8 ligado no release + regras para kotlinx.serialization e WebRTC
 - [ ] `signingConfig` de release com a keystore fora do Git (variáveis de ambiente/secrets do CI)
-- [x] Timber: árvore de debug; nada de log em release — 🔄 decisão de 2026-10-31: o logcat continua só no debug, e o **registro do app** em arquivo vale também no release (sem token, senha nem conteúdo; o problema #4 era o logcat) ✔ HASH_X
-- [x] 🆕 Registro do app (pedido de 2026-10-31): `:core:registro` grava tudo o que passa pelo Timber em `files/registro/AAAA-MM-DD.log`, por 7 dias (teto de 60 MB), com o `Sigilo` e a pilha da falha fatal ✔ HASH_X
-- [x] 🆕 O que entra: cada requisição HTTP (tempos, conexão, erro), o tempo real (eventos sem conteúdo), sessão, sincronização, fila de envio e WorkManager, notificações, chamadas e mídia (ICE, WHIP/WHEP), conexão em segundo plano, aparelho, rede, energia, permissões, telas, por que o processo anterior terminou (ANR com pilhas) e a thread principal travada ✔ HASH_X
-- [x] 🆕 Tela "Registro do app" (Configurações e barra da tela Servidor): ver as últimas entradas, só avisos e erros, compartilhar o zip e apagar ✔ HASH_X
+- [x] Timber: árvore de debug; nada de log em release — 🔄 decisão de 2026-10-31: o logcat continua só no debug, e o **registro do app** em arquivo vale também no release (sem token, senha nem conteúdo; o problema #4 era o logcat) ✔ edadc75
+- [x] 🆕 Registro do app (pedido de 2026-10-31): `:core:registro` grava tudo o que passa pelo Timber em `files/registro/AAAA-MM-DD.log`, por 7 dias (teto de 60 MB), com o `Sigilo` e a pilha da falha fatal ✔ edadc75
+- [x] 🆕 O que entra: cada requisição HTTP (tempos, conexão, erro), o tempo real (eventos sem conteúdo), sessão, sincronização, fila de envio e WorkManager, notificações, chamadas e mídia (ICE, WHIP/WHEP), conexão em segundo plano, aparelho, rede, energia, permissões, telas, por que o processo anterior terminou (ANR com pilhas) e a thread principal travada ✔ edadc75
+- [x] 🆕 Tela "Registro do app" (Configurações e barra da tela Servidor): ver as últimas entradas, só avisos e erros, compartilhar o zip e apagar ✔ edadc75
 - [ ] **Teste:** no celular, o filtro "Só avisos e erros" e o Apagar; no servidor do trabalho, mandar o zip no próximo problema; `RegexNoAndroidTest` no emulador (o `Sigilo`)
 - [ ] (Opcional) Crashlytics sem dados de mensagem — o registro do app já guarda as falhas fatais e os ANRs no aparelho
 - [ ] Manifest com as permissões mínimas: nada de `READ_MEDIA_*`, `SYSTEM_ALERT_WINDOW` ou `DISABLE_KEYGUARD`
