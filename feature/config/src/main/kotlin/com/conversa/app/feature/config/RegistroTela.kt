@@ -287,7 +287,9 @@ private val DIA = DateTimeFormatter.ofPattern("dd/MM/yyyy", Locale.forLanguageTa
 internal fun momentoCurto(momento: String): String =
     if (momento.length < 19) momento else "${momento.substring(8, 10)}/${momento.substring(5, 7)} ${momento.substring(11, 19)}"
 
-private fun tamanhoLegivel(bytes: Long): String = when {
+/** "121 B", "55 kB", "4,1 MB" (abaixo de 1 kB, em bytes: logo depois do Apagar, "0 kB" parecia vazio). */
+internal fun tamanhoLegivel(bytes: Long): String = when {
+    bytes < 1024 -> "$bytes B"
     bytes < 1024 * 1024 -> String.format(Locale.forLanguageTag("pt-BR"), "%.0f kB", bytes / 1024.0)
     else -> String.format(Locale.forLanguageTag("pt-BR"), "%.1f MB", bytes / (1024.0 * 1024))
 }
