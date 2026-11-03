@@ -330,6 +330,13 @@ O conjunto pulsa entre opacidade 1 e 0,55. O brilho só pinta por cima das forma
 
 Ver a pergunta 12 da §9.
 
+**Rascunho na lista de conversas (2026-11-02)**, também sem cor nova:
+
+| Papel | Token reaproveitado |
+|---|---|
+| "Rascunho:" antes do texto | `primary` (`#007DFF`; escuro `#4DA3FF`) |
+| O texto do rascunho | `onSurfaceVariant`, como a prévia |
+
 ### 6.5 Cores das pastas de mensagens — **PROPOSTA** (2026-10-17)
 
 A cor de uma pasta (contrato §10.17) é **um dado guardado no servidor** (texto de até 20 caracteres), escolhido por quem criou a pasta, no web ou no app, e visto pelos dois lados quando ela é compartilhada. Para a pasta aparecer igual nos dois clientes, o app mostra a cor que veio e oferece, para escolher, **a mesma paleta do web** (`CORES_PASTA` em `conversa-web/src/utils/pastas.ts`). É uma exceção à regra 2 da §8, porque a cor é dado e não tema.

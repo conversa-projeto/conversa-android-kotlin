@@ -3,10 +3,12 @@ package com.conversa.app.feature.conversas
 import com.conversa.app.core.data.contatos.ContatosRepositorio
 import com.conversa.app.core.data.conversas.ConversasRepositorio
 import com.conversa.app.core.data.presenca.PresencaRepositorio
+import com.conversa.app.core.data.rascunhos.RascunhosRepositorio
 import com.conversa.app.core.data.sessao.IniciadorSessao
 import com.conversa.app.core.model.Contato
 import com.conversa.app.core.model.Conversa
 import com.conversa.app.core.model.PreviaConversa
+import com.conversa.app.core.model.RascunhoNaLista
 import com.conversa.app.core.model.RotuloData
 import com.conversa.app.core.model.TipoConversa
 import com.conversa.app.core.network.http.ErroApi
@@ -40,6 +42,7 @@ class ConversasViewModelTest {
     private val digitando = MutableStateFlow<Map<Long, Set<Long>>>(emptyMap())
     private val carregada = MutableStateFlow(false)
     private val falha = MutableStateFlow<ErroApi?>(null)
+    private val rascunhos = MutableStateFlow<Map<Long, RascunhoNaLista>>(emptyMap())
 
     private val repoConversas = mockk<ConversasRepositorio>(relaxed = true) { every { observarTodas() } returns conversas }
     private val repoContatos = mockk<ContatosRepositorio>(relaxed = true) { every { observarOutros() } returns contatos }
@@ -48,6 +51,7 @@ class ConversasViewModelTest {
         every { digitando } returns this@ConversasViewModelTest.digitando
         every { gravando } returns MutableStateFlow(emptyMap())
     }
+    private val repoRascunhos = mockk<RascunhosRepositorio> { every { observarNaLista() } returns rascunhos }
     private val iniciador = mockk<IniciadorSessao> {
         every { carregada } returns this@ConversasViewModelTest.carregada
         every { falha } returns this@ConversasViewModelTest.falha
@@ -82,7 +86,7 @@ class ConversasViewModelTest {
     )
 
     private fun TestScope.criar(): Pair<ConversasViewModel, () -> ConversasUiState> {
-        val vm = ConversasViewModel(repoConversas, repoContatos, presenca, iniciador, Clock.fixed(agora, ZoneOffset.UTC))
+        val vm = ConversasViewModel(repoConversas, repoContatos, presenca, iniciador, repoRascunhos, Clock.fixed(agora, ZoneOffset.UTC))
         backgroundScope.launch { vm.estado.collect {} }
         return vm to { vm.estado.value }
     }
@@ -139,6 +143,24 @@ class ConversasViewModelTest {
         assertThat(s.principais.first().grupo).isTrue()
         assertThat(s.arquivadas.single().id).isEqualTo(3)
         assertThat(s.arquivadas.single().naoLidas).isEqualTo(0)
+    }
+
+    @Test
+    fun `rascunho aparece no item da conversa dele e sai quando some`() = runTest {
+        carregada.value = true
+        conversas.value = listOf(conversa(1, ultima = 50), conversa(2, ultima = 40), conversa(3, ultima = 30, arquivada = true))
+        rascunhos.value = mapOf(1L to RascunhoNaLista("vou ver @Bia", 0), 3L to RascunhoNaLista("", 2))
+        val (_, estado) = criar()
+        advanceUntilIdle()
+
+        assertThat(estado().principais.map { it.rascunho }).containsExactly(RascunhoNaLista("vou ver @Bia", 0), null).inOrder()
+        // A prévia continua lá (volta quando o rascunho sai), e a ordem não muda.
+        assertThat(estado().principais.first().previa).isEqualTo(PreviaConversa.Texto("oi @Ana"))
+        assertThat(estado().arquivadas.single().rascunho).isEqualTo(RascunhoNaLista("", 2))
+
+        rascunhos.value = emptyMap()
+        advanceUntilIdle()
+        assertThat(estado().principais.first().rascunho).isNull()
     }
 
     @Test

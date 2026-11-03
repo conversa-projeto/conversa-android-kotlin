@@ -849,6 +849,7 @@
 - [x] Tela "Inserir código" simples (linguagem + texto monoespaçado) ✔ c2a31d6
 - [x] 🆕 `3689155` Tabela colada (do Excel, do Sheets ou em CSV) abre o "Inserir código" já com `tsv`/`csv`, antes do teste de texto longo; `csv` e `tsv` na lista de linguagens (ENV-09, ENV-10, FC-529) — com o `pareceCodigo` do web; no emulador, o texto com tabs colado abriu com `tsv` e foi como tabela ✔ 9db5551
 - [x] 🆕 `7322e83` Rascunho por conversa (FC-519, ENV-23): texto com menções, fila de anexos e resposta/encaminhamento pendente guardados no aparelho; restaurar ao abrir a conversa; apagar ao enviar ✔ 217be62
+- [x] 🆕 (pedido de 2026-11-02, diferença do web) A lista de conversas mostra o rascunho: "Rascunho:" na cor principal e o texto em uma linha (ou "2 anexos"); "digitando" e "gravando" por cima; a ordem não muda; testado no emulador
 
 ### 7.12 Votação em grupo (FC-516, FC-517, FC-518, MSG-20, ENV-22)
 - [x] Store/repositório de enquetes: cache por id; leituras simultâneas deduplicadas ✔ c182ddc

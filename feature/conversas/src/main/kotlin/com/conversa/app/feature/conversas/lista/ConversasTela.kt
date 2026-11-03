@@ -45,6 +45,7 @@ import androidx.compose.material3.ripple
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
@@ -56,13 +57,17 @@ import androidx.compose.ui.semantics.CustomAccessibilityAction
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.customActions
 import androidx.compose.ui.semantics.semantics
+import androidx.compose.ui.text.SpanStyle
+import androidx.compose.ui.text.buildAnnotatedString
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
+import androidx.compose.ui.text.withStyle
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.conversa.app.core.model.PreviaConversa
+import com.conversa.app.core.model.RascunhoNaLista
 import com.conversa.app.core.model.RotuloData
 import com.conversa.app.core.ui.componentes.Avatar
 import com.conversa.app.core.ui.componentes.Carregando
@@ -398,6 +403,8 @@ private fun LinhaConversa(
                         }
                     } else if (item.digitando) {
                         IndicadorDigitando(Modifier.padding(vertical = 6.dp))
+                    } else if (item.rascunho != null) {
+                        LinhaRascunho(item.rascunho)
                     } else {
                         Text(
                             textoDaPrevia(item.previa),
@@ -412,6 +419,27 @@ private fun LinhaConversa(
             }
         }
     }
+}
+
+/** "Rascunho:" na cor principal e, depois, o texto deixado no campo (ou, sem texto, quantos anexos). */
+@Composable
+private fun LinhaRascunho(rascunho: RascunhoNaLista) {
+    val rotulo = stringResource(R.string.lista_rascunho)
+    val conteudo = rascunho.texto.ifEmpty { pluralStringResource(R.plurals.lista_rascunho_anexos, rascunho.anexos, rascunho.anexos) }
+    val destaque = MaterialTheme.colorScheme.primary
+    Text(
+        remember(rotulo, conteudo, destaque) {
+            buildAnnotatedString {
+                withStyle(SpanStyle(color = destaque)) { append(rotulo) }
+                append(" ")
+                append(conteudo)
+            }
+        },
+        style = MaterialTheme.typography.bodyMedium,
+        color = MaterialTheme.colorScheme.onSurfaceVariant,
+        maxLines = 1,
+        overflow = TextOverflow.Ellipsis,
+    )
 }
 
 @Composable

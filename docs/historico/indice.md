@@ -137,6 +137,7 @@
 - 2026-10-22 · [Sugestões de pasta pela IA](2026-10-22-06-sugestoes-de-pasta-pela-ia.md) — "Sugestões da IA" na folha de pastas (com a IA ligada e alguma pasta): "Sugerir pastas" consultado a cada 2 s, ✓ põe, ✕ ignora (guardado no aparelho), "Aceitar todas"; testado no emulador com a resposta simulada
 - 2026-10-22 · [Campo de mensagem religava o teclado a cada letra](2026-10-22-09-teclado-religado-a-cada-letra.md) — o destaque das menções era um `OutputTransformation` novo a cada recomposição; letras perdidas e, no celular, o teclado abrindo e fechando; guardado com `remember`; regra no `CLAUDE.md`
 - 2026-10-27 · [Testes com o web do outro lado (de 2026-10-23)](2026-10-27-01-testes-com-o-web.md) — pastas nos dois sentidos (WS 67), localização e trajeto do app abertos no web; o atender da FC-729 com o web ligando ainda tocou o som de espera (a pré-assinatura do web desistia ou não conectava)
+- 2026-11-02 · [O rascunho aparece na lista de conversas](2026-11-02-01-rascunho-na-lista.md) — "Rascunho:" na cor principal e o texto (ou "2 anexos") no lugar da prévia, observado do Room; diferença do web, a pedido; testado no emulador
 
 ## Atividades, pesquisa, perfil e configurações (etapa 8)
 - 2026-10-08 · [Etapa 8 — aba Atividades](2026-10-08-37-etapa-8-atividades.md) — módulo `:feature:atividades`: lista por dia com selos, prévias e "Nova", paginação, abrir marca como vistas e o WS 61 relê com a aba aberta; corrigido o POST de vistas (o OkHttp recusava POST sem corpo)

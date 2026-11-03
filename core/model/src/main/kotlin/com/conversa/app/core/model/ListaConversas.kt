@@ -42,6 +42,21 @@ fun previaDaConversa(conversa: Conversa): PreviaConversa {
     }
 }
 
+/**
+ * O rascunho de uma conversa na lista, no lugar da prévia: "Rascunho: texto" ou, sem texto,
+ * "Rascunho: 2 anexos". Diferença do web (lá o rascunho só aparece ao abrir a conversa).
+ */
+data class RascunhoNaLista(val texto: String, val anexos: Int)
+
+/**
+ * O texto em uma linha, como a prévia (menção vira `@Nome`, código vira "Código (js)").
+ * Sem texto nem anexos → nulo: uma resposta pendente sozinha não aparece na lista.
+ */
+fun rascunhoNaLista(texto: String, anexos: Int): RascunhoNaLista? {
+    val resumo = resumirTexto(texto)
+    return if (resumo.isEmpty() && anexos == 0) null else RascunhoNaLista(resumo, anexos)
+}
+
 /** Rótulo de data do item: hoje → hora, ontem → "Ontem", senão `dd/MM/aa`. */
 sealed interface RotuloData {
     data class Hora(val texto: String) : RotuloData

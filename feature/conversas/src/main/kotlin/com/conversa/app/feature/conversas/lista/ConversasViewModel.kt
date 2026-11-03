@@ -6,6 +6,7 @@ import androidx.lifecycle.viewModelScope
 import com.conversa.app.core.data.contatos.ContatosRepositorio
 import com.conversa.app.core.data.conversas.ConversasRepositorio
 import com.conversa.app.core.data.presenca.PresencaRepositorio
+import com.conversa.app.core.data.rascunhos.RascunhosRepositorio
 import com.conversa.app.core.data.sessao.IniciadorSessao
 import com.conversa.app.core.model.Contato
 import com.conversa.app.core.model.Conversa
@@ -13,6 +14,7 @@ import com.conversa.app.core.model.EstadoPresenca
 import com.conversa.app.core.model.FichaUsuario
 import com.conversa.app.core.model.PresencaContato
 import com.conversa.app.core.model.PreviaConversa
+import com.conversa.app.core.model.RascunhoNaLista
 import com.conversa.app.core.model.RotuloData
 import com.conversa.app.core.model.TipoConversa
 import com.conversa.app.core.model.avatarDoContato
@@ -64,6 +66,8 @@ data class ItemConversa(
     val ausente: Boolean = false,
     /** Grupo com emoji (sem imagem): no lugar da inicial. */
     val emoji: String? = null,
+    /** O que a pessoa deixou no campo da conversa: aparece no lugar da [previa]. */
+    val rascunho: RascunhoNaLista? = null,
 )
 
 /** Contato sem conversa direta, na seção "Nova conversa" (CON-02). */
@@ -114,6 +118,7 @@ class ConversasViewModel @Inject constructor(
     private val contatos: ContatosRepositorio,
     presenca: PresencaRepositorio,
     iniciador: IniciadorSessao,
+    rascunhos: RascunhosRepositorio,
     private val relogio: Clock,
 ) : ViewModel() {
     private val termo = MutableStateFlow("")
@@ -131,6 +136,7 @@ class ConversasViewModel @Inject constructor(
         presenca.digitando,
         presenca.gravando,
     ) { lista, pessoas, presencas, digitando, gravando -> Dados(lista, pessoas, presencas, digitando, gravando) }
+        .combine(rascunhos.observarNaLista()) { dados, porConversa -> dados.copy(rascunhos = porConversa) }
 
     private val controles = combine(termo, arquivadasAbertas, chamadasAbertas, atualizando, erro) {
             t,
@@ -223,6 +229,7 @@ class ConversasViewModel @Inject constructor(
                 podeDescer = posicao >= 0 && posicao < fixadasIds.lastIndex,
                 ficha = fichaDaConversa(conversa, d.contatos),
                 emoji = conversa.emoji.takeIf { !direta },
+                rascunho = d.rascunhos[conversa.id],
             )
         }
 
@@ -270,6 +277,7 @@ class ConversasViewModel @Inject constructor(
         val presencas: Map<Long, PresencaContato>,
         val digitando: Map<Long, Set<Long>>,
         val gravando: Map<Long, Set<Long>> = emptyMap(),
+        val rascunhos: Map<Long, RascunhoNaLista> = emptyMap(),
     )
 
     private data class Controles(

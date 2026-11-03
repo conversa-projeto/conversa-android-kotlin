@@ -87,4 +87,9 @@
     <string name="grupo_salvando_avatar">Salvando…</string>
     <string name="grupo_imagem_ilegivel">Não foi possível ler a imagem.</string>
     <string name="lista_gravando_audio">Gravando áudio…</string>
+    <string name="lista_rascunho">Rascunho:</string>
+    <plurals name="lista_rascunho_anexos">
+        <item quantity="one">%d anexo</item>
+        <item quantity="other">%d anexos</item>
+    </plurals>
 </resources>

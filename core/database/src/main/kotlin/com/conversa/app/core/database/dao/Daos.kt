@@ -308,6 +308,10 @@ interface RascunhoDao {
     @Query("SELECT * FROM rascunho WHERE conversaId = :conversaId")
     suspend fun buscar(conversaId: Long): RascunhoEntidade?
 
+    /** Todos, para a lista de conversas mostrar "Rascunho:". */
+    @Query("SELECT * FROM rascunho")
+    fun observarTodos(): Flow<List<RascunhoEntidade>>
+
     @Upsert
     suspend fun salvar(rascunho: RascunhoEntidade)
 

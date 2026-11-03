@@ -66,6 +66,21 @@ class ListaConversasTest {
             .isEqualTo(PreviaConversa.Texto("Mensagem oculta"))
     }
 
+    // --- Rascunho na lista (ENV-23) ---
+
+    @Test
+    fun `rascunho em uma linha, como a previa, ou so os anexos`() {
+        assertThat(rascunhoNaLista("oi @[Ana](7),\n  tudo bem?", 0)).isEqualTo(RascunhoNaLista("oi @Ana, tudo bem?", 0))
+        assertThat(rascunhoNaLista("veja:\n```js\nx()\n```", 1)).isEqualTo(RascunhoNaLista("veja: Código (js)", 1))
+        assertThat(rascunhoNaLista("  \n", 2)).isEqualTo(RascunhoNaLista("", 2))
+    }
+
+    @Test
+    fun `sem texto nem anexos nao aparece (resposta pendente sozinha)`() {
+        assertThat(rascunhoNaLista("", 0)).isNull()
+        assertThat(rascunhoNaLista(" \n ", 0)).isNull()
+    }
+
     // --- CON-01: ordem ---
 
     @Test

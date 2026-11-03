@@ -3,8 +3,10 @@ package com.conversa.app.core.data.rascunhos
 import com.conversa.app.core.data.anexos.AnexoLocal
 import com.conversa.app.core.database.dao.RascunhoDao
 import com.conversa.app.core.database.entidades.RascunhoEntidade
+import com.conversa.app.core.model.RascunhoNaLista
 import com.conversa.app.core.model.TipoConteudo
 import com.conversa.app.core.model.TipoReferencia
+import com.conversa.app.core.model.rascunhoNaLista
 import com.conversa.app.core.network.di.EscopoAplicacao
 import com.conversa.app.core.network.json.ConversaJson
 import java.time.Clock
@@ -12,6 +14,8 @@ import javax.inject.Inject
 import javax.inject.Singleton
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Job
+import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
@@ -47,6 +51,14 @@ class RascunhosRepositorio @Inject constructor(
 ) {
     private val trava = Mutex()
     private val versoes = mutableMapOf<Long, Long>()
+
+    /** Por conversa, os rascunhos com texto ou anexos, como a lista de conversas mostra. */
+    fun observarNaLista(): Flow<Map<Long, RascunhoNaLista>> = dao.observarTodos().map { salvos ->
+        salvos.mapNotNull { salvo ->
+            val anexos = runCatching { ConversaJson.decodeFromString(serializadorAnexos, salvo.anexosJson).size }.getOrDefault(0)
+            rascunhoNaLista(salvo.texto, anexos)?.let { salvo.conversaId to it }
+        }.toMap()
+    }
 
     suspend fun ler(conversaId: Long): Rascunho? = dao.buscar(conversaId)?.let { salvo ->
         val anexos = runCatching { ConversaJson.decodeFromString(serializadorAnexos, salvo.anexosJson) }.getOrDefault(emptyList())

@@ -4,10 +4,12 @@ import androidx.room.Room
 import androidx.test.core.app.ApplicationProvider
 import com.conversa.app.core.data.anexos.AnexoLocal
 import com.conversa.app.core.database.ConversaBanco
+import com.conversa.app.core.model.RascunhoNaLista
 import com.conversa.app.core.model.TipoConteudo
 import com.conversa.app.core.model.TipoReferencia
 import com.google.common.truth.Truth.assertThat
 import java.time.Clock
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.test.runTest
 import org.junit.After
 import org.junit.Before
@@ -56,5 +58,26 @@ class RascunhosRepositorioTest {
         repo.guardar(42, Rascunho("abc")).join()
 
         assertThat(repo.ler(42)!!.texto).isEqualTo("abc")
+    }
+
+    @Test
+    fun `a lista ve texto e anexos, e nao ve a resposta pendente sozinha`() = runTest {
+        val repo = RascunhosRepositorio(banco.rascunhoDao(), backgroundScope, Clock.systemUTC())
+        val foto = AnexoLocal("content://fotos/1", "foto.jpg", 2048, "image/jpeg", TipoConteudo.IMAGEM)
+
+        repo.guardar(1, Rascunho("oi @[Bia](3)")).join()
+        repo.guardar(2, Rascunho(anexos = listOf(foto, foto.copy(uri = "content://fotos/2")))).join()
+        repo.guardar(3, Rascunho(referencia = TipoReferencia.RESPOSTA to 10L)).join()
+
+        assertThat(repo.observarNaLista().first()).containsExactly(
+            1L,
+            RascunhoNaLista("oi @Bia", 0),
+            2L,
+            RascunhoNaLista("", 2),
+        )
+
+        // Enviada (campo vazio): sai da lista.
+        repo.guardar(1, Rascunho()).join()
+        assertThat(repo.observarNaLista().first().keys).containsExactly(2L)
     }
 }
