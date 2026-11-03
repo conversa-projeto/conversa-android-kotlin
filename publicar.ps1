@@ -178,9 +178,9 @@ try {
         ' -Pkotlin.compiler.execution.strategy=in-process'
     $log = Join-Path $saida 'gradle.txt'
     Push-Location $fonte
-    # O . na frente: com NoDefaultCurrentDirectoryInExePath ligado, o cmd
+    # O .\ na frente: com NoDefaultCurrentDirectoryInExePath ligado, o cmd
     # não procura o programa na pasta atual.
-    cmd.exe /c (".gradlew.bat --no-daemon --console=plain $props " + ($tarefas -join ' ') + ' 2>&1') |
+    cmd.exe /c (".\gradlew.bat --no-daemon --console=plain $props " + ($tarefas -join ' ') + ' 2>&1') |
         Tee-Object -FilePath $log
     $resGradle = $LASTEXITCODE
     Pop-Location
