@@ -27,6 +27,7 @@ Instruções para quem trabalha neste repositório, pessoas ou agentes de IA. Le
 | Decisões de arquitetura | `docs/adr/NNNN-*.md` |
 | Testar no emulador contra o servidor de dev (e as contas de teste) | `docs/desenvolvimento/emulador.md` |
 | Celular real contra um servidor interno (instalar, primeira inicialização, bateria, roteiro) | `docs/desenvolvimento/apresentacao.md` |
+| Versão de teste no GitHub (`publicar.ps1`: o número, os APKs de 64 e 32 bits, o Pre-release) | `docs/desenvolvimento/versoes-e-release.md` |
 | Matriz de testes manuais de chamada (emulador e aparelho) | `docs/testes/chamadas.md` |
 | Contrato publicado pelo servidor (OpenAPI) | `docs/contrato/openapi.json` |
 | Documentação antiga (não usar como referência) | `docs/legado/` |
@@ -62,6 +63,7 @@ Instruções para quem trabalha neste repositório, pessoas ou agentes de IA. Le
   - PowerShell: `$env:JAVA_HOME = "C:\Program Files\Android\Android Studio\jbr"`
 - `./gradlew assembleDebug` (Git Bash) ou `.\gradlew.bat assembleDebug` (PowerShell).
 - O `local.properties` não é versionado; o `gradle-wrapper.jar` é.
+- Versão de teste no GitHub (Pre-release com os APKs de 64 e 32 bits): `powershell -NoProfile -ExecutionPolicy Bypass -File publicar.ps1` (`-Ensaio` não publica); guia em `docs/desenvolvimento/versoes-e-release.md`.
 - Testes: `./gradlew testDebugUnitTest :core:model:test :core:testing:test`. No emulador (Android de verdade): `./gradlew :app:connectedDebugAndroidTest` — **desinstala o app no fim** (servidor e sessão somem); guia em `docs/desenvolvimento/emulador.md`. Estilo: `./gradlew ktlintCheck` (`ktlintFormat` corrige). Lint: `./gradlew :app:lintDebug`.
 - Toolchain: Gradle 9.8, AGP 9.4 (Kotlin embutido), Kotlin 2.4, compileSdk 37, targetSdk 36, minSdk 28. Versões só no `gradle/libs.versions.toml`.
 

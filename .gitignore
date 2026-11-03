@@ -39,3 +39,6 @@ captures/
 # Configuração local do Claude Code
 .claude/settings.local.json
 tmpclaude-*
+
+# Versões de teste montadas pelo publicar.ps1 (os APKs e as notas)
+dist/

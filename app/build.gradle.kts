@@ -13,6 +13,21 @@ android {
         applicationId = "com.conversa.conversa"
         versionCode = 2
         versionName = "2.0.0-dev"
+        // A versão de teste do GitHub (publicar.ps1) troca o "-dev" pelo "-teste.N".
+        providers.gradleProperty("conversa.versao").orNull?.let { versionName = it }
+    }
+
+    // Um APK por ABI só quando pedido (publicar.ps1: -Pconversa.abis=armeabi-v7a,arm64-v8a).
+    // Sem a propriedade sai o APK de sempre, com todas, e o emulador x86_64 continua instalando.
+    providers.gradleProperty("conversa.abis").orNull?.let { abis ->
+        splits {
+            abi {
+                isEnable = true
+                reset()
+                include(*abis.split(",").map(String::trim).toTypedArray())
+                isUniversalApk = false
+            }
+        }
     }
 
     buildTypes {
