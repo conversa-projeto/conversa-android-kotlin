@@ -4,7 +4,8 @@
 - **Tipo:** build
 - **Itens:** `TODO.md` Qualidade (linha nova, depois do `signingConfig`); ADR 0002 ("APK direto por enquanto")
 - **Branch:** `reescrita`
-- **Commits:** (preencher)
+- **Commits:** `d385e07`, `9321747`, `e9bd5db`, `1687fe9` (os três últimos, as correções que os ensaios acharam)
+- **Release:** [`v2.0.0-teste.1`](https://github.com/conversa-projeto/conversa-android-kotlin/releases/tag/v2.0.0-teste.1), do `1687fe9`
 
 ## Contexto
 A pessoa pediu para lançar a versão no GitHub "assim como é feito no Tabernáculo", como versão de teste, para baixar no celular, com um APK de 32 bits e outro de 64.
@@ -45,7 +46,12 @@ No Tabernáculo, o `publicar.ps1` faz isso desde 2026-10-22:
 - **A limpeza deixou 4.640 arquivos na cópia:** não estavam presos. Os caminhos passavam de 260 letras (as classes do Hilt e das lambdas), e nem o `git worktree remove` nem o `Remove-Item` do PowerShell 5.1 os apagam.
   - Agora vão o `git -c core.longpaths=true worktree remove` e, se sobrar, o `rd /s /q "\\?\<pasta>"`.
   - Provado com uma cópia e um arquivo num caminho de 328 letras: nada sobrou.
-- (preencher: a publicação)
+- **A publicação** (a `reescrita` enviada até o `1687fe9`, e o `publicar.ps1` sem opções):
+  - `BUILD SUCCESSFUL in 35s` (363 das 646 tarefas do cache) e de novo 654 testes verdes;
+  - o release `v2.0.0-teste.1`, "Conversa Android 2.0.0 — teste 1", marcado Pre-release, com a tag criada no `1687fe9`;
+  - os dois APKs chegaram com o mesmo tamanho dos daqui (108.641.668 e 103.376.902 bytes), e as notas com os acentos certos;
+  - a cópia limpa foi apagada inteira, sem sobra.
+- **Falta:** a instalação no celular, que a pessoa vai fazer baixando pelo GitHub.
 
 ## Decisões
 - **O APK de debug, e não o de release:**

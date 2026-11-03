@@ -1000,7 +1000,8 @@
 - [ ] Acessibilidade: TalkBack nas telas críticas, alvos de 48 dp, `contentDescription`, contraste
 - [ ] R8 ligado no release + regras para kotlinx.serialization e WebRTC
 - [ ] `signingConfig` de release com a keystore fora do Git (variáveis de ambiente/secrets do CI)
-- [ ] 🆕 Versão de teste no GitHub, como no Tabernáculo (pedido de 2026-11-02): `publicar.ps1` — cópia limpa da `reescrita` do GitHub, testes, APK de debug de 64 bits (`arm64-v8a`) e de 32 (`armeabi-v7a`), Pre-release `v2.0.0-teste.N` (`docs/desenvolvimento/versoes-e-release.md`)
+- [x] 🆕 Versão de teste no GitHub, como no Tabernáculo (pedido de 2026-11-02): `publicar.ps1` — cópia limpa da `reescrita` do GitHub, testes, APK de debug de 64 bits (`arm64-v8a`) e de 32 (`armeabi-v7a`), Pre-release `v2.0.0-teste.N` (`docs/desenvolvimento/versoes-e-release.md`); a primeira, `v2.0.0-teste.1`, saiu do `1687fe9` ✔ d385e07
+- [ ] **Teste:** instalar a `v2.0.0-teste.1` no celular baixando pelo GitHub (por cima do debug de antes, com o servidor e o login)
 - [x] Timber: árvore de debug; nada de log em release — 🔄 decisão de 2026-10-31: o logcat continua só no debug, e o **registro do app** em arquivo vale também no release (sem token, senha nem conteúdo; o problema #4 era o logcat) ✔ edadc75
 - [x] 🆕 Registro do app (pedido de 2026-10-31): `:core:registro` grava tudo o que passa pelo Timber em `files/registro/AAAA-MM-DD.log`, por 7 dias (teto de 60 MB), com o `Sigilo` e a pilha da falha fatal ✔ edadc75
 - [x] 🆕 O que entra: cada requisição HTTP (tempos, conexão, erro), o tempo real (eventos sem conteúdo), sessão, sincronização, fila de envio e WorkManager, notificações, chamadas e mídia (ICE, WHIP/WHEP), conexão em segundo plano, aparelho, rede, energia, permissões, telas, por que o processo anterior terminou (ANR com pilhas) e a thread principal travada ✔ edadc75
