@@ -35,6 +35,7 @@ No Tabernáculo, o `publicar.ps1` faz isso desde 2026-10-22:
 - **`CLAUDE.md`:** a linha do guia na tabela e o comando na seção Build.
 
 ## Como foi verificado
+- **O primeiro ensaio parou no Gradle:** o `cmd` não achou o `gradlew.bat` na cópia limpa. Neste ambiente a variável `NoDefaultCurrentDirectoryInExePath` está ligada, e o `cmd` não procura programas na pasta atual. O script passou a chamar o `.gradlew.bat`.
 - (preencher: o ensaio e a publicação)
 
 ## Decisões
