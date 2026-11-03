@@ -62,8 +62,11 @@ function Parar([string]$texto) { throw $texto }
 
 function Tirar-Fonte {
     if (Test-Path $fonte) {
-        git -C $raiz worktree remove --force $fonte 2>&1 | Out-Null
-        if (Test-Path $fonte) { Remove-Item -Recurse -Force $fonte -ErrorAction SilentlyContinue }
+        git -C $raiz -c core.longpaths=true worktree remove --force $fonte 2>&1 | Out-Null
+        # O build do Android passa das 260 letras em alguns arquivos (as
+        # classes do Hilt e das lambdas), e o Remove-Item do PowerShell 5.1
+        # não os apaga. O rd com o \\?\ na frente apaga.
+        if (Test-Path $fonte) { cmd.exe /c "rd /s /q `"\\?\$fonte`"" 2>&1 | Out-Null }
         if (Test-Path $fonte) { Aviso "não consegui apagar $fonte inteira (arquivo preso?); apague à mão." }
     }
     git -C $raiz worktree prune 2>&1 | Out-Null

@@ -36,7 +36,16 @@ No Tabernáculo, o `publicar.ps1` faz isso desde 2026-10-22:
 
 ## Como foi verificado
 - **O primeiro ensaio parou no Gradle:** o `cmd` não achou o `gradlew.bat` na cópia limpa. Neste ambiente a variável `NoDefaultCurrentDirectoryInExePath` está ligada, e o `cmd` não procura programas na pasta atual. O script passou a chamar o `.\gradlew.bat`.
-- (preencher: o ensaio e a publicação)
+- **O segundo ensaio (`-Ensaio`, do `e9bd5db`):**
+  - `BUILD SUCCESSFUL in 1m 56s`, com 297 das 646 tarefas vindas do cache de build;
+  - 654 testes unitários verdes;
+  - `Conversa-2.0.0-teste.1-64bits.apk` (103,6 MB, só `arm64-v8a`) e `-32bits.apk` (98,6 MB, só `armeabi-v7a`);
+  - os dois com `versionName='2.0.0-teste.1-debug'` e `versionCode='2'`;
+  - a assinatura é a da chave de depuração desta máquina: o SHA-256 do `apksigner verify --print-certs` é o mesmo do `keytool` no `~/.android/debug.keystore` (`bc6da118…8c3126`).
+- **A limpeza deixou 4.640 arquivos na cópia:** não estavam presos. Os caminhos passavam de 260 letras (as classes do Hilt e das lambdas), e nem o `git worktree remove` nem o `Remove-Item` do PowerShell 5.1 os apagam.
+  - Agora vão o `git -c core.longpaths=true worktree remove` e, se sobrar, o `rd /s /q "\\?\<pasta>"`.
+  - Provado com uma cópia e um arquivo num caminho de 328 letras: nada sobrou.
+- (preencher: a publicação)
 
 ## Decisões
 - **O APK de debug, e não o de release:**
