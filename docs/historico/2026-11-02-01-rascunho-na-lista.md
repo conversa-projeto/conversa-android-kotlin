@@ -4,7 +4,7 @@
 - **Tipo:** funcionalidade (diferença do web, a pedido)
 - **Itens:** `TODO.md` 7.11 (linha nova, depois do rascunho por conversa); ENV-23, FC-519; CON-01
 - **Branch:** `reescrita`
-- **Commits:** (preencher)
+- **Commits:** `d615b0b`
 
 ## Contexto
 A pessoa pediu uma revisão do rascunho: o que se digita fica guardado, e aparece como rascunho na lista de conversas?
