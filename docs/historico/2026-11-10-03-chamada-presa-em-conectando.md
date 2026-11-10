@@ -3,7 +3,7 @@
 - **Fluxo:** Chamadas (etapa 6)
 - **Tipo:** correção
 - **Itens:** `TODO.md` 6.1 (linha nova, depois do "ICE `FAILED` → recriar só o PC"); FC-703, FC-704, CHA-10
-- **Commits:** (preencher)
+- **Commits:** `66a2497`
 
 ## Contexto
 No registro do celular de 2026-11-10 (histórico `2026-11-10-02`; Galaxy A25, `v2.0.0-teste.2`, servidor do trabalho), a pessoa notou um atraso numa das ligações. Foi a chamada 171, às 14:40:
