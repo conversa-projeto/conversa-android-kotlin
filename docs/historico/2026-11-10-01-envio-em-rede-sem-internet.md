@@ -63,5 +63,5 @@ No emulador e em casa a rede tem internet confirmada, por isso o problema não t
 - **Sem rede de verdade, nada muda:** a falha `SemConexao` não conta tentativa, como antes.
 
 ## Pendências / próximos passos
-- A pessoa confirmar no celular, no Wi-Fi do trabalho, com a `v2.0.0-teste.2`.
+- A pessoa confirmar no celular, no Wi-Fi do trabalho, com a `v2.0.0-teste.2`. Feito pelo registro do celular (histórico `2026-11-10-02`).
 - O guia do emulador (`emulador.md`) ganhou o jeito de simular a rede sem internet confirmada.
