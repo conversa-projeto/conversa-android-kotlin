@@ -265,6 +265,9 @@ interface EnvioPendenteDao {
     @Query("SELECT * FROM envio_pendente ORDER BY idFila")
     suspend fun todos(): List<EnvioPendenteEntidade>
 
+    @Query("SELECT COUNT(*) FROM envio_pendente")
+    fun observarQuantidade(): Flow<Int>
+
     @Insert
     suspend fun inserir(envio: EnvioPendenteEntidade): Long
 

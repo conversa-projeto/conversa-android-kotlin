@@ -1,6 +1,8 @@
 package com.conversa.app.core.data.mensagens
 
 import android.content.Context
+import android.net.NetworkCapabilities
+import android.net.NetworkRequest
 import android.os.Build
 import androidx.hilt.work.HiltWorker
 import androidx.work.BackoffPolicy
@@ -8,6 +10,7 @@ import androidx.work.Constraints
 import androidx.work.CoroutineWorker
 import androidx.work.ExistingWorkPolicy
 import androidx.work.NetworkType
+import androidx.work.OneTimeWorkRequest
 import androidx.work.OneTimeWorkRequestBuilder
 import androidx.work.WorkManager
 import androidx.work.WorkerParameters
@@ -57,6 +60,7 @@ import java.util.concurrent.TimeUnit
 import javax.inject.Inject
 import javax.inject.Singleton
 import kotlinx.coroutines.CancellationException
+import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharedFlow
@@ -167,6 +171,9 @@ class EnvioMensagens @Inject constructor(
 
     /** Mensagem otimista → fração já enviada dos anexos (0..1), para a barra na bolha. */
     val progresso: StateFlow<Map<Long, Float>> = _progresso.asStateFlow()
+
+    /** Quantas mensagens estão na fila (também as marcadas como falhou), para o envio ao conectar. */
+    val quantidadeNaFila: Flow<Int> get() = envioDao.observarQuantidade()
 
     suspend fun enviarTexto(conversaId: Long, texto: String): Long = enviar(conversaId, texto, emptyList())
 
@@ -587,6 +594,28 @@ class EnvioMensagens @Inject constructor(
         }
     }
 
+    /**
+     * O tempo real conectou, então o servidor responde: o que está na fila sai já, sem esperar
+     * o WorkManager, que pode estar no intervalo depois de uma falha de rede (chega a horas).
+     * A [trava] não deixa o worker e esta chamada mandarem a mesma mensagem.
+     */
+    suspend fun enviarAoConectar() {
+        val pendentes = envioDao.todos().size
+        if (pendentes == 0) return
+        Timber.tag(TAG).i("Tempo real conectado com %d mensagem(ns) na fila: enviando já", pendentes)
+        val resultado = try {
+            processarPendentes()
+        } catch (e: CancellationException) {
+            throw e
+        } catch (e: Exception) {
+            Timber.tag(TAG).w("Envio ao conectar falhou: %s", e.resumoDoErro())
+            ResultadoEnvio.TENTAR_DEPOIS
+        }
+        Timber.tag(TAG).i("Envio ao conectar: %s", resultado)
+        // O que sobrou (erro do servidor, rede caiu no meio) segue pelo WorkManager.
+        if (resultado == ResultadoEnvio.TENTAR_DEPOIS) agendador.agendar()
+    }
+
     companion object {
         const val TAG = "Envio"
         const val MAX_TENTATIVAS = 5
@@ -623,21 +652,56 @@ class EnvioWorker @AssistedInject constructor(
 class AgendadorEnvioWorkManager @Inject constructor(@ApplicationContext private val contexto: Context) : AgendadorEnvio {
     override fun agendar() {
         Timber.tag(EnvioMensagens.TAG).d("Envio agendado no WorkManager (espera haver rede)")
-        val pedido = OneTimeWorkRequestBuilder<EnvioWorker>()
-            .setConstraints(Constraints.Builder().setRequiredNetworkType(NetworkType.CONNECTED).build())
-            .setBackoffCriteria(BackoffPolicy.EXPONENTIAL, 10, TimeUnit.SECONDS)
-            .build()
-        WorkManager.getInstance(contexto).enqueueUniqueWork(NOME, ExistingWorkPolicy.APPEND_OR_REPLACE, pedido)
+        val gerente = WorkManager.getInstance(contexto)
+        soltarTrabalhoAntigo(gerente)
+        gerente.enqueueUniqueWork(NOME, ExistingWorkPolicy.APPEND_OR_REPLACE, pedidoDeEnvio())
     }
 
     override fun cancelar() {
         Timber.tag(EnvioMensagens.TAG).i("Envio cancelado no WorkManager")
-        WorkManager.getInstance(contexto).cancelUniqueWork(NOME)
+        val gerente = WorkManager.getInstance(contexto)
+        gerente.cancelUniqueWork(NOME)
+        gerente.cancelUniqueWork(NOME_ANTIGO)
+    }
+
+    /**
+     * Até a 2.0.0-teste.1 o trabalho pedia a internet confirmada e pode estar preso no aparelho,
+     * com as mensagens novas esperando atrás dele. Cancelar é seguro: o worker não leva a
+     * mensagem, só esvazia a fila do Room, e o trabalho novo faz isso.
+     */
+    private fun soltarTrabalhoAntigo(gerente: WorkManager) {
+        if (antigoSolto) return
+        antigoSolto = true
+        gerente.cancelUniqueWork(NOME_ANTIGO)
     }
 
     companion object {
         /** O trabalho único do envio no WorkManager (o registro do app acompanha o estado dele). */
-        const val NOME = "envio_mensagens"
+        const val NOME = "envio_mensagens_rede"
+
+        /** O nome de até a 2.0.0-teste.1 ([soltarTrabalhoAntigo]). */
+        private const val NOME_ANTIGO = "envio_mensagens"
+
+        @Volatile
+        private var antigoSolto = false
+
+        fun pedidoDeEnvio(): OneTimeWorkRequest = OneTimeWorkRequestBuilder<EnvioWorker>()
+            .setConstraints(restricoes())
+            .setBackoffCriteria(BackoffPolicy.EXPONENTIAL, 10, TimeUnit.SECONDS)
+            .build()
+
+        fun restricoes(): Constraints = Constraints.Builder().setRequiredNetworkRequest(redeConectada(), NetworkType.CONNECTED).build()
+
+        /**
+         * Rede conectada, **sem** pedir a internet confirmada (`NET_CAPABILITY_VALIDATED`). O
+         * `NetworkType.CONNECTED` pede: num Wi-Fi interno sem saída para a internet (o servidor do
+         * trabalho), o Android marca "sem internet" e o envio nunca rodava, embora o servidor
+         * respondesse. Aceita VPN. Sem rede de verdade, a falha não conta tentativa.
+         */
+        fun redeConectada(): NetworkRequest = NetworkRequest.Builder()
+            .addCapability(NetworkCapabilities.NET_CAPABILITY_INTERNET)
+            .removeCapability(NetworkCapabilities.NET_CAPABILITY_NOT_VPN)
+            .build()
     }
 }
 

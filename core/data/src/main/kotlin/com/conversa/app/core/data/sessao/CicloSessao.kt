@@ -16,6 +16,8 @@ import com.conversa.app.core.database.ConversaBanco
 import com.conversa.app.core.network.di.EscopoAplicacao
 import com.conversa.app.core.network.http.ErroApi
 import com.conversa.app.core.network.http.paraErroApi
+import com.conversa.app.core.network.realtime.EstadoConexao
+import com.conversa.app.core.network.realtime.RealtimeClient
 import com.conversa.app.core.registro.resumoDoErro
 import javax.inject.Inject
 import javax.inject.Singleton
@@ -28,7 +30,9 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.collectLatest
+import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.distinctUntilChanged
+import kotlinx.coroutines.flow.filter
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
@@ -49,6 +53,7 @@ class IniciadorSessao @Inject constructor(
     private val contatos: ContatosRepositorio,
     private val autenticacao: AutenticacaoRepositorio,
     private val envio: EnvioMensagens,
+    private val tempoReal: RealtimeClient,
     @EscopoAplicacao private val escopo: CoroutineScope,
 ) {
     private val _falha = MutableStateFlow<ErroApi?>(null)
@@ -96,6 +101,11 @@ class IniciadorSessao @Inject constructor(
                 Timber.tag(TAG).i("Sessão carregada em %d ms (conversas e contatos)", System.currentTimeMillis() - inicio)
                 // Mensagens que ficaram na fila (app fechado no meio do envio).
                 envio.retomar()
+                // Com o tempo real conectado o servidor responde: a fila sai já, a cada reconexão e a cada
+                // mensagem nova, sem depender só do WorkManager (que espera a rede que o Android aceita).
+                combine(tempoReal.estado, envio.quantidadeNaFila) { estado, naFila -> estado == EstadoConexao.CONECTADO && naFila > 0 }
+                    .filter { it }
+                    .collect { envio.enviarAoConectar() }
             }
         }
     }

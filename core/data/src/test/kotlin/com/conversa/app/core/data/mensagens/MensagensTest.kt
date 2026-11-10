@@ -386,6 +386,27 @@ class MensagensTest {
         }
     }
 
+    @Test
+    fun `tempo real conectado manda a fila ja, e o que sobra volta ao WorkManager`() = runTest {
+        val envio = envio()
+        envio.enviarAoConectar()
+        coVerify(exactly = 0) { api.enviarMensagem(any()) }
+
+        val idLocal = envio.enviarTexto(42, "olá")
+        agendador.agendados = 0
+        coEvery { api.enviarMensagem(any()) } throws java.io.IOException("sem rede")
+        envio.enviarAoConectar()
+        assertThat(banco.envioPendenteDao().todos()).hasSize(1)
+        assertThat(agendador.agendados).isEqualTo(1)
+
+        coEvery { api.enviarMensagem(any()) } returns MensagemCriadaDto(id = 500, conversaId = 42)
+        coEvery { api.mensagens(42, 500, 0, 0) } returns listOf(msg(500, "olá", remetente = 7))
+        envio.enviarAoConectar()
+        assertThat(banco.envioPendenteDao().todos()).isEmpty()
+        assertThat(banco.mensagemDao().buscar(idLocal)).isNull()
+        assertThat(agendador.agendados).isEqualTo(1)
+    }
+
     // --- Reações vistas (servidor ef13c22: atividade pendente até concluir) ---
 
     @Test
