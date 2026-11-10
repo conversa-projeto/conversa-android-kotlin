@@ -3,7 +3,7 @@
 - **Fluxo:** Mensagens (etapa 3)
 - **Tipo:** documentação
 - **Itens:** `TODO.md` 3.7 (a linha **Teste:** da rede sem internet confirmada e uma linha nova, a dos dados móveis); ENV-01, FC-307
-- **Commits:** (preencher)
+- **Commits:** `bb284d8`
 
 ## Contexto
 A pessoa instalou a `v2.0.0-teste.2` (histórico `2026-11-10-01`) e mandou o registro do app do celular, sem texto. O registro vai das 13:30 às 14:41.
