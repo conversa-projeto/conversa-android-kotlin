@@ -15,11 +15,13 @@ import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.merge
 import kotlinx.coroutines.suspendCancellableCoroutine
 import kotlinx.coroutines.withTimeoutOrNull
+import org.webrtc.CandidatePairChangeEvent
 import org.webrtc.DataChannel
 import org.webrtc.DefaultVideoDecoderFactory
 import org.webrtc.DefaultVideoEncoderFactory
 import org.webrtc.EglBase
 import org.webrtc.IceCandidate
+import org.webrtc.IceCandidateErrorEvent
 import org.webrtc.MediaConstraints
 import org.webrtc.MediaStream
 import org.webrtc.MediaStreamTrack
@@ -103,8 +105,24 @@ internal class Observador(
     private val espera = EsperaColeta()
     private val inicio = System.nanoTime()
 
+    /** Quando chegou a resposta do servidor (WHIP/WHEP); 0 antes dela. */
+    @Volatile
+    private var resposta = 0L
+
     /** Quantos candidatos de cada tipo ("relay udp": 1), para o registro; nunca os endereços. */
     private val candidatos = ConcurrentHashMap<String, Int>()
+
+    /** A resposta do servidor chegou: daqui em diante, os tempos no registro contam também desde ela. */
+    fun marcarResposta() {
+        resposta = System.nanoTime()
+    }
+
+    /** "em 1122 ms" e, depois da resposta, "em 1122 ms (380 ms desde a resposta)". */
+    private fun tempos(): String {
+        val agora = System.nanoTime()
+        val desdeResposta = resposta.takeIf { it != 0L }?.let { " (${(agora - it) / 1_000_000} ms desde a resposta)" }.orEmpty()
+        return "em ${(agora - inicio) / 1_000_000} ms$desdeResposta"
+    }
 
     /** Sem trickle ICE: espera a coleta, como diz a [EsperaColeta]. */
     suspend fun esperarColeta() {
@@ -124,7 +142,7 @@ internal class Observador(
     }
 
     override fun onConnectionChange(estado: PeerConnection.PeerConnectionState) {
-        Timber.tag(TAG_MIDIA).i("%s: conexão %s em %d ms", rotulo, estado, (System.nanoTime() - inicio) / 1_000_000)
+        Timber.tag(TAG_MIDIA).i("%s: conexão %s %s", rotulo, estado, tempos())
         aoMudarConexao(estado)
     }
 
@@ -135,10 +153,37 @@ internal class Observador(
     override fun onSignalingChange(estado: PeerConnection.SignalingState) = Unit
 
     override fun onIceConnectionChange(estado: PeerConnection.IceConnectionState) {
-        Timber.tag(TAG_MIDIA).d("%s: ICE %s", rotulo, estado)
+        Timber.tag(TAG_MIDIA).d("%s: ICE %s %s", rotulo, estado, tempos())
     }
 
-    override fun onIceConnectionReceivingChange(recebendo: Boolean) = Unit
+    /**
+     * O ICE pela regra do padrão, sem esperar o DTLS. Com ele "CONNECTED" e a conexão ainda em "CONNECTING",
+     * o caminho pela rede existe e é o aperto de mão do DTLS que não fecha.
+     */
+    override fun onStandardizedIceConnectionChange(estado: PeerConnection.IceConnectionState) {
+        Timber.tag(TAG_MIDIA).d("%s: ICE (padrão) %s %s", rotulo, estado, tempos())
+    }
+
+    override fun onIceConnectionReceivingChange(recebendo: Boolean) {
+        Timber.tag(TAG_MIDIA).d("%s: %s %s", rotulo, if (recebendo) "chegando dados pela rede" else "nada chegando pela rede", tempos())
+    }
+
+    /** O par de candidatos em uso ("relay udp → host udp"), sem os endereços. */
+    override fun onSelectedCandidatePairChanged(evento: CandidatePairChangeEvent) {
+        Timber.tag(TAG_MIDIA).i(
+            "%s: par de candidatos %s → %s (%s) %s",
+            rotulo,
+            tipoDoCandidato(evento.local.sdp),
+            tipoDoCandidato(evento.remote.sdp),
+            evento.reason,
+            tempos(),
+        )
+    }
+
+    /** Falha ao pedir o candidato (o TURN recusou a alocação, por exemplo): o código e o texto do servidor. */
+    override fun onIceCandidateError(evento: IceCandidateErrorEvent) {
+        Timber.tag(TAG_MIDIA).w("%s: erro na coleta ICE em %s: %d %s", rotulo, evento.url, evento.errorCode, evento.errorText)
+    }
 
     override fun onIceCandidate(candidato: IceCandidate) {
         candidatos.merge(tipoDoCandidato(candidato.sdp), 1, Int::plus)

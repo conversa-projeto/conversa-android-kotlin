@@ -49,6 +49,7 @@ import org.webrtc.JavaI420Buffer
 import org.webrtc.MediaConstraints
 import org.webrtc.MediaStreamTrack
 import org.webrtc.PeerConnection
+import org.webrtc.RTCStats
 import org.webrtc.RtpTransceiver
 import org.webrtc.SessionDescription
 import org.webrtc.SurfaceTextureHelper
@@ -81,7 +82,9 @@ data class TrilhaRemota(
  *   (8.5; padrão: Opus a 32 kbps, câmera 360p a 15 fps), H264 → VP9 → resto;
  * - uma assinatura por participante: `PeerConnection` só de recepção, registrada antes da
  *   resposta (#10); WHEP 404 tenta de novo (vídeo 40×1 s, áudio 12×0,8 s);
- * - conexão que falha (ICE) refaz só aquela `PeerConnection`;
+ * - conexão que falha (ICE), ou que não conecta no prazo depois da resposta ([prazoParaConectar]: 3 s,
+ *   depois 6 s e 10 s), refaz só aquela `PeerConnection`, e o registro guarda em que passo ela estava;
+ * - a cada 15 s, a qualidade de cada conexão vai para o registro (RTT, perda, jitter, buffer);
  * - ICE de `GET /api/ice` a cada conexão; "forçar relay" → só TURN.
  *
  * Os objetos do WebRTC só são mexidos numa vez única ([vez]); a rede não segura a
@@ -120,10 +123,19 @@ class MidiaWebRtc @Inject constructor(
     /** A publicação que a [publicacao] está substituindo (FC-728): segue no ar até a nova entrar. */
     private var publicacaoAnterior: Publicacao? = null
     private var republicando = false
+
+    /** Publicações refeitas seguidas por não conectar no prazo ([prazoParaConectar]); zera ao conectar. */
+    private var publicacaoRefeitas = 0
     private var medidor: Job? = null
+
+    /** A qualidade de cada conexão no registro, a cada [INTERVALO_QUALIDADE_MS]. */
+    private var qualidade: Job? = null
     private var falaLocal = DetectorDeFala()
     private var falandoLocal = false
     private val assinaturas = mutableMapOf<Long, Assinatura>()
+
+    /** Assinaturas refeitas seguidas, por participante, por não conectar no prazo; zera ao conectar. */
+    private val assinaturaRefeitas = mutableMapOf<Long, Int>()
 
     /** Assinaturas trocadas que ainda tocam até a nova conectar (FC-728). */
     private val substituidas = mutableMapOf<Long, Assinatura>()
@@ -413,10 +425,32 @@ class MidiaWebRtc @Inject constructor(
             throw CancellationException("Publicação substituída")
         }
         pub.recurso = resposta.recurso
+        Timber.tag(TAG_MIDIA).d("Publicação: resposta com %s", candidatosDaResposta(resposta.resposta))
+        pub.observador.marcarResposta()
         pc.definirRemota(SessionDescription(SessionDescription.Type.ANSWER, resposta.resposta))
         checar(s, pub)
         aplicarLimites(pc)
         garantirMedidor(s)
+        vigiarPublicacao(pub, s)
+    }
+
+    /**
+     * Sem conectar no prazo depois da resposta do WHIP, publica de novo. Não espera o WebRTC dar a conexão
+     * por perdida: presa em "conectando", ela só caía depois de ~18 s, e ninguém ouvia (registro de 2026-11-10).
+     */
+    private fun vigiarPublicacao(pub: Publicacao, s: Long) {
+        val prazo = prazoParaConectar(publicacaoRefeitas)
+        noTrabalho(s) {
+            delay(prazo)
+            if (publicacao !== pub || pub.estado == PeerConnection.PeerConnectionState.CONNECTED || republicando) return@noTrabalho
+            publicacaoRefeitas++
+            republicar(
+                pub,
+                s,
+                0,
+                "não conectou em $prazo ms desde a resposta; publicando de novo, com prazo de ${prazoParaConectar(publicacaoRefeitas)} ms",
+            )
+        }
     }
 
     /**
@@ -454,19 +488,26 @@ class MidiaWebRtc @Inject constructor(
         if (s != sessaoAtual() || publicacao !== pub) return
         pub.estado = estado
         when (estado) {
-            PeerConnection.PeerConnectionState.FAILED -> republicar(pub, s, 0)
-            PeerConnection.PeerConnectionState.DISCONNECTED -> republicar(pub, s, ESPERA_RECONEXAO_MS)
+            PeerConnection.PeerConnectionState.CONNECTED -> publicacaoRefeitas = 0
+            PeerConnection.PeerConnectionState.FAILED -> republicar(pub, s, 0, "falhou; publicando de novo")
+            PeerConnection.PeerConnectionState.DISCONNECTED -> republicar(pub, s, ESPERA_RECONEXAO_MS, "caiu; publicando de novo")
             else -> Unit
         }
     }
 
-    /** A publicação caiu: publica de novo (como o web). "Desconectada" pode voltar sozinha; espera um pouco. */
-    private fun republicar(pub: Publicacao, s: Long, espera: Long) {
+    /**
+     * A publicação caiu ou não conectou: publica de novo (como o web). "Desconectada" pode voltar sozinha;
+     * espera um pouco. Antes, o registro guarda em que passo a conexão estava ([resumoDaConexao]).
+     */
+    private fun republicar(pub: Publicacao, s: Long, espera: Long, motivo: String) {
         noTrabalho(s) {
             delay(espera)
             if (publicacao !== pub || pub.estado == PeerConnection.PeerConnectionState.CONNECTED || republicando) return@noTrabalho
             republicando = true
             try {
+                val situacao = resumoDaConexao(estatisticas(pub.pc))
+                Timber.tag(TAG_MIDIA).w("Publicação %s. Estava: %s", motivo, situacao)
+                if (publicacao !== pub || pub.estado == PeerConnection.PeerConnectionState.CONNECTED) return@noTrabalho
                 publicarAgora(s)
             } catch (e: CancellationException) {
                 throw e
@@ -510,7 +551,8 @@ class MidiaWebRtc @Inject constructor(
      * (em [substituidas]) até a nova conectar ou falhar (FC-728, como o web). Devolve a tarefa da conexão.
      */
     private fun assinar(usuario: Long, s: Long, trocar: Boolean = false): Job? {
-        soltarSubstituida(usuario)
+        // Trocando uma troca que ainda não conectou: a anterior conectada segue tocando até a nova.
+        if (!trocar || assinaturas[usuario]?.estado == PeerConnection.PeerConnectionState.CONNECTED) soltarSubstituida(usuario)
         assinaturas.remove(usuario)?.let { anterior ->
             if (trocar && anterior.estado == PeerConnection.PeerConnectionState.CONNECTED) {
                 substituidas[usuario] = anterior
@@ -592,19 +634,63 @@ class MidiaWebRtc @Inject constructor(
         if (resposta == null) throw StreamAusente()
         a.recurso = resposta.recurso
         a.esperaVideo = a.comVideo && sdpEnviaVideo(resposta.resposta)
+        Timber.tag(TAG_MIDIA).d("Assinatura de %d: resposta com %s", a.usuario, candidatosDaResposta(resposta.resposta))
+        observador.marcarResposta()
         pc.definirRemota(SessionDescription(SessionDescription.Type.ANSWER, resposta.resposta))
         garantirMedidor(s)
+        vigiarAssinatura(a, s)
+    }
+
+    /** Como a [vigiarPublicacao]: sem conectar no prazo depois da resposta do WHEP, assina de novo. */
+    private fun vigiarAssinatura(a: Assinatura, s: Long) {
+        val refeitas = assinaturaRefeitas[a.usuario] ?: 0
+        val prazo = prazoParaConectar(refeitas)
+        noTrabalho(s) {
+            delay(prazo)
+            if (assinaturas[a.usuario] !== a || a.estado == PeerConnection.PeerConnectionState.CONNECTED) return@noTrabalho
+            val situacao = a.pc?.let { resumoDaConexao(estatisticas(it)) } ?: "sem conexão"
+            if (assinaturas[a.usuario] !== a || a.estado == PeerConnection.PeerConnectionState.CONNECTED) return@noTrabalho
+            assinaturaRefeitas[a.usuario] = refeitas + 1
+            Timber.tag(TAG_MIDIA).w(
+                "Assinatura de %d não conectou em %d ms desde a resposta; assinando de novo, com prazo de %d ms. Estava: %s",
+                a.usuario,
+                prazo,
+                prazoParaConectar(refeitas + 1),
+                situacao,
+            )
+            // Com troca: se a anterior ainda toca (ligando o vídeo), ela segue até a nova conectar.
+            assinar(a.usuario, s, trocar = true)
+        }
     }
 
     // --- Quem está falando (6.13) ---
 
     private fun garantirMedidor(s: Long) {
+        if (qualidade?.isActive != true) {
+            qualidade = noTrabalho(s) {
+                while (true) {
+                    delay(INTERVALO_QUALIDADE_MS)
+                    registrarQualidade()
+                }
+            }
+        }
         if (medidor?.isActive == true) return
         medidor = noTrabalho(s) {
             while (true) {
                 delay(INTERVALO_FALA_MS)
                 medirFala()
             }
+        }
+    }
+
+    /** No registro, a cada [INTERVALO_QUALIDADE_MS]: atraso da rede, perda, jitter e buffer de cada conexão de pé. */
+    private suspend fun registrarQualidade() {
+        publicacao?.takeIf { it.estado == PeerConnection.PeerConnectionState.CONNECTED }?.let { pub ->
+            Timber.tag(TAG_MIDIA).d("Qualidade da publicação: %s", resumoDaQualidade(estatisticas(pub.pc)))
+        }
+        for (a in assinaturas.values.toList()) {
+            val pc = a.pc?.takeIf { a.estado == PeerConnection.PeerConnectionState.CONNECTED } ?: continue
+            Timber.tag(TAG_MIDIA).d("Qualidade da assinatura de %d: %s", a.usuario, resumoDaQualidade(estatisticas(pc)))
         }
     }
 
@@ -629,16 +715,14 @@ class MidiaWebRtc @Inject constructor(
     }
 
     /** Maior `audioLevel` (0 a 1) das estatísticas de áudio do tipo pedido; 0 se não vier em 1 s. */
-    private suspend fun nivelDeAudio(pc: PeerConnection, tipo: String): Double = withTimeoutOrNull(ESPERA_ESTATISTICAS_MS) {
-        suspendCancellableCoroutine { continuacao ->
-            pc.getStats { relatorio ->
-                val nivel = relatorio.statsMap.values
-                    .filter { it.type == tipo && it.members["kind"] == "audio" }
-                    .maxOfOrNull { (it.members["audioLevel"] as? Number)?.toDouble() ?: 0.0 } ?: 0.0
-                continuacao.resume(nivel)
-            }
-        }
-    } ?: 0.0
+    private suspend fun nivelDeAudio(pc: PeerConnection, tipo: String): Double = estatisticas(pc)
+        .filter { it.type == tipo && it.members["kind"] == "audio" }
+        .maxOfOrNull { (it.members["audioLevel"] as? Number)?.toDouble() ?: 0.0 } ?: 0.0
+
+    /** As estatísticas do WebRTC da conexão; nada se não vierem em [ESPERA_ESTATISTICAS_MS]. */
+    private suspend fun estatisticas(pc: PeerConnection): Collection<RTCStats> = withTimeoutOrNull(ESPERA_ESTATISTICAS_MS) {
+        suspendCancellableCoroutine { continuacao -> pc.getStats { relatorio -> continuacao.resume(relatorio.statsMap.values) } }
+    } ?: emptyList()
 
     private fun aoMudarAssinatura(a: Assinatura, estado: PeerConnection.PeerConnectionState, s: Long) {
         if (s != sessaoAtual() || assinaturas[a.usuario] !== a) return
@@ -646,6 +730,7 @@ class MidiaWebRtc @Inject constructor(
         when (estado) {
             PeerConnection.PeerConnectionState.CONNECTED -> {
                 a.falhou = false
+                assinaturaRefeitas.remove(a.usuario)
                 // A nova tocando: a anterior (troca sem intervalo) sai.
                 soltarSubstituida(a.usuario)
                 publicarTrilhas()
@@ -658,16 +743,19 @@ class MidiaWebRtc @Inject constructor(
                 }
             }
             // ICE falhou: refaz só esta conexão.
-            PeerConnection.PeerConnectionState.FAILED -> refazer(a, s)
-            PeerConnection.PeerConnectionState.DISCONNECTED -> refazer(a, s)
+            PeerConnection.PeerConnectionState.FAILED -> refazer(a, s, "falhou")
+            PeerConnection.PeerConnectionState.DISCONNECTED -> refazer(a, s, "caiu")
             else -> Unit
         }
     }
 
-    private fun refazer(a: Assinatura, s: Long) {
+    private fun refazer(a: Assinatura, s: Long, motivo: String) {
         noTrabalho(s) {
             delay(ESPERA_RECONEXAO_MS)
             if (assinaturas[a.usuario] !== a || a.estado == PeerConnection.PeerConnectionState.CONNECTED) return@noTrabalho
+            val situacao = a.pc?.let { resumoDaConexao(estatisticas(it)) } ?: "sem conexão"
+            if (assinaturas[a.usuario] !== a || a.estado == PeerConnection.PeerConnectionState.CONNECTED) return@noTrabalho
+            Timber.tag(TAG_MIDIA).w("Assinatura de %d %s; assinando de novo. Estava: %s", a.usuario, motivo, situacao)
             a.falhou = true
             publicarTrilhas()
             assinar(a.usuario, s)
@@ -686,6 +774,7 @@ class MidiaWebRtc @Inject constructor(
 
     private fun soltar(usuario: Long) {
         soltarSubstituida(usuario)
+        assinaturaRefeitas.remove(usuario)
         assinaturas.remove(usuario)?.let(::descartarAssinatura)
         publicarTrilhas()
     }
@@ -705,7 +794,10 @@ class MidiaWebRtc @Inject constructor(
         local = null
         comVideo = false
         republicando = false
+        publicacaoRefeitas = 0
+        assinaturaRefeitas.clear()
         medidor = null
+        qualidade = null
         falaLocal = DetectorDeFala()
         falandoLocal = false
     }
@@ -857,6 +949,9 @@ class MidiaWebRtc @Inject constructor(
         // O web mede a cada 100 ms; aqui as estatísticas custam mais, e 150 ms com a espera de 400 ms não pisca.
         const val INTERVALO_FALA_MS = 150L
         const val ESPERA_ESTATISTICAS_MS = 1_000L
+
+        // A qualidade no registro: 15 s dá ~4 linhas por minuto por conexão.
+        const val INTERVALO_QUALIDADE_MS = 15_000L
     }
 }
 

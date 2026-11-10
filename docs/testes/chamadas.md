@@ -20,6 +20,8 @@ Atualize a linha (data, versão, onde e o que aconteceu) a cada rodada.
 | Wi-Fi ↔ 4G | A | ⏳ | Precisa de dois aparelhos e do servidor acessível pela internet (TURN em TLS 443/8443) |
 | 4G ↔ 4G | A | ⏳ | Idem |
 | Trocar de rede durante a chamada (Wi-Fi → 4G) | A | ⏳ | A conexão que cai é refeita sozinha (6.1); conferir quanto tempo leva |
+| Conexão com o MediaMTX que não fecha depois da resposta | E | ✅ 2026-11-10 | Com o coturn pausado (`emulador.md`): a publicação e a assinatura refeitas aos 3 s, e as novas conectaram em ~250 ms. No celular (2026-11-10, antes do vigia), o outro só ouviu ~20 s depois de atender |
+| Idem, no servidor do trabalho | A | ⏳ | Na versão de teste seguinte: conferir no registro os tempos "desde a resposta" e se o vigia agiu |
 
 ## Estado do app
 

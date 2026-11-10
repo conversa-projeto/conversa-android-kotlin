@@ -111,3 +111,20 @@ O Android só marca a rede como validada (`IS_VALIDATED`) quando chega na intern
 - Conferir: `adb shell dumpsys connectivity | grep NetworkAgentInfo`. O Wi-Fi e os dados móveis aparecem com `EVER_EVALUATED` e **sem** o `IS_VALIDATED`.
 - Com snapshot (`emulator` sem `-no-snapshot`), a rede volta já validada do snapshot e não serve para o teste.
 - Para voltar ao normal, basta ligar o emulador de novo sem o `-dns-server`.
+
+## Conexão da chamada que não fecha (o vigia de 3 s)
+
+No celular de 2026-11-10, a conexão com o MediaMTX ficou em "conectando" depois da resposta do WHIP, e o WebRTC levou ~18 s para dar por perdida. Desde o histórico `2026-11-10-03`, o app refaz a conexão que não fecha em 3 s depois da resposta (6 s e 10 s nas seguintes).
+- **Para travar de propósito**, pausar o TURN de desenvolvimento antes da conexão e soltar depois:
+  - `docker pause coturn`;
+  - ligar ou atender;
+  - uns 10 s depois, `docker unpause coturn`.
+- Sem o TURN, a coleta ICE espera os 5 s, a oferta sai sem candidatos e a conexão não fecha.
+  - Aos 3 s da resposta, o registro mostra "Publicação não conectou em 3000 ms desde a resposta; … Estava: …" ou "Assinatura de N não conectou …".
+  - Com o coturn de volta, a nova conecta.
+- **Para a assinatura**, o outro lado atende pelo web (seção das chamadas acima) com o coturn já pausado. A publicação dele já está de pé desde o toque (as pré-conexões do web).
+- **A pausa também derruba as conexões já de pé**, que caem e são refeitas ("Publicação caiu; publicando de novo. Estava: …").
+- **O registro do app:**
+  - `adb exec-out run-as com.conversa.conversa.dev cat files/registro/AAAA-MM-DD.log`, em UTC;
+  - as linhas da mídia têm a tag `Midia`;
+  - a qualidade sai a cada 15 s ("Qualidade da publicação: RTT …").
