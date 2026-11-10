@@ -4,7 +4,8 @@
 - **Tipo:** correção
 - **Itens:** `TODO.md` 3.7 (linha nova, depois do envio pelo `EnvioWorker`); ENV-01, FC-307
 - **Branch:** `reescrita`
-- **Commits:** (preencher)
+- **Commits:** `4f091a2`
+- **Release:** [`v2.0.0-teste.2`](https://github.com/conversa-projeto/conversa-android-kotlin/releases/tag/v2.0.0-teste.2), do `4f091a2`
 
 ## Contexto
 A pessoa mandou o registro do app do celular, no servidor do trabalho (`https://10.0.5.78`, `v2.0.0-teste.1`), perguntando por que estava travando.
@@ -41,7 +42,18 @@ No emulador e em casa a rede tem internet confirmada, por isso o problema não t
 
 ## Como foi verificado
 - `:core:data:testDebugUnitTest`, `:core:database:testDebugUnitTest`, `:app:assembleDebug` (o grafo do Hilt) e `ktlintCheck`.
-- (preencher: a publicação e o emulador)
+- **A publicação:** `publicar.ps1` → `v2.0.0-teste.2`, Pre-release, 657 testes verdes; os dois APKs (64 e 32 bits) chegaram com o tamanho dos daqui.
+- **No emulador, numa rede sem internet confirmada:**
+  - **A rede:** o emulador foi ligado a frio (`-no-snapshot`) com `-dns-server 127.0.0.2`, um DNS que não responde. O `dumpsys connectivity` mostrou o Wi-Fi e os dados móveis sem o `IS_VALIDATED`, como o Wi-Fi do trabalho. O `adb reverse` para o proxy de dev funciona igual.
+  - **O problema reproduzido**, com o app de 2026-11-03 (a regra antiga): a mensagem ficou em "WorkManager: enqueued, execuções 0" por 45 s, sem execução.
+  - **A atualização por cima**, com a mensagem ainda na fila. Foi um `uninstall -k` (mantém os dados) e o `install` do APK só x86_64, porque o `install -r` falta espaço. Ao abrir:
+    - "Tempo real conectado com 1 mensagem(ns) na fila: enviando já";
+    - "Mensagem local -1 enviada: é a 1254 no servidor (37 ms)", presa desde 18:00:52;
+    - o `EnvioWorker` também rodou nessa rede, o que antes nunca acontecia, e achou a fila vazia.
+  - **Mensagem nova com o tempo real conectado:** enviada em 40 ms (1255); o worker veio depois e não duplicou.
+  - **Espaço no emulador:**
+    - saiu o APK de teste instrumentado (`com.conversa.conversa.dev.test`);
+    - saiu de novo o `video-teste-200mb.mp4` da pasta Download, copiado para o scratchpad do PC. Ele tinha voltado porque o boot a frio carrega a imagem de dados sem o que só ficou no snapshot (histórico `2026-10-27-03`).
 
 ## Decisões
 - **As duas vias, e não só a troca do pedido de rede:**
@@ -52,3 +64,4 @@ No emulador e em casa a rede tem internet confirmada, por isso o problema não t
 
 ## Pendências / próximos passos
 - A pessoa confirmar no celular, no Wi-Fi do trabalho, com a `v2.0.0-teste.2`.
+- O guia do emulador (`emulador.md`) ganhou o jeito de simular a rede sem internet confirmada.

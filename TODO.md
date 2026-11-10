@@ -407,7 +407,8 @@
 ### 3.7 Enviar texto (FC-307, ENV-01)
 - [x] Ao enviar: criar a mensagem otimista com id negativo e `enviando=true` no Room — `EnvioMensagens.enviarTexto` (+ teste)
 - [x] Guardar em `EnvioPendente` e disparar o `EnvioWorker` (WorkManager, com rede) — `envio_pendente` + `EnvioWorker` (`@HiltWorker`, rede obrigatória, `APPEND_OR_REPLACE`); WorkManager iniciado pelo app com o Hilt
-- [ ] 🆕 Rede sem internet confirmada (Wi-Fi do trabalho, 2026-11-10): o `NetworkType.CONNECTED` pede a internet validada e a mensagem ficava presa na fila. Pedido de rede próprio sem `VALIDATED` (trabalho renomeado, o antigo é cancelado) e a fila sai na hora com o tempo real conectado (`enviarAoConectar`, a cada reconexão e mensagem nova)
+- [x] 🆕 Rede sem internet confirmada (Wi-Fi do trabalho, 2026-11-10): o `NetworkType.CONNECTED` pede a internet validada e a mensagem ficava presa na fila. Pedido de rede próprio sem `VALIDATED` (trabalho renomeado, o antigo é cancelado) e a fila sai na hora com o tempo real conectado (`enviarAoConectar`, a cada reconexão e mensagem nova); no emulador com `-dns-server` que não responde (rede sem `IS_VALIDATED`): a mensagem presa saiu ao atualizar por cima, e a nova em 40 ms ✔ 4f091a2
+- [ ] **Teste:** no celular, no Wi-Fi do trabalho, com a `v2.0.0-teste.2`
 - [x] Worker: `PUT /mensagem {conversa_id, conteudos:[{ordem:1, tipo:1, conteudo}]}` → trocar o id negativo pelo real — `processarPendentes`: em ordem; troca pela real (`mensagemreferencia=id`) ou, se não vier, grava a otimista com o id real (+ teste)
 - [x] Erro definitivo → marcar a mensagem como "falhou" com o botão "Reenviar"/"Apagar" — regra (4xx ou 5 erros do servidor → `falhou`; sem rede não conta) + botões "Reenviar"/"Apagar" embaixo da bolha
 - [x] O texto do campo só é limpo depois de salvo no Room (nunca se perde) — o campo só limpa no retorno do `enviar` (depois de gravar no Room), e só se o texto não mudou nesse meio-tempo

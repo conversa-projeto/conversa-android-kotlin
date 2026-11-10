@@ -96,5 +96,18 @@ O armazenamento interno do AVD é de 6 GB, e os apps do Google se atualizam sozi
 - Uma instalação que falhou pode deixar o APK em `/data/local/tmp` (`adb shell ls -la /data/local/tmp`).
 - Desinstalar o app de debug e instalar de novo também resolve, mas perde-se o endereço do servidor e o login (refazer como no passo a passo).
   - Em 2026-10-31, com 7% livre (~450 MB), o `install -r` falhou com `INSTALL_FAILED_INSUFFICIENT_STORAGE: Failed to override installation location`. O `pm trim-caches` liberou só ~8 MB. Desinstalar e instalar resolveu, embora o espaço livre quase não tenha mudado.
-  - O `uninstall -k` (manter os dados) não serve: no Android 16 ele guarda também o código, e o `install` falha igual.
+  - O `uninstall -k` (manter os dados) sozinho não basta: no Android 16 ele guarda também o código, e o `install` falha igual.
+  - Em 2026-11-10 funcionou com mais espaço. O `video-teste-200mb.mp4` saiu da pasta Download e o livre foi de 447 para 647 MB. Depois foram o `adb shell cmd package uninstall -k com.conversa.conversa.dev` e o `adb install` do APK só x86_64 (`./gradlew :app:assembleDebug -Pconversa.abis=x86_64`, 112 MB em vez de 144). O app voltou com os dados, a sessão e a fila de envio.
+  - O boot a frio (`-no-snapshot`) carrega a imagem de dados sem o que só ficou no snapshot. Arquivo apagado numa sessão com snapshot pode voltar.
 - O que resolve de vez é aumentar o armazenamento do AVD no Device Manager do Android Studio, que fica a critério de quem usa o emulador.
+
+## Rede sem internet confirmada (como um Wi-Fi interno)
+
+O Android só marca a rede como validada (`IS_VALIDATED`) quando chega na internet. Num Wi-Fi interno sem essa saída, ele mostra "conectado, sem internet", e o que espera essa marca não roda. Foi o caso do WorkManager com `NetworkType.CONNECTED` (histórico `2026-11-10-01`).
+- Para simular sem mexer nas configurações do emulador:
+  - ligar a frio, com um DNS que não responde: `emulator -avd Medium_Phone_API_36.1 -no-snapshot -dns-server 127.0.0.2`;
+  - o teste de conexão do Android não resolve o nome e a rede fica sem validar;
+  - o `adb reverse` para o `localhost:8081` continua funcionando.
+- Conferir: `adb shell dumpsys connectivity | grep NetworkAgentInfo`. O Wi-Fi e os dados móveis aparecem com `EVER_EVALUATED` e **sem** o `IS_VALIDATED`.
+- Com snapshot (`emulator` sem `-no-snapshot`), a rede volta já validada do snapshot e não serve para o teste.
+- Para voltar ao normal, basta ligar o emulador de novo sem o `-dns-server`.
