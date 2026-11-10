@@ -4,6 +4,7 @@
 - **Tipo:** correção
 - **Itens:** `TODO.md` 6.1 (linha nova, depois do "ICE `FAILED` → recriar só o PC"); FC-703, FC-704, CHA-10
 - **Commits:** `66a2497`
+- **Release:** [`v2.0.0-teste.3`](https://github.com/conversa-projeto/conversa-android-kotlin/releases/tag/v2.0.0-teste.3), do `186eba4`
 
 ## Contexto
 No registro do celular de 2026-11-10 (histórico `2026-11-10-02`; Galaxy A25, `v2.0.0-teste.2`, servidor do trabalho), a pessoa notou um atraso numa das ligações. Foi a chamada 171, às 14:40:
@@ -82,5 +83,5 @@ A causa de a conexão travar não aparece no registro: ele só tinha os estados 
 - **Nunca endereços no registro:** só tipos de candidato e contadores, como já era com os candidatos da oferta.
 
 ## Pendências / próximos passos
-- Sair numa versão de teste (`v2.0.0-teste.3`) e repetir as ligações no celular, no servidor do trabalho. Se travar de novo, o "Estava: …" diz em que passo foi.
+- Saiu na `v2.0.0-teste.3` (666 testes verdes na cópia limpa). Falta repetir as ligações no celular, no servidor do trabalho. Se travar de novo, o "Estava: …" diz em que passo foi.
 - O registro do MediaMTX do servidor do trabalho às 14:40:20–14:41:00 (UTC 18:40) diria por que a sessão de 2026-11-10 não fechou (por exemplo, o tempo-limite do aperto de mão do WebRTC dele).
