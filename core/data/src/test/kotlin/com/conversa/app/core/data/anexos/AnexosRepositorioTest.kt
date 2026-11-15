@@ -10,6 +10,7 @@ import com.conversa.app.core.network.dto.ConfirmarAnexoDto
 import com.conversa.app.core.network.dto.IncluirAnexoRequisicao
 import com.conversa.app.core.network.dto.IncluirAnexoResposta
 import com.conversa.app.core.network.dto.UrlAnexoDto
+import com.conversa.app.core.network.http.ErroApi
 import com.google.common.truth.Truth.assertThat
 import io.mockk.coEvery
 import io.mockk.coVerify
@@ -25,13 +26,17 @@ import kotlinx.coroutines.test.StandardTestDispatcher
 import kotlinx.coroutines.test.runTest
 import mockwebserver3.MockResponse
 import mockwebserver3.MockWebServer
+import okhttp3.MediaType.Companion.toMediaType
 import okhttp3.OkHttpClient
+import okhttp3.ResponseBody.Companion.toResponseBody
 import org.junit.After
 import org.junit.Before
 import org.junit.Test
+import retrofit2.HttpException
+import retrofit2.Response
 
 class AnexosRepositorioTest {
-    private val minio = MockWebServer()
+    private val armazenamento = MockWebServer()
     private val api = mockk<ConversaApi>()
     private val bytes = Random(7).nextBytes(300_000)
     private val fonte = object : FonteArquivo {
@@ -56,10 +61,10 @@ class AnexosRepositorioTest {
     }
 
     @Before
-    fun subir() = minio.start()
+    fun subir() = armazenamento.start()
 
     @After
-    fun parar() = minio.close()
+    fun parar() = armazenamento.close()
 
     private fun kotlinx.coroutines.test.TestScope.repositorio() =
         AnexosRepositorio(api, OkHttpClient(), relogio, StandardTestDispatcher(testScheduler))
@@ -80,18 +85,18 @@ class AnexosRepositorioTest {
             IncluirAnexoResposta(
                 existe = false,
                 id = 9,
-                uploadUrl = minio.url("/storage/chat/a?X-Amz-Signature=x").toString(),
+                uploadUrl = armazenamento.url("/storage/chat/a?X-Amz-Signature=x").toString(),
                 uploadStatus = 0,
             )
         coEvery { api.confirmarAnexo(identificador) } returns ConfirmarAnexoDto(true, 1)
-        minio.enqueue(MockResponse.Builder().code(200).build())
+        armazenamento.enqueue(MockResponse.Builder().code(200).build())
         var ultimo = 0L
 
         val enviado = repositorio().enviar(fonte, TipoConteudo.ARQUIVO) { enviados, _ -> ultimo = enviados }.getOrThrow()
 
         assertThat(enviado.identificador).isEqualTo(identificador)
         assertThat(pedido.captured).isEqualTo(IncluirAnexoRequisicao(identificador, 3, "Relatório Final.PDF", "pdf", bytes.size.toLong()))
-        val recebido = minio.takeRequest()
+        val recebido = armazenamento.takeRequest()
         assertThat(recebido.method).isEqualTo("PUT")
         assertThat(recebido.body!!.toByteArray()).isEqualTo(bytes)
         assertThat(recebido.headers["Authorization"]).isNull()
@@ -100,22 +105,36 @@ class AnexosRepositorioTest {
     }
 
     @Test
-    fun `ja existe - nao sobe nada e a url devolvida vira a de leitura`() = runTest {
+    fun `ja existe - confere com o confirmar, nao sobe nada e a url devolvida vira a de leitura`() = runTest {
         coEvery { api.incluirAnexo(any()) } returns IncluirAnexoResposta(existe = true, id = 9, uploadUrl = "https://x/storage/leitura")
+        coEvery { api.confirmarAnexo(identificador) } returns ConfirmarAnexoDto(true, 1)
         val repo = repositorio()
 
         repo.enviar(fonte, TipoConteudo.ARQUIVO).getOrThrow()
 
-        assertThat(minio.requestCount).isEqualTo(0)
-        coVerify(exactly = 0) { api.confirmarAnexo(any()) }
+        assertThat(armazenamento.requestCount).isEqualTo(0)
+        coVerify(exactly = 1) { api.confirmarAnexo(identificador) }
         assertThat(repo.url(identificador).getOrThrow()).isEqualTo("https://x/storage/leitura")
         // Só o hash leu o arquivo.
         assertThat(fonte.aberturas).isEqualTo(1)
     }
 
     @Test
+    fun `ja existe mas o arquivo nao esta no armazenamento - falha com o motivo do servidor`() = runTest {
+        // O servidor responde "já existe" também para o pendente cujo envio parou no meio (pegadinha 38).
+        coEvery { api.incluirAnexo(any()) } returns IncluirAnexoResposta(existe = true, id = 9, uploadUrl = "https://x/storage/leitura")
+        coEvery { api.confirmarAnexo(identificador) } throws semArquivoNoArmazenamento()
+
+        val erro = repositorio().enviar(fonte, TipoConteudo.ARQUIVO).exceptionOrNull()
+
+        assertThat((erro as ErroApi.Servidor).status).isEqualTo(400)
+        assertThat(erro.detalhe).isEqualTo("Arquivo não encontrado no armazenamento")
+    }
+
+    @Test
     fun `audio leva a duracao e a onda no PUT do anexo`() = runTest {
         val pedido = slot<IncluirAnexoRequisicao>()
+        coEvery { api.confirmarAnexo(any()) } returns ConfirmarAnexoDto(true, 1)
         coEvery { api.incluirAnexo(capture(pedido)) } returns
             IncluirAnexoResposta(existe = true, id = 9, uploadUrl = "https://x/storage/leitura")
 
@@ -126,18 +145,86 @@ class AnexosRepositorioTest {
     }
 
     @Test
-    fun `url vencida no meio - pede outra uma vez`() = runTest {
-        var vez = 0
+    fun `url vencida no meio, servidor de hoje - responde ja existe, o confirmar recusa e nada vai quebrado`() = runTest {
+        // O servidor (d9b2646) não dá outra URL de envio ao pendente: responde "já existe" com a de leitura.
         coEvery { api.incluirAnexo(any()) } answers {
-            vez++
-            IncluirAnexoResposta(existe = false, id = 9, uploadUrl = minio.url("/storage/chat/a?v=$vez").toString())
+            pedidosDeUrl++
+            if (pedidosDeUrl == 1) {
+                IncluirAnexoResposta(existe = false, id = 9, uploadUrl = armazenamento.url("/storage/chat/a").toString())
+            } else {
+                IncluirAnexoResposta(existe = true, id = 9, uploadUrl = "https://x/storage/leitura")
+            }
+        }
+        coEvery { api.confirmarAnexo(identificador) } throws semArquivoNoArmazenamento()
+        armazenamento.enqueue(MockResponse.Builder().code(400).build())
+
+        val erro = repositorio().enviar(fonte, TipoConteudo.ARQUIVO).exceptionOrNull()
+
+        assertThat((erro as ErroApi.Servidor).detalhe).isEqualTo("Arquivo não encontrado no armazenamento")
+        assertThat(pedidosDeUrl).isEqualTo(2)
+        assertThat(armazenamento.requestCount).isEqualTo(1)
+    }
+
+    @Test
+    fun `url vencida no meio, servidor que da outra URL ao pendente (S43) - sobe de novo (400 do Garage)`() = runTest {
+        assertThat(enviarComPrimeiraRecusa(400).isSuccess).isTrue()
+        assertThat(pedidosDeUrl).isEqualTo(2)
+    }
+
+    @Test
+    fun `assinatura recusada - pede outra uma vez (403)`() = runTest {
+        assertThat(enviarComPrimeiraRecusa(403).isSuccess).isTrue()
+        assertThat(pedidosDeUrl).isEqualTo(2)
+    }
+
+    @Test
+    fun `recusada de novo - para na segunda e devolve o codigo`() = runTest {
+        armazenamento.enqueue(MockResponse.Builder().code(400).build())
+
+        val erro = enviarComPrimeiraRecusa(400).exceptionOrNull()
+
+        assertThat((erro as ErroApi.Servidor).status).isEqualTo(400)
+        assertThat(pedidosDeUrl).isEqualTo(2)
+        coVerify(exactly = 0) { api.confirmarAnexo(any()) }
+    }
+
+    @Test
+    fun `outro erro do armazenamento nao pede outra url`() = runTest {
+        val erro = enviarComPrimeiraRecusa(500).exceptionOrNull()
+
+        assertThat((erro as ErroApi.Servidor).status).isEqualTo(500)
+        assertThat(pedidosDeUrl).isEqualTo(1)
+    }
+
+    @Test
+    fun `url assinada recusada - so 400 e 403`() {
+        assertThat(urlAssinadaRecusada(400)).isTrue()
+        assertThat(urlAssinadaRecusada(403)).isTrue()
+        listOf(200, 401, 404, 413, 500, 502).forEach { assertThat(urlAssinadaRecusada(it)).isFalse() }
+    }
+
+    private var pedidosDeUrl = 0
+
+    private fun semArquivoNoArmazenamento() = HttpException(
+        Response.error<Any>(
+            400,
+            """{"error":"Arquivo não encontrado no armazenamento"}""".toResponseBody("application/json".toMediaType()),
+        ),
+    )
+
+    /**
+     * O primeiro `PUT` no armazenamento volta [codigo]; o seguinte, 200. Cada `PUT /anexo` dá uma
+     * URL de envio nova, como o servidor faria com a S43 (hoje ele responde "já existe").
+     */
+    private suspend fun kotlinx.coroutines.test.TestScope.enviarComPrimeiraRecusa(codigo: Int): Result<AnexoEnviado> {
+        coEvery { api.incluirAnexo(any()) } answers {
+            pedidosDeUrl++
+            IncluirAnexoResposta(existe = false, id = 9, uploadUrl = armazenamento.url("/storage/chat/a?v=$pedidosDeUrl").toString())
         }
         coEvery { api.confirmarAnexo(any()) } returns ConfirmarAnexoDto(true, 1)
-        minio.enqueue(MockResponse.Builder().code(403).build())
-        minio.enqueue(MockResponse.Builder().code(200).build())
-
-        assertThat(repositorio().enviar(fonte, TipoConteudo.ARQUIVO).isSuccess).isTrue()
-        assertThat(vez).isEqualTo(2)
+        armazenamento.enqueue(MockResponse.Builder().code(codigo).build())
+        armazenamento.enqueue(MockResponse.Builder().code(200).build())
+        return repositorio().enviar(fonte, TipoConteudo.ARQUIVO)
     }
 
     @Test

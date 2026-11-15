@@ -45,7 +45,8 @@ class ArquivosLocais @Inject constructor(
     /**
      * Baixa o anexo (se ainda não está no cache) e devolve o arquivo. Grava num `.part`
      * e só renomeia no fim: um download interrompido nunca vira arquivo "pronto".
-     * URL vencida (403 do MinIO): pede outra e tenta mais uma vez (ANX-14).
+     * URL vencida ou recusada pelo armazenamento ([urlAssinadaRecusada]: 400 do Garage na
+     * vencida): pede outra e tenta mais uma vez (ANX-14).
      */
     suspend fun baixar(identificador: String, nome: String): Result<File> = withContext(es) {
         val pasta = File(contexto.cacheDir, "anexos/${identificadorSeguro(identificador)}").apply { mkdirs() }
@@ -53,7 +54,7 @@ class ArquivosLocais @Inject constructor(
         if (destino.exists() && destino.length() > 0) return@withContext Result.success(destino)
         val parcial = File(pasta, destino.name + ".part")
         var resultado = tentarBaixar(identificador, parcial, destino)
-        if ((resultado.exceptionOrNull() as? ErroApi.Servidor)?.status == HTTP_PROIBIDO) {
+        if ((resultado.exceptionOrNull() as? ErroApi.Servidor)?.status?.let(::urlAssinadaRecusada) == true) {
             anexos.esquecerUrl(identificador)
             resultado = tentarBaixar(identificador, parcial, destino)
         }
@@ -84,8 +85,4 @@ class ArquivosLocais @Inject constructor(
     }
 
     private fun identificadorSeguro(identificador: String) = identificador.filter { it.isLetterOrDigit() }.take(64).ifBlank { "x" }
-
-    private companion object {
-        const val HTTP_PROIBIDO = 403
-    }
 }

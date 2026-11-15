@@ -40,8 +40,9 @@ class EnderecoInterceptor(private val config: ServerConfigProvider) : Intercepto
  * O 401 do próprio login (senha errada) não conta.
  *
  * O token só vai para a API do servidor configurado (`<base>/api/...`). URLs assinadas
- * do MinIO (`/storage/`), imagens e qualquer outro endereço vão sem ele: o MinIO recusa
- * pedido com duas formas de autenticação, e o token nunca deve sair do servidor.
+ * do armazenamento (`/storage/`), imagens e qualquer outro endereço vão sem ele: a URL já
+ * leva a assinatura, e o token nunca deve sair da API. O MinIO recusava pedido com duas
+ * formas de autenticação; o Garage, que o substituiu (servidor `d9b2646`), ignora o cabeçalho.
  */
 class AutenticacaoInterceptor(
     private val tokens: TokenProvider,

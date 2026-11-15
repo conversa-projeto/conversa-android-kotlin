@@ -1,6 +1,6 @@
 # 08 — Pendências no servidor (`conversa`) que afetam o Android
 
-**Data:** 2026-10-06 (🆕 S17–S22 em 2026-10-13, servidor em `12cf0cf`; 🆕 S11 e S20 revistas e S25 em 2026-10-15, servidor em `e25c4db`; 🆕 S26–S30 e notas em S4, S7, S10, S11, S12, S19 e S25 em 2026-10-15 (noite), servidor em `ef13c22`; 🆕 S31–S39 e notas em S4, S7, S10, S12, S16, S27 e S28 em 2026-10-16, servidor em `ac710eb`; 🆕 S40–S42 e notas em S4, S7, S12, S21 e S28 em 2026-10-19, servidor em `b104db8`) · **Origem:** leitura de `conversa/src/*.ts` durante a auditoria (detalhes e linhas no doc 01).
+**Data:** 2026-10-06 (🆕 S17–S22 em 2026-10-13, servidor em `12cf0cf`; 🆕 S11 e S20 revistas e S25 em 2026-10-15, servidor em `e25c4db`; 🆕 S26–S30 e notas em S4, S7, S10, S11, S12, S19 e S25 em 2026-10-15 (noite), servidor em `ef13c22`; 🆕 S31–S39 e notas em S4, S7, S10, S12, S16, S27 e S28 em 2026-10-16, servidor em `ac710eb`; 🆕 S40–S42 e notas em S4, S7, S12, S21 e S28 em 2026-10-19, servidor em `b104db8`; 🆕 S43 e notas em S29 e S30 em 2026-11-15, servidor em `db5616d`) · **Origem:** leitura de `conversa/src/*.ts` durante a auditoria (detalhes e linhas no doc 01).
 
 > **Nenhuma alteração foi feita no servidor.** Esta lista serve para planejar o trabalho no repositório `conversa`. Itens marcados como **bloqueante** impedem uma funcionalidade P0 do Android.
 
@@ -239,7 +239,7 @@
 
 ### S29 · Ferramentas externas: o servidor chama qualquer endereço 🆕 (2026-10-15, `ef13c22`)
 
-- **Hoje** (`ferramentas.ts`, `conferir`, `chamarFerramenta`): a URL só precisa ser http ou https. O servidor faz o pedido de dentro da rede do Docker, então alcança `http://postgres:5432`, `http://minio:9000`, `http://qdrant:6333` (sem autenticação), `http://api:8080` e `127.0.0.1` — e devolve até 8000 caracteres da resposta em `POST /ferramenta/testar`. Exige a permissão `ferramentas`, mas, no **modo aberto** (doc 01 §13.1), qualquer conta tem todas as permissões.
+- **Hoje** (`ferramentas.ts`, `conferir`, `chamarFerramenta`): a URL só precisa ser http ou https. O servidor faz o pedido de dentro da rede do Docker, então alcança `http://postgres:5432`, ~~`http://minio:9000`~~ 🆕 `http://garage:3900` (`d9b2646`), `http://qdrant:6333` (sem autenticação), `http://api:8080` e `127.0.0.1` — e devolve até 8000 caracteres da resposta em `POST /ferramenta/testar`. Exige a permissão `ferramentas`, mas, no **modo aberto** (doc 01 §13.1), qualquer conta tem todas as permissões.
 - **Efeito:** quem cadastra ferramentas lê e altera os serviços internos (o Qdrant, por exemplo, aceita apagar coleções por HTTP). Um bot com a ferramenta ligada também pode ser induzido a chamá-la.
 - **Proposta:** recusar endereços internos e privados (nomes do compose, `localhost`, 10/8, 172.16/12, 192.168/16, 169.254/16) depois de resolver o DNS, ou ter uma lista de domínios permitidos nos parâmetros.
 
@@ -315,7 +315,7 @@
 ### S38 · Espaço usado: conta uploads não concluídos e recalcula tudo a cada chamada 🆕 (2026-10-16, `ac710eb`)
 
 - **Hoje** (`anexos.ts:33-58`, `espacoPorUsuario`; `permissoes.ts`, `listarPermissoes`):
-  1. A soma junta os conteúdos de anexo com a tabela `anexo` sem olhar `upload_status`: anexo pendente ou que falhou (o arquivo não está no MinIO) conta como espaço usado.
+  1. A soma junta os conteúdos de anexo com a tabela `anexo` sem olhar `upload_status`: anexo pendente ou que falhou (o arquivo não está no armazenamento) conta como espaço usado.
   2. Em `GET /permissoes` (sem filtro de usuário), a consulta percorre **todos** os conteúdos de anexo de todas as mensagens a cada chamada.
   3. Cada pessoa só consulta o próprio (`GET /usuario/espaco`); o dos outros sai só em `GET /permissoes`, junto da lista inteira.
 - **Efeito:** um número um pouco maior que o real quando há uploads que falharam; a tela "Pessoas" fica mais lenta conforme o histórico cresce.
@@ -356,6 +356,19 @@
 - **Efeito para o Android:** guardar a lista de ignoradas no aparelho, sem sincronizar com o web; filtrar as sugestões pelas pastas atuais; não repetir o `POST` para "atualizar".
 - **Proposta:** (1) guardar as dispensadas no servidor (por pessoa e conversa), o que dispensa o `ignorar`; (2) com pedido em andamento, recusar (409) ou começar outro quando o `ignorar` mudou; (3) um limite por pessoa (ex.: um pedido por minuto) e um teto de pedidos simultâneos à IA, reaproveitando o resultado pronto quando nada mudou; (4) conferir `conversa.tipo = 1` e responder como o `PUT /pasta`; (5) na consulta, tirar as sugestões cuja pasta a pessoa não enxerga mais ou cuja mensagem já está em pasta, e conferir que ela ainda é membro.
 
+### S43 · Anexo pendente sem o arquivo: `PUT /anexo` responde "já existe" e não há como reenviar 🆕 (2026-11-15, `d9b2646`)
+
+- **Hoje** (`anexos.ts`, `incluirAnexo`): basta o identificador estar na tabela `anexo` para a resposta ser `{existe: true, upload_url: <URL de leitura>}`. Vale também com `upload_status` 0 (pendente) ou 2 (falhou) e sem o objeto no armazenamento.
+- **Efeito:**
+  1. Um envio que parou no meio não tem conserto: a rede caiu, ou a URL venceu antes do `PUT` (no Garage, 400). O novo `PUT /anexo` responde "já existe", com a URL de leitura, e nenhuma rota dá outra URL de envio. O identificador fica preso: ninguém mais consegue mandar aquele arquivo, porque o mesmo conteúdo dá o mesmo SHA-256.
+  2. O cliente que confia no "já existe" manda a mensagem com o anexo quebrado (`GET /anexo` → 400 "Upload ainda não foi concluído" ou "Upload falhou"). O web faz isso hoje. O Android fez até 2026-11-15; agora confere com o `POST /anexo/confirmar`, que olha o armazenamento, e a mensagem falha com o motivo.
+  - Visto no emulador em 2026-11-15, com o Garage e o `proxy-dev` recusando o primeiro `PUT` (histórico `2026-11-15-01`).
+- **Proposta:** em `incluirAnexo`, com o registro em `upload_status` ≠ 1:
+  - sem o objeto (`objetoExiste`): responder como num anexo novo, `{existe: false, id, upload_url: <PUT, 300 s>, upload_status}`, para o mesmo `objeto`;
+  - com o objeto: marcar 1 e responder "já existe".
+  - Opcional: `upload_status` também na resposta de "já existe".
+  - O app já está pronto para isso: com a URL recusada, ele pede outra uma vez e, vindo uma URL de envio, sobe de novo.
+
 ## Prioridade sugerida no servidor
 
 | Ordem | Itens | Por quê |
@@ -363,5 +376,5 @@
 | 1 | S1, S2, 🆕 S18 | Sem eles, o Android não toca nem notifica de forma confiável |
 | 2 | S4, 🆕 S22, 🆕 `ef13c22` S29, S28 (item 1; 🆕 `ac710eb` e item 8), 🆕 `ac710eb` S39, S36, 🆕 `be17b8e` S40 (itens 2 e 3) | Segurança (ouvir chamadas e baixar anexos alheios; presença em conversa alheia; 🆕 servidor chamando a rede interna; encaminhamento driblando as permissões; 🆕 token salvo indo a endereço digitado; coordenadas indo a serviços de terceiros; 🆕 senha do ramal reaproveitada com outro servidor e guardada na auditoria) |
 | 3 | S3, S13, 🆕 S17, 🆕 `ef13c22` S26, 🆕 `ac710eb` S35 | Qualidade das notificações, do contador de não lidas (🆕 e do de atividades) e da sessão no celular; 🆕 mudança de acesso feita pela migração, sem aviso |
-| 4 | S7, S8, S9, S11, 🆕 S19, S20 (🆕 2026-10-15: só o caso do chat de outra ligação), 🆕 `ef13c22` S27, S28 (itens 2–7 e 🆕 9), 🆕 `ac710eb` S31, S32, S33, S34, S37, 🆕 `be17b8e`…`b104db8` S40 (itens 1 e 4), S41, S42 | Robustez para todos os clientes |
+| 4 | 🆕 `d9b2646` S43, S7, S8, S9, S11, 🆕 S19, S20 (🆕 2026-10-15: só o caso do chat de outra ligação), 🆕 `ef13c22` S27, S28 (itens 2–7 e 🆕 9), 🆕 `ac710eb` S31, S32, S33, S34, S37, 🆕 `be17b8e`…`b104db8` S40 (itens 1 e 4), S41, S42 | Robustez para todos os clientes |
 | 5 | S5, S6, S10, S12, S14, S15, S16, 🆕 S21, 🆕 S25, 🆕 `ef13c22` S30, 🆕 `ac710eb` S38 | Higiene e evolução |

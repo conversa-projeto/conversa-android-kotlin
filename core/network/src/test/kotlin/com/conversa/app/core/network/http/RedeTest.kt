@@ -86,7 +86,7 @@ class RedeTest {
     fun `token so vai para a api do servidor, nunca para o storage nem para outro host`() {
         servidor.enqueue(MockResponse.Builder().code(200).build())
         servidor.enqueue(MockResponse.Builder().code(200).build())
-        // URL assinada do MinIO no mesmo host: com Authorization o MinIO recusa.
+        // URL assinada do armazenamento (Garage) no mesmo host: a assinatura basta, o token fica na API.
         cliente.newCall(okhttp3.Request.Builder().url(servidor.url("/storage/chat/x?X-Amz-Signature=a")).build()).execute().close()
         assertThat(servidor.takeRequest().headers["Authorization"]).isNull()
         // Mesmo caminho /api/ mas outro host (porta diferente): também sem token.

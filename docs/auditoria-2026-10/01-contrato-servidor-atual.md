@@ -1,6 +1,6 @@
 # Contrato atual do servidor Conversa (referência para o cliente Android Kotlin)
 
-> Auditoria de 2026-10-06. Fonte: repositório `conversa` (servidor Bun + Elysia), último commit lido ~~🆕 **`ac710eb`** ("Pastas de mensagens, localização e trajeto, espaço usado e ajustes de IA e acessos", 2026-10-16 22:48)~~ ~~🆕 **`b104db8`** ("Sugestão de pasta pela IA para as mensagens que ainda não estão em pasta", 2026-10-18 15:51)~~ 🆕 **`331083b`** ("Presença: a aba parada, mas visível, continua com a conversa aberta", 2026-10-22 20:10), atualizado a partir de `7f670c3`, em 2026-10-13 de `5cad911`/`779c8ed` (este só mexe no `bin/iniciar-desenvolvimento.bat`), em 2026-10-15 de `12cf0cf` (commits `6d20ff7` e `e25c4db`), em 2026-10-15 (noite) de `e25c4db` (commit `ef13c22`), 🆕 em 2026-10-16, de `ef13c22` (commit `ac710eb`) , 🆕 em 2026-10-19, de `ac710eb` (commits `be17b8e`, `383eaaa` e `b104db8`, todos de 2026-10-18) e, 🆕 em 2026-10-23, de `b104db8` (commit `331083b`, só a presença em `src/websocket.ts`). Migrações aplicadas até a versão ~~🆕 **56** (`migracoes/000.sql` … `056.sql`)~~ 🆕 **57** (`migracoes/000.sql` … `057.sql`). Mudanças desde `7f670c3` estão marcadas com 🆕 (quando não é o `8031fa5`, o commit vem junto) e resumidas na §20.
+> Auditoria de 2026-10-06. Fonte: repositório `conversa` (servidor Bun + Elysia), último commit lido ~~🆕 **`ac710eb`** ("Pastas de mensagens, localização e trajeto, espaço usado e ajustes de IA e acessos", 2026-10-16 22:48)~~ ~~🆕 **`b104db8`** ("Sugestão de pasta pela IA para as mensagens que ainda não estão em pasta", 2026-10-18 15:51)~~ ~~🆕 **`331083b`** ("Presença: a aba parada, mas visível, continua com a conversa aberta", 2026-10-22 20:10)~~ 🆕 **`db5616d`** ("Migração do MinIO apaga o volume antigo no fim, depois do Enter", 2026-11-14 18:48; com o `d9b2646`, os anexos no Garage), atualizado a partir de `7f670c3`, em 2026-10-13 de `5cad911`/`779c8ed` (este só mexe no `bin/iniciar-desenvolvimento.bat`), em 2026-10-15 de `12cf0cf` (commits `6d20ff7` e `e25c4db`), em 2026-10-15 (noite) de `e25c4db` (commit `ef13c22`), 🆕 em 2026-10-16, de `ef13c22` (commit `ac710eb`) , 🆕 em 2026-10-19, de `ac710eb` (commits `be17b8e`, `383eaaa` e `b104db8`, todos de 2026-10-18) e, 🆕 em 2026-10-23, de `b104db8` (commit `331083b`, só a presença em `src/websocket.ts`). Migrações aplicadas até a versão ~~🆕 **56** (`migracoes/000.sql` … `056.sql`)~~ 🆕 **57** (`migracoes/000.sql` … `057.sql`). Mudanças desde `7f670c3` estão marcadas com 🆕 (quando não é o `8031fa5`, o commit vem junto) e resumidas na §20.
 >
 > 🆕 Números de linha: as citações `arquivo:linha` sem 🆕 foram lidas em `7f670c3`/`5cad911`. Os commits de outubro (`b8ea0c2` … `e25c4db`) deslocaram as linhas de `rotas.ts`, `mensagens.ts`, `websocket.ts`, `chamadas.ts`, `conversas.ts`, `usuarios.ts`, `parametros.ts` e 🆕 `atividades.ts`; 🆕 o `ef13c22` deslocou de novo `rotas.ts`, `mensagens.ts`, `atividades.ts`, `usuarios.ts`, `permissoes.ts`, `chamadas.ts`, `conversas.ts`, `parametros.ts`, `esquemas.ts` e `docker-compose.yml`; 🆕 o `ac710eb` deslocou `rotas.ts`, `mensagens.ts`, `permissoes.ts`, `usuarios.ts`, `parametros.ts`, `esquemas.ts`, `websocket.ts`, `bots.ts`, `anexos.ts`, `ia.ts`, `resumos.ts`, `conhecimento.ts`, `configuracao.ts` e `conversas.ts` e criou `pastas.ts`; 🆕 `be17b8e` … `b104db8` deslocaram `rotas.ts` (o `/ice` foi para a linha 329 e o `/sip` para a 333), `esquemas.ts`, `sip.ts`, `chamadas.ts` (`servidoresIce`, linha 640), `permissoes.ts` e `tabelas.ts`, tiraram `validarSipUsuario` de `autorizacao.ts` e criaram `sugestoesPastas.ts` (297 linhas). Nas partes novas, a referência é pelo nome da função (e, no `ac710eb` 🆕 e nos três commits seguintes, também pela linha, quando ajuda).
 >
@@ -19,7 +19,7 @@
 5. [Detalhe das rotas por área](#5-detalhe-das-rotas-por-área)
 6. [WebSocket](#6-websocket)
 7. [Push FCM e dispositivos](#7-push-fcm-e-dispositivos)
-8. [Anexos / MinIO / transcrição](#8-anexos--minio--transcrição)
+8. [Anexos / armazenamento / transcrição](#8-anexos--armazenamento--transcrição)
 9. [Chamadas (ciclo de vida, ICE/TURN, MediaMTX WHIP/WHEP, gravação, sinal, chat)](#9-chamadas)
 10. [Mensagens](#10-mensagens)
 11. [Conversas](#11-conversas)
@@ -42,20 +42,22 @@
 | Serviço | Imagem | Porta interna | Publicada | Função | Referência |
 |---|---|---|---|---|---|
 | `postgres` | postgres:15-alpine | 5432 | `127.0.0.1:5433` | Banco. `TZ: UTC` | `docker-compose.yml:31-46` |
-| `minio` | quay.io/minio/minio | 9000 (S3), 9001 (console) | `127.0.0.1:9000`, `127.0.0.1:9001` | Armazenamento dos anexos. Credenciais geradas em `/dados/minio-usuario` e `/dados/minio-senha` | `docker-compose.yml:52-79` |
+| ~~`minio`~~ | ~~quay.io/minio/minio~~ | ~~9000 (S3), 9001 (console)~~ | ~~`127.0.0.1:9000`, `127.0.0.1:9001`~~ | ~~Armazenamento dos anexos. Credenciais geradas em `/dados/minio-usuario` e `/dados/minio-senha`~~ 🆕 saiu no `d9b2646` (2026-11-14): trocado pelo `garage` | — |
+| 🆕 `d9b2646` `garage` | `bin/garage/Dockerfile` (Alpine com o binário oficial do Garage v2.5.0: a imagem oficial não tem shell) | 3900 (S3), 3901 (RPC, interna) | `127.0.0.1:3900` | Armazenamento dos anexos (S3, nó único, região `us-east-1`). A chave (`/dados/garage-chave`, `/dados/garage-segredo`) e o segredo interno (`/dados/garage-rpc`) são gerados na primeira subida; a chave pode criar bucket, e a API cria o do `s3_bucket`. Sem painel web: administração pelo comando `garage` no container. O cliente só fala com ele pelas URLs assinadas de `/storage/` (§8) | `docker-compose.yml` (serviço `garage`), `src/armazenamento.ts` |
 | `coturn` | coturn/coturn | 3478/tcp 🆕 `383eaaa` e 3478/udp | `3478:3478/tcp` 🆕 e `3478:3478/udp` (públicas, em todas as interfaces) | ~~TURN só TCP~~ 🆕 `383eaaa`: TURN sobre **UDP e TCP** na 3478 (saiu o `no-udp`), sem TLS (o TLS do TCP fica na borda em produção). Relay continua só por UDP e só até o MediaMTX. IP fixo `172.30.0.10` na rede `conversa-rtc` | `docker-compose.yml:86-110` (🆕 portas em `:104-105`), `bin/coturn/turnserver.conf` (🆕 escuta em `:13-17`) |
 | `mediamtx` | `bin/mediamtx/Dockerfile` (bluenviron/mediamtx:1.16.2) | 8889 (WebRTC HTTP), 8189/udp (mídia, interna) | `127.0.0.1:8889` | Servidor WebRTC (WHIP/WHEP) e gravação das chamadas. IP fixo `172.30.0.20` | `docker-compose.yml:116-130`, `bin/mediamtx/mediamtx.docker.yml` |
 | 🆕 `ef13c22` `qdrant` | qdrant/qdrant:v1.13.6 | 6333 (HTTP) | `127.0.0.1:6333` | Banco de vetores da **base de conhecimento dos bots** (§13.9): os trechos dos documentos com os embeddings. A API grava e busca por HTTP (`CONVERSA_QDRANT`); o painel fica em `/dashboard`. O cliente não fala com ele | `docker-compose.yml:136-146` (em `ef13c22`) |
 | `api` | Bun + Elysia | 8080 (HTTP + WebSocket) | `127.0.0.1:8080` | API REST em `/api` e WebSocket em `/ws/`. 🆕 `ef13c22`: depende também do `qdrant` (`service_started`) | `docker-compose.yml:134-160`, `src/servidor.ts:31` |
 | `nginx` | nginx:1.28-alpine | 443 (dev) / 80 (prod) | `${CONVERSA_PORTA:-443}` | Ponto de entrada único | `docker-compose.yml:165-183`, `bin/nginx/nginx.conf` |
 
-Volumes: ~~`pgdata` (banco), `minio` (anexos)~~ 🆕 `ef13c22`: `conversa-postgres` (banco), `conversa-minio` (anexos), `conversa-qdrant` (trechos da base de conhecimento; dá para refazer com "Reindexar tudo"), `conversa-dados` (`/dados`: pepper das senhas, credenciais do MinIO, segredo do TURN), `conversa-gravacoes` (`/gravacoes`) — 🆕 `docker-compose.yml:212-222` (em `ef13c22`).
+Volumes: ~~`pgdata` (banco), `minio` (anexos)~~ 🆕 `ef13c22`: `conversa-postgres` (banco), `conversa-minio` (anexos), `conversa-qdrant` (trechos da base de conhecimento; dá para refazer com "Reindexar tudo"), `conversa-dados` (`/dados`: pepper das senhas, credenciais do MinIO, segredo do TURN), `conversa-gravacoes` (`/gravacoes`) — 🆕 `docker-compose.yml:212-222` (em `ef13c22`). 🆕 `d9b2646`: os anexos passam para o `conversa-garage`, e o `conversa-dados` guarda a chave do Garage no lugar das credenciais do MinIO; o `conversa-minio` não é mais usado.
 - 🆕 `ef13c22` **Instalação antiga** (volumes `pgdata` e `minio`): o `bin\renomear-volumes.bat` (rodar uma vez, **antes** de subir a versão nova) derruba os containers, copia `pgdata` → `conversa-postgres` e `minio` → `conversa-minio`, confere a cópia (arquivos e bytes) e só então apaga os antigos. Se o volume novo já tem dados, não copia e mantém o antigo (`SETUP.md`, passo 4).
 - 🆕 Consequência para o desenvolvimento: subir o `docker-compose.yml` novo **sem** o script cria um banco e um MinIO **vazios** (as contas de teste do emulador somem até rodar o script).
+- 🆕 `d9b2646`/`db5616d` **Instalação que usava o MinIO**: o `bin\migrar-minio-garage.bat` (rodar uma vez, depois de atualizar) sobe o Garage, liga o MinIO antigo num container temporário, copia o bucket do `s3_bucket` com o `mc mirror` e confere com o `mc diff`. Pode rodar de novo (só copia o que faltou). No fim, pede Enter para apagar o `conversa-minio`; fechar a janela mantém o volume. Sem a migração, o Garage começa **vazio**: os anexos antigos dão 404 (`NoSuchKey`) até rodar o script.
 
 ### 1.2 URLs públicas (tudo na mesma origem, via nginx)
 
-Todas as URLs são relativas à origem que o cliente usou (ex.: `https://192.168.0.10` em desenvolvimento ou `https://SEU_DOMINIO` em produção). O servidor monta URLs de MinIO e TURN a partir do **cabeçalho `Host`** e do `X-Forwarded-Proto` de cada requisição (`src/contexto.ts:9-12`), então elas sempre apontam para o mesmo host que o cliente chamou.
+Todas as URLs são relativas à origem que o cliente usou (ex.: `https://192.168.0.10` em desenvolvimento ou `https://SEU_DOMINIO` em produção). O servidor monta URLs do armazenamento (🆕 `d9b2646`: Garage; antes, MinIO) e TURN a partir do **cabeçalho `Host`** e do `X-Forwarded-Proto` de cada requisição (`src/contexto.ts:9-12`), então elas sempre apontam para o mesmo host que o cliente chamou.
 
 | Caminho público | Destino | Observações | Referência |
 |---|---|---|---|
@@ -63,7 +65,7 @@ Todas as URLs são relativas à origem que o cliente usou (ex.: `https://192.168
 | `/api/*` | `api:8080` | timeouts 300 s. **`client_max_body_size 1m`** (corpo JSON máximo de 1 MB) | `bin/nginx/nginx.conf:24`, `:102-106` |
 | `/api/docs` | api | Documentação Scalar; JSON OpenAPI em `/api/docs/json` (útil para gerar o cliente) | `src/app.ts:49-55` |
 | `/ws/` (com barra final) | `api:8080` | WebSocket; timeouts 3600 s. `/ws` sem barra **não casa** com a `location` e cai na página | `bin/nginx/nginx.conf:109-114`, `src/websocket.ts:55` |
-| `/storage/*` | `minio:9000/` (prefixo removido) | URLs pré-assinadas do MinIO; upload até 1024 MB; `Content-Security-Policy: sandbox` (exceto PDF) | `bin/nginx/nginx.conf:121-133`, `src/minio.ts:7`, `:33-46` |
+| `/storage/*` | ~~`minio:9000/`~~ 🆕 `d9b2646` `garage:3900/` (prefixo removido) | URLs pré-assinadas do armazenamento (🆕 Garage; antes, MinIO); upload até 1024 MB; `Content-Security-Policy: sandbox` (exceto PDF) | `bin/nginx/nginx.conf:121-133`, ~~`src/minio.ts:7`, `:33-46`~~ 🆕 `src/armazenamento.ts` |
 | `/webrtc/*` | `mediamtx:8889/` (prefixo removido) | WHIP/WHEP do MediaMTX. Sem autenticação | `bin/nginx/nginx.conf:135-140` |
 | `/` | Vite (dev) ou `bin/web` (prod) | Página web (SPA). Figurinhas Lottie em `/figurinhas/<pacote>/<nome>.json` (servidas pela página, ver §10.6) | `bin/nginx/desenvolvimento/pagina.conf`, `bin/nginx/producao/pagina.conf` |
 | TURN | ~~`turn:<host>:3478?transport=tcp` (dev) ou `turns:<host>:<CONVERSA_TURN_PORTA>?transport=tcp` (prod)~~ 🆕 `383eaaa`: primeiro `turn:<host>:3478?transport=udp` (dev e prod), depois `turn:<host>:3478?transport=tcp` (dev) ou `turns:<host>:<CONVERSA_TURN_PORTA>?transport=tcp` (prod) | Fora do nginx: dev vai direto ao coturn; prod: o TCP passa pela borda com TLS e o 🆕 UDP vai **direto** (sem TLS) para `IP_DA_MAQUINA:3478`, se o firewall repassar (§9.5) | `src/chamadas.ts:576-594` (🆕 `:640-661`), `SETUP.md:91-95,130` (🆕 `:102`) |
@@ -605,9 +607,9 @@ Fluxo:
 
 ---
 
-## 8. Anexos / MinIO / transcrição
+## 8. Anexos / armazenamento / transcrição
 
-Código: `src/anexos.ts`, `src/minio.ts`, `src/transcricoes.ts`. Testes: `tests/anexos.test.ts`, `tests/transcricoes.test.ts`.
+Código: `src/anexos.ts`, ~~`src/minio.ts`~~ 🆕 `src/armazenamento.ts` (`d9b2646`; a biblioteca `minio` continua, como cliente S3 genérico), `src/transcricoes.ts`. Testes: `tests/anexos.test.ts`, `tests/transcricoes.test.ts`.
 
 ### 8.1 Tipos de anexo
 
@@ -631,9 +633,15 @@ Tabela `anexo`: `id`, `identificador` varchar(64), `tipo`, `tamanho` int8, `nome
    Respostas (`src/anexos.ts:58-81`):
    - Novo: `{"existe":false,"id":<number>,"upload_url":"https://<host>/storage/<bucket>/conversa/AAAA/MM/DD/<identificador>?X-Amz-...","upload_status":0}` — `upload_url` é **PUT pré-assinado válido por 300 s**.
    - Já existente: `{"existe":true,"id":"<string!>","upload_url":"<URL GET pré-assinada, 600 s>"}` — **`id` vem como string** e **não** vem `upload_status`; a URL é de **download**, não de upload. Se o anexo existente estiver pendente/falho, o cliente não tem como reenviar (ver §19).
-4. Enviar os bytes: `PUT <upload_url>` com o corpo cru do arquivo. O `Content-Type` não faz parte da assinatura (qualquer um é aceito). **Não alterar a URL** (host/caminho/query fazem parte da assinatura; o `/storage` é removido pelo nginx antes de chegar ao MinIO — `src/minio.ts:29-46`). Limite no nginx: 1024 MB.
-5. `POST /api/anexo/confirmar?identificador=<id>` — **identificador na query, não no corpo**, sem corpo. → `{"confirmado":true,"upload_status":1}`; 404 `Anexo não encontrado`; 400 `Arquivo não encontrado no armazenamento` se o objeto não está no MinIO (`src/anexos.ts:83-95`).
-   - Se o cliente não confirmar, a tarefa `VerificacaoAnexos` (a cada 120 s) confirma sozinha os que já estão no MinIO e marca como **falho (2)** os pendentes há mais de 15 min (`src/tarefas.ts:46-67`).
+4. Enviar os bytes: `PUT <upload_url>` com o corpo cru do arquivo. O `Content-Type` não faz parte da assinatura (qualquer um é aceito). **Não alterar a URL** (host/caminho/query fazem parte da assinatura; o `/storage` é removido pelo nginx antes de chegar ao armazenamento — 🆕 `src/armazenamento.ts`). Limite no nginx: 1024 MB.
+   - 🆕 `d9b2646` **O que o Garage responde** (conferido em 2026-11-14 contra o Garage v2.5.0 do compose, com URLs assinadas pela mesma biblioteca da API):
+     - URL **vencida** → **400** `InvalidRequest` "Bad request: Date is too old", no `PUT` e no `GET`. O MinIO respondia **403** `AccessDenied` "Request has expired";
+     - assinatura que não confere → **403** `AccessDenied` "Forbidden: Invalid signature"; URL sem assinatura → 400;
+     - `PUT` com `Content-Length` ou em *chunked* → 200; `GET` com `Range` → 206; objeto que não existe → 404 `NoSuchKey`;
+     - `Authorization: Bearer` junto da URL assinada é ignorado (o MinIO recusava); `HEAD` numa URL assinada para `GET` → 403 (a assinatura é do método);
+     - **para o cliente:** renovar a URL no 400 **e** no 403. O Android renovava só no 403 até a sincronização de 2026-11-15 (`urlAssinadaRecusada`).
+5. `POST /api/anexo/confirmar?identificador=<id>` — **identificador na query, não no corpo**, sem corpo. → `{"confirmado":true,"upload_status":1}`; 404 `Anexo não encontrado`; 400 `Arquivo não encontrado no armazenamento` se o objeto não está no armazenamento (`src/anexos.ts:83-95`).
+   - Se o cliente não confirmar, a tarefa `VerificacaoAnexos` (a cada 120 s) confirma sozinha os que já estão no armazenamento e marca como **falho (2)** os pendentes há mais de 15 min (`src/tarefas.ts:46-67`).
 6. Enviar a mensagem com o conteúdo `{ "ordem": n, "tipo": 2|3|4|5, "conteudo": "<identificador>" }` (§10.3).
 7. Avatar: após o upload (tipo 2), `PATCH /api/usuario` com `avatar_anexo_id` = id numérico.
 
@@ -642,9 +650,9 @@ Caminho do objeto no bucket: `conversa/AAAA/MM/DD/<identificador>` com a data do
 ### 8.3 Download
 
 `GET /api/anexo?identificador=<id>` → `{"url":"https://<host>/storage/...?X-Amz-..."}` (GET pré-assinado, **600 s**) — `src/anexos.ts:41-56`.
-- 404 `Anexo não encontrado`; 400 `Upload ainda não foi concluído` (pendente e sem objeto no MinIO; se o objeto existe, marca como concluído e entrega a URL); 400 `Upload falhou`.
+- 404 `Anexo não encontrado`; 400 `Upload ainda não foi concluído` (pendente e sem objeto no armazenamento; se o objeto existe, marca como concluído e entrega a URL); 400 `Upload falhou`.
 - **Não há controle de acesso** por conversa nesta rota nem em `/anexo/existe`: qualquer usuário logado que conheça o identificador obtém a URL (`src/rotas.ts:134-136`).
-- A URL usa o host da requisição; baixe pelo mesmo host. Range requests passam ao MinIO (`proxy_buffering off`). Cachear localmente pelo `identificador` (conteúdo imutável), nunca pela URL (expira).
+- A URL usa o host da requisição; baixe pelo mesmo host. Range requests passam ao armazenamento (`proxy_buffering off`; 🆕 o Garage responde 206). Cachear localmente pelo `identificador` (conteúdo imutável), nunca pela URL (expira).
 - `/storage/` responde com `Content-Security-Policy: sandbox` (exceto PDF) — irrelevante para o app nativo.
 
 ### 8.4 Miniaturas e metadados
@@ -1571,7 +1579,7 @@ Rotas:
 | `fcm_project_id` | Firebase project id | sim | sim | `015.sql` |
 | `fcm_client_email` | e-mail da conta de serviço (precisa ter `@`) | sim | sim | `015.sql` |
 | `fcm_private_key` | chave privada (precisa conter `PRIVATE KEY`) | só `fcm_private_key_configurada: bool` | sim | `015.sql` |
-| `s3_bucket` | bucket do MinIO (padrão `chat`) | sim | não | `011.sql` |
+| `s3_bucket` | bucket do armazenamento (🆕 `d9b2646`: no Garage, e a API o cria se não existir) (padrão `chat`) | sim | não | `011.sql` |
 | `turn_forcar_relay` | `'1'` = `iceTransportPolicy: relay` (padrão `'1'`) | como bool | sim (bool) | `023.sql` |
 | `transcritor_url` | URL do transcritor-api (vazio = desligado; http/https) | sim | sim | `027.sql` |
 | `transcritor_idioma` | idioma (`pt`, `en`, `pt-BR`...; regex `^[a-z]{2,3}(-[A-Za-z]{2})?$`) | sim | sim | `027.sql` |
@@ -1862,7 +1870,7 @@ Todas as colunas `timestamp` (sem fuso) guardam UTC; `visivel_em` é `timestampt
 | Tarefa | Intervalo | Faz |
 |---|---|---|
 | `AgendadorMensagens` | 60 s | notifica agendadas que amadureceram nos últimos 10 min (WS 2, push, WS 3, WS 61) |
-| `VerificacaoAnexos` | 120 s | confirma uploads pendentes já no MinIO; marca falho após 15 min |
+| `VerificacaoAnexos` | 120 s | confirma uploads pendentes já no armazenamento; marca falho após 15 min |
 | `LimpezaGravacoes` | 3600 s | apaga gravações mais antigas que `gravacao_dias` |
 
 Atraso máximo para uma agendada "sair": ~60 s após `visivel_em`. 🆕 `ef13c22`: quando ela sai, o `AgendadorMensagens` também chama os bots da conversa (§13.7). Nenhuma tarefa periódica nova; as respostas dos bots e a indexação da base de conhecimento rodam em segundo plano, disparadas pelas rotas.
@@ -1956,9 +1964,9 @@ Atraso máximo para uma agendada "sair": ~60 s após `visivel_em`. 🆕 `ef13c22
 35. Ações de chamada para quem não participa → **404**, não 403.
 36. `/ice` devolve ~~`urls` string única~~ 🆕 `383eaaa`: `urls` **array** (UDP e depois TCP/TLS, pegadinha 112) e credencial de 1 h; mídia só funciona via relay (TURN ~~TCP/TLS~~ 🆕 UDP ou TCP/TLS). VP8 não é gravado — preferir **H264**.
 37. MediaMTX sem autenticação e `GET /anexo` sem checagem de conversa (qualquer usuário logado com o identificador/caminho acessa) — não confiar nisso como privacidade.
-38. `PUT /anexo` com `existe:true` devolve URL de **GET** (não de upload) e não informa `upload_status`; se o anexo existente falhou (status 2), não há como reenviar pelo mesmo identificador. Verifique com `/anexo/existe` antes.
+38. `PUT /anexo` com `existe:true` devolve URL de **GET** (não de upload) e não informa `upload_status`; se o anexo existente falhou (status 2), não há como reenviar pelo mesmo identificador. Verifique com `/anexo/existe` antes. 🆕 2026-11-15: vale também para o **pendente** (status 0) cujo envio parou no meio (rede caiu, URL vencida): o novo `PUT /anexo` responde "já existe" e o arquivo não está lá. O Android chama o `POST /anexo/confirmar` também no "já existe": ele confere o armazenamento e, sem o arquivo, responde 400 "Arquivo não encontrado no armazenamento". Proposta ao servidor: S43 no doc 08.
 39. `POST /anexo/confirmar` recebe `identificador` na **query**.
-40. URLs do MinIO dependem do `Host` da requisição e expiram (upload 300 s, download/avatares 600 s). Não reescrever host; não cachear URL.
+40. URLs do armazenamento dependem do `Host` da requisição e expiram (upload 300 s, download/avatares 600 s). Não reescrever host; não cachear URL. 🆕 `d9b2646`: no Garage, a vencida volta **400** (`InvalidRequest`, "Date is too old"), não mais 403: renovar nos dois (§8.2).
 41. Corpo JSON máximo **1 MB** em `/api/*`; login limitado a 10/min por IP (resposta 503 do nginx, não JSON).
 42. Strings maiores que as colunas (dispositivo 50/15, extensão 10, emoji 10, descrição 100...) e duplicidades não tratadas (e-mail, ~~SIP~~, permissão via FK) viram **500** com mensagem do Postgres. 🆕 `be17b8e`: o "segundo `PUT /sip`" não existe mais (o `PUT /sip/usuario` altera o que existe), mas os campos do ramal continuam sem limite de tamanho no esquema (500 acima das colunas).
 43. Erros sempre `{ "error": "..." }`; mensagens em português e com acentos — não usar o texto como chave lógica (exceto quando documentado, ex.: `Upload ainda não foi concluído`).
@@ -2070,3 +2078,4 @@ Atraso máximo para uma agendada "sair": ~60 s após `visivel_em`. 🆕 `ef13c22
 | 2026-10-19 🆕 | `be17b8e` — "Ramal SIP de cada pessoa configurado só pelo administrador (migração 057)" (2026-10-18 14:32) | **3 rotas novas** (120–122: `GET`, `PUT` e `DELETE /sip/usuario`) e **2 removidas** (63–64: `PUT` e `PATCH /sip`, agora 404). Permissão de administração nova **`sip`** (`Configurar a telefonia (SIP) das pessoas`), dada a quem tinha `permissoes`; 27 de uso + 6 de administração. Ramal com TURN do PABX opcional (`turn_server`, `turn_user`, `turn_password`, migração 057); `GET /sip` devolve as duas senhas ao dono; ao administrador só `tem_senha`/`tem_senha_turn`; senha vazia mantém a salva; validação de ramal, domínio, `wss://` e `turn:`/`turns:` (400) e 404 para conta inexistente. Sem WebSocket. §1.3, §4, §5.6, §13.1, §13.2, §14, §14.1, §16, §18, pegadinhas 42, 75, 82, 106–111 |
 | 2026-10-19 🆕 | `383eaaa` — "TURN sobre UDP na 3478, com o TCP de reserva" (2026-10-18 14:32) | Sem rota nova. `GET /ice`: `urls` passa de string a **array**, com `turn:<host>:3478?transport=udp` primeiro e o TCP (dev) ou o `turns` da borda (prod) depois. coturn aceita UDP e TCP na 3478; compose publica `3478/udp`; `SETUP.md` pede a 3478 UDP no firewall, com repasse direto. §1.1–§1.3, §4, §9.5, §18, pegadinhas 36, 112 |
 | 2026-10-19 🆕 | `b104db8` — "Sugestão de pasta pela IA para as mensagens que ainda não estão em pasta" (2026-10-18 15:51) | **2 rotas novas** (123–124: `POST /pastas/sugerir`, `GET /pastas/sugestao`; total **122**: 3 públicas + 119 autenticadas). A IA sugere a pasta de cada uma das 80 mensagens mais recentes sem pasta (menos as de `ignorar`), conhecendo cada pasta pelo nome e por até 5 mensagens; uma pasta por mensagem, só ids enviados; em segundo plano, na memória por 30 min, com polling; nada entra na pasta sem o `PUT /pasta/mensagens`. Sem WebSocket, sem migração. §4, §5.7, §5.9, §10.17, §10.17.1, §13.4, §13.5, §16, §18, pegadinhas 113–118 |
+| 2026-11-15 🆕 | `d9b2646` — "Anexos no Garage no lugar do MinIO, com script de migração" e `db5616d` — "Migração do MinIO apaga o volume antigo no fim, depois do Enter" (2026-11-14 18:46–18:48) | Sem rota nova; o contrato dos clientes não muda (as mesmas URLs assinadas em `/storage/`, no mesmo endereço). O `garage` (S3, `127.0.0.1:3900`) toma o lugar do `minio`; `src/minio.ts` vira `src/armazenamento.ts`; a chave fica em `/dados/garage-chave` e `garage-segredo`; o `bin\migrar-minio-garage.bat` copia os anexos. **Diferença para o cliente:** a URL vencida volta **400**, não 403 (o Android renovava só no 403). Web `361716d`: só nomes (`uploadArmazenamento`) e documentação. §1.1, §1.2, §8.2, §8.3, pegadinha 40 |

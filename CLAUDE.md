@@ -5,7 +5,7 @@ Instruções para quem trabalha neste repositório, pessoas ou agentes de IA. Le
 ## O projeto
 
 - Cliente **Android (Kotlin)** do Conversa. Os repositórios irmãos:
-  - `../conversa`: servidor Bun + Elysia + Postgres + MinIO + MediaMTX + coturn;
+  - `../conversa`: servidor Bun + Elysia + Postgres + Garage (anexos, S3; era o MinIO até o `d9b2646`) + MediaMTX + coturn;
   - `../conversa-web`: cliente web Vue, que é a **referência de comportamento**.
 - **Situação (2026-10-06):** o app atual é **legado** (escrito para o servidor Delphi). Foi decidido **recomeçar numa nova base** (`docs/adr/0001-nova-base.md`).
 - O código legado fica na branch `legado/abril-2026` / tag `legado-v1-final`.

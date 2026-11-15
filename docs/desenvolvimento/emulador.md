@@ -7,7 +7,7 @@ Como o app novo é testado de ponta a ponta sem mexer nas configurações de seg
 O servidor de dev atende em HTTPS (nginx, porta 443) com certificado do **mkcert**. Para o emulador confiar nele seria preciso instalar a CA do mkcert no aparelho (Configurações > Segurança > Credenciais). Isso altera a segurança do dispositivo, então para os testes automatizados usamos HTTP:
 
 - **`ferramentas/proxy-dev.mjs`** (Node, sem dependências) faz o papel do nginx sem TLS, em `127.0.0.1:8081`:
-  - `/storage/` vai para o MinIO (`127.0.0.1:9000`), **mantendo o `Host`**, porque o MinIO valida a assinatura da URL com ele;
+  - `/storage/` vai para o Garage (`127.0.0.1:3900`; 🆕 até o servidor `d9b2646`, era o MinIO na 9000), **mantendo o `Host`**, porque o Garage valida a assinatura da URL com ele;
   - `/webrtc/` vai para o MediaMTX (`127.0.0.1:8889`), tirando o `/webrtc`, como o nginx (WHIP/WHEP das chamadas);
   - o resto vai para a API (`127.0.0.1:8080`), inclusive o WebSocket `/ws/`, com `X-Forwarded-Proto: http`.
 - O servidor monta as URLs de anexo com o `Host` e o `X-Forwarded-Proto` da requisição (`conversa/src/contexto.ts`). Por isso, pelo proxy, elas voltam apontando para `http://localhost:8081/storage/...`, e upload e download funcionam no emulador.
@@ -21,7 +21,7 @@ A mídia das chamadas passa pelo TURN do coturn, na porta 3478. 🆕 Desde o ser
 
 ## Passo a passo
 
-1. Servidor de dev no ar (Docker: `api`, `postgres`, `minio`, `nginx`…). Conferir: `curl http://localhost:8080/api/usuario/permissoes` → 401 com `{"error":"Token não informado"}`.
+1. Servidor de dev no ar (Docker: `api`, `postgres`, `garage`, `nginx`…). Conferir: `curl http://localhost:8080/api/usuario/permissoes` → 401 com `{"error":"Token não informado"}`.
 2. Proxy: `node ferramentas/proxy-dev.mjs` (deixar rodando).
 3. Emulador: `emulator -avd Medium_Phone_API_36.1` (com `-no-window` roda sem janela).
 4. Ligar a porta do emulador à da máquina: `adb reverse tcp:8081 tcp:8081` (refazer a cada boot do emulador). Para chamadas, também `adb reverse tcp:3478 tcp:3478`.
@@ -59,6 +59,8 @@ Para testar chamada, o usuário B fica no cliente web, num Chrome à parte com c
    - a câmera falsa mostra um círculo verde girando; o microfone falso, um bipe;
    - subir o backend pelo shell: `env -u CONVERSA_DATABASE -u CONVERSA_PORTA docker compose up -d` na pasta `conversa`. Nesta máquina há variáveis antigas `CONVERSA_DATABASE=conversa` e `CONVERSA_PORTA=90` que passam por cima do `.env` (`conversa_dev`): sem o `env -u`, a API usa a base antiga `conversa` (e roda as migrações nela) e o nginx vai para a porta 90. Conferir com `docker inspect api` (`CONVERSA_DATABASE=conversa_dev`);
    - os volumes são `conversa-postgres` e `conversa-minio` desde o servidor `ef13c22` (o `bin\renomear-volumes.bat` já rodou em 2026-10-16);
+   - 🆕 **anexos no Garage** desde o servidor `d9b2646` (2026-11-14): o volume é o `conversa-garage`. Nesta máquina, a migração foi feita em 2026-11-15 com os passos do `bin\migrar-minio-garage.bat`, à mão: `docker compose up -d --build --wait postgres garage`, o `mc mirror` do bucket `chat` (24 objetos, 206 MiB) de dentro do `minio` antigo, o `mc diff` sem diferença, `docker compose up -d api nginx`, `docker rm -f minio` e o `nginx -s reload` (o `nginx` não foi recriado e ainda apontava para o `minio`). **O volume `conversa-minio` foi mantido**: o passo do Enter que o apaga ficou de fora;
+   - 🆕 o `api` de desenvolvimento lê o `src` da pasta e se recarrega sozinho: um `git pull` que muda o armazenamento (ou outro serviço) derruba a API até o compose subir o serviço novo. Subir o serviço logo depois do pull;
    - depois de um pull do web, rodar o `bun install --frozen-lockfile` no contêiner `dev` (o passo "Conferindo dependências" do `iniciar-desenvolvimento.bat`): sem ele, uma biblioteca nova do web (ex.: o `leaflet`) não é achada pelo Vite;
    - o contêiner `dev` (Vite) pode estar parado depois de reiniciar o Docker (`https://localhost` responde 502): `docker start dev` e o Vite como no `iniciar-desenvolvimento.bat`;
    - para não digitar a senha no navegador: login pela API (`POST /api/login`, com a senha lida deste arquivo por um script, sem mostrar) e, pelo DevTools Protocol, `conversa.token` e `conversa.user` no `localStorage` da página, e recarregar;

@@ -30,6 +30,7 @@
 18. [🆕 Atualização de 2026-10-22 — commits `77c7821` e `3689155`](#18-atualização-de-2026-10-22--commits-77c7821-e-3689155)
 19. [🆕 Atualização de 2026-10-23 — commits `30035bb` e `17c49a4`](#19-atualização-de-2026-10-23--commits-30035bb-e-17c49a4)
 20. [🆕 Atualização de 2026-10-27 — commits `6117545`, `c5487a9`, `edb1785` e `1dab7dd`](#20-atualização-de-2026-10-27--commits-6117545-c5487a9-edb1785-e-1dab7dd)
+21. [🆕 Atualização de 2026-11-15 — commit `361716d` (anexos no Garage)](#21-atualização-de-2026-11-15--commit-361716d-anexos-no-garage)
 
 ---
 
@@ -46,7 +47,7 @@
 | HTTP | Eden (`@elysiajs/eden` 1.4.9), tipado pelas rotas do backend (`../conversa/src/app.ts`) | `src/services/eden.ts`, `src/services/conversaApi.ts` |
 | Tempo real | WebSocket nativo, reconexão com backoff, polling de 8 s como fallback | `src/stores/chat.ts` |
 | Push | Firebase Cloud Messaging (web, VAPID) + service worker | `src/services/firebase.ts`, `public/firebase-messaging-sw.js` |
-| Upload | MinIO por URL pré-assinada, `XMLHttpRequest` (progresso) | `conversaApi.ts#uploadMinio` |
+| Upload | ~~MinIO~~ 🆕 `361716d` Garage (S3) por URL pré-assinada, `XMLHttpRequest` (progresso) | ~~`conversaApi.ts#uploadMinio`~~ 🆕 `conversaApi.ts#uploadArmazenamento` |
 | Hash | `hash-wasm` SHA-256 em blocos de 2 MB (deduplicação) | `conversaApi.ts#sha256File` |
 | Código | highlight.js (sob demanda) + CodeMirror 6 (janela de código) | `composables/useCodeHighlight.ts`, `components/CodigoModal.vue` |
 | Markdown / diagramas | `marked` + `DOMPurify`, `mermaid` (securityLevel strict); 🆕 `3689155` tabelas CSV/TSV montadas em Markdown GFM e desenhadas pelo mesmo `marked` (MSG-26) | `composables/useMarkdown.ts`, `composables/useMermaid.ts`, 🆕 `utils/tabelaCsv.ts` |
@@ -67,7 +68,7 @@ https://HOST
  ├── /          → página (Vite em dev, bin/web em prod)
  ├── /api/      → API REST
  ├── /ws/       → WebSocket da API
- ├── /storage/  → anexos (MinIO)
+ ├── /storage/  → anexos (🆕 Garage; antes, MinIO)
  └── /webrtc/   → MediaMTX (WHIP/WHEP)
 ```
 
@@ -1713,7 +1714,7 @@ Fonte única: `src/services/conversaApi.ts` (+ `eden.ts`). "Params" = query stri
 | 28 | GET | `/pesquisar` | `texto, conversa` (0 = todas) | `Mensagem[]`; 🆕 `6d20ff7` com `conversa > 0`, também as mensagens dos **chats das ligações feitas nela** (de que a pessoa é membro): `conversa_id` diferente do pedido | PES-01/02 |
 | 29 | GET | `/anexo/existe` | `identificador` | `{id}` ou objeto sem `id` | §1.7 |
 | 30 | PUT | `/anexo` | body `{identificador, tipo, nome, extensao, tamanho}`; 🆕 `9c6e8a6` áudio também `duracao?, intensidade?` | `{id, upload_url}` | §1.7, ANX-10 |
-| — | PUT | `<upload_url>` (MinIO, fora da API, sem Bearer) | corpo binário | 2xx | §1.7 |
+| — | PUT | `<upload_url>` (🆕 Garage; antes, MinIO; fora da API, sem Bearer) | corpo binário | 2xx | §1.7 |
 | 31 | GET | `/anexo` | `identificador` | `{url}` | ANX-*, AUT-08 |
 | 32 | GET | `/anexo/transcricao` | `identificador` | `{status, texto, erro}` | ANX-12 |
 | 33 | PUT | `/anexo/transcricao` | body `{identificador}` | `{status, texto, erro}` | ANX-12 |
@@ -2852,3 +2853,15 @@ Web `17c49a4` → `1dab7dd` (2026-10-25 a 2026-10-27). O servidor não mudou (`3
 - **CHA-27 / FC-729:** quem liga pelo web passa a ouvir a pré-assinatura sem mudo e espera a que está conectando; com o app atendendo já publicado (FC-729), o som de espera do web visto em 2026-10-23 deve sumir. Repetir o teste.
 - **CHA-04:** o web que atende manda o `entrar` antes de publicar. O app que liga já assina tentando até a publicação aparecer (WHEP com novas tentativas); nada muda.
 - **Quem compartilha** (etapa 9): mandar `escolhendo` e mostrar "Vendo sua tela:".
+
+## 21. Atualização de 2026-11-15 — commit `361716d` (anexos no Garage)
+
+Web `1dab7dd` → `361716d` (2026-11-14), junto do servidor `d9b2646`/`db5616d`, que troca o MinIO pelo Garage. Nenhum ID novo; total **178**.
+
+- **ANX-02** — a função de envio muda de nome: `uploadMinio` → `uploadArmazenamento` (`services/conversaApi.ts`). O envio é o mesmo: `XMLHttpRequest` com `PUT` na `upload_url`, sem Bearer.
+- **ANX-14** — `useAttachments.ts`: só os comentários (a URL "do Garage" vence; a validade vem de `X-Amz-Date` e `X-Amz-Expires`, com a renovação 60 s antes). O web renova ao falhar a carga, com qualquer código, então a troca do 403 pelo 400 não o afeta.
+- Comentários e documentação (`CLAUDE.md`, `README.md`, `playwright.config.ts`, `types/api.ts`, o teste das URLs) sem o MinIO.
+
+### O que muda para o Android
+- **A URL vencida volta 400 no Garage** (`InvalidRequest`, "Date is too old"; o MinIO respondia 403). O app só pedia outra URL no 403: o envio, a baixa do arquivo e as imagens falhariam com a URL vencida em vez de renová-la. Corrigido em 2026-11-15 (`urlAssinadaRecusada`: 400 e 403; histórico `2026-11-15-01`).
+- **Desenvolvimento:** o `ferramentas/proxy-dev.mjs` repassa o `/storage/` para o Garage (`127.0.0.1:3900`), e o `URL_VENCIDA=1` imita o 400 dele, no `GET` e no `PUT`.

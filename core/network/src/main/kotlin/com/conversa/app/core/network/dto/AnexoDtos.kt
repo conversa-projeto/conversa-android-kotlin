@@ -9,7 +9,7 @@ import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.UseSerializers
 
-// Anexos, MinIO e transcrição (contrato §8).
+// Anexos, armazenamento (Garage) e transcrição (contrato §8).
 
 @Serializable
 data class AnexoExisteDto(

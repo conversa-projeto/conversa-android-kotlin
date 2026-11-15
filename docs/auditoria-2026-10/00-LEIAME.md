@@ -22,6 +22,8 @@
 > 🆕 **Atualização 2026-10-23:** servidor `331083b` (a conexão parada continua com a conversa aberta: o "nesta conversa" só sai com `conversa_id: null` ou ao fechar) e web `30035bb`/`17c49a4` (aba parada depois de 30 s, em vez de 5 min, mandando a conversa aberta enquanto visível; no cabeçalho, o ausente e o "nesta conversa" com o visto por último; o texto do Status na Privacidade; a pré-conexão da chamada toca muda enquanto toca). Sem rota nem funcionalidade nova (continuam **178**). Novo FC-226; notas em FC-216 e FC-729. Nada quebra no app: em segundo plano ele já manda `conversa_id: null`.
 >
 > 🆕 **Atualização 2026-10-27:** só o web mudou, `1dab7dd` (atender sem atraso dos dois lados e entrar no clique; "Conectando o vídeo..." no tile; sinais novos da chamada `escolhendo` e `vendo`; textos dos tiles no escuro). Sem rota nem funcionalidade nova (continuam **178**). Novo FC-731; nota na FC-729. Nada quebra no app: ele ignora as ações de sinal que não conhece.
+>
+> 🆕 **Atualização 2026-11-15:** servidor `d9b2646`/`db5616d` (os anexos saem do MinIO e vão para o **Garage**, também S3, com o `bin\migrar-minio-garage.bat` para copiar os antigos) e web `361716d` (só nomes, `uploadArmazenamento`, e documentação). Sem rota nem funcionalidade nova (continuam **178**), e as URLs assinadas de `/storage/` são as mesmas. **Uma diferença quebra o app:** a URL vencida volta **400** no Garage (o MinIO respondia 403), e o app só renovava no 403 (envio, baixa e imagens). Corrigido com o `urlAssinadaRecusada` (400 e 403); o `ferramentas/proxy-dev.mjs` passa para a porta 3900 do Garage (histórico `2026-11-15-01`).
 
 **Escopo:** `conversa-android-kotlin` (branch `novo`, último commit `e3e2a65` em 2026-04-26) comparado a
 `conversa` (servidor, HEAD `7f670c3` → 🆕 `8031fa5` → 🆕 `5cad911` → 🆕 `779c8ed` → 🆕 `12cf0cf` → 🆕 `e25c4db` → 🆕 `ef13c22` → 🆕 `ac710eb` → 🆕 `b104db8`) e `conversa-web` (HEAD `bfb79d8` → 🆕 `39d06f9` → 🆕 `785bdef` → 🆕 `e8d82cb` → 🆕 `d202c06` → 🆕 `8b43965` → 🆕 `9c6e8a6` → 🆕 `f351190` → 🆕 `57bd9f0` → 🆕 `3689155`), de 2026-10-06 a 2026-10-08 (🆕 sincronizado de novo em 2026-10-13).
@@ -34,7 +36,7 @@
 | # | Arquivo | Para que serve |
 |---|---|---|
 | 00 | `00-LEIAME.md` | Este índice, o resumo executivo e a **decisão recomendada** |
-| 01 | `01-contrato-servidor-atual.md` | **Fonte da verdade** do contrato atual do servidor: 67 rotas (🆕 82 em 2026-10-15; 119 em 2026-10-17), WebSocket, FCM, anexos/MinIO, chamadas/MediaMTX, gravação, permissões, parâmetros e 46 "pegadinhas" para clientes |
+| 01 | `01-contrato-servidor-atual.md` | **Fonte da verdade** do contrato atual do servidor: 67 rotas (🆕 82 em 2026-10-15; 119 em 2026-10-17), WebSocket, FCM, anexos/armazenamento (🆕 Garage desde `d9b2646`; antes, MinIO), chamadas/MediaMTX, gravação, permissões, parâmetros e 46 "pegadinhas" para clientes |
 | 02 | `02-mudancas-servidor-desde-abril.md` | O que mudou no servidor desde a última versão do Android, endpoint por endpoint, com as **quebras confirmadas** |
 | 03 | `03-inventario-web.md` | As **136 funcionalidades** (🆕 153 em 2026-10-15; 172 em 2026-10-17; 176 em 2026-10-19; 178 em 2026-10-22) do cliente web (IDs AUT/CON/MSG/ENV/ANX/PES/CHA/SIP/NOT/PRE/ATV/CFG/GER), textos de UI e detalhes de WebRTC: é o checklist de paridade |
 | 04 | `04-auditoria-android.md` | Auditoria interna do app Android: estado do repo, build, arquitetura, **57 problemas** (#1–#57) com severidade e arquivo:linha, e avaliação "evoluir x recomeçar" |

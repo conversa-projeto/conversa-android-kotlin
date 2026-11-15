@@ -69,15 +69,34 @@ fun calcularSha256(entrada: InputStream): String {
 /** Extensão do nome, minúscula e com no máximo 10 caracteres (coluna `extensao`, §8.1). */
 fun extensaoDe(nome: String): String = nome.substringAfterLast('.', "").lowercase().take(LIMITE_EXTENSAO)
 
+/**
+ * O armazenamento recusou a URL assinada (ANX-14): vencida ou com a assinatura que não confere.
+ * Nos dois casos, vale pedir outra URL ao servidor, uma vez.
+ * - **O Garage** (o armazenamento desde o servidor `d9b2646`) responde 400 à vencida
+ *   (`InvalidRequest`, "Date is too old") e 403 à assinatura errada;
+ * - **o MinIO**, que ele substituiu, respondia 403 às duas.
+ */
+fun urlAssinadaRecusada(codigo: Int): Boolean = codigo == HTTP_REQUISICAO_INVALIDA || codigo == HTTP_PROIBIDO
+
 private const val TAMANHO_BLOCO = 64 * 1024
 private const val LIMITE_EXTENSAO = 10
+private const val HTTP_REQUISICAO_INVALIDA = 400
+private const val HTTP_PROIBIDO = 403
 
 /**
  * Anexos (ANX-02, ANX-14): envio com deduplicação e URLs assinadas de leitura.
  *
- * Envio (§8.2): SHA-256 → `PUT /anexo` → se já existe, pronto; senão `PUT` dos bytes na
- * URL assinada (300 s) → `POST /anexo/confirmar?identificador=`. Se a URL vencer no
- * meio (403 do MinIO), pede outra uma vez.
+ * Envio (§8.2): SHA-256 → `PUT /anexo` → se não existe, `PUT` dos bytes na URL assinada
+ * (300 s) → `POST /anexo/confirmar?identificador=`.
+ * - **"Já existe" não quer dizer que o arquivo está lá:** o servidor responde assim para
+ *   qualquer anexo com o identificador, também o pendente cujo envio parou no meio (contrato
+ *   §8.2, pegadinha 38). Por isso o `confirmar` vai também nesse caso. Ele confere o arquivo
+ *   no armazenamento: sem o arquivo, 400 "Arquivo não encontrado no armazenamento", e a
+ *   mensagem falha em vez de ir com o anexo quebrado.
+ * - **URL recusada pelo armazenamento** (vencida no meio: 400 do Garage; [urlAssinadaRecusada]):
+ *   pede outra uma vez. Hoje o servidor responde "já existe" (o registro ficou pendente), e o
+ *   `confirmar` acima recusa; se um dia ele devolver uma URL nova para o pendente
+ *   (pendência S43 do doc 08), o envio segue sozinho.
  *
  * Leitura (§8.3): `GET /anexo?identificador=` → URL que vale 600 s, guardada pelo
  * identificador (o conteúdo nunca muda) até um pouco antes de vencer.
@@ -125,7 +144,9 @@ class AnexosRepositorio @Inject constructor(
             val resposta = chamarApi { api.incluirAnexo(pedido) }.getOrElse { return@withContext Result.failure(it) }
             val enviado = AnexoEnviado(resposta.id, identificador, tipo, fonte.nome, extensao, fonte.tamanho)
             if (resposta.existe) {
-                // Já está no servidor (mesmo conteúdo): nada a subir; a URL devolvida é de leitura.
+                // Mesmo conteúdo já registrado: nada a subir se o arquivo está no armazenamento. O
+                // confirmar confere (e marca o pendente que já subiu); sem o arquivo, recusa com 400.
+                chamarApi { api.confirmarAnexo(identificador) }.getOrElse { return@withContext Result.failure(it) }
                 guardarUrl(identificador, resposta.uploadUrl)
                 aoProgresso(fonte.tamanho, fonte.tamanho)
                 return@withContext Result.success(enviado)
@@ -139,8 +160,8 @@ class AnexosRepositorio @Inject constructor(
                 codigo in 200..299 -> {
                     return@withContext chamarApi { api.confirmarAnexo(identificador) }.map { enviado }
                 }
-                // URL vencida (vale 300 s): pede outra, uma vez.
-                codigo == 403 && tentativa == 0 -> tentativa++
+                // URL vencida (vale 300 s) ou recusada: pede outra, uma vez.
+                urlAssinadaRecusada(codigo) && tentativa == 0 -> tentativa++
                 else -> return@withContext Result.failure(ErroApi.Servidor(codigo, "Falha no envio do arquivo ($codigo)"))
             }
         }
@@ -181,7 +202,7 @@ class AnexosRepositorio @Inject constructor(
         return chamarApi { api.urlAnexo(identificador) }.map { it.url.also { url -> guardarUrl(identificador, url) } }
     }
 
-    /** A imagem falhou (403/expirada): a próxima chamada a [url] busca outra. */
+    /** A URL foi recusada ([urlAssinadaRecusada]) ou a leitura falhou: a próxima chamada a [url] busca outra. */
     fun esquecerUrl(identificador: String) {
         urls.remove(identificador)
     }

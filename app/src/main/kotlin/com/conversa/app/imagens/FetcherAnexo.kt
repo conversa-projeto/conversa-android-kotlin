@@ -11,6 +11,7 @@ import coil3.network.HttpException
 import coil3.request.Options
 import coil3.toUri
 import com.conversa.app.core.data.anexos.AnexosRepositorio
+import com.conversa.app.core.data.anexos.urlAssinadaRecusada
 import com.conversa.app.core.ui.componentes.AnexoRemoto
 
 /**
@@ -18,7 +19,8 @@ import com.conversa.app.core.ui.componentes.AnexoRemoto
  * 1. já está no cache de disco (chave = identificador)? Usa, sem pedir URL ao servidor;
  * 2. senão, pede a URL assinada ao [AnexosRepositorio] (com cache) e repassa ao fetcher
  *    de rede do Coil, que grava no disco com a mesma chave;
- * 3. o MinIO recusou (403: URL vencida)? Esquece a URL e tenta uma vez com outra.
+ * 3. o armazenamento recusou a URL ([urlAssinadaRecusada]: 400 do Garage na vencida)? Esquece
+ *    a URL e tenta uma vez com outra.
  */
 class FetcherAnexo(
     private val anexo: AnexoRemoto,
@@ -31,7 +33,7 @@ class FetcherAnexo(
         return try {
             daRede()
         } catch (e: HttpException) {
-            if (e.response.code != HTTP_PROIBIDO) throw e
+            if (!urlAssinadaRecusada(e.response.code)) throw e
             anexos.esquecerUrl(anexo.identificador)
             daRede()
         }
@@ -64,9 +66,5 @@ class FetcherAnexo(
     /** Chave do cache de memória = identificador. */
     class Chave : Keyer<AnexoRemoto> {
         override fun key(data: AnexoRemoto, options: Options): String = data.identificador
-    }
-
-    private companion object {
-        const val HTTP_PROIBIDO = 403
     }
 }
