@@ -7,7 +7,7 @@
   - `TODO.md` 4.1 e 4.3: as notas nas linhas antigas e as linhas 🆕;
   - pendência S43 (nova) e S29/S30 no doc 08; pegadinha 38 do doc 01.
 - **Branch:** `reescrita`
-- **Commits:** `XXXXXXX`
+- **Commits:** `23238bf`
 - **Commits de origem** (pull `--ff-only` em 2026-11-15):
   - **Servidor (`331083b` → `db5616d`):**
     - `d9b2646` (2026-11-14) "Anexos no Garage no lugar do MinIO, com script de migração";
